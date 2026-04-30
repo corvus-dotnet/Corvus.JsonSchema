@@ -1,0 +1,1697 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@page "/"
+@inject CodeGenerationService CodeGenService
+@inject CompilationService CompilationSvc
+@inject ExecutionService ExecutionSvc
+@inject IntelliSenseService IntelliSenseSvc
+@inject IJSRuntime JSRuntime
+
+<div class="playground-toolbar">
+    <h1>Corvus.Text.Json Playground</h1>
+    <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
+        @if (activeSampleId is null)
+        {
+            <option value="" disabled>— Custom project —</option>
+        }
+        @foreach (var sample in availableSamples)
+        {
+            <option value="@sample.Id">@sample.DisplayName</option>
+        }
+    </select>
+    <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
+    <button class="toolbar-btn secondary" @onclick="SaveProjectAsync" title="Save project as ZIP">💾 Save</button>
+    <button class="toolbar-btn secondary" @onclick="LoadProjectAsync" title="Load a saved project">📂 Open</button>
+    <div class="spacer"></div>
+    <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
+    <button class="toolbar-btn primary" @onclick="GenerateAsync" disabled="@(isGenerating || isRunning)">
+        @(isGenerating ? "Generating…" : "Generate")
+    </button>
+    <button class="toolbar-btn primary" @onclick="RunAsync" disabled="@(generationResult is null || isGenerating || isRunning)" title="Run (F5)">
+        @(isRunning ? "Running…" : "▶ Run")
+    </button>
+</div>
+
+<div class="playground-grid @(maximizedPanel is not null ? "has-maximized" : "")">
+    @* Top-left: Schema editor with tabs *@
+    <div class="playground-panel @(GetPanelClass("schema"))">
+        <div class="panel-header">
+            JSON Schema
+            <div class="spacer"></div>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("schema")' title="@(maximizedPanel == "schema" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "schema" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="schema-tabs-wrapper">
+            <button class="schema-tabs-scroll-btn scroll-left" @onclick="ScrollTabsLeft" title="Scroll left">‹</button>
+            <div class="schema-tabs-scroll" @ref="schemaTabsScrollRef">
+                @for (int i = 0; i < schemaFiles.Count; i++)
+                {
+                    int index = i;
+                    var file = schemaFiles[index];
+                    <div class="schema-tab @(index == activeSchemaIndex ? "active" : "") @(file.IsRootType ? "root-type" : "")"
+                         @onclick="() => SelectSchemaTab(index)">
+                        @if (renamingTabIndex == index)
+                        {
+                            <input @ref="renameInputRef"
+                                   class="schema-tab-rename-input"
+                                   @bind="renameValue"
+                                   @bind:event="oninput"
+                                   @onclick:stopPropagation="true"
+                                   @onkeydown="OnRenameKeyDown"
+                                   @onblur="CommitRename" />
+                        }
+                        else
+                        {
+                            <span class="schema-tab-name">@file.Name</span>
+                            <button class="schema-tab-rename-btn"
+                                    @onclick:stopPropagation="true"
+                                    @onclick="() => StartRename(index)"
+                                    title="Rename">✎</button>
+                        }
+                        <button class="schema-tab-root-badge @(file.IsRootType ? "is-root" : "")"
+                                @onclick:stopPropagation="true"
+                                @onclick="() => ToggleRootType(index)"
+                                title="@(file.IsRootType ? "This schema will be generated (click to unmark)" : "Click to generate types from this schema")">
+                            @(file.IsRootType ? "GENERATED" : "REFERENCED")
+                        </button>
+                        @if (schemaFiles.Count > 1)
+                        {
+                            <button class="schema-tab-close"
+                                    @onclick:stopPropagation="true"
+                                    @onclick="() => RemoveSchemaTab(index)"
+                                    title="Remove">×</button>
+                        }
+                    </div>
+                }
+                <button class="schema-tab-add" @onclick="AddSchemaTab" title="Add schema file">+</button>
+            </div>
+            <button class="schema-tabs-scroll-btn scroll-right" @onclick="ScrollTabsRight" title="Scroll right">›</button>
+        </div>
+        <div class="panel-content">
+            <StandaloneCodeEditor @ref="schemaEditor"
+                Id="schema-editor"
+                ConstructionOptions="SchemaEditorOptions"
+                OnDidInit="OnSchemaEditorInit"
+                OnDidChangeModelContent="OnSchemaContentChanged" />
+        </div>
+    </div>
+
+    @* Top-right: Type map *@
+    <div class="playground-panel @(GetPanelClass("typemap"))">
+        <div class="panel-header">
+            Type Map
+            @if (generationResult?.TypeMap.Count > 0)
+            {
+                <span class="badge">@generationResult.TypeMap.Count types</span>
+            }
+        </div>
+        <div class="panel-content">
+            <TypeMapPanel TypeMap="@(generationResult?.TypeMap ?? [])"
+                          OnSchemaPointerSelected="OnSchemaPointerSelected" />
+        </div>
+    </div>
+
+    @* Bottom-left: User code editor *@
+    <div class="playground-panel @(GetPanelClass("usercode"))">
+        <div class="panel-header">
+            User Code (C#)
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyUserCode" title="Copy code">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("usercode")' title="@(maximizedPanel == "usercode" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "usercode" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-content">
+            <StandaloneCodeEditor @ref="userCodeEditor"
+                Id="user-code-editor"
+                ConstructionOptions="UserCodeEditorOptions"
+                OnDidInit="OnUserCodeEditorInit"
+                OnDidChangeModelContent="OnUserCodeContentChanged" />
+        </div>
+    </div>
+
+    @* Bottom-right: Console output *@
+    <div class="playground-panel @(GetPanelClass("console"))">
+        <div class="panel-header">
+            Console Output
+            <div class="spacer"></div>
+            <button class="panel-clear-btn" @onclick="ClearConsole" title="Clear console">🗑️</button>
+            <button class="panel-copy-btn" @onclick="CopyConsoleOutput" title="Copy output">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("console")' title="@(maximizedPanel == "console" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "console" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-content">
+            <div class="console-output" @ref="consoleDiv">
+                @foreach (var line in consoleLines)
+                {
+                    <span class="@line.CssClass">@line.Text</span>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="status-bar @(statusError ? "error" : "")">
+    @if (isGenerating || isRunning)
+    {
+        <span class="status-spinner"></span>
+    }
+    <span class="status-item">@statusText</span>
+</div>
+
+@if (showDirtyConfirmation)
+{
+    <div class="modal-overlay" @onclick="CancelDirtyConfirmation">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <h3>Unsaved Changes</h3>
+            <p>The following files have unsaved changes:</p>
+            <ul class="dirty-file-list">
+                @foreach (string name in GetDirtyFileNames())
+                {
+                    <li>@name</li>
+                }
+            </ul>
+            <p>Do you want to discard these changes?</p>
+            <div class="modal-actions">
+                <button class="toolbar-btn secondary" @onclick="CancelDirtyConfirmation">Cancel</button>
+                <button class="toolbar-btn primary" @onclick="ConfirmDirtyAction">Discard Changes</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private StandaloneCodeEditor? schemaEditor;
+    private StandaloneCodeEditor? userCodeEditor;
+    private ElementReference consoleDiv;
+    private GenerationResult? generationResult;
+    private bool isGenerating;
+    private bool isRunning;
+    private string statusText = "Ready";
+    private bool statusError;
+    private List<ConsoleLine> consoleLines = [];
+    private string? maximizedPanel;
+
+    // Sample registry state
+    private IReadOnlyList<PlaygroundSample> availableSamples = [];
+    private string? activeSampleId;
+
+    /// <summary>
+    /// Guard flag: suppresses DetachFromSample during programmatic editor updates
+    /// (loading a sample, new project, opening a file, or restoring auto-saved state).
+    /// </summary>
+    private bool isLoadingContent;
+
+    // Multi-schema state
+    private List<SchemaFile> schemaFiles = [];
+    private int activeSchemaIndex;
+    private int renamingTabIndex = -1;
+    private string renameValue = "";
+    private ElementReference renameInputRef;
+    private ElementReference schemaTabsScrollRef;
+    private bool focusRenameInput;
+
+    private const string EmptySchemaContent = "{\n  \"$schema\": \"https://json-schema.org/draft/2020-12/schema\"\n}";
+    private const string NewProjectUserCode = "using Corvus.Text.Json;\nusing Playground;\n";
+
+    // Dirty tracking state
+    private string userCodeCleanContent = "";
+    private bool showDirtyConfirmation;
+    private Func<Task>? pendingDirtyAction;
+
+    // Live diagnostics state
+    private CancellationTokenSource? diagnosticsCts;
+    private System.Threading.Timer? diagnosticsDebounceTimer;
+
+    // Auto-save state
+    private System.Threading.Timer? autoSaveTimer;
+    private string? restoredUserCode;
+    private const string AutoSaveKey = "playground-state";
+    private const int AutoSaveVersion = 1;
+
+    // Theme state: "auto", "light", or "dark"
+    private string themePreference = "auto";
+    private string resolvedTheme = "dark";
+    private string currentMonacoTheme => resolvedTheme == "light" ? "vs" : "vs-dark";
+    private string themeIcon => themePreference switch
+    {
+        "light" => "☀️",
+        "dark" => "🌙",
+        _ => "🖥️"
+    };
+    private string themeTooltip => themePreference switch
+    {
+        "light" => "Theme: Light (click for Dark)",
+        "dark" => "Theme: Dark (click for System)",
+        _ => "Theme: System (click for Light)"
+    };
+
+    private StandaloneEditorConstructionOptions SchemaEditorOptions(StandaloneCodeEditor editor)
+    {
+        string initialContent = schemaFiles.Count > 0
+            ? schemaFiles[activeSchemaIndex].Content
+            : "{\n  \"type\": \"object\"\n}";
+
+        return new StandaloneEditorConstructionOptions
+        {
+            AutomaticLayout = true,
+            Language = "json",
+            Theme = currentMonacoTheme,
+            Value = initialContent,
+            FontSize = 13,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            ScrollBeyondLastLine = false,
+        };
+    }
+
+    private StandaloneEditorConstructionOptions UserCodeEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            AutomaticLayout = true,
+            Language = "csharp",
+            Theme = currentMonacoTheme,
+            Value = GetInitialUserCode(),
+            FontSize = 13,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            ScrollBeyondLastLine = false,
+        };
+    }
+
+    protected override void OnInitialized()
+    {
+        // Load all recipe samples
+        availableSamples = SampleRegistry.LoadAll();
+
+        // Try synchronous restore from localStorage BEFORE first render.
+        // In Blazor WASM, IJSRuntime is IJSInProcessRuntime so we can call
+        // Invoke<T> synchronously — no race with editor initialization.
+        bool restored = RestoreAutoSavedStateSync();
+
+        if (!restored)
+        {
+            // No saved state — default to the first example
+            if (availableSamples.Count > 0)
+            {
+                LoadSample(availableSamples[0]);
+            }
+            else
+            {
+                LoadNewProject();
+            }
+        }
+    }
+
+    private string GetInitialUserCode()
+    {
+        // If we restored user code from auto-save, use that
+        if (restoredUserCode is not null)
+        {
+            string code = restoredUserCode;
+            restoredUserCode = null; // consume it once
+            return code;
+        }
+
+        if (activeSampleId is not null)
+        {
+            PlaygroundSample? sample = availableSamples.FirstOrDefault(s => s.Id == activeSampleId);
+            if (sample is not null)
+            {
+                return sample.UserCode;
+            }
+        }
+
+        return NewProjectUserCode;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await InitializeThemeAsync();
+            await RegisterKeyboardShortcuts();
+        }
+
+        if (focusRenameInput)
+        {
+            focusRenameInput = false;
+            try
+            {
+                await renameInputRef.FocusAsync();
+            }
+            catch
+            {
+                // Element may not yet be in DOM; ignore
+            }
+        }
+    }
+
+    private async Task OnSchemaEditorInit()
+    {
+        // Sync clean state from actual Monaco content after initial render
+        await SyncSchemaFromEditor();
+        if (schemaFiles.Count > 0)
+        {
+            schemaFiles[activeSchemaIndex].MarkClean();
+        }
+    }
+
+    private async Task OnSchemaContentChanged(ModelContentChangedEvent e)
+    {
+        await SyncSchemaFromEditor();
+
+        DetachFromSample();
+        ScheduleAutoSave();
+    }
+
+    private async Task OnUserCodeContentChanged(ModelContentChangedEvent e)
+    {
+        DetachFromSample();
+        ScheduleAutoSave();
+
+        // Trigger debounced live diagnostics if we have generated code
+        if (generationResult is not null && generationResult.Success && !isRunning)
+        {
+            diagnosticsCts?.Cancel();
+            diagnosticsDebounceTimer?.Dispose();
+            diagnosticsDebounceTimer = new System.Threading.Timer(
+                _ => InvokeAsync(RunLiveDiagnosticsAsync),
+                null,
+                800,
+                Timeout.Infinite);
+        }
+    }
+
+    private async Task RunLiveDiagnosticsAsync()
+    {
+        if (generationResult is null || !generationResult.Success || userCodeEditor is null || isRunning)
+        {
+            return;
+        }
+
+        diagnosticsCts?.Cancel();
+        diagnosticsCts = new CancellationTokenSource();
+        var token = diagnosticsCts.Token;
+
+        try
+        {
+            string userCode = await userCodeEditor.GetValue();
+
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            // Yield so the live diagnostics compilation doesn't block the UI thread
+            await Task.Yield();
+
+            CompilationResult result = await CompilationSvc.CompileAsync(
+                generationResult.GeneratedFiles,
+                userCode);
+
+            if (token.IsCancellationRequested)
+            {
+                return;
+            }
+
+            await SetEditorMarkers(result.Diagnostics);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected when cancelled by newer keystroke
+        }
+        catch
+        {
+            // Silently ignore diagnostic failures — they're advisory
+        }
+    }
+
+    private async Task<bool> HasUnsavedChanges()
+    {
+        // Sync current editor content before checking
+        await SyncSchemaFromEditor();
+
+        // Check schema files
+        if (schemaFiles.Any(f => f.IsDirty || f.IsNew))
+        {
+            return true;
+        }
+
+        // Check user code
+        if (userCodeEditor is not null)
+        {
+            string currentCode = await userCodeEditor.GetValue();
+            return currentCode != userCodeCleanContent;
+        }
+
+        return false;
+    }
+
+    private async Task<List<string>> GetDirtyFileNamesAsync()
+    {
+        await SyncSchemaFromEditor();
+
+        var names = new List<string>();
+
+        foreach (SchemaFile f in schemaFiles)
+        {
+            if (f.IsNew)
+            {
+                names.Add($"{f.Name} (new)");
+            }
+            else if (f.IsDirty)
+            {
+                names.Add(f.Name);
+            }
+        }
+
+        if (userCodeEditor is not null)
+        {
+            string currentCode = await userCodeEditor.GetValue();
+            if (currentCode != userCodeCleanContent)
+            {
+                names.Add("Program.cs");
+            }
+        }
+
+        return names;
+    }
+
+    private List<string> GetDirtyFileNames()
+    {
+        // Synchronous version for rendering — uses content synced when the modal opened
+        var names = new List<string>();
+
+        foreach (SchemaFile f in schemaFiles)
+        {
+            if (f.IsNew)
+            {
+                names.Add($"{f.Name} (new)");
+            }
+            else if (f.IsDirty)
+            {
+                names.Add(f.Name);
+            }
+        }
+
+        if (userCodeCurrentSnapshot != userCodeCleanContent)
+        {
+            names.Add("Program.cs");
+        }
+
+        return names;
+    }
+
+    private string userCodeCurrentSnapshot = "";
+
+    private async Task<bool> CheckDirtyAndConfirm(Func<Task> action)
+    {
+        if (!await HasUnsavedChanges())
+        {
+            await action();
+            return true;
+        }
+
+        // Snapshot current editor content for synchronous rendering in the modal
+        userCodeCurrentSnapshot = userCodeEditor is not null
+            ? await userCodeEditor.GetValue()
+            : userCodeCleanContent;
+
+        pendingDirtyAction = action;
+        showDirtyConfirmation = true;
+        StateHasChanged();
+        return false;
+    }
+
+    private async Task ConfirmDirtyAction()
+    {
+        showDirtyConfirmation = false;
+        if (pendingDirtyAction is not null)
+        {
+            await pendingDirtyAction();
+            pendingDirtyAction = null;
+        }
+    }
+
+    private void CancelDirtyConfirmation()
+    {
+        showDirtyConfirmation = false;
+        pendingDirtyAction = null;
+    }
+
+    private void MarkAllClean()
+    {
+        foreach (SchemaFile f in schemaFiles)
+        {
+            f.MarkClean();
+            f.IsNew = false;
+        }
+    }
+
+    /// <summary>
+    /// Syncs the current schema editor content back to the active schema file model.
+    /// No-op if the editor is null or the index is out of range.
+    /// </summary>
+    private async Task SyncSchemaFromEditor()
+    {
+        if (schemaEditor is not null && activeSchemaIndex < schemaFiles.Count)
+        {
+            schemaFiles[activeSchemaIndex].Content = await schemaEditor.GetValue();
+        }
+    }
+
+    /// <summary>
+    /// Reads actual editor content (which Monaco may have normalized) and
+    /// uses it as the clean baseline. Call after every load/SetValue sequence.
+    /// </summary>
+    private async Task SyncCleanStateFromEditors()
+    {
+        await SyncSchemaFromEditor();
+        MarkAllClean();
+
+        if (userCodeEditor is not null)
+        {
+            userCodeCleanContent = await userCodeEditor.GetValue();
+        }
+    }
+
+    private DotNetObjectReference<MainLayout>? intelliSenseRef;
+    private DotNetObjectReference<MainLayout>? shortcutRef;
+    private DotNetObjectReference<MainLayout>? themeChangeRef;
+
+    private async Task OnUserCodeEditorInit()
+    {
+        await RegisterCompletionProvider();
+
+        // Sync clean state from actual Monaco content after initial render
+        if (userCodeEditor is not null)
+        {
+            userCodeCleanContent = await userCodeEditor.GetValue();
+        }
+    }
+
+    private async Task RegisterCompletionProvider()
+    {
+        this.intelliSenseRef = DotNetObjectReference.Create(this);
+        await JSRuntime.InvokeVoidAsync("registerCSharpCompletionProvider", this.intelliSenseRef);
+        await JSRuntime.InvokeVoidAsync("registerCSharpSignatureHelpProvider", this.intelliSenseRef);
+    }
+
+    private async Task RegisterKeyboardShortcuts()
+    {
+        this.shortcutRef = DotNetObjectReference.Create(this);
+        await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", this.shortcutRef);
+    }
+
+    [JSInvokable]
+    public async Task OnF5Pressed()
+    {
+        if (generationResult is null || !generationResult.Success || isGenerating || isRunning)
+        {
+            return;
+        }
+
+        await RunAsync();
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task<List<object>> GetCompletionsForJs(string code, int line, int column)
+    {
+        var items = await IntelliSenseSvc.GetCompletionsAsync(code, line, column);
+
+        return items.Select(item => (object)new
+        {
+            label = item.Label,
+            kind = MapMonacoKind(item.Kind),
+            detail = item.Detail,
+            insertText = item.Label,
+            sortText = item.SortText,
+            filterText = item.FilterText,
+        }).ToList();
+    }
+
+    [JSInvokable]
+    public async Task<object?> GetSignatureHelpForJs(string code, int line, int column)
+    {
+        var result = await IntelliSenseSvc.GetSignatureHelpAsync(code, line, column);
+        if (result is null)
+        {
+            return null;
+        }
+
+        return new
+        {
+            signatures = result.Signatures.Select(sig => new
+            {
+                label = sig.Label,
+                documentation = sig.Documentation,
+                parameters = sig.Parameters.Select(p => new
+                {
+                    label = p.Label,
+                    documentation = p.Documentation,
+                }).ToArray(),
+            }).ToArray(),
+            activeSignature = result.ActiveSignature,
+            activeParameter = result.ActiveParameter,
+        };
+    }
+
+    private static int MapMonacoKind(string kind)
+    {
+        // Monaco CompletionItemKind integer values
+        return kind switch
+        {
+            "Method" => 0,
+            "Function" => 1,
+            "Field" => 3,
+            "Variable" => 4,
+            "Class" => 5,
+            "Struct" => 6,
+            "Interface" => 7,
+            "Module" => 8,
+            "Property" => 9,
+            "Event" => 10,
+            "Constant" => 14,
+            "Enum" => 15,
+            "EnumMember" => 16,
+            "Keyword" => 17,
+            "Snippet" => 27,
+            "TypeParameter" => 24,
+            _ => 18, // Text
+        };
+    }
+
+    private async Task CopyUserCode()
+    {
+        if (userCodeEditor is not null)
+        {
+            string code = await userCodeEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", code);
+        }
+    }
+
+    private async Task CopyConsoleOutput()
+    {
+        string text = string.Join("\n", consoleLines.Select(l => l.Text));
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private void ClearConsole()
+    {
+        consoleLines.Clear();
+    }
+
+    // ── Theme management ──
+
+    private async Task InitializeThemeAsync()
+    {
+        // Immediately sync with the theme the anti-flash inline script resolved,
+        // so Monaco editors match the CSS before we do any further processing.
+        resolvedTheme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
+
+        // Read stored preference from localStorage
+        string? stored = null;
+        try
+        {
+            stored = await JSRuntime.InvokeAsync<string?>("localStorage.getItem", "playground-theme");
+        }
+        catch
+        {
+            // localStorage may not be available
+        }
+
+        themePreference = stored switch
+        {
+            "light" or "dark" => stored,
+            _ => "auto"
+        };
+
+        // Resolve the effective theme
+        if (themePreference == "auto")
+        {
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+        }
+        else
+        {
+            resolvedTheme = themePreference;
+        }
+
+        // Apply theme to DOM and Monaco (with retry if Monaco still loading)
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+
+        // Listen for system theme changes (relevant when preference is "auto")
+        this.themeChangeRef = DotNetObjectReference.Create(this);
+        await JSRuntime.InvokeVoidAsync("onSystemThemeChange", this.themeChangeRef);
+
+        StateHasChanged();
+    }
+
+    private async Task CycleTheme()
+    {
+        themePreference = themePreference switch
+        {
+            "auto" => "light",
+            "light" => "dark",
+            "dark" => "auto",
+            _ => "auto"
+        };
+
+        if (themePreference == "auto")
+        {
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+        }
+        else
+        {
+            resolvedTheme = themePreference;
+        }
+
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "playground-theme", themePreference);
+    }
+
+    [JSInvokable]
+    public async Task OnSystemThemeChanged(string newTheme)
+    {
+        if (themePreference == "auto")
+        {
+            resolvedTheme = newTheme;
+            await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+            await InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private async Task OnSampleChanged(ChangeEventArgs e)
+    {
+        string? sampleId = e.Value?.ToString();
+        if (string.IsNullOrEmpty(sampleId))
+        {
+            return;
+        }
+
+        // Capture the selected ID for use in the deferred action
+        string capturedId = sampleId;
+
+        await CheckDirtyAndConfirm(async () =>
+        {
+            PlaygroundSample? sample = availableSamples.FirstOrDefault(s => s.Id == capturedId);
+            if (sample is null || schemaEditor is null)
+            {
+                return;
+            }
+
+            isLoadingContent = true;
+            try
+            {
+                LoadSample(sample);
+
+                // Update editors
+                activeSchemaIndex = 0;
+                await schemaEditor.SetValue(schemaFiles[0].Content);
+
+                if (userCodeEditor is not null)
+                {
+                    await userCodeEditor.SetValue(sample.UserCode);
+                }
+
+                await SyncCleanStateFromEditors();
+
+                // Reset generation state
+                generationResult = null;
+                await ClearEditorMarkers();
+                await ClearSchemaEditorMarkers();
+                statusText = "Ready — sample loaded";
+                statusError = false;
+                ScheduleAutoSave();
+            }
+            finally
+            {
+                isLoadingContent = false;
+            }
+        });
+    }
+
+    private async Task NewProjectAsync()
+    {
+        await CheckDirtyAndConfirm(async () =>
+        {
+            isLoadingContent = true;
+            try
+            {
+                LoadNewProject();
+
+                if (schemaEditor is not null)
+                {
+                    await schemaEditor.SetValue(schemaFiles[0].Content);
+                }
+
+                if (userCodeEditor is not null)
+                {
+                    await userCodeEditor.SetValue(NewProjectUserCode);
+                }
+
+                await SyncCleanStateFromEditors();
+
+                generationResult = null;
+                await ClearEditorMarkers();
+                await ClearSchemaEditorMarkers();
+                statusText = "Ready";
+                statusError = false;
+                ScheduleAutoSave();
+            }
+            finally
+            {
+                isLoadingContent = false;
+            }
+        });
+    }
+
+    /// <summary>
+    /// Clears the sample association when the user edits content,
+    /// so the dropdown deselects and it becomes a custom project.
+    /// </summary>
+    private void DetachFromSample()
+    {
+        if (isLoadingContent)
+        {
+            return;
+        }
+
+        activeSampleId = null;
+    }
+
+    private void LoadNewProject()
+    {
+        activeSampleId = null;
+        schemaFiles.Clear();
+        var schema = new SchemaFile
+        {
+            Name = "schema.json",
+            Content = EmptySchemaContent,
+            IsRootType = true,
+        };
+        schema.MarkClean();
+        schemaFiles.Add(schema);
+        activeSchemaIndex = 0;
+        userCodeCleanContent = NewProjectUserCode;
+    }
+
+    private async Task SaveProjectAsync()
+    {
+        // Ensure current editor content is captured
+        await SyncSchemaFromEditor();
+
+        string userCode = userCodeEditor is not null
+            ? await userCodeEditor.GetValue()
+            : NewProjectUserCode;
+
+        byte[] zipBytes = ProjectExporter.Export(schemaFiles, userCode);
+        await JSRuntime.InvokeVoidAsync("downloadFileFromBytes",
+            "playground-project.zip", "application/zip", zipBytes);
+
+        // Mark everything clean after save
+        MarkAllClean();
+        userCodeCleanContent = userCode;
+
+        statusText = "Project saved";
+        statusError = false;
+    }
+
+    private async Task LoadProjectAsync()
+    {
+        await CheckDirtyAndConfirm(async () =>
+        {
+            byte[]? zipBytes = await JSRuntime.InvokeAsync<byte[]?>("pickFileAsBytes", ".zip");
+            if (zipBytes is null || zipBytes.Length == 0)
+            {
+                return;
+            }
+
+            isLoadingContent = true;
+            try
+            {
+                ProjectImporter.ImportResult result = ProjectImporter.Import(zipBytes);
+
+                schemaFiles.Clear();
+                schemaFiles.AddRange(result.SchemaFiles);
+
+                if (schemaFiles.Count == 0)
+                {
+                    schemaFiles.Add(new SchemaFile
+                    {
+                        Name = "schema.json",
+                        Content = EmptySchemaContent,
+                        IsRootType = true,
+                    });
+                }
+
+                activeSampleId = null;
+                activeSchemaIndex = 0;
+
+                if (schemaEditor is not null)
+                {
+                    await schemaEditor.SetValue(schemaFiles[0].Content);
+                }
+
+                if (userCodeEditor is not null)
+                {
+                    await userCodeEditor.SetValue(result.UserCode);
+                }
+
+                // Sync clean state from actual editor content (Monaco may normalize)
+                await SyncCleanStateFromEditors();
+
+                generationResult = null;
+                await ClearEditorMarkers();
+                await ClearSchemaEditorMarkers();
+                statusText = "Project loaded";
+                statusError = false;
+                ScheduleAutoSave();
+            }
+            catch (Exception ex)
+            {
+                statusText = $"Failed to load project: {ex.Message}";
+                statusError = true;
+            }
+            finally
+            {
+                isLoadingContent = false;
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private void LoadSample(PlaygroundSample sample)
+    {
+        activeSampleId = sample.Id;
+
+        schemaFiles.Clear();
+        foreach (SampleSchemaFile schema in sample.Schemas)
+        {
+            var file = new SchemaFile
+            {
+                Name = schema.Name,
+                Content = schema.Content,
+                IsRootType = schema.IsRootType,
+                TypeName = schema.TypeName,
+            };
+            file.MarkClean();
+            schemaFiles.Add(file);
+        }
+
+        activeSchemaIndex = 0;
+        userCodeCleanContent = sample.UserCode;
+    }
+
+    private async Task SelectSchemaTab(int index)
+    {
+        if (index == activeSchemaIndex || schemaEditor is null)
+        {
+            return;
+        }
+
+        // Save current tab content
+        await SyncSchemaFromEditor();
+
+        // Switch to new tab
+        activeSchemaIndex = index;
+        await schemaEditor.SetValue(schemaFiles[activeSchemaIndex].Content);
+    }
+
+    private void ToggleRootType(int index)
+    {
+        schemaFiles[index].IsRootType = !schemaFiles[index].IsRootType;
+        ScheduleAutoSave();
+    }
+
+    private void StartRename(int index)
+    {
+        renamingTabIndex = index;
+        // Strip .json for editing, user edits only the stem
+        string name = schemaFiles[index].Name;
+        renameValue = name.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+            ? name[..^5]
+            : name;
+        focusRenameInput = true;
+    }
+
+    private void OnRenameKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            CommitRename();
+        }
+        else if (e.Key == "Escape")
+        {
+            renamingTabIndex = -1;
+        }
+    }
+
+    private void CommitRename()
+    {
+        if (renamingTabIndex < 0 || renamingTabIndex >= schemaFiles.Count)
+        {
+            renamingTabIndex = -1;
+            return;
+        }
+
+        string stem = renameValue.Trim();
+
+        // Validate: must not be empty, must not contain invalid chars
+        if (string.IsNullOrWhiteSpace(stem) ||
+            stem.IndexOfAny(['.', '/', '\\', ' ']) >= 0)
+        {
+            // Revert — keep existing name
+            renamingTabIndex = -1;
+            return;
+        }
+
+        string newName = stem + ".json";
+
+        // Check for duplicates (case-insensitive, excluding current tab)
+        bool isDuplicate = schemaFiles
+            .Where((f, i) => i != renamingTabIndex)
+            .Any(f => string.Equals(f.Name, newName, StringComparison.OrdinalIgnoreCase));
+
+        if (!isDuplicate)
+        {
+            schemaFiles[renamingTabIndex].Name = newName;
+        }
+
+        renamingTabIndex = -1;
+        ScheduleAutoSave();
+    }
+
+    private async Task ScrollTabsLeft()
+    {
+        await JSRuntime.InvokeVoidAsync("eval",
+            "document.querySelector('.schema-tabs-scroll')?.scrollBy({left: -150, behavior: 'smooth'})");
+    }
+
+    private async Task ScrollTabsRight()
+    {
+        await JSRuntime.InvokeVoidAsync("eval",
+            "document.querySelector('.schema-tabs-scroll')?.scrollBy({left: 150, behavior: 'smooth'})");
+    }
+
+    private async Task AddSchemaTab()
+    {
+        // Save current tab content before switching
+        await SyncSchemaFromEditor();
+
+        int number = schemaFiles.Count + 1;
+        schemaFiles.Add(new SchemaFile
+        {
+            Name = $"schema{number}.json",
+            Content = EmptySchemaContent,
+            IsRootType = false,
+            IsNew = true,
+        });
+
+        activeSchemaIndex = schemaFiles.Count - 1;
+
+        if (schemaEditor is not null)
+        {
+            await schemaEditor.SetValue(schemaFiles[activeSchemaIndex].Content);
+        }
+
+        ScheduleAutoSave();
+    }
+
+    private async Task RemoveSchemaTab(int index)
+    {
+        if (schemaFiles.Count <= 1)
+        {
+            return;
+        }
+
+        schemaFiles.RemoveAt(index);
+
+        if (activeSchemaIndex >= schemaFiles.Count)
+        {
+            activeSchemaIndex = schemaFiles.Count - 1;
+        }
+        else if (index < activeSchemaIndex)
+        {
+            activeSchemaIndex--;
+        }
+
+        if (schemaEditor is not null)
+        {
+            await schemaEditor.SetValue(schemaFiles[activeSchemaIndex].Content);
+        }
+
+        ScheduleAutoSave();
+    }
+
+    private async Task GenerateAsync()
+    {
+        if (schemaEditor is null)
+        {
+            return;
+        }
+
+        isGenerating = true;
+        statusText = "Generating types…";
+        statusError = false;
+        consoleLines.Clear();
+        WriteConsole("▶ Generating types…", "console-progress");
+        StateHasChanged();
+
+        try
+        {
+            // Snapshot current editor content
+            await SyncSchemaFromEditor();
+
+            // Yield to let the browser render the "Generating…" status before
+            // the synchronous codegen work blocks the single WASM thread.
+            await Task.Yield();
+
+            // Generate from all schema files
+            generationResult = await CodeGenService.GenerateAsync(schemaFiles);
+
+            if (generationResult.Success)
+            {
+                statusText = $"Generated {generationResult.TypeMap.Count} types, {generationResult.GeneratedFiles.Count} files";
+                WriteConsole($"✓ {statusText}", "console-success");
+                await ClearSchemaEditorMarkers();
+
+                // Update IntelliSense with the generated code
+                IntelliSenseSvc.UpdateGeneratedCode(generationResult.GeneratedFiles);
+            }
+            else
+            {
+                string errMsg = generationResult.ErrorMessage ?? "Generation failed";
+                statusText = errMsg;
+                statusError = true;
+                WriteConsole($"✗ {errMsg}", "error");
+
+                if (generationResult.SchemaErrors.Count > 0)
+                {
+                    await SetSchemaEditorMarkers(generationResult.SchemaErrors);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            statusText = $"Error: {ex.Message}";
+            statusError = true;
+            WriteConsole($"✗ Error: {ex.Message}", "error");
+        }
+        finally
+        {
+            isGenerating = false;
+            StateHasChanged();
+        }
+    }
+
+    private CancellationTokenSource? runCts;
+
+    private async Task RunAsync()
+    {
+        if (generationResult is null || !generationResult.Success || userCodeEditor is null)
+        {
+            return;
+        }
+
+        isRunning = true;
+        consoleLines.Clear();
+        statusError = false;
+        StateHasChanged();
+
+        try
+        {
+            runCts?.Cancel();
+            runCts = new CancellationTokenSource();
+
+            // Clear previous error markers
+            await ClearEditorMarkers();
+
+            // Snapshot user code so editors can be re-enabled
+            string userCode = await userCodeEditor.GetValue();
+
+            // Step 1: Compile generated code + user code
+            statusText = "Building…";
+            WriteConsole("▶ Compiling…", "console-progress");
+            StateHasChanged();
+
+            // Yield to let the browser render the "Compiling…" status before
+            // the synchronous Roslyn Emit() blocks the single WASM thread.
+            await Task.Yield();
+
+            CompilationResult compilationResult = await CompilationSvc.CompileAsync(
+                generationResult.GeneratedFiles,
+                userCode);
+
+            if (!compilationResult.Success)
+            {
+                statusText = $"Build failed — {compilationResult.Diagnostics.Count} error(s)";
+                statusError = true;
+                WriteConsole($"✗ Build failed — {compilationResult.Diagnostics.Count} error(s)", "error");
+
+                await SetEditorMarkers(compilationResult.Diagnostics);
+
+                foreach (var diagnostic in compilationResult.Diagnostics)
+                {
+                    string location = diagnostic.Location.IsInSource
+                        ? $" (line {diagnostic.Location.GetLineSpan().StartLinePosition.Line + 1})"
+                        : string.Empty;
+                    WriteConsole($"  {diagnostic.Severity}: {diagnostic.GetMessage()}{location}", "error");
+                }
+
+                return;
+            }
+
+            if (compilationResult.Assembly is null)
+            {
+                statusText = "Build produced no output";
+                statusError = true;
+                WriteConsole("✗ Build produced no output", "error");
+                return;
+            }
+
+            WriteConsole("✓ Build succeeded", "console-success");
+
+            // Step 2: Execute the compiled assembly
+            statusText = "Running…";
+            WriteConsole("▶ Running…", "console-progress");
+            StateHasChanged();
+
+            // Yield to let the browser render the "Running…" status
+            await Task.Yield();
+
+            ExecutionResult executionResult = await ExecutionSvc.ExecuteAsync(
+                compilationResult.Assembly,
+                runCts.Token);
+
+            if (!string.IsNullOrEmpty(executionResult.Output))
+            {
+                foreach (string line in executionResult.Output.Split('\n'))
+                {
+                    if (!string.IsNullOrEmpty(line))
+                    {
+                        WriteConsole(line.TrimEnd('\r'));
+                    }
+                }
+            }
+
+            if (executionResult.Success)
+            {
+                statusText = "Execution complete";
+                WriteConsole("✓ Execution complete", "console-success");
+            }
+            else
+            {
+                statusText = "Execution failed";
+                statusError = true;
+                if (executionResult.ErrorMessage is not null)
+                {
+                    WriteConsole($"✗ {executionResult.ErrorMessage}", "error");
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            statusText = $"Error: {ex.Message}";
+            statusError = true;
+            WriteConsole($"✗ Error: {ex.Message}", "error");
+        }
+        finally
+        {
+            isRunning = false;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SetEditorMarkers(List<Microsoft.CodeAnalysis.Diagnostic> diagnostics)
+    {
+        if (userCodeEditor is null)
+        {
+            return;
+        }
+
+        var model = await userCodeEditor.GetModel();
+        if (model is null)
+        {
+            return;
+        }
+
+        var markers = new List<MarkerData>();
+        foreach (var diagnostic in diagnostics)
+        {
+            // Only show markers for user code (Program.cs), not generated files
+            if (!diagnostic.Location.IsInSource)
+            {
+                continue;
+            }
+
+            var lineSpan = diagnostic.Location.GetLineSpan();
+            if (lineSpan.Path != "Program.cs")
+            {
+                continue;
+            }
+
+            var start = lineSpan.StartLinePosition;
+            var end = lineSpan.EndLinePosition;
+
+            markers.Add(new MarkerData
+            {
+                Message = diagnostic.GetMessage(),
+                Severity = diagnostic.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error
+                    ? MarkerSeverity.Error
+                    : MarkerSeverity.Warning,
+                StartLineNumber = start.Line + 1,
+                StartColumn = start.Character + 1,
+                EndLineNumber = end.Line + 1,
+                EndColumn = end.Character + 1,
+            });
+        }
+
+        await BlazorMonaco.Editor.Global.SetModelMarkers(JSRuntime, model, "playground", markers);
+    }
+
+    private async Task ClearEditorMarkers()
+    {
+        if (userCodeEditor is null)
+        {
+            return;
+        }
+
+        var model = await userCodeEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(JSRuntime, model, "playground", []);
+        }
+    }
+
+    private async Task SetSchemaEditorMarkers(IReadOnlyList<SchemaError> errors)
+    {
+        if (schemaEditor is null || errors.Count == 0)
+        {
+            return;
+        }
+
+        // Switch to the first schema tab that has an error
+        var firstError = errors[0];
+        int errorTabIndex = schemaFiles.FindIndex(f =>
+            string.Equals(f.Name, firstError.SchemaName, StringComparison.OrdinalIgnoreCase));
+        if (errorTabIndex >= 0 && errorTabIndex != activeSchemaIndex)
+        {
+            await SelectSchemaTab(errorTabIndex);
+            StateHasChanged();
+        }
+
+        // Build markers for errors in the currently visible schema
+        string currentSchemaName = schemaFiles[activeSchemaIndex].Name;
+        var markers = new List<MarkerData>();
+        foreach (var error in errors.Where(e =>
+            string.Equals(e.SchemaName, currentSchemaName, StringComparison.OrdinalIgnoreCase)))
+        {
+            int line = (int)(error.LineNumber ?? 0) + 1;
+            int col = (int)(error.Column ?? 0) + 1;
+
+            markers.Add(new MarkerData
+            {
+                Message = error.Message,
+                Severity = MarkerSeverity.Error,
+                StartLineNumber = line,
+                StartColumn = col,
+                EndLineNumber = line,
+                EndColumn = col + 1,
+            });
+
+            WriteConsole($"{error.SchemaName}({line},{col}): {error.Message}", "error");
+        }
+
+        // Also show errors for other schema files in the console
+        foreach (var error in errors.Where(e =>
+            !string.Equals(e.SchemaName, currentSchemaName, StringComparison.OrdinalIgnoreCase)))
+        {
+            int line = (int)(error.LineNumber ?? 0) + 1;
+            int col = (int)(error.Column ?? 0) + 1;
+            WriteConsole($"{error.SchemaName}({line},{col}): {error.Message}", "error");
+        }
+
+        var model = await schemaEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(JSRuntime, model, "schema-errors", markers);
+        }
+
+        // Navigate to the first error location
+        if (firstError.LineNumber.HasValue)
+        {
+            int navLine = (int)firstError.LineNumber.Value + 1;
+            await schemaEditor.RevealLineInCenter(navLine);
+            await schemaEditor.SetPosition(new Position { LineNumber = navLine, Column = 1 }, "");
+        }
+    }
+
+    private async Task ClearSchemaEditorMarkers()
+    {
+        if (schemaEditor is null)
+        {
+            return;
+        }
+
+        var model = await schemaEditor.GetModel();
+        if (model is not null)
+        {
+            await BlazorMonaco.Editor.Global.SetModelMarkers(JSRuntime, model, "schema-errors", []);
+        }
+    }
+
+    private async Task OnSchemaPointerSelected(TypeMapPanel.SchemaNavigation nav)
+    {
+        if (schemaEditor is null || nav.Pointer is null)
+        {
+            return;
+        }
+
+        // Switch to the correct schema tab if the type comes from a different file
+        if (nav.SchemaName is not null)
+        {
+            int tabIndex = schemaFiles.FindIndex(f =>
+                string.Equals(f.Name, nav.SchemaName, StringComparison.OrdinalIgnoreCase));
+            if (tabIndex >= 0 && tabIndex != activeSchemaIndex)
+            {
+                await SelectSchemaTab(tabIndex);
+                StateHasChanged();
+            }
+        }
+
+        // Find the line in the schema editor that corresponds to this JSON pointer
+        string schemaText = await schemaEditor.GetValue();
+        int line = FindLineForJsonPointer(schemaText, nav.Pointer);
+        if (line > 0)
+        {
+            await schemaEditor.RevealLineInCenter(line);
+            await schemaEditor.SetPosition(new Position { LineNumber = line, Column = 1 }, "");
+        }
+    }
+
+    /// <summary>
+    /// Finds the 1-based line number in a JSON string that corresponds to a JSON pointer.
+    /// E.g. "#/properties/address" finds the line containing "address" under "properties".
+    /// </summary>
+    private static int FindLineForJsonPointer(string json, string pointer)
+    {
+        // Strip leading "#" or "#/"
+        string path = pointer.TrimStart('#').TrimStart('/');
+        if (string.IsNullOrEmpty(path))
+        {
+            return 1;
+        }
+
+        string[] segments = path.Split('/');
+        string[] lines = json.Split('\n');
+
+        // Walk through segments, finding each key in order
+        int currentLine = 0;
+        foreach (string segment in segments)
+        {
+            // Unescape JSON Pointer encoding
+            string key = segment.Replace("~1", "/").Replace("~0", "~");
+            string searchPattern = $"\"{key}\"";
+
+            bool found = false;
+            for (int i = currentLine; i < lines.Length; i++)
+            {
+                if (lines[i].Contains(searchPattern))
+                {
+                    currentLine = i;
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                return currentLine + 1; // Return best match so far (1-based)
+            }
+        }
+
+        return currentLine + 1; // Convert to 1-based
+    }
+
+    private void WriteConsole(string text, string cssClass = "")
+    {
+        consoleLines.Add(new ConsoleLine(text + "\n", cssClass));
+    }
+
+    private void ToggleMaximize(string panelName)
+    {
+        maximizedPanel = maximizedPanel == panelName ? null : panelName;
+    }
+
+    private string GetPanelClass(string panelName)
+    {
+        if (maximizedPanel is null)
+        {
+            return "";
+        }
+
+        return maximizedPanel == panelName ? "maximized" : "hidden";
+    }
+
+    private record ConsoleLine(string Text, string CssClass);
+
+    // ── Auto-save to localStorage ──
+
+    private void ScheduleAutoSave()
+    {
+        autoSaveTimer?.Dispose();
+        autoSaveTimer = new System.Threading.Timer(
+            _ => InvokeAsync(AutoSaveAsync),
+            null,
+            2000,
+            Timeout.Infinite);
+    }
+
+    private async Task AutoSaveAsync()
+    {
+        try
+        {
+            // Read current editor content
+            string userCode = userCodeEditor is not null
+                ? await userCodeEditor.GetValue()
+                : restoredUserCode ?? NewProjectUserCode;
+
+            await SyncSchemaFromEditor();
+
+            var state = new
+            {
+                version = AutoSaveVersion,
+                activeSampleId,
+                activeSchemaIndex,
+                userCode,
+                schemaFiles = schemaFiles.Select(f => new
+                {
+                    name = f.Name,
+                    content = f.Content,
+                    isRootType = f.IsRootType,
+                    typeName = f.TypeName,
+                }).ToArray(),
+            };
+
+            string json = System.Text.Json.JsonSerializer.Serialize(state);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", AutoSaveKey, json);
+        }
+        catch
+        {
+            // Silently ignore — auto-save is best-effort
+        }
+    }
+
+    /// <summary>
+    /// Synchronously restores auto-saved state from localStorage.
+    /// Uses IJSInProcessRuntime (available in Blazor WASM) so the state
+    /// is fully resolved before the first render — no race conditions.
+    /// </summary>
+    private bool RestoreAutoSavedStateSync()
+    {
+        try
+        {
+            var jsInProcess = (Microsoft.JSInterop.IJSInProcessRuntime)JSRuntime;
+            string? json = jsInProcess.Invoke<string?>("localStorage.getItem", AutoSaveKey);
+            if (string.IsNullOrEmpty(json))
+            {
+                return false;
+            }
+
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            var root = doc.RootElement;
+
+            // Version check
+            if (!root.TryGetProperty("version", out var versionEl) || versionEl.GetInt32() != AutoSaveVersion)
+            {
+                return false;
+            }
+
+            // Restore schema files
+            if (root.TryGetProperty("schemaFiles", out var schemasEl) && schemasEl.GetArrayLength() > 0)
+            {
+                schemaFiles.Clear();
+                foreach (var s in schemasEl.EnumerateArray())
+                {
+                    var file = new SchemaFile
+                    {
+                        Name = s.GetProperty("name").GetString() ?? "schema.json",
+                        Content = s.GetProperty("content").GetString() ?? EmptySchemaContent,
+                        IsRootType = s.TryGetProperty("isRootType", out var rt) && rt.GetBoolean(),
+                        TypeName = s.TryGetProperty("typeName", out var tn) && tn.ValueKind != System.Text.Json.JsonValueKind.Null
+                            ? tn.GetString() : null,
+                    };
+                    file.MarkClean();
+                    schemaFiles.Add(file);
+                }
+            }
+
+            // Restore active schema index
+            if (root.TryGetProperty("activeSchemaIndex", out var idxEl))
+            {
+                int idx = idxEl.GetInt32();
+                if (idx >= 0 && idx < schemaFiles.Count)
+                {
+                    activeSchemaIndex = idx;
+                }
+            }
+
+            // Restore active sample ID (may be null for a custom project)
+            if (root.TryGetProperty("activeSampleId", out var sampleEl))
+            {
+                activeSampleId = sampleEl.ValueKind == System.Text.Json.JsonValueKind.Null
+                    ? null
+                    : sampleEl.GetString();
+            }
+
+            // Restore user code — consumed by GetInitialUserCode() on first render
+            if (root.TryGetProperty("userCode", out var codeEl))
+            {
+                restoredUserCode = codeEl.GetString();
+                userCodeCleanContent = restoredUserCode ?? NewProjectUserCode;
+            }
+
+            return true;
+        }
+        catch
+        {
+            // If restore fails, fall through to defaults
+            return false;
+        }
+    }
+
+    public void Dispose()
+    {
+        diagnosticsDebounceTimer?.Dispose();
+        diagnosticsCts?.Cancel();
+        diagnosticsCts?.Dispose();
+        autoSaveTimer?.Dispose();
+        intelliSenseRef?.Dispose();
+        shortcutRef?.Dispose();
+        themeChangeRef?.Dispose();
+    }
+}

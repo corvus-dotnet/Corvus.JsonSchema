@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PropertiesWithOneOf",
+  "description": "An object with declared properties and a oneOf discriminator for the payload.",
+  "type": "object",
+  "required": ["kind"],
+  "properties": {
+    "kind": { "type": "string" }
+  },
+  "oneOf": [
+    {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "text" },
+        "content": { "type": "string" }
+      },
+      "required": ["content"]
+    },
+    {
+      "type": "object",
+      "properties": {
+        "kind": { "const": "number" },
+        "value": { "type": "integer", "format": "int32" }
+      },
+      "required": ["value"]
+    }
+  ]
+}

@@ -6,12 +6,15 @@ on:
     tags:
     - '*'
   pull_request:
-    branches:
-    - main
   workflow_dispatch:
     inputs:
       forcePublish:
         description: When true the Publish stage will always be run, otherwise it only runs for tagged versions.
+        required: false
+        default: false
+        type: boolean
+      forcePublicNugetDestination:
+        description: When true the NuGet Publish destination will always be set to nuget.org. (Force publishing normally publishes to GitHub Packages, if not tagged version)
         required: false
         default: false
         type: boolean
@@ -28,10 +31,12 @@ concurrency:
 permissions:
   actions: write  # enable cache clean-up
   checks: write  # enable test result annotations
-  contents: write  # enable creating releases
+  contents: write  # enable creating releases and GitHub Pages branch deployment
+  id-token: write  # enable OIDC authentication
   issues: read
   packages: write  # enable publishing packages
-  pull-requests: write  # enable test result annotations
+  pages: write  # enable GitHub Pages environment
+  pull-requests: write  # enable test result annotations and PR preview comments
 
 jobs:
   prepareConfig:
@@ -46,19 +51,71 @@ jobs:
       id: prepareEnvVarsAndSecrets
       with:
         environmentVariablesYaml: |
-          BUILDVAR_NuGetPublishSource: "${{ startsWith(github.ref, 'refs/tags/') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}"
+          ZF_NUGET_PUBLISH_SOURCE: ${{ (startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}
+          BUILDVAR_BuildWebsite: "${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request' }}"
+          BUILDVAR_IsPreviewDeployment: "${{ github.event_name == 'pull_request' }}"
+          BUILDVAR_BasePathPrefix: "${{ github.event_name == 'pull_request' && format('/{0}/pr-preview/pr-{1}', github.event.repository.name, github.event.pull_request.number) || format('/{0}', github.event.repository.name) }}"
         secretsYaml: |
           NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
+          # TODO: Review approach to enable Vellum to be downloaded
+          GH_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
         secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
 
+  setCachePathsConfig:
+    name: Set Cache Paths
+    runs-on: ubuntu-latest
+    env:
+      BASE_CACHE_PATHS: |
+        .nuget-packages
+        Solutions
+        solutions
+      # The reusable workflow has the above paths built-in so we don't need to pass them
+      ADDITIONAL_CACHE_PATHS: |
+        JSON-Schema-Test-Suite
+        JMESPath-Test-Suite
+        Jsonata-Test-Suite
+        yaml-test-suite
+        tests/json-patch-tests
+        jsonpath-compliance-test-suite
+        docs/website/.endjin
+        docs/website/.output
+        **/bin
+        **/obj
+        .zf
+    outputs:
+      # This is consumed by the reusable workflow
+      additionalCachePaths: ${{ steps.additionalCachePaths.outputs.additionalCachePaths }}
+      # This is consumed by other jobs that need to restore the cache
+      allCachePaths: ${{ steps.allCachePaths.outputs.allCachePaths }}
+    steps:
+      - id: additionalCachePaths
+        name: Store Additional Cache Paths
+        run: |
+          {
+            echo "additionalCachePaths<<EOF"
+            echo "$ADDITIONAL_CACHE_PATHS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      - id: allCachePaths
+        name: Store All Cache Paths
+        run: |
+          {
+            echo "allCachePaths<<EOF"
+            echo "$BASE_CACHE_PATHS"
+            echo "$ADDITIONAL_CACHE_PATHS"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
   build:
-    needs: prepareConfig
+    needs:
+      - prepareConfig
+      - setCachePathsConfig
     uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@main
     with:
       testPhaseMatrixJson: |
           {
             "os": ["ubuntu-latest", "windows-latest"],
-            "dotnetFramework": ["net10.0", "net8.0", "net481"],
+            "dotnetFramework": ["net10.0", "net481"],
             "exclude": [
               {
                 "os": "ubuntu-latest",
@@ -67,7 +124,9 @@ jobs:
             ]
           }
       netSdkVersion: '10.0.x'
-      # additionalNetSdkVersion: '7.0.x'
+      additionalNetSdkVersion: |
+        8.0.x
+        9.0.x
       # workflow_dispatch inputs are always strings, the type property is just for the UI
       forcePublish: ${{ github.event.inputs.forcePublish == 'true' }}
       skipCleanup: ${{ github.event.inputs.skipCleanup == 'true' }}
@@ -77,15 +136,85 @@ jobs:
       testPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       packagePhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
-      additionalCachePaths: |
-        JSON-Schema-Test-Suite
+      additionalCachePaths: ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
     secrets:
       compilePhaseAzureCredentials: ${{ secrets.AZURE_READER_CREDENTIALS }}
+      compilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       # testPhaseAzureCredentials: ${{ secrets.TESTS_KV_READER_CREDENTIALS }}
       # packagePhaseAzureCredentials: ${{ secrets.AZURE_PUBLISH_CREDENTIALS }}
       # publishPhaseAzureCredentials: ${{ secrets.AZURE_PUBLISH_CREDENTIALS }}
-      # compilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       # testPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       # packagePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       publishPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
+
+  deploy-docs:
+    name: Deploy Documentation
+    needs:
+      - build
+      - setCachePathsConfig
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: https://corvus-oss.org/Corvus.JsonSchema/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore compile cache
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7  # v5.0.4
+        with:
+          path: ${{ needs.setCachePathsConfig.outputs.allCachePaths }}
+          key: build-state-${{ github.run_id }}-compile
+          enableCrossOsArchive: true
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: docs/website/.output
+          clean-exclude: pr-preview
+
+  deploy-preview:
+    name: Deploy PR Preview
+    needs:
+      - build
+      - setCachePathsConfig
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    concurrency: preview-${{ github.event.pull_request.number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Restore compile cache
+        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7  # v5.0.4
+        with:
+          path: ${{ needs.setCachePathsConfig.outputs.allCachePaths }}
+          key: build-state-${{ github.run_id }}-compile
+          enableCrossOsArchive: true
+
+      - name: Ensure Jekyll config on gh-pages
+        run: |
+          if ! git fetch origin gh-pages 2>/dev/null || \
+             ! git show origin/gh-pages:_config.yml >/dev/null 2>&1; then
+            git fetch origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
+            git worktree add /tmp/gh-pages gh-pages
+            cd /tmp/gh-pages
+            rm -f .nojekyll
+            echo -n 'include: [_framework, _content]' > _config.yml
+            git add -A
+            git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
+              commit --amend --no-edit
+            git push origin gh-pages --force-with-lease
+            cd -
+            git worktree remove /tmp/gh-pages
+          fi
+
+      - name: Deploy PR preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          source-dir: docs/website/.output
+          umbrella-dir: pr-preview
+          pages-base-url: corvus-oss.org/Corvus.JsonSchema

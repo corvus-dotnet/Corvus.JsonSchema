@@ -1,0 +1,92 @@
+{
+    // This defines selectors that build test suites based on the files in the
+    // OpenApi-Test-Suite.
+
+    "includeInThisDirectory": [],
+    "subdirectories": {
+        "openApi30": {
+            "assertFormat": true,
+            "testSet": "openApi30",
+            "outputFolder": "OpenApi30",
+            "excludeFromThisDirectory": [
+            ],
+            "subdirectories": {
+                "optional": {
+                    "excludeFromThisDirectory": [
+                        "bignum\\.json",
+                        "zeroTerminatedFloats\\.json"
+                    ],
+                    "testExclusions": {
+                        "optional/ecmascript-regex.json": {
+                            "patterns always use unicode semantics with patternProperties": {
+                                "testsToIgnore": [
+                                    { "name": "ascii character in json string", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "literal unicode character in json string", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "unicode character in hex format in string", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "unicode matching is case-sensitive", "reason": "OpenApi 3.0 does not support patternProperties." }
+                                ]
+                            },
+                            "\\w in patternProperties matches [A-Za-z0-9_], not unicode letters": {
+                                "testsToIgnore": [
+                                    { "name": "ascii character in json string", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "literal unicode character in json string", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "unicode character in hex format in string", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "unicode matching is case-sensitive", "reason": "OpenApi 3.0 does not support patternProperties." }
+                                ]
+                            },
+                            "patternProperties with ASCII ranges": {
+                                "testsToIgnore": [
+                                    { "name": "literal unicode character in json string", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "unicode character in hex format in string", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "ascii characters match", "reason": "OpenApi 3.0 does not support patternProperties." }
+                                ]
+                            },
+                            "\\d in patternProperties matches [0-9], not unicode digits": {
+                                "testsToIgnore": [
+                                    { "name": "ascii digits", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "ascii non-digits", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "non-ascii digits (BENGALI DIGIT FOUR, BENGALI DIGIT TWO)", "reason": "OpenApi 3.0 does not support patternProperties." }
+                                ]
+                            },
+                            "patternProperties with non-ASCII digits": {
+                                "testsToIgnore": [
+                                    { "name": "ascii digits", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "ascii non-digits", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "non-ascii digits (BENGALI DIGIT FOUR, BENGALI DIGIT TWO)", "reason": "OpenApi 3.0 does not support patternProperties." }
+                                ]
+                            }
+                        },
+                        "optional/non-bmp-regex.json": {
+                            "Proper UTF-16 surrogate pair handling: patternProperties": {
+                                "testsToIgnore": [
+                                    { "name": "matches empty", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "matches single", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "matches two", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "doesn't match one", "reason": "OpenApi 3.0 does not support patternProperties." },
+                                    { "name": "doesn't match two", "reason": "OpenApi 3.0 does not support patternProperties." }
+                                ]
+                            }
+                        }
+                    },
+                    "subdirectories": {
+                        "format": {
+                            "excludeFromThisDirectory": [
+                            ],
+                            "testExclusions": {
+                                "optional/format/date-time.json": {
+                                    "validation of date-time strings": {
+                                        "testsToIgnore": [
+                                            { "name": "a valid date-time with a leap second, UTC", "reason": "Leap seconds are not supported." },
+                                            { "name": "a valid date-time with a leap second, with minus offset", "reason": "Leap seconds are not supported." }
+                                        ]
+                                    }
+                                }
+                            }
+
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

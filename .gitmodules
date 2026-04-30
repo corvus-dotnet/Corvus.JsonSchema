@@ -1,3 +1,18 @@
 [submodule "JSON-Schema-Test-Suite"]
 	path = JSON-Schema-Test-Suite
-	url = https://github.com/json-schema-org/JSON-Schema-Test-Suite.git
+	url = https://github.com/json-schema-org/JSON-Schema-Test-Suite
+[submodule "tests/json-patch-tests"]
+	path = tests/json-patch-tests
+	url = https://github.com/json-patch/json-patch-tests.git
+[submodule "Jsonata-Test-Suite"]
+	path = Jsonata-Test-Suite
+	url = https://github.com/jsonata-js/jsonata.git
+[submodule "JMESPath-Test-Suite"]
+	path = JMESPath-Test-Suite
+	url = https://github.com/jmespath/jmespath.test
+[submodule "yaml-test-suite"]
+	path = yaml-test-suite
+	url = https://github.com/yaml/yaml-test-suite.git
+[submodule "jsonpath-compliance-test-suite"]
+	path = jsonpath-compliance-test-suite
+	url = https://github.com/jsonpath-standard/jsonpath-compliance-test-suite.git

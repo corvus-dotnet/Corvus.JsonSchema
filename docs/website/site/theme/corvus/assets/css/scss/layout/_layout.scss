@@ -1,0 +1,105 @@
+// ==========================================================================
+// Layout — Page content grids and wrappers
+// ==========================================================================
+
+@use '../abstracts/mixins' as *;
+
+// ---- Page content wrapper (layered below footer) ----
+
+.page-content {
+  position: relative;
+  z-index: 1;
+  background: var(--color-bg);
+}
+
+// ---- Container ----
+
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-md);
+}
+
+// ---- Full-width section ----
+
+.section {
+  padding: var(--space-xl) 0;
+
+  &--lg {
+    padding: var(--space-xxl) 0;
+  }
+
+  &--flush {
+    padding: 0;
+  }
+}
+
+// ---- Sidebar + content layout (documentation) ----
+
+.layout-docs {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-md) var(--space-md);
+  min-height: calc(100vh - var(--header-height));
+
+  @include breakpoint-md {
+    grid-template-columns: var(--sidebar-width) 1fr;
+  }
+}
+
+// ---- Main content area (within docs layout) ----
+
+.layout-docs__main {
+  min-width: 0; // Prevent grid blowout with code blocks
+  max-width: 52rem;
+
+  // Extra padding extends the grid row so the sidebar stays
+  // sticky as the footer comes into view.
+  @include breakpoint-md {
+    padding-bottom: 4rem;
+  }
+}
+
+// ---- Card grid layout (examples / recipes) ----
+
+.layout-cards {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+}
+
+// ---- Two-column feature layout ----
+
+.layout-split {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--space-lg);
+  align-items: center;
+
+  @include breakpoint-md {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+  }
+
+  &--reverse {
+    @include breakpoint-md {
+      direction: rtl;
+
+      > * {
+        direction: ltr;
+      }
+    }
+  }
+}
+
+// ---- Centered narrow content ----
+
+.layout-narrow {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: var(--space-lg) var(--space-md);
+}

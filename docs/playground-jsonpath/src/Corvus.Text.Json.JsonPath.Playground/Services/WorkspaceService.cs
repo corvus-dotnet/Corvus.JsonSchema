@@ -1,0 +1,257 @@
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
+
+namespace Corvus.Text.Json.JsonPath.Playground.Services;
+
+/// <summary>
+/// Loads .NET assemblies from the WASM _framework/ directory as Roslyn MetadataReferences.
+/// This enables in-browser compilation of user-defined custom functions against the Corvus.Text.Json runtime.
+/// </summary>
+public class WorkspaceService
+{
+    private readonly HttpClient httpClient;
+    private readonly List<MetadataReference> references = [];
+    private bool referencesLoaded;
+    private readonly SemaphoreSlim loadLock = new(1, 1);
+    private Dictionary<string, string>? assetMappings;
+    private readonly List<string> loadLog = [];
+
+    private static readonly string[] RequiredAssemblies =
+    [
+        // Core runtime
+        "System.Private.CoreLib",
+        "System.Runtime",
+        "System.Collections",
+        "System.Linq",
+        "System.Buffers",
+        "System.Memory",
+        "netstandard",
+
+        // Corvus runtime (what custom functions reference)
+        "Corvus.Text.Json",
+        "Corvus.Text.Json.JsonPath",
+    ];
+
+    /// <summary>
+    /// Preamble included in every custom functions compilation.
+    /// </summary>
+    public const string Preamble =
+        """
+        global using System;
+        global using System.Collections.Generic;
+        global using Corvus.Text.Json;
+        global using Corvus.Text.Json.JsonPath;
+        """;
+
+    public WorkspaceService(HttpClient httpClient)
+    {
+        this.httpClient = httpClient;
+    }
+
+    /// <summary>
+    /// Gets the loaded metadata references.
+    /// </summary>
+    public IReadOnlyList<MetadataReference> References => this.references;
+
+    /// <summary>
+    /// Gets a diagnostic summary of assembly loading (for troubleshooting).
+    /// </summary>
+    public string LoadDiagnostics => string.Join("\n", this.loadLog);
+
+    /// <summary>
+    /// Ensures assemblies are loaded and ready for compilation.
+    /// </summary>
+    public async Task EnsureInitializedAsync()
+    {
+        if (this.referencesLoaded)
+        {
+            return;
+        }
+
+        await this.loadLock.WaitAsync();
+        try
+        {
+            if (this.referencesLoaded)
+            {
+                return;
+            }
+
+            this.loadLog.Add($"HttpClient base: {this.httpClient.BaseAddress}");
+
+            await this.LoadAssetMappingsAsync();
+
+            this.loadLog.Add($"Asset mappings: {this.assetMappings?.Count ?? 0} entries");
+
+            foreach (string assemblyName in RequiredAssemblies)
+            {
+                try
+                {
+                    byte[]? bytes = await this.TryLoadAssemblyBytesAsync(assemblyName);
+                    if (bytes is not null)
+                    {
+                        MetadataReference reference = MetadataReference.CreateFromImage(bytes);
+                        this.references.Add(reference);
+                        this.loadLog.Add($"  OK: {assemblyName} ({bytes.Length} bytes)");
+                    }
+                    else
+                    {
+                        this.loadLog.Add($"  MISS: {assemblyName} (no valid PE found)");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    this.loadLog.Add($"  FAIL: {assemblyName}: {ex.GetType().Name}: {ex.Message}");
+                }
+            }
+
+            this.loadLog.Add($"Total references loaded: {this.references.Count}");
+            this.referencesLoaded = true;
+        }
+        finally
+        {
+            this.loadLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Creates a CSharpCompilation for the given source code.
+    /// </summary>
+    public CSharpCompilation CreateCompilation(string sourceCode)
+    {
+        CSharpParseOptions parseOptions = new CSharpParseOptions(LanguageVersion.Latest)
+            .WithPreprocessorSymbols("NET", "NET10_0", "NET10_0_OR_GREATER");
+
+        var syntaxTrees = new List<SyntaxTree>
+        {
+            CSharpSyntaxTree.ParseText(Preamble, parseOptions, path: "Preamble.cs"),
+            CSharpSyntaxTree.ParseText(sourceCode, parseOptions, path: "Functions.cs"),
+        };
+
+        return CSharpCompilation.Create(
+            $"FunctionsAssembly_{Guid.NewGuid():N}",
+            syntaxTrees,
+            this.references,
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
+                .WithOptimizationLevel(OptimizationLevel.Release));
+    }
+
+    private async Task LoadAssetMappingsAsync()
+    {
+        if (this.assetMappings is not null)
+        {
+            return;
+        }
+
+        this.assetMappings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        try
+        {
+            HttpResponseMessage response = await this.httpClient.GetAsync("_framework/asset-manifest.json");
+            if (!response.IsSuccessStatusCode)
+            {
+                this.loadLog.Add($"Manifest fetch failed: HTTP {(int)response.StatusCode}");
+                return;
+            }
+
+            string json = await response.Content.ReadAsStringAsync();
+            this.loadLog.Add($"Manifest fetched: {json.Length} chars");
+
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+
+            if (!doc.RootElement.TryGetProperty("Endpoints", out System.Text.Json.JsonElement endpoints))
+            {
+                this.loadLog.Add("Manifest has no 'Endpoints' property");
+                return;
+            }
+
+            foreach (System.Text.Json.JsonElement endpoint in endpoints.EnumerateArray())
+            {
+                if (!endpoint.TryGetProperty("Route", out System.Text.Json.JsonElement routeEl) ||
+                    !endpoint.TryGetProperty("AssetFile", out System.Text.Json.JsonElement assetEl))
+                {
+                    continue;
+                }
+
+                string? route = routeEl.GetString();
+                string? assetFile = assetEl.GetString();
+
+                if (string.IsNullOrEmpty(route) || string.IsNullOrEmpty(assetFile) ||
+                    !route.EndsWith(".dll") || !assetFile.EndsWith(".dll"))
+                {
+                    continue;
+                }
+
+                // Skip compressed versions
+                if (assetFile.Contains(".dll.br") || assetFile.Contains(".dll.gz"))
+                {
+                    continue;
+                }
+
+                // Map non-fingerprinted route to the actual fingerprinted file
+                string routeFileName = route[(route.LastIndexOf('/') + 1)..];
+                int dllIndex = routeFileName.LastIndexOf(".dll", StringComparison.Ordinal);
+                string baseFileName = routeFileName[..dllIndex];
+
+                int lastDot = baseFileName.LastIndexOf('.');
+                if (lastDot > 0)
+                {
+                    string lastSegment = baseFileName[(lastDot + 1)..];
+                    bool isFingerprint = lastSegment.Length >= 8 && lastSegment.Length <= 12 &&
+                                         lastSegment.All(c => char.IsLetterOrDigit(c) && char.IsLower(c));
+                    if (isFingerprint)
+                    {
+                        continue;
+                    }
+                }
+
+                this.assetMappings[route] = assetFile;
+            }
+        }
+        catch (Exception ex)
+        {
+            this.loadLog.Add($"Manifest error: {ex.GetType().Name}: {ex.Message}");
+        }
+    }
+
+    private async Task<byte[]?> TryLoadAssemblyBytesAsync(string assemblyName)
+    {
+        string virtualPath = $"_framework/{assemblyName}.dll";
+
+        string actualPath = this.assetMappings is not null &&
+                            this.assetMappings.TryGetValue(virtualPath, out string? mappedPath)
+            ? mappedPath
+            : virtualPath;
+
+        string[] patterns = [actualPath, $"_framework/{assemblyName}.wasm"];
+
+        foreach (string pattern in patterns)
+        {
+            try
+            {
+                HttpResponseMessage response = await this.httpClient.GetAsync(pattern);
+                if (response.IsSuccessStatusCode)
+                {
+                    byte[] bytes = await response.Content.ReadAsByteArrayAsync();
+
+                    // Verify it's a valid PE file (starts with MZ)
+                    if (bytes.Length > 2 && bytes[0] == 0x4D && bytes[1] == 0x5A)
+                    {
+                        return bytes;
+                    }
+
+                    this.loadLog.Add($"    {pattern}: {bytes.Length} bytes but not PE (first bytes: {bytes[0]:X2} {bytes[1]:X2})");
+                }
+                else
+                {
+                    this.loadLog.Add($"    {pattern}: HTTP {(int)response.StatusCode}");
+                }
+            }
+            catch (Exception ex)
+            {
+                this.loadLog.Add($"    {pattern}: {ex.GetType().Name}: {ex.Message}");
+            }
+        }
+
+        return null;
+    }
+}

@@ -1,0 +1,1 @@
+$substring(Account.Order[0].Product[0]."Product Name", 0, 6)

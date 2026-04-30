@@ -1,0 +1,220 @@
+using System.Text;
+using System.Text.RegularExpressions;
+using System.Web;
+
+namespace XmlDocToMarkdown;
+
+/// <summary>
+/// Generates the Razor view for the API landing page with a hierarchical sidebar.
+/// </summary>
+internal static class ApiViewGenerator
+{
+    /// <summary>
+    /// Writes <c>index.cshtml</c> — the API landing page with a hierarchical
+    /// namespace sidebar and namespace cards in the main content area.
+    /// </summary>
+    public static void GenerateIndexView(
+        string viewsDir,
+        Dictionary<string, NamespaceInfo> namespaces,
+        string baseUrl,
+        string sidebarPartialName = "_ApiSidebar",
+        string layoutPath = "../Shared/_Layout.cshtml",
+        string? nsDescriptionsDir = null,
+        string? versionLabel = null,
+        string? altVersionLabel = null,
+        string? altVersionUrl = null)
+    {
+        StringBuilder sb = new();
+
+        sb.AppendLine("@model SiteViewModel");
+        sb.AppendLine("@{");
+        sb.AppendLine($"    Layout = \"{layoutPath}\";");
+        sb.AppendLine("}");
+        sb.AppendLine("<div class=\"layout-docs container\">");
+
+        // Use the shared sidebar partial (generated separately)
+        sb.AppendLine($"    @await Html.PartialAsync(\"{sidebarPartialName}\").ConfigureAwait(false)");
+
+        sb.AppendLine("    <main id=\"main-content\" class=\"layout-docs__main\">");
+        sb.AppendLine("        <div class=\"doc__content\">");
+
+        // Version switcher bar (only if version info is provided)
+        if (versionLabel is not null && altVersionLabel is not null && altVersionUrl is not null)
+        {
+            sb.AppendLine("            <div class=\"api-version-bar\">");
+            sb.AppendLine("                <h1>API Reference</h1>");
+            sb.AppendLine("                <div class=\"api-version-switcher\">");
+            sb.AppendLine($"                    <span class=\"api-version-switcher__current\">{versionLabel}</span>");
+            sb.AppendLine($"                    <a href=\"{altVersionUrl}\" class=\"api-version-switcher__alt\" data-api-version-switch>Switch to {altVersionLabel}</a>");
+            sb.AppendLine("                </div>");
+            sb.AppendLine("            </div>");
+            sb.AppendLine("            <script>");
+            sb.AppendLine("            (function(){var s=document.querySelector('.api-version-switcher');if(!s)return;");
+            sb.AppendLine("            s.querySelector('.api-version-switcher__current').addEventListener('click',function(){s.classList.toggle('is-open');});");
+            sb.AppendLine("            document.addEventListener('click',function(e){if(!e.target.closest('.api-version-switcher'))s.classList.remove('is-open');});");
+            sb.AppendLine("            })();");
+            sb.AppendLine("            </script>");
+        }
+        else
+        {
+            sb.AppendLine("            <h1>API Reference</h1>");
+        }
+
+        sb.AppendLine("            <p>Browse the public API by namespace. Each namespace section in the sidebar lists its types.</p>");
+
+        // Search / filter UI — include data attribute for versioned search index
+        string searchIndexUrl = $"{baseUrl}/search-index.json";
+        sb.AppendLine("            <div class=\"api-browser\">");
+        sb.AppendLine($"                <input id=\"api-browser-input\" class=\"api-browser__input\" type=\"search\"");
+        sb.AppendLine($"                       placeholder=\"Search types and members\u2026\" autocomplete=\"off\"");
+        sb.AppendLine($"                       data-search-index=\"{searchIndexUrl}\" />");
+        sb.AppendLine("                <div id=\"api-browser-status\" class=\"api-browser__status\"></div>");
+        sb.AppendLine("            </div>");
+        sb.AppendLine("            <div id=\"api-browser-results\" class=\"api-browser__results\" hidden></div>");
+
+        sb.AppendLine("            <div id=\"api-browser-default\" class=\"card-grid\" style=\"margin-top:var(--space-lg)\">");
+
+        foreach (KeyValuePair<string, NamespaceInfo> kvp in namespaces.OrderBy(n => n.Key))
+        {
+            string ns = kvp.Key;
+            string nsSlug = MarkdownGenerator.NamespaceToFileName(ns);
+            int typeCount = kvp.Value.Types.Count;
+            string description = GetNamespaceDescription(ns, nsDescriptionsDir);
+
+            sb.AppendLine($"                <a class=\"card card--link\" href=\"{baseUrl}/{nsSlug}.html\">");
+            sb.AppendLine($"                    <h3 class=\"card__title\">{HttpUtility.HtmlEncode(ns).Replace(".", ".&#8203;")}</h3>");
+            sb.AppendLine($"                    <p class=\"card__body\">{InlineMarkdownToHtml(description, allowLinks: false)}</p>");
+            sb.AppendLine($"                    <div class=\"card__meta\"><span class=\"card__tag\">{typeCount} type{(typeCount == 1 ? "" : "s")}</span></div>");
+            sb.AppendLine("                </a>");
+        }
+
+        sb.AppendLine("            </div>");
+        sb.AppendLine("        </div>");
+        sb.AppendLine("    </main>");
+        sb.AppendLine("</div>");
+        sb.AppendLine("@section scripts {");
+        sb.AppendLine("    <script src=\"/assets/js/api-browser.js\" defer></script>");
+
+        // Save version preference to localStorage and handle version switch clicks
+        string versionKey = baseUrl.TrimEnd('/').Split('/')[^1];
+        sb.AppendLine("    <script>");
+        sb.AppendLine($"        try {{ localStorage.setItem('corvus-api-version', '{versionKey}'); }} catch(e) {{}}");
+        sb.AppendLine("        document.addEventListener('click', function(e) {");
+        sb.AppendLine("            var link = e.target.closest('[data-api-version-switch]');");
+        sb.AppendLine("            if (!link) return;");
+        sb.AppendLine("            var m = link.href.match(/\\/api\\/(v\\d+)\\//);");
+        sb.AppendLine("            if (m) try { localStorage.setItem('corvus-api-version', m[1]); } catch(e) {}");
+        sb.AppendLine("        });");
+        sb.AppendLine("    </script>");
+        sb.AppendLine("}");
+
+        string outputPath = Path.Combine(viewsDir, "index.cshtml");
+        File.WriteAllText(outputPath, sb.ToString());
+        Console.WriteLine($"  Written: {outputPath}");
+    }
+
+    /// <summary>
+    /// Generates both the sidebar Razor partial (a lightweight placeholder that
+    /// loads its content dynamically) and a static <c>sidebar.html</c> fragment
+    /// containing the full namespace tree. This avoids duplicating the ~1.5 MB+
+    /// sidebar HTML across thousands of per-type API pages.
+    /// </summary>
+    public static void GenerateApiSidebar(
+        string sharedViewsDir,
+        Dictionary<string, NamespaceInfo> namespaces,
+        string baseUrl,
+        string? contentOutputDir = null,
+        string sidebarPartialName = "_ApiSidebar")
+    {
+        // Write the shared sidebar fragment (full namespace tree, no active state)
+        if (contentOutputDir is not null)
+        {
+            StringBuilder contentSb = new();
+            SidebarBuilder.AppendSidebarContent(contentSb, namespaces, baseUrl);
+            string fragmentPath = Path.Combine(contentOutputDir, "sidebar.html");
+            File.WriteAllText(fragmentPath, contentSb.ToString());
+            Console.WriteLine($"  Written: {fragmentPath}");
+        }
+
+        // Write a lightweight Razor partial with a data attribute for JS loading
+        StringBuilder sb = new();
+        SidebarBuilder.AppendSidebarPlaceholder(sb, "sidebar.html");
+
+        string outputPath = Path.Combine(sharedViewsDir, sidebarPartialName + ".cshtml");
+        File.WriteAllText(outputPath, sb.ToString());
+        Console.WriteLine($"  Written: {outputPath}");
+    }
+
+    internal static string GetNamespaceDescription(string ns, string? nsDescriptionsDir)
+    {
+        if (nsDescriptionsDir is not null)
+        {
+            string descPath = Path.Combine(nsDescriptionsDir, ns + ".md");
+            if (File.Exists(descPath))
+            {
+                string content = File.ReadAllText(descPath).Trim();
+                // Extract first sentence as short description
+                int dotIdx = content.IndexOf(". ", StringComparison.Ordinal);
+                if (dotIdx >= 0 && dotIdx < 200)
+                {
+                    return content[..(dotIdx + 1)];
+                }
+                // If no period found, use first line truncated
+                int newlineIdx = content.IndexOfAny(['\r', '\n']);
+                if (newlineIdx >= 0)
+                {
+                    content = content[..newlineIdx];
+                }
+                return content.Length > 200 ? content[..197] + "..." : content;
+            }
+        }
+
+        // Fallback for unknown namespaces
+        return $"Types in the {ns} namespace";
+    }
+
+    /// <summary>
+    /// Converts inline markdown (links and backtick code) to HTML, encoding all other text.
+    /// </summary>
+    internal static string InlineMarkdownToHtml(string markdown)
+    {
+        return InlineMarkdownToHtml(markdown, allowLinks: true);
+    }
+
+    /// <summary>
+    /// Converts inline markdown (links and backtick code) to HTML, encoding all other text.
+    /// When <paramref name="allowLinks"/> is <see langword="false"/>, markdown links are
+    /// rendered as their text content only (no <c>&lt;a&gt;</c> tags), which is safe for use
+    /// inside an existing anchor element.
+    /// </summary>
+    internal static string InlineMarkdownToHtml(string markdown, bool allowLinks)
+    {
+        // First HTML-encode the whole string, then selectively convert markdown constructs.
+        string encoded = HttpUtility.HtmlEncode(markdown);
+
+        // Convert markdown links [text](url) — the brackets and parens are now HTML-encoded.
+        if (allowLinks)
+        {
+            encoded = Regex.Replace(
+                encoded,
+                @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
+                m => $"<a href=\"{m.Groups["url"].Value}\">{m.Groups["text"].Value}</a>");
+        }
+        else
+        {
+            // Strip links to plain text (safe inside an outer <a> tag).
+            encoded = Regex.Replace(
+                encoded,
+                @"\[(?<text>[^\]]+)\]\((?<url>[^)]+)\)",
+                m => m.Groups["text"].Value);
+        }
+
+        // Convert inline code `text` to <code> elements.
+        encoded = Regex.Replace(
+            encoded,
+            @"`(?<code>[^`]+)`",
+            m => $"<code>{m.Groups["code"].Value}</code>");
+
+        return encoded;
+    }
+}

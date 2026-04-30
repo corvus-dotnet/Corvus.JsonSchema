@@ -1,0 +1,36 @@
+@model SiteViewModel
+@{
+    Layout = "../Shared/_Layout.cshtml";
+    var docsParent = Model.SiteContext.Navigation?.Children?
+        .FirstOrDefault(x => x.Url?.ToString()?.Contains("/docs/") == true);
+    var docPages = docsParent?.Children?.OrderBy(x => x.Rank).ToList();
+}
+<div class="layout-docs container">
+    @await Html.PartialAsync("_Sidebar").ConfigureAwait(false)
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            <h1>Documentation</h1>
+            <p>
+                Corvus.Text.Json takes the core concepts from <code>System.Text.Json</code>&mdash;documents,
+                elements, readers, writers&mdash;and reimagines them with pooled-memory parsing, mutable
+                document building, and full JSON&nbsp;Schema validation, all driven by strongly-typed,
+                source-generated models. These guides walk you through the core APIs and show how they relate
+                to the <code>System.Text.Json</code> types you already know. New to the library? Start with the
+                <a href="/getting-started/index.html">Getting Started tutorial</a>, or jump straight to the
+                <a href="/examples/index.html">Example Recipes</a> for practical patterns you can use right away.
+            </p>
+            <div class="card-grid" style="margin-top:var(--space-lg)">
+                @if (docPages != null)
+                {
+                    @foreach (var doc in docPages)
+                    {
+                        <a class="card card--link" href="@doc.Url">
+                            <h3 class="card__title">@doc.Title</h3>
+                            <p class="card__body">@doc.Description</p>
+                        </a>
+                    }
+                }
+            </div>
+        </div>
+    </main>
+</div>

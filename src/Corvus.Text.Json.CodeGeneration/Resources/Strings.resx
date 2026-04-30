@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <!-- Class/scope creation errors -->
+  <data name="JsonSchemaClassNameNotCreated" xml:space="preserve">
+    <value>The JSON Schema class name has not been created.</value>
+  </data>
+  <data name="JsonSchemaClassScopeNotCreated" xml:space="preserve">
+    <value>The JSON Schema class scope has not been created.</value>
+  </data>
+  <data name="JsonPropertyNamesEscapedClassNameNotCreated" xml:space="preserve">
+    <value>The JsonPropertyNamesEscaped class name has not been created.</value>
+  </data>
+  <data name="JsonPropertyNamesEscapedClassScopeNotCreated" xml:space="preserve">
+    <value>The JsonPropertyNamesEscaped class scope has not been created.</value>
+  </data>
+  <data name="JsonPropertyNamesPrebakedClassNameNotCreated" xml:space="preserve">
+    <value>The JsonPropertyNamesPrebaked class name has not been created.</value>
+  </data>
+  <data name="JsonPropertyNamesClassNameNotCreated" xml:space="preserve">
+    <value>The JsonPropertyNames class name has not been created.</value>
+  </data>
+  <data name="JsonPropertyNamesClassScopeNotCreated" xml:space="preserve">
+    <value>The JsonPropertyNames class scope has not been created.</value>
+  </data>
+  <data name="BuilderClassNameNotCreated" xml:space="preserve">
+    <value>The Builder class name has not been created.</value>
+  </data>
+  <data name="ArrayBuilderClassNameNotCreated" xml:space="preserve">
+    <value>The ArrayBuilder class name has not been created.</value>
+  </data>
+  <data name="ObjectBuilderClassNameNotCreated" xml:space="preserve">
+    <value>The ObjectBuilder class name has not been created.</value>
+  </data>
+  <data name="BuilderClassScopeNotCreated" xml:space="preserve">
+    <value>The Builder class scope has not been created.</value>
+  </data>
+  <data name="SourceClassNameNotCreated" xml:space="preserve">
+    <value>The Source class name has not been created.</value>
+  </data>
+  <data name="SourceClassScopeNotCreated" xml:space="preserve">
+    <value>The Source class scope has not been created.</value>
+  </data>
+  <data name="MutableClassNameNotCreated" xml:space="preserve">
+    <value>The Mutable class name has not been created.</value>
+  </data>
+  <data name="MutableClassScopeNotCreated" xml:space="preserve">
+    <value>The Mutable class scope has not been created.</value>
+  </data>
+  <data name="ConstantsClassNameNotCreated" xml:space="preserve">
+    <value>The Constants class name has not been created.</value>
+  </data>
+  <data name="ConstantsClassScopeNotCreated" xml:space="preserve">
+    <value>The Constants class scope has not been created.</value>
+  </data>
+  <data name="EnumValuesClassNameNotCreated" xml:space="preserve">
+    <value>The EnumValues class name has not been created.</value>
+  </data>
+  <data name="EnumValuesClassScopeNotCreated" xml:space="preserve">
+    <value>The EnumValues class scope has not been created.</value>
+  </data>
+
+  <!-- Type/metadata errors -->
+  <data name="ExpectedNumericTypeName" xml:space="preserve">
+    <value>Expected numeric type name.</value>
+  </data>
+  <data name="ExpectedArrayItemsTypeName" xml:space="preserve">
+    <value>Expected an array items type name.</value>
+  </data>
+  <data name="ExpectedCSharpLanguageProvider" xml:space="preserve">
+    <value>Expected a CSharpLanguageProvider.</value>
+  </data>
+  <data name="DotnetNamespaceMetadataNotAvailable" xml:space="preserve">
+    <value>The dotnet namespace metadata is not available.</value>
+  </data>
+  <data name="DotnetTypeNameMetadataNotAvailable" xml:space="preserve">
+    <value>The .NET type name metadata is not available.</value>
+  </data>
+
+  <!-- Build-process guard errors -->
+  <data name="CannotUseCanReduceToAnyOfDuringTypeBuild" xml:space="preserve">
+    <value>You cannot use CanReduceToAnyOf during the type build process.</value>
+  </data>
+  <data name="CannotUseCanReduceToOneOfDuringTypeBuild" xml:space="preserve">
+    <value>You cannot use CanReduceToOneOf during the type build process.</value>
+  </data>
+  <data name="CannotUseRequiresValueKindDuringTypeBuild" xml:space="preserve">
+    <value>You cannot use RequiresValueKind during the type build process.</value>
+  </data>
+
+  <!-- Validation handler errors -->
+  <data name="UnableToGetValidationConstants" xml:space="preserve">
+    <value>Unable to get validation constants for keyword.</value>
+  </data>
+  <data name="UnableToGetMultipleOfValidationConstants" xml:space="preserve">
+    <value>Unable to get validation constants for multipleOf-type keyword.</value>
+  </data>
+  <data name="UnsupportedOperator" xml:space="preserve">
+    <value>Unsupported operator: {0}</value>
+  </data>
+  <data name="ContainsCountVariableNameNotSet" xml:space="preserve">
+    <value>You must set the contains count variable name.</value>
+  </data>
+  <data name="UniqueItemsCountVariableNameNotSet" xml:space="preserve">
+    <value>You must set the uniqueItems count variable name.</value>
+  </data>
+  <data name="UniqueItemsHashSetVariableNameNotSet" xml:space="preserve">
+    <value>You must set the uniqueItems hash set variable name.</value>
+  </data>
+  <data name="ExpectedNumericConstantValue" xml:space="preserve">
+    <value>Expected constant value to be a number that can be represented as an int or double. Actual value: {0}</value>
+  </data>
+  <data name="UnableToFindSchemaEvaluationPathProvider" xml:space="preserve">
+    <value>Unable to find schema evaluation path provider for dependent schema.</value>
+  </data>
+  <data name="RequiredKeywordMustNotBeNull" xml:space="preserve">
+    <value>The required keyword must not be null on a required propertiesByKeyword.</value>
+  </data>
+
+  <!-- Misc errors -->
+  <data name="UnsupportedJsonValueKind" xml:space="preserve">
+    <value>Unsupported JsonValueKind: {0}</value>
+  </data>
+  <data name="UnsupportedFrameworkType" xml:space="preserve">
+    <value>Unsupported framework type: {0}</value>
+  </data>
+  <data name="UnsupportedConstantValue" xml:space="preserve">
+    <value>Unsupported constant value.</value>
+  </data>
+  <data name="UnexpectedValueKind" xml:space="preserve">
+    <value>Unexpected value kind.</value>
+  </data>
+  <data name="NullNamesNotPermitted" xml:space="preserve">
+    <value>Null names are not permitted.</value>
+  </data>
+  <data name="NoParameterNameWasSet" xml:space="preserve">
+    <value>No parameter name was set.</value>
+  </data>
+  <data name="ValueMustBePositive" xml:space="preserve">
+    <value>Value must be positive.</value>
+  </data>
+  <data name="DestinationArrayTooSmall" xml:space="preserve">
+    <value>Destination array is too small.</value>
+  </data>
+
+</root>

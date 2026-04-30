@@ -1,0 +1,25 @@
+@model SiteViewModel
+@{
+    Layout = "../Shared/_Layout.cshtml";
+}
+<script>
+(function() {
+    var version = localStorage.getItem('corvus-api-version') || 'v5';
+    if (version !== 'v4' && version !== 'v5') version = 'v5';
+    window.location.replace(version + '/index.html');
+})();
+</script>
+<noscript>
+<div class="layout-docs container">
+    <main id="main-content" class="layout-docs__main" style="max-width:800px; margin:0 auto;">
+        <div class="doc__content">
+            <h1>API Reference</h1>
+            <p>Choose an API version:</p>
+            <ul>
+                <li><a href="/api/v5/index.html">V5 Engine</a> (Recommended)</li>
+                <li><a href="/api/v4/index.html">V4 Engine</a> (Legacy)</li>
+            </ul>
+        </div>
+    </main>
+</div>
+</noscript>

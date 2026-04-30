@@ -1,0 +1,10 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "A simple person object",
+    "type": "object",
+    "required": ["name"],
+    "properties": {
+        "name": { "type": "string" },
+        "age": { "type": "integer", "format": "int32" }
+    }
+}

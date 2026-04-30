@@ -1,0 +1,22 @@
+{
+    "title": "Order",
+    "type": "object",
+    "required": ["orderId", "customer"],
+    "properties": {
+        "orderId": { "type": "string" },
+        "customer": { "type": "string" },
+        "items": {
+            "type": "array",
+            "items": {
+                "type": "object",
+                "required": ["product", "quantity"],
+                "properties": {
+                    "product": { "type": "string" },
+                    "quantity": { "type": "integer", "format": "int32" },
+                    "price": { "type": "number" }
+                }
+            }
+        },
+        "notes": { "type": "string" }
+    }
+}

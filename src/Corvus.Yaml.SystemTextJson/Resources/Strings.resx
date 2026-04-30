@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="UnexpectedEndOfInput" xml:space="preserve">
+    <value>Unexpected end of YAML input at line {0}, column {1}.</value>
+  </data>
+  <data name="InvalidIndentation" xml:space="preserve">
+    <value>Invalid indentation at line {0}, column {1}. Tabs are not allowed for indentation in YAML.</value>
+  </data>
+  <data name="DuplicateKey" xml:space="preserve">
+    <value>Duplicate mapping key at line {0}, column {1}.</value>
+  </data>
+  <data name="MultipleDocumentsNotAllowed" xml:space="preserve">
+    <value>Multiple documents found but single-document mode is configured. Use YamlDocumentMode.MultiAsArray to allow multiple documents.</value>
+  </data>
+  <data name="InvalidEscapeSequence" xml:space="preserve">
+    <value>Invalid escape sequence '\\{0}' in double-quoted scalar at line {1}, column {2}.</value>
+  </data>
+  <data name="UnterminatedDoubleQuotedScalar" xml:space="preserve">
+    <value>Unterminated double-quoted scalar starting at line {0}, column {1}.</value>
+  </data>
+  <data name="UnterminatedSingleQuotedScalar" xml:space="preserve">
+    <value>Unterminated single-quoted scalar starting at line {0}, column {1}.</value>
+  </data>
+  <data name="UnterminatedFlowSequence" xml:space="preserve">
+    <value>Unterminated flow sequence starting at line {0}, column {1}.</value>
+  </data>
+  <data name="UnterminatedFlowMapping" xml:space="preserve">
+    <value>Unterminated flow mapping starting at line {0}, column {1}.</value>
+  </data>
+  <data name="MaxNestingDepthExceeded" xml:space="preserve">
+    <value>Maximum nesting depth of {0} exceeded at line {1}, column {2}.</value>
+  </data>
+  <data name="AliasExpansionDepthExceeded" xml:space="preserve">
+    <value>Alias expansion depth limit of {0} exceeded. This may indicate a circular or deeply nested anchor/alias structure.</value>
+  </data>
+  <data name="AliasExpansionSizeExceeded" xml:space="preserve">
+    <value>Alias expansion size limit of {0} nodes exceeded. This may indicate a billion-laughs attack.</value>
+  </data>
+  <data name="UndefinedAlias" xml:space="preserve">
+    <value>Undefined alias '*{0}' at line {1}, column {2}.</value>
+  </data>
+  <data name="InvalidAnchorName" xml:space="preserve">
+    <value>Invalid anchor name at line {0}, column {1}. Anchor names must contain at least one character.</value>
+  </data>
+  <data name="InvalidTagHandle" xml:space="preserve">
+    <value>Invalid tag handle at line {0}, column {1}.</value>
+  </data>
+  <data name="InvalidBlockScalarHeader" xml:space="preserve">
+    <value>Invalid block scalar header at line {0}, column {1}.</value>
+  </data>
+  <data name="ExpectedMappingValue" xml:space="preserve">
+    <value>Expected mapping value after key at line {0}, column {1}.</value>
+  </data>
+  <data name="InvalidUtf8" xml:space="preserve">
+    <value>Invalid UTF-8 byte sequence at line {0}, column {1}.</value>
+  </data>
+  <data name="UnexpectedCharacter" xml:space="preserve">
+    <value>Unexpected character '{0}' at line {1}, column {2}.</value>
+  </data>
+  <data name="InvalidDirective" xml:space="preserve">
+    <value>Invalid directive at line {0}, column {1}.</value>
+  </data>
+  <data name="ComplexKeysNotSupported" xml:space="preserve">
+    <value>Complex (non-scalar) mapping keys are not supported in JSON conversion at line {0}, column {1}.</value>
+  </data>
+  <data name="DuplicateYamlDirective" xml:space="preserve">
+    <value>Duplicate %YAML directive at line {0}, column {1}.</value>
+  </data>
+  <data name="DirectiveWithoutDocumentStart" xml:space="preserve">
+    <value>Directives must be followed by a document start marker (---) at line {0}, column {1}.</value>
+  </data>
+  <data name="TabInIndentation" xml:space="preserve">
+    <value>Tabs are not allowed for indentation in YAML at line {0}, column {1}.</value>
+  </data>
+  <data name="TrailingContentAfterNode" xml:space="preserve">
+    <value>Unexpected content after node at line {0}, column {1}.</value>
+  </data>
+  <data name="InvalidFlowSequenceEntry" xml:space="preserve">
+    <value>Invalid flow sequence entry at line {0}, column {1}.</value>
+  </data>
+  <data name="MissingFlowSeparator" xml:space="preserve">
+    <value>Missing comma separator in flow collection at line {0}, column {1}.</value>
+  </data>
+  <data name="MultipleAnchors" xml:space="preserve">
+    <value>A node may have at most one anchor at line {0}, column {1}.</value>
+  </data>
+  <data name="ContentAfterDocumentEndMarker" xml:space="preserve">
+    <value>Unexpected content after document end marker (...) at line {0}, column {1}.</value>
+  </data>
+  <data name="ContentOnDocumentStartLine" xml:space="preserve">
+    <value>Content is not allowed on the same line as the document start marker (---) at line {0}, column {1}.</value>
+  </data>
+  <data name="CommentMustBePreceededByWhitespace" xml:space="preserve">
+    <value>A comment (#) must be preceded by whitespace at line {0}, column {1}.</value>
+  </data>
+  <data name="MultilineImplicitKeyNotAllowed" xml:space="preserve">
+    <value>Implicit mapping keys must not span multiple lines at line {0}, column {1}.</value>
+  </data>
+  <data name="BlockCollectionOnSameLine" xml:space="preserve">
+    <value>A block collection must not appear on the same line as an implicit mapping value at line {0}, column {1}.</value>
+  </data>
+  <data name="FlowContentUnderindented" xml:space="preserve">
+    <value>Flow content continuation line is under-indented at line {0}, column {1}.</value>
+  </data>
+  <data name="DuplicateAnchor" xml:space="preserve">
+    <value>A node must not have more than one anchor at line {0}, column {1}.</value>
+  </data>
+  <data name="AliasCannotHaveProperties" xml:space="preserve">
+    <value>An alias node must not have an anchor or tag at line {0}, column {1}.</value>
+  </data>
+  <data name="StreamNotWritable" xml:space="preserve">
+    <value>The stream does not support writing.</value>
+  </data>
+  <data name="WriterContainerAsMappingKey" xml:space="preserve">
+    <value>Cannot write a container as a mapping key. Write a property name first.</value>
+  </data>
+  <data name="WriterEndMappingNoOpen" xml:space="preserve">
+    <value>Cannot end mapping: no mapping is open.</value>
+  </data>
+  <data name="WriterEndMappingValueExpected" xml:space="preserve">
+    <value>Cannot end mapping: expected a value after the property name.</value>
+  </data>
+  <data name="WriterEndMappingInSequence" xml:space="preserve">
+    <value>Cannot end mapping: the current container is a sequence.</value>
+  </data>
+  <data name="WriterEndSequenceNoOpen" xml:space="preserve">
+    <value>Cannot end sequence: no sequence is open.</value>
+  </data>
+  <data name="WriterEndSequenceInMapping" xml:space="preserve">
+    <value>Cannot end sequence: the current container is a mapping.</value>
+  </data>
+  <data name="WriterPropertyNameOutsideMapping" xml:space="preserve">
+    <value>Cannot write a property name outside a mapping.</value>
+  </data>
+  <data name="WriterPropertyNameValueExpected" xml:space="preserve">
+    <value>Cannot write a property name: expected a value.</value>
+  </data>
+  <data name="WriterValuePropertyNameExpected" xml:space="preserve">
+    <value>Cannot write a value: expected a property name.</value>
+  </data>
+  <data name="WriterMultipleRootValues" xml:space="preserve">
+    <value>A root value has already been written.</value>
+  </data>
+
+</root>

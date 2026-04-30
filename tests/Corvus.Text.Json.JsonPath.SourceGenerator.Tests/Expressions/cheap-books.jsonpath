@@ -1,0 +1,1 @@
+$.store.book[?@.price < 10].title

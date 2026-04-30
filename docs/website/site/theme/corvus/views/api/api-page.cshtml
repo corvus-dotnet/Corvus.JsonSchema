@@ -1,0 +1,15 @@
+@model SiteViewModel
+@{
+    Layout = "../Shared/_Layout.cshtml";
+}
+<div class="layout-docs container">
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content api-ref">
+            <h1>@Model.PageContext.Title</h1>
+            @foreach (var contentFragment in Model.PageContext.GetAllMarkdownContent())
+            {
+                @Html.Raw(contentFragment.Body)
+            }
+        </div>
+    </main>
+</div>

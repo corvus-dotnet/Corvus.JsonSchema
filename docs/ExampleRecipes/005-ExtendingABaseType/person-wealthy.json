@@ -1,0 +1,11 @@
+{
+  "title": "A wealthy person",
+  "$ref": "./person-open.json",
+  "required": [ "wealth" ],
+  "properties": {
+    "wealth": {
+      "type": "integer",
+      "format": "int32"
+    }
+  }
+}

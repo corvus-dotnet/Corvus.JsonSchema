@@ -1,0 +1,80 @@
+@model SiteViewModel
+@{
+    ViewBag.GitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema";
+    ViewBag.OpenGraphDescription ??= Model.PageContext.OpenGraph?.Description ?? Model.PageContext.MetaData.Description;
+    ViewBag.OpenGraphTitle ??= Model.PageContext.OpenGraph?.Title ?? Model.PageContext.MetaData.Title;
+
+    if (string.IsNullOrEmpty(ViewBag.OpenGraphImageUrl))
+    {
+        ViewBag.OpenGraphImageUrl = !string.IsNullOrEmpty(Model.PageContext.OpenGraph?.Image)
+            ? Model.PageContext.OpenGraph.Image
+            : "/assets/images/og-corvus.png";
+    }
+
+    ViewBag.PageTitle ??= Model.PageContext.Title;
+    ViewBag.MetaTitle ??= Model.PageContext.MetaData.Title;
+    ViewBag.MetaTags ??= Model.PageContext.MetaData.Keywords;
+    ViewBag.MetaKeywords ??= string.Join(", ", Model.PageContext.MetaData.Keywords);
+    ViewBag.MetaDescription ??= Model.PageContext.MetaData.Description;
+    ViewBag.PageUrl ??= Model.PageContext.Url;
+    ViewBag.CanonicalUrl ??= Model.PageContext.MetaData.CanonicalUrl;
+}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#1C1D21" />
+    <meta name="description" content="@ViewBag.MetaDescription" />
+    <meta name="keywords" content="@ViewBag.MetaKeywords" />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:description" content="@ViewBag.OpenGraphDescription" />
+    <meta name="twitter:image" content="@ViewBag.OpenGraphImageUrl" />
+    <meta name="twitter:title" content="@ViewBag.OpenGraphTitle" />
+    @if (ViewBag.MetaTags != null)
+    {
+        @foreach (string tag in ViewBag.MetaTags)
+        {
+    <meta property="article:tag" content="@tag" />
+        }
+    }
+    <meta property="og:description" content="@ViewBag.OpenGraphDescription" />
+    <meta property="og:image" content="@ViewBag.OpenGraphImageUrl" />
+    <meta property="og:title" content="@ViewBag.OpenGraphTitle" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="@Vellum.Cli.Domain.Url.Normalize(ViewBag.PageUrl)" />
+    <title>@ViewBag.MetaTitle</title>
+    <link itemprop="url" href="@Vellum.Cli.Domain.Url.Normalize(ViewBag.PageUrl)" />
+    @if (!string.IsNullOrEmpty(ViewBag.CanonicalUrl))
+    {
+    <link rel="canonical" href="@ViewBag.CanonicalUrl" />
+    }
+    else
+    {
+    <link rel="canonical" href="@Vellum.Cli.Domain.Url.Normalize(ViewBag.PageUrl)" />
+    }
+    <link rel="sitemap" href="@(Model.SiteContext.MetaData.Url)/sitemap.xml" />
+    <!-- Styles -->
+    <link rel="stylesheet" href="/main.css" />
+    <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg" />
+    @RenderSection("head", required: false)
+</head>
+<body class="@(ViewBag.BodyClass ?? "")">
+    @await Html.PartialAsync("Header").ConfigureAwait(false)
+    <div class="page-content">
+    @RenderBody()
+    </div>
+    @await Html.PartialAsync("Footer").ConfigureAwait(false)
+    <!-- highlight.js for syntax highlighting (CSS targets .hljs-* classes) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/csharp.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/json.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/bash.min.js" defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/xml.min.js" defer></script>
+    <script>document.addEventListener('DOMContentLoaded',()=>hljs.highlightAll())</script>
+    <script src="/assets/js/main.js" defer></script>
+    <script src="/assets/js/sidebar-search.js" defer></script>
+    @RenderSection("scripts", required: false)
+</body>
+</html>

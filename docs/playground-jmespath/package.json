@@ -1,0 +1,11 @@
+{
+  "private": true,
+  "name": "corvus-jmespath-playground-assets",
+  "description": "Build assets for the JMESPath Playground (monaco-jmespath bundle)",
+  "scripts": {
+    "bundle": "node esbuild.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

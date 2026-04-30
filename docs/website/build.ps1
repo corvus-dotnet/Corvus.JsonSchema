@@ -1,0 +1,1191 @@
+<#
+.SYNOPSIS
+    Builds the Corvus.Text.Json documentation website.
+.DESCRIPTION
+    End-to-end build pipeline:
+      1a. Build Corvus.Text.Json V5 (generates XML doc + assembly)
+      1b. Build V4 libraries (generates XML docs + assemblies)
+      2a. Generate V5 API markdown, taxonomy & views
+      2b. Generate V4 API markdown, taxonomy & views
+      3. Generate recipe content from ExampleRecipes source docs
+      4. Generate docs content from source documentation
+      5. Install Vellum SSG (if not present)
+      6. Run Vellum to render the core site
+      7. Compile SCSS to CSS
+      8. Build Lunr search index
+      9. Build and publish Playground (Blazor WASM)
+     10. Check for broken links (lychee)
+     11. Rewrite root-relative paths for subpath hosting (when -BasePathPrefix is set)
+.PARAMETER Preview
+    Launches a local preview server after building.
+.PARAMETER ServeOnly
+    Skips the build and just starts the preview server on existing output.
+    Requires a previous build to have been completed.
+.PARAMETER Watch
+    Monitors for file changes and auto-regenerates.
+.PARAMETER SkipDotNetBuild
+    Skips steps 1a (V5 build) and 1b (V4 builds). Use when the .NET solution
+    has already been built (e.g. by the root build.ps1) and the compiled
+    binaries are already in the bin/Release directories.
+.PARAMETER IsPreviewDeployment
+    When set, the build produces a preview site with full robots blocking
+    (noindex meta tag retained, robots.txt Disallow). When not set in CI,
+    the build produces a production site (meta tag stripped, robots.txt Allow).
+#>
+[CmdletBinding()]
+param (
+    [Parameter()]
+    [switch] $Preview,
+
+    [Parameter()]
+    [switch] $ServeOnly,
+
+    [Parameter()]
+    [switch] $Watch,
+
+    [Parameter()]
+    [string] $BasePathPrefix = "",
+
+    [Parameter()]
+    [switch] $SkipDotNetBuild,
+
+    [Parameter()]
+    [switch] $IsPreviewDeployment
+)
+
+$ErrorActionPreference = 'Stop'
+$InformationPreference = 'Continue'
+
+# Check that the Github CLI is available
+if (!(Get-Command gh -CommandType application -ErrorAction SilentlyContinue)) {
+    Write-Error "The GitHub CLI was not found, but is required to build the web site - see https://cli.github.com/ for more details."
+}
+# Ensure the GH CLI is logged-in
+& gh auth status | Out-Null
+if ($LASTEXITCODE -eq 1) {
+    Write-Error "You are not logged into the GitHub CLI - run 'gh auth login'"
+}
+# Ensure we have access to the Vellum SSG repo, if not skip the build with a warning rather than a hard error
+& gh repo view endjin/Endjin.StaticSiteGen --json id | Out-Null
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "Skipping web site build - unable to access to the currently closed-source Vellum SSG tooling"
+    exit 0
+}
+
+$here = Split-Path -Parent $PSCommandPath
+$repoRoot = Resolve-Path (Join-Path $here "..\..")
+$siteDir = Join-Path $here "site"
+$outputDir = Join-Path $here ".output"
+
+# Paths used by multiple steps
+$toolProject = Join-Path $here "tools\XmlDocToMarkdown"
+$sharedViewsDir = Join-Path $siteDir "theme\corvus\views\Shared"
+
+# Derive canonical repo URL from git remote (normalise SSH → HTTPS, strip .git)
+$canonicalRepoUrl = $null
+try {
+    $remoteUrl = (git -C $repoRoot remote get-url origin 2>$null)
+    if ($remoteUrl) {
+        $remoteUrl = $remoteUrl.Trim()
+        if ($remoteUrl -match '^git@github\.com:(.+)$') {
+            $remoteUrl = "https://github.com/$($Matches[1])"
+        }
+        $remoteUrl = $remoteUrl -replace '\.git$', ''
+        $canonicalRepoUrl = $remoteUrl
+    }
+} catch { }
+if (-not $canonicalRepoUrl) {
+    $canonicalRepoUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
+    Write-Warning "Could not detect repo URL from git remote — using default: $canonicalRepoUrl"
+}
+
+# V5 paths
+$v5SrcDir = Join-Path $repoRoot "src"
+$v5ApiContentDir = Join-Path $siteDir "content\Api-v5"
+$v5ApiTaxonomyDir = Join-Path $siteDir "taxonomy\api-v5"
+$v5ApiViewsDir = Join-Path $siteDir "theme\corvus\views\api\v5"
+$v5NsDescriptionsDir = Join-Path $siteDir "content\Api-v5\namespaces"
+$v5TypeExamplesDir = Join-Path $siteDir "content\Api-v5\examples"
+
+# V5 consumer-facing libraries to document
+$v5Projects = @(
+    "Corvus.Text.Json",
+    "Corvus.Text.Json.Yaml",
+    "Corvus.Yaml.SystemTextJson",
+    "Corvus.Text.Json.Jsonata",
+    "Corvus.Text.Json.JMESPath",
+    "Corvus.Text.Json.JsonLogic",
+    "Corvus.Text.Json.JsonPath",
+    "Corvus.Text.Json.Patch"
+)
+
+# V4 paths
+$v4SrcDir = Join-Path $repoRoot "src-v4"
+$v4ApiContentDir = Join-Path $siteDir "content\Api-v4"
+$v4ApiTaxonomyDir = Join-Path $siteDir "taxonomy\api-v4"
+$v4ApiViewsDir = Join-Path $siteDir "theme\corvus\views\api\v4"
+
+# V4 consumer-facing libraries to document
+# NOTE: The 7 JsonSchema dialect libraries (Draft4/6/7/201909/202012/OpenApi30/31) are excluded
+# because they contain thousands of generated types with repetitive patterns, adding ~25K pages
+# that make the build impractically slow. The core API libraries below cover the primary user-facing surface.
+$v4Projects = @(
+    "Corvus.Json.ExtendedTypes",
+    "Corvus.Json.JsonReference",
+    "Corvus.Json.Patch",
+    "Corvus.Json.Validator",
+    "Corvus.Json.CodeGeneration",
+    "Corvus.Json.CodeGeneration.CSharp",
+    "Corvus.Json.CodeGeneration.CSharp.QuickStart",
+    "Corvus.Json.CodeGeneration.HttpClientDocumentResolver"
+)
+
+# -- Helper: PascalCase to kebab-case ----------------------------------------
+function ConvertTo-KebabCase([string]$text) {
+    $result = $text -creplace '([a-z0-9])([A-Z])', '$1-$2'
+    $result = $result -creplace '([A-Z]+)([A-Z][a-z])', '$1-$2'
+    return $result.ToLower()
+}
+
+# -- Helper: timed step reporting --------------------------------------------
+function Write-StepDuration($stepName, $sw) {
+    $elapsed = $sw.Elapsed
+    if ($elapsed.TotalMinutes -ge 1) {
+        Write-Host "  $stepName completed in $([math]::Floor($elapsed.TotalMinutes))m $($elapsed.Seconds)s." -ForegroundColor Green
+    } else {
+        Write-Host "  $stepName completed in $([math]::Round($elapsed.TotalSeconds, 1))s." -ForegroundColor Green
+    }
+}
+
+# -- ServeOnly: skip build, just start preview server -----------------------
+if ($ServeOnly) {
+    if (!(Test-Path $outputDir)) {
+        throw "No output directory found at $outputDir. Run a full build first."
+    }
+
+    Write-Host "Starting static file server on existing output..." -ForegroundColor Cyan
+    Write-Host "  Serving: $outputDir" -ForegroundColor DarkGray
+    Write-Host "  URL:     http://localhost:5000" -ForegroundColor Green
+    Write-Host "  Press Ctrl+C to stop." -ForegroundColor DarkGray
+
+    $serverScript = @"
+const http = require('http');
+const fs = require('fs');
+const path = require('path');
+const mimeTypes = {
+  '.html': 'text/html', '.css': 'text/css', '.js': 'application/javascript',
+  '.json': 'application/json', '.png': 'image/png', '.svg': 'image/svg+xml',
+  '.ico': 'image/x-icon', '.woff2': 'font/woff2', '.woff': 'font/woff',
+  '.jpg': 'image/jpeg', '.gif': 'image/gif', '.xml': 'application/xml',
+};
+const root = process.argv[2];
+http.createServer((req, res) => {
+  let url = req.url.split('?')[0];
+  if (url.endsWith('/')) url += 'index.html';
+  const fp = path.join(root, url);
+  fs.readFile(fp, (err, data) => {
+    if (err) { res.writeHead(404); res.end('Not found'); return; }
+    const ext = path.extname(fp);
+    res.writeHead(200, { 'Content-Type': mimeTypes[ext] || 'application/octet-stream' });
+    res.end(data);
+  });
+}).listen(5000, () => console.log('Serving at http://localhost:5000'));
+"@
+    & node -e $serverScript $outputDir
+    return
+}
+
+# -- Step 0: Copy hand-authored source files ----------------------------------
+Write-Host "`n[0/10] Copying hand-authored source files..." -ForegroundColor Cyan
+$sourceDir = Join-Path $siteDir "source"
+# Ensure destination directories exist (they are generated, not in source control)
+foreach ($dir in @("content\Docs", "content\Examples")) {
+    $dst = Join-Path $siteDir $dir
+    if (!(Test-Path $dst)) { New-Item -ItemType Directory -Path $dst -Force | Out-Null }
+}
+# Copy content overviews
+Copy-Item (Join-Path $sourceDir "content\Docs\Overview.md") (Join-Path $siteDir "content\Docs\Overview.md") -Force
+Copy-Item (Join-Path $sourceDir "content\Examples\Overview.md") (Join-Path $siteDir "content\Examples\Overview.md") -Force
+# Copy taxonomy index files
+foreach ($sub in @("docs", "examples", "api", "api-v5", "api-v4")) {
+    $src = Join-Path $sourceDir "taxonomy\$sub\index.yml"
+    $dst = Join-Path $siteDir "taxonomy\$sub\index.yml"
+    if (Test-Path $src) {
+        $dstDir = Split-Path $dst -Parent
+        if (!(Test-Path $dstDir)) { New-Item -ItemType Directory -Path $dstDir -Force | Out-Null }
+        Copy-Item $src $dst -Force
+    }
+}
+Write-Host "  Copied source files to site tree." -ForegroundColor Green
+
+# -- Step 1a/1b: Build .NET projects (skip when -SkipDotNetBuild) ---------------
+if ($SkipDotNetBuild) {
+    Write-Host "`n[1a/10] Skipping V5 build (-SkipDotNetBuild)." -ForegroundColor DarkGray
+    Write-Host "[1b/10] Skipping V4 builds (-SkipDotNetBuild)." -ForegroundColor DarkGray
+} else {
+    # -- Step 1a: Build V5 libraries -----------------------------------------------
+    Write-Host "`n[1a/10] Building V5 libraries..." -ForegroundColor Cyan
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $projIndex = 0
+    foreach ($proj in $v5Projects) {
+        $projIndex++
+        $projPath = Join-Path $v5SrcDir "$proj\$proj.csproj"
+        if (!(Test-Path $projPath)) {
+            Write-Warning "  V5 project not found: $projPath - skipping"
+            continue
+        }
+        Write-Host "  [$projIndex/$($v5Projects.Count)] Building $proj..." -ForegroundColor Gray
+        & dotnet build $projPath -c Release -f net10.0 /p:GenerateDocumentationFile=true --no-incremental -v q
+        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (net10.0)" }
+        & dotnet build $projPath -c Release -f netstandard2.0 /p:GenerateDocumentationFile=true --no-incremental -v q
+        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.0)" }
+        & dotnet build $projPath -c Release -f netstandard2.1 /p:GenerateDocumentationFile=true --no-incremental -v q
+        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.1)" }
+    }
+    Write-StepDuration "V5 builds - $($v5Projects.Count) libraries" $sw
+
+    # -- Step 1b: Build V4 libraries ---------------------------------------------
+    Write-Host "`n[1b/10] Building V4 libraries..." -ForegroundColor Cyan
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+    $projIndex = 0
+    foreach ($proj in $v4Projects) {
+        $projIndex++
+        $projPath = Join-Path $v4SrcDir "$proj\$proj.csproj"
+        if (!(Test-Path $projPath)) {
+            Write-Warning "  V4 project not found: $projPath - skipping"
+            continue
+        }
+        Write-Host "  [$projIndex/$($v4Projects.Count)] Building $proj..." -ForegroundColor Gray
+        & dotnet build $projPath -c Release -f net10.0 --no-incremental -v q
+        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (net10.0)" }
+        & dotnet build $projPath -c Release -f netstandard2.0 --no-incremental -v q
+        if ($LASTEXITCODE -ne 0) { throw "Failed to build $proj (netstandard2.0)" }
+    }
+    Write-StepDuration "V4 builds - $($v4Projects.Count) libraries" $sw
+}
+
+# -- Step 2a: Generate V5 API markdown, taxonomy & views ---------------------
+Write-Host "`n[2a/10] Generating V5 API markdown, taxonomy & views..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Build the --xml / --assembly argument pairs for all V5 libraries
+$v5ToolArgs = @()
+foreach ($proj in $v5Projects) {
+    $binDir = Join-Path $v5SrcDir "$proj\bin\Release\net10.0"
+    $xmlFile = Join-Path $binDir "$proj.xml"
+    $dllFile = Join-Path $binDir "$proj.dll"
+    $ns20Dll = Join-Path $v5SrcDir "$proj\bin\Release\netstandard2.0\$proj.dll"
+    $ns21Dll = Join-Path $v5SrcDir "$proj\bin\Release\netstandard2.1\$proj.dll"
+    if ((Test-Path $xmlFile) -and (Test-Path $dllFile)) {
+        $v5ToolArgs += "--xml", $xmlFile, "--assembly", $dllFile
+        if (Test-Path $ns20Dll) {
+            $v5ToolArgs += "--ns20-assembly", $ns20Dll
+        }
+        if (Test-Path $ns21Dll) {
+            $v5ToolArgs += "--ns21-assembly", $ns21Dll
+        }
+    } else {
+        Write-Warning "  V5 XML/DLL not found for $proj - skipping"
+    }
+}
+
+& dotnet run --project $toolProject -c Release -- `
+    @v5ToolArgs `
+    --output $v5ApiContentDir `
+    --taxonomy-output $v5ApiTaxonomyDir `
+    --api-views-dir $v5ApiViewsDir `
+    --shared-views-dir $sharedViewsDir `
+    --ns-descriptions $v5NsDescriptionsDir `
+    --type-examples $v5TypeExamplesDir `
+    --api-base-url /api/v5 `
+    --repo-url $canonicalRepoUrl `
+    --sidebar-partial-name _ApiSidebarV5 `
+    --layout-path "../../Shared/_Layout.cshtml" `
+    --version-label "V5 Engine" `
+    --alt-version-label "V4 Engine" `
+    --alt-version-url "/api/v4/index.html"
+if ($LASTEXITCODE -ne 0) { throw "V5 API generation failed" }
+Write-StepDuration "V5 API generation" $sw
+
+# -- Step 2b: Generate V4 API markdown, taxonomy & views ---------------------
+Write-Host "`n[2b/10] Generating V4 API markdown, taxonomy & views..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Build the --xml / --assembly argument pairs for all V4 libraries
+$v4ToolArgs = @()
+foreach ($proj in $v4Projects) {
+    $binDir = Join-Path $v4SrcDir "$proj\bin\Release\net10.0"
+    $xmlFile = Join-Path $binDir "$proj.xml"
+    $dllFile = Join-Path $binDir "$proj.dll"
+    $ns20Dll = Join-Path $v4SrcDir "$proj\bin\Release\netstandard2.0\$proj.dll"
+    if ((Test-Path $xmlFile) -and (Test-Path $dllFile)) {
+        $v4ToolArgs += "--xml", $xmlFile, "--assembly", $dllFile
+        if (Test-Path $ns20Dll) {
+            $v4ToolArgs += "--ns20-assembly", $ns20Dll
+        }
+    } else {
+        Write-Warning "  Missing XML or DLL for $proj - skipping"
+    }
+}
+
+& dotnet run --project $toolProject -c Release -- @v4ToolArgs `
+    --output $v4ApiContentDir `
+    --taxonomy-output $v4ApiTaxonomyDir `
+    --api-views-dir $v4ApiViewsDir `
+    --shared-views-dir $sharedViewsDir `
+    --api-base-url /api/v4 `
+    --repo-url $canonicalRepoUrl `
+    --sidebar-partial-name _ApiSidebarV4 `
+    --layout-path "../../Shared/_Layout.cshtml" `
+    --version-label "V4 Engine" `
+    --alt-version-label "V5 Engine" `
+    --alt-version-url "/api/v5/index.html"
+if ($LASTEXITCODE -ne 0) { throw "V4 API generation failed" }
+Write-StepDuration "V4 API generation" $sw
+
+# -- Step 3: Generate recipe content from ExampleRecipes ---------------------
+Write-Host "`n[3/10] Generating recipe content from ExampleRecipes..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$recipesSourceDir = Join-Path $repoRoot "docs\ExampleRecipes"
+$recipesContentDir = Join-Path $siteDir "content\Examples"
+$recipesTaxonomyDir = Join-Path $siteDir "taxonomy\examples"
+
+# Clean old generated recipe files (hand-authored files are in source/ and copied in step 0)
+Get-ChildItem $recipesContentDir -Filter "*.md" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne "Overview.md" } | Remove-Item -Force
+Get-ChildItem $recipesTaxonomyDir -Filter "*.yml" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne "index.yml" } | Remove-Item -Force
+
+$recipeDirs = Get-ChildItem $recipesSourceDir -Directory | Sort-Object Name
+$recipeCount = 0
+
+# Build a lookup table from numbered directory names to output slugs
+# so we can rewrite cross-recipe relative links (e.g. ../004-OpenVersusClosedTypes/ -> /examples/open-versus-closed-types.html)
+$recipeSlugMap = @{}
+foreach ($d in $recipeDirs) {
+    if ($d.Name -match '^(\d+)-(.+)$') {
+        $recipeSlugMap[$d.Name] = ConvertTo-KebabCase $Matches[2]
+    }
+}
+
+foreach ($dir in $recipeDirs) {
+    if ($dir.Name -notmatch '^(\d+)-(.+)$') { continue }
+    $number = $Matches[1]
+    $pascalName = $Matches[2]
+    $slug = ConvertTo-KebabCase $pascalName
+
+    $readmePath = Join-Path $dir.FullName "README.md"
+    if (!(Test-Path $readmePath)) { continue }
+
+    $raw = Get-Content $readmePath -Raw -Encoding utf8
+
+    # Extract title from "# JSON Schema Patterns in .NET - <title>"
+    if ($raw -match '^# JSON Schema Patterns in \.NET\s*[---]\s*(.+?)[\r\n]') {
+        $title = $Matches[1].Trim()
+    } else {
+        $title = ($pascalName -creplace '([a-z])([A-Z])', '$1 $2')
+    }
+
+    # Strip the # heading line and any leading blank lines after it
+    $body = ($raw -replace '^#[^\n]+\n\s*', '').TrimStart()
+
+    # Rewrite cross-recipe relative links from source format to website format:
+    #   ../004-OpenVersusClosedTypes/  ->  /examples/open-versus-closed-types.html
+    #   ./Program.cs                   ->  GitHub source link for this recipe
+    foreach ($entry in $recipeSlugMap.GetEnumerator()) {
+        $body = $body -replace [regex]::Escape("../$($entry.Key)/"), "/examples/$($entry.Value).html"
+        $body = $body -replace [regex]::Escape("../$($entry.Key)"), "/examples/$($entry.Value).html"
+    }
+    $ghRecipeBase = "https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/$($dir.Name)"
+    $body = $body -replace '\./Program\.cs', "$ghRecipeBase/Program.cs"
+
+    # Extract first sentence as description
+    if ($body -match '^(.+?\.)\s') {
+        $description = $Matches[1] -replace '"', '\"'
+    } else {
+        $description = $title
+    }
+
+    # Extract FAQ Q&A pairs from the FAQ section
+    $faqQuestions = @()
+    $faqPairs = @()
+    if ($raw -match '(?s)## Frequently Asked Questions(.+?)(?=\n## |\z)') {
+        $faqSection = $Matches[1]
+        # Split on ### headings to get Q&A pairs
+        $parts = $faqSection -split '(?=### )'
+        foreach ($part in $parts) {
+            $part = $part.Trim()
+            if ($part -match '^###\s+(.+?)[\r\n]+(.+)') {
+                $question = $Matches[1].Trim()
+                $answer = ($Matches[2].Trim() -replace '[\r\n]+', ' ').Trim()
+                $faqQuestions += ($question -replace '`', '')
+                # Escape for JSON
+                $qJson = $question -replace '\\', '\\' -replace '"', '\"'
+                $aJson = $answer -replace '\\', '\\' -replace '"', '\"' -replace '`', ''
+                $faqPairs += @{ q = $qJson; a = $aJson }
+            }
+        }
+    }
+
+    # Build Keywords array: title words + JSON Schema keywords + Corvus API terms
+    # Start with the recipe title split into words (skip short ones)
+    $titleWords = $title -split '\s+' | Where-Object { $_.Length -ge 3 } |
+        ForEach-Object { $_.ToLower() -replace '[^a-z0-9]', '' } | Where-Object { $_ -and $_ -notin @('and', 'the', 'for', 'with', 'from') }
+
+    # Extract JSON Schema keywords used in the content
+    $schemaKeywords = [regex]::Matches($raw, '"(type|properties|required|additionalProperties|unevaluatedProperties|format|enum|const|oneOf|anyOf|allOf|if|then|else|prefixItems|items|unevaluatedItems|patternProperties|\$ref|\$defs|minimum|maximum|minLength|maxLength|pattern|not|contains|minItems|maxItems|uniqueItems)"') |
+        ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
+
+    # Extract Corvus API method/type names from backtick spans
+    $apiMethods = [regex]::Matches($raw, '`(IsUndefined|IsNull|IsValid|TryGetValue|ValueEquals|EvaluateSchema|GetRawText|ToString|Parse|From|Match|SetProperty|RemoveProperty|TryGetProperty|AddProperty|CreateBuilder|BuildDocument|Build|Clone|AsArray|AsObject|RootElement|TryGetNumericValues|CreateTuple|ConstInstance)\b') |
+        ForEach-Object { $_.Groups[1].Value } | Select-Object -Unique
+
+    $keywordItems = @('recipe', 'JSON Schema', 'C#') + $titleWords + $schemaKeywords + $apiMethods |
+        Select-Object -Unique
+    $keywordsYaml = ($keywordItems | ForEach-Object { "`"$($_ -replace '"', '\"')`"" }) -join ', '
+
+    # Build FAQPage JSON-LD structured data
+    $faqJsonLd = ''
+    if ($faqPairs.Count -gt 0) {
+        $mainEntity = ($faqPairs | ForEach-Object {
+            "    {`n      `"@type`": `"Question`",`n      `"name`": `"$($_.q)`",`n      `"acceptedAnswer`": {`n        `"@type`": `"Answer`",`n        `"text`": `"$($_.a)`"`n      }`n    }"
+        }) -join ",`n"
+        $faqJsonLd = @"
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+$mainEntity
+  ]
+}
+</script>
+"@
+    }
+
+    # 1) Content markdown with Vellum frontmatter + FAQ JSON-LD
+    $contentPath = Join-Path $recipesContentDir "$pascalName.md"
+    $frontmatter = "---`nContentType: `"application/vnd.endjin.ssg.content+md`"`nPublicationStatus: Published`nDate: 2026-03-15T00:00:00.0+00:00`nTitle: `"$title`"`n---`n"
+    $contentMd = $frontmatter + $body + $faqJsonLd
+    [System.IO.File]::WriteAllText($contentPath, $contentMd, [System.Text.Encoding]::UTF8)
+
+    # 2) Taxonomy YAML (with Template property for shared view)
+    $rank = $recipeCount + 1
+    $taxonomyYml = @"
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: "$title"
+Template: examples/recipe-detail
+Navigation:
+  Title: $title
+  Description: "$description"
+  Parent: /examples/index.html
+  Url: /examples/$slug.html
+  Rank: $rank
+  Header:
+    Visible: False
+    Link: False
+  Footer:
+    Visible: False
+    Link: False
+MetaData:
+  Title: "$title - Corvus.Text.Json Examples"
+  Description: "$description"
+  Keywords: [$keywordsYaml]
+OpenGraph:
+  Title: "$title - Corvus.Text.Json Examples"
+  Description: "$description"
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: $pascalName
+    Spec:
+      Path: ../../content/Examples/$pascalName.md
+"@
+    $taxonomyPath = Join-Path $recipesTaxonomyDir "$slug.yml"
+    [System.IO.File]::WriteAllText($taxonomyPath, $taxonomyYml, [System.Text.Encoding]::UTF8)
+
+    $recipeCount++
+    Write-Host "  $number $title -> $slug" -ForegroundColor Gray
+}
+Write-StepDuration "Recipe generation ($recipeCount recipes)" $sw
+
+# -- Step 4: Generate docs content from source documentation -----------------
+Write-Host "`n[4/10] Generating docs content from source documentation..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$docsSourceDir = Join-Path $repoRoot "docs"
+$docsContentDir = Join-Path $siteDir "content\Docs"
+$docsTaxonomyDir = Join-Path $siteDir "taxonomy\docs"
+$descriptorsDir = Join-Path $here "doc-descriptors"
+
+# Clean old generated doc files (hand-authored files are in source/ and copied in step 0)
+Get-ChildItem $docsContentDir -Filter "*.md" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne "Overview.md" } | Remove-Item -Force
+Get-ChildItem $docsTaxonomyDir -Filter "*.yml" -ErrorAction SilentlyContinue |
+    Where-Object { $_.Name -ne "index.yml" } | Remove-Item -Force
+
+# Build a map of source filenames -> slugs for cross-doc link rewriting
+$docLinkMap = @{}
+$descriptorFiles = Get-ChildItem $descriptorsDir -Filter "*.yml" | Sort-Object Name
+foreach ($df in $descriptorFiles) {
+    $dc = Get-Content $df.FullName -Raw -Encoding utf8
+    foreach ($ln in ($dc -split "`n")) {
+        $ln = $ln.Trim()
+        if ($ln -match '^source:\s*"?(.+?)"?\s*$') {
+            $src = $Matches[1]
+            $bn = [System.IO.Path]::GetFileNameWithoutExtension($src)
+            $docLinkMap[$src] = (ConvertTo-KebabCase $bn) + ".html"
+        }
+    }
+}
+
+$docCount = 0
+
+foreach ($descriptorFile in $descriptorFiles) {
+    # Parse simple YAML descriptor (source, navTitle, description)
+    $descriptorContent = Get-Content $descriptorFile.FullName -Raw -Encoding utf8
+    $descriptor = @{}
+    foreach ($line in ($descriptorContent -split "`n")) {
+        $line = $line.Trim()
+        if ($line -match '^(\w+):\s*"?(.+?)"?\s*$') {
+            $descriptor[$Matches[1]] = $Matches[2]
+        }
+    }
+
+    $docFile = $descriptor['source']
+    if (!$docFile) {
+        Write-Warning "  Descriptor $($descriptorFile.Name) missing 'source' - skipping"
+        continue
+    }
+
+    $sourcePath = Join-Path $docsSourceDir $docFile
+    if (!(Test-Path $sourcePath)) {
+        Write-Warning "  Source doc not found: $docFile - skipping"
+        continue
+    }
+
+    $raw = Get-Content $sourcePath -Raw -Encoding utf8
+    $baseName = [System.IO.Path]::GetFileNameWithoutExtension($docFile)
+    $slug = ConvertTo-KebabCase $baseName
+
+    # Extract title from # heading
+    if ($raw -match '^# (.+?)[\r\n]') {
+        $docTitle = $Matches[1].Trim() -replace '`', ''
+    } else {
+        $docTitle = ($baseName -creplace '([a-z])([A-Z])', '$1 $2')
+    }
+
+    # Strip the # heading line
+    $docBody = ($raw -replace '^#[^\n]+\n\s*', '').TrimStart()
+
+    # Strip markdown "## Table of Contents" section (the TOC through the next --- or ## heading)
+    $docBody = $docBody -replace '(?ms)^## Table of Contents\s*\n(- \[.*?\]\(#.*?\)\s*\n)+\s*---\s*\n?', ''
+
+    # Rewrite cross-doc markdown links:
+    #   (Source.md)                  -> (/docs/slug.html)
+    #   (./Source.md)                -> (/docs/slug.html)
+    #   (Source.md#fragment)         -> (/docs/slug.html#fragment)
+    #   (./Source.md#fragment)       -> (/docs/slug.html#fragment)
+    foreach ($srcFile in $docLinkMap.Keys) {
+        $escaped = [regex]::Escape($srcFile)
+        $target = "/docs/$($docLinkMap[$srcFile])"
+        $docBody = $docBody -replace "\(\./$escaped(#[^)]+)?\)", "($target`$1)"
+        $docBody = $docBody -replace "\($escaped(#[^)]+)?\)", "($target`$1)"
+    }
+
+    # Rewrite links to files that aren't website pages (e.g. copilot/ instructions)
+    # Point them at the GitHub source
+    $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', '(https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/copilot/$1)'
+
+    # Use descriptor nav title, or fall back to doc title
+    $navTitle = if ($descriptor['navTitle']) { $descriptor['navTitle'] } else {
+        $t = $docTitle
+        if ($t.Length -gt 30) { $t = $t.Substring(0, 27) + '...' }
+        $t
+    }
+
+    # Use descriptor description, or extract first sentence
+    if ($descriptor['description']) {
+        $docDescription = $descriptor['description']
+    } elseif ($docBody -match '^(.+?\.)\s') {
+        $docDescription = $Matches[1] -replace '"', '\"'
+    } else {
+        $docDescription = $docTitle
+    }
+
+    # 1) Content markdown
+    $contentPath = Join-Path $docsContentDir "$baseName.md"
+    $frontmatter = "---`nContentType: `"application/vnd.endjin.ssg.content+md`"`nPublicationStatus: Published`nDate: 2026-03-15T00:00:00.0+00:00`nTitle: `"$($docTitle -replace '"', '\"')`"`n---`n"
+    [System.IO.File]::WriteAllText($contentPath, ($frontmatter + $docBody), [System.Text.Encoding]::UTF8)
+
+    # 2) Taxonomy YAML (with Template property for shared view)
+    $docRank = $docCount + 1
+    $docTaxonomyYml = @"
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: "$($docTitle -replace '"', '\"')"
+Template: docs/doc-page
+Navigation:
+  Title: $navTitle
+  Description: "$docDescription"
+  Parent: /docs/index.html
+  Url: /docs/$slug.html
+  Rank: $docRank
+  Header:
+    Visible: False
+    Link: False
+  Footer:
+    Visible: False
+    Link: False
+MetaData:
+  Title: "$($docTitle -replace '"', '\"') - Corvus.Text.Json"
+  Description: "$docDescription"
+  Keywords: [documentation, Corvus.Text.Json]
+OpenGraph:
+  Title: "$($docTitle -replace '"', '\"') - Corvus.Text.Json"
+  Description: "$docDescription"
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: $baseName
+    Spec:
+      Path: ../../content/Docs/$baseName.md
+"@
+    $docTaxonomyPath = Join-Path $docsTaxonomyDir "$slug.yml"
+    [System.IO.File]::WriteAllText($docTaxonomyPath, $docTaxonomyYml, [System.Text.Encoding]::UTF8)
+
+    $docCount++
+    Write-Host "  $docTitle -> $slug" -ForegroundColor Gray
+}
+Write-StepDuration "Docs generation ($docCount pages)" $sw
+
+# -- Step 5: Install Vellum --------------------------------------------------
+$vellumVersion = "2.0.9"
+$vellumDir = Join-Path $here ".endjin"
+$vellumCmd = Join-Path $vellumDir "vellum"
+
+if (!(Test-Path $vellumCmd) -and !(Test-Path "$vellumCmd.exe")) {
+    Write-Host "`n[5/10] Installing Vellum $vellumVersion..." -ForegroundColor Cyan
+    if (!(Test-Path $vellumDir)) {
+        New-Item -ItemType Directory -Path $vellumDir | Out-Null
+    }
+    & gh release download -R endjin/Endjin.StaticSiteGen $vellumVersion -p "vellum.$vellumVersion.nupkg" -D $vellumDir --clobber
+    & dotnet tool install vellum --version $vellumVersion --tool-path $vellumDir --add-source $vellumDir
+    if ($LASTEXITCODE -ne 0) { throw "Failed to install Vellum" }
+    Write-Host "  Vellum installed." -ForegroundColor Green
+} else {
+    Write-Host "`n[5/10] Vellum already installed." -ForegroundColor DarkGray
+}
+
+# -- Step 6: Run Vellum ------------------------------------------------------
+Write-Host "`n[6/10] Running Vellum..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Prepare output directory (clean contents but keep dir if locked by another process)
+if (Test-Path $outputDir) {
+    try { Remove-Item $outputDir -Recurse -Force }
+    catch { Get-ChildItem $outputDir -Force | Remove-Item -Recurse -Force -ErrorAction SilentlyContinue }
+}
+$assetsSource = Join-Path $siteDir "theme\corvus\assets"
+$assetsDest = Join-Path $outputDir "assets"
+Copy-Item -Path $assetsSource -Destination $assetsDest -Recurse -Force
+
+# Run Vellum from the site/ directory so it only sees site source files.
+# This eliminates the need to clean up spurious copies of build.ps1, tools/, etc.
+Push-Location $siteDir
+try {
+    $vellumArgs = @("content", "generate", "-t", (Join-Path $siteDir "site.yml"), "-o", $outputDir)
+    if ($Watch) { $vellumArgs += "--watch" }
+    & $vellumCmd $vellumArgs
+    if ($LASTEXITCODE -ne 0) { throw "Vellum generation failed" }
+} finally {
+    Pop-Location
+}
+
+# Vellum copies the site/ source files into output - remove the lightweight copies
+foreach ($dir in @("taxonomy", "content", "theme")) {
+    $spurious = Join-Path $outputDir $dir
+    if (Test-Path $spurious) { Remove-Item $spurious -Recurse -Force }
+}
+foreach ($file in @("site.yml")) {
+    $spurious = Join-Path $outputDir $file
+    if (Test-Path $spurious) { Remove-Item $spurious -Force }
+}
+Write-StepDuration "Vellum site generation" $sw
+
+# -- Step 7: Compile SCSS ----------------------------------------------------
+Write-Host "`n[7/10] Compiling SCSS..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+$scssPath = Join-Path $assetsSource "css\scss\main.scss"
+$cssOutputPath = Join-Path $outputDir "main.css"
+& npx sass $scssPath $cssOutputPath --style=compressed --no-source-map
+if ($LASTEXITCODE -ne 0) { throw "SCSS compilation failed" }
+Write-StepDuration "SCSS compilation" $sw
+
+# -- Step 7b: Copy per-version API search indices and sidebar fragments -------
+Write-Host "`n[7b/10] Copying API search indices and sidebar fragments..." -ForegroundColor Cyan
+$v5SearchSrc = Join-Path $v5ApiContentDir "search-index.json"
+$v4SearchSrc = Join-Path $v4ApiContentDir "search-index.json"
+$v5SearchDst = Join-Path $outputDir "api\v5\search-index.json"
+$v4SearchDst = Join-Path $outputDir "api\v4\search-index.json"
+if (Test-Path $v5SearchSrc) {
+    Copy-Item $v5SearchSrc $v5SearchDst -Force
+    Write-Host "  V5: $([math]::Round((Get-Item $v5SearchDst).Length/1024,1)) KB"
+} else { Write-Warning "  V5 search index not found at $v5SearchSrc" }
+if (Test-Path $v4SearchSrc) {
+    Copy-Item $v4SearchSrc $v4SearchDst -Force
+    Write-Host "  V4: $([math]::Round((Get-Item $v4SearchDst).Length/1024,1)) KB"
+} else { Write-Warning "  V4 search index not found at $v4SearchSrc" }
+
+# Copy sidebar fragments (loaded dynamically by JS to avoid duplicating ~1.5 MB per page)
+$v5SidebarSrc = Join-Path $v5ApiContentDir "sidebar.html"
+$v4SidebarSrc = Join-Path $v4ApiContentDir "sidebar.html"
+$v5SidebarDst = Join-Path $outputDir "api\v5\sidebar.html"
+$v4SidebarDst = Join-Path $outputDir "api\v4\sidebar.html"
+if (Test-Path $v5SidebarSrc) {
+    Copy-Item $v5SidebarSrc $v5SidebarDst -Force
+    Write-Host "  V5 sidebar: $([math]::Round((Get-Item $v5SidebarDst).Length/1024,1)) KB"
+} else { Write-Warning "  V5 sidebar fragment not found at $v5SidebarSrc" }
+if (Test-Path $v4SidebarSrc) {
+    Copy-Item $v4SidebarSrc $v4SidebarDst -Force
+    Write-Host "  V4 sidebar: $([math]::Round((Get-Item $v4SidebarDst).Length/1024,1)) KB"
+} else { Write-Warning "  V4 sidebar fragment not found at $v4SidebarSrc" }
+
+# -- Step 8: Build search index ----------------------------------------------
+Write-Host "`n[8/10] Building search index..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+$searchIndexOutput = Join-Path $outputDir "search-index.json"
+& node (Join-Path $here "tools\build-search-index.js") --output $searchIndexOutput
+if ($LASTEXITCODE -ne 0) {
+    Write-Warning "Search index generation failed - site will build without search."
+} else {
+    Write-StepDuration "Search index" $sw
+}
+
+# -- Step 9: Build Playground (Blazor WASM) ----------------------------------
+Write-Host "`n[9/10] Building Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+$playgroundProject = Join-Path $repoRoot "docs\playground\src\Corvus.Text.Json.Playground\Corvus.Text.Json.Playground.csproj"
+$playgroundPublishDir = Join-Path $here ".playground-publish"
+$playgroundOutputDir = Join-Path $outputDir "playground"
+
+# Publish the Blazor WASM app
+& dotnet publish $playgroundProject -c Release -o $playgroundPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "Playground publish failed" }
+
+# Copy the wwwroot output (the deployable Blazor app) to .output/playground/
+$playgroundWwwroot = Join-Path $playgroundPublishDir "wwwroot"
+if (!(Test-Path $playgroundWwwroot)) {
+    throw "Playground wwwroot not found at $playgroundWwwroot"
+}
+Copy-Item -Path $playgroundWwwroot -Destination $playgroundOutputDir -Recurse -Force
+
+# Rewrite <base href="/"> for subpath hosting
+$playgroundIndex = Join-Path $playgroundOutputDir "index.html"
+if (Test-Path $playgroundIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($playgroundIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground/`" />"
+    [System.IO.File]::WriteAllText($playgroundIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground/" -ForegroundColor Gray
+}
+
+# Clean up the intermediate publish directory
+Remove-Item $playgroundPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$playgroundSize = (Get-ChildItem $playgroundOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  Playground: $([math]::Round($playgroundSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "Playground build" $sw
+
+# -- Step 9b: Build JSONata Playground (Blazor WASM) ---------------------------
+Write-Host "`n[9b/10] Building JSONata Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Bundle monaco-jsonata (npm)
+$jsonataPlaygroundRoot = Join-Path $repoRoot "docs\playground-jsonata"
+Push-Location $jsonataPlaygroundRoot
+try {
+    & npm ci --ignore-scripts --no-audit --no-fund 2>&1 | Out-Null
+    & node esbuild.mjs
+    if ($LASTEXITCODE -ne 0) { throw "monaco-jsonata bundle failed" }
+} finally {
+    Pop-Location
+}
+
+$jsonataProject = Join-Path $repoRoot "docs\playground-jsonata\src\Corvus.Text.Json.Jsonata.Playground\Corvus.Text.Json.Jsonata.Playground.csproj"
+$jsonataPublishDir = Join-Path $here ".playground-jsonata-publish"
+$jsonataOutputDir = Join-Path $outputDir "playground-jsonata"
+
+& dotnet publish $jsonataProject -c Release -o $jsonataPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "JSONata Playground publish failed" }
+
+$jsonataWwwroot = Join-Path $jsonataPublishDir "wwwroot"
+if (!(Test-Path $jsonataWwwroot)) {
+    throw "JSONata Playground wwwroot not found at $jsonataWwwroot"
+}
+Copy-Item -Path $jsonataWwwroot -Destination $jsonataOutputDir -Recurse -Force
+
+$jsonataIndex = Join-Path $jsonataOutputDir "index.html"
+if (Test-Path $jsonataIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($jsonataIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-jsonata/`" />"
+    [System.IO.File]::WriteAllText($jsonataIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-jsonata/" -ForegroundColor Gray
+}
+
+Remove-Item $jsonataPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$jsonataSize = (Get-ChildItem $jsonataOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  JSONata Playground: $([math]::Round($jsonataSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "JSONata Playground build" $sw
+
+# -- Step 9c: Build JMESPath Playground (Blazor WASM) ---------------------------
+Write-Host "`n[9c/10] Building JMESPath Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Bundle monaco-jmespath (npm)
+$jmespathPlaygroundRoot = Join-Path $repoRoot "docs\playground-jmespath"
+Push-Location $jmespathPlaygroundRoot
+try {
+    & npm ci --ignore-scripts --no-audit --no-fund 2>&1 | Out-Null
+    & node esbuild.mjs
+    if ($LASTEXITCODE -ne 0) { throw "monaco-jmespath bundle failed" }
+} finally {
+    Pop-Location
+}
+
+$jmespathProject = Join-Path $repoRoot "docs\playground-jmespath\src\Corvus.Text.Json.JMESPath.Playground\Corvus.Text.Json.JMESPath.Playground.csproj"
+$jmespathPublishDir = Join-Path $here ".playground-jmespath-publish"
+$jmespathOutputDir = Join-Path $outputDir "playground-jmespath"
+
+& dotnet publish $jmespathProject -c Release -o $jmespathPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "JMESPath Playground publish failed" }
+
+$jmespathWwwroot = Join-Path $jmespathPublishDir "wwwroot"
+if (!(Test-Path $jmespathWwwroot)) {
+    throw "JMESPath Playground wwwroot not found at $jmespathWwwroot"
+}
+Copy-Item -Path $jmespathWwwroot -Destination $jmespathOutputDir -Recurse -Force
+
+$jmespathIndex = Join-Path $jmespathOutputDir "index.html"
+if (Test-Path $jmespathIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($jmespathIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-jmespath/`" />"
+    [System.IO.File]::WriteAllText($jmespathIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-jmespath/" -ForegroundColor Gray
+}
+
+Remove-Item $jmespathPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$jmespathSize = (Get-ChildItem $jmespathOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  JMESPath Playground: $([math]::Round($jmespathSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "JMESPath Playground build" $sw
+
+# -- Step 9d: Build YAML Playground (Blazor WASM) ------------------------------
+Write-Host "`n[9d/10] Building YAML Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$yamlProject = Join-Path $repoRoot "docs\playground-yaml\src\Corvus.Text.Json.Yaml.Playground\Corvus.Text.Json.Yaml.Playground.csproj"
+$yamlPublishDir = Join-Path $here ".playground-yaml-publish"
+$yamlOutputDir = Join-Path $outputDir "playground-yaml"
+
+& dotnet publish $yamlProject -c Release -o $yamlPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "YAML Playground publish failed" }
+
+$yamlWwwroot = Join-Path $yamlPublishDir "wwwroot"
+if (!(Test-Path $yamlWwwroot)) {
+    throw "YAML Playground wwwroot not found at $yamlWwwroot"
+}
+Copy-Item -Path $yamlWwwroot -Destination $yamlOutputDir -Recurse -Force
+
+$yamlIndex = Join-Path $yamlOutputDir "index.html"
+if (Test-Path $yamlIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($yamlIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-yaml/`" />"
+    [System.IO.File]::WriteAllText($yamlIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-yaml/" -ForegroundColor Gray
+}
+
+Remove-Item $yamlPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$yamlSize = (Get-ChildItem $yamlOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  YAML Playground: $([math]::Round($yamlSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "YAML Playground build" $sw
+
+# -- Step 9e: Build JSON Logic Playground (Blazor WASM) -------------------------
+Write-Host "`n[9e/10] Building JSON Logic Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$jsonlogicProject = Join-Path $repoRoot "docs\playground-jsonlogic\src\Corvus.Text.Json.JsonLogic.Playground\Corvus.Text.Json.JsonLogic.Playground.csproj"
+$jsonlogicPublishDir = Join-Path $here ".playground-jsonlogic-publish"
+$jsonlogicOutputDir = Join-Path $outputDir "playground-jsonlogic"
+
+& dotnet publish $jsonlogicProject -c Release -o $jsonlogicPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "JSON Logic Playground publish failed" }
+
+$jsonlogicWwwroot = Join-Path $jsonlogicPublishDir "wwwroot"
+if (!(Test-Path $jsonlogicWwwroot)) {
+    throw "JSON Logic Playground wwwroot not found at $jsonlogicWwwroot"
+}
+Copy-Item -Path $jsonlogicWwwroot -Destination $jsonlogicOutputDir -Recurse -Force
+
+$jsonlogicIndex = Join-Path $jsonlogicOutputDir "index.html"
+if (Test-Path $jsonlogicIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($jsonlogicIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-jsonlogic/`" />"
+    [System.IO.File]::WriteAllText($jsonlogicIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-jsonlogic/" -ForegroundColor Gray
+}
+
+Remove-Item $jsonlogicPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$jsonlogicSize = (Get-ChildItem $jsonlogicOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  JSON Logic Playground: $([math]::Round($jsonlogicSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "JSON Logic Playground build" $sw
+
+# -- Step 9f: Build JSONPath Playground (Blazor WASM) ---------------------------
+Write-Host "`n[9f/10] Building JSONPath Playground..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+# Bundle monaco-jsonpath (npm)
+$jsonpathPlaygroundRoot = Join-Path $repoRoot "docs\playground-jsonpath"
+Push-Location $jsonpathPlaygroundRoot
+try {
+    & npm ci --ignore-scripts --no-audit --no-fund 2>&1 | Out-Null
+    & node esbuild.mjs
+    if ($LASTEXITCODE -ne 0) { throw "monaco-jsonpath bundle failed" }
+} finally {
+    Pop-Location
+}
+
+$jsonpathProject = Join-Path $repoRoot "docs\playground-jsonpath\src\Corvus.Text.Json.JsonPath.Playground\Corvus.Text.Json.JsonPath.Playground.csproj"
+$jsonpathPublishDir = Join-Path $here ".playground-jsonpath-publish"
+$jsonpathOutputDir = Join-Path $outputDir "playground-jsonpath"
+
+& dotnet publish $jsonpathProject -c Release -o $jsonpathPublishDir --nologo
+if ($LASTEXITCODE -ne 0) { throw "JSONPath Playground publish failed" }
+
+$jsonpathWwwroot = Join-Path $jsonpathPublishDir "wwwroot"
+if (!(Test-Path $jsonpathWwwroot)) {
+    throw "JSONPath Playground wwwroot not found at $jsonpathWwwroot"
+}
+Copy-Item -Path $jsonpathWwwroot -Destination $jsonpathOutputDir -Recurse -Force
+
+$jsonpathIndex = Join-Path $jsonpathOutputDir "index.html"
+if (Test-Path $jsonpathIndex) {
+    $indexContent = [System.IO.File]::ReadAllText($jsonpathIndex)
+    $indexContent = $indexContent -replace '<base href="/" />', "<base href=`"$BasePathPrefix/playground-jsonpath/`" />"
+    [System.IO.File]::WriteAllText($jsonpathIndex, $indexContent)
+    Write-Host "  Updated base href to $BasePathPrefix/playground-jsonpath/" -ForegroundColor Gray
+}
+
+Remove-Item $jsonpathPublishDir -Recurse -Force -ErrorAction SilentlyContinue
+
+$jsonpathSize = (Get-ChildItem $jsonpathOutputDir -Recurse -File | Measure-Object -Property Length -Sum).Sum
+Write-Host "  JSONPath Playground: $([math]::Round($jsonpathSize/1MB, 1)) MB" -ForegroundColor Gray
+Write-StepDuration "JSONPath Playground build" $sw
+
+# Tell Jekyll to include _-prefixed directories needed by the Blazor playground.
+# We cannot use .nojekyll (which bypasses Jekyll entirely) because the resulting
+# unprocessed artifact exceeds GitHub Pages deployment limits.
+$configPath = Join-Path $outputDir "_config.yml"
+if (!(Test-Path $configPath)) {
+    Set-Content -Path $configPath -Value "include: [_framework, _content]" -NoNewline
+    Write-Host "  Created _config.yml to include _framework and _content." -ForegroundColor Gray
+}
+
+# -- Step 10: Check for broken links (lychee) ---------------------------------
+# Run BEFORE path rewriting so that root-relative links (e.g. /api/index.html)
+# still map to the local .output/ directory structure.
+Write-Host "`n[10] Checking for broken links..." -ForegroundColor Cyan
+$sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+$lycheeVersion = "0.23.0"
+$lycheeCmd = if ($IsWindows -or $env:OS -eq "Windows_NT") {
+    Join-Path $vellumDir "lychee.exe"
+} else {
+    Join-Path $vellumDir "lychee"
+}
+
+if (!(Test-Path $lycheeCmd)) {
+    Write-Host "  Installing lychee $lycheeVersion..." -ForegroundColor Gray
+    if ($IsWindows -or $env:OS -eq "Windows_NT") {
+        $lycheeAsset = "lychee-x86_64-windows.exe"
+        $lycheeUrl = "https://github.com/lycheeverse/lychee/releases/download/lychee-v$lycheeVersion/$lycheeAsset"
+        Invoke-WebRequest -Uri $lycheeUrl -OutFile $lycheeCmd -UseBasicParsing
+    } else {
+        $lycheeAsset = "lychee-x86_64-unknown-linux-gnu.tar.gz"
+        $lycheeUrl = "https://github.com/lycheeverse/lychee/releases/download/lychee-v$lycheeVersion/$lycheeAsset"
+        $lycheeTar = Join-Path $vellumDir $lycheeAsset
+        Invoke-WebRequest -Uri $lycheeUrl -OutFile $lycheeTar -UseBasicParsing
+        tar -xzf $lycheeTar -C $vellumDir "lychee"
+        Remove-Item $lycheeTar -Force
+        chmod +x $lycheeCmd
+    }
+    Write-Host "  lychee installed." -ForegroundColor Green
+} else {
+    Write-Host "  lychee already installed." -ForegroundColor DarkGray
+}
+
+$lycheeIgnore = Join-Path $here ".lycheeignore"
+# --root-dir MUST be an absolute path (lychee requirement) so that
+# root-relative links like /api/index.html resolve inside .output/
+$absOutputDir = (Resolve-Path $outputDir).Path
+$lycheeArgs = @(
+    "--root-dir", $absOutputDir
+    "--include-fragments"
+    "--no-progress"
+    "--exclude-path", "api[/\\]v4"
+    "--exclude-path", "playground"
+    "--exclude-path", "playground-jsonata"
+    "--exclude-path", "playground-jmespath"
+    "--exclude-path", "playground-jsonlogic"
+    "--exclude-path", "playground-jsonpath"
+    "--exclude-path", "playground-yaml"
+    "."
+)
+
+Push-Location $outputDir
+try {
+    # lychee reads .lycheeignore from CWD automatically
+    if (Test-Path $lycheeIgnore) {
+        Copy-Item $lycheeIgnore -Destination ".lycheeignore"
+    }
+    & $lycheeCmd @lycheeArgs
+} finally {
+    Pop-Location
+}
+if ($LASTEXITCODE -ne 0) { throw "Broken links found — see output above" }
+Write-StepDuration "Link check" $sw
+
+# -- Step 11: Rewrite root-relative paths for subpath hosting -----------------
+if ($BasePathPrefix) {
+    Write-Host "`n[11] Rewriting paths for base prefix '$BasePathPrefix'..." -ForegroundColor Cyan
+    $sw = [System.Diagnostics.Stopwatch]::StartNew()
+
+    # Rewrite HTML files (excluding playgrounds which use <base href>)
+    $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-jsonlogic\*" -and $_.FullName -notlike "*\playground-jsonpath\*" -and $_.FullName -notlike "*\playground-yaml\*" }
+    $rewriteCount = 0
+    foreach ($htmlFile in $htmlFiles) {
+        $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
+        $original = $content
+
+        # Rewrite href="/..." and src="/..." and content="/..." and data-search-index="/..." (but not protocol-relative "//" URLs)
+        $content = $content -replace '(href|src|content|data-search-index)="(/(?!/))', "`$1=`"$BasePathPrefix`$2"
+
+        if ($content -ne $original) {
+            [System.IO.File]::WriteAllText($htmlFile.FullName, $content)
+            $rewriteCount++
+        }
+    }
+    Write-Host "  Rewrote paths in $rewriteCount of $($htmlFiles.Count) HTML files." -ForegroundColor Gray
+
+    # Rewrite JS files that contain root-relative fetch URLs
+    $jsFiles = Get-ChildItem (Join-Path $outputDir "assets\js") -Filter "*.js" -File -ErrorAction SilentlyContinue
+    $jsRewriteCount = 0
+    foreach ($jsFile in $jsFiles) {
+        $content = [System.IO.File]::ReadAllText($jsFile.FullName)
+        $original = $content
+
+        # Rewrite string literals containing root-relative paths: '/api/', '/search-index.json', etc.
+        $content = $content -replace "(['""])(/(?!/)(?:api|search|docs|examples|getting-started|assets|playground|playground-jsonata|playground-jmespath|playground-jsonlogic|playground-jsonpath|playground-yaml))", "`$1$BasePathPrefix`$2"
+
+        if ($content -ne $original) {
+            [System.IO.File]::WriteAllText($jsFile.FullName, $content)
+            $jsRewriteCount++
+        }
+    }
+    if ($jsRewriteCount -gt 0) {
+        Write-Host "  Rewrote paths in $jsRewriteCount JS files." -ForegroundColor Gray
+    }
+
+    # Rewrite search-index.json files — URLs inside must also carry the base prefix
+    $searchJsonFiles = Get-ChildItem $outputDir -Filter "search-index.json" -Recurse -File -ErrorAction SilentlyContinue
+    $jsonRewriteCount = 0
+    foreach ($jsonFile in $searchJsonFiles) {
+        $content = [System.IO.File]::ReadAllText($jsonFile.FullName)
+        $original = $content
+
+        # Rewrite "Url": "/api/..." and "Url": "/docs/..." etc.
+        $content = $content -replace '("Url"\s*:\s*")(/(?!/)(?:api|docs|examples|getting-started))', "`$1$BasePathPrefix`$2"
+
+        if ($content -ne $original) {
+            [System.IO.File]::WriteAllText($jsonFile.FullName, $content)
+            $jsonRewriteCount++
+        }
+    }
+    if ($jsonRewriteCount -gt 0) {
+        Write-Host "  Rewrote URLs in $jsonRewriteCount search-index.json files." -ForegroundColor Gray
+    }
+
+    Write-StepDuration "Path rewriting" $sw
+} else {
+    Write-Host "`n[11] No base path prefix - skipping path rewriting." -ForegroundColor DarkGray
+}
+
+# -- Step 11b: Replace default GitHub URL with the one derived from git --------
+# The Razor template has a hardcoded default; if the git-derived URL differs
+# (e.g. building from a fork), rewrite all HTML references.
+$defaultGitHubUrl = "https://github.com/corvus-dotnet/Corvus.JsonSchema"
+if ($canonicalRepoUrl -ne $defaultGitHubUrl) {
+    Write-Host "`n  Rewriting GitHub URLs: $defaultGitHubUrl -> $canonicalRepoUrl" -ForegroundColor Cyan
+    $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
+        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-jsonlogic\*" -and $_.FullName -notlike "*\playground-jsonpath\*" -and $_.FullName -notlike "*\playground-yaml\*" }
+    $ghRewriteCount = 0
+    foreach ($htmlFile in $htmlFiles) {
+        $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
+        $original = $content
+        $content = $content.Replace($defaultGitHubUrl, $canonicalRepoUrl)
+        if ($content -ne $original) {
+            [System.IO.File]::WriteAllText($htmlFile.FullName, $content)
+            $ghRewriteCount++
+        }
+    }
+    if ($ghRewriteCount -gt 0) {
+        Write-Host "  Rewrote GitHub URLs in $ghRewriteCount HTML files." -ForegroundColor Gray
+    }
+}
+
+# Write robots.txt — allow indexing for production, block for preview/local
+if ($env:GITHUB_ACTIONS -and -not $Preview -and -not $IsPreviewDeployment) {
+    # Production CI build — allow search engines
+    $robotsTxt = @"
+User-agent: *
+Allow: /
+"@
+    [System.IO.File]::WriteAllText((Join-Path $outputDir "robots.txt"), $robotsTxt)
+    Write-Host "  Created robots.txt (allow indexing)." -ForegroundColor Gray
+
+    # Strip the hardcoded <meta name="robots" content="noindex, nofollow" /> from
+    # all HTML files so search engines can index the production site.
+    # The tag remains in _Layout.cshtml as a safe default for local/preview builds.
+    $robotsMetaCount = 0
+    Get-ChildItem -Path $outputDir -Filter "*.html" -Recurse | ForEach-Object {
+        $content = [System.IO.File]::ReadAllText($_.FullName)
+        $newContent = $content -replace '\s*<meta name="robots" content="noindex, nofollow"\s*/>', ''
+        if ($content -ne $newContent) {
+            [System.IO.File]::WriteAllText($_.FullName, $newContent)
+            $robotsMetaCount++
+        }
+    }
+    if ($robotsMetaCount -gt 0) {
+        Write-Host "  Stripped robots noindex meta tag from $robotsMetaCount HTML files." -ForegroundColor Gray
+    }
+} else {
+    # Local dev, preview, or PR preview — block indexing
+    $robotsTxt = @"
+User-agent: *
+Disallow: /
+"@
+    [System.IO.File]::WriteAllText((Join-Path $outputDir "robots.txt"), $robotsTxt)
+    Write-Host "  Created robots.txt (noindex — local/preview build)." -ForegroundColor Gray
+}
+
+Write-Host "`nBuild complete! Output: $outputDir" -ForegroundColor Green
+
+if ($Preview) {
+    Write-Host "`nStarting preview server..." -ForegroundColor Cyan
+    $previewArgs = @("content", "generate", "-t", (Join-Path $siteDir "site.yml"), "-o", $outputDir, "--preview")
+    & $vellumCmd $previewArgs
+}

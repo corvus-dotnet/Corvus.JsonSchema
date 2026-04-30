@@ -1,0 +1,7 @@
+{
+    "title": "A 1-dimensional array of Person instances",
+    "type": "array",
+    "items": { "$ref": "./person-closed.json" },
+    "minItems": 30,
+    "maxItems": 30
+}

@@ -1,0 +1,382 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- SYSLIB0020: JsonSerializerOptions.IgnoreNullValues is obsolete -->
+    <NoWarn>$(NoWarn);SYSLIB0020</NoWarn>
+    <!-- SYSLIB0049: JsonSerializerOptions.AddContext is obsolete -->
+    <NoWarn>$(NoWarn);SYSLIB0049</NoWarn>
+    <!-- Disable analyzers warnings about JSON being misformatted in string literals -->
+    <NoWarn>$(NoWarn);JSON001</NoWarn>
+    <!-- For this project, we want warnings if there are public APIs/types without properly formatted XML comments. -->
+    <SkipIntellisenseNoWarnCS1591>true</SkipIntellisenseNoWarnCS1591>
+    <NoWarn>$(NoWarn);CS8969</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn Condition="'$(TargetFramework)' == 'net481'">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
+    <!-- Warnings to always disable -->
+    <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065;CS8632</NoWarn>
+    <NoWarn>$(NoWarn);xUnit1031;xUnit2013;xUnit2017;CA2265</NoWarn>
+    <!-- these tests depend on the pdb files. Causes test failures like:
+          [FAIL] Corvus.Text.Json.Tests.DebuggerTests.DefaultJsonElement -->
+    <DebuggerSupport Condition="'$(DebuggerSupport)' == '' and '$(TargetOS)' == 'browser'">true</DebuggerSupport>
+    <!-- Needed for JsonSerializerOptionsUpdateHandler tests -->
+    <MetadataUpdaterSupport Condition="'$(MetadataUpdaterSupport)' == '' and '$(TargetOS)' == 'browser'">true</MetadataUpdaterSupport>
+    <IncludeRemoteExecutor>true</IncludeRemoteExecutor>
+    <!-- The JsonSerializerIsReflectionEnabledByDefault feature switch is turned off automatically in projects that enable the PublishTrimmed property.
+         Enable reflection and preserve required assemblies -->
+    <JsonSerializerIsReflectionEnabledByDefault Condition="'$(EnableAggressiveTrimming)' == 'true' and '$(UseNativeAotRuntime)' != 'true'">true</JsonSerializerIsReflectionEnabledByDefault>
+    <!-- Disable nullability public only feature for NullabilityInfoContextTests -->
+    <Features>$(Features.Replace('nullablePublicOnly', ''))</Features>
+    <CoreLibSharedDir>..\..\System.Private.CoreLib\src\</CoreLibSharedDir>
+    <LibrariesProjectRoot>..\..\</LibrariesProjectRoot>
+    <CommonPath>..\..\Common\src\</CommonPath>
+    <CommonTestPath>..\..\Common\tests\</CommonTestPath>
+    <LangVersion>preview</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <IsTestProject>true</IsTestProject>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Remove="ILLink.Descriptors.xml" />
+    <None Remove="Innerloop.playlist" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Text" />
+    <Using Include="SR = Corvus.Text.Json.Tests.Resources.Strings" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+    <PackageReference Include="coverlet.collector">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="System.Runtime.Loader" />
+    <PackageReference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
+    <Compile Include="BigNumber\BigNumberArithmeticTests.cs" />
+    <Compile Include="BigNumber\BigNumberComparisonTests.cs" />
+    <Compile Include="BigNumber\BigNumberConversionTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\AllOfConversionEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\ArrayEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\CreateBuilderEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\DefaultValueEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\EqualityEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\EnumConstEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\FormattingEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\MutationEquivalenceTests.cs" />
+    <Compile Include="VersionTrackingTests.cs" />
+    <Compile Include="Utf8UriEscapeTests.cs" />
+    <Compile Include="Utf8UriToolsCoverageTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\NumericArrayEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\ParsingEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\PropertyAccessEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\SerializationEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\TupleEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\UnionEquivalenceTests.cs" />
+    <Compile Include="MigrationEquivalenceTests\ValidationEquivalenceTests.cs" />
+    <Compile Include="DescendantPropertyEnumeratorTests.cs" />
+    <Compile Include="DummyDocument.cs" />
+    <Compile Include="DummyResultsCollector.cs" />
+    <Compile Include="JsonDocumentBuilderComplexObjectTests.cs" />
+    <Compile Include="JsonDocumentBuilderCreateDynamicTests.cs" />
+    <Compile Include="JsonDocumentBuilderInsertItemTests.cs" />
+    <Compile Include="MutableAccessorCoverageTests.cs" />
+    <Compile Include="MutableBuilderExtendedCoverageTests.cs" />
+    <Compile Include="MutableDocumentCoverageTests.cs" />
+    <Compile Include="PercentBufferOverflowTests.cs" />
+    <Compile Include="AnnotationProducerCoverageTests.cs" />
+    <Compile Include="ValueStackCoverageTests.cs" />
+    <Compile Include="LargeArrayBuilderTests.cs" />
+    <Compile Include="EvaluatorMessageCoverageTests.cs" />
+    <Compile Include="BuilderSnapshotCoverageTests.cs" />
+    <Compile Include="BuilderAndCopyMoveCoverageTests.cs" />
+    <Compile Include="SourceAndNumericCoverageTests.cs" />
+    <Compile Include="JsonDocumentBuilderRangeTests.cs" />
+    <Compile Include="JsonDocumentBuilderParseTests.cs" />
+    <Compile Include="JsonDocumentBuilderTests.cs" />
+    <Compile Include="JsonElement.MutableDynamicCloneTests.cs" />
+    <Compile Include="JsonElement.MutableDynamicWriteTests.cs" />
+    <Compile Include="JsonElement.MutableApplyTests.cs" />
+    <Compile Include="JsonElement.MutableCloneTests.cs" />
+    <Compile Include="JsonElement.MutableCopyMoveTests.cs" />
+    <Compile Include="JsonElement.MutableFreezeTests.cs" />
+    <Compile Include="JsonElement.MutableRemoveWhereTests.cs" />
+    <Compile Include="ExternalSimpleValueWriteTests.cs" />
+    <Compile Include="MultiComplexSetPropertyReproTest.cs" />
+    <Compile Include="DateTimeCoverageTests.cs" />
+    <Compile Include="JsonElementHelpersDateTimeTests.cs" />
+    <Compile Include="JsonElementHelpersParseNumberTests.cs" />
+    <Compile Include="CurrencyBufferOverflowTests.cs" />
+    <Compile Include="GeneralExponentialBufferOverflowTests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatCurrencyTests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatCurrencyUtf8Tests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatExponentialTests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatExponentialUtf8Tests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatFixedPointTests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatFixedPointUtf8Tests.cs" />
+    <Compile Include="JsonElementFormatTests.cs" />
+    <Compile Include="FormatAwareStringFormatTests.cs" />
+    <Compile Include="FormatAwareUriFormatTests.cs" />
+    <Compile Include="GeneratedObjectMutationTests.cs" />
+    <Compile Include="GeneratedCreateBuilderFromPropertiesTests.cs" />
+    <Compile Include="GeneratedSelfReferencingObjectTests.cs" />
+    <Compile Include="GeneratedNestedObjectMutationTests.cs" />
+    <Compile Include="GeneratedArrayMutationTests.cs" />
+    <Compile Include="GeneratedObjectWithArrayPropertyTests.cs" />
+    <Compile Include="GeneratedCompositionApplyTests.cs" />
+    <Compile Include="GeneratedCompositionMatchTests.cs" />
+    <Compile Include="GeneratedIfThenElseMatchTests.cs" />
+    <Compile Include="GeneratedMixedCompositionTests.cs" />
+    <Compile Include="GeneratedNullableOptionalTests.cs" />
+    <Compile Include="GeneratedTupleArrayTests.cs" />
+    <Compile Include="GeneratedComposedTupleTests.cs" />
+    <Compile Include="GeneratedComposedCreationTests.cs" />
+    <Compile Include="GeneratedNumericArrayTests.cs" />
+    <Compile Include="GeneratedRefNumericArrayTests.cs" />
+    <Compile Include="GeneratedIndexerTests.cs" />
+    <Compile Include="GeneratedDefaultPropertyTests.cs" />
+    <Compile Include="GeneratedPatternPropertiesTests.cs" />
+    <Compile Include="GeneratedRefPatternPropertiesTests.cs" />
+    <Compile Include="GeneratedAllOfPatternPropertiesTests.cs" />
+    <Compile Include="GeneratedUnevaluatedPatternPropertiesTests.cs" />
+    <Compile Include="PatternPropertyMethodPresenceTests.cs" />
+    <Compile Include="JsonElementPropertyIndexerTests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatGeneralTests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatGeneralUtf8Tests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatNumberTests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatNumberUtf8Tests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatPercentTests.cs" />
+    <Compile Include="JsonElementHelpersTryFormatPercentUtf8Tests.cs" />
+    <Compile Include="NumericFormatCoverageTests.cs" />
+    <Compile Include="TryFormatOverflowBugTests.cs" />
+    <Compile Include="NumericCoreOperationsTests.cs" />
+    <Compile Include="HexBinaryFormatTests.cs" />
+    <Compile Include="JsonElementNumberTest.cs" />
+    <Compile Include="JsonElement.MutableWriteTests.cs" />
+    <Compile Include="JsonElementSourceCoverageTests.cs" />
+    <Compile Include="JsonElementSourceTContextCoverageTests.cs" />
+    <Compile Include="UnescapedUtf16JsonStringTests.cs" />
+    <Compile Include="JsonWorkspaceWriterRentalTests.cs" />
+    <Compile Include="JsonPropertyDocumentBuilderDynamicTests.cs" />
+    <Compile Include="JsonPropertyDocumentBuilderTests.cs" />
+    <Compile Include="JsonSchemaAdditionalTests\draft2019-09\typeAndFormat.cs" />
+    <Compile Include="JsonSchemaAdditionalTests\draft2020-12\benchmarkRepro.cs" />
+    <Compile Include="JsonSchemaAdditionalTests\draft2020-12\largeNumbersOfRequiredProperties.cs" />
+    <Compile Include="JsonSchemaAdditionalTests\draft2020-12\typeAndFormat.cs" />
+    <Compile Include="JsonSchemaCodeGeneratorTests.cs" />
+    <Compile Include="JsonRegexValidatorTests.cs" />
+    <Compile Include="JsonSchemaContextTests.cs" />
+    <Compile Include="JsonSchemaEvaluationMessageTests.cs" />
+    <Compile Include="Canonicalization\JsonCanonicalizerTests.cs" />
+    <Compile Include="JsonSchemaMatchingNumberTests.cs" />
+    <Compile Include="JsonSchemaMatchingStringTests.cs" />
+    <Compile Include="JsonSchemaResultsCollectorTests.cs" />
+    <Compile Include="JsonSchemaResultsCollectorCoverageTests.cs" />
+    <Compile Include="JsonElementCoreApiCoverageTests.cs" />
+    <Compile Include="JsonElementCoverageTests.cs" />
+    <Compile Include="PeriodTests.cs" />
+    <Compile Include="PrebakedPropertyNameWriteTests.cs" />
+    <Compile Include="ValueStringBuilderTests.cs" />
+    <Compile Include="Utf8ValueStringBuilderTests.cs" />
+    <Compile Include="FixedDocumentCoverageTests.cs" />
+    <Compile Include="FixedDocumentCoverageTests2.cs" />
+    <Compile Include="ComplexValueBuilderCoverageTests.cs" />
+    <!-- Include common SR helper when resources are included. -->
+    <Compile Include="System\SR$(DefaultLanguageSourceExtension)" Visible="true" Link="Resources/Common/SR$(DefaultLanguageSourceExtension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(ContinuousIntegrationBuild)' == 'true'">
+    <HighAotMemoryUsageAssembly Include="Corvus.Text.Json.Tests.dll" />
+  </ItemGroup>
+  <!-- Adds Nullable annotation attributes to C# non .NETCoreApp builds. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\NullableAttributes.cs" Link="System\Diagnostics\CodeAnalysis\NullableAttributes.cs" />
+  </ItemGroup>
+  <!-- Adds polyfills on non-.NETCoreApp builds -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\CallerArgumentExpressionAttribute.cs" />
+    <Compile Include="$(LibrariesProjectRoot)\Common\src\System\ExceptionPolyfills.cs" Link="System\ExceptionPolyfills.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\Versioning\PlatformAttributes.cs" Link="System\Runtime\Versioning\PlatformAttributes.cs" />
+  </ItemGroup>
+  <!-- Adds ObsoleteAttribute to projects that need to apply downlevel Obsoletions with DiagnosticId and UrlFormat -->
+  <Choose>
+    <When Condition="'$(TargetFramework)' == 'net481'">
+      <ItemGroup>
+        <Compile Include="$(CoreLibSharedDir)System\ObsoleteAttribute.cs" Link="System\ObsoleteAttribute.cs" />
+      </ItemGroup>
+      <PropertyGroup>
+        <!-- Suppress CS0436 to allow ObsoleteAttribute to be internally defined and used in netstandard -->
+        <NoWarn>$(NoWarn);CS0436</NoWarn>
+      </PropertyGroup>
+    </When>
+  </Choose>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Include="$(CoreLibSharedDir)System\Index.cs" Link="System\Index.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Range.cs" Link="System\Range.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Numerics\Hashing\HashHelpers.cs" Link="System\Numerics\Hashing\HashHelpers.cs" />
+  </ItemGroup>
+  <PropertyGroup>
+    <NoWarn Condition="'$(TargetFramework)' == 'net481'">$(NoWarn);nullable</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="AssemblyInfo.cs" />
+    <Compile Include="$(CommonTestPath)System\IO\WrappedMemoryStream.cs" Link="CommonTest\System\IO\WrappedMemoryStream.cs" />
+    <Compile Include="$(CommonTestPath)System\DateTimeTestHelpers.cs" Link="CommonTest\System\DateTimeTestHelpers.cs" />
+    <Compile Include="..\Common\JsonNumberTestData.cs" Link="CommonTest\System\Text\Json\Tests\JsonNumberTestData.cs" />
+    <Compile Include="..\Common\JsonTestHelper.cs" Link="CommonTest\System\Text\Json\JsonTestHelper.cs" />
+    <Compile Include="..\Common\TestClasses\TestClasses.cs" Link="CommonTest\System\Text\Json\Tests\Serialization\TestClasses\TestClasses.cs" />
+    <Compile Include="..\Common\TestClasses\TestClasses.SimpleTestClass.cs" Link="CommonTest\System\Text\Json\Tests\Serialization\TestClasses\TestClasses.SimpleTestClass.cs" />
+    <Compile Include="..\Common\TestClasses\TestClasses.SimpleTestStruct.cs" Link="CommonTest\System\Text\Json\Tests\Serialization\TestClasses\TestClasses.SimpleTestStruct.cs" />
+    <!-- BigNumber Tests -->
+    <Compile Include="BigNumber\BigNumberTestData.cs" />
+    <Compile Include="BigNumber\BigNumberConstructorTests.cs" />
+    <Compile Include="BigNumber\BigNumberNormalizeTests.cs" />
+    <Compile Include="BigNumber\BigNumberTryFormatCharTests.cs" />
+    <Compile Include="BigNumber\BigNumberTryFormatByteTests.cs" />
+    <Compile Include="BigNumber\BigNumberTryParseTests.cs" />
+    <Compile Include="BigNumber\BigNumberEqualityTests.cs" />
+    <Compile Include="BigNumber\BigNumberToStringTests.cs" />
+    <Compile Include="BigNumber\BigNumberEdgeCaseTests.cs" />
+    <Compile Include="BitStackTests.cs" />
+    <Compile Include="BufferFactory.cs" />
+    <Compile Include="BufferSegment.cs" />
+    <Compile Include="DebuggerTests.cs" />
+    <Compile Include="EnumStringSetValidationTests.cs" />
+    <Compile Include="CaseInsensitiveEnumTests.cs" />
+    <Compile Include="ReservedPropertyNameTests.cs" />
+    <Compile Include="StringMaxLengthEnumTests.cs" />
+    <Compile Include="OneOfDiscriminatorValidationTests.cs" />
+    <Compile Include="AnyOfDiscriminatorValidationTests.cs" />
+    <Compile Include="AnyOfPartialDiscriminatorValidationTests.cs" />
+    <Compile Include="OneOfNumericDiscriminatorValidationTests.cs" />
+    <Compile Include="NoopRegexOptimizationTests.cs" />
+    <Compile Include="NonEmptyRegexOptimizationTests.cs" />
+    <Compile Include="PrefixRegexOptimizationTests.cs" />
+    <Compile Include="RangeRegexOptimizationTests.cs" />
+    <Compile Include="FixedSizedBufferWriter.cs" />
+    <Compile Include="InvalidBufferWriter.cs" />
+    <Compile Include="JsonBase64TestData.cs" />
+    <Compile Include="JsonDateTimeTestData.cs" />
+    <Compile Include="ParsedJsonDocumentTests.cs" />
+    <Compile Include="RequiredPropertyResultsTests.cs" />
+    <Compile Include="SourceLocationTests.cs" />
+    <Compile Include="JsonElementCloneTests.cs" />
+    <Compile Include="JsonElementGetMethodEdgeCaseTests.cs" />
+    <Compile Include="JsonElementGetMethodExceptionTests.cs" />
+    <Compile Include="JsonElementGetMethodSuccessTests.cs" />
+    <Compile Include="JsonElementMutableImmutableConsistencyTests.cs" />
+    <Compile Include="JsonElementNumericBoundaryTests.cs" />
+    <Compile Include="JsonElementParseTests.cs" />
+    <Compile Include="JsonPointerExtensionTests.cs" />
+    <Compile Include="JsonElementWriteTests.cs" />
+    <Compile Include="JsonEncodedTextTests.cs" />
+    <Compile Include="JsonGuidTestData.cs" />
+    <Compile Include="JsonPropertyTests.cs" />
+    <Compile Include="JsonReaderStateAndOptionsTests.cs" />
+    <Compile Include="JsonTestHelper.cs" />
+    <Compile Include="JsonWriterOptionsTests.cs" />
+    <Compile Include="TestCaseType.cs" />
+    <Compile Include="Utf8JsonReaderTests.cs" />
+    <Compile Include="Utf8JsonReaderTests.MultiSegment.cs" />
+    <Compile Include="Utf8JsonReaderTests.TryGet.cs" />
+    <Compile Include="Utf8JsonReaderTests.TryGet.Date.cs" />
+    <Compile Include="Utf8JsonReaderTests.ValueTextEquals.cs" />
+    <Compile Include="Utf8JsonWriterTests.Values.StringSegment.cs" />
+    <Compile Include="Utf8JsonWriterTests.cs" />
+    <Compile Include="Utf8JsonWriterTests.WriteRaw.cs" />
+    <Compile Include="Utf8UriTemplateTests.cs" />
+    <Compile Include="Utf8UriFormatTests.cs" />
+    <Compile Include="Utf8UriApplyTests.cs" />
+    <Compile Include="Utf8UriMakeRelativeTests.cs" />
+    <Compile Include="Utf8UriReferenceTests.cs" />
+    <Compile Include="Utf8UriTests.cs" />
+    <Compile Include="Utf8IriMakeRelativeTests.cs" />
+    <Compile Include="Utf8IriReferenceTests.cs" />
+    <Compile Include="Utf8IriTests.cs" />
+    <Compile Include="UriCoverageTests.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Include="$(CommonPath)System\Buffers\ArrayBufferWriter.cs" Link="CommonTest\System\Buffers\ArrayBufferWriter.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\DynamicallyAccessedMemberTypes.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\DynamicDependencyAttribute.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\SetsRequiredMembersAttribute.cs" Link="System.Private.CoreLib\System\Diagnostics\CodeAnalysis\SetsRequiredMembersAttribute.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\CompilerFeatureRequiredAttribute.cs" Link="System.Private.CoreLib\System\Runtime\CompilerServices\CompilerFeatureRequiredAttribute.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\RequiredMemberAttribute.cs" Link="System.Private.CoreLib\System\Runtime\CompilerServices\RequiredMemberAttribute.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
+    <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
+    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="Newtonsoft.Json" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <!-- Only include System.Text.Json for net481 as it's included in .NET 6+ runtime -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="System.Text.Json" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="System.Collections.Immutable" />
+    <PackageReference Include="System.IO.Pipelines" />
+    <PackageReference Include="System.Linq.AsyncEnumerable" />
+    <Reference Include="Microsoft.CSharp" />
+    <PackageReference Include="System.ComponentModel.Annotations" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="JsonSchema.Net" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\tests\TestUtilities\TestUtilities.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels\Corvus.Text.Json.Tests.GeneratedModels.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable\Corvus.Text.Json.Tests.GeneratedModels.OptionalAsNullable.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Tests.MigrationModels.V4\Corvus.Text.Json.Tests.MigrationModels.V4.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.Tests.MigrationModels.V5\Corvus.Text.Json.Tests.MigrationModels.V5.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.DotNet.XUnitAssert">
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Remove="..\..\Common\tests\xunit.runner.json" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="$(CommonTestPath)xunit.runner.json" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="JsonSchemaTestSuite\**\*.cs" />
+    <Compile Include="StandaloneEvaluatorTestSuite\**\*.cs" />
+    <Compile Include="AnnotationTestSuite\**\*.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="JsonSchemaTestSuite\" />
+    <Folder Include="StandaloneEvaluatorTestSuite\" />
+    <Folder Include="AnnotationTestSuite\" />
+  </ItemGroup>
+</Project>

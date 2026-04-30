@@ -1,0 +1,612 @@
+=== BenchmarkAggregation ===
+ Corvus_Average         | Average    | 1,043.7 ns | 82.62 ns | 243.59 ns | 1,028.0 ns |  0.76 |    0.18 |      - |         - |        0.00 |
+ JsonataDotNet_Average  | Average    | 1,371.2 ns | 29.64 ns |  83.60 ns | 1,328.9 ns |  1.00 |    0.08 | 0.2193 |    2760 B |        1.00 |
+ Corvus_CodeGen_Average | Average    |   587.5 ns |  8.03 ns |   7.12 ns |   583.7 ns |  0.43 |    0.02 |      - |         - |        0.00 |
+ Corvus_Max             | Max        |   750.6 ns |  3.01 ns |   1.99 ns |   749.9 ns |  0.55 |    0.04 |      - |         - |        0.00 |
+ JsonataDotNet_Max      | Max        | 1,375.5 ns | 37.56 ns | 109.55 ns | 1,353.1 ns |  1.01 |    0.11 | 0.2193 |    2760 B |        1.00 |
+ Corvus_CodeGen_Max     | Max        |   587.6 ns |  6.46 ns |   5.73 ns |   584.5 ns |  0.43 |    0.03 |      - |         - |        0.00 |
+ Corvus_Min             | Min        |   520.8 ns | 65.97 ns | 194.52 ns |   405.1 ns |  0.71 |    0.26 |      - |         - |        0.00 |
+ JsonataDotNet_Min      | Min        |   733.6 ns | 13.95 ns |  13.70 ns |   734.8 ns |  1.00 |    0.03 | 0.2193 |    2760 B |        1.00 |
+ Corvus_CodeGen_Min     | Min        |   308.3 ns |  4.81 ns |   4.50 ns |   307.6 ns |  0.42 |    0.01 |      - |         - |        0.00 |=== BenchmarkArithmetic ===
+ Corvus_MapArithmetic          | MapArithmetic  | 1,100.5119 ns | 18.3016 ns | 17.1194 ns |  0.83 |    0.02 | 0.0134 |      - |     168 B |        0.03 |
+ JsonataDotNet_MapArithmetic   | MapArithmetic  | 1,324.2963 ns | 24.4384 ns | 22.8597 ns |  1.00 |    0.02 | 0.4406 |      - |    5536 B |        1.00 |
+ Corvus_CodeGen_MapArithmetic  | MapArithmetic  |   810.3714 ns |  7.5237 ns |  7.0377 ns |  0.61 |    0.01 | 0.0105 |      - |     136 B |        0.02 |
+ Corvus_PureArithmetic         | PureArithmetic |   185.2176 ns |  1.8319 ns |  1.7136 ns | 0.618 |    0.01 |      - |      - |         - |        0.00 |
+ JsonataDotNet_PureArithmetic  | PureArithmetic |   299.7573 ns |  3.8705 ns |  2.7986 ns | 1.000 |    0.01 | 0.1073 |      - |    1352 B |        1.00 |
+ Corvus_CodeGen_PureArithmetic | PureArithmetic |     0.6053 ns |  0.0283 ns |  0.0265 ns | 0.002 |    0.00 |      - |      - |         - |        0.00 |
+ Corvus_SumProduct             | SumProduct     | 1,234.1888 ns | 18.9693 ns | 17.7439 ns |  0.77 |    0.02 | 0.0019 |      - |      32 B |       0.005 |
+ JsonataDotNet_SumProduct      | SumProduct     | 1,602.6690 ns | 24.6762 ns | 23.0821 ns |  1.00 |    0.02 | 0.5150 | 0.0019 |    6480 B |       1.000 |
+ Corvus_CodeGen_SumProduct     | SumProduct     |   416.5885 ns |  4.3717 ns |  3.8754 ns |  0.26 |    0.00 |      - |      - |         - |       0.000 |=== BenchmarkArrayFunctions ===
+ Corvus_Append             | Append     | 422.4 ns |  3.40 ns |   3.01 ns | 422.5 ns |  0.53 |    0.01 | 0.0105 |     136 B |        0.04 |
+ JsonataDotNet_Append      | Append     | 793.0 ns |  9.68 ns |   7.56 ns | 793.3 ns |  1.00 |    0.01 | 0.2613 |    3280 B |        1.00 |
+ Corvus_CodeGen_Append     | Append     | 415.9 ns |  3.13 ns |   2.77 ns | 415.5 ns |  0.52 |    0.01 | 0.0105 |     136 B |        0.04 |
+ Corvus_Count              | Count      | 142.3 ns |  0.26 ns |   0.22 ns | 142.4 ns |  0.31 |    0.00 |      - |         - |        0.00 |
+ JsonataDotNet_Count       | Count      | 459.9 ns |  5.34 ns |   4.73 ns | 460.9 ns |  1.00 |    0.01 | 0.1683 |    2112 B |        1.00 |
+ Corvus_CodeGen_Count      | Count      | 115.1 ns |  1.02 ns |   0.96 ns | 114.9 ns |  0.25 |    0.00 |      - |         - |        0.00 |
+ Corvus_Distinct           | Distinct   | 658.7 ns |  8.40 ns |   7.86 ns | 659.0 ns |  0.86 |    0.01 | 0.0105 |     136 B |        0.05 |
+ JsonataDotNet_Distinct    | Distinct   | 768.1 ns |  9.80 ns |   8.69 ns | 769.1 ns |  1.00 |    0.02 | 0.2270 |    2848 B |        1.00 |
+ Corvus_CodeGen_Distinct   | Distinct   | 558.3 ns |  4.92 ns |   4.61 ns | 560.3 ns |  0.73 |    0.01 | 0.0105 |     13
+36 B |        0.05 |
+ Corvus_FlattenStd         | FlattenStd | 439.2 ns |  1.16 ns |   1.03 ns | 438.9 ns |  0.86 |    0.27 | 0.0105 |     13
+36 B |        0.09 |
+ JsonataDotNet_FlattenStd  | FlattenStd | 559.6 ns | 59.02 ns | 159.56 ns | 541.9 ns |  1.09 |    0.47 | 0.1211 |    152
+20 B |        1.00 |
+ Corvus_CodeGen_FlattenStd | FlattenStd | 514.7 ns | 10.21 ns |  11.75 ns | 510.2 ns |  1.00 |    0.32 | 0.0105 |     13
+36 B |        0.09 |
+ Corvus_Reverse            | Reverse    | 420.9 ns |  8.46 ns |  22.44 ns | 417.6 ns |  0.49 |    0.03 | 0.0105 |     13
+36 B |        0.06 |
+ JsonataDotNet_Reverse     | Reverse    | 869.9 ns | 17.53 ns |  46.49 ns | 849.4 ns |  1.00 |    0.07 | 0.1698 |    213
+36 B |        1.00 |
+ Corvus_CodeGen_Reverse    | Reverse    | 375.4 ns |  1.33 ns |   1.18 ns | 374.8 ns |  0.43 |    0.02 | 0.0105 |     13
+36 B |        0.06 |
+
+=== BenchmarkBindings ===
+ Corvus_BindingInHof         | BindingInHof | 3,436.0 ns |  50.82 ns |  42.44 ns | 3,433.5 ns |  0.66 |    0.04 | 0.0496
+6 |     648 B |        0.05 |
+ JsonataDotNet_BindingInHof  | BindingInHof | 5,263.3 ns | 133.07 ns | 375.33 ns | 5,071.7 ns |  1.00 |    0.10 | 0.9384
+4 |   11792 B |        1.00 |
+ Corvus_CodeGen_BindingInHof | BindingInHof | 1,973.5 ns |  39.26 ns |  73.74 ns | 1,941.7 ns |  0.38 |    0.03 | 0.0076
+6 |     136 B |        0.01 |
+ Corvus_LetBinding           | LetBinding   | 2,252.7 ns |  43.35 ns |  42.58 ns | 2,252.7 ns |  0.71 |    0.02 | 0.0114
+4 |     152 B |        0.02 |
+ JsonataDotNet_LetBinding    | LetBinding   | 3,181.5 ns |  51.76 ns |  72.55 ns | 3,162.6 ns |  1.00 |    0.03 | 0.5569
+9 |    6992 B |        1.00 |
+ Corvus_CodeGen_LetBinding   | LetBinding   |   851.0 ns |   6.45 ns |   5.38 ns |   849.3 ns |  0.27 |    0.01 |      -
+- |         - |        0.00 |
+
+=== BenchmarkColdCompile ===
+ Corvus_Complex        | Complex    | 12,346.5 ns | 244.60 ns |   447.26 ns | 12,241.4 ns |  0.83 |    0.09 | 1.1292 | 0
+0.0305 |  13.84 KB |        0.45 |
+ JsonataDotNet_Complex | Complex    | 15,069.3 ns | 598.33 ns | 1,627.80 ns | 14,553.0 ns |  1.01 |    0.15 | 2.5024 | 0
+0.0458 |   30.8 KB |        1.00 |
+ Corvus_Medium         | Medium     |  3,957.4 ns |  21.89 ns |    19.41 ns |  3,956.3 ns |  0.78 |    0.08 | 0.4044 |  
+     - |   5.02 KB |        0.49 |
+ JsonataDotNet_Medium  | Medium     |  5,105.2 ns | 202.77 ns |   581.79 ns |  4,956.0 ns |  1.01 |    0.16 | 0.8392 |  
+     - |  10.29 KB |        1.00 |
+ Corvus_Simple         | Simple     |    860.3 ns |  17.12 ns |    24.00 ns |    851.2 ns |  0.89 |    0.07 | 0.1011 |  
+     - |   1.24 KB |        0.55 |
+ JsonataDotNet_Simple  | Simple     |    974.1 ns |  26.22 ns |    76.07 ns |    960.3 ns |  1.01 |    0.11 | 0.1850 |  
+     - |   2.27 KB |        1.00 |
+
+=== BenchmarkDateTime ===
+ Corvus_FromMillis         | FromMillis | 535.4 ns | 10.49 ns | 11.66 ns | 537.6 ns |  0.65 |    0.02 |      - |        
+  - |        0.00 |
+ JsonataDotNet_FromMillis  | FromMillis | 825.7 ns | 16.40 ns | 21.89 ns | 830.1 ns |  1.00 |    0.04 | 0.1249 |    1568
+8 B |        1.00 |
+ Corvus_CodeGen_FromMillis | FromMillis | 322.2 ns |  6.37 ns |  9.91 ns | 324.6 ns |  0.39 |    0.02 |      - |        
+  - |        0.00 |
+ Corvus_Millis             | Millis     | 260.3 ns |  5.19 ns | 10.94 ns | 258.0 ns |  1.44 |    0.07 |      - |        
+  - |        0.00 |
+ JsonataDotNet_Millis      | Millis     | 181.2 ns |  3.65 ns |  4.48 ns | 181.0 ns |  1.00 |    0.03 | 0.0446 |     560
+0 B |        1.00 |
+ Corvus_CodeGen_Millis     | Millis     | 201.1 ns |  4.08 ns |  8.24 ns | 197.4 ns |  1.11 |    0.05 |      - |        
+  - |        0.00 |
+ Corvus_Now                | Now        | 306.5 ns |  6.14 ns |  9.00 ns | 307.2 ns |  0.76 |    0.03 |      - |        
+  - |        0.00 |
+ JsonataDotNet_Now         | Now        | 405.1 ns |  7.98 ns |  9.80 ns | 409.5 ns |  1.00 |    0.03 | 0.0477 |     600
+0 B |        1.00 |
+ Corvus_CodeGen_Now        | Now        | 260.2 ns |  5.25 ns | 10.37 ns | 266.6 ns |  0.64 |    0.03 |      - |        
+  - |        0.00 |
+ Corvus_ToMillis           | ToMillis   | 279.6 ns |  5.55 ns |  9.72 ns | 280.2 ns |  0.37 |    0.02 |      - |        
+  - |        0.00 |
+ JsonataDotNet_ToMillis    | ToMillis   | 763.2 ns | 15.37 ns | 29.25 ns | 756.7 ns |  1.00 |    0.05 | 0.1097 |    1376
+6 B |        1.00 |
+ Corvus_CodeGen_ToMillis   | ToMillis   | 213.5 ns |  4.33 ns | 11.02 ns | 212.0 ns |  0.28 |    0.02 |      - |        
+  - |        0.00 |
+
+=== BenchmarkDeepNavigation ===
+ Corvus_10Level         | 10Level    |   298.0 ns |  5.81 ns |  6.69 ns |   296.6 ns |  0.27 |    0.01 |      - |       
+   - |        0.00 |
+ JsonataDotNet_10Level  | 10Level    | 1,094.8 ns | 21.35 ns | 55.11 ns | 1,067.9 ns |  1.00 |    0.07 | 0.2651 |    332
+28 B |        1.00 |
+ Corvus_CodeGen_10Level | 10Level    |   311.5 ns |  6.03 ns |  7.18 ns |   307.6 ns |  0.29 |    0.01 |      - |       
+   - |        0.00 |
+ Corvus_5Level          | 5Level     |   158.2 ns |  2.93 ns |  2.45 ns |   157.0 ns |  0.24 |    0.02 |      - |       
+   - |        0.00 |
+ JsonataDotNet_5Level   | 5Level     |   667.5 ns | 14.96 ns | 43.40 ns |   658.2 ns |  1.00 |    0.09 | 0.1535 |    193
+36 B |        1.00 |
+ Corvus_CodeGen_5Level  | 5Level     |   189.0 ns |  0.78 ns |  0.65 ns |   189.2 ns |  0.28 |    0.02 |      - |       
+   - |        0.00 |
+
+=== BenchmarkEachSift ===
+ Corvus_Each         | Each       | 2,628.6 ns |  51.80 ns |  61.67 ns | 2,655.4 ns |  0.63 |    0.06 | 0.0153 |     216
+6 B |        0.03 |
+ JsonataDotNet_Each  | Each       | 4,232.8 ns | 157.70 ns | 457.53 ns | 4,097.5 ns |  1.01 |    0.15 | 0.6447 |    8096
+6 B |        1.00 |
+ Corvus_CodeGen_Each | Each       | 1,042.1 ns |  20.82 ns |  33.62 ns | 1,027.2 ns |  0.25 |    0.03 | 0.0095 |     136
+6 B |        0.02 |
+ Corvus_Sift         | Sift       | 1,527.0 ns |  14.05 ns |  11.73 ns | 1,523.7 ns |  0.46 |    0.04 | 0.0172 |     216
+6 B |        0.03 |
+ JsonataDotNet_Sift  | Sift       | 3,307.3 ns |  95.14 ns | 272.97 ns | 3,212.4 ns |  1.01 |    0.11 | 0.5646 |    7088
+8 B |        1.00 |
+ Corvus_CodeGen_Sift | Sift       |   533.9 ns |   0.68 ns |   0.53 ns |   533.8 ns |  0.16 |    0.01 | 0.0105 |     136
+6 B |        0.02 |
+
+=== BenchmarkEmployeeTransform ===
+ Corvus_Evaluate                | CachedEval | 2.113 μs | 0.0415 μs | 0.0581 μs | 2.080 μs |  0.48 |    0.04 | 0.0763 | 
+      - |     976 B |        0.10 |
+ JsonataDotNet_Evaluate         | CachedEval | 4.463 μs | 0.1315 μs | 0.3687 μs | 4.273 μs |  1.01 |    0.11 | 0.7782 | 
+      - |    9920 B |        1.00 |
+ Corvus_CodeGen_Evaluate        | CachedEval | 1.947 μs | 0.0053 μs | 0.0049 μs | 1.947 μs |  0.44 |    0.03 | 0.0191 | 
+      - |     272 B |        0.03 |
+ Corvus_ParseAndEvaluate        | ColdStart  | 5.747 μs | 0.0355 μs | 0.0277 μs | 5.746 μs |  0.63 |    0.06 | 0.6409 | 
+      - |    8104 B |        0.42 |
+ JsonataDotNet_ParseAndEvaluate | ColdStart  | 9.174 μs | 0.3225 μs | 0.8936 μs | 9.015 μs |  1.01 |    0.13 | 1.5259 | 
+ 0.0153 |   19296 B |        1.00 |
+
+=== BenchmarkEncoding ===
+ Corvus_Base64Decode               | Base64Decode       | 156.8 ns |  3.21 ns |   3.43 ns | 156.4 ns |  0.27 |    0.01 |
+|      - |         - |        0.00 |
+ JsonataDotNet_Base64Decode        | Base64Decode       | 572.1 ns |  2.14 ns |   1.78 ns | 572.1 ns |  1.00 |    0.00 |
+| 0.1049 |    1320 B |        1.00 |
+ Corvus_CodeGen_Base64Decode       | Base64Decode       | 103.5 ns |  1.71 ns |   1.83 ns | 103.6 ns |  0.18 |    0.00 |
+|      - |         - |        0.00 |
+ Corvus_Base64Encode               | Base64Encode       | 171.2 ns |  3.46 ns |   4.25 ns | 171.4 ns |  0.30 |    0.02 |
+|      - |         - |        0.00 |
+ JsonataDotNet_Base64Encode        | Base64Encode       | 568.0 ns | 13.90 ns |  39.21 ns | 561.4 ns |  1.00 |    0.09 |
+| 0.1059 |    1336 B |        1.00 |
+ Corvus_CodeGen_Base64Encode       | Base64Encode       | 116.5 ns |  1.66 ns |   1.38 ns | 116.9 ns |  0.21 |    0.01 |
+|      - |         - |        0.00 |
+ Corvus_DecodeUrl                  | DecodeUrl          | 257.5 ns |  5.18 ns |   7.90 ns | 257.5 ns |  0.48 |    0.03 |
+|      - |         - |        0.00 |
+ JsonataDotNet_DecodeUrl           | DecodeUrl          | 534.6 ns | 10.81 ns |  25.05 ns | 521.7 ns |  1.00 |    0.06 |
+| 0.1040 |    1312 B |        1.00 |
+ Corvus_CodeGen_DecodeUrl          | DecodeUrl          | 211.0 ns |  4.27 ns |   7.25 ns | 213.6 ns |  0.40 |    0.02 |
+|      - |         - |        0.00 |
+ Corvus_DecodeUrlComponent         | DecodeUrlComponent | 212.0 ns |  4.22 ns |   4.34 ns | 212.2 ns |  0.36 |    0.03 |
+|      - |         - |        0.00 |
+ JsonataDotNet_DecodeUrlComponent  | DecodeUrlComponent | 586.9 ns | 14.77 ns |  42.62 ns | 577.7 ns |  1.00 |    0.10 |
+| 0.1011 |    1272 B |        1.00 |
+ Corvus_CodeGen_DecodeUrlComponent | DecodeUrlComponent | 157.2 ns |  0.81 ns |   0.67 ns | 157.3 ns |  0.27 |    0.02 |
+|      - |         - |        0.00 |
+ Corvus_EncodeUrl                  | EncodeUrl          | 264.4 ns |  5.34 ns |   9.50 ns | 266.4 ns |  0.51 |    0.04 |
+|      - |         - |        0.00 |
+ JsonataDotNet_EncodeUrl           | EncodeUrl          | 521.2 ns | 12.06 ns |  34.02 ns | 501.5 ns |  1.00 |    0.09 |
+| 0.1040 |    1312 B |        1.00 |
+ Corvus_CodeGen_EncodeUrl          | EncodeUrl          | 206.6 ns |  4.12 ns |   7.00 ns | 207.5 ns |  0.40 |    0.03 |
+|      - |         - |        0.00 |
+ Corvus_EncodeUrlComponent         | EncodeUrlComponent | 217.8 ns |  4.40 ns |  10.62 ns | 212.5 ns |  0.31 |    0.05 |
+|      - |         - |        0.00 |
+ JsonataDotNet_EncodeUrlComponent  | EncodeUrlComponent | 725.8 ns | 41.39 ns | 122.04 ns | 693.0 ns |  1.03 |    0.24 |
+| 0.1020 |    1288 B |        1.00 |
+ Corvus_CodeGen_EncodeUrlComponent | EncodeUrlComponent | 147.3 ns |  3.01 ns |   5.02 ns | 147.3 ns |  0.21 |    0.03 |
+|      - |         - |        0.00 |
+
+=== BenchmarkFormatting ===
+ Corvus_FormatBase            | FormatBase    |   544.4 ns | 10.49 ns | 12.07 ns |   541.5 ns |  0.81 |    0.06 |      -
+- |         - |        0.00 |
+ JsonataDotNet_FormatBase     | FormatBase    |   676.7 ns | 18.11 ns | 50.80 ns |   661.9 ns |  1.01 |    0.10 | 0.1268
+8 |    1592 B |        1.00 |
+ Corvus_CodeGen_FormatBase    | FormatBase    |   201.6 ns |  4.03 ns |  5.91 ns |   199.8 ns |  0.30 |    0.02 |      -
+- |         - |        0.00 |
+ Corvus_FormatInteger         | FormatInteger |   387.3 ns |  7.77 ns |  8.95 ns |   387.9 ns |     ? |       ? |      -
+- |         - |           ? |
+ JsonataDotNet_FormatInteger  | FormatInteger |         NA |       NA |       NA |         NA |     ? |       ? |     NA
+A |        NA |           ? |
+ Corvus_CodeGen_FormatInteger | FormatInteger |   190.7 ns |  3.53 ns |  3.47 ns |   189.7 ns |     ? |       ? |      -
+- |         - |           ? |
+ Corvus_FormatNumber          | FormatNumber  |   681.5 ns | 13.29 ns | 21.07 ns |   684.7 ns |  0.56 |    0.02 |      -
+- |         - |        0.00 |
+ JsonataDotNet_FormatNumber   | FormatNumber  | 1,208.5 ns | 23.09 ns | 22.68 ns | 1,198.7 ns |  1.00 |    0.03 | 0.1373
+3 |    1728 B |        1.00 |
+ Corvus_CodeGen_FormatNumber  | FormatNumber  |   612.3 ns | 12.11 ns | 18.50 ns |   612.2 ns |  0.51 |    0.02 |      -
+- |         - |        0.00 |
+ Corvus_ParseInteger          | ParseInteger  |   426.8 ns |  8.47 ns | 10.40 ns |   423.6 ns |     ? |       ? |      -
+- |         - |           ? |
+ JsonataDotNet_ParseInteger   | ParseInteger  |         NA |       NA |       NA |         NA |     ? |       ? |     NA
+A |        NA |           ? |
+ Corvus_CodeGen_ParseInteger  | ParseInteger  |   334.2 ns |  6.61 ns |  8.36 ns |   336.6 ns |     ? |       ? |      -
+- |         - |           ? |
+
+=== BenchmarkHigherOrder ===
+ Corvus_Filter         | Filter     | 1.993 μs | 0.0056 μs | 0.0044 μs | 1.992 μs |  0.63 |    0.02 | 0.0153 |     216 B
+B |        0.03 |
+ JsonataDotNet_Filter  | Filter     | 3.175 μs | 0.0544 μs | 0.1136 μs | 3.171 μs |  1.00 |    0.05 | 0.6065 |    7632 B
+B |        1.00 |
+ Corvus_CodeGen_Filter | Filter     | 1.445 μs | 0.0288 μs | 0.0541 μs | 1.434 μs |  0.46 |    0.02 | 0.0095 |     136 B
+B |        0.02 |
+ Corvus_Map            | Map        | 1.487 μs | 0.0294 μs | 0.0466 μs | 1.491 μs |  0.55 |    0.03 | 0.0172 |     216 B
+B |        0.03 |
+ JsonataDotNet_Map     | Map        | 2.713 μs | 0.0524 μs | 0.1236 μs | 2.697 μs |  1.00 |    0.06 | 0.5379 |    6768 B
+B |        1.00 |
+ Corvus_CodeGen_Map    | Map        | 1.290 μs | 0.0212 μs | 0.0209 μs | 1.288 μs |  0.48 |    0.02 | 0.0095 |     136 B
+B |        0.02 |
+ Corvus_Reduce         | Reduce     | 3.017 μs | 0.0577 μs | 0.0566 μs | 3.017 μs |  0.67 |    0.03 | 0.0267 |     360 B
+B |        0.04 |
+ JsonataDotNet_Reduce  | Reduce     | 4.531 μs | 0.0896 μs | 0.2077 μs | 4.457 μs |  1.00 |    0.06 | 0.7935 |   10120 B
+B |        1.00 |
+ Corvus_CodeGen_Reduce | Reduce     | 1.506 μs | 0.0278 μs | 0.0273 μs | 1.504 μs |  0.33 |    0.02 | 0.0095 |     136 B
+B |        0.01 |
+ Corvus_Sort           | Sort       | 3.210 μs | 0.0474 μs | 0.0443 μs | 3.199 μs |  0.75 |    0.01 | 0.0153 |     216 B
+B |        0.02 |
+ JsonataDotNet_Sort    | Sort       | 4.275 μs | 0.0312 μs | 0.0277 μs | 4.272 μs |  1.00 |    0.01 | 0.7935 |    9992 B
+B |        1.00 |
+ Corvus_CodeGen_Sort   | Sort       | 1.482 μs | 0.0263 μs | 0.0432 μs | 1.458 μs |  0.35 |    0.01 | 0.0095 |     136 B
+B |        0.01 |
+
+=== BenchmarkLargeArray ===
+ Corvus_Filter         | Filter     | 2,641.1 μs |  51.63 μs |  87.68 μs | 2,648.6 μs |  0.57 |    0.04 |         - |   
+      - |       - |      216 B |       0.000 |
+ JsonataDotNet_Filter  | Filter     | 4,658.7 μs | 101.97 μs | 282.55 μs | 4,639.3 μs |  1.00 |    0.08 |  992.1875 | 16
+64.0625 |       - | 12533176 B |       1.000 |
+ Corvus_CodeGen_Filter | Filter     |   869.2 μs |   1.78 μs |   1.29 μs |   869.1 μs |  0.19 |    0.01 |         - |   
+      - |       - |      136 B |       0.000 |
+ Corvus_Map            | Map        | 3,296.7 μs |  64.86 μs | 118.59 μs | 3,276.9 μs |  0.35 |    0.03 |         - |   
+      - |       - |      216 B |       0.000 |
+ JsonataDotNet_Map     | Map        | 9,511.6 μs | 273.07 μs | 765.71 μs | 9,187.4 μs |  1.01 |    0.11 | 1046.8750 | 42
+21.8750 | 78.1250 | 12344404 B |       1.000 |
+ Corvus_CodeGen_Map    | Map        | 1,402.9 μs |  11.90 μs |   9.93 μs | 1,398.8 μs |  0.15 |    0.01 |         - |   
+      - |       - |      136 B |       0.000 |
+ Corvus_Reduce         | Reduce     | 3,091.7 μs |  35.50 μs |  27.72 μs | 3,085.3 μs |  0.62 |    0.05 |         - |   
+      - |       - |       80 B |       0.000 |
+ JsonataDotNet_Reduce  | Reduce     | 5,031.4 μs | 136.49 μs | 398.16 μs | 4,957.0 μs |  1.01 |    0.11 |  890.6250 |   
+      - |       - | 11242000 B |       1.000 |
+ Corvus_CodeGen_Reduce | Reduce     |   620.9 μs |   4.97 μs |   4.15 μs |   619.0 μs |  0.12 |    0.01 |         - |   
+      - |       - |          - |       0.000 |
+
+=== BenchmarkMathFunctions ===
+ Corvus_Abs           | Abs        |   834.0 ns |  8.92 ns |  7.91 ns |   829.3 ns |  0.70 |    0.03 |      - |         
+- |        0.00 |
+ JsonataDotNet_Abs    | Abs        | 1,200.3 ns | 24.12 ns | 53.94 ns | 1,171.1 ns |  1.00 |    0.06 | 0.2422 |    3040 
+ B |        1.00 |
+ Corvus_CodeGen_Abs   | Abs        |   736.0 ns | 14.49 ns | 19.35 ns |   732.3 ns |  0.61 |    0.03 |      - |         
+- |        0.00 |
+ Corvus_Ceil          | Ceil       |   364.1 ns |  7.35 ns | 10.77 ns |   359.0 ns |  0.32 |    0.02 |      - |         
+- |        0.00 |
+ JsonataDotNet_Ceil   | Ceil       | 1,132.0 ns | 22.93 ns | 66.53 ns | 1,115.3 ns |  1.00 |    0.08 | 0.2289 |    2888 
+ B |        1.00 |
+ Corvus_CodeGen_Ceil  | Ceil       |   314.6 ns |  5.74 ns |  5.09 ns |   315.9 ns |  0.28 |    0.02 |      - |         
+- |        0.00 |
+ Corvus_Floor         | Floor      |   368.1 ns |  7.36 ns | 10.08 ns |   371.4 ns |  0.35 |    0.01 |      - |         
+- |        0.00 |
+ JsonataDotNet_Floor  | Floor      | 1,039.0 ns | 10.23 ns |  9.57 ns | 1,037.1 ns |  1.00 |    0.01 | 0.2289 |    2888 
+ B |        1.00 |
+ Corvus_CodeGen_Floor | Floor      |   317.4 ns |  6.35 ns |  8.90 ns |   315.7 ns |  0.31 |    0.01 |      - |         
+- |        0.00 |
+ Corvus_Power         | Power      |   640.7 ns | 11.44 ns | 15.66 ns |   645.4 ns |  0.47 |    0.03 |      - |         
+- |        0.00 |
+ JsonataDotNet_Power  | Power      | 1,361.1 ns | 32.96 ns | 96.67 ns | 1,341.5 ns |  1.00 |    0.10 | 0.2537 |    3200 
+ B |        1.00 |
+ Corvus_CodeGen_Power | Power      |   477.0 ns |  9.61 ns | 16.58 ns |   478.8 ns |  0.35 |    0.03 |      - |         
+- |        0.00 |
+ Corvus_Round         | Round      |   609.9 ns | 12.19 ns | 14.97 ns |   610.9 ns |  0.46 |    0.02 |      - |         
+- |        0.00 |
+ JsonataDotNet_Round  | Round      | 1,318.1 ns | 26.04 ns | 65.81 ns | 1,304.3 ns |  1.00 |    0.07 | 0.2556 |    3224 
+ B |        1.00 |
+ Corvus_CodeGen_Round | Round      |   427.9 ns |  8.55 ns | 18.40 ns |   420.6 ns |  0.33 |    0.02 |      - |         
+- |        0.00 |
+ Corvus_Sqrt          | Sqrt       |   455.0 ns |  0.40 ns |  0.33 ns |   455.0 ns |  0.40 |    0.01 |      - |         
+- |        0.00 |
+ JsonataDotNet_Sqrt   | Sqrt       | 1,133.6 ns | 22.42 ns | 41.56 ns | 1,134.7 ns |  1.00 |    0.05 | 0.2289 |    2888 
+ B |        1.00 |
+ Corvus_CodeGen_Sqrt  | Sqrt       |   400.8 ns |  7.62 ns |  8.78 ns |   401.5 ns |  0.35 |    0.01 |      - |         
+- |        0.00 |
+
+=== BenchmarkMiscFunctions ===
+ Corvus_Lookup         | Lookup     |   277.7 ns |  0.19 ns |   0.15 ns |  0.23 |    0.02 |      - |         - |        
+ 0.00 |
+ JsonataDotNet_Lookup  | Lookup     | 1,238.4 ns | 43.83 ns | 123.63 ns |  1.01 |    0.15 | 0.2193 |    2752 B |        
+ 1.00 |
+ Corvus_CodeGen_Lookup | Lookup     |   229.4 ns |  1.97 ns |   1.64 ns |  0.19 |    0.02 | 0.0095 |     120 B |        
+ 0.04 |
+ Corvus_Pad            | Pad        |   586.3 ns |  5.95 ns |   6.62 ns |  0.40 |    0.02 | 0.0286 |     360 B |        
+ 0.09 |
+ JsonataDotNet_Pad     | Pad        | 1,483.5 ns | 28.71 ns |  80.52 ns |  1.00 |    0.07 | 0.3033 |    3808 B |        
+ 1.00 |
+ Corvus_CodeGen_Pad    | Pad        |   429.7 ns |  8.62 ns |  13.67 ns |  0.29 |    0.02 |      - |         - |        
+ 0.00 |
+ Corvus_Single         | Single     |   739.0 ns | 14.81 ns |  15.21 ns |  0.34 |    0.01 | 0.0057 |      80 B |        
+ 0.02 |
+ JsonataDotNet_Single  | Single     | 2,146.9 ns |  6.22 ns |   4.49 ns |  1.00 |    0.00 | 0.3929 |    4960 B |        
+ 1.00 |
+ Corvus_CodeGen_Single | Single     |   441.3 ns |  8.24 ns |  11.56 ns |  0.21 |    0.01 |      - |         - |        
+ 0.00 |
+ Corvus_Spread         | Spread     |   786.3 ns |  1.27 ns |   1.12 ns |  0.64 |    0.05 | 0.0105 |     136 B |        
+ 0.04 |
+ JsonataDotNet_Spread  | Spread     | 1,234.3 ns | 33.09 ns |  93.34 ns |  1.01 |    0.11 | 0.2708 |    3400 B |        
+ 1.00 |
+ Corvus_CodeGen_Spread | Spread     |   734.8 ns | 10.68 ns |  10.97 ns |  0.60 |    0.05 | 0.0105 |     136 B |        
+ 0.04 |
+
+=== BenchmarkObjectConstruction ===
+ Corvus_ArrayOfObjects         | ArrayOfObjects | 2.307 μs | 0.0462 μs | 0.0532 μs | 2.336 μs |  0.60 |    0.03 | 0.0076
+6 |      - |     136 B |        0.01 |
+ JsonataDotNet_ArrayOfObjects  | ArrayOfObjects | 3.838 μs | 0.0766 μs | 0.1649 μs | 3.840 μs |  1.00 |    0.06 | 0.7668
+8 | 0.0038 |    9664 B |        1.00 |
+ Corvus_CodeGen_ArrayOfObjects | ArrayOfObjects | 2.142 μs | 0.0332 μs | 0.0517 μs | 2.119 μs |  0.56 |    0.03 | 0.0076
+6 |      - |     136 B |        0.01 |
+ Corvus_GroupByObject          | GroupByObject  | 3.138 μs | 0.0198 μs | 0.0155 μs | 3.142 μs |  1.19 |    0.11 | 0.0534
+4 |      - |     680 B |        0.10 |
+ JsonataDotNet_GroupByObject   | GroupByObject  | 2.655 μs | 0.0927 μs | 0.2599 μs | 2.561 μs |  1.01 |    0.13 | 0.5646
+6 | 0.0038 |    7104 B |        1.00 |
+ Corvus_CodeGen_GroupByObject  | GroupByObject  | 1.106 μs | 0.0090 μs | 0.0070 μs | 1.106 μs |  0.42 |    0.04 | 0.0095
+5 |      - |     136 B |        0.02 |
+ Corvus_SimpleObject           | SimpleObject   | 2.736 μs | 0.0794 μs | 0.2214 μs | 2.615 μs |  0.75 |    0.10 | 0.0114
+4 |      - |     168 B |        0.02 |
+ JsonataDotNet_SimpleObject    | SimpleObject   | 3.691 μs | 0.1380 μs | 0.3959 μs | 3.578 μs |  1.01 |    0.15 | 0.6218
+8 | 0.0038 |    7840 B |        1.00 |
+ Corvus_CodeGen_SimpleObject   | SimpleObject   | 1.073 μs | 0.0154 μs | 0.0129 μs | 1.070 μs |  0.29 |    0.03 | 0.0095
+5 |      - |     136 B |        0.02 |
+
+=== BenchmarkObjectFunctions ===
+ Corvus_Keys              | Keys       |   540.5 ns | 10.26 ns |  23.16 ns |   530.0 ns |  0.55 |    0.02 | 0.0105 |    
+  136 B |        0.05 |
+ JsonataDotNet_Keys       | Keys       |   978.2 ns |  6.15 ns |   5.76 ns |   978.1 ns |  1.00 |    0.01 | 0.2136 |    
+ 2696 B |        1.00 |
+ Corvus_CodeGen_Keys      | Keys       |   384.0 ns |  7.69 ns |   9.99 ns |   381.8 ns |  0.39 |    0.01 | 0.0105 |    
+  136 B |        0.05 |
+ Corvus_Merge             | Merge      |   826.6 ns | 31.94 ns |  91.63 ns |   794.1 ns |  0.55 |    0.06 | 0.0105 |    
+  136 B |        0.05 |
+ JsonataDotNet_Merge      | Merge      | 1,510.2 ns | 26.18 ns |  23.21 ns | 1,500.0 ns |  1.00 |    0.02 | 0.2213 |    
+ 2784 B |        1.00 |
+ Corvus_CodeGen_Merge     | Merge      |   679.5 ns | 13.49 ns |  26.32 ns |   661.6 ns |  0.45 |    0.02 | 0.0105 |    
+  136 B |        0.05 |
+ Corvus_Values            | Values     |   335.8 ns |  2.24 ns |   1.99 ns |   336.2 ns |     ? |       ? | 0.0105 |    
+  136 B |           ? |
+ JsonataDotNet_Values     | Values     |         NA |       NA |        NA |         NA |     ? |       ? |     NA |    
+     NA |           ? |
+ Corvus_CodeGen_Values    | Values     |   350.3 ns |  4.15 ns |   4.77 ns |   352.1 ns |     ? |       ? | 0.0105 |    
+  136 B |           ? |
+ Corvus_ValuesStd         | ValuesStd  | 1,182.3 ns | 23.39 ns |  40.96 ns | 1,161.3 ns |  0.66 |    0.05 | 0.0172 |    
+  216 B |        0.05 |
+ JsonataDotNet_ValuesStd  | ValuesStd  | 1,795.6 ns | 49.01 ns | 138.23 ns | 1,763.7 ns |  1.01 |    0.11 | 0.3357 |    
+ 4232 B |        1.00 |
+ Corvus_CodeGen_ValuesStd | ValuesStd  |   391.3 ns |  1.39 ns |   1.09 ns |   391.3 ns |  0.22 |    0.02 | 0.0105 |    
+  136 B |        0.03 |
+
+=== BenchmarkOperators ===
+ Corvus_Conditional           | Conditional   |   252.2 ns |  1.62 ns |   1.35 ns |   251.5 ns |  0.30 |    0.02 |      
+ - |         - |        0.00 |
+ JsonataDotNet_Conditional    | Conditional   |   850.1 ns | 23.91 ns |  69.75 ns |   848.4 ns |  1.01 |    0.11 | 0.181
+12 |    2280 B |        1.00 |
+ Corvus_CodeGen_Conditional   | Conditional   |   216.6 ns |  0.31 ns |   0.26 ns |   216.7 ns |  0.26 |    0.02 |      
+ - |         - |        0.00 |
+ Corvus_Descendant            | Descendant    | 1,070.3 ns |  2.57 ns |   2.01 ns | 1,069.6 ns |  0.70 |    0.05 | 0.009
+95 |     136 B |        0.06 |
+ JsonataDotNet_Descendant     | Descendant    | 1,538.0 ns | 37.67 ns | 106.87 ns | 1,502.5 ns |  1.00 |    0.10 | 0.192
+26 |    2432 B |        1.00 |
+ Corvus_CodeGen_Descendant    | Descendant    |   703.1 ns | 11.81 ns |   9.86 ns |   704.2 ns |  0.46 |    0.03 | 0.010
+05 |     136 B |        0.06 |
+ Corvus_TransformPipe         | TransformPipe |   716.3 ns |  1.79 ns |   1.19 ns |   716.3 ns |  0.51 |    0.03 |      
+ - |         - |        0.00 |
+ JsonataDotNet_TransformPipe  | TransformPipe | 1,401.1 ns | 29.06 ns |  82.43 ns | 1,373.0 ns |  1.00 |    0.08 | 0.221
+13 |    2792 B |        1.00 |
+ Corvus_CodeGen_TransformPipe | TransformPipe |   635.7 ns |  3.14 ns |   2.27 ns |   635.1 ns |  0.46 |    0.03 |      
+ - |         - |        0.00 |
+
+=== BenchmarkPredicateFilter ===
+ Corvus_ChainedPredicate          | ChainedPredicate  |   303.3 ns |  6.03 ns |   8.04 ns |   298.6 ns |  0.26 |    0.02
+2 |      - |         - |        0.00 |
+ JsonataDotNet_ChainedPredicate   | ChainedPredicate  | 1,185.5 ns | 27.73 ns |  79.56 ns | 1,171.0 ns |  1.00 |    0.09
+9 | 0.2441 |    3072 B |        1.00 |
+ Corvus_CodeGen_ChainedPredicate  | ChainedPredicate  |   246.6 ns |  2.06 ns |   1.72 ns |   245.8 ns |  0.21 |    0.01
+1 |      - |         - |        0.00 |
+ Corvus_CompoundPredicate         | CompoundPredicate | 1,231.0 ns |  7.90 ns |   6.60 ns | 1,227.8 ns |  0.28 |    0.02
+2 | 0.0095 |     136 B |        0.01 |
+ JsonataDotNet_CompoundPredicate  | CompoundPredicate | 4,370.4 ns | 99.28 ns | 280.01 ns | 4,232.9 ns |  1.00 |    0.09
+9 | 0.8240 |   10376 B |        1.00 |
+ Corvus_CodeGen_CompoundPredicate | CompoundPredicate | 1,003.6 ns | 17.91 ns |  14.96 ns |   995.9 ns |  0.23 |    0.01
+1 | 0.0095 |     136 B |        0.01 |
+ Corvus_SinglePredicate           | SinglePredicate   | 1,015.8 ns |  1.70 ns |   1.33 ns | 1,016.0 ns |  0.39 |    0.03
+3 | 0.0095 |     136 B |        0.02 |
+ JsonataDotNet_SinglePredicate    | SinglePredicate   | 2,653.8 ns | 74.36 ns | 219.26 ns | 2,596.8 ns |  1.01 |    0.11
+1 | 0.4578 |    5760 B |        1.00 |
+ Corvus_CodeGen_SinglePredicate   | SinglePredicate   |   886.6 ns | 17.41 ns |  24.41 ns |   882.7 ns |  0.34 |    0.03
+3 | 0.0105 |     136 B |        0.02 |
+
+=== BenchmarkPropertyNavigation ===
+ Corvus_ArrayIndex             | ArrayIndex     | 130.50 ns |  1.987 ns |  1.659 ns | 129.84 ns |  0.25 |    0.02 |     
+  - |         - |        0.00 |
+ JsonataDotNet_ArrayIndex      | ArrayIndex     | 517.44 ns | 13.065 ns | 37.694 ns | 509.53 ns |  1.00 |    0.10 | 0.11
+116 |    1408 B |        1.00 |
+ Corvus_CodeGen_ArrayIndex     | ArrayIndex     | 124.75 ns |  0.487 ns |  0.432 ns | 124.71 ns |  0.24 |    0.02 |     
+  - |         - |        0.00 |
+ Corvus_DeepPath               | DeepPath       | 772.36 ns | 11.114 ns |  9.853 ns | 767.63 ns |  0.93 |    0.07 | 0.01
+105 |     136 B |        0.07 |
+ JsonataDotNet_DeepPath        | DeepPath       | 839.76 ns | 23.139 ns | 67.498 ns | 815.00 ns |  1.01 |    0.11 | 0.14
+440 |    1816 B |        1.00 |
+ Corvus_CodeGen_DeepPath       | DeepPath       | 558.69 ns | 10.043 ns | 12.333 ns | 553.63 ns |  0.67 |    0.05 | 0.01
+105 |     136 B |        0.07 |
+ Corvus_QuotedProperty         | QuotedProperty |  88.99 ns |  1.781 ns |  1.906 ns |  88.12 ns |  0.27 |    0.01 |     
+  - |         - |        0.00 |
+ JsonataDotNet_QuotedProperty  | QuotedProperty | 327.00 ns |  6.499 ns |  9.526 ns | 324.30 ns |  1.00 |    0.04 | 0.08
+815 |    1024 B |        1.00 |
+ Corvus_CodeGen_QuotedProperty | QuotedProperty |  69.20 ns |  1.442 ns |  1.543 ns |  69.33 ns |  0.21 |    0.01 |     
+  - |         - |        0.00 |
+
+=== BenchmarkRegex ===
+ Corvus_Match           | Match      | 1,343.8 ns | 26.77 ns |  25.04 ns |  0.40 |    0.03 | 0.0134 |      - |     168 B
+B |        0.02 |
+ JsonataDotNet_Match    | Match      | 3,355.3 ns | 73.30 ns | 209.14 ns |  1.00 |    0.09 | 0.6409 | 0.0038 |    8072 B
+B |        1.00 |
+ Corvus_CodeGen_Match   | Match      | 1,041.2 ns | 20.47 ns |  27.33 ns |  0.31 |    0.02 | 0.0134 |      - |     168 B
+B |        0.02 |
+ Corvus_Replace         | Replace    |   890.7 ns | 12.60 ns |  10.52 ns |  0.24 |    0.01 |      - |      - |         -
+- |        0.00 |
+ JsonataDotNet_Replace  | Replace    | 3,757.5 ns | 74.51 ns | 188.28 ns |  1.00 |    0.07 | 0.7401 | 0.0038 |    9312 B
+B |        1.00 |
+ Corvus_CodeGen_Replace | Replace    |   631.7 ns | 12.46 ns |  20.46 ns |  0.17 |    0.01 |      - |      - |         -
+- |        0.00 |
+
+=== BenchmarkSequenceArrayLeak ===
+ Corvus_ContinuationChain         | ContinuationChain | 10.238 μs | 0.1968 μs | 0.2489 μs | 10.170 μs |  1.23 |    0.10 
+ |      - |      - |     136 B |        0.01 |
+ Native_ContinuationChain         | ContinuationChain |  8.346 μs | 0.2470 μs | 0.7048 μs |  8.173 μs |  1.01 |    0.12 
+ | 0.8698 |      - |   11024 B |        1.00 |
+ Corvus_CodeGen_ContinuationChain | ContinuationChain |  9.306 μs | 0.1182 μs | 0.0987 μs |  9.319 μs |  1.12 |    0.09 
+ |      - |      - |     136 B |        0.01 |
+ Corvus_FilteredChain             | FilteredChain     | 10.828 μs | 0.0859 μs | 0.0621 μs | 10.805 μs |  0.87 |    0.07 
+ |      - |      - |     136 B |       0.006 |
+ Native_FilteredChain             | FilteredChain     | 12.571 μs | 0.3935 μs | 1.1352 μs | 12.197 μs |  1.01 |    0.12 
+ | 1.6937 |      - |   21280 B |       1.000 |
+ Corvus_CodeGen_FilteredChain     | FilteredChain     |  9.648 μs | 0.1917 μs | 0.2424 μs |  9.626 μs |  0.77 |    0.07 
+ |      - |      - |     136 B |       0.006 |
+ Corvus_IndexedChain              | IndexedChain      |  5.806 μs | 0.1052 μs | 0.2679 μs |  5.730 μs |  1.13 |    0.05 
+ |      - |      - |     136 B |       0.010 |
+ Native_IndexedChain              | IndexedChain      |  5.139 μs | 0.0517 μs | 0.0483 μs |  5.125 μs |  1.00 |    0.01 
+ | 1.1368 | 0.0076 |   14288 B |       1.000 |
+ Corvus_CodeGen_IndexedChain      | IndexedChain      |  5.099 μs | 0.0441 μs | 0.0412 μs |  5.083 μs |  0.99 |    0.01 
+ | 0.0076 |      - |     136 B |       0.010 |
+ Corvus_WideObject                | WideObject        |  5.372 μs | 0.0435 μs | 0.0407 μs |  5.365 μs |  1.23 |    0.01 
+ | 0.0076 |      - |     136 B |        0.01 |
+ Native_WideObject                | WideObject        |  4.375 μs | 0.0464 μs | 0.0434 μs |  4.365 μs |  1.00 |    0.01 
+ | 0.8774 |      - |   11024 B |        1.00 |
+ Corvus_CodeGen_WideObject        | WideObject        |  4.807 μs | 0.0448 μs | 0.0419 μs |  4.791 μs |  1.10 |    0.01 
+ | 0.0076 |      - |     136 B |        0.01 |
+
+=== BenchmarkSplitReplace ===
+ Corvus_ReplaceString         | ReplaceString |   221.4 ns |  4.03 ns |  3.77 ns |  0.26 |      - |      - |         - |
+|        0.00 |
+ JsonataDotNet_ReplaceString  | ReplaceString |   836.6 ns |  7.79 ns |  6.91 ns |  1.00 | 0.2594 | 0.0010 |    3264 B |
+|        1.00 |
+ Corvus_CodeGen_ReplaceString | ReplaceString |   178.5 ns |  0.86 ns |  0.80 ns |  0.21 |      - |      - |         - |
+|        0.00 |
+ Corvus_SplitRegex            | SplitRegex    | 1,165.7 ns |  8.74 ns |  8.18 ns |  0.72 | 0.0095 |      - |     136 B |
+|        0.02 |
+ JsonataDotNet_SplitRegex     | SplitRegex    | 1,618.1 ns | 16.41 ns | 15.35 ns |  1.00 | 0.5989 | 0.0038 |    7536 B |
+|        1.00 |
+ Corvus_CodeGen_SplitRegex    | SplitRegex    |   847.3 ns |  7.12 ns |  5.56 ns |  0.52 | 0.0105 |      - |     136 B |
+|        0.02 |
+ Corvus_SplitString           | SplitString   |   353.8 ns |  2.96 ns |  2.77 ns |  0.52 | 0.0105 |      - |     136 B |
+|        0.05 |
+ JsonataDotNet_SplitString    | SplitString   |   680.3 ns |  2.63 ns |  2.20 ns |  1.00 | 0.2031 |      - |    2552 B |
+|        1.00 |
+ Corvus_CodeGen_SplitString   | SplitString   |   274.5 ns |  3.52 ns |  3.12 ns |  0.40 | 0.0105 |      - |     136 B |
+|        0.05 |
+
+=== BenchmarkStringConcat ===
+ Corvus_ConcatWithNumber         | ConcatWithNumber |   477.8 ns |  3.13 ns |  2.77 ns |   477.5 ns |  0.68 |    0.01 | 
+      - |         - |        0.00 |
+ JsonataDotNet_ConcatWithNumber  | ConcatWithNumber |   701.7 ns | 11.68 ns |  9.76 ns |   702.2 ns |  1.00 |    0.02 | 
+ 0.2499 |    3136 B |        1.00 |
+ Corvus_CodeGen_ConcatWithNumber | ConcatWithNumber |   161.9 ns |  1.08 ns |  1.01 ns |   161.9 ns |  0.23 |    0.00 | 
+      - |         - |        0.00 |
+ Corvus_JoinArray                | JoinArray        |   893.2 ns | 15.79 ns | 35.31 ns |   892.7 ns |  0.52 |    0.03 | 
+ 0.0105 |     136 B |        0.03 |
+ JsonataDotNet_JoinArray         | JoinArray        | 1,720.0 ns | 34.13 ns | 87.49 ns | 1,674.8 ns |  1.00 |    0.07 | 
+ 0.3204 |    4040 B |        1.00 |
+ Corvus_CodeGen_JoinArray        | JoinArray        |   307.2 ns |  6.17 ns | 10.48 ns |   304.8 ns |  0.18 |    0.01 | 
+      - |         - |        0.00 |
+ Corvus_SimpleConcat             | SimpleConcat     |   461.6 ns |  0.77 ns |  0.68 ns |   461.6 ns |  0.94 |    0.00 | 
+      - |         - |        0.00 |
+ JsonataDotNet_SimpleConcat      | SimpleConcat     |   491.7 ns |  2.34 ns |  1.95 ns |   491.2 ns |  1.00 |    0.01 | 
+ 0.1116 |    1408 B |        1.00 |
+ Corvus_CodeGen_SimpleConcat     | SimpleConcat     |   243.3 ns |  1.58 ns |  1.32 ns |   243.0 ns |  0.49 |    0.00 | 
+      - |         - |        0.00 |
+
+=== BenchmarkStringFunctions ===
+ Corvus_Contains                | Contains        |   353.3 ns |  2.36 ns |   2.09 ns |   353.3 ns |  0.27 |    0.02 |  
+     - |         - |        0.00 |
+ JsonataDotNet_Contains         | Contains        | 1,337.7 ns | 40.04 ns | 116.80 ns | 1,306.8 ns |  1.01 |    0.12 | 0
+0.2499 |    3136 B |        1.00 |
+ Corvus_CodeGen_Contains        | Contains        |   210.4 ns |  4.16 ns |   6.35 ns |   208.9 ns |  0.16 |    0.01 |  
+     - |         - |        0.00 |
+ Corvus_Length                  | Length          |   402.1 ns |  0.51 ns |   0.45 ns |   402.1 ns |  0.36 |    0.03 |  
+     - |         - |        0.00 |
+ JsonataDotNet_Length           | Length          | 1,131.4 ns | 29.87 ns |  85.69 ns | 1,113.8 ns |  1.01 |    0.10 | 0
+0.2270 |    2864 B |        1.00 |
+ Corvus_CodeGen_Length          | Length          |   302.3 ns |  5.82 ns |   6.23 ns |   305.5 ns |  0.27 |    0.02 |  
+     - |         - |        0.00 |
+ Corvus_Lowercase               | Lowercase       |   336.7 ns |  6.79 ns |   8.59 ns |   337.9 ns |  0.29 |    0.02 |  
+     - |         - |        0.00 |
+ JsonataDotNet_Lowercase        | Lowercase       | 1,158.3 ns | 32.40 ns |  90.84 ns | 1,134.5 ns |  1.01 |    0.11 | 0
+0.2270 |    2864 B |        1.00 |
+ Corvus_CodeGen_Lowercase       | Lowercase       |   318.8 ns |  1.02 ns |   0.79 ns |   318.5 ns |  0.28 |    0.02 |  
+     - |         - |        0.00 |
+ Corvus_Substring               | Substring       |   745.6 ns | 12.37 ns |  11.57 ns |   739.7 ns |  0.51 |    0.04 |  
+     - |         - |        0.00 |
+ JsonataDotNet_Substring        | Substring       | 1,480.4 ns | 42.21 ns | 121.78 ns | 1,467.1 ns |  1.01 |    0.11 | 0
+0.2708 |    3416 B |        1.00 |
+ Corvus_CodeGen_Substring       | Substring       |   372.1 ns |  0.69 ns |   0.54 ns |   372.3 ns |  0.25 |    0.02 |  
+     - |         - |        0.00 |
+ Corvus_SubstringAfter          | SubstringAfter  |   416.6 ns |  8.41 ns |   7.86 ns |   416.4 ns |  0.30 |    0.03 |  
+     - |         - |        0.00 |
+ JsonataDotNet_SubstringAfter   | SubstringAfter  | 1,417.7 ns | 52.97 ns | 151.97 ns | 1,399.3 ns |  1.01 |    0.15 | 0
+0.2480 |    3112 B |        1.00 |
+ Corvus_CodeGen_SubstringAfter  | SubstringAfter  |   280.1 ns |  4.68 ns |   7.82 ns |   281.2 ns |  0.20 |    0.02 |  
+     - |         - |        0.00 |
+ Corvus_SubstringBefore         | SubstringBefore |   418.4 ns |  5.46 ns |   5.11 ns |   418.6 ns |  0.31 |    0.03 |  
+     - |         - |        0.00 |
+ JsonataDotNet_SubstringBefore  | SubstringBefore | 1,352.9 ns | 43.84 ns | 127.17 ns | 1,318.2 ns |  1.01 |    0.13 | 0
+0.2480 |    3120 B |        1.00 |
+ Corvus_CodeGen_SubstringBefore | SubstringBefore |   281.1 ns |  3.69 ns |   3.45 ns |   282.6 ns |  0.21 |    0.02 |  
+     - |         - |        0.00 |
+ Corvus_Trim                    | Trim            |   455.2 ns |  7.79 ns |   9.85 ns |   452.4 ns |  0.35 |    0.01 | 0
+0.0076 |      96 B |        0.03 |
+ JsonataDotNet_Trim             | Trim            | 1,300.5 ns | 25.90 ns |  44.67 ns | 1,292.1 ns |  1.00 |    0.05 | 0
+0.2270 |    2864 B |        1.00 |
+ Corvus_CodeGen_Trim            | Trim            |   323.2 ns |  6.30 ns |   8.41 ns |   322.2 ns |  0.25 |    0.01 |  
+     - |         - |        0.00 |
+ Corvus_Uppercase               | Uppercase       |   352.5 ns |  7.07 ns |   9.67 ns |   354.6 ns |  0.30 |    0.02 |  
+     - |         - |        0.00 |
+ JsonataDotNet_Uppercase        | Uppercase       | 1,196.2 ns | 27.76 ns |  78.76 ns | 1,177.1 ns |  1.00 |    0.09 | 0
+0.2270 |    2864 B |        1.00 |
+ Corvus_CodeGen_Uppercase       | Uppercase       |   309.4 ns |  5.28 ns |   7.90 ns |   306.2 ns |  0.26 |    0.02 |  
+     - |         - |        0.00 |
+
+=== BenchmarkTypeConversion ===
+ Corvus_Boolean         | Boolean    |   218.74 ns |  2.180 ns |   2.910 ns |   217.28 ns |  0.18 |    0.02 |      - |  
+        - |        0.00 |
+ JsonataDotNet_Boolean  | Boolean    | 1,193.57 ns | 34.924 ns | 102.975 ns | 1,160.72 ns |  1.01 |    0.12 | 0.2251 |  
+   2840 B |        1.00 |
+ Corvus_CodeGen_Boolean | Boolean    |   234.59 ns |  2.363 ns |   1.845 ns |   234.03 ns |  0.20 |    0.02 |      - |  
+        - |        0.00 |
+ Corvus_Exists          | Exists     |   113.02 ns |  1.580 ns |   2.266 ns |   112.01 ns |  0.12 |    0.01 |      - |  
+        - |        0.00 |
+ JsonataDotNet_Exists   | Exists     |   969.19 ns | 23.672 ns |  68.300 ns |   951.23 ns |  1.00 |    0.10 | 0.1869 |  
+   2352 B |        1.00 |
+ Corvus_CodeGen_Exists  | Exists     |    76.27 ns |  0.080 ns |   0.063 ns |    76.26 ns |  0.08 |    0.01 |      - |  
+        - |        0.00 |
+ Corvus_Not             | Not        |   162.50 ns |  3.286 ns |   4.919 ns |   163.26 ns |  0.20 |    0.02 |      - |  
+        - |        0.00 |
+ JsonataDotNet_Not      | Not        |   824.96 ns | 22.673 ns |  66.139 ns |   831.40 ns |  1.01 |    0.12 | 0.1554 |  
+   1960 B |        1.00 |
+ Corvus_CodeGen_Not     | Not        |   129.83 ns |  2.596 ns |   3.554 ns |   129.28 ns |  0.16 |    0.01 |      - |  
+        - |        0.00 |
+ Corvus_Number          | Number     |   298.04 ns |  5.989 ns |   9.671 ns |   299.81 ns |  0.41 |    0.03 |      - |  
+        - |        0.00 |
+ JsonataDotNet_Number   | Number     |   732.63 ns | 17.959 ns |  51.238 ns |   716.16 ns |  1.00 |    0.10 | 0.0973 |  
+   1232 B |        1.00 |
+ Corvus_CodeGen_Number  | Number     |   197.55 ns |  3.985 ns |   9.776 ns |   197.57 ns |  0.27 |    0.02 |      - |  
+        - |        0.00 |
+ Corvus_String          | String     |   547.06 ns |  9.595 ns |   8.506 ns |   543.08 ns |  0.41 |    0.03 |      - |  
+        - |        0.00 |
+ JsonataDotNet_String   | String     | 1,339.48 ns | 38.473 ns | 110.385 ns | 1,321.49 ns |  1.01 |    0.11 | 0.2480 |  
+   3112 B |        1.00 |
+ Corvus_CodeGen_String  | String     |   480.81 ns |  1.538 ns |   1.285 ns |   480.09 ns |  0.36 |    0.03 |      - |  
+        - |        0.00 |
+ Corvus_Type            | Type       |   183.46 ns |  3.007 ns |   2.665 ns |   182.11 ns |  0.15 |    0.01 |      - |  
+        - |        0.00 |
+ JsonataDotNet_Type     | Type       | 1,196.27 ns | 31.725 ns |  88.961 ns | 1,178.38 ns |  1.01 |    0.10 | 0.2232 |  
+   2816 B |        1.00 |
+ Corvus_CodeGen_Type    | Type       |   183.44 ns |  3.636 ns |   4.328 ns |   183.64 ns |  0.15 |    0.01 |      - |  
+        - |        0.00 |
+
+=== BenchmarkZipShuffle ===
+ Corvus_Shuffle          | Shuffle    |   773.828 ns |  8.3965 ns |   7.0115 ns |   771.891 ns |  0.48 |    0.02 | 0.010
+05 |     136 B |        0.05 |
+ JsonataDotNet_Shuffle   | Shuffle    | 1,612.299 ns | 32.2871 ns |  86.1807 ns | 1,595.416 ns |  1.00 |    0.07 | 0.225
+51 |    2824 B |        1.00 |
+ Corvus_CodeGen_Shuffle  | Shuffle    |   723.382 ns |  8.3230 ns |   6.9501 ns |   726.475 ns |  0.45 |    0.02 | 0.010
+05 |     136 B |        0.05 |
+ Corvus_Zip              | Zip        |    38.769 ns |  0.8048 ns |   0.9884 ns |    38.690 ns | 0.027 |    0.00 |      
+ - |         - |        0.00 |
+ JsonataDotNet_Zip       | Zip        | 1,430.573 ns | 23.9425 ns |  39.3382 ns | 1,411.563 ns | 1.001 |    0.04 | 0.293
+37 |    3696 B |        1.00 |
+ Corvus_CodeGen_Zip      | Zip        |     1.254 ns |  0.0604 ns |   0.0646 ns |     1.284 ns | 0.001 |    0.00 |      
+ - |         - |        0.00 |
+ Corvus_ZipData          | ZipData    | 1,208.986 ns |  1.6911 ns |   1.3203 ns | 1,209.502 ns |  0.53 |    0.03 | 0.009
+95 |     136 B |        0.03 |
+ JsonataDotNet_ZipData   | ZipData    | 2,294.715 ns | 45.7744 ns | 116.5104 ns | 2,244.267 ns |  1.00 |    0.07 | 0.377
+77 |    4784 B |        1.00 |
+ Corvus_CodeGen_ZipData  | ZipData    | 1,183.825 ns | 19.1278 ns |  15.9725 ns | 1,176.231 ns |  0.52 |    0.03 | 0.009
+95 |     136 B |        0.03 |
+ Corvus_ZipMixed         | ZipMixed   |   866.158 ns | 14.7769 ns |  13.0993 ns |   858.878 ns |  0.47 |    0.02 | 0.010
+05 |     136 B |        0.03 |
+ JsonataDotNet_ZipMixed  | ZipMixed   | 1,829.904 ns | 36.1146 ns |  63.2517 ns | 1,801.716 ns |  1.00 |    0.05 | 0.337
+76 |    4240 B |        1.00 |
+ Corvus_CodeGen_ZipMixed | ZipMixed   |   771.824 ns | 15.2799 ns |  22.8703 ns |   774.560 ns |  0.42 |    0.02 | 0.010
+05 |     136 B |        0.03 |
+
+___BEGIN___COMMAND_DONE_MARKER___0
+PS D:\source\corvus-dotnet\Corvus.JsonSchema>

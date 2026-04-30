@@ -1,0 +1,10 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "A closed object with no pattern properties",
+    "type": "object",
+    "properties": {
+        "name": { "type": "string" }
+    },
+    "required": ["name"],
+    "additionalProperties": false
+}

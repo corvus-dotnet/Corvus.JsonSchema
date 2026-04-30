@@ -1,0 +1,1233 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@page "/"
+@inject EvaluationService EvalService
+@inject OperatorCompilationService OperatorCompiler
+@inject IntelliSenseService IntelliSenseSvc
+@inject IJSRuntime JSRuntime
+
+<div class="playground-toolbar">
+    <h1>JSON Logic Playground</h1>
+    <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
+    <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
+        @if (activeSampleId is null)
+        {
+            <option value="" disabled>— Custom —</option>
+        }
+        @foreach (var sample in SampleRegistry.All)
+        {
+            <option value="@sample.Id">@sample.DisplayName</option>
+        }
+    </select>
+    <div class="spacer"></div>
+    <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
+</div>
+
+@if (activeSample is not null)
+{
+    <div class="sample-description">@activeSample.Description</div>
+}
+
+<div class="jsonlogic-grid @(maximizedPanel is not null ? "has-maximized" : "")">
+    @* Left: Rule builder (full height) *@
+    <div class="playground-panel panel-rule @(GetPanelClass("rule"))">
+        <div class="panel-header">
+            Rule
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyRule" title="Copy rule JSON">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("rule")' title="@(maximizedPanel == "rule" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "rule" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body panel-body--builder">
+            <RuleBuilder @ref="ruleBuilder" OnRuleChanged="OnRuleChanged" OnVisualModeRestored="ReapplyErrorHighlights" />
+        </div>
+    </div>
+
+    @* Top-right: Schema | Data | Operators (tabbed) *@
+    <div class="playground-panel panel-data @(GetPanelClass("data"))">
+        <div class="panel-header">
+            <button class="panel-tab @(activeDataTab == "schema" ? "panel-tab--active" : "")"
+                    @onclick="@(() => SwitchDataTab("schema"))">Schema</button>
+            <button class="panel-tab @(activeDataTab == "data" ? "panel-tab--active" : "")"
+                    @onclick="@(() => SwitchDataTab("data"))">Data</button>
+            <button class="panel-tab @(activeDataTab == "operators" ? "panel-tab--active" : "")"
+                    @onclick="@(() => SwitchDataTab("operators"))">Operators</button>
+            <div class="spacer"></div>
+            @if (isParsingSchema)
+            {
+                <span class="schema-status" title="Parsing schema...">⏳</span>
+            }
+            @if (operatorStatus is not null)
+            {
+                <span class="schema-status" title="@operatorStatusTooltip">@operatorStatus</span>
+            }
+            @if (activeDataTab == "operators")
+            {
+                <button class="panel-copy-btn" @onclick="ScaffoldNewOperator" title="Add a new custom operator">➕</button>
+            }
+            <button class="panel-copy-btn" @onclick="CopyDataOrSchema" title="Copy">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("data")' title="@(maximizedPanel == "data" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "data" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body" style="@(activeDataTab != "schema" ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="schemaEditor"
+                                  Id="schema-editor"
+                                  ConstructionOptions="SchemaEditorOptions"
+                                  OnDidChangeModelContent="OnSchemaChanged" />
+        </div>
+        <div class="panel-body" style="@(activeDataTab != "data" ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="dataEditor"
+                                  Id="data-editor"
+                                  ConstructionOptions="DataEditorOptions"
+                                  OnDidChangeModelContent="OnDataChanged" />
+        </div>
+        <div class="panel-body" style="@(activeDataTab != "operators" ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="operatorsEditor"
+                                  Id="operators-editor"
+                                  ConstructionOptions="OperatorsEditorOptions"
+                                  OnDidChangeModelContent="OnOperatorsChanged" />
+        </div>
+    </div>
+
+    @* Bottom-right: Result *@
+    <div class="playground-panel panel-output @(GetPanelClass("output"))">
+        <div class="panel-header">
+            Result
+            <div class="spacer"></div>
+            @if (lastResult is not null)
+            {
+                <span style="font-weight:normal;text-transform:none;">
+                    @(lastResult.Success ? "✓" : "✗")
+                    @($"{lastResult.ElapsedMs:F1}ms")
+                </span>
+            }
+            <button class="panel-copy-btn" @onclick="CopyResult" title="Copy result">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "output" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="outputEditor"
+                                  Id="output-editor"
+                                  ConstructionOptions="OutputEditorOptions" />
+        </div>
+        @if (lastResult is not null && !lastResult.Success)
+        {
+            <div class="panel-body">
+                <div class="error-output">@lastResult.ErrorMessage</div>
+            </div>
+        }
+    </div>
+</div>
+
+@if (showDirtyConfirmation)
+{
+    <div class="modal-overlay" @onclick="CancelDirtyConfirmation">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <h3>Unsaved Changes</h3>
+            <p>Your editors have been modified. Do you want to discard these changes?</p>
+            <div class="modal-actions">
+                <button class="toolbar-btn secondary" @onclick="CancelDirtyConfirmation">Cancel</button>
+                <button class="toolbar-btn primary" @onclick="ConfirmDirtyAction">Discard</button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="status-bar @(lastResult is not null && !lastResult.Success ? "status-bar--error" : "")">
+    @if (isEvaluating)
+    {
+        <span>Evaluating…</span>
+    }
+    else if (lastResult is not null)
+    {
+        <span>@(lastResult.Success ? "✓ Evaluated" : "✗ Error") in @($"{lastResult.ElapsedMs:F1}")ms</span>
+    }
+    else
+    {
+        <span>Ready</span>
+    }
+</div>
+
+@code {
+    private RuleBuilder? ruleBuilder;
+    private StandaloneCodeEditor? schemaEditor;
+    private StandaloneCodeEditor? dataEditor;
+    private StandaloneCodeEditor? operatorsEditor;
+    private StandaloneCodeEditor? outputEditor;
+
+    private EvaluationResult? lastResult;
+    private bool isEvaluating;
+    private bool isParsingSchema;
+    private string? maximizedPanel;
+    private string activeDataTab = "data";
+
+    // Operator compilation status
+    private string? operatorStatus;
+    private string? operatorStatusTooltip;
+    private Dictionary<string, Models.CustomOperatorDefinition>? lastGoodOperators;
+    private string sampleOperatorsCode = "";
+
+    // Sample tracking
+    private string? activeSampleId;
+    private Sample? activeSample;
+    private string sampleRuleJson = "";
+    private string sampleDataJson = "";
+    private string sampleSchemaJson = "";
+
+    // Debounce
+    private CancellationTokenSource? evalDebounce;
+    private CancellationTokenSource? saveDebounce;
+    private CancellationTokenSource? schemaDebounce;
+    private CancellationTokenSource? operatorsDebounce;
+
+    // Schema versioning — monotonic counter to discard stale parse results
+    private long schemaVersion;
+
+    // Operator compilation versioning
+    private long operatorsVersion;
+
+    private const string DefaultOperatorsTemplate =
+        """
+        public static class MyOperators
+        {
+            public static Dictionary<string, CustomOperatorDefinition> Create()
+            {
+                return new()
+                {
+                    ["double"] = new CustomOperatorDefinition(
+                        new DoubleOp(), MinArgs: 1, MaxArgs: 1,
+                        Description: "Doubles the input value"),
+                };
+            }
+        }
+
+        public class DoubleOp : IOperatorCompiler
+        {
+            public RuleEvaluator Compile(RuleEvaluator[] operands)
+            {
+                var op = operands[0];
+                return (in JsonElement data, JsonWorkspace workspace) =>
+                {
+                    var result = op(data, workspace);
+                    if (result.TryGetDouble(out double val))
+                        return EvalResult.FromDouble(val * 2);
+                    return result;
+                };
+            }
+        }
+        """;
+
+    // Dirty confirmation
+    private bool showDirtyConfirmation;
+    private Action? pendingDirtyAction;
+
+    // Theme
+    private string theme = "dark";
+    private string themeIcon = "🌙";
+    private string themeTooltip = "Switch to light theme";
+    private DotNetObjectReference<MainLayout>? dotNetRef;
+    private DotNetObjectReference<MainLayout>? intelliSenseRef;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", dotNetRef);
+            await JSRuntime.InvokeVoidAsync("onSystemThemeChange", dotNetRef);
+
+            // Register Roslyn IntelliSense for the C# operators editor
+            intelliSenseRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerCSharpCompletionProvider", intelliSenseRef);
+            await JSRuntime.InvokeVoidAsync("registerCSharpSignatureHelpProvider", intelliSenseRef);
+
+            theme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
+            UpdateThemeUI();
+            // Resolve the effective theme and sync Blockly
+            string resolvedTheme = theme;
+            if (theme == "auto")
+            {
+                resolvedTheme = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+            }
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setTheme", resolvedTheme == "dark");
+            await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+
+            // Load from localStorage or default to first sample
+            string? savedRule = null;
+            string? savedData = null;
+            string? savedSchema = null;
+            string? savedOperators = null;
+            try
+            {
+                savedRule = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jsonlogic-rule");
+                savedData = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jsonlogic-data");
+                savedSchema = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jsonlogic-schema");
+                savedOperators = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "jsonlogic-operators");
+            }
+            catch
+            {
+                // localStorage may not be available
+            }
+
+            if (!string.IsNullOrEmpty(savedRule))
+            {
+                if (schemaEditor is not null && !string.IsNullOrEmpty(savedSchema))
+                {
+                    await schemaEditor.SetValue(savedSchema);
+                    activeDataTab = "schema";
+                    // Parse and push schema to Blockly
+                    long version = Interlocked.Increment(ref schemaVersion);
+                    var tree = await Services.SchemaIntrospectionService.ExtractSchemaTreeAsync(savedSchema);
+                    if (tree is not null && Interlocked.Read(ref schemaVersion) == version)
+                    {
+                        string treeJson = System.Text.Json.JsonSerializer.Serialize(tree);
+                        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", treeJson);
+                    }
+                }
+
+                if (dataEditor is not null && !string.IsNullOrEmpty(savedData))
+                {
+                    await dataEditor.SetValue(savedData);
+                }
+
+                // Restore saved operator code
+                if (operatorsEditor is not null && !string.IsNullOrEmpty(savedOperators))
+                {
+                    await operatorsEditor.SetValue(savedOperators);
+                    await CompileAndPushOperatorsAsync(savedOperators);
+                }
+
+                // Push data to Blockly before loading the rule
+                if (!string.IsNullOrEmpty(savedData))
+                {
+                    await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setData", savedData);
+                }
+
+                ruleBuilder?.SetRule(savedRule, savedData);
+
+                await EvaluateAsync();
+            }
+            else
+            {
+                await LoadSampleAsync(SampleRegistry.All[0]);
+            }
+
+            StateHasChanged();
+        }
+    }
+
+    // ── Editor construction ──
+
+    private StandaloneEditorConstructionOptions SchemaEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "json",
+            Theme = "vs-dark",
+            Value = "",
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            FontSize = 14,
+            ScrollBeyondLastLine = false,
+            TabSize = 2,
+        };
+    }
+
+    private StandaloneEditorConstructionOptions DataEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "json",
+            Theme = "vs-dark",
+            Value = "{}",
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            FontSize = 14,
+            ScrollBeyondLastLine = false,
+            TabSize = 2,
+        };
+    }
+
+    private StandaloneEditorConstructionOptions OutputEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "json",
+            Theme = "vs-dark",
+            Value = "",
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            FontSize = 14,
+            ScrollBeyondLastLine = false,
+            ReadOnly = true,
+            TabSize = 2,
+        };
+    }
+
+    private StandaloneEditorConstructionOptions OperatorsEditorOptions(StandaloneCodeEditor editor)
+    {
+        return new StandaloneEditorConstructionOptions
+        {
+            Language = "csharp",
+            Theme = "vs-dark",
+            Value = "",
+            AutomaticLayout = true,
+            Minimap = new EditorMinimapOptions { Enabled = false },
+            FontSize = 14,
+            ScrollBeyondLastLine = false,
+            TabSize = 4,
+        };
+    }
+
+    // ── Tab switching ──
+
+    private async Task SwitchDataTab(string tab)
+    {
+        activeDataTab = tab;
+        StateHasChanged();
+        // Monaco needs a layout kick after becoming visible
+        await Task.Delay(50);
+        if (tab == "schema" && schemaEditor is not null)
+        {
+            await schemaEditor.Layout();
+        }
+        else if (tab == "data" && dataEditor is not null)
+        {
+            await dataEditor.Layout();
+        }
+        else if (tab == "operators" && operatorsEditor is not null)
+        {
+            await operatorsEditor.Layout();
+        }
+    }
+
+    // ── Change handlers ──
+
+    private void OnRuleChanged(string ruleJson)
+    {
+        DebounceEval();
+        DebounceSave();
+    }
+
+    private async void OnSchemaChanged(ModelContentChangedEvent e)
+    {
+        DebounceSave();
+        DebounceSchemaparse();
+    }
+
+    private void OnOperatorsChanged(ModelContentChangedEvent e)
+    {
+        DebounceSave();
+        DebounceOperatorsCompile();
+    }
+
+    private async Task ScaffoldNewOperator()
+    {
+        if (operatorsEditor is null)
+        {
+            return;
+        }
+
+        string current = await operatorsEditor.GetValue();
+        if (string.IsNullOrWhiteSpace(current))
+        {
+            // Empty editor — insert the full scaffold template
+            await operatorsEditor.SetValue(ScaffoldOperatorTemplate);
+        }
+        else
+        {
+            // Already has code — append a new operator class + hint comment
+            string appended = current.TrimEnd()
+                + "\n\n"
+                + ScaffoldAppendSnippet;
+            await operatorsEditor.SetValue(appended);
+        }
+
+        // Switch to operators tab if not already there
+        if (activeDataTab != "operators")
+        {
+            await SwitchDataTab("operators");
+        }
+    }
+
+    private const string ScaffoldOperatorTemplate =
+        """
+        public static class MyOperators
+        {
+            public static Dictionary<string, CustomOperatorDefinition> Create()
+            {
+                return new()
+                {
+                    ["myop"] = new CustomOperatorDefinition(
+                        new MyOp(), MinArgs: 1, MaxArgs: 1,
+                        Description: "Describe your operator here"),
+                };
+            }
+        }
+
+        public class MyOp : IOperatorCompiler
+        {
+            public RuleEvaluator Compile(RuleEvaluator[] operands)
+            {
+                var op = operands[0];
+                return (in JsonElement data, JsonWorkspace workspace) =>
+                {
+                    var result = op(data, workspace);
+                    // TODO: implement your logic here
+                    return result;
+                };
+            }
+        }
+        """;
+
+    private const string ScaffoldAppendSnippet =
+        """
+        // TODO: Add a new entry to the dictionary in MyOperators.Create():
+        //   ["newop"] = new CustomOperatorDefinition(
+        //       new NewOp(), MinArgs: 1, MaxArgs: 1,
+        //       Description: "Describe your operator here"),
+
+        public class NewOp : IOperatorCompiler
+        {
+            public RuleEvaluator Compile(RuleEvaluator[] operands)
+            {
+                var op = operands[0];
+                return (in JsonElement data, JsonWorkspace workspace) =>
+                {
+                    var result = op(data, workspace);
+                    // TODO: implement your logic here
+                    return result;
+                };
+            }
+        }
+        """;
+
+    private void DebounceOperatorsCompile()
+    {
+        operatorsDebounce?.Cancel();
+        operatorsDebounce = new CancellationTokenSource();
+        var token = operatorsDebounce.Token;
+        long version = Interlocked.Increment(ref operatorsVersion);
+        _ = Task.Delay(800, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(() => CompileOperatorsFromEditorAsync(version));
+            }
+        }, token);
+    }
+
+    private async Task CompileOperatorsFromEditorAsync(long version)
+    {
+        if (operatorsEditor is null)
+        {
+            return;
+        }
+
+        string code = await operatorsEditor.GetValue();
+        if (Interlocked.Read(ref operatorsVersion) != version)
+        {
+            return;
+        }
+
+        await CompileAndPushOperatorsAsync(code);
+    }
+
+    private async Task CompileAndPushOperatorsAsync(string code)
+    {
+        if (string.IsNullOrWhiteSpace(code))
+        {
+            // No operator code — clear custom operators
+            lastGoodOperators = null;
+            EvalService.SetCustomOperators(new Dictionary<string, IOperatorCompiler>());
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setCustomOperators", "[]");
+            operatorStatus = null;
+            operatorStatusTooltip = null;
+            StateHasChanged();
+            DebounceEval();
+            return;
+        }
+
+        operatorStatus = "⏳";
+        operatorStatusTooltip = "Compiling operators...";
+        StateHasChanged();
+
+        try
+        {
+            var result = await OperatorCompiler.CompileAsync(code);
+
+            if (result.Success && result.Operators is not null)
+            {
+                lastGoodOperators = result.Operators;
+
+                // Wire into evaluation
+                var compilers = result.Operators.ToDictionary(
+                    kv => kv.Key,
+                    kv => kv.Value.Compiler);
+                EvalService.SetCustomOperators(compilers);
+
+                // Push metadata to Blockly for dynamic block creation
+                var metadata = result.Operators.Select(kv => new
+                {
+                    name = kv.Key,
+                    minArgs = kv.Value.MinArgs,
+                    maxArgs = kv.Value.MaxArgs,
+                    description = kv.Value.Description ?? $"Custom operator: {kv.Key}",
+                });
+                string metadataJson = System.Text.Json.JsonSerializer.Serialize(metadata);
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setCustomOperators", metadataJson);
+
+                int count = result.Operators.Count;
+                operatorStatus = "✅";
+                operatorStatusTooltip = $"{count} operator{(count == 1 ? "" : "s")} compiled";
+
+                // Clear any previous error markers
+                await JSRuntime.InvokeVoidAsync("setMonacoMarkers", "operators-editor", "[]");
+
+                // Re-evaluate with new operators
+                DebounceEval();
+            }
+            else
+            {
+                // Compilation failed — keep last-good operators
+                operatorStatus = "❌";
+                string errorMsg = result.ErrorMessage ?? string.Join("; ",
+                    result.Diagnostics.Select(d =>
+                    {
+                        string loc = d.Location.IsInSource
+                            ? $" (line {d.Location.GetLineSpan().StartLinePosition.Line + 1})"
+                            : "";
+                        return $"{d.GetMessage()}{loc}";
+                    }));
+                operatorStatusTooltip = errorMsg;
+
+                // Set Monaco editor markers for errors
+                if (operatorsEditor is not null && result.Diagnostics.Count > 0)
+                {
+                    await SetOperatorEditorMarkers(result.Diagnostics);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            operatorStatus = "❌";
+            operatorStatusTooltip = ex.Message;
+        }
+        finally
+        {
+            StateHasChanged();
+        }
+    }
+
+    private async Task SetOperatorEditorMarkers(List<Microsoft.CodeAnalysis.Diagnostic> diagnostics)
+    {
+        if (operatorsEditor is null)
+        {
+            return;
+        }
+
+        // Filter to only diagnostics in the user's file (CustomOperators.cs)
+        var markers = diagnostics
+            .Where(d => d.Location.IsInSource &&
+                        d.Location.SourceTree?.FilePath == "CustomOperators.cs")
+            .Select(d =>
+            {
+                var span = d.Location.GetLineSpan();
+                return new
+                {
+                    startLineNumber = span.StartLinePosition.Line + 1,
+                    startColumn = span.StartLinePosition.Character + 1,
+                    endLineNumber = span.EndLinePosition.Line + 1,
+                    endColumn = span.EndLinePosition.Character + 1,
+                    message = d.GetMessage(),
+                    severity = d.Severity == Microsoft.CodeAnalysis.DiagnosticSeverity.Error ? 8 : 4,
+                };
+            })
+            .ToArray();
+
+        string markersJson = System.Text.Json.JsonSerializer.Serialize(markers);
+        await JSRuntime.InvokeVoidAsync("setMonacoMarkers", "operators-editor", markersJson);
+    }
+
+    private void DebounceSchemaparse()
+    {
+        schemaDebounce?.Cancel();
+        schemaDebounce = new CancellationTokenSource();
+        var token = schemaDebounce.Token;
+        long version = Interlocked.Increment(ref schemaVersion);
+        _ = Task.Delay(500, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(() => ParseAndPushSchemaAsync(version));
+            }
+        }, token);
+    }
+
+    private async Task ParseAndPushSchemaAsync(long version)
+    {
+        if (schemaEditor is null)
+        {
+            return;
+        }
+
+        string schemaJson = await schemaEditor.GetValue();
+
+        if (string.IsNullOrWhiteSpace(schemaJson))
+        {
+            // Clear schema — revert to data-driven dropdowns
+            if (Interlocked.Read(ref schemaVersion) == version)
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
+            }
+
+            return;
+        }
+
+        isParsingSchema = true;
+        StateHasChanged();
+
+        try
+        {
+            var tree = await Services.SchemaIntrospectionService.ExtractSchemaTreeAsync(schemaJson);
+
+            // Discard if a newer version has been requested
+            if (Interlocked.Read(ref schemaVersion) != version)
+            {
+                return;
+            }
+
+            if (tree is not null)
+            {
+                string treeJson = System.Text.Json.JsonSerializer.Serialize(tree);
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", treeJson);
+            }
+            else
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
+            }
+        }
+        catch
+        {
+            // Schema parse failed — clear schema context
+            if (Interlocked.Read(ref schemaVersion) == version)
+            {
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
+            }
+        }
+        finally
+        {
+            isParsingSchema = false;
+            StateHasChanged();
+        }
+    }
+
+    private async void OnDataChanged(ModelContentChangedEvent e)
+    {
+        DebounceEval();
+        DebounceSave();
+        // Push data to Blockly for context-aware dropdowns
+        if (dataEditor is not null)
+        {
+            string dataJson = await dataEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setData", dataJson);
+        }
+    }
+
+    // ── Evaluation ──
+
+    private void DebounceEval()
+    {
+        evalDebounce?.Cancel();
+        evalDebounce = new CancellationTokenSource();
+        var token = evalDebounce.Token;
+        _ = Task.Delay(300, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(EvaluateAsync);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
+    private void DebounceSave()
+    {
+        saveDebounce?.Cancel();
+        saveDebounce = new CancellationTokenSource();
+        var token = saveDebounce.Token;
+        _ = Task.Delay(2000, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(SaveToLocalStorageAsync);
+            }
+        }, token, TaskContinuationOptions.OnlyOnRanToCompletion, TaskScheduler.Current);
+    }
+
+    private async Task EvaluateAsync()
+    {
+        string ruleJson = ruleBuilder?.RuleJson ?? "";
+        string dataJson = dataEditor is not null ? await dataEditor.GetValue() : "{}";
+
+        isEvaluating = true;
+        StateHasChanged();
+
+        lastResult = await EvalService.EvaluateAsync(ruleJson, dataJson);
+
+        isEvaluating = false;
+
+        if (lastResult.Success && outputEditor is not null)
+        {
+            await outputEditor.SetValue(lastResult.ResultJson ?? "");
+        }
+
+        // Highlight error-causing custom operator in Blockly
+        if (!lastResult.Success && lastResult.ErrorOperatorName is not null)
+        {
+            string pathsJson = System.Text.Json.JsonSerializer.Serialize(
+                lastResult.ErrorPaths ?? []);
+            await JSRuntime.InvokeVoidAsync(
+                "BlocklyJsonLogic.highlightErrorOperator",
+                lastResult.ErrorOperatorName,
+                pathsJson,
+                lastResult.ErrorMessage);
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync(
+                "BlocklyJsonLogic.highlightErrorOperator",
+                null as string,
+                "[]",
+                null as string);
+        }
+
+        StateHasChanged();
+    }
+
+    [JSInvokable]
+    public async Task OnEvaluateShortcut()
+    {
+        evalDebounce?.Cancel();
+        await EvaluateAsync();
+    }
+
+    private async Task ReapplyErrorHighlights()
+    {
+        if (lastResult is not null && !lastResult.Success && lastResult.ErrorOperatorName is not null)
+        {
+            string pathsJson = System.Text.Json.JsonSerializer.Serialize(
+                lastResult.ErrorPaths ?? []);
+            await JSRuntime.InvokeVoidAsync(
+                "BlocklyJsonLogic.highlightErrorOperator",
+                lastResult.ErrorOperatorName,
+                pathsJson,
+                lastResult.ErrorMessage);
+        }
+    }
+
+    // ── IntelliSense JSInvokable callbacks ──
+
+    [JSInvokable]
+    public async Task<List<object>> GetCompletionsForJs(string code, int line, int column)
+    {
+        var items = await IntelliSenseSvc.GetCompletionsAsync(code, line, column);
+
+        return items.Select(item => (object)new
+        {
+            label = item.Label,
+            kind = MapMonacoKind(item.Kind),
+            detail = item.Detail,
+            insertText = item.Label,
+            sortText = item.SortText,
+            filterText = item.FilterText,
+        }).ToList();
+    }
+
+    [JSInvokable]
+    public async Task<object?> GetSignatureHelpForJs(string code, int line, int column)
+    {
+        var result = await IntelliSenseSvc.GetSignatureHelpAsync(code, line, column);
+        if (result is null)
+        {
+            return null;
+        }
+
+        return new
+        {
+            signatures = result.Signatures.Select(sig => new
+            {
+                label = sig.Label,
+                documentation = sig.Documentation,
+                parameters = sig.Parameters.Select(p => new
+                {
+                    label = p.Label,
+                    documentation = p.Documentation,
+                }).ToArray(),
+            }).ToArray(),
+            activeSignature = result.ActiveSignature,
+            activeParameter = result.ActiveParameter,
+        };
+    }
+
+    private static int MapMonacoKind(string kind)
+    {
+        return kind switch
+        {
+            "Method" => 0,
+            "Function" => 1,
+            "Field" => 3,
+            "Variable" => 4,
+            "Class" => 5,
+            "Struct" => 6,
+            "Interface" => 7,
+            "Module" => 8,
+            "Property" => 9,
+            "Event" => 10,
+            "Constant" => 14,
+            "Enum" => 15,
+            "EnumMember" => 16,
+            "Keyword" => 17,
+            "Snippet" => 27,
+            "TypeParameter" => 24,
+            _ => 18, // Text
+        };
+    }
+
+    // ── Samples ──
+
+    private async Task OnSampleChanged(ChangeEventArgs e)
+    {
+        string? id = e.Value?.ToString();
+        var sample = SampleRegistry.All.FirstOrDefault(s => s.Id == id);
+        if (sample is null)
+        {
+            return;
+        }
+
+        if (IsDirty())
+        {
+            pendingDirtyAction = async () => await LoadSampleAsync(sample);
+            showDirtyConfirmation = true;
+            StateHasChanged();
+            return;
+        }
+
+        await LoadSampleAsync(sample);
+    }
+
+    private async Task LoadSampleAsync(Sample sample)
+    {
+        activeSampleId = sample.Id;
+        activeSample = sample;
+        sampleRuleJson = sample.Rule.Trim();
+        sampleDataJson = sample.Data.Trim();
+        sampleSchemaJson = (sample.Schema ?? "").Trim();
+        sampleOperatorsCode = (sample.OperatorsCode ?? "").Trim();
+
+        if (dataEditor is not null)
+        {
+            await dataEditor.SetValue(sampleDataJson);
+        }
+
+        if (schemaEditor is not null)
+        {
+            await schemaEditor.SetValue(sampleSchemaJson);
+        }
+
+        if (operatorsEditor is not null)
+        {
+            await operatorsEditor.SetValue(sampleOperatorsCode);
+        }
+
+        // Push schema first (if any), then operators, then data, then rule
+        if (!string.IsNullOrEmpty(sampleSchemaJson))
+        {
+            activeDataTab = "schema";
+            long version = Interlocked.Increment(ref schemaVersion);
+            var tree = await Services.SchemaIntrospectionService.ExtractSchemaTreeAsync(sampleSchemaJson);
+            if (tree is not null && Interlocked.Read(ref schemaVersion) == version)
+            {
+                string treeJson = System.Text.Json.JsonSerializer.Serialize(tree);
+                await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", treeJson);
+            }
+        }
+        else
+        {
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
+        }
+
+        // Compile operators (if any)
+        if (!string.IsNullOrEmpty(sampleOperatorsCode))
+        {
+            if (string.IsNullOrEmpty(sampleSchemaJson))
+            {
+                activeDataTab = "operators";
+            }
+
+            await CompileAndPushOperatorsAsync(sampleOperatorsCode);
+        }
+        else
+        {
+            // Clear custom operators
+            lastGoodOperators = null;
+            EvalService.SetCustomOperators(new Dictionary<string, IOperatorCompiler>());
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setCustomOperators", "[]");
+            operatorStatus = null;
+            operatorStatusTooltip = null;
+        }
+
+        // Push data to Blockly BEFORE loading the rule so dropdowns have context.
+        // OnDataChanged fires asynchronously (too late), so we call setData explicitly.
+        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setData", sampleDataJson);
+
+        ruleBuilder?.SetRule(sampleRuleJson, sampleDataJson);
+
+        lastResult = null;
+        await EvaluateAsync();
+        StateHasChanged();
+    }
+
+    private async Task NewProjectAsync()
+    {
+        if (IsDirty())
+        {
+            pendingDirtyAction = async () => await ClearProject();
+            showDirtyConfirmation = true;
+            StateHasChanged();
+            return;
+        }
+
+        await ClearProject();
+    }
+
+    private async Task ClearProject()
+    {
+        activeSampleId = null;
+        activeSample = null;
+        sampleRuleJson = "";
+        sampleDataJson = "{}";
+        sampleSchemaJson = "";
+        sampleOperatorsCode = "";
+
+        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setSchema", null as string);
+        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setCustomOperators", "[]");
+        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setData", "{}");
+        EvalService.SetCustomOperators(new Dictionary<string, IOperatorCompiler>());
+        lastGoodOperators = null;
+        operatorStatus = null;
+        operatorStatusTooltip = null;
+
+        ruleBuilder?.SetRule("");
+        if (dataEditor is not null)
+        {
+            await dataEditor.SetValue("{}");
+        }
+
+        if (schemaEditor is not null)
+        {
+            await schemaEditor.SetValue("");
+        }
+
+        if (operatorsEditor is not null)
+        {
+            await operatorsEditor.SetValue("");
+        }
+
+        if (outputEditor is not null)
+        {
+            await outputEditor.SetValue("");
+        }
+
+        activeDataTab = "data";
+        lastResult = null;
+        StateHasChanged();
+    }
+
+    private bool IsDirty()
+    {
+        string currentRule = ruleBuilder?.RuleJson ?? "";
+        return !JsonEquals(currentRule, sampleRuleJson);
+    }
+
+    private static bool JsonEquals(string a, string b)
+    {
+        try
+        {
+            using var docA = System.Text.Json.JsonDocument.Parse(
+                string.IsNullOrWhiteSpace(a) ? "null" : a);
+            using var docB = System.Text.Json.JsonDocument.Parse(
+                string.IsNullOrWhiteSpace(b) ? "null" : b);
+            return docA.RootElement.GetRawText() == docB.RootElement.GetRawText();
+        }
+        catch
+        {
+            return string.Equals(a.Trim(), b.Trim(), StringComparison.Ordinal);
+        }
+    }
+
+    // ── Dirty confirmation ──
+
+    private void CancelDirtyConfirmation()
+    {
+        showDirtyConfirmation = false;
+        pendingDirtyAction = null;
+        // Reset sample select to current
+        _ = JSRuntime.InvokeVoidAsync("resetSampleSelect", activeSampleId ?? "");
+    }
+
+    private async void ConfirmDirtyAction()
+    {
+        showDirtyConfirmation = false;
+        var action = pendingDirtyAction;
+        pendingDirtyAction = null;
+        if (action is not null)
+        {
+            action.Invoke();
+            // Action may be async void delegate — give it a tick
+            await Task.Yield();
+        }
+    }
+
+    // ── Copy buttons ──
+
+    private async Task CopyRule()
+    {
+        string text = ruleBuilder?.RuleJson ?? "";
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyDataOrSchema()
+    {
+        if (activeDataTab == "schema" && schemaEditor is not null)
+        {
+            string text = await schemaEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+        else if (activeDataTab == "operators" && operatorsEditor is not null)
+        {
+            string text = await operatorsEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+        else if (dataEditor is not null)
+        {
+            string text = await dataEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+    }
+
+    private async Task CopyResult()
+    {
+        if (outputEditor is not null)
+        {
+            string text = await outputEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+    }
+
+    // ── Maximize ──
+
+    private void ToggleMaximize(string panel)
+    {
+        maximizedPanel = maximizedPanel == panel ? null : panel;
+    }
+
+    private string GetPanelClass(string panel)
+    {
+        if (maximizedPanel is null)
+        {
+            return "";
+        }
+
+        return maximizedPanel == panel ? "panel-maximized" : "panel-hidden";
+    }
+
+    // ── Theme ──
+
+    private async Task CycleTheme()
+    {
+        theme = theme switch
+        {
+            "dark" => "light",
+            "light" => "auto",
+            _ => "dark",
+        };
+        UpdateThemeUI();
+        string resolved = theme;
+        if (theme == "auto")
+        {
+            resolved = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+        }
+
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolved);
+        await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setTheme", resolved == "dark");
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-theme", theme);
+        }
+        catch
+        {
+            // ignore
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnSystemThemeChanged(string systemTheme)
+    {
+        if (theme == "auto")
+        {
+            await JSRuntime.InvokeVoidAsync("applyTheme", systemTheme);
+            await JSRuntime.InvokeVoidAsync("BlocklyJsonLogic.setTheme", systemTheme == "dark");
+            StateHasChanged();
+        }
+    }
+
+    private void UpdateThemeUI()
+    {
+        (themeIcon, themeTooltip) = theme switch
+        {
+            "dark" => ("🌙", "Switch to light theme"),
+            "light" => ("☀️", "Switch to auto theme"),
+            _ => ("🖥️", "Switch to dark theme"),
+        };
+    }
+
+    // ── LocalStorage persistence ──
+
+    private async Task SaveToLocalStorageAsync()
+    {
+        try
+        {
+            string ruleJson = ruleBuilder?.RuleJson ?? "";
+            string dataJson = dataEditor is not null ? await dataEditor.GetValue() : "{}";
+            string schemaJson = schemaEditor is not null ? await schemaEditor.GetValue() : "";
+            string operatorsCode = operatorsEditor is not null ? await operatorsEditor.GetValue() : "";
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-rule", ruleJson);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-data", dataJson);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-schema", schemaJson);
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", "jsonlogic-operators", operatorsCode);
+        }
+        catch
+        {
+            // localStorage may not be available
+        }
+    }
+
+    // ── Disposal ──
+
+    public void Dispose()
+    {
+        evalDebounce?.Cancel();
+        evalDebounce?.Dispose();
+        saveDebounce?.Cancel();
+        saveDebounce?.Dispose();
+        schemaDebounce?.Cancel();
+        schemaDebounce?.Dispose();
+        operatorsDebounce?.Cancel();
+        operatorsDebounce?.Dispose();
+        dotNetRef?.Dispose();
+        intelliSenseRef?.Dispose();
+    }
+}

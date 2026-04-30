@@ -1,0 +1,1 @@
+$.store.book[?length(@.title) > 10]

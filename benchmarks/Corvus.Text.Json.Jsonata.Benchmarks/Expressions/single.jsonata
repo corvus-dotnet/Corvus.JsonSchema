@@ -1,0 +1,1 @@
+$single(Account.Order[0].Product, function($v) { $v.Price > 30 })

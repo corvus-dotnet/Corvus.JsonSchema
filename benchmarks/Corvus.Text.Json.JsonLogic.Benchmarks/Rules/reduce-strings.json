@@ -1,0 +1,1 @@
+{"reduce":[{"var":"people"},{"cat":[{"var":"accumulator"},{"if":[{"var":"accumulator"},", ",""]},{"var":"current.name"}]},""]}

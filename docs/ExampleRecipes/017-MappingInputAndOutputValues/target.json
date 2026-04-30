@@ -1,0 +1,8 @@
+{
+  "type": "object",
+  "required": ["identifier", "fullName"],
+  "properties": {
+    "identifier": { "type": "integer" },
+    "fullName": { "type": "string" }
+  }
+}

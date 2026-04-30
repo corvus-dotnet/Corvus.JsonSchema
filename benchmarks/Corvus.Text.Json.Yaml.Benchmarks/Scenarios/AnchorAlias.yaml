@@ -1,0 +1,38 @@
+defaults: &defaults
+  adapter: postgres
+  host: localhost
+  port: 5432
+  pool: 5
+  timeout: 30
+
+development:
+  database: myapp_dev
+  <<: *defaults
+
+test:
+  database: myapp_test
+  <<: *defaults
+  pool: 1
+
+production:
+  database: myapp_prod
+  <<: *defaults
+  host: db.example.com
+  pool: 25
+  timeout: 60
+
+shared: &shared_labels
+  app: myapp
+  team: backend
+  managed-by: helm
+
+services:
+  - name: api
+    replicas: 3
+    labels: *shared_labels
+  - name: worker
+    replicas: 2
+    labels: *shared_labels
+  - name: scheduler
+    replicas: 1
+    labels: *shared_labels

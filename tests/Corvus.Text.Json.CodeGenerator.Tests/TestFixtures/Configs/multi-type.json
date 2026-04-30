@@ -1,0 +1,13 @@
+{
+    "rootNamespace": "Corvus.Text.Json.CodeGenerator.Tests.MultiGenerated",
+    "typesToGenerate": [
+        {
+            "schemaFile": "./Schemas/simple-object.json",
+            "outputRootTypeName": "PersonType"
+        },
+        {
+            "schemaFile": "./Schemas/array-type.json",
+            "outputRootTypeName": "ItemList"
+        }
+    ]
+}

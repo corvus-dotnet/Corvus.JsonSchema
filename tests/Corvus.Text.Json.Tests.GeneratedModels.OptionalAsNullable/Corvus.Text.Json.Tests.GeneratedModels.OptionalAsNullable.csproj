@@ -1,0 +1,60 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1;net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>Preview</LangVersion>
+    <NoWarn>$(NoWarn);CS8500;CS8969;CS8618;IDE0065;IDE0290;IDE0079;IDE0130;IDE1006;IDE0130</NoWarn>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CorvusTextJsonOptionalAsNullable>NullOrUndefined</CorvusTextJsonOptionalAsNullable>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <CompilerVisibleProperty Include="CorvusTextJsonOptionalAsNullable" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="format-types-2020-12.json" />
+    <AdditionalFiles Include="object-with-mixed-properties-2020-12.json" />
+    <AdditionalFiles Include="nested-object-2020-12.json" />
+    <AdditionalFiles Include="array-of-items-2020-12.json" />
+    <AdditionalFiles Include="object-with-array-property-2020-12.json" />
+    <AdditionalFiles Include="composition-any-of-2020-12.json" />
+    <AdditionalFiles Include="composition-all-of-2020-12.json" />
+    <AdditionalFiles Include="composition-one-of-2020-12.json" />
+    <AdditionalFiles Include="if-then-else-2020-12.json" />
+    <AdditionalFiles Include="allof-with-anyof-2020-12.json" />
+    <AdditionalFiles Include="properties-with-oneof-2020-12.json" />
+    <AdditionalFiles Include="allof-with-ifthenelse-2020-12.json" />
+    <AdditionalFiles Include="pure-tuple-2020-12.json" />
+    <AdditionalFiles Include="tuple-with-additional-items-2020-12.json" />
+    <AdditionalFiles Include="ref-tuple-with-contains-2020-12.json" />
+    <AdditionalFiles Include="ref-tuple-with-additional-items-2020-12.json" />
+    <AdditionalFiles Include="allof-inline-tuple-with-unevaluated-2020-12.json" />
+    <AdditionalFiles Include="allof-open-tuple-closed-locally-2020-12.json" />
+    <AdditionalFiles Include="ref-closed-tuple-with-contains-2020-12.json" />
+    <AdditionalFiles Include="ref-open-tuple-with-items-2020-12.json" />
+    <AdditionalFiles Include="ref-object-with-properties-2020-12.json" />
+    <AdditionalFiles Include="allof-object-with-properties-2020-12.json" />
+    <AdditionalFiles Include="ref-array-with-items-2020-12.json" />
+    <AdditionalFiles Include="allof-array-with-items-2020-12.json" />
+    <AdditionalFiles Include="rank1-double-vector-2020-12.json" />
+    <AdditionalFiles Include="rank1-int32-vector-2020-12.json" />
+    <AdditionalFiles Include="rank2-double-matrix-2020-12.json" />
+    <AdditionalFiles Include="rank3-int32-cube-2020-12.json" />
+    <AdditionalFiles Include="ref-items-double-vector-2020-12.json" />
+    <AdditionalFiles Include="ref-items-int32-vector-2020-12.json" />
+    <AdditionalFiles Include="ref-inner-array-double-matrix-2020-12.json" />
+    <AdditionalFiles Include="allof-double-vector-2020-12.json" />
+    <AdditionalFiles Include="allof-int32-matrix-2020-12.json" />
+    <AdditionalFiles Include="object-with-default-properties-2020-12.json" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+
+</Project>

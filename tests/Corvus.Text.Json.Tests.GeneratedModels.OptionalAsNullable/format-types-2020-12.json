@@ -1,0 +1,138 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "object",
+    "properties": {
+        "date": {
+            "type": "string",
+            "format": "date"
+        },
+        "dateTime": {
+            "type": "string",
+            "format": "date-time"
+        },
+        "time": {
+            "type": "string",
+            "format": "time"
+        },
+        "duration": {
+            "type": "string",
+            "format": "duration"
+        },
+        "email": {
+            "type": "string",
+            "format": "email"
+        },
+        "idnEmail": {
+            "type": "string",
+            "format": "idn-email"
+        },
+        "hostname": {
+            "type": "string",
+            "format": "hostname"
+        },
+        "idnHostname": {
+            "type": "string",
+            "format": "idn-hostname"
+        },
+        "ipV4": {
+            "type": "string",
+            "format": "ipV4"
+        },
+        "ipV6": {
+            "type": "string",
+            "format": "ipV6"
+        },
+        "uuid": {
+            "type": "string",
+            "format": "uuid"
+        },
+        "uri": {
+            "type": "string",
+            "format": "uri"
+        },
+        "uriTemplate": {
+            "type": "string",
+            "format": "uri"
+        },
+        "uriReference": {
+            "type": "string",
+            "format": "uri-reference"
+        },
+        "iri": {
+            "type": "string",
+            "format": "iri"
+        },
+        "iriReference": {
+            "type": "string",
+            "format": "iri-reference"
+        },
+        "jsonPointer": {
+            "type": "string",
+            "format": "json-pointer"
+        },
+        "relativeJsonPointer": {
+            "type": "string",
+            "format": "relative-json-pointer"
+        },
+        "regex": {
+            "type": "string",
+            "format": "regex"
+        },
+        "byte": {
+            "type": "number",
+            "format": "byte"
+        },
+        "uint16": {
+            "type": "number",
+            "format": "uint16"
+        },
+        "uint32": {
+            "type": "number",
+            "format": "uint32"
+        },
+        "uint64": {
+            "type": "number",
+            "format": "uint64"
+        },
+        "uint128": {
+            "type": "number",
+            "format": "uint128"
+        },
+        "sbyte": {
+            "type": "number",
+            "format": "sbyte"
+        },
+        "int16": {
+            "type": "number",
+            "format": "int16"
+        },
+        "int32": {
+            "type": "number",
+            "format": "int32"
+        },
+        "int64": {
+            "type": "number",
+            "format": "int64"
+        },
+        "int128": {
+            "type": "number",
+            "format": "int128"
+        },
+        "half": {
+            "type": "number",
+            "format": "half"
+        },
+        "single": {
+            "type": "number",
+            "format": "single"
+        },
+        "double": {
+            "type": "number",
+            "format": "double"
+        },
+        "decimal": {
+            "type": "number",
+            "format": "decimal"
+        }
+    }
+}

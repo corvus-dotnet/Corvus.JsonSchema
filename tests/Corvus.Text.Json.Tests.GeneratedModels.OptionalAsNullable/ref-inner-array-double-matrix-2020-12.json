@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RefInnerArrayDoubleMatrix",
+    "description": "A rank-2 double matrix where the inner array (row) is referenced via $ref.",
+    "$defs": {
+        "doubleRow": {
+            "type": "array",
+            "items": {
+                "type": "number",
+                "format": "double"
+            },
+            "minItems": 3,
+            "maxItems": 3
+        }
+    },
+    "type": "array",
+    "items": {
+        "$ref": "#/$defs/doubleRow"
+    },
+    "minItems": 2,
+    "maxItems": 2
+}
