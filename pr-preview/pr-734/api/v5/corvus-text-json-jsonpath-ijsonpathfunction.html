@@ -188,7 +188,7 @@ using JsonPathResult result = evaluator.QueryNodes(
 <p>For simple functions, use the <code>JsonPathFunction</code> factory methods instead of implementing the interface directly:</p>
 <pre><code class="language-csharp">// Equivalent to the CeilFunction class above:
 IJsonPathFunction ceil = JsonPathFunction.Value((v, ws) =&gt;
-    JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws));
+    JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(v.GetDouble()), ws));
 </code></pre>
 <h2 id="applies-to">Applies To</h2>
 <table>

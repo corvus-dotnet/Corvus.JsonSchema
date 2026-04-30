@@ -197,7 +197,7 @@ foreach (JsonElement node in result.Nodes)
 <pre><code class="language-csharp">var evaluator = new JsonPathEvaluator(new Dictionary&lt;string, IJsonPathFunction&gt;
 {
     [&quot;ceil&quot;] = JsonPathFunction.Value((v, ws) =&gt;
-        JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws)),
+        JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(v.GetDouble()), ws)),
     [&quot;is_cheap&quot;] = JsonPathFunction.Logical(v =&gt;
         v.ValueKind == JsonValueKind.Number &amp;&amp; v.GetDouble() &lt; 10),
 });

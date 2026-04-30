@@ -142,12 +142,12 @@
 
 // ceil(value) → value: rounds a number up to the nearest integer
 IJsonPathFunction ceil = JsonPathFunction.Value((v, ws) =&gt;
-    JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws));
+    JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(v.GetDouble()), ws));
 </code></pre>
 <h3 id="value-function-two-arguments">Value function (two arguments)</h3>
 <pre><code class="language-csharp">// add(value, value) → value: sums two numbers
 IJsonPathFunction add = JsonPathFunction.Value((a, b, ws) =&gt;
-    JsonPathFunctionResult.FromValue(a.GetDouble() + b.GetDouble(), ws));
+    JsonPathCodeGenHelpers.DoubleToElement(a.GetDouble() + b.GetDouble(), ws));
 </code></pre>
 <h3 id="logical-function">Logical function</h3>
 <pre><code class="language-csharp">// is_string(value) → logical: tests whether a value is a string
@@ -191,7 +191,7 @@ JsonElement result = evaluator.Query(&quot;$[?is_string(@.name)]&quot;, data);
     });
 </code></pre>
 <h2 id="example">Example</h2>
-<p><code>csharp var evaluator = new JsonPathEvaluator(new Dictionary&lt;string, IJsonPathFunction&gt; { [&quot;ceil&quot;] = JsonPathFunction.Value((v, ws) =&gt; JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws)), [&quot;is_fiction&quot;] = JsonPathFunction.Logical(v =&gt; v.ValueKind == JsonValueKind.String &amp;&amp; v.ValueEquals(&quot;fiction&quot;u8)), }); </code></p>
+<p><code>csharp var evaluator = new JsonPathEvaluator(new Dictionary&lt;string, IJsonPathFunction&gt; { [&quot;ceil&quot;] = JsonPathFunction.Value((v, ws) =&gt; JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(v.GetDouble()), ws)), [&quot;is_fiction&quot;] = JsonPathFunction.Logical(v =&gt; v.ValueKind == JsonValueKind.String &amp;&amp; v.ValueEquals(&quot;fiction&quot;u8)), }); </code></p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
