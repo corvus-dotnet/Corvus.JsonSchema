@@ -53,5 +53,5 @@ For simple functions, use the `JsonPathFunction` factory methods instead of impl
 ```csharp
 // Equivalent to the CeilFunction class above:
 IJsonPathFunction ceil = JsonPathFunction.Value((v, ws) =>
-    JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws));
+    JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(v.GetDouble()), ws));
 ```

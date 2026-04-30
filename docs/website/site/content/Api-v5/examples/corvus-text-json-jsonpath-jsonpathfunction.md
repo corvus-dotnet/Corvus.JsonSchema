@@ -7,7 +7,7 @@ using Corvus.Text.Json.JsonPath;
 
 // ceil(value) → value: rounds a number up to the nearest integer
 IJsonPathFunction ceil = JsonPathFunction.Value((v, ws) =>
-    JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws));
+    JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(v.GetDouble()), ws));
 ```
 
 ### Value function (two arguments)
@@ -15,7 +15,7 @@ IJsonPathFunction ceil = JsonPathFunction.Value((v, ws) =>
 ```csharp
 // add(value, value) → value: sums two numbers
 IJsonPathFunction add = JsonPathFunction.Value((a, b, ws) =>
-    JsonPathFunctionResult.FromValue(a.GetDouble() + b.GetDouble(), ws));
+    JsonPathCodeGenHelpers.DoubleToElement(a.GetDouble() + b.GetDouble(), ws));
 ```
 
 ### Logical function

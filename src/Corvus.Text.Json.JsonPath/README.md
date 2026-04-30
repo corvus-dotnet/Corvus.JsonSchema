@@ -24,7 +24,7 @@ var evaluator = new JsonPathEvaluator(
     new Dictionary<string, IJsonPathFunction>
     {
         ["ceil"] = JsonPathFunction.Value((v, ws) =>
-            JsonPathFunctionResult.FromValue((int)Math.Ceiling(v.GetDouble()), ws)),
+            JsonPathCodeGenHelpers.IntToElement((int)Math.Ceiling(v.GetDouble()), ws)),
         ["is_fiction"] = JsonPathFunction.Logical(v =>
             v.ValueKind == JsonValueKind.String && v.ValueEquals("fiction"u8)),
     });
