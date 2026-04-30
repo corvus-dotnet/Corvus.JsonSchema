@@ -183,6 +183,7 @@
     <Compile Include="JsonSchemaMatchingNumberTests.cs" />
     <Compile Include="JsonSchemaMatchingStringTests.cs" />
     <Compile Include="JsonSchemaResultsCollectorTests.cs" />
+    <Compile Include="JsonElementCoreApiCoverageTests.cs" />
     <Compile Include="PeriodTests.cs" />
     <Compile Include="PrebakedPropertyNameWriteTests.cs" />
     <!-- Include common SR helper when resources are included. -->
