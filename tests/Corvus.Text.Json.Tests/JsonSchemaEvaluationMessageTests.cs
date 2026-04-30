@@ -1322,6 +1322,165 @@ public class JsonSchemaEvaluationMessageTests
         Assert.Equal(0, written);
     }
 
+    [Fact]
+    public void ExpectedType_EmptyTypeName_SucceedsWithPrefixOnly()
+    {
+        // Empty type name exercises AppendSingleQuotedValue(ReadOnlySpan<byte>) early return (lines 197-199)
+        Span<byte> buffer = stackalloc byte[256];
+        bool result = JsonSchemaEvaluation.ExpectedType(ReadOnlySpan<byte>.Empty, buffer, out int written);
+
+        Assert.True(result);
+        Assert.True(written > 0);
+    }
+
+    [Fact]
+    public void ExpectedMultipleOfDivisor_EmptyDivisor_SucceedsWithPrefixOnly()
+    {
+        // Empty string exercises AppendSingleQuotedValue(string) early return (lines 219-221)
+        Span<byte> buffer = stackalloc byte[256];
+        bool result = JsonSchemaEvaluation.ExpectedMultipleOfDivisor("", buffer, out int written);
+
+        Assert.True(result);
+        Assert.True(written > 0);
+    }
+
+    [Fact]
+    public void ExpectedConstant_EmptyValue_SucceedsWithPrefixOnly()
+    {
+        Span<byte> buffer = stackalloc byte[256];
+        bool result = JsonSchemaEvaluation.ExpectedConstant("", buffer, out int written);
+
+        Assert.True(result);
+        Assert.True(written > 0);
+    }
+
+    [Fact]
+    public void ExpectedType_BufferFitsPrefixButNotQuotedValue_ReturnsFalse()
+    {
+        // Get the prefix length by calling with empty typeName
+        Span<byte> largeBuffer = stackalloc byte[256];
+        JsonSchemaEvaluation.ExpectedType(ReadOnlySpan<byte>.Empty, largeBuffer, out int prefixLen);
+
+        // Buffer = prefix + 2 bytes: enough for prefix but not for ' 'X'' (needs +4)
+        byte[] typeName = Encoding.UTF8.GetBytes("X");
+        Span<byte> buffer = stackalloc byte[256];
+        buffer = buffer.Slice(0, prefixLen + 2);
+
+        bool result = JsonSchemaEvaluation.ExpectedType(typeName, buffer, out int written);
+
+        Assert.False(result);
+        Assert.Equal(0, written);
+    }
+
+    [Fact]
+    public void ExpectedMultipleOfDivisor_BufferFitsPrefixButNotQuotedValue_ReturnsFalse()
+    {
+        // Get the prefix length by calling with empty divisor
+        Span<byte> largeBuffer = stackalloc byte[256];
+        JsonSchemaEvaluation.ExpectedMultipleOfDivisor("", largeBuffer, out int prefixLen);
+
+        // Buffer = prefix + 2: enough for prefix but not for ' '7'' (needs +4)
+        Span<byte> buffer = stackalloc byte[256];
+        buffer = buffer.Slice(0, prefixLen + 2);
+
+        bool result = JsonSchemaEvaluation.ExpectedMultipleOfDivisor("7", buffer, out int written);
+
+        Assert.False(result);
+        Assert.Equal(0, written);
+    }
+
+    [Fact]
+    public void ExpectedItemCountEquals_BufferFitsPrefixPlusQuoteButNotDigit_ReturnsFalse()
+    {
+        // Get the prefix length with a known-good call
+        Span<byte> largeBuffer = stackalloc byte[512];
+        JsonSchemaEvaluation.ExpectedItemCountEqualsValue(5, largeBuffer, out int fullWritten);
+
+        // Buffer = prefix + 1: room for opening quote but not for the integer digit
+        // AppendQuotedInteger: after writing opening quote, TryFormat has 0 bytes → fails (lines 252-255)
+        Span<byte> buffer = stackalloc byte[512];
+
+        // The full message is: "prefix'5'" — prefix + opening quote (1) + digit (1) + closing quote (1) = prefix + 3
+        // Use prefix + 1 to allow only the opening quote
+        int prefixPlusQuote = fullWritten - 2; // minus digit and closing quote
+        buffer = buffer.Slice(0, prefixPlusQuote);
+
+        bool result = JsonSchemaEvaluation.ExpectedItemCountEqualsValue(5, buffer, out int written);
+
+        Assert.False(result);
+        Assert.Equal(0, written);
+    }
+
+    [Fact]
+    public void ExpectedPropertyCountEquals_BufferFitsPrefixButNotInteger_ReturnsFalse()
+    {
+        Span<byte> largeBuffer = stackalloc byte[512];
+        JsonSchemaEvaluation.ExpectedPropertyCountEqualsValue(42, largeBuffer, out int fullWritten);
+
+        // One byte short
+        Span<byte> buffer = stackalloc byte[512];
+        buffer = buffer.Slice(0, fullWritten - 1);
+
+        bool result = JsonSchemaEvaluation.ExpectedPropertyCountEqualsValue(42, buffer, out int written);
+
+        Assert.False(result);
+        Assert.Equal(0, written);
+    }
+
+    [Fact]
+    public void ExpectedStringEquals_BufferFitsPrefixButNotValue_ReturnsFalse()
+    {
+        // Get prefix length with empty value
+        Span<byte> largeBuffer = stackalloc byte[512];
+        JsonSchemaEvaluation.ExpectedStringEquals("", largeBuffer, out int prefixLen);
+
+        // Buffer fits prefix but not appended ' 'hello'' (needs value.Length + 4)
+        Span<byte> buffer = stackalloc byte[512];
+        buffer = buffer.Slice(0, prefixLen + 2);
+
+        bool result = JsonSchemaEvaluation.ExpectedStringEquals("hello", buffer, out int written);
+
+        Assert.False(result);
+        Assert.Equal(0, written);
+    }
+
+    [Fact]
+    public void ExpectedStringEquals_EmptyValue_SucceedsWithPrefixOnly()
+    {
+        Span<byte> buffer = stackalloc byte[256];
+        bool result = JsonSchemaEvaluation.ExpectedStringEquals("", buffer, out int written);
+
+        Assert.True(result);
+        Assert.True(written > 0);
+    }
+
+    [Fact]
+    public void SchemaLocationForItemIndex_BufferTooSmallForSlash_ReturnsFalse()
+    {
+        // A location without trailing slash, buffer just big enough for the location
+        // but not for the appended "/" (exercises Array.cs lines 104-107)
+        byte[] location = Encoding.UTF8.GetBytes("items");
+        Span<byte> buffer = stackalloc byte[5]; // Exactly fits "items" but no room for "/"
+
+        bool result = JsonSchemaEvaluation.SchemaLocationForItemIndex(location, 0, buffer, out int written);
+
+        Assert.False(result);
+        Assert.Equal(0, written);
+    }
+
+    [Fact]
+    public void SchemaLocationForItemIndex_BufferTooSmallForIndex_ReturnsFalse()
+    {
+        // Buffer fits "items/" but not the index number (exercises Array.cs lines 113-116)
+        byte[] location = Encoding.UTF8.GetBytes("items");
+        Span<byte> buffer = stackalloc byte[6]; // Fits "items/" but not the index digit
+
+        bool result = JsonSchemaEvaluation.SchemaLocationForItemIndex(location, 0, buffer, out int written);
+
+        Assert.False(result);
+        Assert.Equal(0, written);
+    }
+
     #endregion
 
     #region Helper methods
