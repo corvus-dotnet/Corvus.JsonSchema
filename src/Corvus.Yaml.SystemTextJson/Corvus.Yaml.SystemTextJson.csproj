@@ -9,7 +9,7 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658;CS3021</NoWarn>
-    <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
+    <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847;nullable</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <IsPackable>true</IsPackable>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
@@ -65,6 +65,10 @@
     <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Common\System\Collections\Generic\ValueListBuilder.Pop.cs" />
   </ItemGroup>
+  <!-- Unescape support: linked from CTJ Reader directory -->
+  <ItemGroup>
+    <Compile Include="..\Corvus.Text.Json\Corvus\Text\Json\Reader\JsonReaderHelper.Unescape.cs" Link="Corvus\Yaml\Internal\JsonReaderHelper.Unescape.cs" />
+  </ItemGroup>
   <!-- Utf8Hash from Corvus.Text.Json (with #if STJ namespace + access modifier) -->
   <ItemGroup>
     <Compile Include="..\Corvus.Text.Json\Corvus\Text\Json\Internal\Utf8Hash.cs" Link="Corvus\Yaml\Internal\Utf8Hash.cs" />
@@ -78,6 +82,17 @@
   <!-- IsExternalInit: also needed for netstandard2.1 -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
     <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
+  </ItemGroup>
+  <!-- Unicode polyfills: Rune is .NET Core 3.0+, not in netstandard -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <Compile Include="$(CoreLibSharedDir)System\Text\Rune.cs" Link="System\Text\Rune.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Text\UnicodeDebug.cs" Link="System\Text\UnicodeDebug.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Text\UnicodeUtility.cs" Link="System\Text\UnicodeUtility.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Text\Unicode\Utf16Utility.cs" Link="System\Text\Unicode\Utf16Utility.cs" />
+  </ItemGroup>
+  <!-- Rune dependency shims only needed for netstandard (where Rune polyfill is used) -->
+  <ItemGroup Condition="'$(TargetFramework)' != 'netstandard2.0' AND '$(TargetFramework)' != 'netstandard2.1'">
+    <Compile Remove="ThrowHelper.Rune.cs" />
   </ItemGroup>
   <!-- netstandard polyfill packages -->
   <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">

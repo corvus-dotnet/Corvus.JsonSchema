@@ -121,6 +121,18 @@ public readonly struct Rune
     }
 
     /// <summary>
+    /// Encodes this <see cref="Rune"/> to a destination buffer as UTF-8 bytes.
+    /// </summary>
+    /// <param name="destination">The buffer to which to write this value as UTF-8.</param>
+    /// <param name="bytesWritten">The number of bytes written to <paramref name="destination"/>.</param>
+    /// <returns><see langword="true"/> if the destination was large enough; otherwise <see langword="false"/>.</returns>
+    public bool TryEncodeToUtf8(Span<byte> destination, out int bytesWritten)
+    {
+        bytesWritten = EncodeToUtf8(destination);
+        return bytesWritten != 0;
+    }
+
+    /// <summary>
     /// Decodes the <see cref="Rune"/> at the beginning of the provided UTF-16 source buffer.
     /// </summary>
     /// <returns>

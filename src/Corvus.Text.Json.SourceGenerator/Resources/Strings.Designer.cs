@@ -248,5 +248,23 @@ namespace Resources
         /// <summary>A node must not have more than one anchor at line {0}, column {1}.</summary>
         public static string @DuplicateAnchor => GetResourceString("DuplicateAnchor", @"A node must not have more than one anchor at line {0}, column {1}.");
 
+        /// <summary>Cannot read incomplete UTF-16 JSON text as string with missing low surrogate.</summary>
+        public static string @CannotReadIncompleteUTF16 => GetResourceString("CannotReadIncompleteUTF16", @"Cannot read incomplete UTF-16 JSON text as string with missing low surrogate.");
+
+        /// <summary>Cannot read invalid UTF-16 JSON text as string. Invalid surrogate value: '{0}'.</summary>
+        public static string @CannotReadInvalidUTF16 => GetResourceString("CannotReadInvalidUTF16", @"Cannot read invalid UTF-16 JSON text as string. Invalid surrogate value: '{0}'.");
+
+        /// <summary>Object must be of type Rune.</summary>
+        public static string @Arg_MustBeRune => GetResourceString("Arg_MustBeRune", @"Object must be of type Rune.");
+
+        /// <summary>Destination is too short.</summary>
+        public static string @Argument_DestinationTooShort => GetResourceString("Argument_DestinationTooShort", @"Destination is too short.");
+
+        /// <summary>Index was out of range. Must be non-negative and less than the size of the collection.</summary>
+        public static string @ArgumentOutOfRange_IndexMustBeLess => GetResourceString("ArgumentOutOfRange_IndexMustBeLess", @"Index was out of range. Must be non-negative and less than the size of the collection.");
+
+        /// <summary>Cannot extract a Unicode scalar value from the specified index in the input.</summary>
+        public static string @Argument_CannotExtractScalar => GetResourceString("Argument_CannotExtractScalar", @"Cannot extract a Unicode scalar value from the specified index in the input.");
+
     }
 }

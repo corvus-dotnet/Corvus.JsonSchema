@@ -338,6 +338,13 @@
     <Compile Include="..\..\System.Private.CoreLib\src\System\Collections\Generic\ValueListBuilder.cs" Link="Yaml\Common\ValueListBuilder.cs" />
     <Compile Include="..\..\System.Private.CoreLib\src\System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Yaml\Common\ValueListBuilder.Pop.cs" />
   </ItemGroup>
+  <!-- Unescape support for YamlToJsonConverter -->
+  <ItemGroup>
+    <Compile Include="$(CorvusTextJsonPath)Corvus\Text\Json\Reader\JsonReaderHelper.Unescape.cs" Link="Yaml\Internal\JsonReaderHelper.Unescape.cs" />
+    <Compile Include="..\Corvus.Yaml.SystemTextJson\JsonConstants.Unescape.cs" Link="Yaml\Internal\JsonConstants.Unescape.cs" />
+    <Compile Include="..\Corvus.Yaml.SystemTextJson\JsonHelpers.Unescape.cs" Link="Yaml\Internal\JsonHelpers.Unescape.cs" />
+    <Compile Include="..\Corvus.Yaml.SystemTextJson\ThrowHelper.Unescape.cs" Link="Yaml\Internal\ThrowHelper.Unescape.cs" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="IncrementalSourceGenerator.cs" />
     <Compile Include="Metaschema.cs" />

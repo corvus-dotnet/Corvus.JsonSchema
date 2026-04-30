@@ -280,7 +280,9 @@
     <Compile Include="Corvus\Text\Json\Reader\ConsumeTokenResult.cs" />
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderException.cs" />
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderHelper.cs" />
+    <Compile Include="Corvus\Text\Json\Reader\JsonReaderHelper.Unescape.cs" />
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderHelper.Unescaping.cs" />
+    <Compile Include="Corvus\Text\Json\JsonStringUnescaper.cs" />
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderOptions.cs" />
     <Compile Include="Corvus\Text\Json\Reader\JsonReaderState.cs" />
     <Compile Include="Corvus\Text\Json\Reader\Utf8JsonReader.cs" />

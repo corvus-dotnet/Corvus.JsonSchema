@@ -70,6 +70,7 @@
     <Compile Include="BigNumber\BigNumberArithmeticTests.cs" />
     <Compile Include="BigNumber\BigNumberComparisonTests.cs" />
     <Compile Include="BigNumber\BigNumberConversionTests.cs" />
+    <Compile Include="JsonStringUnescaperTests.cs" />
     <Compile Include="MigrationEquivalenceTests\AllOfConversionEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\ArrayEquivalenceTests.cs" />
     <Compile Include="MigrationEquivalenceTests\CreateBuilderEquivalenceTests.cs" />

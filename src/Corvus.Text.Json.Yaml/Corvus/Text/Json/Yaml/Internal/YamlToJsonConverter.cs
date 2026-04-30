@@ -4320,63 +4320,17 @@ internal ref struct YamlToJsonConverter
             return escaped;
         }
 
-        // Slow path: unescape with full \uXXXX support (including surrogate pairs).
+        // Slow path: use the battle-tested unescape implementation that handles
+        // all JSON escapes including \uXXXX and surrogate pairs.
         byte[] buffer = ArrayPool<byte>.Shared.Rent(escaped.Length);
 
         try
         {
-            int written = 0;
-
-            for (int i = 0; i < escaped.Length; i++)
-            {
-                if (escaped[i] == (byte)'\\' && i + 1 < escaped.Length)
-                {
-                    i++;
-                    switch (escaped[i])
-                    {
-                        case (byte)'"': buffer[written++] = (byte)'"'; break;
-                        case (byte)'\\': buffer[written++] = (byte)'\\'; break;
-                        case (byte)'/': buffer[written++] = (byte)'/'; break;
-                        case (byte)'n': buffer[written++] = (byte)'\n'; break;
-                        case (byte)'t': buffer[written++] = (byte)'\t'; break;
-                        case (byte)'r': buffer[written++] = (byte)'\r'; break;
-                        case (byte)'b': buffer[written++] = (byte)'\b'; break;
-                        case (byte)'f': buffer[written++] = (byte)'\f'; break;
-                        case (byte)'u':
-                            if (i + 4 < escaped.Length)
-                            {
-                                int scalar = ParseHex4(escaped.Slice(i + 1, 4));
-                                i += 4;
-
-                                // Handle surrogate pairs
-                                if (scalar >= 0xD800 && scalar <= 0xDBFF
-                                    && i + 2 < escaped.Length
-                                    && escaped[i + 1] == (byte)'\\'
-                                    && escaped[i + 2] == (byte)'u'
-                                    && i + 6 < escaped.Length)
-                                {
-                                    int low = ParseHex4(escaped.Slice(i + 3, 4));
-                                    if (low >= 0xDC00 && low <= 0xDFFF)
-                                    {
-                                        i += 6;
-                                        int codePoint = 0x10000 + ((scalar - 0xD800) * 0x400) + (low - 0xDC00);
-                                        written += EncodeToUtf8(codePoint, buffer.AsSpan(written));
-                                        break;
-                                    }
-                                }
-
-                                written += EncodeToUtf8(scalar, buffer.AsSpan(written));
-                            }
-
-                            break;
-                        default: buffer[written++] = escaped[i]; break;
-                    }
-                }
-                else
-                {
-                    buffer[written++] = escaped[i];
-                }
-            }
+#if STJ
+            JsonReaderHelper.Unescape(escaped, buffer, out int written);
+#else
+            JsonStringUnescaper.Unescape(escaped, buffer, out int written);
+#endif
 
             byte[] result = new byte[written];
             buffer.AsSpan(0, written).CopyTo(result);
@@ -4385,60 +4339,6 @@ internal ref struct YamlToJsonConverter
         finally
         {
             ArrayPool<byte>.Shared.Return(buffer);
-        }
-    }
-
-    private static int ParseHex4(ReadOnlySpan<byte> hex)
-    {
-        int value = 0;
-        for (int i = 0; i < 4; i++)
-        {
-            value <<= 4;
-            byte c = hex[i];
-            if (c >= (byte)'0' && c <= (byte)'9')
-            {
-                value |= c - '0';
-            }
-            else if (c >= (byte)'a' && c <= (byte)'f')
-            {
-                value |= c - 'a' + 10;
-            }
-            else if (c >= (byte)'A' && c <= (byte)'F')
-            {
-                value |= c - 'A' + 10;
-            }
-        }
-
-        return value;
-    }
-
-    private static int EncodeToUtf8(int codePoint, Span<byte> destination)
-    {
-        if (codePoint <= 0x7F)
-        {
-            destination[0] = (byte)codePoint;
-            return 1;
-        }
-        else if (codePoint <= 0x7FF)
-        {
-            destination[0] = (byte)(0xC0 | (codePoint >> 6));
-            destination[1] = (byte)(0x80 | (codePoint & 0x3F));
-            return 2;
-        }
-        else if (codePoint <= 0xFFFF)
-        {
-            destination[0] = (byte)(0xE0 | (codePoint >> 12));
-            destination[1] = (byte)(0x80 | ((codePoint >> 6) & 0x3F));
-            destination[2] = (byte)(0x80 | (codePoint & 0x3F));
-            return 3;
-        }
-        else
-        {
-            destination[0] = (byte)(0xF0 | (codePoint >> 18));
-            destination[1] = (byte)(0x80 | ((codePoint >> 12) & 0x3F));
-            destination[2] = (byte)(0x80 | ((codePoint >> 6) & 0x3F));
-            destination[3] = (byte)(0x80 | (codePoint & 0x3F));
-            return 4;
         }
     }
 
