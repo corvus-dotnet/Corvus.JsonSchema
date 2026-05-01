@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Text;
+using Corvus.Numerics;
 using Corvus.Text.Json.JsonLogic;
 using Xunit;
 
@@ -507,5 +508,120 @@ public class JsonLogicHelpersDirectTests
         JsonElement source = JsonElement.ParseValue("\"hello\""u8);
         JsonElement result = JsonLogicHelpers.SubstrFromElement(source, 3, -5, workspace);
         Assert.Equal(string.Empty, result.GetString());
+    }
+
+    // ─── CompareCoerced: BigNumber fallback path (lines 790-803) ─────
+
+    [Fact]
+    public void CompareCoerced_BigNumberFallback_GreaterThan()
+    {
+        // Lines 795-798: CompareNumbers with op=1 (>)
+        // Use numbers beyond double precision to force BigNumber path
+        JsonElement left = JsonElement.ParseValue("99999999999999999999999999999"u8);
+        JsonElement right = JsonElement.ParseValue("1"u8);
+        Assert.True(JsonLogicHelpers.CompareCoerced(left, right, 1));
+    }
+
+    [Fact]
+    public void CompareCoerced_BigNumberFallback_GreaterThanOrEqual()
+    {
+        // Lines 795-799: op=2 (>=)
+        JsonElement left = JsonElement.ParseValue("99999999999999999999999999999"u8);
+        JsonElement right = JsonElement.ParseValue("99999999999999999999999999999"u8);
+        Assert.True(JsonLogicHelpers.CompareCoerced(left, right, 2));
+    }
+
+    [Fact]
+    public void CompareCoerced_BigNumberFallback_LessThan()
+    {
+        // Lines 795-800: op=3 (<)
+        JsonElement left = JsonElement.ParseValue("1"u8);
+        JsonElement right = JsonElement.ParseValue("99999999999999999999999999999"u8);
+        Assert.True(JsonLogicHelpers.CompareCoerced(left, right, 3));
+    }
+
+    [Fact]
+    public void CompareCoerced_BigNumberFallback_LessThanOrEqual()
+    {
+        // Lines 795-801: op=4 (<=)
+        JsonElement left = JsonElement.ParseValue("99999999999999999999999999999"u8);
+        JsonElement right = JsonElement.ParseValue("99999999999999999999999999999"u8);
+        Assert.True(JsonLogicHelpers.CompareCoerced(left, right, 4));
+    }
+
+    [Fact]
+    public void CompareCoerced_NonNumeric_ReturnsFalse()
+    {
+        // Lines 790-792: TryCoerceToNumber fails
+        JsonElement left = JsonElement.ParseValue("\"abc\""u8);
+        JsonElement right = JsonElement.ParseValue("\"def\""u8);
+        Assert.False(JsonLogicHelpers.CompareCoerced(left, right, 1));
+    }
+
+    // ─── CoerceToBigNumber (lines 811-816) ───────────────────────────
+
+    [Fact]
+    public void CoerceToBigNumber_Number_ReturnsValue()
+    {
+        // Lines 812-816: number element → BigNumber
+        JsonElement elem = JsonElement.ParseValue("42"u8);
+        BigNumber result = JsonLogicHelpers.CoerceToBigNumber(elem);
+        Assert.Equal(BigNumber.Parse("42"u8), result);
+    }
+
+    [Fact]
+    public void CoerceToBigNumber_Null_ReturnsZero()
+    {
+        JsonElement elem = JsonElement.ParseValue("null"u8);
+        BigNumber result = JsonLogicHelpers.CoerceToBigNumber(elem);
+        Assert.Equal(BigNumber.Zero, result);
+    }
+
+    // ─── AppendCoercedUtf8 (lines 274-301): null, string, number ─────
+
+    [Fact]
+    public void AppendCoercedUtf8_Null_AppendsNullLiteral()
+    {
+        // Lines 275-278: null/undefined → "null"
+        JsonElement elem = JsonElement.ParseValue("null"u8);
+        string result = EvalCat("""{"cat":[null]}""");
+        Assert.Equal("\"null\"", result);
+    }
+
+    [Fact]
+    public void AppendCoercedUtf8_Number_AppendsRawDigits()
+    {
+        // Lines 298-301: number → raw UTF-8 digits
+        string result = EvalCat("""{"cat":[42]}""");
+        Assert.Equal("\"42\"", result);
+    }
+
+    [Fact]
+    public void AppendCoercedUtf8_String_AppendsContent()
+    {
+        // Lines 284-292: string → content without quotes
+        string result = EvalCat("""{"cat":["hello"]}""");
+        Assert.Equal("\"hello\"", result);
+    }
+
+    // ─── GrowCatBuffer (lines 598-603) ───────────────────────────────
+
+    [Fact]
+    public void Cat_LongString_GrowsBuffer()
+    {
+        // Lines 598-603: GrowCatBuffer is called when concat exceeds initial buffer
+        string longStr = new('x', 300);
+        string rule = $$"""{"cat":["{{longStr}}","{{longStr}}"]}""";
+        string result = EvalCat(rule);
+        Assert.Equal($"\"{longStr}{longStr}\"", result);
+    }
+
+    private static string EvalCat(string rule)
+    {
+        JsonElement ruleElem = JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(rule));
+        JsonElement dataElem = JsonElement.ParseValue("{}"u8);
+        JsonLogicRule logicRule = new(ruleElem);
+        JsonElement result = JsonLogicEvaluator.Default.Evaluate(logicRule, dataElem);
+        return result.GetRawText();
     }
 }

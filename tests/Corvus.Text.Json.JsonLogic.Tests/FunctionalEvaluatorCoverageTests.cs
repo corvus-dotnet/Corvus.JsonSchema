@@ -610,4 +610,138 @@ public class FunctionalEvaluatorCoverageTests
         Assert.Equal("6", Eval(
             """{"reduce":[{"map":[[1,2,3],{"var":""}]},{"+":[{"var":"accumulator"},{"var":"current"}]},0]}"""));
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // MIN/MAX SLOW PATH — lines 672-687
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Min_SlowPath_MultipleStringOperands()
+    {
+        // Lines 672-684: MinMaxSlow with string operands that coerce to numbers
+        // Forces slow path because string → element → TryGetDouble fails on EvalResult
+        Assert.Equal("1", Eval("""{"min":["3","1","2"]}"""));
+    }
+
+    [Fact]
+    public void Max_SlowPath_MultipleStringOperands()
+    {
+        // Lines 680-684: isMin=false branch in MinMaxSlow
+        Assert.Equal("5", Eval("""{"max":["3","5","2"]}"""));
+    }
+
+    [Fact]
+    public void Min_SlowPath_NonNumericInLoop_ReturnsNull()
+    {
+        // Lines 675-677: TryCoerceToNumber fails for second operand in loop
+        Assert.Equal("null", Eval("""{"min":["3","abc","2"]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // COMPARISON — lines 772-780 (LessThan, LessThanOrEqual)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void LessThan_NumericComparison()
+    {
+        // Line 777: CompareOp.LessThan => cmp < 0
+        Assert.Equal("true", Eval("""{"<":[1,2]}"""));
+        Assert.Equal("false", Eval("""{"<":[2,1]}"""));
+    }
+
+    [Fact]
+    public void LessThanOrEqual_NumericComparison()
+    {
+        // Line 778: CompareOp.LessThanOrEqual => cmp <= 0
+        Assert.Equal("true", Eval("""{"<=":[2,2]}"""));
+        Assert.Equal("true", Eval("""{"<=":[1,2]}"""));
+        Assert.Equal("false", Eval("""{"<=":[3,2]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FLIPPED COMPARISON — lines 1339-1398
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void If_FlippedComparison_NumberLeftVarRight()
+    {
+        // Lines 1339-1345: {op: [N, {"var":"path"}]} pattern flips operator
+        string result = Eval(
+            """{"if":[{">":[10,{"var":"x"}]},"big","small"]}""",
+            """{"x":5}""");
+        Assert.Equal("\"big\"", result);
+    }
+
+    [Fact]
+    public void If_FlippedComparison_GreaterThanOrEqual()
+    {
+        // Lines 1391-1398: FlipCompareOp for >=
+        string result = Eval(
+            """{"if":[{">=":[10,{"var":"x"}]},"yes","no"]}""",
+            """{"x":10}""");
+        Assert.Equal("\"yes\"", result);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CAT — line 1519-1522 (null literal)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Cat_NullLiteral()
+    {
+        // Lines 1519-1522: null case in cat string building
+        Assert.Equal("\"anullb\"", Eval("""{"cat":["a",null,"b"]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // AS_DOUBLE / AS_LONG — lines 2231-2234, 2255-2258
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void AsDouble_VarPointsToNumber_ElementFallback()
+    {
+        // Lines 2231-2233: TryGetDouble fails on EvalResult but succeeds on element
+        // var returns an element-backed result, so fast path fails, falls through to elem.TryGetDouble
+        Assert.Equal("42", Eval(
+            """{"asDouble":[{"var":"x"}]}""",
+            """{"x":42}"""));
+    }
+
+    [Fact]
+    public void AsLong_VarPointsToNumber_ElementFallback()
+    {
+        // Lines 2255-2257: TryGetDouble fails on EvalResult but succeeds on element
+        Assert.Equal("7", Eval(
+            """{"asLong":[{"var":"x"}]}""",
+            """{"x":7.9}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // VAR ARRAY INDEX — lines 2340-2344
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Var_ArrayIndexNavigation()
+    {
+        // Lines 2341-2343: array index path segment resolves correctly
+        Assert.Equal("\"b\"", Eval("""{"var":"items.1"}""", """{"items":["a","b","c"]}"""));
+    }
+
+    [Fact]
+    public void Var_ArrayIndexOutOfBounds_ReturnsNull()
+    {
+        // Lines 2341-2347: array index out of bounds → null
+        Assert.Equal("null", Eval("""{"var":"items.5"}""", """{"items":["a","b","c"]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // DOUBLE TO ELEMENT — lines 2476-2480
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Arithmetic_ProducesDoubleElement()
+    {
+        // Lines 2476-2480: DoubleToElement called via arithmetic that produces non-integer
+        Assert.Equal("2.5", Eval("""{"/": [5, 2]}"""));
+    }
 }
