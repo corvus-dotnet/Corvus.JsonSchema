@@ -25,5 +25,11 @@
         <ModulePath>.*Corvus\.Yaml\.SystemTextJson\.dll$</ModulePath>
       </Include>
     </ModulePaths>
+    <Sources>
+      <Exclude>
+        <!-- V4 generated core types inflate the denominator without meaningful coverage value -->
+        <Source>.*\\src-v4\\Corvus\.Json\.ExtendedTypes\\Corvus\.Json\\GeneratedCoreTypes\\.*</Source>
+      </Exclude>
+    </Sources>
   </CodeCoverage>
 </Configuration>
