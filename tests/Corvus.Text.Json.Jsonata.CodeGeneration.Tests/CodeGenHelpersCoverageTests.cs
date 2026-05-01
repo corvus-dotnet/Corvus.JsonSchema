@@ -4812,4 +4812,129 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             // 1,2,...,100 joined without separator
             "\"" + string.Join("", Enumerable.Range(1, 100).Select(i => i.ToString())) + "\"");
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 10: $zip (CGH lines 6654-6680)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$zip([1,2,3],[4,5,6])", "null", "[[1,4],[2,5],[3,6]]")]
+    [InlineData("$zip([1,2],[3,4,5],[6,7])", "null", "[[1,3,6],[2,4,7]]")]
+    [InlineData("$zip([],[])", "null", "[]")]
+    [InlineData("$zip([1],[2],[3])", "null", "[[1,2,3]]")]
+    public void Zip(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 10: Surrogate-pair string ops (CGH lines 7561-7591)
+    // CountCodePoints, CodePointToCharIndex
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$substring('A\uD83D\uDE00B', 1, 1)", "null", "\"\uD83D\uDE00\"")]
+    [InlineData("$length('A\uD83D\uDE00B')", "null", "3")]
+    [InlineData("$substring('\uD83D\uDE00\uD83D\uDE01\uD83D\uDE02', 1, 2)", "null", "\"\uD83D\uDE01\uD83D\uDE02\"")]
+    [InlineData("$substring('\uD83D\uDE00ABC', 0, 2)", "null", "\"\uD83D\uDE00A\"")]
+    public void SurrogatePairStringOps(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 10: Indexed path access (CGH lines 818-845)
+    // FusedEvalFromStep with perElementIndex
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("items[0].name",
+        "{\"items\":[{\"name\":\"first\"},{\"name\":\"second\"}]}",
+        "\"first\"")]
+    [InlineData("data.items[1].value",
+        "{\"data\":{\"items\":[{\"value\":10},{\"value\":20}]}}",
+        "20")]
+    [InlineData("items[0]",
+        "{\"items\":[\"a\",\"b\",\"c\"]}",
+        "\"a\"")]
+    [InlineData("data.list[-1]",
+        "{\"data\":{\"list\":[1,2,3]}}",
+        "3")]
+    public void IndexedPathAccess(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 10: Map/transform over property chain
+    // (CGH lines 2674-2716 NavigatePropertyChainTransform)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$map(items.price, function($v){$v*2})",
+        "{\"items\":[{\"price\":5},{\"price\":10}]}",
+        "[10,20]")]
+    [InlineData("items.price ~> $map(function($v){$v*2})",
+        "{\"items\":[{\"price\":5},{\"price\":10}]}",
+        "[10,20]")]
+    [InlineData("$map(data.x.y, function($v){$v+1})",
+        "{\"data\":[{\"x\":{\"y\":1}},{\"x\":{\"y\":2}}]}",
+        "[2,3]")]
+    public void MapTransformOverChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 10: Higher-order built-in functions
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("$map([1,2,3], $string)", "null", "[\"1\",\"2\",\"3\"]")]
+    [InlineData("$map([1,'a',true], $type)", "null", "[\"number\",\"string\",\"boolean\"]")]
+    [InlineData("$filter([0, 1, '', 'a', false, true], $boolean)", "null", "[1,\"a\",true]")]
+    public void HigherOrderBuiltIns(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 10: Context binding / $split / $replace pipe
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("'hello world' ~> $contains('world')", "null", "true")]
+    [InlineData("'abc' ~> $split(',')", "null", "[\"abc\"]")]
+    [InlineData("'abc' ~> $replace('b', 'X')", "null", "\"aXc\"")]
+    [InlineData("'hello' ~> $match(/l+/)", "null", "{\"match\":\"ll\",\"index\":2,\"groups\":[]}")]
+    public void ContextBindingPipe(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 10: Deep nested array path traversal
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-coverage")]
+    [InlineData("Account.Order.Product.Price",
+        "{\"Account\":{\"Order\":[{\"Product\":[{\"Price\":10},{\"Price\":20}]},{\"Product\":[{\"Price\":30}]}]}}",
+        "[10,20,30]")]
+    [InlineData("a.b.c",
+        "{\"a\":[{\"b\":{\"c\":1}},{\"b\":{\"c\":2}},{\"b\":{\"c\":3}}]}",
+        "[1,2,3]")]
+    [InlineData("x.y.z",
+        "{\"x\":[{\"y\":[{\"z\":1},{\"z\":2}]},{\"y\":[{\"z\":3}]}]}",
+        "[1,2,3]")]
+    public void DeepNestedArrayPath(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
 }

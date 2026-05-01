@@ -4089,4 +4089,116 @@ public class BuiltInFunctionEdgeCaseTests
     {
         EvalThrows("""$lookup({"a":1}, true)""", "{}", "T0410");
     }
+
+    // ─── Round 10: Context binding, error paths, validation ─────────────
+
+    // --- Context binding (1-arg overloads) ---
+
+    [Fact] // BF 1415-1418: $contains with 1 arg uses context binding
+    public void Contains_OneArg_ContextBinding()
+    {
+        Assert.Equal("true", Eval("'hello world' ~> $contains('world')"));
+    }
+
+    [Fact] // BF 1415-1418: $contains with 1 arg + regex
+    public void Contains_OneArg_ContextBinding_Regex()
+    {
+        Assert.Equal("true", Eval("'hello world' ~> $contains(/wor/)"));
+    }
+
+    [Fact] // BF 3134-3138: $match with 1 arg uses context binding
+    public void Match_OneArg_ContextBinding()
+    {
+        Assert.Equal(@"{""match"":""ll"",""index"":2,""groups"":[]}", Eval("'hello' ~> $match(/l+/)"));
+    }
+
+    [Fact] // FC: $split with 1 arg uses context binding
+    public void Split_OneArg_ContextBinding()
+    {
+        Assert.Equal(@"[""abc""]", Eval("'abc' ~> $split(',')"));
+    }
+
+    [Fact] // FC: $replace with 2 args uses context binding
+    public void Replace_TwoArg_ContextBinding()
+    {
+        Assert.Equal(@"""aXc""", Eval("'abc' ~> $replace('b', 'X')"));
+    }
+
+    // --- Error paths ---
+
+    [Fact] // BF 3538-3539: $replace with regex that matches empty string → D1004
+    public void Replace_ZeroLengthRegexMatch_ThrowsD1004()
+    {
+        EvalThrows("$replace('abc', /(?=a)/, '-')", "{}", "D1004");
+    }
+
+    [Fact] // BF 3987-3989: $split with regex limit=0 → empty array
+    public void Split_RegexLimitZero_ReturnsEmptyArray()
+    {
+        Assert.Equal("[]", Eval("$split('a,b,c', /,/, 0)"));
+    }
+
+    [Fact] // BF: $split with regex limit=-1 → D3020
+    public void Split_RegexLimitNegative_ThrowsD3020()
+    {
+        EvalThrows("$split('a,b,c', /,/, -1)", "{}", "D3020");
+    }
+
+    // --- URL decoding: invalid percent encoding (BF 4453-4460) ---
+
+    [Fact] // BF 4453-4460: $decodeUrlComponent with invalid hex after %
+    public void DecodeUrlComponent_InvalidHexGG_ThrowsD3140()
+    {
+        EvalThrows("$decodeUrlComponent('%GG')", "{}", "D3140");
+    }
+
+    [Fact] // BF 4453-4460: $decodeUrlComponent with single char after %
+    public void DecodeUrlComponent_SingleCharAfterPercent_ThrowsD3140()
+    {
+        EvalThrows("$decodeUrlComponent('a%2b%1')", "{}", "D3140");
+    }
+
+    [Fact] // BF 4453-4460: $decodeUrlComponent with trailing %
+    public void DecodeUrlComponent_TrailingPercent_ThrowsD3140()
+    {
+        EvalThrows("$decodeUrlComponent('hello%')", "{}", "D3140");
+    }
+
+    // --- Higher-order built-in functions (FC 9052+) ---
+
+    [Fact] // FC 9052+: $map with $string passes built-in as lambda
+    public void Map_WithStringBuiltIn()
+    {
+        Assert.Equal(@"[""1"",""2"",""3""]", Eval("$map([1,2,3], $string)"));
+    }
+
+    [Fact] // FC: $map with $type passes built-in as lambda
+    public void Map_WithTypeBuiltIn()
+    {
+        Assert.Equal(@"[""number"",""string"",""boolean""]", Eval("$map([1,'a',true], $type)"));
+    }
+
+    [Fact] // FC: $filter with $boolean passes built-in as lambda
+    public void Filter_WithBooleanBuiltIn()
+    {
+        Assert.Equal(@"[1,""a"",true]", Eval("$filter([0, 1, '', 'a', false, true], $boolean)"));
+    }
+
+    // --- Nested array path traversal (FC 1567-1581, 1966-1980) ---
+
+    [Fact] // FC 1567+: deep property access through nested arrays
+    public void NestedArrayPathTraversal()
+    {
+        Assert.Equal("[10,20,30]",
+            Eval("Account.Order.Product.Price",
+                """{"Account":{"Order":[{"Product":[{"Price":10},{"Price":20}]},{"Product":[{"Price":30}]}]}}"""));
+    }
+
+    [Fact] // FC: path traversal through arrays with filtering
+    public void NestedArrayPathWithPredicate()
+    {
+        Assert.Equal("[20,30]",
+            Eval("Account.Order.Product[Price>15].Price",
+                """{"Account":{"Order":[{"Product":[{"Price":10},{"Price":20}]},{"Product":[{"Price":30}]}]}}"""));
+    }
 }
