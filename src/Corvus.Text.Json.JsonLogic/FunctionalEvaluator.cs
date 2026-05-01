@@ -2229,7 +2229,7 @@ internal static class FunctionalEvaluator
             }
 
             JsonElement elem = r.AsElement(workspace);
-            return elem.TryGetDouble(out double val)
+            return elem.ValueKind == JsonValueKind.Number && elem.TryGetDouble(out double val)
                 ? EvalResult.FromDouble(val)
                 : EvalResult.FromElement(JsonLogicHelpers.NullElement());
         };
@@ -2253,7 +2253,7 @@ internal static class FunctionalEvaluator
             }
 
             JsonElement elem = r.AsElement(workspace);
-            return elem.TryGetDouble(out double val)
+            return elem.ValueKind == JsonValueKind.Number && elem.TryGetDouble(out double val)
                 ? EvalResult.FromDouble((long)val)
                 : EvalResult.FromElement(JsonLogicHelpers.NullElement());
         };

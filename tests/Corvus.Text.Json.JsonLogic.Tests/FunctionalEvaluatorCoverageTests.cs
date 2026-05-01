@@ -698,22 +698,58 @@ public class FunctionalEvaluatorCoverageTests
     // ═══════════════════════════════════════════════════════════════
 
     [Fact]
-    public void AsDouble_VarPointsToNumber_ElementFallback()
+    public void AsDouble_VarPointsToNumber_FastPath()
     {
-        // Lines 2231-2233: TryGetDouble fails on EvalResult but succeeds on element
-        // var returns an element-backed result, so fast path fails, falls through to elem.TryGetDouble
+        // Lines 2226-2228: EvalResult.TryGetDouble succeeds for Number element → fast path
         Assert.Equal("42", Eval(
             """{"asDouble":[{"var":"x"}]}""",
             """{"x":42}"""));
     }
 
     [Fact]
-    public void AsLong_VarPointsToNumber_ElementFallback()
+    public void AsDouble_NonNumericString_ReturnsNull()
     {
-        // Lines 2255-2257: TryGetDouble fails on EvalResult but succeeds on element
+        // Lines 2231-2234: non-numeric string fails EvalResult.TryGetDouble,
+        // then elem.TryGetDouble also fails → returns NullElement
+        Assert.Equal("null", Eval(
+            """{"asDouble":[{"var":"x"}]}""",
+            """{"x":"hello"}"""));
+    }
+
+    [Fact]
+    public void AsDouble_Array_ReturnsNull()
+    {
+        // Array fails both TryGetDouble paths → NullElement (line 2234)
+        Assert.Equal("null", Eval(
+            """{"asDouble":[{"var":"x"}]}""",
+            """{"x":[1,2,3]}"""));
+    }
+
+    [Fact]
+    public void AsLong_VarPointsToNumber_FastPath()
+    {
+        // Lines 2250-2252: EvalResult.TryGetDouble succeeds → fast path with (long) cast
         Assert.Equal("7", Eval(
             """{"asLong":[{"var":"x"}]}""",
             """{"x":7.9}"""));
+    }
+
+    [Fact]
+    public void AsLong_NonNumericString_ReturnsNull()
+    {
+        // Lines 2255-2258: non-numeric string fails both TryGetDouble paths → NullElement
+        Assert.Equal("null", Eval(
+            """{"asLong":[{"var":"x"}]}""",
+            """{"x":"world"}"""));
+    }
+
+    [Fact]
+    public void AsLong_Object_ReturnsNull()
+    {
+        // Object fails both TryGetDouble paths → NullElement (line 2258)
+        Assert.Equal("null", Eval(
+            """{"asLong":[{"var":"x"}]}""",
+            """{"x":{"a":1}}"""));
     }
 
     // ═══════════════════════════════════════════════════════════════
