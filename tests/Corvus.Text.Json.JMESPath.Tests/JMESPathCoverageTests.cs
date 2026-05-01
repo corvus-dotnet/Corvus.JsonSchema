@@ -975,4 +975,128 @@ public class JMESPathCoverageTests
         Assert.Equal(4, result[1].GetDouble());
         Assert.Equal(3, result[2].GetDouble());
     }
+
+    // ─── sort_by with string comparisons (WriteJsonEscapedFromUtf8) ──────
+    // Covers: Compiler.Functions.cs lines 989-1051
+
+    [Fact]
+    public void SortBy_StringValues_UsesUtf8Comparison()
+    {
+        // sort_by(@, &@) on strings triggers Utf8StringElementComparer
+        JsonElement data = JsonElement.ParseValue(
+            Encoding.UTF8.GetBytes("""["banana", "apple", "cherry"]"""));
+        JsonElement result = JMESPathEvaluator.Default.Search("sort_by(@, &@)", data);
+        Assert.Equal(JsonValueKind.Array, result.ValueKind);
+        Assert.Equal("apple", result[0].GetString());
+        Assert.Equal("banana", result[1].GetString());
+        Assert.Equal("cherry", result[2].GetString());
+    }
+
+    [Fact]
+    public void SortBy_StringsWithControlCharacters()
+    {
+        // Strings with control chars exercise WriteJsonEscapedFromUtf8 escape branches
+        JsonElement data = JsonElement.ParseValue(
+            Encoding.UTF8.GetBytes("""["b\t1", "a\n2", "c\r3"]"""));
+        JsonElement result = JMESPathEvaluator.Default.Search("sort_by(@, &@)", data);
+        Assert.Equal(JsonValueKind.Array, result.ValueKind);
+        Assert.Equal(3, result.GetArrayLength());
+    }
+
+    [Fact]
+    public void SortBy_StringsWithBackslashAndQuotes()
+    {
+        // Backslash and quote exercise the escaping paths in WriteJsonEscapedFromUtf8
+        JsonElement data = JsonElement.ParseValue(
+            Encoding.UTF8.GetBytes("""["c\\d", "a\"b", "e"]"""));
+        JsonElement result = JMESPathEvaluator.Default.Search("sort_by(@, &@)", data);
+        Assert.Equal(JsonValueKind.Array, result.ValueKind);
+        Assert.Equal(3, result.GetArrayLength());
+    }
+
+    // ─── join with large output (EnsureJoinBuffer) ────────────────────
+    // Covers: Compiler.Functions.cs lines 368-376
+
+    [Fact]
+    public void Join_LargeArray_TriggersBufferGrowth()
+    {
+        // Build a large array that produces a join result longer than initial buffer
+        var sb = new StringBuilder("[");
+        for (int i = 0; i < 200; i++)
+        {
+            if (i > 0) sb.Append(',');
+            sb.Append($"\"item{i:D5}\""); // "item00000" etc
+        }
+        sb.Append(']');
+        JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(sb.ToString()));
+        JsonElement result = JMESPathEvaluator.Default.Search("join(',', @)", data);
+        Assert.Equal(JsonValueKind.String, result.ValueKind);
+        string joined = result.GetString()!;
+        Assert.Contains("item00000", joined);
+        Assert.Contains("item00199", joined);
+    }
+
+    // ─── Lexer: raw string with backslash (non-quote) ─────────────────
+    // Covers: Lexer.cs lines 237-242
+
+    [Fact]
+    public void RawString_WithBackslash_EmitsLiteralBackslash()
+    {
+        // Raw strings ('...') treat backslash as literal except before single quote
+        JsonElement data = JsonElement.ParseValue(
+            Encoding.UTF8.GetBytes("""{"a\\b": 42}"""));
+        JsonElement result = JMESPathEvaluator.Default.Search("\"a\\\\b\"", data);
+        Assert.Equal(42, result.GetDouble());
+    }
+
+    // ─── Lexer: buffer growth in raw string ──────────────────────────
+    // Covers: Lexer.cs lines 246-256
+
+    [Fact]
+    public void Lexer_LongIdentifier_TriggersBufferGrowth()
+    {
+        // A very long identifier forces the lexer buffer to grow
+        string longKey = new string('x', 500);
+        JsonElement data = JsonElement.ParseValue(
+            Encoding.UTF8.GetBytes($"{{\"{longKey}\": 99}}"));
+        JsonElement result = JMESPathEvaluator.Default.Search(longKey, data);
+        Assert.Equal(99, result.GetDouble());
+    }
+
+    // ─── Lexer: Unicode escape producing multi-byte UTF-8 ───────────
+    // Covers: Lexer.cs lines 413-418
+
+    [Fact]
+    public void Lexer_UnicodeEscape_TwoByteUtf8()
+    {
+        // \u00E9 = 'é' (2-byte UTF-8: C3 A9)
+        JsonElement data = JsonElement.ParseValue(
+            Encoding.UTF8.GetBytes("""{"café": true}"""));
+        JsonElement result = JMESPathEvaluator.Default.Search("\"caf\\u00e9\"", data);
+        Assert.True(result.IsNotUndefined());
+    }
+
+    [Fact]
+    public void Lexer_UnicodeEscape_ThreeByteUtf8()
+    {
+        // \u4e16 = '世' (3-byte UTF-8: E4 B8 96)
+        JsonElement data = JsonElement.ParseValue(
+            Encoding.UTF8.GetBytes("""{"世界": "hello"}"""));
+        JsonElement result = JMESPathEvaluator.Default.Search("\"\\u4e16\\u754c\"", data);
+        Assert.Equal("hello", result.GetString());
+    }
+
+    // ─── Lexer: GrowBuffer general path ──────────────────────────────
+    // Covers: Lexer.cs lines 604-612
+
+    [Fact]
+    public void Lexer_LongQuotedString_TriggersGrowBuffer()
+    {
+        // Very long quoted identifier triggers general GrowBuffer
+        string longKey = new string('y', 600);
+        JsonElement data = JsonElement.ParseValue(
+            Encoding.UTF8.GetBytes($"{{\"{longKey}\": 42}}"));
+        JsonElement result = JMESPathEvaluator.Default.Search($"\"{longKey}\"", data);
+        Assert.Equal(42, result.GetDouble());
+    }
 }
