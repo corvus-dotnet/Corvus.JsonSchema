@@ -4466,4 +4466,96 @@ public class BuiltInFunctionEdgeCaseTests
             Eval("items.name.$uppercase()",
                 """{"items":[{"name":"hello"},{"name":"world"}]}"""));
     }
+
+    // ==================== Round 13: RT tests for CG helper fallback paths ====================
+
+    // Multiple equality predicates
+    [Fact]
+    public void MultiEqualityPredicateChain()
+    {
+        Assert.Equal("\"x\"",
+            Eval("""items[type="A"][status="active"].name""",
+                """{"items":[{"type":"A","status":"active","name":"x"},{"type":"A","status":"inactive","name":"y"},{"type":"B","status":"active","name":"z"}]}"""));
+    }
+
+    [Fact]
+    public void MultiEqualityPredicateChainMultiMatch()
+    {
+        Assert.Equal("""["x","w"]""",
+            Eval("""items[type="A"][status="active"].name""",
+                """{"items":[{"type":"A","status":"active","name":"x"},{"type":"A","status":"active","name":"w"}]}"""));
+    }
+
+    // Mixed predicate + index
+    [Fact]
+    public void MixedPredicateAndIndex()
+    {
+        Assert.Equal("10",
+            Eval("""items[type="A"].values[0]""",
+                """{"items":[{"type":"A","values":[10,20]},{"type":"B","values":[30,40]}]}"""));
+    }
+
+    [Fact]
+    public void MixedPredicateAndIndexMultiMatch()
+    {
+        Assert.Equal("[10,30]",
+            Eval("""items[type="A"].values[0]""",
+                """{"items":[{"type":"A","values":[10,20]},{"type":"A","values":[30,40]},{"type":"B","values":[50,60]}]}"""));
+    }
+
+    // $merge over chain — property order may differ between RT and reference;
+    // JSON objects are unordered, so we check both possible orderings.
+    [Fact]
+    public void ChainMerge()
+    {
+        string result = Eval("$merge(items.objs)",
+            """{"items":[{"objs":{"a":1}},{"objs":{"b":2}}]}""");
+
+        Assert.True(
+            result == """{"a":1,"b":2}""" || result == """{"b":2,"a":1}""",
+            $"Expected merged object with a=1 and b=2, got: {result}");
+    }
+
+    // $map over chain
+    [Fact]
+    public void MapChainElementsViaMapCall()
+    {
+        Assert.Equal("""["ALICE","BOB"]""",
+            Eval("""$map(items.name, function($v){$uppercase($v)})""",
+                """{"items":[{"name":"alice"},{"name":"bob"}]}"""));
+    }
+
+    // Aggregate via apply operator
+    [Fact]
+    public void AverageOverChainViaApply()
+    {
+        Assert.Equal("5",
+            Eval("items.values ~> $average",
+                """{"items":[{"values":[2,4]},{"values":[6,8]}]}"""));
+    }
+
+    [Fact]
+    public void SumOverChainViaApply()
+    {
+        Assert.Equal("20",
+            Eval("items.values ~> $sum",
+                """{"items":[{"values":[3,7]},{"values":[1,9]}]}"""));
+    }
+
+    // Arithmetic computed step
+    [Fact]
+    public void MapChainDoubleComputedStep()
+    {
+        Assert.Equal("[20,40]",
+            Eval("items.(price * 2)",
+                """{"items":[{"price":10},{"price":20}]}"""));
+    }
+
+    [Fact]
+    public void MapChainDoubleComputedStepAddition()
+    {
+        Assert.Equal("[11,22]",
+            Eval("items.(price + tax)",
+                """{"items":[{"price":10,"tax":1},{"price":20,"tax":2}]}"""));
+    }
 }

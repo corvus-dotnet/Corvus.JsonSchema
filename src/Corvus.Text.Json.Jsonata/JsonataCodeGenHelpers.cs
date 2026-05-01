@@ -4669,28 +4669,6 @@ public static class JsonataCodeGenHelpers
     }
 
     /// <summary>
-    /// Fused chain navigation + merge with a start index for partially-resolved chains.
-    /// </summary>
-    /// <param name="data">The element at the start position (already resolved up to <paramref name="startIndex"/>).</param>
-    /// <param name="names">The full UTF-8 encoded property names array.</param>
-    /// <param name="startIndex">The index into <paramref name="names"/> to start navigating from.</param>
-    /// <param name="workspace">The workspace for pooled memory.</param>
-    /// <returns>The merged object result.</returns>
-    public static JsonElement ChainMerge(in JsonElement data, byte[][] names, int startIndex, JsonWorkspace workspace)
-    {
-        var buffer = default(ElementBuffer);
-        try
-        {
-            NavigatePropertyChainInto(data, names, startIndex, ref buffer);
-            return MergeFromBuffer(ref buffer, workspace);
-        }
-        finally
-        {
-            buffer.Dispose();
-        }
-    }
-
-    /// <summary>
     /// Builds an array from an <see cref="ElementBuffer"/>. If the buffer is empty,
     /// returns undefined. If it has exactly one element, returns that element wrapped
     /// in an array. Otherwise, builds a full array document.

@@ -5378,5 +5378,206 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
+
+    // ==================== Round 13: CG helper fallback paths ====================
+    // These tests target helper methods that are only reached when the CG's inline
+    // optimizations cannot handle the expression pattern (e.g., multiple predicates,
+    // mixed equality + index, array inputs to predicate chains).
+
+    // --- NavigatePropertyChainWithPredicates: multiple equality predicates (lines 640-712) ---
+    [Theory]
+    [InlineData(
+        "items[type=\"A\"][status=\"active\"].name",
+        "{\"items\":[{\"type\":\"A\",\"status\":\"active\",\"name\":\"x\"},{\"type\":\"A\",\"status\":\"inactive\",\"name\":\"y\"},{\"type\":\"B\",\"status\":\"active\",\"name\":\"z\"}]}",
+        "\"x\"")]
+    [InlineData(
+        "items[type=\"A\"][status=\"active\"].name",
+        "{\"items\":[{\"type\":\"A\",\"status\":\"active\",\"name\":\"x\"},{\"type\":\"A\",\"status\":\"active\",\"name\":\"w\"}]}",
+        "[\"x\",\"w\"]")]
+    public void MultiEqualityPredicateChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- NavigatePropertyChainWithPredicates: mixed equality predicate + constant index ---
+    [Theory]
+    [InlineData(
+        "items[type=\"A\"].values[0]",
+        "{\"items\":[{\"type\":\"A\",\"values\":[10,20]},{\"type\":\"B\",\"values\":[30,40]}]}",
+        "10")]
+    [InlineData(
+        "items[type=\"A\"].values[0]",
+        "{\"items\":[{\"type\":\"A\",\"values\":[10,20]},{\"type\":\"A\",\"values\":[30,40]},{\"type\":\"B\",\"values\":[50,60]}]}",
+        "[10,30]")]
+    public void MixedPredicateAndIndex(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- ChainKeepSingletonArray: keepArray fallback (lines 4613-4646) ---
+    // a.b.c[] with array at 'a' triggers the startIndex overload;
+    // a.b.c[] with top-level array data triggers the no-startIndex overload.
+    [Theory]
+    [InlineData(
+        "a.b.c[]",
+        "{\"a\":[{\"b\":{\"c\":1}},{\"b\":{\"c\":2}}]}",
+        "[1,2]")]
+    [InlineData(
+        "a.b.c[]",
+        "{\"a\":{\"b\":{\"c\":42}}}",
+        "[42]")]
+    [InlineData(
+        "a.b.c[]",
+        "[{\"a\":{\"b\":{\"c\":1}}},{\"a\":{\"b\":{\"c\":2}}}]",
+        "[1,2]")]
+    public void ChainKeepSingletonArrayFallback(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- ChainMerge: $merge over chain (lines 4680-4691) ---
+    [Theory]
+    [InlineData(
+        "$merge(items.objs)",
+        "{\"items\":[{\"objs\":{\"a\":1}},{\"objs\":{\"b\":2}}]}",
+        "{\"a\":1,\"b\":2}")]
+    [InlineData(
+        "$merge(items.objs)",
+        "{\"items\":[{\"objs\":{\"x\":10}},{\"objs\":{\"y\":20}},{\"objs\":{\"z\":30}}]}",
+        "{\"x\":10,\"y\":20,\"z\":30}")]
+    public void ChainMergeDynamic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- ShuffleFromBuffer: $shuffle over chain (lines 5586-5613) ---
+    [Theory]
+    [InlineData(
+        "$count($shuffle(items.vals))",
+        "{\"items\":[{\"vals\":[1]},{\"vals\":[2]},{\"vals\":[3]}]}",
+        "3")]
+    [InlineData(
+        "$count($shuffle(items.vals))",
+        "{\"items\":[{\"vals\":[10,20]},{\"vals\":[30,40]}]}",
+        "4")]
+    public void ShuffleFromBufferChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- MapChainElements: $map over chain (lines 2674-2716) ---
+    [Theory]
+    [InlineData(
+        "$map(items.name, function($v){$uppercase($v)})",
+        "{\"items\":[{\"name\":\"alice\"},{\"name\":\"bob\"}]}",
+        "[\"ALICE\",\"BOB\"]")]
+    [InlineData(
+        "$map(items.val, function($v){$v * 10})",
+        "{\"items\":[{\"val\":1},{\"val\":2},{\"val\":3}]}",
+        "[10,20,30]")]
+    public void MapChainElementsViaMap(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- MapChainElements via ~> apply operator ---
+    [Theory]
+    [InlineData(
+        "items.name ~> $map(function($v){$uppercase($v)})",
+        "{\"items\":[{\"name\":\"alice\"},{\"name\":\"bob\"}]}",
+        "[\"ALICE\",\"BOB\"]")]
+    public void MapChainElementsViaApply(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- AverageOverChain via apply (lines 2290-2306) ---
+    [Theory]
+    [InlineData(
+        "items.values ~> $average",
+        "{\"items\":[{\"values\":[2,4]},{\"values\":[6,8]}]}",
+        "5")]
+    [InlineData(
+        "items.values ~> $average",
+        "{\"items\":[{\"values\":[10]}]}",
+        "10")]
+    public void AverageOverChainViaApply(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- SumOverChain via apply ---
+    [Theory]
+    [InlineData(
+        "items.values ~> $sum",
+        "{\"items\":[{\"values\":[3,7]},{\"values\":[1,9]}]}",
+        "20")]
+    public void SumOverChainViaApply(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- MaxOverChain / MinOverChain via apply ---
+    [Theory]
+    [InlineData(
+        "items.values ~> $max",
+        "{\"items\":[{\"values\":[3,7]},{\"values\":[1,9]}]}",
+        "9")]
+    [InlineData(
+        "items.values ~> $min",
+        "{\"items\":[{\"values\":[3,7]},{\"values\":[1,9]}]}",
+        "1")]
+    public void MaxMinOverChainViaApply(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- MapChainDouble: arithmetic computed step over chain (lines 2590-2597) ---
+    [Theory]
+    [InlineData(
+        "items.(price * 2)",
+        "{\"items\":[{\"price\":10},{\"price\":20}]}",
+        "[20,40]")]
+    [InlineData(
+        "items.(price + tax)",
+        "{\"items\":[{\"price\":10,\"tax\":1},{\"price\":20,\"tax\":2}]}",
+        "[11,22]")]
+    public void MapChainDoubleComputedStep(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- NavigatePropertyChain: 3+ step chain with array at first position (lines 208-238) ---
+    // First two cases: array at property 'a'; third case: top-level array data triggers
+    // NavigatePropertyChain(data, chain, workspace) overload (no startIndex).
+    [Theory]
+    [InlineData(
+        "a.b.c.d",
+        "{\"a\":[{\"b\":{\"c\":{\"d\":\"x\"}}},{\"b\":{\"c\":{\"d\":\"y\"}}}]}",
+        "[\"x\",\"y\"]")]
+    [InlineData(
+        "a.b.c.d[]",
+        "{\"a\":[{\"b\":{\"c\":{\"d\":\"x\"}}},{\"b\":{\"c\":{\"d\":\"y\"}}}]}",
+        "[\"x\",\"y\"]")]
+    [InlineData(
+        "a.b.c.d",
+        "[{\"a\":{\"b\":{\"c\":{\"d\":\"x\"}}}},{\"a\":{\"b\":{\"c\":{\"d\":\"y\"}}}}]",
+        "[\"x\",\"y\"]")]
+    public void NavigatePropertyChainLongFallback(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- FusedCollectAndContinue: predicate chain with array input ---
+    // When the data is an array, the inline predicate path falls through to the helper
+    [Theory]
+    [InlineData(
+        "items[type=\"A\"].name",
+        "[{\"items\":[{\"type\":\"A\",\"name\":\"x\"}]},{\"items\":[{\"type\":\"A\",\"name\":\"y\"}]}]",
+        "[\"x\",\"y\"]")]
+    public void FusedCollectAndContinueArrayInput(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
 }
 
