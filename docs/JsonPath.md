@@ -72,15 +72,18 @@ using var dataDoc = ParsedJsonDocument<JsonElement>.Parse("""
     }
     """);
 
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
 JsonElement result = JsonPathEvaluator.Default.Query(
     "$.store.book[*].author",
-    dataDoc.RootElement);
+    dataDoc.RootElement,
+    workspace);
 
 Console.WriteLine(result);
 // ["Sandi Toksvig","Evelyn Waugh","Jane Austen","J. R. R. Tolkien"]
 ```
 
-`Query(expression, data)` evaluates the expression and returns a cloned JSON array containing all matched nodes. It manages memory internally — no workspace or disposal needed.
+`Query(expression, data, workspace)` evaluates the expression and returns a JSON array containing all matched nodes, backed by the provided workspace.
 
 **Zero-allocation evaluation with `QueryNodes`:**
 
@@ -230,7 +233,8 @@ JSONPath queries return a **node list** — zero or more `JsonElement` values ma
 **Quick result as JSON array:**
 
 ```csharp
-JsonElement array = JsonPathEvaluator.Default.Query("$.store.book[*].title", data);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement array = JsonPathEvaluator.Default.Query("$.store.book[*].title", data, workspace);
 // Returns a JSON array: ["Between the Stops", "Sword of Honour", ...]
 // Returns [] if no matches
 ```
@@ -256,9 +260,10 @@ if (count > 0)
 All evaluation errors throw `JsonPathException` with a descriptive message:
 
 ```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
 try
 {
-    JsonElement result = evaluator.Query(expression, data);
+    JsonElement result = evaluator.Query(expression, data, workspace);
 }
 catch (JsonPathException ex)
 {
@@ -451,7 +456,8 @@ var evaluator = new JsonPathEvaluator(
     });
 
 // Use in filter expressions
-JsonElement result = evaluator.Query("$.store.book[?ceil(@.price)==9].title", data);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Query("$.store.book[?ceil(@.price)==9].title", data, workspace);
 ```
 
 ### Delegate factory helpers
@@ -578,13 +584,14 @@ The source generator reads expression files from `AdditionalFiles`. Without the 
 
 ### Use `QueryNodes` for performance-sensitive code
 
-`Query()` is convenient but creates a workspace, builds a JSON array, and clones it. In hot paths, use `QueryNodes()` which pools its buffer internally:
+`Query()` builds a JSON array in the caller-supplied workspace. In hot paths, use `QueryNodes()` which returns lightweight references into the original document without re-serialization:
 
 ```csharp
-// ❌ Allocates per call
-JsonElement result = evaluator.Query(expression, data);
+// Materializes a JSON array via workspace (convenient)
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Query(expression, data, workspace);
 
-// ✅ Pooled buffer, no cloning
+// ✅ Pooled buffer, no re-serialization
 using JsonPathResult result = evaluator.QueryNodes(expression, data);
 ```
 
