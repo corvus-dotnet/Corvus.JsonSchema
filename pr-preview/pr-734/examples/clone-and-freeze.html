@@ -4,30 +4,32 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#1C1D21" />
-    <meta name="description" content="This recipe demonstrates the two ways to obtain an immutable snapshot from a mutable document: **Clone** and **Freeze**." />
-    <meta name="keywords" content="recipe, JSON Schema, C#, clone, freeze, type, required, properties, items, format, Clone" />
+    <meta name="description" content="Clone, Freeze, and Builder Snapshots" />
+    <meta name="keywords" content="recipe, JSON Schema, C#, clone, freeze, builder, snapshots, type, required, properties, items, format, Clone" />
     <meta name="robots" content="noindex, nofollow" />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:description" content="This recipe demonstrates the two ways to obtain an immutable snapshot from a mutable document: **Clone** and **Freeze**." />
+    <meta name="twitter:description" content="Clone, Freeze, and Builder Snapshots" />
     <meta name="twitter:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
-    <meta name="twitter:title" content="Clone and Freeze - Corvus.Text.Json Examples" />
+    <meta name="twitter:title" content="Clone, Freeze, and Builder Snapshots - Corvus.Text.Json Examples" />
     <meta property="article:tag" content="recipe" />
     <meta property="article:tag" content="JSON Schema" />
     <meta property="article:tag" content="C#" />
     <meta property="article:tag" content="clone" />
     <meta property="article:tag" content="freeze" />
+    <meta property="article:tag" content="builder" />
+    <meta property="article:tag" content="snapshots" />
     <meta property="article:tag" content="type" />
     <meta property="article:tag" content="required" />
     <meta property="article:tag" content="properties" />
     <meta property="article:tag" content="items" />
     <meta property="article:tag" content="format" />
     <meta property="article:tag" content="Clone" />
-    <meta property="og:description" content="This recipe demonstrates the two ways to obtain an immutable snapshot from a mutable document: **Clone** and **Freeze**." />
+    <meta property="og:description" content="Clone, Freeze, and Builder Snapshots" />
     <meta property="og:image" content="/Corvus.JsonSchema/pr-preview/pr-734/assets/images/og-corvus.png" />
-    <meta property="og:title" content="Clone and Freeze - Corvus.Text.Json Examples" />
+    <meta property="og:title" content="Clone, Freeze, and Builder Snapshots - Corvus.Text.Json Examples" />
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://corvus-oss.org/corvus-json-schema/examples/clone-and-freeze/" />
-    <title>Clone and Freeze - Corvus.Text.Json Examples</title>
+    <title>Clone, Freeze, and Builder Snapshots - Corvus.Text.Json Examples</title>
     <link itemprop="url" href="https://corvus-oss.org/corvus-json-schema/examples/clone-and-freeze/" />
     <link rel="canonical" href="https://corvus-oss.org/corvus-json-schema/examples/clone-and-freeze/" />
     <link rel="sitemap" href="https://corvus-oss.org/corvus-json-schema/sitemap.xml" />
@@ -217,7 +219,7 @@
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/creating-and-mutating-objects.html">Creating and Mutating Objects</a>
                             </li>
                             <li class="sidebar__item">
-                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/clone-and-freeze.html">Clone and Freeze</a>
+                                <a class="sidebar__link is-active" href="/Corvus.JsonSchema/pr-preview/pr-734/examples/clone-and-freeze.html">Clone, Freeze, and Builder Snapshots</a>
                             </li>
                             <li class="sidebar__item">
                                 <a class="sidebar__link " href="/Corvus.JsonSchema/pr-preview/pr-734/examples/conditional-schemas.html">Conditional Schemas</a>
@@ -257,13 +259,15 @@
 
     <main id="main-content" class="layout-docs__main">
         <div class="doc__content">
-            <h1>Clone and Freeze</h1>
+            <h1>Clone, Freeze, and Builder Snapshots</h1>
                 <div class="card__tags" style="margin-bottom:1.5rem">
                         <span class="card__tag">recipe</span>
                         <span class="card__tag">JSON Schema</span>
                         <span class="card__tag">C#</span>
                         <span class="card__tag">clone</span>
                         <span class="card__tag">freeze</span>
+                        <span class="card__tag">builder</span>
+                        <span class="card__tag">snapshots</span>
                         <span class="card__tag">type</span>
                         <span class="card__tag">required</span>
                         <span class="card__tag">properties</span>
@@ -271,10 +275,11 @@
                         <span class="card__tag">format</span>
                         <span class="card__tag">Clone</span>
                 </div>
-<p>This recipe demonstrates the two ways to obtain an immutable snapshot from a mutable document: <strong>Clone</strong> and <strong>Freeze</strong>. Both return a strongly-typed immutable element, but they differ in cost and lifetime.</p>
+<p>This recipe demonstrates how to produce immutable copies from a mutable document and how to save and restore builder state:</p>
 <ul>
 <li><strong>Clone()</strong> — serializes the element and re-parses it into a standalone, heap-allocated document. The result can outlive the workspace and the original builder.</li>
 <li><strong>Freeze()</strong> — performs a cheap blit of the metadata and value backing arrays. The result is immutable but only valid for the lifetime of the workspace.</li>
+<li><strong>CreateSnapshot()</strong> / <strong>Restore()</strong> — captures the builder's entire internal state so it can be cheaply rolled back later. This operates on the <strong>builder</strong>, not on individual elements.</li>
 </ul>
 <h2 id="the-schema">The Schema</h2>
 <p>File: <code>order.json</code></p>
@@ -334,7 +339,7 @@ Order.Mutable root = builder.RootElement;
 Console.WriteLine(cloned);
 Console.WriteLine($&quot;  Customer: {cloned.Customer}&quot;);
 </code></pre>
-<h3 id="freeze-workspace-scoped-snapshot">Freeze — workspace-scoped snapshot</h3>
+<h3 id="freeze-cheap-workspace-scoped-immutable-copy">Freeze — cheap workspace-scoped immutable copy</h3>
 <p><code>Freeze()</code> performs a cheap blit of the internal metadata and value arrays. The frozen value is immutable but only valid while the workspace is alive.</p>
 <pre><code class="language-csharp">Order frozen = root.Freeze();
 Console.WriteLine(frozen);
@@ -348,18 +353,18 @@ Console.WriteLine($&quot;  Customer: {frozen.Customer}&quot;);
 Console.WriteLine(firstItem);
 Console.WriteLine($&quot;  Product: {firstItem.Product}, Quantity: {firstItem.Quantity}&quot;);
 </code></pre>
-<h3 id="snapshot-before-and-after-mutation">Snapshot before and after mutation</h3>
-<p>Freeze is ideal for capturing point-in-time snapshots of a document that is still being mutated:</p>
-<pre><code class="language-csharp">Order snapshotBefore = root.Freeze();
+<h3 id="capturing-state-before-and-after-mutation">Capturing state before and after mutation</h3>
+<p>Freeze is ideal for capturing the state of a document at different points during a mutation sequence:</p>
+<pre><code class="language-csharp">Order frozenBefore = root.Freeze();
 
 root.SetNotes(&quot;URGENT — ship by Friday&quot;);
 
-Order snapshotAfter = root.Freeze();
+Order frozenAfter = root.Freeze();
 
-Console.WriteLine($&quot;Before: notes = {snapshotBefore.Notes}&quot;);
-Console.WriteLine($&quot;After:  notes = {snapshotAfter.Notes}&quot;);
-Console.WriteLine($&quot;Snapshots equal? {snapshotBefore == snapshotAfter}&quot;);
-// Output: Snapshots equal? False
+Console.WriteLine($&quot;Before: notes = {frozenBefore.Notes}&quot;);
+Console.WriteLine($&quot;After:  notes = {frozenAfter.Notes}&quot;);
+Console.WriteLine($&quot;Equal? {frozenBefore == frozenAfter}&quot;);
+// Output: Equal? False
 </code></pre>
 <h3 id="cross-document-freeze">Cross-document freeze</h3>
 <p>Elements from different documents can be combined in a single builder. Here we take a line item from order 1 and add it to order 2, then freeze the result:</p>
@@ -373,6 +378,25 @@ root2.Items.AddItem(parsedOrder.RootElement.Items[0]);
 Order frozenOrder2 = root2.Freeze();
 Console.WriteLine(frozenOrder2);
 </code></pre>
+<h2 id="saving-and-restoring-builder-state-createsnapshot-and-restore">Saving and Restoring Builder State — CreateSnapshot and Restore</h2>
+<p>While <code>Clone()</code> and <code>Freeze()</code> produce immutable <strong>elements</strong>, <code>CreateSnapshot()</code> and <code>Restore()</code> operate at the <strong>builder</strong> level — they save and restore the builder's entire internal state.</p>
+<p>This is useful when you need to make tentative changes and then roll back, or when processing multiple records through the same template:</p>
+<pre><code class="language-csharp">// Capture the builder's current state (rents copies of backing arrays)
+using var builderSnapshot = builder.CreateSnapshot();
+
+// Make some experimental changes
+root.SetCustomer(&quot;Charlie Brown&quot;);
+root.SetNotes(&quot;Expedited shipping&quot;);
+
+Console.WriteLine($&quot;After changes: customer = {root.Customer}, notes = {root.Notes}&quot;);
+
+// Roll back the builder to the captured state — pure memcpy, no allocations
+builder.Restore(builderSnapshot);
+root = builder.RootElement;
+
+Console.WriteLine($&quot;After restore: customer = {root.Customer}, notes = {root.Notes}&quot;);
+</code></pre>
+<p><code>CreateSnapshot()</code> rents copies of the builder's backing arrays from <code>ArrayPool</code>, so the snapshot must be disposed when no longer needed. <code>Restore()</code> copies the data back into the builder's existing buffers (which can only grow, never shrink), so the restore itself is a pure memcpy with no allocations.</p>
 <h2 id="clone-vs-freeze-comparison">Clone vs Freeze — Comparison</h2>
 <table>
 <thead>
@@ -383,6 +407,16 @@ Console.WriteLine(frozenOrder2);
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><strong>Operates on</strong></td>
+<td>Mutable element</td>
+<td>Mutable element</td>
+</tr>
+<tr>
+<td><strong>Returns</strong></td>
+<td>Immutable element</td>
+<td>Immutable element</td>
+</tr>
 <tr>
 <td><strong>Cost</strong></td>
 <td>Serializes and re-parses (allocates)</td>
@@ -395,12 +429,14 @@ Console.WriteLine(frozenOrder2);
 </tr>
 <tr>
 <td><strong>Use when</strong></td>
-<td>The snapshot must be stored, cached, or returned beyond the workspace scope</td>
-<td>You need a temporary immutable view during a processing pipeline</td>
+<td>The result must be stored, cached, or returned beyond the workspace scope</td>
+<td>You need a temporary immutable copy during a processing pipeline</td>
 </tr>
 </tbody>
 </table>
 <p>Both methods return the strongly-typed immutable element (e.g., <code>Order</code>, not <code>JsonElement</code>), so you retain full access to generated properties and schema validation. If the element is already immutable (e.g., from a <code>ParsedJsonDocument</code>), both methods return the same instance without additional work.</p>
+<h2 id="createsnapshot-vs-clonefreeze">CreateSnapshot vs Clone/Freeze</h2>
+<p><code>CreateSnapshot()</code> and <code>Restore()</code> work at a different level from <code>Clone()</code> and <code>Freeze()</code>. They save and restore the builder's internal buffers, not individual elements. Use them when you need to efficiently reset a builder to a known state, avoiding the cost of re-traversing the source document.</p>
 <h2 id="running-the-example">Running the Example</h2>
 <pre><code class="language-bash">cd docs/ExampleRecipes/019-CloneAndFreeze
 dotnet run
