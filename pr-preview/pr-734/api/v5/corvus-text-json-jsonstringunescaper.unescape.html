@@ -119,7 +119,7 @@
 </tbody>
 </table>
 <h2 id="unescape-readonlyspan-byte-span-byte-ref-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L33">JsonStringUnescaper.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L40">JsonStringUnescaper.cs</a></p>
 <p>Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to <code>destination</code>. The first backslash is located automatically.</p>
 <pre><code class="language-csharp">public static void Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, ref int written)
 </code></pre>
@@ -136,7 +136,7 @@
 <tr>
 <td><code>source</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
-<td>The escaped UTF-8 source bytes. Must contain at least one backslash.</td>
+<td>The escaped UTF-8 source bytes. Must contain at least one backslash (<code>0x5C</code>).</td>
 </tr>
 <tr>
 <td><code>destination</code></td>
@@ -150,6 +150,8 @@
 </tr>
 </tbody>
 </table>
+<h3 id="remarks">Remarks</h3>
+<p>Callers must ensure that <code>source</code> contains at least one escape sequence. If no backslash is present, the behavior is undefined (a debug assertion will fire in debug builds). Check for the presence of a backslash before calling this method.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
@@ -171,7 +173,7 @@
 </table>
 <hr />
 <h2 id="unescape-readonlyspan-byte-span-byte-int-ref-int">Unescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, int, ref int)</h2>
-<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L46">JsonStringUnescaper.cs</a></p>
+<p><strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L53">JsonStringUnescaper.cs</a></p>
 <p>Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to <code>destination</code>. The caller provides the index of the first backslash to avoid a redundant scan.</p>
 <pre><code class="language-csharp">public static void Unescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, int idx, ref int written)
 </code></pre>

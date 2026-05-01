@@ -99,7 +99,7 @@
 <h2 id="definition">Definition</h2>
 <p><strong>Namespace:</strong> Corvus.Text.Json<br />
 <strong>Assembly:</strong> Corvus.Text.Json.dll<br />
-<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L60">JsonStringUnescaper.cs</a></p>
+<strong>Source:</strong> <a href="https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/src/Corvus.Text.Json/Corvus/Text/Json/JsonStringUnescaper.cs#L74">JsonStringUnescaper.cs</a></p>
 <h2 id="tryunescape-readonlyspan-byte-span-byte-ref-int">TryUnescape(ReadOnlySpan&lt;byte&gt;, Span&lt;byte&gt;, ref int)</h2>
 <p>Attempts to unescape a JSON-encoded UTF-8 byte sequence into <code>destination</code>. Returns <code>false</code> if the destination buffer is too small. The first backslash is located automatically.</p>
 <pre><code class="language-csharp">public static bool TryUnescape(ReadOnlySpan&lt;byte&gt; source, Span&lt;byte&gt; destination, ref int written)
@@ -117,7 +117,7 @@
 <tr>
 <td><code>source</code></td>
 <td><a href="https://learn.microsoft.com/dotnet/api/system.readonlyspan-1"><code>ReadOnlySpan&lt;byte&gt;</code></a></td>
-<td>The escaped UTF-8 source bytes. Must contain at least one backslash.</td>
+<td>The escaped UTF-8 source bytes. Must contain at least one backslash (<code>0x5C</code>).</td>
 </tr>
 <tr>
 <td><code>destination</code></td>
@@ -134,6 +134,8 @@
 <h3 id="returns">Returns</h3>
 <p><a href="https://learn.microsoft.com/dotnet/api/system.boolean"><code>bool</code></a></p>
 <p><code>true</code> if the unescaped output fit in <code>destination</code>; otherwise <code>false</code>.</p>
+<h3 id="remarks">Remarks</h3>
+<p>Callers must ensure that <code>source</code> contains at least one escape sequence. If no backslash is present, the behavior is undefined (a debug assertion will fire in debug builds). Check for the presence of a backslash before calling this method.</p>
 <h2 id="applies-to">Applies To</h2>
 <table>
 <thead>
