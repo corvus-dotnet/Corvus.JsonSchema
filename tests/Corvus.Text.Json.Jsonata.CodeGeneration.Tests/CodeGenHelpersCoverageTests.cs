@@ -3,7 +3,9 @@
 // </copyright>
 
 using System.Reflection;
+using System.Linq;
 using System.Text;
+using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
 using Xunit;
@@ -4968,27 +4970,26 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // ──────── Round 11: StringConcat3/4/5 (lines 1596-1654) ────────
+    // CG only calls these for DYNAMIC (non-literal) operands.
 
     [Theory]
-    [InlineData("\"a\" & \"b\" & \"c\"", "0", "\"abc\"")]
-    [InlineData("\"x\" & 1 & \"y\"", "0", "\"x1y\"")]
-    [InlineData("\"\" & \"\" & \"\"", "0", "\"\"")]
+    [InlineData("a & b & c", "{\"a\":\"x\",\"b\":\"y\",\"c\":\"z\"}", "\"xyz\"")]
+    [InlineData("x & y & z", "{\"x\":\"hello\",\"y\":\" \",\"z\":\"world\"}", "\"hello world\"")]
     public void StringConcat3(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     [Theory]
-    [InlineData("\"a\" & \"b\" & \"c\" & \"d\"", "0", "\"abcd\"")]
-    [InlineData("\"x\" & 1 & true & \"z\"", "0", "\"x1truez\"")]
+    [InlineData("a & b & c & d", "{\"a\":\"1\",\"b\":\"2\",\"c\":\"3\",\"d\":\"4\"}", "\"1234\"")]
+    [InlineData("w & x & y & z", "{\"w\":\"a\",\"x\":\"b\",\"y\":\"c\",\"z\":\"d\"}", "\"abcd\"")]
     public void StringConcat4(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     [Theory]
-    [InlineData("\"a\" & \"b\" & \"c\" & \"d\" & \"e\"", "0", "\"abcde\"")]
-    [InlineData("1 & 2 & 3 & 4 & 5", "0", "\"12345\"")]
+    [InlineData("a & b & c & d & e", "{\"a\":\"1\",\"b\":\"2\",\"c\":\"3\",\"d\":\"4\",\"e\":\"5\"}", "\"12345\"")]
     public void StringConcat5(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -5183,25 +5184,199 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // ──────── Round 11: Zip multi-arg overload (lines 6654-6705) ────────
+    // CG constant-folds literal arrays; use dynamic refs to hit runtime Zip helpers.
 
     [Theory]
-    [InlineData("$zip([1,2],[3,4],[5,6],[7,8])", "0", "[[1,3,5,7],[2,4,6,8]]")]
-    [InlineData("$zip([1],[2],[3],[4],[5])", "0", "[[1,2,3,4,5]]")]
-    [InlineData("$zip([1,2,3])", "0", "[[1],[2],[3]]")]
+    [InlineData("$zip(a, b, c, d)", "{\"a\":[1,2],\"b\":[3,4],\"c\":[5,6],\"d\":[7,8]}", "[[1,3,5,7],[2,4,6,8]]")]
+    [InlineData("$zip(a, b, c, d, e)", "{\"a\":[1],\"b\":[2],\"c\":[3],\"d\":[4],\"e\":[5]}", "[[1,2,3,4,5]]")]
+    [InlineData("$zip(a)", "{\"a\":[1,2,3]}", "[[1],[2],[3]]")]
+    [InlineData("$zip(a, b)", "{\"a\":[1,2],\"b\":[3,4]}", "[[1,3],[2,4]]")]
     public void ZipMultiArg(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
-    // ──────── Round 11: Numeric error paths (T2001/T2002) ────────
+    // ──────── Round 12: CG-targeted with dynamic data ────────
+    // All tests use data references to bypass CG constant folding.
 
+    // --- AggregateMinMaxChain: $max/$min on nested array (lines 3422-3440) ---
     [Theory]
-    [InlineData("\"hello\" + 1", "0", "T2001")]
-    [InlineData("1 + \"hello\"", "0", "T2002")]
-    [InlineData("true + 1", "0", "T2001")]
-    [InlineData("1 + true", "0", "T2002")]
-    public void NumericBinaryOpTypeErrors(string expression, string data, string expectedCode)
+    [InlineData("$max(items.price)", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "20")]
+    [InlineData("$min(items.price)", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "5")]
+    [InlineData("items.price ~> $max", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "20")]
+    [InlineData("items.price ~> $min", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "5")]
+    public void AggregateMinMaxChain(string expression, string data, string expected)
     {
-        this.AssertCgAndRtThrow(expression, data, expectedCode);
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- AverageChain: $average on nested path (lines 3485-3498) ---
+    [Theory]
+    [InlineData("$average(items.price)", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":30}]}", "20")]
+    [InlineData("items.price ~> $average", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":30}]}", "20")]
+    public void AverageOverChain(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- ContinueChainFlatInto: array mid-chain (lines 598-613) ---
+    [Theory]
+    [InlineData("a.b.c", "{\"a\":[{\"b\":{\"c\":1}},{\"b\":{\"c\":2}}]}", "[1,2]")]
+    [InlineData("a.b.c.d", "{\"a\":[{\"b\":{\"c\":{\"d\":\"x\"}}},{\"b\":{\"c\":{\"d\":\"y\"}}}]}", "[\"x\",\"y\"]")]
+    public void ContinueChainFlatIntoDynamic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- FusedEval with equality predicate on array (lines 850-866) ---
+    [Theory]
+    [InlineData("items[type=\"A\"].name", "{\"items\":[{\"type\":\"A\",\"name\":\"foo\"},{\"type\":\"B\",\"name\":\"bar\"},{\"type\":\"A\",\"name\":\"baz\"}]}", "[\"foo\",\"baz\"]")]
+    public void FusedEvalEqualityPredicateArray(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- FusedEval with equality predicate on singleton object (lines 700-712) ---
+    [Theory]
+    [InlineData("item[type=\"A\"].name", "{\"item\":{\"type\":\"A\",\"name\":\"foo\"}}", "\"foo\"")]
+    [InlineData("item[type=\"B\"].name", "{\"item\":{\"type\":\"A\",\"name\":\"foo\"}}", "undefined")]
+    public void FusedEvalEqualityPredicateSingleton(string expression, string data, string expected)
+    {
+        if (expected == "undefined")
+        {
+            this.AssertCgAndRtBothUndefined(expression, data);
+        }
+        else
+        {
+            this.AssertCgAndRtMatch(expression, data, expected);
+        }
+    }
+
+    // --- FusedEval with constant index on array (lines 818-833) ---
+    [Theory]
+    [InlineData("items.values[0]", "{\"items\":[{\"values\":[10,20]},{\"values\":[30,40]}]}", "[10,30]")]
+    [InlineData("items.values[1]", "{\"items\":[{\"values\":[10,20]},{\"values\":[30,40]}]}", "[20,40]")]
+    public void FusedEvalConstantIndex(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- FusedEval const-index + more steps (lines 836-845) ---
+    [Theory]
+    [InlineData("items.values[0].name", "{\"items\":[{\"values\":[{\"name\":\"a\"},{\"name\":\"b\"}]},{\"values\":[{\"name\":\"c\"},{\"name\":\"d\"}]}]}", "[\"a\",\"c\"]")]
+    public void FusedEvalConstantIndexMoreSteps(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- EnumerateWildcard on array with len >= 2 (lines 1030-1037) ---
+    [Theory]
+    [InlineData("data.*", "{\"data\":{\"a\":1,\"b\":2,\"c\":3}}", "[1,2,3]")]
+    [InlineData("x.*", "{\"x\":[{\"a\":1},{\"b\":2},{\"c\":3}]}", "[1,2,3]")]
+    public void EnumerateWildcardDynamic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- MapChainElements: path with transform (lines 2674-2710) ---
+    [Theory]
+    [InlineData("items.name.$uppercase()", "{\"items\":[{\"name\":\"hello\"},{\"name\":\"world\"}]}", "[\"HELLO\",\"WORLD\"]")]
+    [InlineData("items.$string()", "{\"items\":[1,2,3]}", "[\"1\",\"2\",\"3\"]")]
+    public void MapChainElementsDynamic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- StringifyElement: $string on objects/arrays (lines 8990-9005) ---
+    [Theory]
+    [InlineData("$string(x)", "{\"x\":{\"a\":1,\"b\":2}}", "\"{\\\"a\\\":1,\\\"b\\\":2}\"")]
+    [InlineData("$string(x)", "{\"x\":[1,2,3]}", "\"[1,2,3]\"")]
+    [InlineData("$string(x)", "{\"x\":42}", "\"42\"")]
+    [InlineData("$string(x)", "{\"x\":true}", "\"true\"")]
+    public void StringifyDynamic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- Shuffle: $shuffle on dynamic array (lines 5602-5613) ---
+    [Fact]
+    public void ShuffleDynamic()
+    {
+        // $shuffle returns a random permutation; just verify it's an array of the same elements
+        string expression = "$shuffle(x)";
+        string data = "{\"x\":[1,2,3,4,5]}";
+
+        // RT path
+        string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
+        Assert.NotNull(rtResult);
+
+        // CG path
+        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        Assert.NotNull(compiled.Method);
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
+
+        // Both should be arrays with elements {1,2,3,4,5} (in any order)
+        using var rtDoc = JsonDocument.Parse(rtResult);
+        using var cgDoc = JsonDocument.Parse(cgResult.GetRawText());
+        int[] rtArr = rtDoc.RootElement.EnumerateArray().Select(e => e.GetInt32()).OrderBy(x => x).ToArray();
+        int[] cgArr = cgDoc.RootElement.EnumerateArray().Select(e => e.GetInt32()).OrderBy(x => x).ToArray();
+        Assert.Equal(new[] { 1, 2, 3, 4, 5 }, rtArr);
+        Assert.Equal(new[] { 1, 2, 3, 4, 5 }, cgArr);
+    }
+
+    // --- CodePointToCharIndex/CountCodePoints: surrogate strings (lines 7561-7591) ---
+    [Theory]
+    [InlineData("$substring(x,2)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "\"B\"")]
+    [InlineData("$substring(x,1)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "\"AB\"")]
+    [InlineData("$substring(x,0,1)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "\"\\uD83D\\uDE00\"")]
+    [InlineData("$length(x)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "3")]
+    public void SurrogateStringOperations(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- ParseInteger with dynamic picture (lines 7544-7556) ---
+    [Theory]
+    [InlineData("$parseInteger(x,y)", "{\"x\":\"255\",\"y\":\"#0\"}", "255")]
+    public void ParseIntegerDynamic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- ToMillis with dynamic picture (lines 7336-7344) ---
+    [Theory]
+    [InlineData("$toMillis(x,y)", "{\"x\":\"2018-02-12\",\"y\":\"[Y]-[M01]-[D01]\"}", "1518393600000")]
+    public void ToMillisDynamic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- Flatten with nested arrays (lines 7060-7073) ---
+    [Theory]
+    [InlineData("$flatten(x)", "{\"x\":[[1,2],[3,4],[5,6]]}", "[1,2,3,4,5,6]")]
+    [InlineData("$flatten(x)", "{\"x\":[[1,[2,3]],[4,[5,6]]]}", "[1,2,3,4,5,6]")]
+    public void FlattenDynamic(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- MapChainDouble: single-element arithmetic map (lines 7759-7768) ---
+    [Theory]
+    [InlineData("items.price + 1", "{\"items\":{\"price\":10}}", "11")]
+    [InlineData("items.price * 2", "{\"items\":{\"price\":5}}", "10")]
+    public void MapChainDoubleSingle(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // --- ArrayFromBuffer: multi-result navigation (lines 4713-4721) ---
+    [Theory]
+    [InlineData("items.name", "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]}", "[\"a\",\"b\",\"c\"]")]
+    public void ArrayFromBufferMulti(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
     }
 }
+

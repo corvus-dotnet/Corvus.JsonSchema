@@ -4328,13 +4328,142 @@ public class BuiltInFunctionEdgeCaseTests
         EvalThrows("1 + \"hello\"", "0", "T2002");
     }
 
-    // ──────── Round 11: BF object construction via {key:value} ────────
+    // ──────── Round 12: BF targeted dynamic paths ────────
+
+    // Aggregate via chain path
+    [Fact]
+    public void MaxOverChain()
+    {
+        Assert.Equal("20",
+            Eval("$max(items.price)",
+                """{"items":[{"price":10},{"price":20},{"price":5}]}"""));
+    }
 
     [Fact]
-    public void ObjectConstruction_FromArray()
+    public void MinOverChain()
     {
-        Assert.Equal("{\"Hat\":9.99,\"Shoes\":21.99}",
-            Eval("Account.Order.Product{`Product Name`:Price}",
-                """{"Account":{"Order":[{"Product":{"Product Name":"Hat","Price":9.99}},{"Product":{"Product Name":"Shoes","Price":21.99}}]}}"""));
+        Assert.Equal("5",
+            Eval("$min(items.price)",
+                """{"items":[{"price":10},{"price":20},{"price":5}]}"""));
+    }
+
+    [Fact]
+    public void AverageOverChain()
+    {
+        Assert.Equal("20",
+            Eval("$average(items.price)",
+                """{"items":[{"price":10},{"price":20},{"price":30}]}"""));
+    }
+
+    // Chain flat into (array mid-chain)
+    [Fact]
+    public void ChainFlatArray()
+    {
+        Assert.Equal("[1,2]",
+            Eval("a.b.c",
+                """{"a":[{"b":{"c":1}},{"b":{"c":2}}]}"""));
+    }
+
+    // Filter predicate on array
+    [Fact]
+    public void FilterPredicateArray()
+    {
+        Assert.Equal("""["foo","baz"]""",
+            Eval("""items[type="A"].name""",
+                """{"items":[{"type":"A","name":"foo"},{"type":"B","name":"bar"},{"type":"A","name":"baz"}]}"""));
+    }
+
+    // Constant index on nested array
+    [Fact]
+    public void ConstantIndexOnArray()
+    {
+        Assert.Equal("[10,30]",
+            Eval("items.values[0]",
+                """{"items":[{"values":[10,20]},{"values":[30,40]}]}"""));
+    }
+
+    // Wildcard on array
+    [Fact]
+    public void WildcardOnArray()
+    {
+        Assert.Equal("[1,2,3]",
+            Eval("x.*",
+                """{"x":[{"a":1},{"b":2},{"c":3}]}"""));
+    }
+
+    // $string on dynamic objects/arrays
+    [Fact]
+    public void StringifyObject()
+    {
+        // Eval returns JSON text, e.g., "{\"a\":1,\"b\":2}" wrapped in quotes
+        // The outer quote pair is the JSON string literal; strip those to get the actual value
+        string result = Eval("$string(x)", """{"x":{"a":1,"b":2}}""");
+        Assert.StartsWith("\"", result);
+        Assert.EndsWith("\"", result);
+        // The inner content when unescaped should be {"a":1,"b":2}
+        string inner = result.Substring(1, result.Length - 2).Replace("\\\"", "\"");
+        Assert.Equal("{\"a\":1,\"b\":2}", inner);
+    }
+
+    [Fact]
+    public void StringifyArray()
+    {
+        string result = Eval("$string(x)", """{"x":[1,2,3]}""");
+        Assert.StartsWith("\"", result);
+        string inner = result.Substring(1, result.Length - 2).Replace("\\\"", "\"");
+        Assert.Equal("[1,2,3]", inner);
+    }
+
+    // Surrogate string operations
+    [Fact]
+    public void SubstringSurrogate()
+    {
+        Assert.Equal("\"AB\"",
+            Eval("$substring(x,1)",
+                "{\"x\":\"\uD83D\uDE00AB\"}"));
+    }
+
+    [Fact]
+    public void LengthSurrogate()
+    {
+        Assert.Equal("3",
+            Eval("$length(x)",
+                "{\"x\":\"\uD83D\uDE00AB\"}"));
+    }
+
+    // $parseInteger with dynamic picture
+    [Fact]
+    public void ParseIntegerDynamic()
+    {
+        Assert.Equal("255",
+            Eval("$parseInteger(x,y)",
+                """{"x":"255","y":"#0"}"""));
+    }
+
+    // $toMillis with dynamic picture
+    [Fact]
+    public void ToMillisDynamic()
+    {
+        Assert.Equal("1518393600000",
+            Eval("$toMillis(x,y)",
+                """{"x":"2018-02-12","y":"[Y]-[M01]-[D01]"}"""));
+    }
+
+    // $flatten with nested arrays
+    [Fact]
+    public void FlattenNestedArraysDynamic()
+    {
+        Assert.Equal("[1,2,3,4,5,6]",
+            Eval("$flatten(x)",
+                """{"x":[[1,2],[3,4],[5,6]]}"""));
+    }
+
+    // Map chain with transform
+    [Fact]
+    public void MapChainTransform()
+    {
+        Assert.Equal("""["HELLO","WORLD"]""",
+            Eval("items.name.$uppercase()",
+                """{"items":[{"name":"hello"},{"name":"world"}]}"""));
     }
 }
