@@ -3,11 +3,19 @@
 // </copyright>
 
 using System.Text;
+#if STJ
+using Corvus.Yaml;
+#else
 using Corvus.Text.Json.Yaml;
+#endif
 using Xunit;
 using Xunit.Abstractions;
 
+#if STJ
+namespace Corvus.Yaml.SystemTextJson.Tests;
+#else
 namespace Corvus.Text.Json.Yaml.Tests;
+#endif
 
 /// <summary>
 /// Conformance tests for the YAML event parser, driven by the yaml-test-suite
