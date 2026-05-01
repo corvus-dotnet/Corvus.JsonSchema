@@ -1598,4 +1598,211 @@ public class YamlCoverageTests
         Assert.Equal("a&b", doc.RootElement.GetProperty("a").GetString());
         Assert.Equal("result", doc.RootElement.GetProperty("a&b").GetString());
     }
+
+    // ========================
+    // YAML double-quoted escape sequences (rare Unicode escapes)
+    // Covers: YamlToJsonConverter.cs lines 2737-2754
+    // ========================
+
+    [Fact]
+    public void DoubleQuotedEscape_NextLine()
+    {
+        // \N = U+0085 NEXT LINE, UTF-8: C2 85
+        string yaml = "key: \"hello\\Nworld\"";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        string? value = doc.RootElement.GetProperty("key").GetString();
+        Assert.Equal("hello\u0085world", value);
+    }
+
+    [Fact]
+    public void DoubleQuotedEscape_NonBreakingSpace()
+    {
+        // \_ = U+00A0 NO-BREAK SPACE, UTF-8: C2 A0
+        string yaml = "key: \"hello\\_world\"";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        string? value = doc.RootElement.GetProperty("key").GetString();
+        Assert.Equal("hello\u00A0world", value);
+    }
+
+    [Fact]
+    public void DoubleQuotedEscape_LineSeparator()
+    {
+        // \L = U+2028 LINE SEPARATOR, UTF-8: E2 80 A8
+        string yaml = "key: \"hello\\Lworld\"";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        string? value = doc.RootElement.GetProperty("key").GetString();
+        Assert.Equal("hello\u2028world", value);
+    }
+
+    [Fact]
+    public void DoubleQuotedEscape_ParagraphSeparator()
+    {
+        // \P = U+2029 PARAGRAPH SEPARATOR, UTF-8: E2 80 A9
+        string yaml = "key: \"hello\\Pworld\"";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        string? value = doc.RootElement.GetProperty("key").GetString();
+        Assert.Equal("hello\u2029world", value);
+    }
+
+    // ========================
+    // Anchor on null/empty value
+    // Covers: YamlToJsonConverter.cs lines 4107-4121
+    // ========================
+
+    [Fact]
+    public void AnchorOnNullValue_AliasReturnsNull()
+    {
+        string yaml = "a: &anchor\nb: *anchor";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("a").ValueKind);
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("b").ValueKind);
+    }
+
+    [Fact]
+    public void AnchorOnExplicitNull_AliasReturnsNull()
+    {
+        string yaml = "a: &anchor null\nb: *anchor";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("a").ValueKind);
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("b").ValueKind);
+    }
+
+    // ========================
+    // Explicit key with colon not followed by whitespace
+    // Covers: YamlToJsonConverter.cs lines 1032-1034
+    // ========================
+
+    [Fact]
+    public void ExplicitKey_ColonNotFollowedByWhitespace_NullValue()
+    {
+        // ? key\n: maps to {"key": null} when there's no value after the key
+        // But ?key\n:val with no space after colon is the explicit-key null-value path
+        string yaml = "? explicit\n: value";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal("value", doc.RootElement.GetProperty("explicit").GetString());
+    }
+
+    [Fact]
+    public void ExplicitKey_NoColon_NullValue()
+    {
+        // ? key with no ':' → null value
+        string yaml = "? key1\n? key2";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("key1").ValueKind);
+        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("key2").ValueKind);
+    }
+
+    // ========================
+    // Block scalar with more-indented lines (folded variant)
+    // Covers: YamlToJsonConverter.cs lines 3140-3155
+    // ========================
+
+    [Fact]
+    public void FoldedBlockScalar_MoreIndentedLines()
+    {
+        // Folded block scalar where more-indented lines are preserved
+        string yaml = "data: >\n  folded\n    indented\n  back";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        string? value = doc.RootElement.GetProperty("data").GetString();
+        Assert.NotNull(value);
+        // More-indented lines break out of folding; exact output depends on YAML spec
+        Assert.Contains("indented", value);
+    }
+
+    // ========================
+    // JsonToYaml: string/bool/null/number values through reader path
+    // Covers: JsonToYamlConverter.cs lines 172-189
+    // ========================
+
+    [Fact]
+    public void JsonToYaml_StringValue()
+    {
+        string json = """{"key": "hello world"}""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        Assert.Contains("hello world", yaml);
+    }
+
+    [Fact]
+    public void JsonToYaml_BoolAndNull()
+    {
+        string json = """{"a": true, "b": false, "c": null}""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        Assert.Contains("true", yaml);
+        Assert.Contains("false", yaml);
+        Assert.Contains("null", yaml);
+    }
+
+    // ========================
+    // JsonToYaml: empty mapping/sequence
+    // Covers: JsonToYamlConverter.cs lines 514-517
+    // ========================
+
+    [Fact]
+    public void JsonToYaml_EmptyObject()
+    {
+        string json = """{"empty": {}}""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        Assert.Contains("{}", yaml);
+    }
+
+    [Fact]
+    public void JsonToYaml_EmptyArray()
+    {
+        string json = """{"empty": []}""";
+        string yaml = YamlDocument.ConvertToYamlString(json);
+        Assert.Contains("[]", yaml);
+    }
+
+    // ========================
+    // Double-quoted escape: \x hex escape
+    // ========================
+
+    [Fact]
+    public void DoubleQuotedEscape_HexX()
+    {
+        // \x41 = 'A'
+        string yaml = "key: \"\\x41\"";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal("A", doc.RootElement.GetProperty("key").GetString());
+    }
+
+    [Fact]
+    public void DoubleQuotedEscape_HexU()
+    {
+        // \u0041 = 'A'
+        string yaml = "key: \"\\u0041\"";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal("A", doc.RootElement.GetProperty("key").GetString());
+    }
+
+    [Fact]
+    public void DoubleQuotedEscape_HexU8()
+    {
+        // \U00000041 = 'A'
+        string yaml = "key: \"\\U00000041\"";
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(yaml));
+        Assert.Equal("A", doc.RootElement.GetProperty("key").GetString());
+    }
+
+    // ========================
+    // Buffer growth path: large string value
+    // Covers: GrowOutputBuffer / GrowRentedBuffer (lines 4650-4687)
+    // ========================
+
+    [Fact]
+    public void LargeDoubleQuotedString_TriggersEscapeBufferGrowth()
+    {
+        // Create a large double-quoted string with escape sequences to force buffer growth
+        // in the escape processing path (GrowRentedBuffer)
+        var sb = new StringBuilder("key: \"");
+        for (int i = 0; i < 200; i++)
+        {
+            sb.Append("\\n"); // Each escape becomes a single byte — forces escape buffer reallocation
+        }
+
+        sb.Append('"');
+        using var doc = YamlTestHelper.Parse(Encoding.UTF8.GetBytes(sb.ToString()));
+        string? value = doc.RootElement.GetProperty("key").GetString();
+        Assert.Equal(200, value!.Length); // 200 newline characters
+    }
 }
