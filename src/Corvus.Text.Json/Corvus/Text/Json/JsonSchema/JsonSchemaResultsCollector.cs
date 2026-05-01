@@ -1030,7 +1030,10 @@ public sealed class JsonSchemaResultsCollector : IJsonSchemaResultsCollector
         // expecting to write a message given the level settings
         if (messageProvider is not null && writeMessage)
         {
-            messageProvider(_utf8StringBacking.AsSpan(_utf8StringBackingLength + ResultHeaderSize), out written);
+            if (!messageProvider(_utf8StringBacking.AsSpan(_utf8StringBackingLength + ResultHeaderSize), out written))
+            {
+                ThrowHelper.ThrowArgumentException_DestinationTooShort();
+            }
         }
 
         WriteHeaderAndPathsAndUpdateResultStack(match, written);

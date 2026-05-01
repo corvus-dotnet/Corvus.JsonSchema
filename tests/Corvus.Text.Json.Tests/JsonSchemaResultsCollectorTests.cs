@@ -29,29 +29,23 @@ public class JsonSchemaResultsCollectorTests
         ];
 
     [Fact]
-    public void All_Providers_Throw_If_Value_Too_Large()
+    public void All_Providers_Throw_If_Provider_Returns_False()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
         IJsonSchemaResultsCollector c = collector;
 
-        // Create a large (>8k) UTF-8 buffer
-        byte[] largeBuffer = new byte[9000];
-        for (int i = 0; i < largeBuffer.Length; ++i) largeBuffer[i] = (byte)('A' + (i % 26));
-
-        // PathProvider that always tries to write the large buffer
+        // A well-behaved provider that returns false when the buffer is too small.
         bool largePathProvider(Span<byte> buffer, out int written)
         {
-            written = largeBuffer.Length;
-            largeBuffer.CopyTo(buffer);
-            return true;
+            written = 0;
+            return false;
         }
 
-        // MessageProvider that always tries to write the large buffer
+        // A well-behaved message provider that returns false when the buffer is too small.
         bool largeMessageProvider(Span<byte> buffer, out int written)
         {
-            written = largeBuffer.Length;
-            largeBuffer.CopyTo(buffer);
-            return true;
+            written = 0;
+            return false;
         }
 
         // 1. BeginChildContext with large path provider
