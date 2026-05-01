@@ -12,6 +12,17 @@
         <ModulePath>.*Corvus\.Text\.Json\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.Validator\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.JMESPath\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.JMESPath\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Jsonata\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Jsonata\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.JsonLogic\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.JsonLogic\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.JsonPath\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.JsonPath\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Patch\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.Yaml\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Yaml\.SystemTextJson\.dll$</ModulePath>
       </Include>
     </ModulePaths>
   </CodeCoverage>
