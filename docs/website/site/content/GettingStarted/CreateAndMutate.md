@@ -274,7 +274,7 @@ The standard mutation workflow is:
 
 ## Converting to immutable: Clone() and Freeze()
 
-After building or mutating a document, you may need an immutable snapshot. There are two ways to do this, each with different trade-offs. Both can be called on any element — root or nested — and both return the strongly-typed immutable form (e.g., `Person` from `Person.Mutable`), not `JsonElement`.
+After building or mutating a document, you may need an immutable copy. There are two ways to do this, each with different trade-offs. Both can be called on any element — root or nested — and both return the strongly-typed immutable form (e.g., `Person` from `Person.Mutable`), not `JsonElement`.
 
 ### Clone()
 
@@ -287,10 +287,10 @@ using var builder = doc.RootElement.CreateBuilder(workspace);
 
 builder.RootElement.SetAge(31);
 
-// Clone produces a standalone immutable value
-Person snapshot = builder.RootElement.Clone();
+// Clone produces a standalone immutable copy
+Person cloned = builder.RootElement.Clone();
 
-// snapshot is valid even after the workspace is disposed
+// cloned is valid even after the workspace is disposed
 ```
 
 Use `Clone()` when you need a value to escape the scope of the workspace — for example, returning a result from a method, storing it in a cache, or passing it to another thread.
@@ -309,13 +309,13 @@ builder.RootElement.SetAge(31);
 // Freeze the root element
 Person frozen = builder.RootElement.Freeze();
 
-// Or freeze a nested element to get a standalone immutable snapshot of just that subtree
+// Or freeze a nested element to get an immutable copy of just that subtree
 Person.PersonNameEntity frozenName = builder.RootElement.Name.Freeze();
 
 // Both are valid for the lifetime of the workspace
 ```
 
-Use `Freeze()` when you need an immutable reference that stays within the workspace lifetime — for example, caching intermediate results while building a complex document, or taking a snapshot before further mutations.
+Use `Freeze()` when you need an immutable reference that stays within the workspace lifetime — for example, caching intermediate results while building a complex document, or capturing the document state before further mutations.
 
 `Freeze()` also works on immutable elements: if the element is already backed by an immutable document, it returns the same instance without any copying.
 
@@ -326,6 +326,38 @@ Use `Freeze()` when you need an immutable reference that stays within the worksp
 | **Cost** | O(JSON size) — heap allocation | O(metadata size) — cheap blit |
 | **Lifetime** | Standalone — outlives the workspace | Workspace-scoped |
 | **Use when** | Value must escape the workspace | Value stays within the workspace |
+
+## Saving and restoring builder state: CreateSnapshot() and Restore()
+
+While `Clone()` and `Freeze()` produce immutable **elements**, `CreateSnapshot()` and `Restore()` operate at the **builder** level — they save and restore the builder's entire internal state.
+
+`CreateSnapshot()` rents copies of the builder's backing arrays (metadata, values, property maps) from `ArrayPool`. `Restore()` copies the data back into the builder's existing buffers — a pure memcpy with no allocations.
+
+This is useful when you need to make tentative changes and then roll back, or when processing multiple records through the same template:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var doc = ParsedJsonDocument<Person>.Parse(json);
+using var builder = doc.RootElement.CreateBuilder(workspace);
+
+Person.Mutable root = builder.RootElement;
+root.SetAge(31);
+
+// Capture the builder's current state
+using var builderSnapshot = builder.CreateSnapshot();
+
+// Make experimental changes
+root.SetAge(99);
+root.SetEmail("temp@example.com"u8);
+
+// Roll back the builder to the captured state
+builder.Restore(builderSnapshot);
+root = builder.RootElement;
+
+// root.Age is 31 again; Email is removed
+```
+
+The snapshot must be disposed when no longer needed (it holds rented arrays). `Restore()` invalidates any previously cached non-root mutable element references, just like any other structural mutation.
 
 ## Serialization
 

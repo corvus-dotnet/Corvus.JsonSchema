@@ -679,6 +679,161 @@ As always, build synchronously within the workspace scope, then perform async I/
 
 The rental pattern shines in hot paths where you're serializing thousands of documents per second. The workspace pools everything, and you get consistent, fast, allocation-free serialization.
 
+## Producing Immutable Values: Clone and Freeze
+
+After building or modifying a document, you often need an immutable copy — for returning from a method, caching, or capturing the document state at a point in time. Two methods are available, each with different trade-offs.
+
+### Clone()
+
+`Clone()` serializes the mutable element to JSON and re-parses it into an independent, heap-allocated document. The result outlives the workspace, the builder, and the source document:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =>
+    {
+        objectBuilder.AddProperty("name"u8, "Alice"u8);
+        objectBuilder.AddProperty("age"u8, 30);
+    }));
+
+JsonElement.Mutable root = doc.RootElement;
+root.SetProperty("age"u8, 31);
+
+// Clone produces a standalone immutable copy
+JsonElement cloned = root.Clone();
+
+// cloned is valid even after the workspace and builder are disposed
+```
+
+Use `Clone()` when the result must escape the workspace — for example, returning from a method, storing in a cache, or passing to another thread.
+
+### Freeze()
+
+`Freeze()` creates a cheap immutable copy within the same workspace. It blits only the metadata and value backing arrays — no JSON serialization or re-parsing occurs:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =>
+    {
+        objectBuilder.AddProperty("name"u8, "Alice"u8);
+        objectBuilder.AddProperty("age"u8, 30);
+    }));
+
+JsonElement.Mutable root = doc.RootElement;
+root.SetProperty("age"u8, 31);
+
+// Freeze the root element
+JsonElement frozen = root.Freeze();
+
+// Or freeze a nested element to get an immutable copy of just that subtree
+JsonElement frozenName = root.GetProperty("name"u8).Freeze();
+
+// Both are valid for the lifetime of the workspace
+```
+
+You can freeze any element in the tree, not just the root. Use `Freeze()` when you need an immutable reference that stays within the workspace lifetime — for example, caching intermediate results while building a complex document, or capturing the document state before further mutations.
+
+`Freeze()` also works on immutable elements: if the element is already backed by an immutable document, it returns the same instance without any copying.
+
+### Choosing between Clone() and Freeze()
+
+| | Clone() | Freeze() |
+|---|---|---|
+| **Cost** | O(JSON size) — serializes and re-parses | O(metadata size) — cheap blit |
+| **Lifetime** | Standalone — outlives the workspace | Workspace-scoped |
+| **Use when** | Value must escape the workspace | Value stays within the workspace |
+
+Both methods return the strongly-typed immutable element (e.g., `JsonElement` from `JsonElement.Mutable`), so you retain full access to properties and traversal. If the element is already immutable (e.g., from a `ParsedJsonDocument`), both methods return the same instance without additional work.
+
+## Saving and Restoring Builder State: CreateSnapshot and Restore
+
+While `Clone()` and `Freeze()` produce immutable **values**, `CreateSnapshot()` and `Restore()` operate at the **builder** level — they save and restore the builder's entire internal state.
+
+This is useful when you need to make tentative changes and then roll back, or when processing multiple records through the same template without re-parsing the base document.
+
+### Basic Snapshot and Restore
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+using var doc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =>
+    {
+        objectBuilder.AddProperty("name"u8, "Alice"u8);
+        objectBuilder.AddProperty("status"u8, "active"u8);
+    }));
+
+JsonElement.Mutable root = doc.RootElement;
+
+// Capture the builder's current state (rents copies of backing arrays)
+using var snapshot = doc.CreateSnapshot();
+
+// Make some experimental changes
+root.SetProperty("status"u8, "suspended"u8);
+root.SetProperty("reason"u8, "investigation"u8);
+
+Console.WriteLine(root.ToString());
+// {"name":"Alice","status":"suspended","reason":"investigation"}
+
+// Roll back the builder to the captured state — pure memcpy, no allocations
+doc.Restore(snapshot);
+root = doc.RootElement;
+
+Console.WriteLine(root.ToString());
+// {"name":"Alice","status":"active"}
+```
+
+### How It Works
+
+- **`CreateSnapshot()`** rents copies of the builder's backing arrays (metadata, values, property maps) from `ArrayPool`. The snapshot holds these rented arrays and must be disposed when no longer needed.
+- **`Restore()`** copies the snapshot data back into the builder's existing buffers. Because buffers can only grow (never shrink), this is a pure memcpy with no allocations. It also increments the builder's version, invalidating any previously cached non-root mutable element references — just like any other structural mutation.
+
+### Template Processing Pattern
+
+Snapshot/restore is particularly effective when processing multiple records through the same document structure:
+
+```csharp
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
+// Build a template document
+using var templateDoc = JsonElement.CreateBuilder(
+    workspace,
+    new JsonElement.Source(static (ref objectBuilder) =>
+    {
+        objectBuilder.AddProperty("type"u8, "notification"u8);
+        objectBuilder.AddProperty("version"u8, 1);
+    }));
+
+// Capture the template state
+using var templateSnapshot = templateDoc.CreateSnapshot();
+
+string[] recipients = ["Alice", "Bob", "Charlie"];
+
+foreach (string recipient in recipients)
+{
+    // Start from the clean template
+    templateDoc.Restore(templateSnapshot);
+    JsonElement.Mutable root = templateDoc.RootElement;
+
+    // Customise for this recipient
+    root.SetProperty("recipient"u8, recipient);
+    root.SetProperty("timestamp"u8, DateTime.UtcNow);
+
+    // Serialize or process the customised document
+    Console.WriteLine(root.ToString());
+
+    workspace.Reset();
+}
+```
+
+This avoids re-creating the builder and re-building the template on each iteration.
+
 ## Performance Tips
 
 For optimal performance:

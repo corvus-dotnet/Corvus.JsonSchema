@@ -1,9 +1,10 @@
-# JSON Schema Patterns in .NET - Clone and Freeze
+# JSON Schema Patterns in .NET - Clone, Freeze, and Builder Snapshots
 
-This recipe demonstrates the two ways to obtain an immutable snapshot from a mutable document: **Clone** and **Freeze**. Both return a strongly-typed immutable element, but they differ in cost and lifetime.
+This recipe demonstrates how to produce immutable copies from a mutable document and how to save and restore builder state:
 
 - **Clone()** — serializes the element and re-parses it into a standalone, heap-allocated document. The result can outlive the workspace and the original builder.
 - **Freeze()** — performs a cheap blit of the metadata and value backing arrays. The result is immutable but only valid for the lifetime of the workspace.
+- **CreateSnapshot()** / **Restore()** — captures the builder's entire internal state so it can be cheaply rolled back later. This operates on the **builder**, not on individual elements.
 
 ## The Schema
 
@@ -76,7 +77,7 @@ Console.WriteLine(cloned);
 Console.WriteLine($"  Customer: {cloned.Customer}");
 ```
 
-### Freeze — workspace-scoped snapshot
+### Freeze — cheap workspace-scoped immutable copy
 
 `Freeze()` performs a cheap blit of the internal metadata and value arrays. The frozen value is immutable but only valid while the workspace is alive.
 
@@ -98,21 +99,21 @@ Console.WriteLine(firstItem);
 Console.WriteLine($"  Product: {firstItem.Product}, Quantity: {firstItem.Quantity}");
 ```
 
-### Snapshot before and after mutation
+### Capturing state before and after mutation
 
-Freeze is ideal for capturing point-in-time snapshots of a document that is still being mutated:
+Freeze is ideal for capturing the state of a document at different points during a mutation sequence:
 
 ```csharp
-Order snapshotBefore = root.Freeze();
+Order frozenBefore = root.Freeze();
 
 root.SetNotes("URGENT — ship by Friday");
 
-Order snapshotAfter = root.Freeze();
+Order frozenAfter = root.Freeze();
 
-Console.WriteLine($"Before: notes = {snapshotBefore.Notes}");
-Console.WriteLine($"After:  notes = {snapshotAfter.Notes}");
-Console.WriteLine($"Snapshots equal? {snapshotBefore == snapshotAfter}");
-// Output: Snapshots equal? False
+Console.WriteLine($"Before: notes = {frozenBefore.Notes}");
+Console.WriteLine($"After:  notes = {frozenAfter.Notes}");
+Console.WriteLine($"Equal? {frozenBefore == frozenAfter}");
+// Output: Equal? False
 ```
 
 ### Cross-document freeze
@@ -131,15 +132,46 @@ Order frozenOrder2 = root2.Freeze();
 Console.WriteLine(frozenOrder2);
 ```
 
+## Saving and Restoring Builder State — CreateSnapshot and Restore
+
+While `Clone()` and `Freeze()` produce immutable **elements**, `CreateSnapshot()` and `Restore()` operate at the **builder** level — they save and restore the builder's entire internal state.
+
+This is useful when you need to make tentative changes and then roll back, or when processing multiple records through the same template:
+
+```csharp
+// Capture the builder's current state (rents copies of backing arrays)
+using var builderSnapshot = builder.CreateSnapshot();
+
+// Make some experimental changes
+root.SetCustomer("Charlie Brown");
+root.SetNotes("Expedited shipping");
+
+Console.WriteLine($"After changes: customer = {root.Customer}, notes = {root.Notes}");
+
+// Roll back the builder to the captured state — pure memcpy, no allocations
+builder.Restore(builderSnapshot);
+root = builder.RootElement;
+
+Console.WriteLine($"After restore: customer = {root.Customer}, notes = {root.Notes}");
+```
+
+`CreateSnapshot()` rents copies of the builder's backing arrays from `ArrayPool`, so the snapshot must be disposed when no longer needed. `Restore()` copies the data back into the builder's existing buffers (which can only grow, never shrink), so the restore itself is a pure memcpy with no allocations.
+
 ## Clone vs Freeze — Comparison
 
 | | Clone | Freeze |
 |---|---|---|
+| **Operates on** | Mutable element | Mutable element |
+| **Returns** | Immutable element | Immutable element |
 | **Cost** | Serializes and re-parses (allocates) | Cheap blit of backing arrays |
 | **Lifetime** | Independent — outlives workspace | Workspace-scoped |
-| **Use when** | The snapshot must be stored, cached, or returned beyond the workspace scope | You need a temporary immutable view during a processing pipeline |
+| **Use when** | The result must be stored, cached, or returned beyond the workspace scope | You need a temporary immutable copy during a processing pipeline |
 
 Both methods return the strongly-typed immutable element (e.g., `Order`, not `JsonElement`), so you retain full access to generated properties and schema validation. If the element is already immutable (e.g., from a `ParsedJsonDocument`), both methods return the same instance without additional work.
+
+## CreateSnapshot vs Clone/Freeze
+
+`CreateSnapshot()` and `Restore()` work at a different level from `Clone()` and `Freeze()`. They save and restore the builder's internal buffers, not individual elements. Use them when you need to efficiently reset a builder to a known state, avoiding the cost of re-traversing the source document.
 
 ## Running the Example
 

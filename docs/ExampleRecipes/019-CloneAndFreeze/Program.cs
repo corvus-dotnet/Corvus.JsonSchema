@@ -38,7 +38,7 @@ Console.WriteLine($"  Customer: {cloned.Customer}");
 Console.WriteLine();
 
 // ------------------------------------------------------------------
-// 3. Freeze — cheap immutable snapshot scoped to the workspace
+// 3. Freeze — cheap immutable copy scoped to the workspace
 // ------------------------------------------------------------------
 Order frozen = root.Freeze();
 
@@ -61,18 +61,18 @@ Console.WriteLine($"  Product: {firstItem.Product}, Quantity: {firstItem.Quantit
 Console.WriteLine();
 
 // ------------------------------------------------------------------
-// 5. Snapshot before and after mutation
+// 5. Capturing state before and after mutation
 // ------------------------------------------------------------------
-Order snapshotBefore = root.Freeze();
+Order frozenBefore = root.Freeze();
 
 root.SetNotes("URGENT — ship by Friday");
 
-Order snapshotAfter = root.Freeze();
+Order frozenAfter = root.Freeze();
 
-Console.WriteLine("=== 5. Snapshot Before and After Mutation ===");
-Console.WriteLine($"Before: notes = {snapshotBefore.Notes}");
-Console.WriteLine($"After:  notes = {snapshotAfter.Notes}");
-Console.WriteLine($"Snapshots equal? {snapshotBefore == snapshotAfter}");
+Console.WriteLine("=== 5. Capturing State Before and After Mutation ===");
+Console.WriteLine($"Before: notes = {frozenBefore.Notes}");
+Console.WriteLine($"After:  notes = {frozenAfter.Notes}");
+Console.WriteLine($"Equal? {frozenBefore == frozenAfter}");
 Console.WriteLine();
 
 // ------------------------------------------------------------------
@@ -109,15 +109,44 @@ foreach (var item in frozenOrder2.Items.EnumerateArray())
 Console.WriteLine();
 
 // ------------------------------------------------------------------
-// 7. Clone vs Freeze — summary
+// 7. Builder state management — CreateSnapshot and Restore
 // ------------------------------------------------------------------
-Console.WriteLine("=== Clone vs Freeze ===");
+// Capture the builder's current state (rents copies of backing arrays)
+using var builderSnapshot = builder.CreateSnapshot();
+
+// Make some experimental changes
+root.SetCustomer("Charlie Brown");
+root.SetNotes("Expedited shipping");
+
+Console.WriteLine("=== 7. CreateSnapshot and Restore ===");
+Console.WriteLine("After experimental changes:");
+Console.WriteLine($"  Customer: {root.Customer}");
+Console.WriteLine($"  Notes: {root.Notes}");
+
+// Roll back the builder to the captured state — pure memcpy, no allocations
+builder.Restore(builderSnapshot);
+root = builder.RootElement;
+
+Console.WriteLine("After restore:");
+Console.WriteLine($"  Customer: {root.Customer}");
+Console.WriteLine($"  Notes: {root.Notes}");
+Console.WriteLine();
+
+// ------------------------------------------------------------------
+// 8. Clone vs Freeze vs CreateSnapshot — summary
+// ------------------------------------------------------------------
+Console.WriteLine("=== Clone vs Freeze vs CreateSnapshot ===");
 Console.WriteLine("Clone():");
 Console.WriteLine("  - Serializes and re-parses into a new document");
 Console.WriteLine("  - Heap-allocated; lives independently of the workspace");
-Console.WriteLine("  - Use when the snapshot must outlive the workspace");
+Console.WriteLine("  - Use when the result must outlive the workspace");
 Console.WriteLine();
 Console.WriteLine("Freeze():");
 Console.WriteLine("  - Cheap blit of metadata and value arrays");
 Console.WriteLine("  - Immutable, but scoped to the workspace lifetime");
-Console.WriteLine("  - Use for temporary snapshots within a processing pipeline");
+Console.WriteLine("  - Use for temporary immutable copies within a processing pipeline");
+Console.WriteLine();
+Console.WriteLine("CreateSnapshot() / Restore():");
+Console.WriteLine("  - Captures the builder's entire internal state");
+Console.WriteLine("  - Restore is pure memcpy — no allocations");
+Console.WriteLine("  - Use to roll back a builder to a known state without re-parsing");
