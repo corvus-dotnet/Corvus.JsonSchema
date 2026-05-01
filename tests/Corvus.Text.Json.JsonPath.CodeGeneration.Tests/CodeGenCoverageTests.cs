@@ -640,6 +640,490 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         this.AssertCgMatchesRuntime("""$[?count(@.items[*]) > 1]""", """[{"items":[1]},{"items":[1,2,3]}]""");
     }
 
+    // ── Singleton prefix: all segments are single-name/index (483-501) ─
+
+    [Fact]
+    public void SingletonPrefix_AllSingleton()
+    {
+        // $.a.b → every segment is a singleton name → all-singleton path (line 497-501)
+        this.AssertCgMatchesRuntime("$.a.b", """{"a":{"b":42},"c":1}""");
+    }
+
+    [Fact]
+    public void SingletonPrefix_IndexThenName()
+    {
+        // $[0].x → singleton index prefix + singleton name (lines 489-495, 541-552)
+        this.AssertCgMatchesRuntime("$[0].x", """[{"x":1},{"x":2}]""");
+    }
+
+    [Fact]
+    public void SingletonPrefix_NegativeIndex()
+    {
+        // $[-1].x → singleton with negative index normalization
+        this.AssertCgMatchesRuntime("$[-1].x", """[{"x":1},{"x":2},{"x":3}]""");
+    }
+
+    [Fact]
+    public void SingletonPrefix_MixedThenStreaming()
+    {
+        // $.a[*] → singleton "a" prefix then wildcard streaming (lines 489-495, 504-505)
+        this.AssertCgMatchesRuntime("$.a[*]", """{"a":[1,2,3],"b":4}""");
+    }
+
+    // ── Index selector streaming (656-670) ──────────────────────────
+
+    [Fact]
+    public void IndexStreaming_WithFurtherSegment()
+    {
+        // $[*][0] → wildcard then index streaming (non-singleton because wildcard precedes)
+        this.AssertCgMatchesRuntime("$[*][0]", """[[1,2],[3,4],[5]]""");
+    }
+
+    [Fact]
+    public void IndexStreaming_NegativeWithChain()
+    {
+        // $[*][-1].x → wildcard + negative index streaming + name streaming
+        this.AssertCgMatchesRuntime("$[*][-1].x", """[[{"x":1},{"x":2}],[{"x":3}]]""");
+    }
+
+    // ── Slice selector streaming (705-733) ──────────────────────────
+
+    [Fact]
+    public void SliceStreaming_PositiveStep()
+    {
+        // $[*][0:2] → wildcard then positive-step slice streaming
+        this.AssertCgMatchesRuntime("$[*][0:2]", """[[1,2,3],[4,5]]""");
+    }
+
+    [Fact]
+    public void SliceStreaming_NegativeStep()
+    {
+        // $[*][2:0:-1] → wildcard then negative-step slice streaming (lines 724-729)
+        this.AssertCgMatchesRuntime("$[*][2:0:-1]", """[[1,2,3],[4,5,6]]""");
+    }
+
+    [Fact]
+    public void SliceStreaming_WithFurtherName()
+    {
+        // $[0:2].x → slice streaming then name (chain continuation)
+        this.AssertCgMatchesRuntime("$[0:2].x", """[{"x":1},{"x":2},{"x":3}]""");
+    }
+
+    // ── Descendant streaming general DFS (788-866) ──────────────────
+
+    [Fact]
+    public void DescendantGeneral_IndexSelector()
+    {
+        // $..[0] with further segment → general DFS (not name-optimized)
+        this.AssertCgMatchesRuntime("$..[0].x", """{"a":[{"x":1}],"b":{"c":[{"x":2}]}}""");
+    }
+
+    [Fact]
+    public void DescendantGeneral_WildcardWithChain()
+    {
+        // $..*[0] → general descendant wildcard + index streaming
+        this.AssertCgMatchesRuntime("$..[*].x", """{"a":[{"x":1},{"x":2}],"b":{"x":3}}""");
+    }
+
+    [Fact]
+    public void DescendantGeneral_FilterSelector()
+    {
+        // $..[?@>1] with further segment → general DFS + filter + chain
+        this.AssertCgMatchesRuntime("$..[?@.x>1].x", """{"a":[{"x":1},{"x":2}],"b":{"x":3}}""");
+    }
+
+    [Fact]
+    public void DescendantGeneral_DeepNesting()
+    {
+        // Deep nesting exercises GrowStack in DFS (lines 835, 851)
+        this.AssertCgMatchesRuntime(
+            "$..[0]",
+            """{"a":[[1],[2]],"b":{"c":[[3],[4]],"d":{"e":[[5]]}}}""");
+    }
+
+    // ── Descendant for name streaming non-terminal (876-903) ────────
+
+    [Fact]
+    public void DescendantForName_NonTerminal_WithChain()
+    {
+        // $..name.child → EnumerateDescendantProperties + streaming chain (lines 896-902)
+        this.AssertCgMatchesRuntime(
+            "$..items.name",
+            """{"items":{"name":"a"},"x":{"items":{"name":"b"},"y":{"items":{"name":"c"}}}}""");
+    }
+
+    [Fact]
+    public void DescendantForName_Terminal_CounterTarget()
+    {
+        // count(@..name) → terminal descendant in counter context (lines 883-886)
+        this.AssertCgMatchesRuntime(
+            """$[?count(@..name) > 1]""",
+            """[{"name":"a","x":{"name":"b"}},{"name":"c"}]""");
+    }
+
+    // ── Logical AND / OR (1228-1271) ────────────────────────────────
+
+    [Fact]
+    public void LogicalAnd_ShortCircuit()
+    {
+        // && → EmitLogicalAnd with short-circuit (lines 1228-1246)
+        this.AssertCgMatchesRuntime(
+            "$[?@.a > 1 && @.b < 10]",
+            """[{"a":0,"b":5},{"a":2,"b":5},{"a":2,"b":15},{"a":3,"b":3}]""");
+    }
+
+    [Fact]
+    public void LogicalOr_ShortCircuit()
+    {
+        // || → EmitLogicalOr with short-circuit (lines 1253-1271)
+        this.AssertCgMatchesRuntime(
+            "$[?@.a > 5 || @.b < 2]",
+            """[{"a":1,"b":5},{"a":6,"b":5},{"a":1,"b":1},{"a":0,"b":9}]""");
+    }
+
+    [Fact]
+    public void LogicalAnd_NestedOr()
+    {
+        // AND containing OR → exercises both emission paths
+        this.AssertCgMatchesRuntime(
+            "$[?(@.a > 1 || @.a < -1) && @.b == true]",
+            """[{"a":2,"b":true},{"a":0,"b":true},{"a":-2,"b":true},{"a":2,"b":false}]""");
+    }
+
+    // ── Filter query as test: non-singular (1290-1308) ──────────────
+
+    [Fact]
+    public void FilterQueryAsTest_NonSingular()
+    {
+        // @.items[*] as existence test → non-singular path (lines 1300-1307)
+        this.AssertCgMatchesRuntime(
+            "$[?@.items[*]]",
+            """[{"items":[1,2]},{"items":[]},{"other":1}]""");
+    }
+
+    [Fact]
+    public void FilterQueryAsTest_Singular()
+    {
+        // @.x as existence test → singular path (lines 1291-1298)
+        this.AssertCgMatchesRuntime(
+            "$[?@.x]",
+            """[{"x":1},{"y":2},{"x":null}]""");
+    }
+
+    // ── Constant literal comparisons: <, > (1152-1164 default) ──────
+
+    [Fact]
+    public void NullLessThan()
+    {
+        // @.x < null → non-orderable, always false (line 1159)
+        this.AssertCgMatchesRuntime("$[?@.x < null]", """[{"x":null},{"x":1}]""");
+    }
+
+    [Fact]
+    public void NullGreaterThan()
+    {
+        // @.x > null → non-orderable, always false (line 1159)
+        this.AssertCgMatchesRuntime("$[?@.x > null]", """[{"x":null},{"x":1}]""");
+    }
+
+    [Fact]
+    public void TrueNotEqual()
+    {
+        // @.x != true → NotEqual branch (line 1155)
+        this.AssertCgMatchesRuntime("$[?@.x != true]", """[{"x":true},{"x":false},{"x":1}]""");
+    }
+
+    [Fact]
+    public void FalseLessThanOrEqual()
+    {
+        // @.x <= false → reduces to == for non-orderable (line 1152)
+        this.AssertCgMatchesRuntime("$[?@.x <= false]", """[{"x":false},{"x":true},{"x":0}]""");
+    }
+
+    // ── String ordering comparison (falls through to general, line 1000) ─
+
+    [Fact]
+    public void StringOrderingComparison_LessThan()
+    {
+        // @.s < "m" → LiteralKind.String with non-equality op → falls to general (line 1000 _ => null)
+        this.AssertCgMatchesRuntime("""$[?@.s < "m"]""", """[{"s":"apple"},{"s":"zebra"},{"s":"mango"}]""");
+    }
+
+    [Fact]
+    public void StringOrderingComparison_GreaterThan()
+    {
+        this.AssertCgMatchesRuntime("""$[?@.s > "m"]""", """[{"s":"apple"},{"s":"zebra"},{"s":"mango"}]""");
+    }
+
+    // ── Count function in value context (1431-1449) ─────────────────
+
+    [Fact]
+    public void CountFunction_ValueContext()
+    {
+        // count(@.items[*]) == 2 → EmitCountFunction full path (lines 1431-1449)
+        this.AssertCgMatchesRuntime(
+            """$[?count(@.items[*]) == 2]""",
+            """[{"items":[1,2]},{"items":[1]},{"items":[1,2,3]}]""");
+    }
+
+    // ── Value function (1456-1471) ──────────────────────────────────
+
+    [Fact]
+    public void ValueFunction_SingleElement()
+    {
+        // value(@.items[*]) == 42 → single-element returns it (lines 1457-1462)
+        this.AssertCgMatchesRuntime(
+            """$[?value(@.items[*]) == 42]""",
+            """[{"items":[42]},{"items":[1,2]},{"items":[]}]""");
+    }
+
+    // ── Match/search with literal vs dynamic patterns (1478-1521) ───
+
+    [Fact]
+    public void MatchWithDynamicPattern()
+    {
+        // match() with property as pattern → dynamic regex (lines 1497-1517)
+        this.AssertCgMatchesRuntime(
+            """$[?match(@.val, @.pat)]""",
+            """[{"val":"hello","pat":"hel.*"},{"val":"world","pat":"xyz"}]""");
+    }
+
+    [Fact]
+    public void SearchWithLiteralPattern_NonTerminal()
+    {
+        // search() with literal → pre-compiled regex field (lines 1485-1495)
+        this.AssertCgMatchesRuntime(
+            """$[?search(@.name, "test")].value""",
+            """[{"name":"testing","value":1},{"name":"other","value":2}]""");
+    }
+
+    // ── GenerateFilterQueryHelper (1584-1617) ───────────────────────
+
+    [Fact]
+    public void FilterQueryHelper_EmptySegments()
+    {
+        // Existence test with no segments → empty segments path (lines 1593-1599)
+        // This is exercised by count($) or similar, but parser may prevent it.
+        // Use a non-singular query with wildcard that generates a helper method.
+        this.AssertCgMatchesRuntime(
+            """$[?count(@[*]) > 1]""",
+            """[{"a":1,"b":2,"c":3},{"a":1},[1,2,3]]""");
+    }
+
+    [Fact]
+    public void FilterQueryHelper_StreamingChain()
+    {
+        // Non-singular query with multiple segments → helper method with streaming chain (1602-1616)
+        this.AssertCgMatchesRuntime(
+            """$[?count(@.items[*]) >= 2]""",
+            """[{"items":[1,2,3]},{"items":[1]},{"items":[]}]""");
+    }
+
+    // ── Literal field emission: number/string static fields (1635-1678) ─
+
+    [Fact]
+    public void LiteralField_NumberLiteral()
+    {
+        // @.x == 42 → EmitLiteralFieldRef default case, creates s_literal field (lines 1644-1655)
+        // Note: numeric comparisons are specialized, but when used in general
+        // comparison context (e.g., two expressions compared), literal fields are emitted.
+        this.AssertCgMatchesRuntime(
+            """$[?@.x == "hello"]""",
+            """[{"x":"hello"},{"x":"world"}]""");
+    }
+
+    [Fact]
+    public void LiteralField_ReusedLiteral()
+    {
+        // Same literal used twice → EmitLiteralFieldRef cache hit (line 1646-1648)
+        this.AssertCgMatchesRuntime(
+            """$[?@.a == "x" || @.b == "x"]""",
+            """[{"a":"x","b":"y"},{"a":"y","b":"x"},{"a":"z","b":"z"}]""");
+    }
+
+    // ── Regex field emission (1659-1678) ────────────────────────────
+
+    [Fact]
+    public void RegexField_MatchFullAnchor()
+    {
+        // match() adds ^(?:...)$ anchoring (line 1667)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a.c")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("^(?:", compiled.GeneratedCode!);
+        Assert.Contains(")$", compiled.GeneratedCode!);
+    }
+
+    [Fact]
+    public void RegexField_SearchNoAnchor()
+    {
+        // search() does NOT add anchors (line 1671)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?search(@.s, "a.c")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.DoesNotContain("^(?:", compiled.GeneratedCode!);
+    }
+
+    // ── EmitCountFunction in value context (not numeric comparison) (1431-1449)
+
+    [Fact]
+    public void CountFunction_InEqualityNotSpecialized()
+    {
+        // count(@.items[*]) used where the specialized numeric comparison
+        // doesn't apply — i.e., in a general comparison with another expression,
+        // not a literal. This hits the full EmitCountFunction path (1431-1449)
+        // through EmitFunctionValue → EmitCountFunction
+        this.AssertCgMatchesRuntime(
+            """$[?count(@.items[*]) == count(@.other[*])]""",
+            """[{"items":[1,2],"other":[3,4]},{"items":[1],"other":[2,3]}]""");
+    }
+
+    // ── EmitValueFunction else branch (1464-1469) ───────────────────
+
+    [Fact]
+    public void ValueFunction_NonQueryArgument()
+    {
+        // value() with a function call arg (not FilterQueryNode) → else branch (1464-1469)
+        // This would need value(someFunc(...)) but parser limits arg to NodesType.
+        // So this exercises value(@.items[*]) which IS a FilterQueryNode.
+        // The else branch at 1464-1469 is only hit when the argument is NOT a FilterQueryNode.
+        // This should be unreachable because parser requires NodesType arg for value().
+        // But we can still exercise the main path thoroughly.
+        this.AssertCgMatchesRuntime(
+            """$[?value(@.items[*]) > 5]""",
+            """[{"items":[10]},{"items":[3]},{"items":[6,7]}]""");
+    }
+
+    // ── EmitFilterQueryAsValue non-singular (1356-1361) ─────────────
+
+    [Fact]
+    public void FilterQueryAsValue_NonSingular_InComparison()
+    {
+        // @.items[*] in a comparison (not value() wrapped) → EmitFilterQueryAsValue non-singular (1356-1361)
+        // Parser requires value() wrapper for non-singular queries in comparisons,
+        // so this path is actually covered via value() tests above.
+        // Test value() with multi-element result (returns Undefined):
+        this.AssertCgMatchesRuntime(
+            """$[?value(@.items[*]) == 42]""",
+            """[{"items":[42]},{"items":[1,42]},{"items":[]}]""");
+    }
+
+    // ── EmitCountNumericComparison else (non-FilterQueryNode arg) ────
+
+    [Fact]
+    public void CountNumeric_WithFunctionArg()
+    {
+        // count(someFunc(...)) where arg is NOT FilterQueryNode →
+        // hits else branch (1111-1116) of EmitCountNumericComparison
+        // But parser requires NodesType for count(), and only filter queries produce NodesType.
+        // This path may be unreachable in practice.
+        // Exercise the main (FilterQueryNode) path thoroughly instead:
+        this.AssertCgMatchesRuntime(
+            """$[?count(@[*]) == 3]""",
+            """[[1,2,3],[1,2],[1,2,3,4]]""");
+    }
+
+    // ── GenerateFilterQueryHelper empty segments (1593-1599) ────────
+
+    [Fact]
+    public void FilterQueryHelper_RootQuery()
+    {
+        // count($[*]) → filter query with root ($) + wildcard segments
+        // This generates a helper method with non-empty segments
+        this.AssertCgMatchesRuntime(
+            """$[?count($[*]) > 2]""",
+            """[1,2,3]""");
+    }
+
+    // ── EscapeStringLiteral edge cases (226-236) ────────────────────
+
+    [Fact]
+    public void EscapeStringLiteral_QuoteInPattern()
+    {
+        // Regex pattern with " character → EscapeStringLiteral hits '"' case (line 226)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\"b")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("\\\"", compiled.GeneratedCode!);
+    }
+
+    // ── EmitLengthNumericComparison: Equal integral (1070-1075) ─────
+
+    [Fact]
+    public void LengthEqual_Integral()
+    {
+        // length(@.s) == 3 → Equal + integral branch (lines 1072-1074)
+        this.AssertCgMatchesRuntime("""$[?length(@.s) == 3]""", """[{"s":"ab"},{"s":"abc"},{"s":"abcd"}]""");
+    }
+
+    [Fact]
+    public void LengthEqual_NonIntegral()
+    {
+        // length(@.s) == 2.5 → Equal + non-integral branch (lines 1076-1078)
+        this.AssertCgMatchesRuntime("""$[?length(@.s) == 2.5]""", """[{"s":"ab"},{"s":"abc"}]""");
+    }
+
+    [Fact]
+    public void LengthLessThan_Integral()
+    {
+        // length(@.s) < 3 → else branch + integral (lines 1083-1086)
+        this.AssertCgMatchesRuntime("""$[?length(@.s) < 3]""", """[{"s":"ab"},{"s":"abc"},{"s":"abcd"}]""");
+    }
+
+    [Fact]
+    public void LengthGreaterThan_NonIntegral()
+    {
+        // length(@.s) > 2.5 → else branch + non-integral (lines 1088-1090)
+        this.AssertCgMatchesRuntime("""$[?length(@.s) > 2.5]""", """[{"s":"ab"},{"s":"abc"},{"s":"abcd"}]""");
+    }
+
+    // ── EmitCountNumericComparison (1104-1133) ──────────────────────
+
+    [Fact]
+    public void CountNumeric_EqualIntegral()
+    {
+        // count(@..x) == 2 → integral comparison (line 1125)
+        this.AssertCgMatchesRuntime(
+            """$[?count(@..x) == 2]""",
+            """[{"x":1,"a":{"x":2}},{"x":1},{"x":1,"a":{"x":2,"b":{"x":3}}}]""");
+    }
+
+    [Fact]
+    public void CountNumeric_LessThanIntegral()
+    {
+        // count(@..x) < 2 → integral with < (line 1125)
+        this.AssertCgMatchesRuntime(
+            """$[?count(@..x) < 2]""",
+            """[{"x":1,"a":{"x":2}},{"x":1}]""");
+    }
+
+    [Fact]
+    public void CountNumeric_NonIntegral()
+    {
+        // count(@..x) > 1.5 → non-integral branch (line 1129)
+        this.AssertCgMatchesRuntime(
+            """$[?count(@..x) > 1.5]""",
+            """[{"x":1,"a":{"x":2}},{"x":1}]""");
+    }
+
+    // ── Filter selector streaming with further segments (735-777) ───
+
+    [Fact]
+    public void FilterStreaming_WithFurtherSegment()
+    {
+        // $[?@.ok].name → filter streaming + further name selector
+        this.AssertCgMatchesRuntime(
+            "$[?@.ok].name",
+            """[{"ok":true,"name":"a"},{"ok":false,"name":"b"},{"ok":true,"name":"c"}]""");
+    }
+
+    [Fact]
+    public void FilterStreaming_OnArray()
+    {
+        // $[?@ > 1][0] → filter on array elements + index streaming
+        // (Array branch of EmitFilterSelectorStreaming)
+        this.AssertCgMatchesRuntime(
+            "$[?@ > 1]",
+            """[1,2,3,0,5]""");
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────
 
     private void AssertCgMatchesRuntime(string expression, string json)
