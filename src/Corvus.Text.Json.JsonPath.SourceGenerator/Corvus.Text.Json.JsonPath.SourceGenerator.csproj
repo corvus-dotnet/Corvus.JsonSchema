@@ -9,6 +9,7 @@
     <RootNamespace>Corvus.Text.Json.JsonPath.SourceGenerator</RootNamespace>
     <CorvusTextJsonJsonPathPath>..\Corvus.Text.Json.JsonPath\</CorvusTextJsonJsonPathPath>
     <CorvusTextJsonJsonPathCodeGenPath>..\Corvus.Text.Json.JsonPath.CodeGeneration\</CorvusTextJsonJsonPathCodeGenPath>
+    <CommonPath>..\..\Common\src\</CommonPath>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -59,6 +60,7 @@
   </ItemGroup>
   <!-- Link the JsonPath code generation engine -->
   <ItemGroup>
+    <Compile Include="$(CommonPath)Corvus\Text\Json\CodeGeneration\CodeGenStringHelpers.cs" LinkBase="Common" />
     <Compile Include="$(CorvusTextJsonJsonPathCodeGenPath)JsonPathCodeGenerator.cs" LinkBase="CodeGeneration" />
     <Compile Include="$(CorvusTextJsonJsonPathCodeGenPath)CustomFunction.cs" LinkBase="CodeGeneration" />
     <Compile Include="$(CorvusTextJsonJsonPathCodeGenPath)JpfnParser.cs" LinkBase="CodeGeneration" />

@@ -5,6 +5,7 @@
 using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
+using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.Jsonata.Ast;
 
 namespace Corvus.Text.Json.Jsonata.CodeGeneration;
@@ -344,12 +345,7 @@ public static class JsonataCodeGenerator
 
     private static string EscapeStringLiteral(string s)
     {
-        return s
-            .Replace("\\", "\\\\")
-            .Replace("\"", "\\\"")
-            .Replace("\r", "\\r")
-            .Replace("\n", "\\n")
-            .Replace("\t", "\\t");
+        return CodeGenStringHelpers.EscapeCSharpStringLiteral(s);
     }
 
     private static string EscapeXmlContent(string s)
@@ -3270,33 +3266,7 @@ public static class JsonataCodeGenerator
         /// </summary>
         private static string EscapeJsonStringContent(string s)
         {
-            var sb = new StringBuilder(s.Length);
-            foreach (char c in s)
-            {
-                switch (c)
-                {
-                    case '\\': sb.Append("\\\\"); break;
-                    case '"': sb.Append("\\\""); break;
-                    case '\n': sb.Append("\\n"); break;
-                    case '\r': sb.Append("\\r"); break;
-                    case '\t': sb.Append("\\t"); break;
-                    case '\b': sb.Append("\\b"); break;
-                    case '\f': sb.Append("\\f"); break;
-                    default:
-                        if (c < ' ')
-                        {
-                            sb.AppendFormat("\\u{0:X4}", (int)c);
-                        }
-                        else
-                        {
-                            sb.Append(c);
-                        }
-
-                        break;
-                }
-            }
-
-            return sb.ToString();
+            return CodeGenStringHelpers.EscapeJsonStringContent(s);
         }
 
         private string EmitEqualityComparison(

@@ -68,6 +68,7 @@
   </ItemGroup>
   <!-- Link the JsonLogic code generation engine -->
   <ItemGroup>
+    <Compile Include="$(CommonPath)Corvus\Text\Json\CodeGeneration\CodeGenStringHelpers.cs" LinkBase="Common" />
     <Compile Include="$(CorvusTextJsonJsonLogicCodeGenPath)JsonLogicCodeGenerator.cs" LinkBase="CodeGeneration" />
     <Compile Include="$(CorvusTextJsonJsonLogicCodeGenPath)CustomOperator.cs" LinkBase="CodeGeneration" />
     <Compile Include="$(CorvusTextJsonJsonLogicCodeGenPath)JlopsParser.cs" LinkBase="CodeGeneration" />

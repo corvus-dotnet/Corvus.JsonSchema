@@ -9,6 +9,7 @@
     <RootNamespace>Corvus.Text.Json.JMESPath.SourceGenerator</RootNamespace>
     <CorvusTextJsonJMESPathPath>..\Corvus.Text.Json.JMESPath\</CorvusTextJsonJMESPathPath>
     <CorvusTextJsonJMESPathCodeGenPath>..\Corvus.Text.Json.JMESPath.CodeGeneration\</CorvusTextJsonJMESPathCodeGenPath>
+    <CommonPath>..\..\Common\src\</CommonPath>
     <ManagePackageVersionsCentrally>false</ManagePackageVersionsCentrally>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -59,6 +60,7 @@
   </ItemGroup>
   <!-- Link the JMESPath code generation engine -->
   <ItemGroup>
+    <Compile Include="$(CommonPath)Corvus\Text\Json\CodeGeneration\CodeGenStringHelpers.cs" LinkBase="Common" />
     <Compile Include="$(CorvusTextJsonJMESPathCodeGenPath)JMESPathCodeGenerator.cs" LinkBase="CodeGeneration" />
   </ItemGroup>
   <!-- Link the JMESPath parser, lexer, and AST (no external dependencies) -->

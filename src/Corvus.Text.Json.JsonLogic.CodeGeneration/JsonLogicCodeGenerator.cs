@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Corvus.Numerics;
+using Corvus.Text.Json.CodeGeneration;
 using STJ = System.Text.Json;
 
 namespace Corvus.Text.Json.JsonLogic.CodeGeneration;
@@ -144,31 +145,12 @@ public static class JsonLogicCodeGenerator
 
     private static string Utf8Literal(string content)
     {
-        StringBuilder sb = new(content.Length + 4);
-        sb.Append('"');
-        foreach (char c in content)
-        {
-            if (c == '"')
-            {
-                sb.Append("\\\"");
-            }
-            else if (c == '\\')
-            {
-                sb.Append("\\\\");
-            }
-            else
-            {
-                sb.Append(c);
-            }
-        }
-
-        sb.Append("\"u8");
-        return sb.ToString();
+        return CodeGenStringHelpers.FormatUtf8StringLiteral(content);
     }
 
     private static string EscapeCSharpString(string s)
     {
-        return s.Replace("\\", "\\\\").Replace("\"", "\\\"");
+        return CodeGenStringHelpers.EscapeCSharpStringLiteral(s);
     }
 
     private static bool TryParseNonNegativeInt(string s, out int value)

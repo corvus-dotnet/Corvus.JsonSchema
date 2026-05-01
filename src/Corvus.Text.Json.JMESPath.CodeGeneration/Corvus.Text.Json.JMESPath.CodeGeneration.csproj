@@ -16,7 +16,11 @@
     <RootNamespace>Corvus.Text.Json.JMESPath.CodeGeneration</RootNamespace>
     <Description>Code generation engine for Corvus.Text.Json.JMESPath — parses JMESPath expressions and emits optimized C# evaluation code.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
+    <CommonPath>..\..\Common\src\</CommonPath>
   </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="$(CommonPath)Corvus\Text\Json\CodeGeneration\CodeGenStringHelpers.cs" Link="Common\CodeGenStringHelpers.cs" />
+  </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\Corvus.Text.Json.JMESPath\Corvus.Text.Json.JMESPath.csproj" />
   </ItemGroup>

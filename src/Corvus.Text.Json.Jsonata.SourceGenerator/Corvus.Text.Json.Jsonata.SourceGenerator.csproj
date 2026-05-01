@@ -63,6 +63,7 @@
   </ItemGroup>
   <!-- Link the JSONata code generation engine -->
   <ItemGroup>
+    <Compile Include="$(CommonPath)Corvus\Text\Json\CodeGeneration\CodeGenStringHelpers.cs" LinkBase="Common" />
     <Compile Include="$(CorvusTextJsonJsonataCodeGenPath)JsonataCodeGenerator.cs" LinkBase="CodeGeneration" />
     <Compile Include="$(CorvusTextJsonJsonataCodeGenPath)CustomFunction.cs" LinkBase="CodeGeneration" />
     <Compile Include="$(CorvusTextJsonJsonataCodeGenPath)JfnParser.cs" LinkBase="CodeGeneration" />

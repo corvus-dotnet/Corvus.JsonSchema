@@ -7,6 +7,7 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
+using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.JsonPath;
 
 namespace Corvus.Text.Json.JsonPath.CodeGeneration;
@@ -199,51 +200,12 @@ public static class JsonPathCodeGenerator
 
     private static string Utf8Literal(byte[] bytes)
     {
-        StringBuilder sb = new(bytes.Length * 4 + 4);
-        sb.Append("new byte[] { ");
-        for (int i = 0; i < bytes.Length; i++)
-        {
-            if (i > 0)
-            {
-                sb.Append(", ");
-            }
-
-            sb.Append("0x");
-            sb.Append(bytes[i].ToString("X2"));
-        }
-
-        sb.Append(" }");
-        return sb.ToString();
+        return CodeGenStringHelpers.FormatUtf8ByteArrayLiteral(bytes);
     }
 
     private static string EscapeStringLiteral(string value)
     {
-        StringBuilder sb = new(value.Length + 4);
-        foreach (char ch in value)
-        {
-            switch (ch)
-            {
-                case '"': sb.Append("\\\""); break;
-                case '\\': sb.Append("\\\\"); break;
-                case '\n': sb.Append("\\n"); break;
-                case '\r': sb.Append("\\r"); break;
-                case '\t': sb.Append("\\t"); break;
-                case '\0': sb.Append("\\0"); break;
-                default:
-                    if (ch < 0x20)
-                    {
-                        sb.Append($"\\u{(int)ch:X4}");
-                    }
-                    else
-                    {
-                        sb.Append(ch);
-                    }
-
-                    break;
-            }
-        }
-
-        return sb.ToString();
+        return CodeGenStringHelpers.EscapeCSharpStringLiteral(value);
     }
 
     private static byte[] LiteralToUtf8(string rawJson)
@@ -251,75 +213,9 @@ public static class JsonPathCodeGenerator
         return Encoding.UTF8.GetBytes(rawJson);
     }
 
-    /// <summary>
-    /// Unescapes a JSON string literal (including surrounding double quotes)
-    /// to produce the actual string value. Handles standard JSON escape sequences:
-    /// <c>\\</c>, <c>\"</c>, <c>\/</c>, <c>\b</c>, <c>\f</c>, <c>\n</c>,
-    /// <c>\r</c>, <c>\t</c>, and <c>\uXXXX</c>.
-    /// </summary>
     private static string UnescapeJsonString(string rawJson)
     {
-        // Strip surrounding double quotes
-        string content = rawJson.Substring(1, rawJson.Length - 2);
-
-        if (content.IndexOf('\\') < 0)
-        {
-            return content;
-        }
-
-        StringBuilder sb = new(content.Length);
-        for (int i = 0; i < content.Length; i++)
-        {
-            if (content[i] == '\\' && i + 1 < content.Length)
-            {
-                char next = content[i + 1];
-                switch (next)
-                {
-                    case '"': sb.Append('"'); i++; break;
-                    case '\\': sb.Append('\\'); i++; break;
-                    case '/': sb.Append('/'); i++; break;
-                    case 'b': sb.Append('\b'); i++; break;
-                    case 'f': sb.Append('\f'); i++; break;
-                    case 'n': sb.Append('\n'); i++; break;
-                    case 'r': sb.Append('\r'); i++; break;
-                    case 't': sb.Append('\t'); i++; break;
-                    case 'u':
-                        if (i + 5 <= content.Length)
-                        {
-#if NETSTANDARD2_0
-                            string hex = content.Substring(i + 2, 4);
-#else
-                            ReadOnlySpan<char> hex = content.AsSpan(i + 2, 4);
-#endif
-                            if (int.TryParse(hex, System.Globalization.NumberStyles.HexNumber, null, out int codePoint))
-                            {
-                                sb.Append((char)codePoint);
-                                i += 5;
-                            }
-                            else
-                            {
-                                sb.Append(content[i]);
-                            }
-                        }
-                        else
-                        {
-                            sb.Append(content[i]);
-                        }
-
-                        break;
-
-                    default:
-                        sb.Append(content[i]);
-                        break;
-                }
-            }
-            else
-            {
-                sb.Append(content[i]);
-            }
-        }
-
-        return sb.ToString();
+        return CodeGenStringHelpers.UnescapeJsonString(rawJson);
     }
 
     private static string TranslateIRegexpForCodeGen(string pattern)

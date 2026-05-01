@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Text;
+using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.JMESPath;
 
 namespace Corvus.Text.Json.JMESPath.CodeGeneration;
@@ -121,51 +122,12 @@ public static class JMESPathCodeGenerator
 
     private static string Utf8Literal(byte[] bytes)
     {
-        StringBuilder sb = new(bytes.Length * 4 + 4);
-        sb.Append("new byte[] { ");
-        for (int i = 0; i < bytes.Length; i++)
-        {
-            if (i > 0)
-            {
-                sb.Append(", ");
-            }
-
-            sb.Append("0x");
-            sb.Append(bytes[i].ToString("X2"));
-        }
-
-        sb.Append(" }");
-        return sb.ToString();
+        return CodeGenStringHelpers.FormatUtf8ByteArrayLiteral(bytes);
     }
 
     private static string EscapeStringLiteral(string value)
     {
-        StringBuilder sb = new(value.Length + 4);
-        foreach (char ch in value)
-        {
-            switch (ch)
-            {
-                case '"': sb.Append("\\\""); break;
-                case '\\': sb.Append("\\\\"); break;
-                case '\n': sb.Append("\\n"); break;
-                case '\r': sb.Append("\\r"); break;
-                case '\t': sb.Append("\\t"); break;
-                case '\0': sb.Append("\\0"); break;
-                default:
-                    if (ch < 0x20)
-                    {
-                        sb.Append($"\\u{(int)ch:X4}");
-                    }
-                    else
-                    {
-                        sb.Append(ch);
-                    }
-
-                    break;
-            }
-        }
-
-        return sb.ToString();
+        return CodeGenStringHelpers.EscapeCSharpStringLiteral(value);
     }
 
     /// <summary>
