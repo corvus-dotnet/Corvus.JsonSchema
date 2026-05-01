@@ -2726,6 +2726,35 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         Assert.Equal(expected.GetRawText(), actual.GetRawText());
     }
 
+    private void AssertCgAndRtThrow(string expression, string data, string expectedCode)
+    {
+        // CG path
+        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+
+        this.output.WriteLine($"Expression: {expression}");
+        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+
+        if (compiled.Error is not null)
+        {
+            Assert.Fail($"CG compilation failed: {compiled.Error}");
+        }
+
+        Assert.NotNull(compiled.Method);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+
+        var cgEx = Assert.Throws<TargetInvocationException>(() => InvokeCg(compiled.Method, inputDoc.RootElement, workspace));
+        var cgJsonataEx = Assert.IsType<JsonataException>(cgEx.InnerException);
+        Assert.Equal(expectedCode, cgJsonataEx.Code);
+
+        // RT path
+        var rtEx = Assert.Throws<JsonataException>(() => JsonataEvaluator.Default.EvaluateToString(expression, data));
+        Assert.Equal(expectedCode, rtEx.Code);
+
+        this.output.WriteLine($"Both CG and RT threw {expectedCode}");
+    }
+
     // ═══════════════════════════════════════════════════════════════════
     // $zip — multiple overloads (JsonataCodeGenHelpers lines 6528-6888)
     // ═══════════════════════════════════════════════════════════════════
@@ -4936,5 +4965,243 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     public void DeepNestedArrayPath(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ──────── Round 11: StringConcat3/4/5 (lines 1596-1654) ────────
+
+    [Theory]
+    [InlineData("\"a\" & \"b\" & \"c\"", "0", "\"abc\"")]
+    [InlineData("\"x\" & 1 & \"y\"", "0", "\"x1y\"")]
+    [InlineData("\"\" & \"\" & \"\"", "0", "\"\"")]
+    public void StringConcat3(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    [Theory]
+    [InlineData("\"a\" & \"b\" & \"c\" & \"d\"", "0", "\"abcd\"")]
+    [InlineData("\"x\" & 1 & true & \"z\"", "0", "\"x1truez\"")]
+    public void StringConcat4(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    [Theory]
+    [InlineData("\"a\" & \"b\" & \"c\" & \"d\" & \"e\"", "0", "\"abcde\"")]
+    [InlineData("1 & 2 & 3 & 4 & 5", "0", "\"12345\"")]
+    public void StringConcat5(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ──────── Round 11: CoerceToStringElement (lines 2087-2108) ────────
+
+    [Theory]
+    [InlineData("$string(42)", "0", "\"42\"")]
+    [InlineData("$string(true)", "0", "\"true\"")]
+    [InlineData("$string(false)", "0", "\"false\"")]
+    [InlineData("$string(null)", "0", "\"null\"")]
+    [InlineData("$string({\"x\":1})", "0", "\"{\\\"x\\\":1}\"")]
+    [InlineData("$string([1,2,3])", "0", "\"[1,2,3]\"")]
+    public void CoerceToStringElement(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ──────── Round 11: EnumerateWildcard (lines 1017-1037) ────────
+
+    [Theory]
+    [InlineData("$.*", "{\"a\":1,\"b\":2,\"c\":3}", "[1,2,3]")]
+    [InlineData("data.*", "{\"data\":{\"x\":10,\"y\":20}}", "[10,20]")]
+    [InlineData("$.*", "{\"only\":42}", "42")]
+    [InlineData("$.*", "{}", "undefined")]
+    [InlineData("$.*", "0", "undefined")]
+    public void EnumerateWildcard(string expression, string data, string expected)
+    {
+        if (expected == "undefined")
+        {
+            this.AssertCgAndRtBothUndefined(expression, data);
+        }
+        else
+        {
+            this.AssertCgAndRtMatch(expression, data, expected);
+        }
+    }
+
+    // ──────── Round 11: NumericBinaryOp (lines 8799-8822) ────────
+
+    [Theory]
+    [InlineData("a + b", "{\"a\":10,\"b\":20}", "30")]
+    [InlineData("a - b", "{\"a\":100,\"b\":42}", "58")]
+    [InlineData("a * b", "{\"a\":3,\"b\":7}", "21")]
+    [InlineData("a % b", "{\"a\":17,\"b\":5}", "2")]
+    [InlineData("a + b", "{\"a\":10}", "undefined")]
+    [InlineData("a + b", "{\"b\":20}", "undefined")]
+    public void NumericBinaryOp(string expression, string data, string expected)
+    {
+        if (expected == "undefined")
+        {
+            this.AssertCgAndRtBothUndefined(expression, data);
+        }
+        else
+        {
+            this.AssertCgAndRtMatch(expression, data, expected);
+        }
+    }
+
+    // ──────── Round 11: NavigatePropertyChainTransform (lines 2674-2716) ────────
+
+    [Theory]
+    [InlineData("Account.Order.Product.Price.$string()",
+        "{\"Account\":{\"Order\":[{\"Product\":{\"Price\":9.99}},{\"Product\":{\"Price\":21.99}}]}}",
+        "[\"9.99\",\"21.99\"]")]
+    [InlineData("items.name.$uppercase()",
+        "{\"items\":[{\"name\":\"hello\"},{\"name\":\"world\"}]}",
+        "[\"HELLO\",\"WORLD\"]")]
+    [InlineData("items.name.$length()",
+        "{\"items\":[{\"name\":\"ab\"},{\"name\":\"cdef\"}]}",
+        "[2,4]")]
+    public void NavigatePropertyChainTransform(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ──────── Round 11: ContinueChainFlatInto (lines 598-622) ────────
+
+    [Theory]
+    [InlineData("a.b.c",
+        "{\"a\":{\"b\":[{\"c\":1},{\"c\":2}]}}",
+        "[1,2]")]
+    [InlineData("a.b.c.d",
+        "{\"a\":[{\"b\":{\"c\":{\"d\":1}}},{\"b\":{\"c\":{\"d\":2}}}]}",
+        "[1,2]")]
+    [InlineData("a.b.c",
+        "{\"a\":{\"b\":{\"c\":\"leaf\"}}}",
+        "\"leaf\"")]
+    [InlineData("a.b.c",
+        "{\"a\":{\"b\":{\"c\":[10,20]}}}",
+        "[10,20]")]
+    public void ContinueChainFlatInto(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ──────── Round 11: Aggregate min/max via path (lines 3422-3440) ────────
+
+    [Theory]
+    [InlineData("$max(items.price)",
+        "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
+        "30")]
+    [InlineData("$min(items.price)",
+        "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
+        "10")]
+    [InlineData("$sum(items.price)",
+        "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
+        "60")]
+    [InlineData("$average(items.price)",
+        "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
+        "20")]
+    [InlineData("$count(items.price)",
+        "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
+        "3")]
+    public void AggregateViaPath(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ──────── Round 11: ArrayFromBuffer (lines 4699-4721) ────────
+
+    [Theory]
+    [InlineData("items[price > 15]",
+        "{\"items\":[{\"price\":10,\"name\":\"a\"},{\"price\":30,\"name\":\"b\"},{\"price\":20,\"name\":\"c\"}]}",
+        "[{\"price\":30,\"name\":\"b\"},{\"price\":20,\"name\":\"c\"}]")]
+    [InlineData("items[price > 100]",
+        "{\"items\":[{\"price\":10},{\"price\":20}]}",
+        "undefined")]
+    [InlineData("items[price > 15].name",
+        "{\"items\":[{\"price\":10,\"name\":\"a\"},{\"price\":30,\"name\":\"b\"},{\"price\":20,\"name\":\"c\"}]}",
+        "[\"b\",\"c\"]")]
+    public void ArrayFromBuffer(string expression, string data, string expected)
+    {
+        if (expected == "undefined")
+        {
+            this.AssertCgAndRtBothUndefined(expression, data);
+        }
+        else
+        {
+            this.AssertCgAndRtMatch(expression, data, expected);
+        }
+    }
+
+    // ──────── Round 11: StringifyElement (lines 8990-9005) ────────
+
+    [Theory]
+    [InlineData("$string({\"x\":1})", "0", "\"{\\\"x\\\":1}\"")]
+    [InlineData("$string([1,2,3])", "0", "\"[1,2,3]\"")]
+    [InlineData("$string({\"a\":{\"b\":2}})", "0", "\"{\\\"a\\\":{\\\"b\\\":2}}\"")]
+    public void StringifyElement(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ──────── Round 11: BuildSingleEntryObject (lines 8357-8387) ────────
+
+    [Theory]
+    [InlineData("Account.Order.Product{`Product Name`:Price}",
+        "{\"Account\":{\"Order\":[{\"Product\":{\"Product Name\":\"Hat\",\"Price\":9.99}},{\"Product\":{\"Product Name\":\"Shoes\",\"Price\":21.99}}]}}",
+        "{\"Hat\":9.99,\"Shoes\":21.99}")]
+    [InlineData("items{name:value}",
+        "{\"items\":[{\"name\":\"x\",\"value\":1},{\"name\":\"y\",\"value\":2}]}",
+        "{\"x\":1,\"y\":2}")]
+    public void BuildSingleEntryObject(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ──────── Round 11: Fused predicate on singleton object (lines 700-712) ────────
+
+    [Theory]
+    [InlineData("items[type=\"book\"].name",
+        "{\"items\":{\"type\":\"book\",\"name\":\"Title\"}}",
+        "\"Title\"")]
+    [InlineData("items[type=\"dvd\"].name",
+        "{\"items\":{\"type\":\"book\",\"name\":\"Title\"}}",
+        "undefined")]
+    [InlineData("data[active=true].id",
+        "{\"data\":{\"active\":true,\"id\":42}}",
+        "42")]
+    public void FusedPredicateSingletonObject(string expression, string data, string expected)
+    {
+        if (expected == "undefined")
+        {
+            this.AssertCgAndRtBothUndefined(expression, data);
+        }
+        else
+        {
+            this.AssertCgAndRtMatch(expression, data, expected);
+        }
+    }
+
+    // ──────── Round 11: Zip multi-arg overload (lines 6654-6705) ────────
+
+    [Theory]
+    [InlineData("$zip([1,2],[3,4],[5,6],[7,8])", "0", "[[1,3,5,7],[2,4,6,8]]")]
+    [InlineData("$zip([1],[2],[3],[4],[5])", "0", "[[1,2,3,4,5]]")]
+    [InlineData("$zip([1,2,3])", "0", "[[1],[2],[3]]")]
+    public void ZipMultiArg(string expression, string data, string expected)
+    {
+        this.AssertCgAndRtMatch(expression, data, expected);
+    }
+
+    // ──────── Round 11: Numeric error paths (T2001/T2002) ────────
+
+    [Theory]
+    [InlineData("\"hello\" + 1", "0", "T2001")]
+    [InlineData("1 + \"hello\"", "0", "T2002")]
+    [InlineData("true + 1", "0", "T2001")]
+    [InlineData("1 + true", "0", "T2002")]
+    public void NumericBinaryOpTypeErrors(string expression, string data, string expectedCode)
+    {
+        this.AssertCgAndRtThrow(expression, data, expectedCode);
     }
 }

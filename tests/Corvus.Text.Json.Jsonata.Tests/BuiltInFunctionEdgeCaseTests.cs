@@ -4201,4 +4201,140 @@ public class BuiltInFunctionEdgeCaseTests
             Eval("Account.Order.Product[Price>15].Price",
                 """{"Account":{"Order":[{"Product":[{"Price":10},{"Price":20}]},{"Product":[{"Price":30}]}]}}"""));
     }
+
+    // ──────── Round 11: BF wildcard on object (target: EnumeratePropertyValues path in BF) ────────
+
+    [Fact]
+    public void WildcardOnObject_MultipleValues()
+    {
+        Assert.Equal("[1,2,3]",
+            Eval("$.*", """{"a":1,"b":2,"c":3}"""));
+    }
+
+    [Fact]
+    public void WildcardOnObject_SingleValue()
+    {
+        Assert.Equal("42",
+            Eval("$.*", """{"only":42}"""));
+    }
+
+    [Fact]
+    public void WildcardOnObject_Empty()
+    {
+        Assert.Equal("undefined",
+            Eval("$.*", """{}"""));
+    }
+
+    // ──────── Round 11: BF aggregate on path results ────────
+
+    [Fact]
+    public void MaxViaPropertyPath()
+    {
+        Assert.Equal("30",
+            Eval("$max(items.price)",
+                """{"items":[{"price":10},{"price":30},{"price":20}]}"""));
+    }
+
+    [Fact]
+    public void MinViaPropertyPath()
+    {
+        Assert.Equal("10",
+            Eval("$min(items.price)",
+                """{"items":[{"price":10},{"price":30},{"price":20}]}"""));
+    }
+
+    [Fact]
+    public void SumViaPropertyPath()
+    {
+        Assert.Equal("60",
+            Eval("$sum(items.price)",
+                """{"items":[{"price":10},{"price":30},{"price":20}]}"""));
+    }
+
+    [Fact]
+    public void AverageViaPropertyPath()
+    {
+        Assert.Equal("20",
+            Eval("$average(items.price)",
+                """{"items":[{"price":10},{"price":30},{"price":20}]}"""));
+    }
+
+    // ──────── Round 11: BF string concat via & operator ────────
+
+    [Fact]
+    public void StringConcat3Operands()
+    {
+        Assert.Equal("\"abc\"",
+            Eval("\"a\" & \"b\" & \"c\""));
+    }
+
+    [Fact]
+    public void StringConcat4Operands()
+    {
+        Assert.Equal("\"abcd\"",
+            Eval("\"a\" & \"b\" & \"c\" & \"d\""));
+    }
+
+    [Fact]
+    public void StringConcat5Operands()
+    {
+        Assert.Equal("\"abcde\"",
+            Eval("\"a\" & \"b\" & \"c\" & \"d\" & \"e\""));
+    }
+
+    // ──────── Round 11: BF chain traversal into nested arrays ────────
+
+    [Fact]
+    public void ChainTraversalObjectThenArray()
+    {
+        Assert.Equal("[1,2]",
+            Eval("a.b.c", """{"a":{"b":[{"c":1},{"c":2}]}}"""));
+    }
+
+    [Fact]
+    public void ChainTraversalArrayThenObjectDeep()
+    {
+        Assert.Equal("[1,2]",
+            Eval("a.b.c.d", """{"a":[{"b":{"c":{"d":1}}},{"b":{"c":{"d":2}}}]}"""));
+    }
+
+    // ──────── Round 11: BF $string coercion ────────
+
+    [Fact]
+    public void StringCoerceObject()
+    {
+        Assert.Equal("\"{\\\"x\\\":1}\"",
+            Eval("""$string({"x":1})"""));
+    }
+
+    [Fact]
+    public void StringCoerceArray()
+    {
+        Assert.Equal("\"[1,2,3]\"",
+            Eval("$string([1,2,3])"));
+    }
+
+    // ──────── Round 11: BF numeric binary op error paths ────────
+
+    [Fact]
+    public void NumericAdd_LeftNonNumeric_ThrowsT2001()
+    {
+        EvalThrows("\"hello\" + 1", "0", "T2001");
+    }
+
+    [Fact]
+    public void NumericAdd_RightNonNumeric_ThrowsT2002()
+    {
+        EvalThrows("1 + \"hello\"", "0", "T2002");
+    }
+
+    // ──────── Round 11: BF object construction via {key:value} ────────
+
+    [Fact]
+    public void ObjectConstruction_FromArray()
+    {
+        Assert.Equal("{\"Hat\":9.99,\"Shoes\":21.99}",
+            Eval("Account.Order.Product{`Product Name`:Price}",
+                """{"Account":{"Order":[{"Product":{"Product Name":"Hat","Price":9.99}},{"Product":{"Product Name":"Shoes","Price":21.99}}]}}"""));
+    }
 }
