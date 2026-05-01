@@ -280,42 +280,42 @@
 <h2 id="basic-queries">Basic Queries</h2>
 <h3 id="property-access">Property access</h3>
 <p>Navigate to a specific property using dot notation:</p>
-<pre><code class="language-csharp">evaluator.Query(&quot;$.store.bicycle.color&quot;, data);
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.bicycle.color&quot;, data, workspace);
 // [&quot;red&quot;]
 </code></pre>
 <h3 id="wildcards">Wildcards</h3>
 <p>Select all elements of an array or object:</p>
-<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[*].author&quot;, data);
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[*].author&quot;, data, workspace);
 // [&quot;Sandi Toksvig&quot;,&quot;Evelyn Waugh&quot;,&quot;Jane Austen&quot;,&quot;J. R. R. Tolkien&quot;]
 </code></pre>
 <h3 id="recursive-descent">Recursive descent</h3>
 <p>Find matching keys at any depth in the document tree:</p>
-<pre><code class="language-csharp">evaluator.Query(&quot;$..author&quot;, data);
+<pre><code class="language-csharp">evaluator.Query(&quot;$..author&quot;, data, workspace);
 // [&quot;Sandi Toksvig&quot;,&quot;Evelyn Waugh&quot;,&quot;Jane Austen&quot;,&quot;J. R. R. Tolkien&quot;]
 </code></pre>
 <h3 id="index-access">Index access</h3>
 <p>Select array elements by position. Negative indices count from the end:</p>
-<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[0].title&quot;, data);   // [&quot;Between the Stops&quot;]
-evaluator.Query(&quot;$.store.book[-1].title&quot;, data);   // [&quot;The Lord of the Rings&quot;]
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[0].title&quot;, data, workspace);   // [&quot;Between the Stops&quot;]
+evaluator.Query(&quot;$.store.book[-1].title&quot;, data, workspace);   // [&quot;The Lord of the Rings&quot;]
 </code></pre>
 <h3 id="array-slicing">Array slicing</h3>
 <p>Select a contiguous range of elements (<code>start:end</code>):</p>
-<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[0:2].title&quot;, data);
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[0:2].title&quot;, data, workspace);
 // [&quot;Between the Stops&quot;,&quot;Sword of Honour&quot;]
 </code></pre>
 <h2 id="filter-expressions">Filter Expressions</h2>
 <h3 id="simple-comparison">Simple comparison</h3>
-<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[?@.price&lt;10].title&quot;, data);
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[?@.price&lt;10].title&quot;, data, workspace);
 // [&quot;Between the Stops&quot;,&quot;Pride and Prejudice&quot;]
 </code></pre>
 <h3 id="logical-operators">Logical operators</h3>
 <p>Combine conditions with <code>&amp;&amp;</code> (and) and <code>||</code> (or):</p>
-<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[?@.price&lt;10 &amp;&amp; @.category=='fiction'].title&quot;, data);
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[?@.price&lt;10 &amp;&amp; @.category=='fiction'].title&quot;, data, workspace);
 // [&quot;Pride and Prejudice&quot;]
 </code></pre>
 <h3 id="built-in-functions">Built-in functions</h3>
 <p>RFC 9535 defines five built-in functions: <code>length</code>, <code>count</code>, <code>value</code>, <code>match</code>, and <code>search</code>.</p>
-<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[?length(@.title)&gt;15].title&quot;, data);
+<pre><code class="language-csharp">evaluator.Query(&quot;$.store.book[?length(@.title)&gt;15].title&quot;, data, workspace);
 // [&quot;Between the Stops&quot;,&quot;Pride and Prejudice&quot;,&quot;The Lord of the Rings&quot;]
 </code></pre>
 <h2 id="zero-allocation-querynodes">Zero-Allocation QueryNodes</h2>
@@ -369,7 +369,7 @@ foreach (JsonElement node in result.Nodes)
 <pre><code class="language-csharp">var evaluator = new JsonPathEvaluator(
     new Dictionary&lt;string, IJsonPathFunction&gt; { [&quot;ceil&quot;] = new CeilFunction() });
 
-evaluator.Query(&quot;$.store.book[?ceil(@.price)==9].title&quot;, data);
+evaluator.Query(&quot;$.store.book[?ceil(@.price)==9].title&quot;, data, workspace);
 // [&quot;Between the Stops&quot;,&quot;Pride and Prejudice&quot;]
 </code></pre>
 <h3 id="is_fiction-valuetype-logicaltype">is_fiction — ValueType → LogicalType</h3>
@@ -392,7 +392,7 @@ evaluator.Query(&quot;$.store.book[?ceil(@.price)==9].title&quot;, data);
 <pre><code class="language-csharp">var evaluator = new JsonPathEvaluator(
     new Dictionary&lt;string, IJsonPathFunction&gt; { [&quot;is_fiction&quot;] = new IsFictionFunction() });
 
-evaluator.Query(&quot;$.store.book[?is_fiction(@.category)].title&quot;, data);
+evaluator.Query(&quot;$.store.book[?is_fiction(@.category)].title&quot;, data, workspace);
 // [&quot;Sword of Honour&quot;,&quot;Pride and Prejudice&quot;,&quot;The Lord of the Rings&quot;]
 </code></pre>
 <h3 id="cheapest-nodestype-valuetype">cheapest — NodesType → ValueType</h3>
@@ -427,7 +427,7 @@ evaluator.Query(&quot;$.store.book[?is_fiction(@.category)].title&quot;, data);
 <pre><code class="language-csharp">var evaluator = new JsonPathEvaluator(
     new Dictionary&lt;string, IJsonPathFunction&gt; { [&quot;cheapest&quot;] = new CheapestFunction() });
 
-evaluator.Query(&quot;$.store.book[?@.price==cheapest($.store.book[*].price)].title&quot;, data);
+evaluator.Query(&quot;$.store.book[?@.price==cheapest($.store.book[*].price)].title&quot;, data, workspace);
 // [&quot;Between the Stops&quot;]
 </code></pre>
 <h2 id="running-the-example">Running the Example</h2>

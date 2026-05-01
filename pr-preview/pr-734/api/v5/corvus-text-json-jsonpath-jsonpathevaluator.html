@@ -146,8 +146,8 @@
 </thead>
 <tbody>
 <tr>
-<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.query.html#query-string-ref-jsonelement">Query(string, ref JsonElement)</a></td>
-<td>Evaluates a JSONPath expression against the given data, using an internally managed workspace. The result is cloned and safe to use after this call returns.</td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.query.html#query-string-ref-jsonelement-jsonworkspace">Query(string, ref JsonElement, JsonWorkspace)</a></td>
+<td>Evaluates a JSONPath expression against the given data, returning a JSON array of matched nodes. The returned element is backed by the provided workspace.</td>
 </tr>
 <tr>
 <td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.querynodes.html">QueryNodes</a></td>
@@ -174,9 +174,11 @@ using ParsedJsonDocument&lt;JsonElement&gt; doc = ParsedJsonDocument&lt;JsonElem
     &quot;&quot;&quot;u8);
 
 // Query returns a JSON array of matched nodes
+using JsonWorkspace workspace = JsonWorkspace.Create();
 JsonElement titles = JsonPathEvaluator.Default.Query(
     &quot;$.store.book[*].title&quot;,
-    doc.RootElement);
+    doc.RootElement,
+    workspace);
 // titles: [&quot;Sayings of the Century&quot;,&quot;Moby Dick&quot;,&quot;The Lord of the Rings&quot;]
 </code></pre>
 <h3 id="zero-allocation-query-with-querynodes">Zero-allocation query with QueryNodes</h3>
@@ -204,7 +206,8 @@ foreach (JsonElement node in result.Nodes)
 
 JsonElement cheap = evaluator.Query(
     &quot;$.store.book[?is_cheap(@.price)].title&quot;,
-    doc.RootElement);
+    doc.RootElement,
+    workspace);
 // cheap: [&quot;Sayings of the Century&quot;,&quot;Moby Dick&quot;]
 </code></pre>
 <h2 id="applies-to">Applies To</h2>

@@ -12149,7 +12149,7 @@
     "Title": "JsonPathEvaluator",
     "Description": "Evaluates JSONPath (RFC 9535) expressions against JSON data. Compiled expressions are cached for efficient repeated evaluation.",
     "Keywords": "JsonPathEvaluator class Corvus.Text.Json.JsonPath",
-    "Body": "Evaluates JSONPath (RFC 9535) expressions against JSON data. Compiled expressions are cached for efficient repeated evaluation.\r\nDefault: Gets the default shared evaluator instance.\r\nQueryNodes: Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html). Uses an [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1)-backed buffer internally.\r\nQueryNodes: Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html). The initial buffer is caller-provided and can be stack-allocated for zero-heap-allocation queries.\r\nQuery: Evaluates a JSONPath expression against the given data, using an internally managed workspace. The result is cloned and safe to use after this call returns."
+    "Body": "Evaluates JSONPath (RFC 9535) expressions against JSON data. Compiled expressions are cached for efficient repeated evaluation.\r\nDefault: Gets the default shared evaluator instance.\r\nQueryNodes: Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html). Uses an [`ArrayPool`](https://learn.microsoft.com/dotnet/api/system.buffers.arraypool-1)-backed buffer internally.\r\nQueryNodes: Evaluates a JSONPath expression against the given data, returning matched nodes in a disposable [`JsonPathResult`](/api/v5/corvus-text-json-jsonpath-jsonpathresult.html). The initial buffer is caller-provided and can be stack-allocated for zero-heap-allocation queries.\r\nQuery: Evaluates a JSONPath expression against the given data, returning a JSON array of matched nodes. The returned element is backed by the provided workspace."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.ctor.html",
@@ -12175,9 +12175,9 @@
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathevaluator.query.html",
     "Title": "JsonPathEvaluator.Query",
-    "Description": "Evaluates a JSONPath expression against the given data, using an internally managed workspace. The result is cloned and safe to use after this call returns.",
+    "Description": "Evaluates a JSONPath expression against the given data, returning a JSON array of matched nodes. The returned element is backed by the provided workspace.",
     "Keywords": "JsonPathEvaluator Query method Corvus.Text.Json.JsonPath",
-    "Body": "Evaluates a JSONPath expression against the given data, using an internally managed workspace. The result is cloned and safe to use after this call returns."
+    "Body": "Evaluates a JSONPath expression against the given data, returning a JSON array of matched nodes. The returned element is backed by the provided workspace."
   },
   {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonpath-jsonpathexception.html",

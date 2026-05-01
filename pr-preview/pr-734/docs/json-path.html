@@ -392,14 +392,17 @@ using var dataDoc = ParsedJsonDocument&lt;JsonElement&gt;.Parse(&quot;&quot;&quo
     }
     &quot;&quot;&quot;);
 
+using JsonWorkspace workspace = JsonWorkspace.Create();
+
 JsonElement result = JsonPathEvaluator.Default.Query(
     &quot;$.store.book[*].author&quot;,
-    dataDoc.RootElement);
+    dataDoc.RootElement,
+    workspace);
 
 Console.WriteLine(result);
 // [&quot;Sandi Toksvig&quot;,&quot;Evelyn Waugh&quot;,&quot;Jane Austen&quot;,&quot;J. R. R. Tolkien&quot;]
 </code></pre>
-<p><code>Query(expression, data)</code> evaluates the expression and returns a cloned JSON array containing all matched nodes. It manages memory internally — no workspace or disposal needed.</p>
+<p><code>Query(expression, data, workspace)</code> evaluates the expression and returns a JSON array containing all matched nodes, backed by the provided workspace.</p>
 <p><strong>Zero-allocation evaluation with <code>QueryNodes</code>:</strong></p>
 <pre><code class="language-csharp">using Corvus.Text.Json;
 using Corvus.Text.Json.JsonPath;
@@ -548,7 +551,8 @@ public static partial class AllAuthors;
 <h3 id="result-handling">Result handling</h3>
 <p>JSONPath queries return a <strong>node list</strong> — zero or more <code>JsonElement</code> values matched in document order.</p>
 <p><strong>Quick result as JSON array:</strong></p>
-<pre><code class="language-csharp">JsonElement array = JsonPathEvaluator.Default.Query(&quot;$.store.book[*].title&quot;, data);
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement array = JsonPathEvaluator.Default.Query(&quot;$.store.book[*].title&quot;, data, workspace);
 // Returns a JSON array: [&quot;Between the Stops&quot;, &quot;Sword of Honour&quot;, ...]
 // Returns [] if no matches
 </code></pre>
@@ -567,9 +571,10 @@ if (count &gt; 0)
 </code></pre>
 <h3 id="error-handling">Error handling</h3>
 <p>All evaluation errors throw <code>JsonPathException</code> with a descriptive message:</p>
-<pre><code class="language-csharp">try
+<pre><code class="language-csharp">using JsonWorkspace workspace = JsonWorkspace.Create();
+try
 {
-    JsonElement result = evaluator.Query(expression, data);
+    JsonElement result = evaluator.Query(expression, data, workspace);
 }
 catch (JsonPathException ex)
 {
@@ -758,7 +763,8 @@ catch (JsonPathException ex)
     });
 
 // Use in filter expressions
-JsonElement result = evaluator.Query(&quot;$.store.book[?ceil(@.price)==9].title&quot;, data);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Query(&quot;$.store.book[?ceil(@.price)==9].title&quot;, data, workspace);
 </code></pre>
 <h3 id="delegate-factory-helpers">Delegate factory helpers</h3>
 <p>For simple functions, you can skip the boilerplate class and use the <code>JsonPathFunction</code> factory methods:</p>
@@ -911,11 +917,12 @@ using JsonPathResult result = evaluator.QueryNodes(expression, data);
 &lt;/ItemGroup&gt;
 </code></pre>
 <h3 id="use-querynodes-for-performance-sensitive-code">Use <code>QueryNodes</code> for performance-sensitive code</h3>
-<p><code>Query()</code> is convenient but creates a workspace, builds a JSON array, and clones it. In hot paths, use <code>QueryNodes()</code> which pools its buffer internally:</p>
-<pre><code class="language-csharp">// ❌ Allocates per call
-JsonElement result = evaluator.Query(expression, data);
+<p><code>Query()</code> builds a JSON array in the caller-supplied workspace. In hot paths, use <code>QueryNodes()</code> which returns lightweight references into the original document without re-serialization:</p>
+<pre><code class="language-csharp">// Materializes a JSON array via workspace (convenient)
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Query(expression, data, workspace);
 
-// ✅ Pooled buffer, no cloning
+// ✅ Pooled buffer, no re-serialization
 using JsonPathResult result = evaluator.QueryNodes(expression, data);
 </code></pre>
 <h2 id="comparison-with-other-libraries">Comparison with other libraries</h2>

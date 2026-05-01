@@ -167,7 +167,8 @@ IJsonPathFunction first = JsonPathFunction.NodesValue((nodes, ws) =&gt;
 });
 
 // Use in filter expressions: $[?is_string(@.name)]
-JsonElement result = evaluator.Query(&quot;$[?is_string(@.name)]&quot;, data);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Query(&quot;$[?is_string(@.name)]&quot;, data, workspace);
 </code></pre>
 <h3 id="full-control-with-create">Full control with Create</h3>
 <p>For arbitrary signatures, use <code>Create</code> with explicit type arrays:</p>
