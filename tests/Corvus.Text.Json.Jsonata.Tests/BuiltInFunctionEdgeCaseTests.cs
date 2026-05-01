@@ -4851,4 +4851,142 @@ public class BuiltInFunctionEdgeCaseTests
         Assert.Equal("undefined",
             Eval("$sum(items.values)", """{"items":[]}"""));
     }
+
+    // ==================== Round 13e: FusedEvalFromStep edge cases ====================
+
+    [Fact]
+    public void MultiPredicateMissingProperty()
+    {
+        Assert.Equal("undefined",
+            Eval("""items[type="A"][status="active"].name""", """{"x":1}"""));
+    }
+
+    [Fact]
+    public void MultiPredicateSingletonObjectMatch()
+    {
+        Assert.Equal("\"x\"",
+            Eval("""items[type="A"][status="active"].name""",
+                """{"items":{"type":"A","status":"active","name":"x"}}"""));
+    }
+
+    [Fact]
+    public void MultiPredicateSingletonObjectNoMatch()
+    {
+        Assert.Equal("undefined",
+            Eval("""items[type="A"][status="active"].name""",
+                """{"items":{"type":"B","status":"active","name":"y"}}"""));
+    }
+
+    [Fact]
+    public void MultiPredicatePrimitive()
+    {
+        Assert.Equal("undefined",
+            Eval("""items[type="A"][status="active"].name""", """{"items":42}"""));
+    }
+
+    [Fact]
+    public void MixedPredicateIndexOutOfBounds()
+    {
+        Assert.Equal("undefined",
+            Eval("""items[type="A"].values[5]""",
+                """{"items":[{"type":"A","values":[1]}]}"""));
+    }
+
+    [Fact]
+    public void MixedPredicateSingletonIndex0()
+    {
+        Assert.Equal("10",
+            Eval("""items[type="A"].values[0]""",
+                """{"items":{"type":"A","values":10}}"""));
+    }
+
+    [Fact]
+    public void MixedPredicateSingletonIndexNon0()
+    {
+        Assert.Equal("undefined",
+            Eval("""items[type="A"].values[1]""",
+                """{"items":{"type":"A","values":10}}"""));
+    }
+
+    [Fact]
+    public void MultiPredicateSuccessful()
+    {
+        Assert.Equal("\"x\"",
+            Eval("""data.items[type="A"][status="active"].name""",
+                """{"data":{"items":[{"type":"A","status":"active","name":"x"},{"type":"B","status":"active","name":"y"}]}}"""));
+    }
+
+    // ==================== Round 13f: FusedCollectAndContinue ====================
+
+    [Fact]
+    public void FccPerElementIndexArrayValid()
+    {
+        Assert.Equal("[{\"type\":\"X\",\"d\":1},{\"type\":\"X\",\"d\":3}]",
+            Eval("""a.b[0].c[type="X"]""",
+                """{"a":[{"b":[{"c":{"type":"X","d":1}},{"c":{"type":"Y"}}]},{"b":[{"c":{"type":"X","d":3}}]}]}"""));
+    }
+
+    [Fact]
+    public void FccPerElementIndexArrayOOB()
+    {
+        Assert.Equal("undefined",
+            Eval("""a.b[5].c[type="X"]""",
+                """{"a":[{"b":[{"c":{"type":"X"}}]}]}"""));
+    }
+
+    [Fact]
+    public void FccPerElementIndexSingleton0()
+    {
+        Assert.Equal("{\"type\":\"X\",\"d\":1}",
+            Eval("""a.b[0].c[type="X"]""",
+                """{"a":[{"b":{"c":{"type":"X","d":1}}},{"b":{"c":{"type":"Y"}}}]}"""));
+    }
+
+    [Fact]
+    public void FccPerElementIndexSingletonSkip()
+    {
+        Assert.Equal("undefined",
+            Eval("""a.b[1].c[type="X"]""",
+                """{"a":[{"b":{"c":{"type":"X","d":1}}}]}"""));
+    }
+
+    [Fact]
+    public void FccEqPredicateArraySubItems()
+    {
+        Assert.Equal("[{\"type\":\"X\",\"n\":1},{\"type\":\"X\",\"n\":3}]",
+            Eval("""a.items.c[type="X"]""",
+                """{"a":[{"items":{"c":[{"type":"X","n":1},{"type":"Y","n":2}]}},{"items":{"c":[{"type":"X","n":3}]}}]}"""));
+    }
+
+    [Fact]
+    public void FccEqPredicateSingletonMatch()
+    {
+        Assert.Equal("{\"type\":\"X\",\"n\":1}",
+            Eval("""a.items.c[type="X"]""",
+                """{"a":[{"items":{"c":{"type":"X","n":1}}},{"items":{"c":{"type":"Y","n":2}}}]}"""));
+    }
+
+    [Fact]
+    public void FccNestedArrays()
+    {
+        Assert.Equal("{\"type\":\"X\",\"n\":1}",
+            Eval("""a.items.c[type="X"]""",
+                """{"a":[[{"items":{"c":{"type":"X","n":1}}}],[{"items":{"c":{"type":"Y","n":2}}}]]}"""));
+    }
+
+    [Fact]
+    public void FccGlobalIndexSuccess()
+    {
+        Assert.Equal("{\"type\":\"X\",\"v\":1}",
+            Eval("""items[0].name[type="X"]""",
+                """[{"items":[{"name":{"type":"X","v":1}},{"name":{"type":"Y"}}]},{"items":[{"name":{"type":"X","v":3}}]}]"""));
+    }
+
+    [Fact]
+    public void FccGlobalIndexOOB()
+    {
+        Assert.Equal("undefined",
+            Eval("""items[5].name[type="X"]""",
+                """[{"items":[{"name":{"type":"X"}}]}]"""));
+    }
 }

@@ -5984,5 +5984,199 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "$sum(items.values)",
             "{\"items\":[]}");
     }
+
+    // ==================== Round 13e: FusedEvalFromStep deep branches ====================
+    // These use multi-predicate chains to bypass CG inlining and reach FusedEvalFromStep.
+
+    // --- FusedEvalFromStep: missing property at step 0 (line 660-661) ---
+    [Fact]
+    public void FusedEvalFromStepMissingProperty()
+    {
+        this.AssertCgAndRtBothUndefined(
+            "items[type=\"A\"][status=\"active\"].name",
+            "{\"x\":1}");
+    }
+
+    // --- FusedEvalFromStep: array index out of bounds (line 675-676) ---
+    [Fact]
+    public void FusedEvalFromStepIndexOutOfBounds()
+    {
+        this.AssertCgAndRtBothUndefined(
+            "items[type=\"A\"].values[5]",
+            "{\"items\":[{\"type\":\"A\",\"values\":[1]}]}");
+    }
+
+    // --- FusedEvalFromStep: singleton object matching multi-predicate (line 700-705) ---
+    [Fact]
+    public void FusedEvalFromStepSingletonObjectMatch()
+    {
+        this.AssertCgAndRtMatch(
+            "items[type=\"A\"][status=\"active\"].name",
+            "{\"items\":{\"type\":\"A\",\"status\":\"active\",\"name\":\"x\"}}",
+            "\"x\"");
+    }
+
+    // --- FusedEvalFromStep: singleton object NOT matching multi-predicate (line 700-705) ---
+    [Fact]
+    public void FusedEvalFromStepSingletonObjectNoMatch()
+    {
+        this.AssertCgAndRtBothUndefined(
+            "items[type=\"A\"][status=\"active\"].name",
+            "{\"items\":{\"type\":\"B\",\"status\":\"active\",\"name\":\"y\"}}");
+    }
+
+    // --- FusedEvalFromStep: primitive with multi-predicate (line 708-710) ---
+    [Fact]
+    public void FusedEvalFromStepPrimitiveWithPredicate()
+    {
+        this.AssertCgAndRtBothUndefined(
+            "items[type=\"A\"][status=\"active\"].name",
+            "{\"items\":42}");
+    }
+
+    // --- FusedEvalFromStep: deep multi-predicate, non-object at step (line 720-721) ---
+    [Fact]
+    public void FusedEvalFromStepNonObjectAtStep()
+    {
+        this.AssertCgAndRtBothUndefined(
+            "data.items[type=\"A\"][status=\"active\"].name",
+            "{\"data\":{\"items\":42}}");
+    }
+
+    // --- FusedEvalFromStep: non-array singleton with index 0 (line 680-682) ---
+    [Fact]
+    public void FusedEvalFromStepSingletonIndex0()
+    {
+        this.AssertCgAndRtMatch(
+            "items[type=\"A\"].values[0]",
+            "{\"items\":{\"type\":\"A\",\"values\":10}}",
+            "10");
+    }
+
+    // --- FusedEvalFromStep: non-array singleton with index != 0 (line 682-684) ---
+    [Fact]
+    public void FusedEvalFromStepSingletonIndexNon0()
+    {
+        this.AssertCgAndRtBothUndefined(
+            "items[type=\"A\"].values[1]",
+            "{\"items\":{\"type\":\"A\",\"values\":10}}");
+    }
+
+    // --- FusedEvalFromStep: successful multi-predicate through objects (line 725) ---
+    [Fact]
+    public void FusedEvalFromStepMultiPredicateSuccess()
+    {
+        this.AssertCgAndRtMatch(
+            "data.items[type=\"A\"][status=\"active\"].name",
+            "{\"data\":{\"items\":[{\"type\":\"A\",\"status\":\"active\",\"name\":\"x\"},{\"type\":\"B\",\"status\":\"active\",\"name\":\"y\"}]}}",
+            "\"x\"");
+    }
+
+    // ==================== Round 13f: FusedCollectAndContinue deep branches ====================
+    // These expressions use the pattern where an intermediate step resolves to an array WITHOUT
+    // a predicate/index, so the next step enters FusedCollectAndContinue. All expressions
+    // are mixed predicate+index to force NavigatePropertyChainWithPredicates fallback.
+
+    // --- perElementIndex: propValue is Array, valid index (lines 819-824, 836-839) ---
+    // a.b[0].c[type="X"] where a resolves to array of objects with b as array
+    // At step 1 inside FusedCollectAndContinue: perElementIndex=true, propValue=item.b (array), idx=0
+    [Fact]
+    public void FccPerElementIndexArrayValid()
+    {
+        this.AssertCgAndRtMatch(
+            "a.b[0].c[type=\"X\"]",
+            "{\"a\":[{\"b\":[{\"c\":{\"type\":\"X\",\"d\":1}},{\"c\":{\"type\":\"Y\"}}]},{\"b\":[{\"c\":{\"type\":\"X\",\"d\":3}}]}]}",
+            "[{\"type\":\"X\",\"d\":1},{\"type\":\"X\",\"d\":3}]");
+    }
+
+    // --- perElementIndex: propValue is Array, index OOB (lines 822, 826-828) ---
+    [Fact]
+    public void FccPerElementIndexArrayOOB()
+    {
+        this.AssertCgAndRtBothUndefined(
+            "a.b[5].c[type=\"X\"]",
+            "{\"a\":[{\"b\":[{\"c\":{\"type\":\"X\"}}]}]}");
+    }
+
+    // --- perElementIndex: propValue is singleton, index 0 (line 831 false branch) ---
+    [Fact]
+    public void FccPerElementIndexSingleton0()
+    {
+        this.AssertCgAndRtMatch(
+            "a.b[0].c[type=\"X\"]",
+            "{\"a\":[{\"b\":{\"c\":{\"type\":\"X\",\"d\":1}}},{\"b\":{\"c\":{\"type\":\"Y\"}}}]}",
+            "{\"type\":\"X\",\"d\":1}");
+    }
+
+    // --- perElementIndex: propValue is singleton, index != 0 → skip (lines 831-833) ---
+    [Fact]
+    public void FccPerElementIndexSingletonSkip()
+    {
+        this.AssertCgAndRtBothUndefined(
+            "a.b[1].c[type=\"X\"]",
+            "{\"a\":[{\"b\":{\"c\":{\"type\":\"X\",\"d\":1}}}]}");
+    }
+
+    // --- perElementIndex + more steps (lines 836-839 with FusedEvalFromStep continuation) ---
+    [Fact]
+    public void FccPerElementIndexWithMoreSteps()
+    {
+        this.AssertCgAndRtMatch(
+            "a.b[0].c[type=\"X\"].d",
+            "{\"a\":[{\"b\":[{\"c\":{\"type\":\"X\",\"d\":99}},{\"c\":{\"type\":\"Y\"}}]},{\"b\":[{\"c\":{\"type\":\"X\",\"d\":77}}]}]}",
+            "[99,77]");
+    }
+
+    // --- hasEqPredThisStep: propValue is Array of objects, filter sub-items (lines 849-863) ---
+    // a.items.c[type="X"] where items.c resolves to array of objects, predicate at last step
+    [Fact]
+    public void FccEqPredicateArraySubItems()
+    {
+        this.AssertCgAndRtMatch(
+            "a.items.c[type=\"X\"]",
+            "{\"a\":[{\"items\":{\"c\":[{\"type\":\"X\",\"n\":1},{\"type\":\"Y\",\"n\":2}]}},{\"items\":{\"c\":[{\"type\":\"X\",\"n\":3}]}}]}",
+            "[{\"type\":\"X\",\"n\":1},{\"type\":\"X\",\"n\":3}]");
+    }
+
+    // --- hasEqPredThisStep: propValue is single Object match at last step (lines 867-877) ---
+    [Fact]
+    public void FccEqPredicateSingletonMatch()
+    {
+        this.AssertCgAndRtMatch(
+            "a.items.c[type=\"X\"]",
+            "{\"a\":[{\"items\":{\"c\":{\"type\":\"X\",\"n\":1}}},{\"items\":{\"c\":{\"type\":\"Y\",\"n\":2}}}]}",
+            "{\"type\":\"X\",\"n\":1}");
+    }
+
+    // --- nested arrays: array element is itself an Array (lines 886-890) ---
+    // a value is [[objects...], [objects...]] so FusedCollectAndContinue recurses
+    [Fact]
+    public void FccNestedArrays()
+    {
+        this.AssertCgAndRtMatch(
+            "a.items.c[type=\"X\"]",
+            "{\"a\":[[{\"items\":{\"c\":{\"type\":\"X\",\"n\":1}}}],[{\"items\":{\"c\":{\"type\":\"Y\",\"n\":2}}}]]}",
+            "{\"type\":\"X\",\"n\":1}");
+    }
+
+    // --- globalIndex success: root data is Array, step 0 has constant index (lines 894-909) ---
+    // items[0].name[type="X"] with root data = array of objects
+    [Fact]
+    public void FccGlobalIndexSuccess()
+    {
+        this.AssertCgAndRtMatch(
+            "items[0].name[type=\"X\"]",
+            "[{\"items\":[{\"name\":{\"type\":\"X\",\"v\":1}},{\"name\":{\"type\":\"Y\"}}]},{\"items\":[{\"name\":{\"type\":\"X\",\"v\":3}}]}]",
+            "{\"type\":\"X\",\"v\":1}");
+    }
+
+    // --- globalIndex OOB: index exceeds buffer.Count (lines 897-899) ---
+    [Fact]
+    public void FccGlobalIndexOOB()
+    {
+        this.AssertCgAndRtBothUndefined(
+            "items[5].name[type=\"X\"]",
+            "[{\"items\":[{\"name\":{\"type\":\"X\"}}]}]");
+    }
 }
 
