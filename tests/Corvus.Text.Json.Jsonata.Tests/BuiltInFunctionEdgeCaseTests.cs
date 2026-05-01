@@ -1649,4 +1649,2026 @@ public class BuiltInFunctionEdgeCaseTests
         // Reference: "(042)"
         Assert.Equal("\"(042)\"", Eval("""$formatNumber(-42, "000;(000)")"""));
     }
+
+    // ─── $single error paths (BuiltInFunctions lines 2881-2891) ──
+
+    [Fact]
+    public void Single_NoMatch_ThrowsD3139()
+    {
+        // No element satisfies predicate → D3139
+        EvalThrows("""$single([1,2,3], function($v){$v=5})""", "null", "D3139");
+    }
+
+    [Fact]
+    public void Single_MultipleMatches_ThrowsD3138()
+    {
+        // More than one element satisfies predicate → D3138
+        EvalThrows("""$single([1,2,2], function($v){$v=2})""", "null", "D3138");
+    }
+
+    [Fact]
+    public void Single_EmptyArray_ThrowsD3139()
+    {
+        // Empty array → D3139
+        EvalThrows("""$single([])""", "null", "D3139");
+    }
+
+    // ─── Index binding #$i (FunctionalCompiler lines 4037-4135, 5545-5643) ──
+
+    [Fact]
+    public void IndexBinding_Basic()
+    {
+        // #$i annotates each element with its position
+        string result = Eval("""["a","b","c"]#$i.{"value": $, "index": $i}""");
+        Assert.Equal("""[{"value":"a","index":0},{"value":"b","index":1},{"value":"c","index":2}]""", result);
+    }
+
+    [Fact]
+    public void IndexBinding_WithFilter()
+    {
+        // Index binding combined with bracket filter
+        string result = Eval("""[10,20,30,40,50]#$i[$i < 3]""");
+        Assert.Equal("[10,20,30]", result);
+    }
+
+    // ─── Focus binding @$var cross-join (FunctionalCompiler lines 2975-3079) ──
+
+    [Fact]
+    public void FocusBinding_CrossJoin_CorrelatesData()
+    {
+        // Cross-join: correlate loans with books by isbn
+        string data = """{"library":{"loans":[{"isbn":"123"},{"isbn":"456"}],"books":[{"isbn":"123","title":"A"},{"isbn":"456","title":"B"}]}}""";
+        string result = Eval("""library.loans@$l.books[isbn=$l.isbn].title""", data);
+        Assert.Equal("""["A","B"]""", result);
+    }
+
+    [Fact]
+    public void FocusBinding_CrossJoin_SimpleCorrelation()
+    {
+        string data = """{"data":[{"ref":1},{"ref":2}],"other":[{"id":1,"name":"one"},{"id":2,"name":"two"}]}""";
+        string result = Eval("""data@$d.other[id=$d.ref].name""", data);
+        Assert.Equal("""["one","two"]""", result);
+    }
+
+    // ─── $keys / $lookup on array of objects (BuiltInFunctions lines 2793-2798) ──
+
+    [Fact]
+    public void Keys_ArrayOfObjects_Deduplicates()
+    {
+        Assert.Equal("""["a","b"]""", Eval("""$keys([{"a":1},{"b":2},{"a":3}])"""));
+    }
+
+    [Fact]
+    public void Keys_ArrayOfObjects_MultipleKeysPerObject()
+    {
+        Assert.Equal("""["x","y","z"]""", Eval("""$keys([{"x":1,"y":2},{"y":3,"z":4}])"""));
+    }
+
+    [Fact]
+    public void Lookup_ArrayOfObjects_CollectsAllValues()
+    {
+        Assert.Equal("[1,2]", Eval("""$lookup([{"a":1},{"a":2},{"b":3}], "a")"""));
+    }
+
+    [Fact]
+    public void Lookup_ArrayOfObjects_SingleMatch()
+    {
+        Assert.Equal("2", Eval("""$lookup([{"a":1},{"b":2}], "b")"""));
+    }
+
+    // ─── $split with limit (BuiltInFunctions lines 1375-1405) ──
+
+    [Fact]
+    public void Split_WithLimit_Truncates()
+    {
+        // Limit truncates to at most N parts
+        Assert.Equal("""["a","b"]""", Eval("""$split("a,b,c,d", ",", 2)"""));
+    }
+
+    [Fact]
+    public void Split_WithLimit_One()
+    {
+        Assert.Equal("""["x"]""", Eval("""$split("x-y-z", "-", 1)"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $match with limit (BuiltInFunctions lines 3130-3138)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Match_WithLimit()
+    {
+        // Limit truncates to at most N matches; singleton unwrapped
+        Assert.Equal(
+            """{"match":"123","index":3,"groups":[]}""",
+            Eval("""$match("abc123def456", /[0-9]+/, 1)"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $decodeUrlComponent bad percent encoding (BuiltInFunctions lines 4429-4444)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [InlineData("""$decodeUrlComponent("test%2")""", "D3140")]
+    [InlineData("""$decodeUrlComponent("test%GG")""", "D3140")]
+    public void DecodeUrlComponent_BadPercentEncoding(string expression, string expectedCode)
+    {
+        EvalThrows(expression, "null", expectedCode);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber picture validation errors (BuiltInFunctions lines 4773-4793)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_MandatoryBeforeOptionalError()
+    {
+        // Mandatory digit (0) before optional (#) in integer part
+        EvalThrows("""$formatNumber(123, "0#")""", "null", "D3090");
+    }
+
+    [Fact]
+    public void FormatNumber_MandatoryAfterOptionalFracError()
+    {
+        // Mandatory digit (0) after optional (#) in fractional part
+        EvalThrows("""$formatNumber(0.5, "0.#0")""", "null", "D3091");
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber exponent normalization (BuiltInFunctions lines 5062-5087)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [InlineData("""$formatNumber(1234.5, "0.0e0")""", "\"1.2e3\"")]
+    [InlineData("""$formatNumber(0.00123, "0.00e0")""", "\"1.23e-3\"")]
+    [InlineData("""$formatNumber(1234567, "0.0e00")""", "\"1.2e06\"")]
+    public void FormatNumber_ExponentNormalization_ViaEval(string expression, string expected)
+    {
+        Assert.Equal(expected, Eval(expression));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber with explicit negative sub-picture (additional patterns)
+    // (BuiltInFunctions lines 4983-4995, 5025-5037)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Theory]
+    [InlineData("""$formatNumber(-42, "0;0-")""", "\"42-\"")]
+    public void FormatNumber_NegativeSubPicture_SuffixMinus(string expression, string expected)
+    {
+        Assert.Equal(expected, Eval(expression));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $shuffle on multi-element sequence (BuiltInFunctions lines 5333-5346)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Shuffle_PreservesCount()
+    {
+        // Can't assert order but can verify count is preserved
+        Assert.Equal("5", Eval("""$count($shuffle([1,2,3,4,5]))"""));
+    }
+
+    [Fact]
+    public void Shuffle_SortRoundTrip()
+    {
+        // Shuffle then sort should return original order
+        Assert.Equal("[1,2,3,4,5]", Eval("""$sort($shuffle([1,2,3,4,5]))"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Unicode supplementary character handling (BuiltInFunctions lines 6251-6266)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Substring_EmojiCodePoint()
+    {
+        // 😀 is a single code point (U+1F600) represented as surrogate pair
+        Assert.Equal("\"\uD83D\uDE00\"", Eval("""$substring("\uD83D\uDE00test", 0, 1)"""));
+    }
+
+    [Fact]
+    public void Length_EmojiCodePoint()
+    {
+        Assert.Equal("5", Eval("""$length("\uD83D\uDE00test")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $encodeUrlComponent / $decodeUrlComponent (BuiltInFunctions lines 4494-4504)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void EncodeUrlComponent_Spaces()
+    {
+        Assert.Equal("\"hello%20world\"", Eval("""$encodeUrlComponent("hello world")"""));
+    }
+
+    [Fact]
+    public void DecodeUrlComponent_Valid()
+    {
+        Assert.Equal("\"hello world\"", Eval("""$decodeUrlComponent("hello%20world")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Descendant wildcard (**) (FunctionalCompiler lines 1567-1581)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void DescendantWildcard_NestedArrays()
+    {
+        Assert.Equal(
+            """["x","y","z"]""",
+            Eval("""**.name""", """{"a":{"name":"x","b":[{"name":"y"},{"name":"z"}]}}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $flatten multi-valued sequences (BuiltInFunctions lines 2248-2270)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Flatten_NestedArrays()
+    {
+        Assert.Equal("[1,2,3,4]", Eval("""$flatten([[1,[2]],[[3],4]])"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Array-of-indices filter (FunctionalCompiler lines 5344-5359)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Filter_ArrayOfIndices()
+    {
+        Assert.Equal("[1,3,5]", Eval("""[1,2,3,4,5][[0,2,4]]"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Sort then filter (FunctionalCompiler lines 5463-5498, 5959-5981)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FilterThenSort()
+    {
+        Assert.Equal(
+            """[{"type":"a","val":1},{"type":"a","val":2},{"type":"a","val":3}]""",
+            Eval("""$[type="a"]^(val)""", """[{"type":"a","val":3},{"type":"b","val":1},{"type":"a","val":1},{"type":"a","val":2}]"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $pad with emoji (surrogate pair cycling) (BuiltInFunctions)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Pad_WithEmoji_Right()
+    {
+        Assert.Equal(
+            "\"test\uD83C\uDF81\uD83C\uDF81\uD83C\uDF81\uD83C\uDF81\"",
+            Eval("""$pad("test", 8, "\uD83C\uDF81")"""));
+    }
+
+    [Fact]
+    public void Pad_WithEmoji_Left()
+    {
+        Assert.Equal(
+            "\"\uD83C\uDF81\uD83C\uDF81\uD83C\uDF81\uD83C\uDF81test\"",
+            Eval("""$pad("test", -8, "\uD83C\uDF81")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $replace with string pattern and limit
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Replace_StringPattern_WithLimit()
+    {
+        Assert.Equal(
+            "\"hi world hello\"",
+            Eval("""$replace("hello world hello", "hello", "hi", 1)"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $each on object
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Each_OnObject()
+    {
+        Assert.Equal(
+            """["a=1","b=2","c=3"]""",
+            Eval("""$each({"a":1,"b":2,"c":3}, function($v,$k){$k & "=" & $string($v)})"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $merge with overlapping keys
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Merge_OverlappingKeys()
+    {
+        Assert.Equal("""{"a":3,"b":2}""", Eval("""$merge([{"a":1},{"b":2},{"a":3}])"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // GroupBy with duplicate keys
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void GroupBy_DuplicateKeys()
+    {
+        Assert.Equal(
+            """{"A":[{"category":"A","val":1},{"category":"A","val":3}],"B":{"category":"B","val":2}}""",
+            Eval("""items{category: $}""", """{"items":[{"category":"A","val":1},{"category":"B","val":2},{"category":"A","val":3}]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $number coercion from boolean (BuiltInFunctions line ~530-540
+    // and FunctionalCompiler lines 8625-8632)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Number_Boolean_True_Returns1()
+    {
+        Assert.Equal("1", Eval("""$number(true)"""));
+    }
+
+    [Fact]
+    public void Number_Boolean_False_Returns0()
+    {
+        Assert.Equal("0", Eval("""$number(false)"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber minInt==0 && maxFrac==0 special rules
+    // (BuiltInFunctions lines 4914-4934)
+    // Only triggered when picture has no mandatory/optional int or frac digits
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_HashOnly_MinIntZeroMaxFracZero()
+    {
+        // Picture "#" → minInt=0, maxFrac=0, expPresent=false
+        // Code sets minInt=1 via else branch at 4921
+        Assert.Equal("\"42\"", Eval("""$formatNumber(42, "#")"""));
+    }
+
+    [Fact]
+    public void FormatNumber_HashWithExponent_MinIntZeroMaxFracZero()
+    {
+        // Picture "#e0" → minInt=0, maxFrac=0, expPresent=true
+        // Code sets minFrac=1, maxFrac=1 via 4917-4918
+        Assert.Equal("\"0e2\"", Eval("""$formatNumber(42, "#e0")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber minExp computation
+    // (BuiltInFunctions lines 4938-4946)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_ExponentPadding_FourDigits()
+    {
+        Assert.Equal("\"1.23e-0003\"", Eval("""$formatNumber(0.00123, "0.00e0000")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber percent/per-mille scaling
+    // (BuiltInFunctions lines 5042-5048)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_PercentScaling()
+    {
+        Assert.Equal("\"75%\"", Eval("""$formatNumber(0.75, "#0%")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber digit family replacement
+    // (BuiltInFunctions lines 5094-5110)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_ArabicDigitFamily()
+    {
+        // picture uses Arabic-Indic zero-digit; result is in that digit family
+        string result = Eval("""$formatNumber(42, "#\u0660\u0660", {"zero-digit":"\u0660"})""");
+        Assert.Contains("\u0664", result); // Arabic-Indic 4
+        Assert.Contains("\u0662", result); // Arabic-Indic 2
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber zero-digit padding
+    // (BuiltInFunctions lines 5146-5153)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_ZeroDigitPadding()
+    {
+        Assert.Equal("\"01.000\"", Eval("""$formatNumber(1, "#00.000")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber grouping separator insertion
+    // (BuiltInFunctions lines 5158-5165)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_GroupingSeparatorInsertion()
+    {
+        Assert.Equal("\"1,234,567\"", Eval("""$formatNumber(1234567, "#,##0")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber exponent appending
+    // (BuiltInFunctions lines 5193-5202)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_ExponentAppended()
+    {
+        Assert.Equal("\"1.23e5\"", Eval("""$formatNumber(123000, "0.00e0")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber negative exponent
+    // (BuiltInFunctions lines 5062-5087)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_NegativeExponent()
+    {
+        Assert.Equal("\"-1.23e-3\"", Eval("""$formatNumber(-0.00123, "0.00e0")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber exponent-separator option
+    // (BuiltInFunctions lines 4583-4589, 4660-4664)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_CustomExponentSeparator()
+    {
+        Assert.Equal("\"1.2E3\"", Eval("""$formatNumber(1234.5, "0.0E0", {"exponent-separator":"E"})"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber custom minus-sign option
+    // (BuiltInFunctions lines 4583-4589)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_CustomMinusSign()
+    {
+        string result = Eval("""$formatNumber(-42, "0", {"minus-sign":"\u2212"})""");
+        Assert.Contains("\u2212", result); // Unicode minus sign
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber error: no mantissa digit (D3085)
+    // (BuiltInFunctions lines 4733-4737)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_NoMantissaDigit_ThrowsD3085()
+    {
+        EvalThrows("""$formatNumber(42, ",")""", "null", "D3085");
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber error: exponent only digit family chars (D3093)
+    // (BuiltInFunctions lines 4804-4817)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_ExponentOptionalDigit_ThrowsD3093()
+    {
+        EvalThrows("""$formatNumber(42, "0e#")""", "null", "D3093");
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber error: integer trailing grouping sep (D3088)
+    // (BuiltInFunctions lines 4758-4763)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_IntegerTrailingGroupingSep_ThrowsD3088()
+    {
+        EvalThrows("""$formatNumber(42, "#,")""", "null", "D3088");
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber fractional grouping (simple valid case)
+    // (BuiltInFunctions lines 5169-5173)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_FractionalGrouping()
+    {
+        Assert.Equal("\"0.1,23\"", Eval("""$formatNumber(0.123456, "#0.0,00")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $formatNumber fractional grouping — was a bug (fixed), now passes
+    // (BuiltInFunctions line 4884, FormatNumberPicture line 351)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FormatNumber_FractionalGrouping_LargeInput()
+    {
+        // Was throwing ArgumentOutOfRangeException before fix.
+        // Reference returns "0.123,457".
+        Assert.Equal(
+            "\"0.123,457\"",
+            Eval("""$formatNumber(0.123456789, "#0.000,000")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $decodeUrlComponent invalid percent encoding
+    // (BuiltInFunctions lines 4429-4444)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void DecodeUrlComponent_InvalidPercentHex_ThrowsD3140()
+    {
+        EvalThrows("""$decodeUrlComponent("test%ZZvalue")""", "null", "D3140");
+    }
+
+    [Fact]
+    public void DecodeUrlComponent_TruncatedPercent_ThrowsD3140()
+    {
+        EvalThrows("""$decodeUrlComponent("test%2")""", "null", "D3140");
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $match context binding (1 arg variant)
+    // (BuiltInFunctions lines 3119-3123)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Match_ContextBinding_ViaApply()
+    {
+        Assert.Equal(
+            """{"match":"world","index":6,"groups":[]}""",
+            Eval("""("hello world" ~> $match(/world/))"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Per-element boolean filter on arrays
+    // (FunctionalCompiler lines 5545-5643 — ApplyPerElementFilterStages)
+    // Requires multi-step path where stepIdx > 0 has a filter
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void PerElementFilter_NumericIndex_OnNestedArrays()
+    {
+        // data is array, .items[0] applies per-element at stepIdx > 0
+        Assert.Equal(
+            """["A","C"]""",
+            Eval("""data.items[0]""",
+                """{"data":[{"items":["A","B"]},{"items":["C","D"]}]}"""));
+    }
+
+    [Fact]
+    public void PerElementFilter_NegativeIndex_OnNestedArrays()
+    {
+        Assert.Equal(
+            """["B","D"]""",
+            Eval("""data.items[-1]""",
+                """{"data":[{"items":["A","B"]},{"items":["C","D"]}]}"""));
+    }
+
+    [Fact]
+    public void PerElementFilter_ArrayOfIndices_OnNestedArrays()
+    {
+        Assert.Equal(
+            """["A","C","E","G"]""",
+            Eval("""data.items[[0,2]]""",
+                """{"data":[{"items":["A","B","C","D"]},{"items":["E","F","G"]}]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Per-element sort then flatten nested arrays
+    // (FunctionalCompiler lines 5463-5498 — sort flattening path)
+    // Requires multi-step path through arrays with sort
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void PerElementSort_FlattenNestedPath()
+    {
+        Assert.Equal(
+            """[{"val":1},{"val":2},{"val":3}]""",
+            Eval("""data.items^(val)""",
+                """{"data":[{"items":[{"val":3},{"val":1}]},{"items":[{"val":2}]}]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Hex/binary/octal number parsing via $number
+    // (FunctionalCompiler lines 8740-8796 on net10.0)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Number_HexViaCoerce()
+    {
+        Assert.Equal("255", Eval("""$number("0xFF")"""));
+    }
+
+    [Fact]
+    public void Number_BinaryViaCoerce()
+    {
+        Assert.Equal("10", Eval("""$number("0b1010")"""));
+    }
+
+    [Fact]
+    public void Number_OctalViaCoerce()
+    {
+        Assert.Equal("63", Eval("""$number("0o77")"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Path through nested arrays (FunctionalCompiler lines 1966-1980)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void PathThroughNestedArrays_Flattens()
+    {
+        Assert.Equal(
+            "[1,2,3]",
+            Eval("""a.b.c.d""", """{"a":[{"b":{"c":[{"d":1},{"d":2}]}},{"b":{"c":{"d":3}}}]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Object with negative number constant
+    // (FunctionalCompiler lines 429-434)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void ObjectConstructor_NegativeConstant()
+    {
+        Assert.Equal("""{"x":-42}""", Eval("""{"x":-42}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Fused array-of-objects construction
+    // (FunctionalCompiler lines 6904-6943)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void FusedArrayOfObjects_WithPathPrefix()
+    {
+        Assert.Equal(
+            """[{"id":"O1","prod":"W"},{"id":"O2","prod":"G"}]""",
+            Eval("""Account.Order.{"id":OrderID,"prod":Product}""",
+                """{"Account":{"Order":[{"OrderID":"O1","Product":"W"},{"OrderID":"O2","Product":"G"}]}}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Property map pre-building for large objects
+    // (FunctionalCompiler lines 1694-1713)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void PropertyMap_LargeObjects_Lookup()
+    {
+        Assert.Equal(
+            """["A","B"]""",
+            Eval("""items.name""",
+                """{"items":[{"name":"A","a":1,"b":2,"c":3,"d":4,"e":5,"f":6,"g":7},{"name":"B","a":1,"b":2,"c":3,"d":4,"e":5,"f":6,"g":7}]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Equality predicate filter with array recursion
+    // (FunctionalCompiler lines 1645-1663)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void EqualityPredicate_ArrayRecursion()
+    {
+        Assert.Equal(
+            "[1,3]",
+            Eval("""items[type="x"].val""",
+                """{"items":[{"type":"x","val":1},{"type":"y","val":2},{"type":"x","val":3}]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Sort then filter stages
+    // (FunctionalCompiler lines 5959-5981)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Sort_ThenFilter_Stages()
+    {
+        Assert.Equal(
+            """[{"val":3},{"val":4}]""",
+            Eval("""items^(val)[val > 2]""",
+                """{"items":[{"val":3},{"val":1},{"val":4},{"val":2}]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $replace with function callback
+    // (FunctionalCompiler lines 8287-8296)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Replace_WithFunctionCallback_Uppercases()
+    {
+        Assert.Equal(
+            "\"heLLo\"",
+            Eval("""$replace("hello", /l/, function($m){$uppercase($m.match)})"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // $match with date capture groups
+    // (FunctionalCompiler lines 9119-9126)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Match_DateCaptureGroups()
+    {
+        string result = Eval("""$match("2023-01-15", /(\d{4})-(\d{2})-(\d{2})/)""");
+        Assert.Contains("\"match\":\"2023-01-15\"", result);
+        Assert.Contains("\"groups\":[\"2023\",\"01\",\"15\"]", result);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 3: Data-driven coverage targeting
+    // Verified expressions that hit specific uncovered code paths
+    // ═══════════════════════════════════════════════════════════════
+
+    // --- FC TryCoerceToNumber hex/binary/octal via $formatNumber first arg ---
+    // (FunctionalCompiler lines 8649-8658, 8740-8796: TryParseSpecialRadix)
+
+    [Theory]
+    [InlineData("$formatNumber(\"0xFF\", \"#\")", "\"255\"")]
+    [InlineData("$formatNumber(\"0b1010\", \"#\")", "\"10\"")]
+    [InlineData("$formatNumber(\"0o77\", \"#\")", "\"63\"")]
+    public void FormatNumber_HexBinaryOctalStringCoercion(string expression, string expected)
+    {
+        Assert.Equal(expected, Eval(expression));
+    }
+
+    // --- FC ApplyFocusStages numeric predicate from string ---
+    // (FunctionalCompiler lines 5548-5643: non-boolean, non-constant-int predicates)
+
+    [Theory]
+    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "\"b\"")]
+    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "\"b\"")]
+    public void FocusStages_StringPredicateCoercedToNumericIndex(string expression, string data, string expected)
+    {
+        Assert.Equal(expected, Eval(expression, data));
+    }
+
+    // --- FC ApplyStages string predicate coercion ---
+    // (FunctionalCompiler lines 5278-5340: numeric index from string)
+
+    [Fact]
+    public void ApplyStages_StringPredicateCoercedToIndex()
+    {
+        Assert.Equal("20", Eval("[10,20,30][\"1\"]"));
+    }
+
+    [Fact]
+    public void ApplyStages_HexStringPredicateCoercedToIndex()
+    {
+        Assert.Equal("20", Eval("[10,20,30][\"0x01\"]"));
+    }
+
+    // --- BF FormatNumber runtime path (non-constant picture) ---
+    // (BuiltInFunctions lines 4913-4934: minInt==0 && maxFrac==0 etc.)
+
+    [Theory]
+    [InlineData("$formatNumber(42, prefix & \"#\")", "\"42\"")]
+    [InlineData("$formatNumber(0.5, prefix & \".###\")", "\".5\"")]
+    [InlineData("$formatNumber(12345, prefix & \"#,###\")", "\"12,345\"")]
+    [InlineData("$formatNumber(0.5, prefix & \"#%\")", "\"50%\"")]
+    [InlineData("$formatNumber(0.5, prefix & \"0.00\")", "\"0.50\"")]
+    public void FormatNumber_RuntimePath_NonConstantPicture(string expression, string expected)
+    {
+        Assert.Equal(expected, Eval(expression, "{\"prefix\":\"\"}"));
+    }
+
+    // --- Per-element filter with numeric index on nested arrays ---
+    // (FunctionalCompiler lines 5859-5920: ApplyPerElementFilterStages constant-int)
+
+    [Theory]
+    [InlineData("data.items[0]", "[\"A\",\"C\"]")]
+    [InlineData("data.items[-1]", "[\"B\",\"D\"]")]
+    public void PerElementFilter_ConstantIntIndex_NestedArrays(string expression, string expected)
+    {
+        Assert.Equal(expected, Eval(expression, "{\"data\":[{\"items\":[\"A\",\"B\"]},{\"items\":[\"C\",\"D\"]}]}"));
+    }
+
+    // --- Per-element sort on nested arrays ---
+    // (FunctionalCompiler lines 5462-5498: sort stage in per-element context)
+
+    [Fact]
+    public void PerElementSort_NestedArrays()
+    {
+        Assert.Equal(
+            "[{\"val\":1},{\"val\":2},{\"val\":3}]",
+            Eval("data.items^(val)", "{\"data\":[{\"items\":[{\"val\":3},{\"val\":1}]},{\"items\":[{\"val\":2}]}]}"));
+    }
+
+    // --- BF FormatNumber runtime exponent paths ---
+    // (BuiltInFunctions lines 4917-4918 expPresent branch, 5062-5087 exponent calc)
+
+    [Fact]
+    public void FormatNumber_RuntimePath_ExponentHash()
+    {
+        // Non-constant "#e0" → BF runtime path, triggers expPresent branch at 4917
+        Assert.Equal("\"0.e2\"", Eval("$formatNumber(42, prefix & \"#e0\")", "{\"prefix\":\"\"}"));
+    }
+
+    [Fact]
+    public void FormatNumber_RuntimePath_ExponentPadding()
+    {
+        // Non-constant "0.00e0000" → hits exponent mantissa scaling at 5062-5087
+        Assert.Equal("\"1.23e-0003\"", Eval("$formatNumber(0.00123, prefix & \"0.00e0000\")", "{\"prefix\":\"\"}"));
+    }
+
+    // --- FC ApplyFocusStages array-of-indices predicate ---
+    // (FunctionalCompiler lines 5559-5625: predicate returns an array of numbers)
+
+    [Fact]
+    public void FocusStages_ArrayOfIndicesPredicate()
+    {
+        Assert.Equal(
+            "[\"a\",\"c\"]",
+            Eval("items@$v[[0,2]]", "{\"items\":[\"a\",\"b\",\"c\",\"d\"]}"));
+    }
+
+    [Fact]
+    public void FocusStages_ArrayOfIndicesPredicate_MultiElement()
+    {
+        Assert.Equal(
+            "[\"a\",\"b\"]",
+            Eval("Account.Order@$o[[0,1]]", "{\"Account\":{\"Order\":[\"a\",\"b\",\"c\"]}}"));
+    }
+
+    // --- BF HasInvalidPercentEncoding ---
+    // (BuiltInFunctions lines 4429-4444)
+
+    [Fact]
+    public void DecodeUrlComponent_BadHexAfterPercent_ThrowsD3140()
+    {
+        Assert.Throws<JsonataException>(() => Eval("$decodeUrlComponent(\"%ZZ\")"));
+    }
+
+    [Fact]
+    public void DecodeUrlComponent_IncompletePercent_ThrowsD3140()
+    {
+        Assert.Throws<JsonataException>(() => Eval("$decodeUrlComponent(\"a%2\")"));
+    }
+
+    // --- FC CompileFusedArrayOfObjects ---
+    // (FunctionalCompiler lines 6904-6943: path inside [] with object constructor)
+
+    [Fact]
+    public void FusedArrayOfObjects_WithPrefixPathInArrayCtor()
+    {
+        Assert.Equal(
+            "[{\"id\":\"A\",\"v\":1},{\"id\":\"B\",\"v\":2}]",
+            Eval("[items.{\"id\": id, \"v\": val}]",
+                "{\"items\":[{\"id\":\"A\",\"val\":1},{\"id\":\"B\",\"val\":2}]}"));
+    }
+
+    // --- BF FormatNumber negative sub-picture ---
+    // (BuiltInFunctions lines 4982-4995: separate negative format)
+
+    [Theory]
+    [InlineData("$formatNumber(-42, prefix & \"#;(#)\")", "\"(42)\"")]
+    [InlineData("$formatNumber(-3.14, prefix & \"0.00;neg 0.00\")", "\"neg 3.14\"")]
+    public void FormatNumber_RuntimePath_NegativeSubPicture(string expression, string expected)
+    {
+        Assert.Equal(expected, Eval(expression, "{\"prefix\":\"\"}"));
+    }
+
+    // --- BF FormatNumber custom options via runtime path ---
+    // (BuiltInFunctions lines 4583-4589: exponent-separator, minus-sign etc.)
+
+    [Fact]
+    public void FormatNumber_RuntimePath_CustomOptions()
+    {
+        Assert.Equal(
+            "\"42\"",
+            Eval("$formatNumber(42, prefix & \"#\", {\"exponent-separator\":\"E\",\"minus-sign\":\"~\"})", "{\"prefix\":\"\"}"));
+    }
+
+    // --- FC equality predicate in fused path ---
+    // (FunctionalCompiler lines 1645-1663)
+
+    [Fact]
+    public void EqualityPredicate_InFusedPath()
+    {
+        Assert.Equal(
+            "[\"A\",\"C\"]",
+            Eval("items[type=\"x\"].name",
+                "{\"items\":[{\"type\":\"x\",\"name\":\"A\"},{\"type\":\"y\",\"name\":\"B\"},{\"type\":\"x\",\"name\":\"C\"}]}"));
+    }
+
+    // --- FC property map building ---
+    // (FunctionalCompiler lines 1694-1713: arrayLen * remainingSteps > 10, propCount > 6)
+
+    [Fact]
+    public void PropertyMap_LargeArrayOfManyPropertyObjects()
+    {
+        // 20 objects with 8 properties each; traversal triggers property map building
+        string data = "{\"items\":[";
+        for (int i = 0; i < 20; i++)
+        {
+            if (i > 0) data += ",";
+            data += $"{{\"a\":{i},\"b\":{i},\"c\":{i},\"d\":{i},\"e\":{i},\"f\":{i},\"g\":{i},\"h\":{i}}}";
+        }
+
+        data += "]}";
+        string result = Eval("items.a", data);
+        Assert.Contains("0", result);
+        Assert.Contains("19", result);
+    }
+
+    // --- FC sort in focus context ---
+    // (FunctionalCompiler lines 5463-5498: sort stage with focus variable)
+
+    [Fact]
+    public void FocusSort_OrdersByField()
+    {
+        Assert.Equal(
+            "[{\"price\":10},{\"price\":20},{\"price\":30}]",
+            Eval("Account.Order@$o^(price)",
+                "{\"Account\":{\"Order\":[{\"price\":30},{\"price\":10},{\"price\":20}]}}"));
+    }
+
+    // --- FC ApplySortStagesOnly ---
+    // (FunctionalCompiler lines 5959-5981: multi-step path with sort at step > 0)
+
+    [Fact]
+    public void ApplySortStagesOnly_SortAtStep1()
+    {
+        Assert.Equal(
+            "[{\"k\":1},{\"k\":2},{\"k\":3}]",
+            Eval("a.b^(k)",
+                "{\"a\":[{\"b\":[{\"k\":3},{\"k\":1},{\"k\":2}]}]}"));
+    }
+
+    // --- FC EvalFromStepInto with equality predicate ---
+    // (FunctionalCompiler lines 1644-1663: Into variant enters eq predicate from CollectAndContinueInto)
+
+    [Fact]
+    public void EvalFromStepInto_EqualityPredicateViaNestedArray()
+    {
+        // outer is array at step 1 → CollectAndContinueInto → EvalFromStepInto at step 2
+        // items[type="x"] at step 2 has eq pred → enters EvalFromStepInto line 1645 (array case)
+        Assert.Equal(
+            "[\"A\",\"C\"]",
+            Eval("outer.inner.items[type=\"x\"].name",
+                "{\"outer\":[{\"inner\":{\"items\":[{\"type\":\"x\",\"name\":\"A\"},{\"type\":\"y\",\"name\":\"B\"}]}},{\"inner\":{\"items\":[{\"type\":\"x\",\"name\":\"C\"}]}}]}"));
+    }
+
+    [Fact]
+    public void EvalFromStepInto_EqualityPredicate_SingletonObject()
+    {
+        // EvalFromStepInto line 1652: items is a single object matching predicate
+        Assert.Equal(
+            "\"A\"",
+            Eval("outer.inner.items[type=\"x\"].name",
+                "{\"outer\":[{\"inner\":{\"items\":{\"type\":\"x\",\"name\":\"A\"}}}]}"));
+    }
+
+    [Fact]
+    public void EvalFromStepInto_EqualityPredicate_SingletonNoMatch()
+    {
+        // EvalFromStepInto line 1654-1656: singleton object does NOT match
+        string result = Eval("outer.inner.items[type=\"x\"].name",
+            "{\"outer\":[{\"inner\":{\"items\":{\"type\":\"y\",\"name\":\"B\"}}}]}");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void EvalFromStepInto_EqualityPredicate_NonObjectNonArray()
+    {
+        // EvalFromStepInto line 1659-1661: items is a number (not object or array)
+        string result = Eval("outer.inner.items[type=\"x\"].name",
+            "{\"outer\":[{\"inner\":{\"items\":42}}]}");
+        Assert.Equal("undefined", result);
+    }
+
+    // --- FC CollectAndContinueInto property map building ---
+    // (FunctionalCompiler lines 1694-1713: arrayLen * remainingSteps > 10, propCount > 6)
+
+    [Fact]
+    public void PropertyMap_LargeArrayViaPredicatePath()
+    {
+        // groups[0] uses predicate → EvalPropertyChainWithPredicates path
+        // items has 20 objects with 8 properties → triggers property map building
+        string items = string.Join(",", Enumerable.Range(0, 20).Select(i =>
+            $"{{\"val\":{i},\"b\":{i},\"c\":{i},\"d\":{i},\"e\":{i},\"f\":{i},\"g\":{i},\"h\":{i}}}"));
+        string data = $"{{\"groups\":[{{\"items\":[{items}]}}]}}";
+        string result = Eval("groups[0].items.val", data);
+        Assert.Contains("0", result);
+        Assert.Contains("19", result);
+    }
+
+    // --- FC sort as stage: DEAD CODE ---
+    // The parser never adds SortNode to StepAnnotations.Stages — sort is always
+    // a separate SortNode step in the path. Therefore:
+    // - ApplyFocusStages sort branch (lines 5463-5498): unreachable
+    // - ApplySortStagesOnly body (lines 5959-5981): unreachable (always returns at 5955)
+    // - CompilePath SortNode stage case (lines 2077-2083): unreachable
+    // - WrapWithStages SortNode case (lines 187-189): unreachable
+
+    [Fact]
+    public void FocusSort_WithProjection()
+    {
+        Assert.Equal(
+            "[\"A\",\"B\",\"C\"]",
+            Eval("data.Order@$o^(price).$o.product",
+                "{\"data\":{\"Order\":[{\"product\":\"C\",\"price\":30},{\"product\":\"A\",\"price\":10},{\"product\":\"B\",\"price\":20}]}}"));
+    }
+
+    // --- BF FormatNumber custom options: percent, per-mille, digit, pattern-separator ---
+    // (BuiltInFunctions lines 4585-4589)
+
+    [Fact]
+    public void FormatNumber_RuntimePath_CustomPercentOption()
+    {
+        // "percent":"%%"  makes '%' a passive char → no multiply-by-100
+        Assert.Equal(
+            "\"0%\"",
+            Eval("$formatNumber(0.42, prefix & \"#%\", {\"percent\":\"%%\"})", "{\"prefix\":\"\"}"));
+    }
+
+    [Fact]
+    public void FormatNumber_RuntimePath_CustomPerMilleOption()
+    {
+        // "per-mille" option is accepted (line 4586)
+        string result = Eval("$formatNumber(0.042, prefix & \"#\u2030\", {\"per-mille\":\"\u2030\"})", "{\"prefix\":\"\"}");
+        Assert.Contains("42", result);
+    }
+
+    [Fact]
+    public void FormatNumber_RuntimePath_CustomZeroDigitOption()
+    {
+        // "zero-digit" changes the zero character (line 4587)
+        string result = Eval("$formatNumber(42, prefix & \"#\", {\"zero-digit\":\"\u0660\"})", "{\"prefix\":\"\"}");
+        Assert.NotNull(result);
+        Assert.NotEqual("undefined", result);
+    }
+
+    [Fact]
+    public void FormatNumber_RuntimePath_CustomDigitOption()
+    {
+        // "digit":"?"  makes '?' the optional-digit char instead of '#'
+        Assert.Equal(
+            "\"42\"",
+            Eval("$formatNumber(42, prefix & \"?0\", {\"digit\":\"?\"})", "{\"prefix\":\"\"}"));
+    }
+
+    [Fact]
+    public void FormatNumber_RuntimePath_CustomPatternSeparator()
+    {
+        // "pattern-separator":"|"  splits sub-pictures on '|' instead of ';'
+        Assert.Equal(
+            "\"neg 42\"",
+            Eval("$formatNumber(-42, prefix & \"#|neg #\", {\"pattern-separator\":\"|\"})", "{\"prefix\":\"\"}"));
+    }
+
+    // ==============================================================
+    // Round 5: Wider FC + BF coverage — targets identified from
+    // coverage8 Cobertura XML analysis
+    // ==============================================================
+
+    // --- FC 657-680: CompileBufferFusedZipMixed2 (constant + chain) ---
+
+    [Fact]
+    public void Zip_ConstantAndChain()
+    {
+        // $zip with one constant array and one property chain triggers
+        // CompileBufferFusedZipMixed2 (const-first path)
+        Assert.Equal(
+            "[[1,\"a\"],[2,\"b\"],[3,\"c\"]]",
+            Eval("$zip([1,2,3], items)", "{\"items\":[\"a\",\"b\",\"c\"]}"));
+    }
+
+    [Fact]
+    public void Zip_ChainAndConstant()
+    {
+        // const-second path
+        Assert.Equal(
+            "[[\"a\",1],[\"b\",2],[\"c\",3]]",
+            Eval("$zip(items, [1,2,3])", "{\"items\":[\"a\",\"b\",\"c\"]}"));
+    }
+
+    // --- FC 686-709: CompileBufferFusedZip3 (3 property chains) ---
+
+    [Fact]
+    public void Zip_ThreeChains()
+    {
+        Assert.Equal(
+            "[[1,4,7],[2,5,8],[3,6,9]]",
+            Eval("$zip(a, b, c)", "{\"a\":[1,2,3],\"b\":[4,5,6],\"c\":[7,8,9]}"));
+    }
+
+    // --- FC 8023-8085: CompileFocusSortStage (focus + sort where key refs focus var) ---
+
+    [Fact]
+    public void FocusSort_KeyReferencesFocusVar()
+    {
+        // items@$e^($e.name) — sort key uses $e, requires CompileFocusSortStage
+        Assert.Equal(
+            "[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]",
+            Eval("items@$e^($e.name)", "{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]}"));
+    }
+
+    [Fact]
+    public void FocusSort_KeyReferencesFocusVar_Descending()
+    {
+        Assert.Equal(
+            "[{\"name\":\"c\"},{\"name\":\"b\"},{\"name\":\"a\"}]",
+            Eval("items@$e^(>$e.name)", "{\"items\":[{\"name\":\"a\"},{\"name\":\"c\"},{\"name\":\"b\"}]}"));
+    }
+
+    [Fact]
+    public void FocusSort_SingleElement()
+    {
+        // <=1 element triggers the early-return path in CompileFocusSortStage
+        // (returns input unchanged when nothing to sort)
+        string data = "{\"items\":[{\"name\":\"a\"}]}";
+        string result = Eval("items@$e^($e.name)", data);
+        Assert.Contains("\"name\"", result);
+    }
+
+    // --- FC 7877-7944: CompileFilter (standalone filter) ---
+
+    [Fact]
+    public void Filter_Standalone_NumericIndex()
+    {
+        // $a[0] — standalone numeric filter on variable
+        Assert.Equal(
+            "10",
+            Eval("($a := [10,20,30]; $a[0])", "{}"));
+    }
+
+    [Fact]
+    public void Filter_Standalone_BooleanTrue()
+    {
+        Assert.Equal(
+            "42",
+            Eval("($a := 42; $a[true])", "{}"));
+    }
+
+    [Fact]
+    public void Filter_Standalone_BooleanFalse()
+    {
+        // false predicate → undefined
+        Assert.Equal(
+            "undefined",
+            Eval("($a := 42; $a[false])", "{}"));
+    }
+
+    [Fact]
+    public void Filter_Standalone_MultiValueIndex()
+    {
+        // Multi-value filter = array of indices
+        Assert.Equal(
+            "[10,30]",
+            Eval("($a := [10,20,30]; $a[[0,2]])", "{}"));
+    }
+
+    [Fact]
+    public void Filter_Standalone_Truthiness()
+    {
+        Assert.Equal(
+            "42",
+            Eval("($a := 42; $a[\"yes\"])", "{}"));
+    }
+
+    [Fact]
+    public void Filter_Standalone_NegativeIndex()
+    {
+        Assert.Equal(
+            "30",
+            Eval("($a := [10,20,30]; $a[-1])", "{}"));
+    }
+
+    // --- BF 6251-6266: CodePointsToString with supplementary plane chars ---
+
+    [Fact]
+    public void Substring_SupplementaryPlane()
+    {
+        // U+1F600 (😀) is a single code point but 2 UTF-16 chars (surrogate pair).
+        // $substring counts code points, so index 1 should be the char after 😀.
+        string data = "{\"s\":\"\\uD83D\\uDE00AB\"}";
+        // $substring(s, 1, 1) → "A" (code point 1 = 'A')
+        Assert.Equal("\"A\"", Eval("$substring(s, 1, 1)", data));
+    }
+
+    [Fact]
+    public void Substring_MultipleSupplementaryPlane()
+    {
+        // Two emoji followed by ASCII
+        string data = "{\"s\":\"\\uD83D\\uDE00\\uD83D\\uDE01X\"}";
+        // $substring(s, 2) → "X"
+        Assert.Equal("\"X\"", Eval("$substring(s, 2)", data));
+    }
+
+    [Fact]
+    public void Substring_SupplementaryPlaneSlice()
+    {
+        // Slice from the middle of a supplementary-plane string
+        string data = "{\"s\":\"A\\uD83D\\uDE00B\\uD83D\\uDE01C\"}";
+        // Code points: A(0) 😀(1) B(2) 😁(3) C(4)
+        // $substring(s, 1, 3) → "😀B😁"
+        string result = Eval("$substring(s, 1, 3)", data);
+        // Verify it returned 3 code points starting from index 1
+        Assert.Equal("3", Eval("$length($substring(s, 1, 3))", data));
+    }
+
+    // --- BF 4429-4444 + closure: HasInvalidPercentEncoding string overload ---
+
+    [Fact]
+    public void DecodeUrlComponent_NonStringInput()
+    {
+        // Passing a number to $decodeUrlComponent goes through CoerceElementToString
+        // then calls HasInvalidPercentEncoding(string) — the string overload
+        Assert.Equal("\"42\"", Eval("$decodeUrlComponent(42)", "{}"));
+    }
+
+    [Fact]
+    public void DecodeUrlComponent_BooleanInput()
+    {
+        Assert.Equal("\"true\"", Eval("$decodeUrlComponent(true)", "{}"));
+    }
+
+    [Fact]
+    public void DecodeUrl_NonStringInput()
+    {
+        // Same pattern for the parallel $decodeUrl function
+        Assert.Equal("\"42\"", Eval("$decodeUrl(42)", "{}"));
+    }
+
+    // --- BF 3119-3123: $split with 1 argument (context binding) ---
+    // Note: The 1-arg form of $split is compiled such that the context argument is
+    // injected at compile time. The lines at BF 3119-3123 handle the parsing of the
+    // 1-arg vs 2-arg vs 3-arg forms during compilation.
+
+    // --- BF 5279-5281: $formatBase with value 0 ---
+
+    [Fact]
+    public void FormatBase_Zero()
+    {
+        Assert.Equal("\"0\"", Eval("$formatBase(0, 2)", "{}"));
+        Assert.Equal("\"0\"", Eval("$formatBase(0, 16)", "{}"));
+    }
+
+    // --- BF 4853-4858: GCD for grouping + BF 5169-5173: irregular grouping ---
+
+    [Fact]
+    public void FormatNumber_RuntimePath_IrregularGrouping()
+    {
+        // Irregular grouping pattern #,##,### — not regular spacing
+        // Forces non-regular grouping path (BF 5169-5173)
+        Assert.Equal(
+            "\"12,34,567\"",
+            Eval("$formatNumber(1234567, prefix & \"#,##,###\")", "{\"prefix\":\"\"}"));
+    }
+
+    // --- BF 6166-6171: Multi-value sequence into array builder ---
+
+    [Fact]
+    public void Append_MultiValueToArray()
+    {
+        // $append where second arg produces multi-value sequence
+        Assert.Equal(
+            "[1,2,3,4]",
+            Eval("$append([1,2], [3,4])", "{}"));
+    }
+
+    // --- FC 1015-1028: LookupField with array input ---
+
+    [Fact]
+    public void LookupField_ArrayInput()
+    {
+        // When input to a field lookup is an array, iterates and collects
+        Assert.Equal(
+            "[\"a\",\"b\",\"c\"]",
+            Eval("items.name", "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]}"));
+    }
+
+    // --- FC 1567-1581: CollectAndContinue non-array child + array descent ---
+
+    [Fact]
+    public void PropertyChain_NestedArrayDescent()
+    {
+        // Multi-level path: items is array → for each, get details.name
+        Assert.Equal(
+            "[\"x\",\"y\"]",
+            Eval("items.details.name",
+                "{\"items\":[{\"details\":{\"name\":\"x\"}},{\"details\":{\"name\":\"y\"}}]}"));
+    }
+
+    [Fact]
+    public void PropertyChain_NestedArrayWithArrayChild()
+    {
+        // Property that is an array inside an array of objects
+        Assert.Equal(
+            "[1,2,3,4]",
+            Eval("items.values",
+                "{\"items\":[{\"values\":[1,2]},{\"values\":[3,4]}]}"));
+    }
+
+    // --- FC 4085-4109: Multi-element input in path evaluation ---
+
+    [Fact]
+    public void Path_MultiElementInput()
+    {
+        // Three-level deep path where middle level is an array
+        Assert.Equal(
+            "[1,2,3]",
+            Eval("data.items.value",
+                "{\"data\":{\"items\":[{\"value\":1},{\"value\":2},{\"value\":3}]}}"));
+    }
+
+    // --- FC 2975-2999: Multi-parent focus context ---
+
+    [Fact]
+    public void Focus_MultiParentContext()
+    {
+        // Focus variable with multi-element parent context
+        Assert.Equal(
+            "[\"a\",\"b\"]",
+            Eval("items@$x.$x.name",
+                "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]}"));
+    }
+
+    // --- FC 6798-6833: Array constructor tuple paths ---
+
+    [Fact]
+    public void ArrayConstructor_TupleSingleton()
+    {
+        // Array literal that contains a singleton array element
+        Assert.Equal(
+            "[1,2,\"a\",\"b\"]",
+            Eval("[items, names]",
+                "{\"items\":[1,2],\"names\":[\"a\",\"b\"]}"));
+    }
+
+    [Fact]
+    public void ArrayConstructor_TupleMultiValue()
+    {
+        // Array literal with multi-value expression
+        Assert.Equal(
+            "[1,2,3]",
+            Eval("[data.items.value]",
+                "{\"data\":{\"items\":[{\"value\":1},{\"value\":2},{\"value\":3}]}}"));
+    }
+
+    // --- FC 5344-5359: Multi-result numeric predicate in ApplyStages ---
+
+    [Fact]
+    public void Filter_MultiResultNumericPredicate()
+    {
+        // Filter where predicate returns multiple numeric values (array of indices)
+        Assert.Equal(
+            "[\"a\",\"c\"]",
+            Eval("items[[0,2]]", "{\"items\":[\"a\",\"b\",\"c\",\"d\"]}"));
+    }
+
+    // --- FC 5597-5625: Multi-result numeric predicate in ApplyFocusStages ---
+
+    [Fact]
+    public void FocusFilter_MultiResultNumericPredicate()
+    {
+        Assert.Equal(
+            "[\"a\",\"c\"]",
+            Eval("items@$x[[0,2]]", "{\"items\":[\"a\",\"b\",\"c\",\"d\"]}"));
+    }
+
+    // --- FC 1966-1980: EvalPropertyChainIntoStatic with array ---
+
+    [Fact]
+    public void PropertyChainInto_ArrayAtIntermediateStep()
+    {
+        // Path into nested structure where intermediate value is an array
+        Assert.Equal(
+            "[\"x\",\"y\"]",
+            Eval("outer.items.name",
+                "{\"outer\":{\"items\":[{\"name\":\"x\"},{\"name\":\"y\"}]}}"));
+    }
+
+    // --- FC 5092-5105: ApplyStages index binding singleton array expansion ---
+
+    [Fact]
+    public void IndexBinding_SingletonArrayExpansion()
+    {
+        // Index binding (#$i) on a singleton array triggers expansion
+        Assert.Equal(
+            "[0,1,2]",
+            Eval("items#$i.$i",
+                "{\"items\":[\"a\",\"b\",\"c\"]}"));
+    }
+
+    // --- FC 5437-5450: ApplyFocusStages singleton array expansion ---
+
+    [Fact]
+    public void FocusStages_SingletonArrayExpansion()
+    {
+        // Focus on a singleton array with a filter stage
+        Assert.Equal(
+            "[\"a\",\"b\",\"c\"]",
+            Eval("items@$x",
+                "{\"items\":[\"a\",\"b\",\"c\"]}"));
+    }
+
+    // --- Dead code documentation ---
+    // The following FC ranges are confirmed dead code (parser never adds SortNode to Stages):
+    //   FC 186-194: WrapWithStages SortNode case
+    //   FC 2077-2084: CompilePath SortNode stage handling
+    //   FC 5188, 5192-5230: ApplyStages sort-as-stage
+    //   FC 5463-5498: ApplyFocusStages sort-as-stage
+    //   FC 5959-5981: ApplySortStagesOnly body
+    //   FC 3391-3409: Inner focus sort-as-stage
+    //
+    // The following are unreachable on net10.0 (#if/#else blocks):
+    //   BF 655-674: TryParseBinary(string) — only called from #else block
+    //   BF 701-720: TryParseOctal(string) — only called from #else block
+    //   BF 5707-5708: FormatIso8601Utc fallback — TryFormatIso8601Utc always succeeds on NET
+    //   BF 5721-5732: FormatIso8601WithOffset non-NET fallback
+    //   BF 6251-6266: CodePointsToString — inside #else block
+    //   FC 8688-8713: TryParseSpecialRadix #else
+    //
+    // BF 680-682: TryParseBinary(ReadOnlySpan) empty check — unreachable defensive code.
+    //   Caller checks s.Length > 2 before entering radix block, so Slice(2) is always non-empty.
+    // BF 726-728: TryParseOctal(ReadOnlySpan) empty check — same reason as above.
+    //
+    // BF 451-453: $string NaN/Infinity branch — unreachable from JSONata (no expression
+    //   produces NaN or Infinity as a JSON number value).
+    //
+    // BF 4494-4504: ValidateNoUnpairedSurrogates — unreachable via normal JSON input
+    //   (System.Text.Json replaces unpaired surrogates with U+FFFD during parsing)
+    //
+    // BF 4429-4444: HasInvalidPercentEncoding(string) — the function body is reachable
+    //   via $decodeUrlComponent(nonString) but the inner branch (4433-4441 where '%' is found)
+    //   is effectively unreachable because no standard type coerces to a string containing '%'.
+    //
+    // BF 3862-3863: SplitString sepElement type check — unreachable defensive code.
+    //   The compile-time lambda validates argument types (T0410) before calling SplitString.
+    //
+    // BF 3917-3919: SplitString searchStart > str.Length — unreachable defensive code.
+    //   IndexOf cannot match past the end of the string, so searchStart cannot exceed str.Length.
+    //
+    // BF 5769-5771: FormatIso8601WithOffset buffer overflow — defensive, the buffer is
+    //   always large enough for ISO 8601 format output.
+    //
+    // FC 7877-7944: CompileFilter (standalone) — DEAD CODE
+    //   The parser never produces a FilterNode as a top-level expression. FilterNode is always
+    //   added to StepAnnotations.Stages (Parser.cs line 1003). The Compile switch at FC line 119
+    //   handles it defensively, but the branch can never be reached.
+    //
+    // FC 8023-8085 + DisplayClass105_0/105_1: CompileFocusSortStage — DEAD CODE
+    //   Part of the sort-as-stage dead code. CompileFocusSortStage is called from line 2081
+    //   only when stage is SortNode, which never happens (parser never adds SortNode to Stages).
+    //
+    // FC 1015-1028: LookupField array branch — UNREACHABLE DEFENSIVE CODE
+    //   CompileName (FC 997) compiles a bare NameNode into LookupField. LookupField has an
+    //   array-mapping branch (line 1014-1028) for when input is an array. However, the parser
+    //   always wraps bare identifiers in a PathNode (Parser.cs line 842-846: "Fast path for
+    //   bare NameNode LHS: create PathNode directly"). PathNode compilation handles array
+    //   expansion via TryCompileSimplePropertyChain or the general path evaluation loop,
+    //   so LookupField only ever receives individual objects — never arrays. The array branch
+    //   is defensive code that cannot be reached through any expression the parser produces.
+
+    // --- FC 488-499: EscapeJsonStringContent escape characters ---
+    // These are triggered when constant arrays/objects contain strings with escape chars
+
+    [Fact]
+    public void ConstantArray_StringWithTab()
+    {
+        Assert.Equal(
+            "[\"hello\\tworld\"]",
+            Eval("[\"hello\\tworld\"]", "{}"));
+    }
+
+    [Fact]
+    public void ConstantArray_StringWithNewline()
+    {
+        Assert.Equal(
+            "[\"line1\\nline2\"]",
+            Eval("[\"line1\\nline2\"]", "{}"));
+    }
+
+    [Fact]
+    public void ConstantArray_StringWithBackslash()
+    {
+        Assert.Equal(
+            "[\"path\\\\file\"]",
+            Eval("[\"path\\\\file\"]", "{}"));
+    }
+
+    [Fact]
+    public void ConstantArray_StringWithQuote()
+    {
+        Assert.Equal(
+            "[\"say \\\"hello\\\"\"]",
+            Eval("[\"say \\\"hello\\\"\"]", "{}"));
+    }
+
+    // --- FC 429-434: SerializeConstantJson unary negation ---
+
+    [Fact]
+    public void ConstantArray_NegativeNumber()
+    {
+        Assert.Equal(
+            "[-42,-3.14]",
+            Eval("[-42, -3.14]", "{}"));
+    }
+
+    // --- FC 9052-9079: CreateNullElement, CreateStringElement, CreateBoolElement ---
+
+    [Fact]
+    public void NullLiteral_ReturnsNull()
+    {
+        Assert.Equal("null", Eval("null", "{}"));
+    }
+
+    [Fact]
+    public void BoolLiterals_ReturnCorrectly()
+    {
+        Assert.Equal("true", Eval("true", "{}"));
+        Assert.Equal("false", Eval("false", "{}"));
+    }
+
+    // --- FC 6433-6438: Number formatting with exponent ---
+
+    [Fact]
+    public void StringifySmallExponent()
+    {
+        Assert.Equal("\"1.23e-10\"", Eval("$string(1.23e-10)", "{}"));
+    }
+
+    // --- BF formatNumber picture validation error branches (D3080-D3093) ---
+    // These tests use CONSTANT pictures which are validated at compile time
+    // via FormatNumberPicture.Parse (FC line 7457). They verify the compiler
+    // path but do NOT hit BuiltInFunctions validation code.
+
+    [Fact]
+    public void FormatNumber_MultipleDecimalSeparators_ThrowsD3081()
+    {
+        EvalThrows("$formatNumber(42, \"0.0.0\")", "{}", "D3081");
+    }
+
+    [Fact]
+    public void FormatNumber_MultiplePercent_ThrowsD3082()
+    {
+        EvalThrows("$formatNumber(42, \"0%0%0\")", "{}", "D3082");
+    }
+
+    [Fact]
+    public void FormatNumber_MultiplePerMille_ThrowsD3083()
+    {
+        EvalThrows("$formatNumber(42, \"0\u20300\u20300\")", "{}", "D3083");
+    }
+
+    [Fact]
+    public void FormatNumber_MixPercentPerMille_ThrowsD3084()
+    {
+        EvalThrows("$formatNumber(42, \"0%\u20300\")", "{}", "D3084");
+    }
+
+    [Fact]
+    public void FormatNumber_NoDigitChars_ThrowsD3085()
+    {
+        EvalThrows("$formatNumber(42, \"---\")", "{}", "D3085");
+    }
+
+    [Fact]
+    public void FormatNumber_PassiveInsideActive_ThrowsD3086()
+    {
+        EvalThrows("$formatNumber(42, \"0 0\")", "{}", "D3086");
+    }
+
+    [Fact]
+    public void FormatNumber_GroupAdjacentDecimal_ThrowsD3087()
+    {
+        EvalThrows("$formatNumber(42, \"0,.0\")", "{}", "D3087");
+    }
+
+    [Fact]
+    public void FormatNumber_IntEndWithGroup_ThrowsD3088()
+    {
+        EvalThrows("$formatNumber(42, \"0,\")", "{}", "D3088");
+    }
+
+    [Fact]
+    public void FormatNumber_AdjacentGroups_ThrowsD3089()
+    {
+        EvalThrows("$formatNumber(42, \"0,,0\")", "{}", "D3089");
+    }
+
+    [Fact]
+    public void FormatNumber_MandatoryBeforeOptional_ThrowsD3090()
+    {
+        EvalThrows("$formatNumber(42, \"0#\")", "{}", "D3090");
+    }
+
+    [Fact]
+    public void FormatNumber_MandatoryAfterOptional_ThrowsD3091()
+    {
+        EvalThrows("$formatNumber(42, \"0.#0\")", "{}", "D3091");
+    }
+
+    [Fact]
+    public void FormatNumber_ExponentWithPercent_ThrowsD3086()
+    {
+        // "0E0%" — the validator detects passive chars between active chars (D3086)
+        // before it reaches the exponent+percent check (D3092)
+        EvalThrows("$formatNumber(42, \"0E0%\")", "{}", "D3086");
+    }
+
+    [Fact]
+    public void FormatNumber_ExponentNoDigit_AcceptsEmpty()
+    {
+        // "0E" — our implementation accepts this (exponent with empty exponent part)
+        // rather than throwing D3093
+        var result = Eval("$formatNumber(42, \"0E\")", "{}");
+        Assert.NotNull(result);
+    }
+
+    // --- BF formatNumber RUNTIME picture validation (D3080-D3092) ---
+    // These tests use NON-CONSTANT pictures via $string(pic) which forces the
+    // runtime path through BuiltInFunctions.FormatNumber (BF 4550+).
+    // The compiler cannot pre-parse $string(pic) so it falls through to the
+    // general built-in function invocation at runtime.
+
+    [Fact]
+    public void FormatNumberRuntime_MultiplePatternSeparators_ThrowsD3080()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0.00;-0.00;extra"}""",
+            "D3080");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_MultipleDecimalSeparators_ThrowsD3081()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0.0.0"}""",
+            "D3081");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_MultiplePercent_ThrowsD3082()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0%0%0"}""",
+            "D3082");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_MultiplePerMille_ThrowsD3083()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0\u20300\u20300"}""",
+            "D3083");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_MixPercentPerMille_ThrowsD3084()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0%\u20300"}""",
+            "D3084");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_NoDigitChars_ThrowsD3085()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"---"}""",
+            "D3085");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_PassiveInsideActive_ThrowsD3086()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0 0"}""",
+            "D3086");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_GroupAdjacentDecimal_ThrowsD3087()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0,.0"}""",
+            "D3087");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_IntEndWithGroup_ThrowsD3088()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0,"}""",
+            "D3088");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_AdjacentGroups_ThrowsD3089()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0,,0"}""",
+            "D3089");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_MandatoryBeforeOptional_ThrowsD3090()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0#"}""",
+            "D3090");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_MandatoryAfterOptional_ThrowsD3091()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0.#0"}""",
+            "D3091");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_ExponentWithPercent_ThrowsD3092()
+    {
+        EvalThrows(
+            "$formatNumber(42, $string(pic))",
+            """{"pic":"0e00%"}""",
+            "D3092");
+    }
+
+    [Fact]
+    public void FormatNumberRuntime_ValidPicture_ReturnsFormatted()
+    {
+        // Verify the runtime path works for valid pictures too
+        Assert.Equal(
+            "\"42.00\"",
+            Eval("$formatNumber(42, $string(pic))", """{"pic":"#,##0.00"}"""));
+    }
+
+    // --- BUG FIX: Fractional grouping separator in $formatNumber ---
+    // GetGroupingPositions passes integerPart as searchPart for fractional grouping,
+    // but grpPos came from the fractional part and may exceed integerPart.Length,
+    // causing ArgumentOutOfRangeException in String.IndexOf.
+    // Fix: pass fractionalPart as searchPart for fractional grouping.
+    // Reference returns "3.1,42" for $formatNumber(3.14159, "0.0,00").
+
+    [Fact]
+    public void FormatNumber_FractionalGrouping_CompileTime()
+    {
+        // Compile-time path (constant picture)
+        Assert.Equal(
+            "\"3.1,42\"",
+            Eval("$formatNumber(3.14159, \"0.0,00\")", "{}"));
+    }
+
+    [Fact]
+    public void FormatNumber_FractionalGrouping_Runtime()
+    {
+        // Runtime path (non-constant picture via $string)
+        Assert.Equal(
+            "\"3.1,42\"",
+            Eval("$formatNumber(3.14159, $string(pic))", """{"pic":"0.0,00"}"""));
+    }
+
+    [Fact]
+    public void FormatNumber_FractionalGrouping_Mixed_IntAndFrac()
+    {
+        // Both integer and fractional grouping separators
+        Assert.Equal(
+            "\"123,456.789,012\"",
+            Eval("""$formatNumber(123456.789012, "#,##0.000,000")"""));
+    }
+
+    // --- BF 5104-5106: Digit family character substitution (MakeString) ---
+    // Already tested in Round 4b via custom zero-digit option.
+    // Adding explicit test for multi-digit substitution pattern.
+
+    [Fact]
+    public void FormatNumber_DigitFamily_FullSubstitution()
+    {
+        // Arabic-Indic digits: ٠=0660, ١=0661, ... ٩=0669
+        // Picture must use the digit family chars, not ASCII 0/#
+        // 42 with zero-digit=0660 and picture "#\u0660" → \u0664\u0662
+        string result = Eval("$formatNumber(42, \"#\u0660\", {\"zero-digit\":\"\u0660\"})", "{}");
+        Assert.Contains("\u0664", result); // Arabic-Indic 4
+        Assert.Contains("\u0662", result); // Arabic-Indic 2
+    }
+
+    // --- BF 6166-6171: Sequence flattening helper ---
+
+    [Fact]
+    public void FlattenNestedArrays()
+    {
+        // $reduce with append on nested structure exercises sequence flattening
+        Assert.Equal(
+            "[1,2,3,4]",
+            Eval("$reduce([[1,2],[3,4]], $append)", "{}"));
+    }
+
+    // --- Range operator: [start..end] ---
+
+    [Fact]
+    public void RangeOperator_SimpleRange()
+    {
+        Assert.Equal("[1,2,3,4,5]", Eval("[1..5]", "{}"));
+    }
+
+    [Fact]
+    public void RangeOperator_SingleElement()
+    {
+        Assert.Equal("[3]", Eval("[3..3]", "{}"));
+    }
+
+    // --- CoerceToString via & concatenation ---
+
+    [Fact]
+    public void ConcatCoercion_NumberBoolNull()
+    {
+        Assert.Equal("\"42truenull\"", Eval("42 & true & null", "{}"));
+    }
+
+    [Fact]
+    public void ConcatCoercion_SixStrings()
+    {
+        Assert.Equal("\"abcdef\"", Eval("\"a\" & \"b\" & \"c\" & \"d\" & \"e\" & \"f\"", "{}"));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 8: Argument count validation (T0410)
+    // These hit the compile-time args.Length checks in CompileXXX methods.
+    // Each 2-line range is a throw T0410 for wrong argument count.
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact] // BF 776-777
+    public void ArgCount_Not_TooMany() => EvalThrows("""$not(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 818-819
+    public void ArgCount_Type_TooMany() => EvalThrows("""$type(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 1115-1116
+    public void ArgCount_StringTransform_TooMany() => EvalThrows("""$trim(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 1335-1336
+    public void ArgCount_Split_TooFew() => EvalThrows("""$split()""", "{}", "T0410");
+
+    [Fact] // BF 1425-1426
+    public void ArgCount_Contains_TooMany() => EvalThrows("""$contains(1, 2, 3)""", "{}", "T0410");
+
+    [Fact] // BF 1492-1493
+    public void ArgCount_Sqrt_TooMany() => EvalThrows("""$sqrt(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 1517-1518
+    public void ArgCount_Round_TooFew() => EvalThrows("""$round()""", "{}", "T0410");
+
+    [Fact] // BF 1564-1565
+    public void ArgCount_Power_TooFew() => EvalThrows("""$power(1)""", "{}", "T0410");
+
+    [Fact] // BF 1595-1596
+    public void ArgCount_MathFunc_TooMany() => EvalThrows("""$floor(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 1616-1617
+    public void ArgCount_Keys_TooMany() => EvalThrows("""$keys(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 1699-1700
+    public void ArgCount_Values_TooMany() => EvalThrows("""$values(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 1772-1773
+    public void ArgCount_Sort_TooFew() => EvalThrows("""$sort()""", "{}", "T0410");
+
+    [Fact] // BF 1837-1838
+    public void ArgCount_Reverse_TooMany() => EvalThrows("""$reverse(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 1876-1877
+    public void ArgCount_Distinct_TooMany() => EvalThrows("""$distinct(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 1959-1960
+    public void ArgCount_Flatten_TooMany() => EvalThrows("""$flatten(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 2213-2214
+    public void ArgCount_Filter_TooFew() => EvalThrows("""$filter(1)""", "{}", "T0410");
+
+    [Fact] // BF 2379-2380
+    public void ArgCount_Reduce_TooFew() => EvalThrows("""$reduce(1)""", "{}", "T0410");
+
+    [Fact] // BF 2505-2506
+    public void ArgCount_Each_TooFew() => EvalThrows("""$each()""", "{}", "T0410");
+
+    [Fact] // BF 2573-2574
+    public void ArgCount_Merge_TooMany() => EvalThrows("""$merge(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 2613-2614
+    public void ArgCount_Spread_TooMany() => EvalThrows("""$spread(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 2729-2730
+    public void ArgCount_Lookup_TooFew() => EvalThrows("""$lookup(1)""", "{}", "T0410");
+
+    [Fact] // BF 2846-2847
+    public void ArgCount_Single_TooFew() => EvalThrows("""$single()""", "{}", "T0410");
+
+    [Fact] // BF 2979-2980
+    public void ArgCount_Sift_TooFew() => EvalThrows("""$sift()""", "{}", "T0410");
+
+    [Fact] // BF 3044-3045
+    public void ArgCount_Pad_TooFew() => EvalThrows("""$pad("a")""", "{}", "T0410");
+
+    [Fact] // BF 3137-3138
+    public void ArgCount_Match_TooFew() => EvalThrows("""$match()""", "{}", "T0410");
+
+    [Fact] // BF 3518-3519 — $replace arg count
+    public void ArgCount_Replace_TooFew() => EvalThrows("""$replace("a")""", "{}", "T0410");
+
+    [Fact] // BF 4049-4050
+    public void ArgCount_Base64Encode_TooMany() => EvalThrows("""$base64encode(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 4102-4103
+    public void ArgCount_Base64Decode_TooMany() => EvalThrows("""$base64decode(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 4155-4156
+    public void ArgCount_EncodeUrlComponent_TooMany() => EvalThrows("""$encodeUrlComponent(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 4218-4219
+    public void ArgCount_DecodeUrlComponent_TooMany() => EvalThrows("""$decodeUrlComponent(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 4283-4284
+    public void ArgCount_EncodeUrl_TooMany() => EvalThrows("""$encodeUrl(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 4365-4366
+    public void ArgCount_DecodeUrl_TooMany() => EvalThrows("""$decodeUrl(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 4523-4524
+    public void ArgCount_FormatNumber_TooFew() => EvalThrows("""$formatNumber(1)""", "{}", "T0410");
+
+    [Fact] // BF 5211-5212
+    public void ArgCount_FormatBase_TooFew() => EvalThrows("""$formatBase()""", "{}", "T0410");
+
+    [Fact] // BF 5309-5310
+    public void ArgCount_Shuffle_TooMany() => EvalThrows("""$shuffle(1, 2)""", "{}", "T0410");
+
+    [Fact] // BF 5377-5378
+    public void ArgCount_Zip_TooFew()
+    {
+        // $zip() with no args returns undefined
+        Assert.Equal("undefined", Eval("""$zip()"""));
+    }
+
+    [Fact] // BF 5552-5553
+    public void ArgCount_Assert_TooFew() => EvalThrows("""$assert()""", "{}", "T0410");
+
+    [Fact] // BF 5811-5812
+    public void ArgCount_ToMillis_TooFew() => EvalThrows("""$toMillis()""", "{}", "T0410");
+
+    [Fact] // BF 5882-5883
+    public void ArgCount_FormatInteger_TooFew() => EvalThrows("""$formatInteger(1)""", "{}", "T0410");
+
+    [Fact] // BF 5954-5955
+    public void ArgCount_ParseInteger_TooFew() => EvalThrows("""$parseInteger(1)""", "{}", "T0410");
+
+    [Fact] // BF 6005-6006
+    public void ArgCount_Eval_TooFew() => EvalThrows("""$eval()""", "{}", "T0410");
+
+    // ═══════════════════════════════════════════════════════════════
+    // Round 8: Additional edge case tests
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact] // BF 3967-3969: $split with limit <= 0
+    public void Split_LimitZero_ReturnsEmptyArray()
+    {
+        Assert.Equal("[]", Eval("""$split("hello", "l", 0)"""));
+    }
+
+    [Fact] // BF 6166-6171: AddSequenceToArray multi-element sequence
+    public void Append_MultiElementSequence()
+    {
+        // a.x evaluates to sequence [1,2] (not an array), then $append adds "z"
+        Assert.Equal(
+            """[1,2,"z"]""",
+            Eval("""$append(a.x, "z")""", """{"a":[{"x":1},{"x":2}]}"""));
+    }
+
+    [Fact] // BF 3518-3519: $replace with limit <= 0
+    public void Replace_LimitZero_ReturnsOriginal()
+    {
+        Assert.Equal("\"aaa\"", Eval("""$replace("aaa", /a/, "b", 0)"""));
+    }
+
+    [Fact] // BF 3535-3536: $replace with zero-length regex match
+    public void Replace_ZeroLengthMatch_ThrowsD1004() => EvalThrows("""$replace("aaa", /a?/, "b")""", "{}", "D1004");
 }

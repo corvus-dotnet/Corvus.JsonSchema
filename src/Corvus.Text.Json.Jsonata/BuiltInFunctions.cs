@@ -4881,7 +4881,7 @@ internal static class BuiltInFunctions
         {
             intGrpPositions[p] = GetGroupingPositions(integerParts[p], false, integerParts[p]);
             regularGroupings[p] = ComputeRegularGrouping(intGrpPositions[p]);
-            fracGrpPositions[p] = GetGroupingPositions(fractionalParts[p], true, integerParts[p]);
+            fracGrpPositions[p] = GetGroupingPositions(fractionalParts[p], true, fractionalParts[p]);
 
             int minInt = 0;
             for (int i = 0; i < integerParts[p].Length; i++)

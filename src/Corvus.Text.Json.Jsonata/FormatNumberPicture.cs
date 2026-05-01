@@ -348,7 +348,7 @@ internal readonly struct FormatNumberPicture
             // ── Analysis (F&O 4.7.4) ───────────────────────────
             List<int> intGrpPositions = GetGroupingPositions(intPart, false, intPart, grpSep, IsDigitOrOpt);
             int regularGrouping = ComputeRegularGrouping(intGrpPositions);
-            List<int> fracGrpPositions = GetGroupingPositions(fracPart, true, intPart, grpSep, IsDigitOrOpt);
+            List<int> fracGrpPositions = GetGroupingPositions(fracPart, true, fracPart, grpSep, IsDigitOrOpt);
 
             int minInt = 0;
             for (int i = 0; i < intPart.Length; i++)
