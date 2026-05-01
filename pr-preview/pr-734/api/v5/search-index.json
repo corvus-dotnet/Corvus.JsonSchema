@@ -3500,6 +3500,27 @@
     "Body": "The level of result to collect for an [`IJsonSchemaResultsCollector`](/api/v5/corvus-text-json-ijsonschemaresultscollector.html)."
   },
   {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonstringunescaper.html",
+    "Title": "JsonStringUnescaper",
+    "Description": "Provides a public API for unescaping JSON-encoded UTF-8 byte sequences.",
+    "Keywords": "JsonStringUnescaper class Corvus.Text.Json",
+    "Body": "Provides a public API for unescaping JSON-encoded UTF-8 byte sequences.\r\nThis class exposes the battle-tested unescaping logic for use by companion packages (e.g. Corvus.Text.Json.Yaml) that need to decode JSON escape sequences without duplicating the implementation. All standard JSON escape sequences are handled: `\\\"`, `\\\\`, `\\/`, `\\n`, `\\r`, `\\t`, `\\b`, `\\f`, and `\\uXXXX` (including surrogate pairs for characters outside the Basic Multilingual Plane).\r\nUnescape: Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to `destination`. The first backslash is located automatically.\r\nUnescape: Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to `destination`. The caller provides the index of the first backslash to avoid a redundant scan.\r\nTryUnescape: Attempts to unescape a JSON-encoded UTF-8 byte sequence into `destination`. Returns `false` if the destination buffer is too small. The first backslash is located automatically."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonstringunescaper.unescape.html",
+    "Title": "JsonStringUnescaper.Unescape",
+    "Description": "Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to `destination`. The first backslash is located automatically.",
+    "Keywords": "JsonStringUnescaper Unescape method Corvus.Text.Json",
+    "Body": "Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to `destination`. The first backslash is located automatically. Unescapes a JSON-encoded UTF-8 byte sequence, writing the result to `destination`. The caller provides the index of the first backslash to avoid a redundant scan."
+  },
+  {
+    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonstringunescaper.tryunescape.html",
+    "Title": "JsonStringUnescaper.TryUnescape",
+    "Description": "Attempts to unescape a JSON-encoded UTF-8 byte sequence into `destination`. Returns `false` if the destination buffer is too small. The first backslash is located automatically.",
+    "Keywords": "JsonStringUnescaper TryUnescape method Corvus.Text.Json",
+    "Body": "Attempts to unescape a JSON-encoded UTF-8 byte sequence into `destination`. Returns `false` if the destination buffer is too small. The first backslash is located automatically."
+  },
+  {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-jsonvaluekind.html",
     "Title": "JsonValueKind",
     "Description": "Specifies the data type of a JSON value.",
