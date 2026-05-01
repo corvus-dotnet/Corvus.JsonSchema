@@ -110,7 +110,8 @@ public class JsonPathResultTests
     public void Query_ConvenienceMethod_ReturnsMaterializedArray()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
-        JsonElement result = JsonPathEvaluator.Default.Query("$.store.book[*].author", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$.store.book[*].author", data, workspace);
 
         Assert.Equal(JsonValueKind.Array, result.ValueKind);
         Assert.Equal(4, result.GetArrayLength());
@@ -123,7 +124,8 @@ public class JsonPathResultTests
     public void Query_NoMatch_ReturnsEmptyArray()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
-        JsonElement result = JsonPathEvaluator.Default.Query("$.nonexistent", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$.nonexistent", data, workspace);
 
         Assert.Equal(JsonValueKind.Array, result.ValueKind);
         Assert.Equal(0, result.GetArrayLength());

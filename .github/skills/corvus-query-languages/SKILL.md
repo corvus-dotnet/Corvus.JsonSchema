@@ -107,8 +107,9 @@ JsonElement result = ConditionalRule.Evaluate(doc.RootElement, workspace);
 
 ### Runtime Evaluation
 ```csharp
-// Simple — returns a cloned JSON array of matched nodes (manages memory internally)
-JsonElement result = JsonPathEvaluator.Default.Query("$.store.book[*].author", doc.RootElement);
+// Returns a JSON array of matched nodes within the provided workspace
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = JsonPathEvaluator.Default.Query("$.store.book[*].author", doc.RootElement, workspace);
 
 // Zero-allocation — returns a disposable result with direct node access
 using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.store.book[?@.price<10]", doc.RootElement);
@@ -124,9 +125,9 @@ foreach (JsonElement node in result.Nodes)
 [JsonPathExpression("expressions/book-authors.jsonpath")]
 internal static partial class BookAuthors;
 
-// Usage — code-gen produces a static Evaluate(in JsonElement, JsonWorkspace) method:
+// Usage — code-gen produces a static Query(in JsonElement, JsonWorkspace) method:
 using JsonWorkspace workspace = JsonWorkspace.Create();
-JsonElement result = BookAuthors.Evaluate(doc.RootElement, workspace);
+JsonElement result = BookAuthors.Query(doc.RootElement, workspace);
 ```
 
 ### Custom Function Extensions

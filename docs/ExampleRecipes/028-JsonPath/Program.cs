@@ -24,51 +24,52 @@ using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Pars
     """);
 
 JsonElement data = doc.RootElement;
+using JsonWorkspace workspace = JsonWorkspace.Create();
 
 // ── 1. Property access ──────────────────────────────────────────────────────
 Console.WriteLine("1. Property access");
-Console.WriteLine($"   $.store.bicycle.color = {JsonPathEvaluator.Default.Query("$.store.bicycle.color", data)}");
+Console.WriteLine($"   $.store.bicycle.color = {JsonPathEvaluator.Default.Query("$.store.bicycle.color", data, workspace)}");
 Console.WriteLine();
 
 // ── 2. Wildcard ─────────────────────────────────────────────────────────────
 Console.WriteLine("2. Wildcard — all book authors");
-Console.WriteLine($"   $.store.book[*].author = {JsonPathEvaluator.Default.Query("$.store.book[*].author", data)}");
+Console.WriteLine($"   $.store.book[*].author = {JsonPathEvaluator.Default.Query("$.store.book[*].author", data, workspace)}");
 Console.WriteLine();
 
 // ── 3. Recursive descent ────────────────────────────────────────────────────
 Console.WriteLine("3. Recursive descent — all authors at any depth");
-Console.WriteLine($"   $..author = {JsonPathEvaluator.Default.Query("$..author", data)}");
+Console.WriteLine($"   $..author = {JsonPathEvaluator.Default.Query("$..author", data, workspace)}");
 Console.WriteLine();
 
 // ── 4. Index access ─────────────────────────────────────────────────────────
 Console.WriteLine("4. Index access");
-Console.WriteLine($"   $.store.book[0].title = {JsonPathEvaluator.Default.Query("$.store.book[0].title", data)}");
-Console.WriteLine($"   $.store.book[-1].title = {JsonPathEvaluator.Default.Query("$.store.book[-1].title", data)}");
+Console.WriteLine($"   $.store.book[0].title = {JsonPathEvaluator.Default.Query("$.store.book[0].title", data, workspace)}");
+Console.WriteLine($"   $.store.book[-1].title = {JsonPathEvaluator.Default.Query("$.store.book[-1].title", data, workspace)}");
 Console.WriteLine();
 
 // ── 5. Array slicing ────────────────────────────────────────────────────────
 Console.WriteLine("5. Array slicing — first two books");
-Console.WriteLine($"   $.store.book[0:2].title = {JsonPathEvaluator.Default.Query("$.store.book[0:2].title", data)}");
+Console.WriteLine($"   $.store.book[0:2].title = {JsonPathEvaluator.Default.Query("$.store.book[0:2].title", data, workspace)}");
 Console.WriteLine();
 
 // ── 6. Filter expressions ───────────────────────────────────────────────────
 Console.WriteLine("6. Filter — books cheaper than 10");
-Console.WriteLine($"   $.store.book[?@.price<10].title = {JsonPathEvaluator.Default.Query("$.store.book[?@.price<10].title", data)}");
+Console.WriteLine($"   $.store.book[?@.price<10].title = {JsonPathEvaluator.Default.Query("$.store.book[?@.price<10].title", data, workspace)}");
 Console.WriteLine();
 
 // ── 7. Filter with logical operators ────────────────────────────────────────
 Console.WriteLine("7. Filter with logical operators — fiction books under 10");
-Console.WriteLine($"   $.store.book[?@.price<10 && @.category=='fiction'].title = {JsonPathEvaluator.Default.Query("$.store.book[?@.price<10 && @.category=='fiction'].title", data)}");
+Console.WriteLine($"   $.store.book[?@.price<10 && @.category=='fiction'].title = {JsonPathEvaluator.Default.Query("$.store.book[?@.price<10 && @.category=='fiction'].title", data, workspace)}");
 Console.WriteLine();
 
 // ── 8. Filter with function extension ───────────────────────────────────────
 Console.WriteLine("8. Filter function — books with long titles");
-Console.WriteLine($"   $.store.book[?length(@.title)>15].title = {JsonPathEvaluator.Default.Query("$.store.book[?length(@.title)>15].title", data)}");
+Console.WriteLine($"   $.store.book[?length(@.title)>15].title = {JsonPathEvaluator.Default.Query("$.store.book[?length(@.title)>15].title", data, workspace)}");
 Console.WriteLine();
 
 // ── 9. All prices (recursive descent) ───────────────────────────────────────
 Console.WriteLine("9. Recursive descent — all prices");
-Console.WriteLine($"   $..price = {JsonPathEvaluator.Default.Query("$..price", data)}");
+Console.WriteLine($"   $..price = {JsonPathEvaluator.Default.Query("$..price", data, workspace)}");
 Console.WriteLine();
 
 // ── 10. Zero-allocation QueryNodes ──────────────────────────────────────────
@@ -112,7 +113,7 @@ var ceilFunc = new CeilFunction();
 var evaluator = new JsonPathEvaluator(
     new Dictionary<string, IJsonPathFunction> { ["ceil"] = ceilFunc });
 
-Console.WriteLine($"    $.store.book[?ceil(@.price)==9].title = {evaluator.Query("$.store.book[?ceil(@.price)==9].title", data)}");
+Console.WriteLine($"    $.store.book[?ceil(@.price)==9].title = {evaluator.Query("$.store.book[?ceil(@.price)==9].title", data, workspace)}");
 Console.WriteLine();
 
 // ── 13. Custom function — is_fiction (ValueType → LogicalType) ──────────────
@@ -125,7 +126,7 @@ var evaluator2 = new JsonPathEvaluator(
         ["is_fiction"] = isFictionFunc,
     });
 
-Console.WriteLine($"    $.store.book[?is_fiction(@.category)].title = {evaluator2.Query("$.store.book[?is_fiction(@.category)].title", data)}");
+Console.WriteLine($"    $.store.book[?is_fiction(@.category)].title = {evaluator2.Query("$.store.book[?is_fiction(@.category)].title", data, workspace)}");
 Console.WriteLine();
 
 // ── 14. Custom function — cheapest (NodesType → ValueType) ──────────────────
@@ -135,7 +136,7 @@ var cheapestFunc = new CheapestFunction();
 var evaluator3 = new JsonPathEvaluator(
     new Dictionary<string, IJsonPathFunction> { ["cheapest"] = cheapestFunc });
 
-Console.WriteLine($"    $.store.book[?@.price==cheapest($.store.book[*].price)].title = {evaluator3.Query("$.store.book[?@.price==cheapest($.store.book[*].price)].title", data)}");
+Console.WriteLine($"    $.store.book[?@.price==cheapest($.store.book[*].price)].title = {evaluator3.Query("$.store.book[?@.price==cheapest($.store.book[*].price)].title", data, workspace)}");
 
 // ────────────────────────────────────────────────────────────────────────────
 // Custom function implementations

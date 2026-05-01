@@ -39,7 +39,7 @@ public sealed class CodeGenConformanceFixture : IDisposable
 
     /// <summary>
     /// Generate C# for a JSONPath expression, dynamically compile it, and return
-    /// the <c>Evaluate(in JsonElement, JsonWorkspace)</c> method.
+    /// the <c>Query(in JsonElement, JsonWorkspace)</c> method.
     /// </summary>
     /// <param name="expression">The JSONPath expression text.</param>
     /// <returns>
@@ -109,7 +109,7 @@ public sealed class CodeGenConformanceFixture : IDisposable
             string fullTypeName = $"{GeneratedNamespace}.{className}";
             Type? type = asm!.GetType(fullTypeName);
             MethodInfo? method = type?.GetMethod(
-                "Evaluate",
+                "Query",
                 [typeof(Corvus.Text.Json.JsonElement).MakeByRefType(), typeof(Corvus.Text.Json.JsonWorkspace)]);
 
             return new CompiledJsonPathExpression(method, generatedCode, method is null ? $"Type or method not found: {fullTypeName}" : null);
@@ -195,7 +195,7 @@ public sealed class CodeGenConformanceFixture : IDisposable
 /// <summary>
 /// The result of generating and dynamically compiling a JSONPath expression.
 /// </summary>
-/// <param name="Method">The compiled <c>Evaluate(in JsonElement, JsonWorkspace)</c> method, or null on failure.</param>
+/// <param name="Method">The compiled <c>Query(in JsonElement, JsonWorkspace)</c> method, or null on failure.</param>
 /// <param name="GeneratedCode">The generated C# source code, or null if generation failed.</param>
 /// <param name="Error">An error message if generation or compilation failed.</param>
 /// <param name="IsParseError">True if the failure was a parse/syntax error in the expression.</param>

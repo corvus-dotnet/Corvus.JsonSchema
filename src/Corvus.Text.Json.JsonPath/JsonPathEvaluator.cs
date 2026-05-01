@@ -116,14 +116,15 @@ public sealed class JsonPathEvaluator
     }
 
     /// <summary>
-    /// Evaluates a JSONPath expression against the given data, using an internally
-    /// managed workspace. The result is cloned and safe to use after this call returns.
+    /// Evaluates a JSONPath expression against the given data, returning a JSON array
+    /// of matched nodes. The returned element is backed by the provided workspace.
     /// </summary>
     /// <param name="expression">The JSONPath expression string (e.g., <c>"$.store.book[*].title"</c>).</param>
     /// <param name="data">The JSON data to query.</param>
+    /// <param name="workspace">The workspace for document allocation. The returned element is backed by this workspace.</param>
     /// <returns>A JSON array containing the matched node list. Returns an empty array if no nodes match.</returns>
     /// <exception cref="JsonPathException">Thrown if the expression is syntactically invalid.</exception>
-    public JsonElement Query(string expression, in JsonElement data)
+    public JsonElement Query(string expression, in JsonElement data, JsonWorkspace workspace)
     {
         using JsonPathResult result = this.QueryNodes(expression, data);
 
@@ -132,8 +133,7 @@ public sealed class JsonPathEvaluator
             return EmptyArray;
         }
 
-        using JsonWorkspace workspace = JsonWorkspace.Create();
-        return JsonPathCodeGenHelpers.BuildArrayFromSpan(result.Nodes, workspace).Clone();
+        return JsonPathCodeGenHelpers.BuildArrayFromSpan(result.Nodes, workspace);
     }
 
     private Compiler.CompiledJsonPath GetOrCompile(string expression)

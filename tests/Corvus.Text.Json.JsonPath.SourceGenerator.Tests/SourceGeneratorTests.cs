@@ -41,7 +41,7 @@ public class SourceGeneratorTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(BookStoreJson));
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
-        JsonElement result = BookAuthors.Evaluate(data, workspace);
+        JsonElement result = BookAuthors.Query(data, workspace);
 
         string resultJson = result.GetRawText();
         this.output.WriteLine($"Result: {resultJson}");
@@ -62,7 +62,7 @@ public class SourceGeneratorTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(BookStoreJson));
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
-        JsonElement result = CheapBooks.Evaluate(data, workspace);
+        JsonElement result = CheapBooks.Query(data, workspace);
 
         string resultJson = result.GetRawText();
         this.output.WriteLine($"Result: {resultJson}");
@@ -81,7 +81,7 @@ public class SourceGeneratorTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(BookStoreJson));
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
-        JsonElement result = AllPrices.Evaluate(data, workspace);
+        JsonElement result = AllPrices.Query(data, workspace);
 
         string resultJson = result.GetRawText();
         this.output.WriteLine($"Result: {resultJson}");

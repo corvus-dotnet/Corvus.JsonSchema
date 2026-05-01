@@ -55,7 +55,8 @@ public class ComplianceTestSuiteTests
         JsonElement data = JsonElement.ParseValue(
             System.Text.Encoding.UTF8.GetBytes(testCase.DocumentJson));
 
-        JsonElement result = JsonPathEvaluator.Default.Query(testCase.Selector, data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query(testCase.Selector, data, workspace);
 
         this.output.WriteLine($"Result: {result}");
 
@@ -91,10 +92,11 @@ public class ComplianceTestSuiteTests
         this.output.WriteLine($"Test: {testCase.Name}");
         this.output.WriteLine($"Selector: {testCase.Selector}");
 
+        using JsonWorkspace workspace = JsonWorkspace.Create();
         Assert.ThrowsAny<JsonPathException>(() =>
         {
             JsonElement data = JsonElement.ParseValue("{}"u8);
-            JsonPathEvaluator.Default.Query(testCase.Selector, data);
+            JsonPathEvaluator.Default.Query(testCase.Selector, data, workspace);
         });
     }
 

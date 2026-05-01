@@ -44,7 +44,8 @@ var evaluator = new JsonPathEvaluator(new Dictionary<string, IJsonPathFunction>
 });
 
 // Use in filter expressions: $[?is_string(@.name)]
-JsonElement result = evaluator.Query("$[?is_string(@.name)]", data);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = evaluator.Query("$[?is_string(@.name)]", data, workspace);
 ```
 
 ### Full control with Create

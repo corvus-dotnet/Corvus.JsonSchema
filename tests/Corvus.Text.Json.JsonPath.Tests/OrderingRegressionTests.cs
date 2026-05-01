@@ -21,7 +21,8 @@ public class OrderingRegressionTests
     public void UnionSelectorPreservesOrder()
     {
         JsonElement data = JsonElement.ParseValue("""["a","b","c"]"""u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$[0,1]", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$[0,1]", data, workspace);
         Assert.Equal("""["a","b"]""", result.ToString());
     }
 
@@ -34,7 +35,8 @@ public class OrderingRegressionTests
     {
         JsonElement data = JsonElement.ParseValue(
             """[{"x":1},{"x":2},{"x":3}]"""u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$[0,1].x", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$[0,1].x", data, workspace);
         Assert.Equal("[1,2]", result.ToString());
     }
 
@@ -47,7 +49,8 @@ public class OrderingRegressionTests
     {
         JsonElement data = JsonElement.ParseValue(
             """{"a":1,"b":2,"c":{"a":3,"b":4}}"""u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("""$..['a','b']""", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("""$..['a','b']""", data, workspace);
         Assert.Equal("[1,2,3,4]", result.ToString());
     }
 
@@ -68,7 +71,8 @@ public class OrderingRegressionTests
               }
             }
             """u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$..book[*].author", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$..book[*].author", data, workspace);
         Assert.Equal("""["A","B"]""", result.ToString());
     }
 
@@ -86,7 +90,8 @@ public class OrderingRegressionTests
               "c": {"d": {"author": "Z"}}
             }
             """u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$..author", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$..author", data, workspace);
         Assert.Equal("""["X","Y","Z"]""", result.ToString());
     }
 
@@ -99,7 +104,8 @@ public class OrderingRegressionTests
     {
         JsonElement data = JsonElement.ParseValue(
             """[{"x":5},{"y":20},{"x":15}]"""u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$[?@.x < 10]", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$[?@.x < 10]", data, workspace);
         Assert.Equal("""[{"x":5}]""", result.ToString());
     }
 
@@ -112,7 +118,8 @@ public class OrderingRegressionTests
     {
         JsonElement data = JsonElement.ParseValue(
             """[{"x":"hello"},{"x":5}]"""u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$[?@.x < 10]", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$[?@.x < 10]", data, workspace);
         Assert.Equal("""[{"x":5}]""", result.ToString());
     }
 
@@ -129,7 +136,8 @@ public class OrderingRegressionTests
               "expensive": [{"price": 20}, {"price": 3}]
             }
             """u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$.*[?@.price < 10]", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$.*[?@.price < 10]", data, workspace);
         Assert.Equal("""[{"price":5},{"price":3}]""", result.ToString());
     }
 
@@ -141,7 +149,8 @@ public class OrderingRegressionTests
     {
         JsonElement data = JsonElement.ParseValue(
             """[{"x":10},{"x":20},{"x":30}]"""u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$[0:2].x", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$[0:2].x", data, workspace);
         Assert.Equal("[10,20]", result.ToString());
     }
 
@@ -152,7 +161,8 @@ public class OrderingRegressionTests
     public void ReverseSliceOrdering()
     {
         JsonElement data = JsonElement.ParseValue("""[0,1,2,3,4]"""u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$[2:0:-1]", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$[2:0:-1]", data, workspace);
         Assert.Equal("[2,1]", result.ToString());
     }
 
@@ -165,7 +175,8 @@ public class OrderingRegressionTests
     {
         JsonElement data = JsonElement.ParseValue(
             """{"a":{"b":{"b":1}}}"""u8);
-        JsonElement result = JsonPathEvaluator.Default.Query("$.a..b", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$.a..b", data, workspace);
         Assert.Equal("""[{"b":1},1]""", result.ToString());
     }
 }

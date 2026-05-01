@@ -738,38 +738,38 @@ main-docs:
   - path: "docs/JsonPath.md"
     blocks:
       - {index: 0, language: bash, lines: [51, 54]}
-      - {index: 1, language: csharp, lines: [58, 81], category: compilable, verified: false}
-      - {index: 2, language: csharp, lines: [87, 105], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [117, 123], category: compilable, verified: false}
-      - {index: 4, language: bash, lines: [133, 135]}
-      - {index: 5, language: , lines: [139, 141]}
-      - {index: 6, language: csharp, lines: [145, 152], category: compilable, verified: false}
-      - {index: 7, language: xml, lines: [156, 169]}
-      - {index: 8, language: csharp, lines: [173, 175], category: fragment, verified: false}
-      - {index: 9, language: bash, lines: [191, 193]}
-      - {index: 10, language: bash, lines: [195, 200]}
-      - {index: 11, language: bash, lines: [211, 216]}
-      - {index: 12, language: csharp, lines: [232, 236], category: fragment, verified: false}
-      - {index: 13, language: csharp, lines: [240, 252], category: compilable, verified: false}
-      - {index: 14, language: csharp, lines: [258, 267], category: compilable, verified: false}
-      - {index: 15, language: json, lines: [281, 293]}
-      - {index: 16, language: , lines: [299, 302]}
-      - {index: 17, language: , lines: [308, 314]}
-      - {index: 18, language: , lines: [322, 328]}
-      - {index: 19, language: , lines: [336, 342]}
-      - {index: 20, language: , lines: [348, 354]}
-      - {index: 21, language: , lines: [360, 369]}
-      - {index: 22, language: , lines: [375, 384]}
-      - {index: 23, language: , lines: [396, 402]}
-      - {index: 24, language: csharp, lines: [422, 442], category: compilable, verified: false}
-      - {index: 25, language: csharp, lines: [446, 455], category: compilable, verified: false}
-      - {index: 26, language: csharp, lines: [461, 477], category: compilable, verified: false}
-      - {index: 27, language: , lines: [510, 519]}
-      - {index: 28, language: xml, lines: [525, 530]}
-      - {index: 29, language: csharp, lines: [540, 548], category: compilable, verified: false}
-      - {index: 30, language: csharp, lines: [554, 561], category: fragment, verified: false}
-      - {index: 31, language: xml, lines: [567, 577]}
-      - {index: 32, language: csharp, lines: [583, 589], category: compilable, verified: false}
+      - {index: 1, language: csharp, lines: [58, 84], category: compilable, verified: false}
+      - {index: 2, language: csharp, lines: [90, 108], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [120, 126], category: compilable, verified: false}
+      - {index: 4, language: bash, lines: [136, 138]}
+      - {index: 5, language: , lines: [142, 144]}
+      - {index: 6, language: csharp, lines: [148, 155], category: compilable, verified: false}
+      - {index: 7, language: xml, lines: [159, 172]}
+      - {index: 8, language: csharp, lines: [176, 178], category: fragment, verified: false}
+      - {index: 9, language: bash, lines: [194, 196]}
+      - {index: 10, language: bash, lines: [198, 203]}
+      - {index: 11, language: bash, lines: [214, 219]}
+      - {index: 12, language: csharp, lines: [235, 240], category: fragment, verified: false}
+      - {index: 13, language: csharp, lines: [244, 256], category: compilable, verified: false}
+      - {index: 14, language: csharp, lines: [262, 272], category: compilable, verified: false}
+      - {index: 15, language: json, lines: [286, 298]}
+      - {index: 16, language: , lines: [304, 307]}
+      - {index: 17, language: , lines: [313, 319]}
+      - {index: 18, language: , lines: [327, 333]}
+      - {index: 19, language: , lines: [341, 347]}
+      - {index: 20, language: , lines: [353, 359]}
+      - {index: 21, language: , lines: [365, 374]}
+      - {index: 22, language: , lines: [380, 389]}
+      - {index: 23, language: , lines: [401, 407]}
+      - {index: 24, language: csharp, lines: [427, 447], category: compilable, verified: false}
+      - {index: 25, language: csharp, lines: [451, 461], category: compilable, verified: false}
+      - {index: 26, language: csharp, lines: [467, 483], category: compilable, verified: false}
+      - {index: 27, language: , lines: [516, 525]}
+      - {index: 28, language: xml, lines: [531, 536]}
+      - {index: 29, language: csharp, lines: [546, 554], category: compilable, verified: false}
+      - {index: 30, language: csharp, lines: [560, 567], category: fragment, verified: false}
+      - {index: 31, language: xml, lines: [573, 583]}
+      - {index: 32, language: csharp, lines: [589, 596], category: compilable, verified: false}
   - path: "docs/LocalNuGetTesting.md"
     blocks:
       - {index: 0, language: powershell, lines: [9, 11]}
@@ -1378,10 +1378,10 @@ skills:
       - {index: 3, language: csharp, lines: [67, 75], category: compilable, verified: false}
       - {index: 4, language: csharp, lines: [82, 87], category: compilable, verified: false}
       - {index: 5, language: csharp, lines: [90, 98], category: compilable, verified: false}
-      - {index: 6, language: csharp, lines: [109, 119], category: compilable, verified: false}
-      - {index: 7, language: csharp, lines: [122, 130], category: compilable, verified: false}
-      - {index: 8, language: csharp, lines: [134, 138], category: compilable, verified: false}
-      - {index: 9, language: powershell, lines: [147, 165]}
+      - {index: 6, language: csharp, lines: [109, 120], category: compilable, verified: false}
+      - {index: 7, language: csharp, lines: [123, 131], category: compilable, verified: false}
+      - {index: 8, language: csharp, lines: [135, 139], category: compilable, verified: false}
+      - {index: 9, language: powershell, lines: [148, 166]}
   - path: ".github/skills/corvus-standalone-evaluator/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [27, 30], category: compilable, verified: false}

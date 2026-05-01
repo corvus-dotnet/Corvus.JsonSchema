@@ -14,7 +14,7 @@ using Microsoft.CodeAnalysis.Text;
 namespace Corvus.Text.Json.JsonPath.SourceGenerator;
 
 /// <summary>
-/// Roslyn incremental source generator that produces a static <c>Evaluate</c> method
+/// Roslyn incremental source generator that produces a static <c>Query</c> method
 /// from a JSONPath expression file referenced via <c>[JsonPathExpression("path.jsonpath")]</c>.
 /// Custom function definitions from <c>.jpfn</c> files are discovered automatically.
 /// </summary>
@@ -73,7 +73,7 @@ public sealed class JsonPathSourceGenerator : IIncrementalGenerator
                     /// <summary>
                     /// Marks a partial type for JSONPath source generation.
                     /// The source generator reads the referenced JSONPath expression file and emits
-                    /// a static <c>Evaluate</c> method on the type.
+                    /// a static <c>Query</c> method on the type.
                     /// </summary>
                     [AttributeUsage(AttributeTargets.Class | AttributeTargets.Struct, Inherited = false, AllowMultiple = false)]
                     internal sealed class JsonPathExpressionAttribute : Attribute

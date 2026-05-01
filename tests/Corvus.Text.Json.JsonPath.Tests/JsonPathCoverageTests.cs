@@ -56,7 +56,8 @@ public class JsonPathCoverageTests
     {
         string json = """{"a": {"b": [{"c": 1}, {"c": 2}], "d": {"b": [{"c": 3}]}}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
-        JsonElement result = JsonPathEvaluator.Default.Query("$..b[?@.c > 1]", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$..b[?@.c > 1]", data, workspace);
         Assert.Equal(JsonValueKind.Array, result.ValueKind);
         Assert.True(result.GetArrayLength() >= 1);
     }
@@ -66,7 +67,8 @@ public class JsonPathCoverageTests
     {
         string json = """{"a": {"x": 1}, "b": {"x": 2}, "c": {"d": {"x": 3}}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
-        JsonElement result = JsonPathEvaluator.Default.Query("$..x", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$..x", data, workspace);
         Assert.Equal(JsonValueKind.Array, result.ValueKind);
         Assert.Equal(3, result.GetArrayLength());
     }
@@ -76,7 +78,8 @@ public class JsonPathCoverageTests
     {
         string json = """{"a": [1, 2], "b": {"c": [3, 4]}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
-        JsonElement result = JsonPathEvaluator.Default.Query("$..*", data);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = JsonPathEvaluator.Default.Query("$..*", data, workspace);
         Assert.Equal(JsonValueKind.Array, result.ValueKind);
         Assert.True(result.GetArrayLength() > 4);
     }

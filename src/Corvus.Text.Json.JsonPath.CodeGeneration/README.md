@@ -13,7 +13,7 @@ string source = JsonPathCodeGenerator.Generate(
 // source is a complete C# file with:
 // public static class BookAuthors
 // {
-//     public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace) { ... }
+//     public static JsonElement Query(in JsonElement data, JsonWorkspace workspace) { ... }
 // }
 ```
 

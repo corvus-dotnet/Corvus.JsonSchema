@@ -33,7 +33,7 @@ File: `bookstore.json`
 Navigate to a specific property using dot notation:
 
 ```csharp
-evaluator.Query("$.store.bicycle.color", data);
+evaluator.Query("$.store.bicycle.color", data, workspace);
 // ["red"]
 ```
 
@@ -42,7 +42,7 @@ evaluator.Query("$.store.bicycle.color", data);
 Select all elements of an array or object:
 
 ```csharp
-evaluator.Query("$.store.book[*].author", data);
+evaluator.Query("$.store.book[*].author", data, workspace);
 // ["Sandi Toksvig","Evelyn Waugh","Jane Austen","J. R. R. Tolkien"]
 ```
 
@@ -51,7 +51,7 @@ evaluator.Query("$.store.book[*].author", data);
 Find matching keys at any depth in the document tree:
 
 ```csharp
-evaluator.Query("$..author", data);
+evaluator.Query("$..author", data, workspace);
 // ["Sandi Toksvig","Evelyn Waugh","Jane Austen","J. R. R. Tolkien"]
 ```
 
@@ -60,8 +60,8 @@ evaluator.Query("$..author", data);
 Select array elements by position. Negative indices count from the end:
 
 ```csharp
-evaluator.Query("$.store.book[0].title", data);   // ["Between the Stops"]
-evaluator.Query("$.store.book[-1].title", data);   // ["The Lord of the Rings"]
+evaluator.Query("$.store.book[0].title", data, workspace);   // ["Between the Stops"]
+evaluator.Query("$.store.book[-1].title", data, workspace);   // ["The Lord of the Rings"]
 ```
 
 ### Array slicing
@@ -69,7 +69,7 @@ evaluator.Query("$.store.book[-1].title", data);   // ["The Lord of the Rings"]
 Select a contiguous range of elements (`start:end`):
 
 ```csharp
-evaluator.Query("$.store.book[0:2].title", data);
+evaluator.Query("$.store.book[0:2].title", data, workspace);
 // ["Between the Stops","Sword of Honour"]
 ```
 
@@ -78,7 +78,7 @@ evaluator.Query("$.store.book[0:2].title", data);
 ### Simple comparison
 
 ```csharp
-evaluator.Query("$.store.book[?@.price<10].title", data);
+evaluator.Query("$.store.book[?@.price<10].title", data, workspace);
 // ["Between the Stops","Pride and Prejudice"]
 ```
 
@@ -87,7 +87,7 @@ evaluator.Query("$.store.book[?@.price<10].title", data);
 Combine conditions with `&&` (and) and `||` (or):
 
 ```csharp
-evaluator.Query("$.store.book[?@.price<10 && @.category=='fiction'].title", data);
+evaluator.Query("$.store.book[?@.price<10 && @.category=='fiction'].title", data, workspace);
 // ["Pride and Prejudice"]
 ```
 
@@ -96,7 +96,7 @@ evaluator.Query("$.store.book[?@.price<10 && @.category=='fiction'].title", data
 RFC 9535 defines five built-in functions: `length`, `count`, `value`, `match`, and `search`.
 
 ```csharp
-evaluator.Query("$.store.book[?length(@.title)>15].title", data);
+evaluator.Query("$.store.book[?length(@.title)>15].title", data, workspace);
 // ["Between the Stops","Pride and Prejudice","The Lord of the Rings"]
 ```
 
@@ -174,7 +174,7 @@ Register it on a new evaluator instance:
 var evaluator = new JsonPathEvaluator(
     new Dictionary<string, IJsonPathFunction> { ["ceil"] = new CeilFunction() });
 
-evaluator.Query("$.store.book[?ceil(@.price)==9].title", data);
+evaluator.Query("$.store.book[?ceil(@.price)==9].title", data, workspace);
 // ["Between the Stops","Pride and Prejudice"]
 ```
 
@@ -203,7 +203,7 @@ sealed class IsFictionFunction : IJsonPathFunction
 var evaluator = new JsonPathEvaluator(
     new Dictionary<string, IJsonPathFunction> { ["is_fiction"] = new IsFictionFunction() });
 
-evaluator.Query("$.store.book[?is_fiction(@.category)].title", data);
+evaluator.Query("$.store.book[?is_fiction(@.category)].title", data, workspace);
 // ["Sword of Honour","Pride and Prejudice","The Lord of the Rings"]
 ```
 
@@ -244,7 +244,7 @@ sealed class CheapestFunction : IJsonPathFunction
 var evaluator = new JsonPathEvaluator(
     new Dictionary<string, IJsonPathFunction> { ["cheapest"] = new CheapestFunction() });
 
-evaluator.Query("$.store.book[?@.price==cheapest($.store.book[*].price)].title", data);
+evaluator.Query("$.store.book[?@.price==cheapest($.store.book[*].price)].title", data, workspace);
 // ["Between the Stops"]
 ```
 

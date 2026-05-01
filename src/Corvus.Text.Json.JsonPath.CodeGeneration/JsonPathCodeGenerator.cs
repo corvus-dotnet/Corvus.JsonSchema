@@ -4,6 +4,7 @@
 
 using System.Collections.Generic;
 using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.JsonPath;
@@ -26,8 +27,8 @@ public static class JsonPathCodeGenerator
     private const string H = "JsonPathCodeGenHelpers";
 
     /// <summary>
-    /// Generates a complete C# source file containing a static class with an
-    /// <c>Evaluate</c> method that evaluates the given JSONPath expression.
+    /// Generates a complete C# source file containing a static class with a
+    /// <c>Query</c> method that evaluates the given JSONPath expression.
     /// </summary>
     /// <param name="expression">The JSONPath expression string.</param>
     /// <param name="className">The name of the generated static class.</param>
@@ -152,14 +153,14 @@ public static class JsonPathCodeGenerator
         L(sb, "    ", "}");
         Blank(sb);
 
-        // Emit Evaluate convenience (materializes to JsonElement array)
+        // Emit Query convenience (materializes to JsonElement array)
         L(sb, "    ", "/// <summary>");
-        L(sb, "    ", "/// Evaluates the JSONPath expression and returns a JSON array of matched nodes.");
+        L(sb, "    ", "/// Queries the JSONPath expression and returns a JSON array of matched nodes.");
         L(sb, "    ", "/// </summary>");
         L(sb, "    ", "/// <param name=\"data\">The root JSON element.</param>");
-        L(sb, "    ", "/// <param name=\"workspace\">The workspace for document allocation.</param>");
+        L(sb, "    ", "/// <param name=\"workspace\">The workspace for document allocation. The returned element is backed by this workspace.</param>");
         L(sb, "    ", "/// <returns>A JSON array element containing the matched nodes.</returns>");
-        L(sb, "    ", "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)");
+        L(sb, "    ", "public static JsonElement Query(in JsonElement data, JsonWorkspace workspace)");
         L(sb, "    ", "{");
         L(sb, "    ", "    JsonPathResult result = JsonPathResult.CreatePooled(16);");
         L(sb, "    ", "    try");
@@ -403,7 +404,10 @@ public static class JsonPathCodeGenerator
                     FunctionParamType.Value => JsonPathFunctionType.ValueType,
                     FunctionParamType.Logical => JsonPathFunctionType.LogicalType,
                     FunctionParamType.Nodes => JsonPathFunctionType.NodesType,
-                    _ => JsonPathFunctionType.ValueType,
+                    _ => throw new ArgumentOutOfRangeException(
+                        nameof(customFunctions),
+                        fn.Parameters[i].Type,
+                        $"Custom function '{fn.Name}' parameter '{fn.Parameters[i].Name}' has invalid type."),
                 };
             }
 
@@ -412,7 +416,10 @@ public static class JsonPathCodeGenerator
                 FunctionParamType.Value => JsonPathFunctionType.ValueType,
                 FunctionParamType.Logical => JsonPathFunctionType.LogicalType,
                 FunctionParamType.Nodes => JsonPathFunctionType.NodesType,
-                _ => JsonPathFunctionType.ValueType,
+                _ => throw new ArgumentOutOfRangeException(
+                    nameof(customFunctions),
+                    fn.ReturnType,
+                    $"Custom function '{fn.Name}' has invalid return type."),
             };
 
             signatures[fn.Name] = new CustomFunctionSignature(returnType, paramTypes);
@@ -921,11 +928,8 @@ public static class JsonPathCodeGenerator
                 case ParenExpressionNode paren:
                     return this.EmitFilterBool(body, paren.Inner, indent, currentVar);
                 default:
-                    // Fallback: treat as existence (non-null = true)
-                    string valVar = this.EmitFilterValue(body, expr, indent, currentVar);
-                    string boolVar = this.NextVar();
-                    L(body, indent, $"bool {boolVar} = {valVar}.ValueKind != JsonValueKind.Undefined;");
-                    return boolVar;
+                    Debug.Fail($"Parser guarantees only valid filter expression types reach EmitFilterBool, but got {expr.GetType().Name}.");
+                    throw new InvalidOperationException($"Unexpected filter expression type in bool context: {expr.GetType().Name}");
             }
         }
 
@@ -1185,7 +1189,9 @@ public static class JsonPathCodeGenerator
                 ComparisonOp.LessThanOrEqual => ComparisonOp.GreaterThanOrEqual,
                 ComparisonOp.GreaterThan => ComparisonOp.LessThan,
                 ComparisonOp.GreaterThanOrEqual => ComparisonOp.LessThanOrEqual,
-                _ => op,
+                ComparisonOp.Equal => ComparisonOp.Equal,
+                ComparisonOp.NotEqual => ComparisonOp.NotEqual,
+                _ => throw new InvalidOperationException($"Unexpected {nameof(ComparisonOp)}: {op}"),
             };
         }
 
@@ -1199,7 +1205,7 @@ public static class JsonPathCodeGenerator
                 ComparisonOp.LessThanOrEqual => "<=",
                 ComparisonOp.GreaterThan => ">",
                 ComparisonOp.GreaterThanOrEqual => ">=",
-                _ => throw new InvalidOperationException(),
+                _ => throw new InvalidOperationException($"Unexpected {nameof(ComparisonOp)}: {op}"),
             };
         }
 
@@ -1319,10 +1325,8 @@ public static class JsonPathCodeGenerator
                 case ParenExpressionNode paren:
                     return this.EmitFilterValue(body, paren.Inner, indent, currentVar);
                 default:
-                    // Shouldn't happen if parser validated types; return Undefined
-                    string v = this.NextVar();
-                    L(body, indent, $"JsonElement {v} = default;");
-                    return v;
+                    Debug.Fail($"Parser guarantees only comparable types reach EmitFilterValue, but got {expr.GetType().Name}.");
+                    throw new InvalidOperationException($"Unexpected filter expression type in value context: {expr.GetType().Name}");
             }
         }
 
@@ -1400,10 +1404,8 @@ public static class JsonPathCodeGenerator
                         return this.EmitCustomFunctionCall(body, func, customFunc, indent, currentVar);
                     }
 
-                    // Unknown function — return Undefined
-                    string v = this.NextVar();
-                    L(body, indent, $"JsonElement {v} = default;");
-                    return v;
+                    Debug.Fail($"Parser rejects unknown functions; '{func.Name}' should not reach EmitFunctionValue.");
+                    throw new InvalidOperationException($"Unexpected function in value context: {func.Name}");
             }
         }
 
@@ -1841,7 +1843,8 @@ public static class JsonPathCodeGenerator
                     FunctionParamType.Value => "JsonElement",
                     FunctionParamType.Logical => "bool",
                     FunctionParamType.Nodes => "ReadOnlySpan<JsonElement>",
-                    _ => "JsonElement",
+                    _ => throw new InvalidOperationException(
+                        $"Custom function '{fn.Name}' parameter '{fn.Parameters[i].Name}' has invalid type {fn.Parameters[i].Type}."),
                 };
 
                 mb.Append($"{csharpType} {fn.Parameters[i].Name}");

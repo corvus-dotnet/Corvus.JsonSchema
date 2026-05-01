@@ -85,9 +85,11 @@ public sealed class EvaluationService
 
                 var evaluator = this.GetOrCreateEvaluator(customFunctions);
 
+                using JsonWorkspace workspace = JsonWorkspace.Create();
                 JsonElement result = evaluator.Query(
                     expression,
-                    doc.RootElement);
+                    doc.RootElement,
+                    workspace);
 
                 sw.Stop();
 

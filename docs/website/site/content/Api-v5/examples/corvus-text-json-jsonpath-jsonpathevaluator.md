@@ -18,9 +18,11 @@ using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Pars
     """u8);
 
 // Query returns a JSON array of matched nodes
+using JsonWorkspace workspace = JsonWorkspace.Create();
 JsonElement titles = JsonPathEvaluator.Default.Query(
     "$.store.book[*].title",
-    doc.RootElement);
+    doc.RootElement,
+    workspace);
 // titles: ["Sayings of the Century","Moby Dick","The Lord of the Rings"]
 ```
 
@@ -56,6 +58,7 @@ var evaluator = new JsonPathEvaluator(new Dictionary<string, IJsonPathFunction>
 
 JsonElement cheap = evaluator.Query(
     "$.store.book[?is_cheap(@.price)].title",
-    doc.RootElement);
+    doc.RootElement,
+    workspace);
 // cheap: ["Sayings of the Century","Moby Dick"]
 ```

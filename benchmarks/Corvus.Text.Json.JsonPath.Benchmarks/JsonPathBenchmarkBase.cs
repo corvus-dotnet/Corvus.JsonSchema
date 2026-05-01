@@ -117,7 +117,10 @@ public abstract class JsonPathBenchmarkBase
         this.corvusData = this.corvusDocument.RootElement;
 
         // Pre-warm the Corvus compilation cache
-        JsonPathEvaluator.Default.Query(this.expression, this.corvusData);
+        using (JsonWorkspace workspace = JsonWorkspace.Create())
+        {
+            JsonPathEvaluator.Default.Query(this.expression, this.corvusData, workspace);
+        }
 
         // JsonCons setup
         this.jsonConsDocument = JsonDocument.Parse(dataJsonText);

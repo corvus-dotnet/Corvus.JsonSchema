@@ -20,9 +20,9 @@ Roslyn incremental source generator that produces optimized C# evaluation code f
    internal static partial class BookAuthors;
    ```
 
-4. Use the generated `Evaluate` method:
+4. Use the generated `Query` method:
    ```csharp
    using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
    using var workspace = JsonWorkspace.Create();
-   JsonElement result = BookAuthors.Evaluate(doc.RootElement, workspace);
+   JsonElement result = BookAuthors.Query(doc.RootElement, workspace);
    ```
