@@ -3048,7 +3048,7 @@ internal static class FunctionalCompiler
                             elements.Add(sortedSeq[si]);
                         }
 
-                        // Note: FocusSort returns a non-pooled array — do NOT call ReturnBackingArray.
+                        sortedSeq.ReturnBackingArray();
                     }
                     else
                     {
@@ -8322,12 +8322,7 @@ internal static class FunctionalCompiler
         {
             bool isMatch = matchTexts.Contains(element.GetRawText());
 
-            // Count properties for capacity estimate
-            int propCount = 0;
-            foreach (var unused in element.EnumerateObject())
-            {
-                propCount++;
-            }
+            int propCount = element.GetPropertyCount();
 
             JsonDocumentBuilder<JsonElement.Mutable> objDoc = JsonElement.CreateObjectBuilder(env.Workspace, propCount + 4);
             JsonElement.Mutable objRoot = objDoc.RootElement;
