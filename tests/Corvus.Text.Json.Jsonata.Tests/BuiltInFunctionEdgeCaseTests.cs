@@ -4558,4 +4558,297 @@ public class BuiltInFunctionEdgeCaseTests
             Eval("items.(price + tax)",
                 """{"items":[{"price":10,"tax":1},{"price":20,"tax":2}]}"""));
     }
+
+    // ==================== Round 13b: Edge cases for partial coverage gaps ====================
+
+    // Chain with missing property mid-chain → undefined
+    [Fact]
+    public void ChainMissingPropertyReturnsUndefined()
+    {
+        Assert.Equal("undefined", Eval("a.b.c.d", """{"a":{"x":1}}"""));
+    }
+
+    [Fact]
+    public void ChainPrimitiveMidChainReturnsUndefined()
+    {
+        Assert.Equal("undefined", Eval("a.b.c.d", """{"a":{"b":5}}"""));
+    }
+
+    [Fact]
+    public void ChainViaSingleElementArray()
+    {
+        Assert.Equal("1", Eval("a.b.c.d", """[{"a":{"b":{"c":{"d":1}}}}]"""));
+    }
+
+    // Average via apply operator — empty chains
+    [Fact]
+    public void AverageOverChainEmptyItems()
+    {
+        Assert.Equal("undefined", Eval("items.values ~> $average", """{"items":[]}"""));
+    }
+
+    [Fact]
+    public void AverageOverChainEmptyValues()
+    {
+        Assert.Equal("undefined", Eval("items.values ~> $average", """{"items":[{"values":[]}]}"""));
+    }
+
+    [Fact]
+    public void AverageOverChainSingleValue()
+    {
+        Assert.Equal("42", Eval("items.values ~> $average", """{"items":[{"values":[42]}]}"""));
+    }
+
+    // Sum via apply operator — empty chains
+    [Fact]
+    public void SumOverChainEmpty()
+    {
+        Assert.Equal("undefined", Eval("items.values ~> $sum", """{"items":[]}"""));
+    }
+
+    [Fact]
+    public void SumOverChainEmptyValues()
+    {
+        Assert.Equal("undefined", Eval("items.values ~> $sum", """{"items":[{"values":[]}]}"""));
+    }
+
+    // $map with empty chain
+    [Fact]
+    public void MapChainElementsEmptyResult()
+    {
+        Assert.Equal("undefined", Eval("""$map(items.name, function($v){$uppercase($v)})""", """{"items":[]}"""));
+    }
+
+    // $shuffle with empty/single chain
+    [Fact]
+    public void ShuffleChainEmpty()
+    {
+        Assert.Equal("undefined", Eval("$shuffle(items.vals)", """{"items":[]}"""));
+    }
+
+    [Fact]
+    public void ShuffleChainSingle()
+    {
+        Assert.Equal("[42]", Eval("$shuffle(items.vals)", """{"items":[{"vals":[42]}]}"""));
+    }
+
+    // keepArray ([]) with empty/single chain
+    [Fact]
+    public void KeepArrayChainEmpty()
+    {
+        Assert.Equal("undefined", Eval("a.b.c[]", """{"a":[]}"""));
+    }
+
+    [Fact]
+    public void KeepArrayChainSingle()
+    {
+        Assert.Equal("[1]", Eval("a.b.c[]", """{"a":[{"b":{"c":1}}]}"""));
+    }
+
+    // MapChainDouble — empty/single edge cases
+    [Fact]
+    public void MapChainDoubleEmptyItems()
+    {
+        Assert.Equal("undefined", Eval("items.(price * 2)", """{"items":[]}"""));
+    }
+
+    [Fact]
+    public void MapChainDoubleSingleItem()
+    {
+        Assert.Equal("10", Eval("items.(price * 2)", """{"items":[{"price":5}]}"""));
+    }
+
+    // Predicate chain with no match
+    [Fact]
+    public void PredicateChainNoMatch()
+    {
+        Assert.Equal("undefined", Eval("""items[type="A"].values[0]""", """{"items":[{"type":"B","values":[99]}]}"""));
+    }
+
+    [Fact]
+    public void PredicateChainSingleMatchName()
+    {
+        Assert.Equal("\"x\"", Eval("""items[type="A"].name""", """{"items":[{"type":"A","name":"x"}]}"""));
+    }
+
+    // ==================== Round 13c: Deeper edge cases ====================
+
+    // Primitive data with long chain → undefined
+    [Theory]
+    [InlineData("a.b.c.d", "42")]
+    [InlineData("a.b.c.d", "true")]
+    public void ChainPrimitiveTopLevelData(string expression, string data)
+    {
+        Assert.Equal("undefined", Eval(expression, data));
+    }
+
+    // 2-step chain with computed step (MapChainDouble)
+    [Fact]
+    public void MapChainDoubleTwoStepChain()
+    {
+        Assert.Equal("[6,14]",
+            Eval("data.items.(price * 2)",
+                """{"data":{"items":[{"price":3},{"price":7}]}}"""));
+    }
+
+    [Fact]
+    public void MapChainDoubleTwoStepChainSingle()
+    {
+        Assert.Equal("10",
+            Eval("data.items.(price * 2)",
+                """{"data":{"items":[{"price":5}]}}"""));
+    }
+
+    [Fact]
+    public void MapChainDoubleTwoStepChainEmpty()
+    {
+        Assert.Equal("undefined",
+            Eval("data.items.(price * 2)",
+                """{"data":{"items":[]}}"""));
+    }
+
+    // AverageOverChainCore: array at end of chain
+    [Fact]
+    public void AverageOverChainCoreArray()
+    {
+        Assert.Equal("2",
+            Eval("items.values ~> $average",
+                """{"items":[{"values":[1,2,3]}]}"""));
+    }
+
+    // AverageOverChainCore: single number
+    [Fact]
+    public void AverageOverChainCoreSingleNumber()
+    {
+        Assert.Equal("3",
+            Eval("items.values ~> $average",
+                """{"items":[{"values":3}]}"""));
+    }
+
+    // AverageOverChainCore: non-number → error
+    [Fact]
+    public void AverageOverChainCoreNonNumberThrows()
+    {
+        EvalThrows("items.values ~> $average",
+            """{"items":[{"values":"hello"}]}""",
+            "T0412");
+    }
+
+    // SumOverChainCore: array at end of chain
+    [Fact]
+    public void SumOverChainCoreArray()
+    {
+        Assert.Equal("6",
+            Eval("items.values ~> $sum",
+                """{"items":[{"values":[1,2,3]}]}"""));
+    }
+
+    // SumOverChainCore: single number
+    [Fact]
+    public void SumOverChainCoreSingleNumber()
+    {
+        Assert.Equal("3",
+            Eval("items.values ~> $sum",
+                """{"items":[{"values":3}]}"""));
+    }
+
+    // SumOverChainCore: non-number → error
+    [Fact]
+    public void SumOverChainCoreNonNumberThrows()
+    {
+        EvalThrows("items.values ~> $sum",
+            """{"items":[{"values":"hello"}]}""",
+            "T0412");
+    }
+
+    // FusedEvalFromStep: multiple matches → array
+    [Fact]
+    public void FusedEvalFromStepMultipleMatches()
+    {
+        Assert.Equal("[1,4]",
+            Eval("""items[type="A"].values[0]""",
+                """{"items":[{"type":"A","values":[1,2]},{"type":"B","values":[3]},{"type":"A","values":[4,5]}]}"""));
+    }
+
+    // FusedEvalFromStep: single match → scalar
+    [Fact]
+    public void FusedEvalFromStepSingleMatch()
+    {
+        Assert.Equal("10",
+            Eval("""items[type="A"].values[0]""",
+                """{"items":[{"type":"A","values":[10]},{"type":"B","values":[20]}]}"""));
+    }
+
+    // FusedCollectAndContinue: multiple matches
+    [Fact]
+    public void FusedCollectAndContinueMultipleMatches()
+    {
+        Assert.Equal("[\"x\",\"z\"]",
+            Eval("""items[type="A"].name""",
+                """{"items":[{"type":"A","name":"x"},{"type":"B","name":"y"},{"type":"A","name":"z"}]}"""));
+    }
+
+    // NavigatePropertyChainInto: mixed types in array
+    [Fact]
+    public void NavigatePropertyChainIntoMixedTypes()
+    {
+        Assert.Equal("[1,3]",
+            Eval("a.b", """[{"a":{"b":1}},{"a":2},{"a":{"b":3}}]"""));
+    }
+
+    // ==================== Round 13d: $average/$sum function-call pattern ====================
+
+    [Fact]
+    public void AverageFunctionCallArrayValues()
+    {
+        Assert.Equal("2",
+            Eval("$average(items.values)", """{"items":[{"values":[1,2,3]}]}"""));
+    }
+
+    [Fact]
+    public void AverageFunctionCallScalarValue()
+    {
+        Assert.Equal("5",
+            Eval("$average(items.values)", """{"items":[{"values":5}]}"""));
+    }
+
+    [Fact]
+    public void AverageFunctionCallNonNumberThrows()
+    {
+        EvalThrows("$average(items.values)", """{"items":[{"values":"hello"}]}""", "T0412");
+    }
+
+    [Fact]
+    public void AverageFunctionCallEmpty()
+    {
+        Assert.Equal("undefined",
+            Eval("$average(items.values)", """{"items":[]}"""));
+    }
+
+    [Fact]
+    public void SumFunctionCallArrayValues()
+    {
+        Assert.Equal("6",
+            Eval("$sum(items.values)", """{"items":[{"values":[1,2,3]}]}"""));
+    }
+
+    [Fact]
+    public void SumFunctionCallScalarValue()
+    {
+        Assert.Equal("5",
+            Eval("$sum(items.values)", """{"items":[{"values":5}]}"""));
+    }
+
+    [Fact]
+    public void SumFunctionCallNonNumberThrows()
+    {
+        EvalThrows("$sum(items.values)", """{"items":[{"values":"hello"}]}""", "T0412");
+    }
+
+    [Fact]
+    public void SumFunctionCallEmpty()
+    {
+        Assert.Equal("undefined",
+            Eval("$sum(items.values)", """{"items":[]}"""));
+    }
 }
