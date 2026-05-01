@@ -7557,39 +7557,6 @@ public static class JsonataCodeGenHelpers
     }
 
     // ===== String Utility =====
-    private static int CountCodePoints(string str)
-    {
-        int count = 0;
-        for (int i = 0; i < str.Length; i++)
-        {
-            count++;
-            if (char.IsHighSurrogate(str[i]) && i + 1 < str.Length && char.IsLowSurrogate(str[i + 1]))
-            {
-                i++;
-            }
-        }
-
-        return count;
-    }
-
-    private static int CodePointToCharIndex(string str, int codePointIndex)
-    {
-        int charIdx = 0;
-        for (int cpCount = 0; charIdx < str.Length && cpCount < codePointIndex; cpCount++)
-        {
-            if (char.IsHighSurrogate(str[charIdx]) && charIdx + 1 < str.Length && char.IsLowSurrogate(str[charIdx + 1]))
-            {
-                charIdx += 2;
-            }
-            else
-            {
-                charIdx++;
-            }
-        }
-
-        return charIdx;
-    }
-
     private static int CountCodePoints(ReadOnlySpan<char> span)
     {
         int count = 0;
@@ -8980,28 +8947,6 @@ public static class JsonataCodeGenHelpers
         {
             dest[i] = (byte)formatted[i];
         }
-    }
-
-    /// <summary>
-    /// Serializes a JSON element to a compact JSON string, formatting numbers like
-    /// JavaScript to match JSONata semantics.
-    /// </summary>
-    private static string StringifyElement(in JsonElement element, bool prettyPrint = false)
-    {
-        using var ms = new System.IO.MemoryStream(256);
-        using var writer = new Utf8JsonWriter(ms, new JsonWriterOptions
-        {
-            Indented = prettyPrint,
-            NewLine = "\n",
-            Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
-        });
-
-        WriteStringifiedElement(element, writer);
-        writer.Flush();
-
-        ms.Position = 0;
-        using var reader = new System.IO.StreamReader(ms);
-        return reader.ReadToEnd();
     }
 
     /// <summary>
