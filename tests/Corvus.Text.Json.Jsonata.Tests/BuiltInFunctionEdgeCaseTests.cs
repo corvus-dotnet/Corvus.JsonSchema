@@ -3865,15 +3865,10 @@ public class BuiltInFunctionEdgeCaseTests
         Assert.Equal("undefined", Eval("""$match(nothing, /a/)"""));
     }
 
-    [Fact] // BF 3264-3267: $match with non-string and regex → undefined (NET) or throws (net481)
+    [Fact] // BF 3264-3267: $match with non-string and regex → undefined
     public void Match_NonString_ReturnsUndefined()
     {
-#if NET
         Assert.Equal("undefined", Eval("""$match(42, /a/)"""));
-#else
-        // On net481, the #else path calls GetString() directly which throws for non-string types
-        Assert.ThrowsAny<Exception>(() => Eval("$match(42, /a/)"));
-#endif
     }
 
     [Fact] // BF 3247-3249: $match with non-regex non-lambda pattern → undefined
@@ -4054,4 +4049,44 @@ public class BuiltInFunctionEdgeCaseTests
     // production code paths always use the singleton (Count == 1) or
     // singleton-array fast paths instead.
     // ===================================================================
+
+    // ─── BUG FIX: TFM inconsistencies ──────────────────────────────────
+    // These tests verify consistent behavior across NET and net481.
+    // Reference JSONata throws T0410 for non-string args to these functions.
+
+    [Fact] // BF 1440/1463: $contains non-string arg1 must throw T0410 on all TFMs
+    public void Contains_NonStringArg1_ThrowsT0410()
+    {
+        EvalThrows("""$contains(42, "2")""", "{}", "T0410");
+    }
+
+    [Fact] // BF 1440/1463: $contains boolean arg1
+    public void Contains_BooleanArg1_ThrowsT0410()
+    {
+        EvalThrows("""$contains(true, "r")""", "{}", "T0410");
+    }
+
+    [Fact] // BF 1454/1475: $contains non-string arg2 must throw T0410 on all TFMs
+    public void Contains_NonStringArg2_ThrowsT0410()
+    {
+        EvalThrows("""$contains("hello", 42)""", "{}", "T0410");
+    }
+
+    [Fact] // BF 1454/1475: $contains boolean arg2
+    public void Contains_BooleanArg2_ThrowsT0410()
+    {
+        EvalThrows("""$contains("hello", true)""", "{}", "T0410");
+    }
+
+    [Fact] // BF 2746-2755: $lookup non-string key must throw T0410 on all TFMs
+    public void Lookup_NonStringKey_ThrowsT0410()
+    {
+        EvalThrows("""$lookup({"a":1}, 42)""", "{}", "T0410");
+    }
+
+    [Fact] // BF 2746-2755: $lookup boolean key
+    public void Lookup_BooleanKey_ThrowsT0410()
+    {
+        EvalThrows("""$lookup({"a":1}, true)""", "{}", "T0410");
+    }
 }

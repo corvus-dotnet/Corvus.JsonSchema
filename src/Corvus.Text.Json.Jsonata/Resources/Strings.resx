@@ -491,6 +491,9 @@
   <data name="T0410_LookupExpects2Arguments" xml:space="preserve">
     <value>$lookup expects 2 arguments</value>
   </data>
+  <data name="T0410_Argument2OfFunctionLookupMustBeAString" xml:space="preserve">
+    <value>Argument 2 of function $lookup must be a string</value>
+  </data>
   <data name="T0410_MapExpects2Arguments" xml:space="preserve">
     <value>$map expects 2 arguments</value>
   </data>

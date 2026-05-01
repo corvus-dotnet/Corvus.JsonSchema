@@ -1460,6 +1460,11 @@ internal static class BuiltInFunctions
             bool result = strSpan.Contains(searchUtf16.Span, StringComparison.Ordinal);
             return new Sequence(JsonataHelpers.BooleanElement(result));
 #else
+            if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", SR.T0410_Argument1OfFunctionContainsMustBeAString, 0);
+            }
+
             string? str = strSeq.FirstOrDefault.GetString();
             if (str is null)
             {
@@ -1470,6 +1475,11 @@ internal static class BuiltInFunctions
             {
                 bool isMatch = searchSeq.Regex!.IsMatch(str);
                 return new Sequence(JsonataHelpers.BooleanElement(isMatch));
+            }
+
+            if (searchSeq.IsUndefined || searchSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionContainsMustBeAStringOrRegex, 0);
             }
 
             string? search = searchSeq.FirstOrDefault.GetString();
@@ -2743,6 +2753,11 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
+            if (keySeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                throw new JsonataException("T0410", SR.T0410_Argument2OfFunctionLookupMustBeAString, 0);
+            }
+
 #if NET
             using UnescapedUtf16JsonString keyUtf16 = keySeq.FirstOrDefault.GetUtf16String();
             ReadOnlySpan<char> key = keyUtf16.Span;
@@ -3343,6 +3358,11 @@ internal static class BuiltInFunctions
                 return UnwrapMatchArray((JsonElement)doc.RootElement);
             }
 #else
+            if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
+            {
+                return Sequence.Undefined;
+            }
+
             string? regexStr = strSeq.FirstOrDefault.GetString();
             if (regexStr is null)
             {
