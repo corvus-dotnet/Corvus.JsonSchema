@@ -300,4 +300,110 @@ public class CustomFunctionTests
                 JsonPathCodeGenHelpers.DoubleToElement(total, workspace));
         }
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Tests for JsonPathFunction factory methods (delegate-based API)
+    // ═══════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Factory_Value_SingleArg()
+    {
+        // Lines 44-48: JsonPathFunction.Value(Func<JsonElement, JsonWorkspace, JsonElement>)
+        JsonElement data = JsonElement.ParseValue("""[{"x": 2.7}, {"x": 3.1}]"""u8);
+        JsonPathEvaluator evaluator = new(new Dictionary<string, IJsonPathFunction>
+        {
+            ["floor"] = JsonPathFunction.Value((v, ws) =>
+                JsonPathCodeGenHelpers.IntToElement((int)Math.Floor(v.GetDouble()), ws)),
+        });
+
+        using JsonPathResult result = evaluator.QueryNodes("$[?floor(@.x) == 2]", data);
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public void Factory_Value_TwoArgs()
+    {
+        // Lines 58-62: JsonPathFunction.Value(Func<JsonElement, JsonElement, JsonWorkspace, JsonElement>)
+        JsonElement data = JsonElement.ParseValue("""[{"a": 10, "b": 3}]"""u8);
+        JsonPathEvaluator evaluator = new(new Dictionary<string, IJsonPathFunction>
+        {
+            ["modulo"] = JsonPathFunction.Value((a, b, ws) =>
+                JsonPathCodeGenHelpers.IntToElement(a.GetInt32() % b.GetInt32(), ws)),
+        });
+
+        using JsonPathResult result = evaluator.QueryNodes("$[?modulo(@.a, @.b) == 1]", data);
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public void Factory_Logical()
+    {
+        // Lines 72-76: JsonPathFunction.Logical(Func<JsonElement, bool>)
+        JsonElement data = JsonElement.ParseValue("""["cat", "dog", "catfish"]"""u8);
+        JsonPathEvaluator evaluator = new(new Dictionary<string, IJsonPathFunction>
+        {
+            ["starts_with_cat"] = JsonPathFunction.Logical(v =>
+                v.ValueKind == JsonValueKind.String && v.GetString()!.StartsWith("cat")),
+        });
+
+        using JsonPathResult result = evaluator.QueryNodes("$[?starts_with_cat(@)]", data);
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
+    public void Factory_NodesValue()
+    {
+        // Lines 91-95: JsonPathFunction.NodesValue(Func<JsonElement[], JsonWorkspace, JsonElement>)
+        JsonElement data = JsonElement.ParseValue("""[{"items": [10, 20, 30]}, {"items": [1, 2]}]"""u8);
+        JsonPathEvaluator evaluator = new(new Dictionary<string, IJsonPathFunction>
+        {
+            ["sum"] = JsonPathFunction.NodesValue((nodes, ws) =>
+            {
+                double total = 0;
+                foreach (JsonElement n in nodes)
+                {
+                    if (n.ValueKind == JsonValueKind.Number)
+                    {
+                        total += n.GetDouble();
+                    }
+                }
+
+                return JsonPathCodeGenHelpers.DoubleToElement(total, ws);
+            }),
+        });
+
+        using JsonPathResult result = evaluator.QueryNodes("$[?sum(@.items[*]) == 60]", data);
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public void Factory_NodesLogical()
+    {
+        // Lines 110-114: JsonPathFunction.NodesLogical(Func<JsonElement[], bool>)
+        JsonElement data = JsonElement.ParseValue("""[{"tags": ["a", "b"]}, {"tags": ["c"]}]"""u8);
+        JsonPathEvaluator evaluator = new(new Dictionary<string, IJsonPathFunction>
+        {
+            ["has_multiple"] = JsonPathFunction.NodesLogical(nodes => nodes.Length > 1),
+        });
+
+        using JsonPathResult result = evaluator.QueryNodes("$[?has_multiple(@.tags[*])]", data);
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public void Factory_Create_CustomSignature()
+    {
+        // Lines 126-130: JsonPathFunction.Create(returnType, parameterTypes, evaluate)
+        JsonElement data = JsonElement.ParseValue("[1, 2, 3, 4, 5]"u8);
+        JsonPathEvaluator evaluator = new(new Dictionary<string, IJsonPathFunction>
+        {
+            ["gt3"] = JsonPathFunction.Create(
+                JsonPathFunctionType.LogicalType,
+                [JsonPathFunctionType.ValueType],
+                (args, ws) => JsonPathFunctionResult.FromLogical(args[0].Value.GetInt32() > 3)),
+        });
+
+        using JsonPathResult result = evaluator.QueryNodes("$[?gt3(@)]", data);
+        Assert.Equal(2, result.Count);
+    }
 }
