@@ -542,6 +542,13 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     // Chained comparison operators
     [InlineData("1 < 2 and 2 < 3", "true")]
     [InlineData("1 > 2 or 2 > 3", "false")]
+    // CodeGenStringHelpers: EscapeJsonStringContent \b \f paths (L85-86)
+    // and EscapeCSharpStringLiteral \b \f paths (L39-40)
+    [InlineData("\"hello\\bworld\"", "\"hello\\bworld\"")]
+    [InlineData("\"hello\\fworld\"", "\"hello\\fworld\"")]
+    // CodeGenStringHelpers: EscapeCSharpStringLiteral \u escape for control chars (L44-46)
+    [InlineData("\"hello\\u0007world\"", "\"hello\\u0007world\"")]
+    [InlineData("\"hello\\u000Bworld\"", "\"hello\\u000Bworld\"")]
     public void EvaluateR2SelfContainedExpression(string expression, string expectedJson)
     {
         this.CompileAndAssert(expression, "null", expectedJson);

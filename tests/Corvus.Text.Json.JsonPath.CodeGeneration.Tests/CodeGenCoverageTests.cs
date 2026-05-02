@@ -1490,4 +1490,54 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """$[?value(@[*]) == 42]""",
             """[[42],[1,42],[]]""");
     }
+
+    // ── CodeGenStringHelpers: UnescapeJsonString paths ────────────────
+    // These target the uncovered branches in UnescapeJsonString (L116-178)
+    // which is called by JsonPathCodeGenerator.UnescapeJsonString for
+    // string literals in JSONPath expressions.
+
+    [Fact]
+    public void StringLiteral_WithForwardSlashEscape()
+    {
+        // JSON escape \/ (forward slash) → UnescapeJsonString L135
+        const string expression = """$[?@.path == "a\/b"]""";
+        const string json = """[{"path":"a/b"},{"path":"a\\/b"},{"path":"other"}]""";
+        this.AssertCgMatchesRuntime(expression, json);
+    }
+
+    [Fact]
+    public void StringLiteral_WithUnicodeEscape()
+    {
+        // JSON escape \uXXXX → UnescapeJsonString L141-153
+        const string expression = """$[?@.name == "\u0041lice"]""";
+        const string json = """[{"name":"Alice"},{"name":"Bob"}]""";
+        this.AssertCgMatchesRuntime(expression, json);
+    }
+
+    [Fact]
+    public void StringLiteral_WithBackspaceEscape()
+    {
+        // JSON escape \b → UnescapeJsonString L136
+        const string expression = """$[?@.val == "a\bb"]""";
+        const string json = """[{"val":"a\bb"},{"val":"ab"}]""";
+        this.AssertCgMatchesRuntime(expression, json);
+    }
+
+    [Fact]
+    public void StringLiteral_WithFormfeedEscape()
+    {
+        // JSON escape \f → UnescapeJsonString L137
+        const string expression = """$[?@.val == "a\fb"]""";
+        const string json = """[{"val":"a\fb"},{"val":"ab"}]""";
+        this.AssertCgMatchesRuntime(expression, json);
+    }
+
+    [Fact]
+    public void StringLiteral_NoEscapes()
+    {
+        // String with no backslashes → UnescapeJsonString L120-122 (fast path)
+        const string expression = """$[?@.val == "simple"]""";
+        const string json = """[{"val":"simple"},{"val":"other"}]""";
+        this.AssertCgMatchesRuntime(expression, json);
+    }
 }
