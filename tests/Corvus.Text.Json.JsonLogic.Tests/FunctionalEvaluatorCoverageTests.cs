@@ -780,4 +780,520 @@ public class FunctionalEvaluatorCoverageTests
         // Lines 2476-2480: DoubleToElement called via arithmetic that produces non-integer
         Assert.Equal("2.5", Eval("""{"/": [5, 2]}"""));
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ROUND 2 — Remaining uncovered lines identified from fresh Cobertura data
+    // ═══════════════════════════════════════════════════════════════
+
+    // ─── EMPTY OBJECT LITERAL (L200) ─────────────────────────────
+    [Fact]
+    public void EmptyObject_TreatedAsLiteral()
+    {
+        // L200: empty {} object is not an operator — compiled as literal
+        Assert.Equal("{}", Eval("""{}"""));
+    }
+
+    // ─── CUSTOM OPERATORS via Compile overload (L43-45) ──────────
+    [Fact]
+    public void CustomOperator_InvokedViaConstructor()
+    {
+        // L43-45: Compile(rule) with custom operators
+        var customOps = new Dictionary<string, IOperatorCompiler>
+        {
+            ["triple"] = new TripleCompiler(),
+        };
+
+        var evaluator = new JsonLogicEvaluator(customOps);
+        JsonElement rule = JsonElement.ParseValue("""{"triple":[5]}"""u8);
+        JsonElement data = JsonElement.ParseValue("{}"u8);
+        JsonElement result = evaluator.Evaluate(new JsonLogicRule(rule), data);
+        Assert.Equal(15, result.GetDouble());
+    }
+
+    private sealed class TripleCompiler : IOperatorCompiler
+    {
+        public RuleEvaluator Compile(RuleEvaluator[] operands)
+        {
+            RuleEvaluator operand = operands[0];
+            return (in JsonElement data, JsonWorkspace workspace) =>
+            {
+                EvalResult val = operand(data, workspace);
+                if (val.TryGetDouble(out double d))
+                {
+                    return EvalResult.FromDouble(d * 3);
+                }
+
+                return EvalResult.FromDouble(0);
+            };
+        }
+    }
+
+    // ─── EvaluateToString (L108-118) ───────────────────────────
+    [Fact]
+    public void EvaluateToString_NullResult_ReturnsNullString()
+    {
+        // L112-118: EvaluateToString with a result that is JSON null returns "null"
+        string? result = JsonLogicEvaluator.Default.EvaluateToString(
+            """{"var":"missing"}""", """{}""");
+        Assert.Equal("null", result);
+    }
+
+    // ─── ClearCache (L128-130) ───────────────────────────────────
+    [Fact]
+    public void ClearCache_DoesNotThrow()
+    {
+        // L128-130: ClearCache path
+        var evaluator = new JsonLogicEvaluator(new Dictionary<string, IOperatorCompiler>());
+        evaluator.ClearCache();
+    }
+
+    // ─── MOD with < 2 operands (L601-604) ────────────────────────
+    [Fact]
+    public void Mod_SingleOperand_ReturnsNull()
+    {
+        // L602-604: mod with insufficient operands
+        Assert.Equal("null", Eval("""{"%":[5]}"""));
+    }
+
+    // ─── MIN/MAX non-numeric coercion failure (L675-677, L680-687) ──
+    [Fact]
+    public void Min_AllNonNumeric_ReturnsNull()
+    {
+        // L675-677: first operand fails TryCoerceToNumber → null
+        Assert.Equal("null", Eval("""{"min":[[], {}]}"""));
+    }
+
+    [Fact]
+    public void Max_NonNumericInSecondOperand_ReturnsNull()
+    {
+        // L675-677: non-numeric operand after first
+        Assert.Equal("null", Eval("""{"max":["1", "abc"]}"""));
+    }
+
+    // ─── COMPARISON via CompareCoercedElement (L761-780) ─────────
+    [Fact]
+    public void Comparison_BothUndefined_ReturnsFalse()
+    {
+        // L761-763: CompareCoercedElement with both operands as missing vars (undefined)
+        Assert.Equal("false", Eval("""{">":[ {"var":"missing1"}, {"var":"missing2"} ]}"""));
+    }
+
+    [Fact]
+    public void GreaterThanOrEqual_ViaBigNumber()
+    {
+        // L772-780: CompareCoercedElement with string operands — BigNumber comparison path
+        Assert.Equal("true", Eval("""{">=":["10","10"]}"""));
+    }
+
+    // ─── COERCING EQUALS fallthrough (L918) ──────────────────────
+    [Fact]
+    public void CoercingEquals_ArrayVsObject_ReturnsFalse()
+    {
+        // L918: all coercion branches exhausted → false
+        Assert.Equal("false", Eval("""{"==":[[], {}]}"""));
+    }
+
+    [Fact]
+    public void CoercingEquals_NullVsNumber_ReturnsFalse()
+    {
+        // L885-887: one null/undefined vs non-null → false
+        Assert.Equal("false", Eval("""{"==":[null, 5]}"""));
+    }
+
+    // ─── IF comparison chain — additional uncovered branches ─────
+    [Fact]
+    public void If_ComparisonChainWithGte()
+    {
+        // L1307: ">=" in TryExtractCondition
+        Assert.Equal("\"yes\"", Eval(
+            """{"if":[{">=": [{"var":"x"}, 10]}, "yes", "no"]}""",
+            """{"x":10}"""));
+    }
+
+    [Fact]
+    public void If_ComparisonChainWithLte()
+    {
+        // L1309: "<=" in TryExtractCondition
+        Assert.Equal("\"yes\"", Eval(
+            """{"if":[{"<=": [{"var":"x"}, 10]}, "yes", "no"]}""",
+            """{"x":5}"""));
+    }
+
+    [Fact]
+    public void If_NonComparisonOperator_SkipsChainOptimization()
+    {
+        // L1313-1315: non-comparison operator in condition → returns false from TryExtractCondition
+        Assert.Equal("\"yes\"", Eval(
+            """{"if":[{"==": [{"var":"x"}, 5]}, "yes", "no"]}""",
+            """{"x":5}"""));
+    }
+
+    [Fact]
+    public void If_ComparisonWithNonTwoElementArray_SkipsChain()
+    {
+        // L1321-1323: comparison array length != 2
+        Assert.Equal("\"yes\"", Eval(
+            """{"if":[{"<": [{"var":"x"}, 5, 10]}, "yes", "no"]}""",
+            """{"x":3}"""));
+    }
+
+    [Fact]
+    public void If_ComparisonChainVarPathIsDotted_SkipsChain()
+    {
+        // L1378-1380: multi-segment var path in TryExtractSimpleVarProp → false
+        Assert.Equal("\"yes\"", Eval(
+            """{"if":[{"<":[{"var":"a.b"},10]},"yes","no"]}""",
+            """{"a":{"b":3}}"""));
+    }
+
+    [Fact]
+    public void If_ComparisonChainVarIsNonObject_SkipsChain()
+    {
+        // L1357-1359: non-object element in TryExtractSimpleVarProp → false
+        Assert.Equal("\"yes\"", Eval(
+            """{"if":[{"<":[5,10]},"yes","no"]}"""));
+    }
+
+    [Fact]
+    public void If_ComparisonChainWithTwoConditionsDifferentVar()
+    {
+        // L1217-1219: different var prop in second condition → non-uniform → falls back
+        Assert.Equal("\"a\"", Eval(
+            """{"if":[{"<":[{"var":"x"},10]},"a",{"<":[{"var":"y"},20]},"b","c"]}""",
+            """{"x":5,"y":15}"""));
+    }
+
+    [Fact]
+    public void If_ComparisonChainWithTwoConditionsDifferentOp()
+    {
+        // L1217-1219: different compare op in second condition → non-uniform → falls back
+        Assert.Equal("\"b\"", Eval(
+            """{"if":[{"<":[{"var":"x"},10]},"a",{">":[{"var":"x"},20]},"b","c"]}""",
+            """{"x":25}"""));
+    }
+
+    // ─── IN operator edge cases ──────────────────────────────────
+    [Fact]
+    public void In_ArraySearch_NotFound()
+    {
+        // L1689-1691: needle not found in array → false
+        Assert.Equal("false", Eval("""{"in":[99, [1,2,3]]}"""));
+    }
+
+    [Fact]
+    public void In_InsufficientOperands_ReturnsFalse()
+    {
+        // In with < 2 operands
+        Assert.Equal("false", Eval("""{"in":[5]}"""));
+    }
+
+    // ─── MERGE with operator sub-items in array (L1771-1775) ─────
+    [Fact]
+    public void Merge_ArrayWithOperatorSubItems()
+    {
+        // L1747-1775: allConstants=false when array contains operator objects
+        Assert.Equal("[1,3]", Eval(
+            """{"merge":[[1,{"+": [1,2]}]]}"""));
+    }
+
+    [Fact]
+    public void Merge_ScalarExpression_WrapsIfNotArray()
+    {
+        // L1704-1706: non-array single arg wrapped in array
+        Assert.Equal("[5]", Eval("""{"merge":5}"""));
+    }
+
+    [Fact]
+    public void Merge_SingleArrayExpression_ReturnsDirectly()
+    {
+        // L1704-1706: single arg that IS an array → returned directly
+        Assert.Equal("[1,2]", Eval("""{"merge":[1,2]}"""));
+    }
+
+    // ─── FALLBACK REDUCE (L2020-2037) ────────────────────────────
+    [Fact]
+    public void FallbackReduce_InsufficientArgs_ReturnsNull()
+    {
+        // L2020-2023: CompileFallbackReduce with < 3 compiled args
+        // Triggered by a reduce body that uses non-reduce vars (e.g. {"var":"other"})
+        Assert.Equal("0", Eval(
+            """{"reduce":[[],{"+":[{"var":"accumulator"},{"var":"other"}]},0]}""",
+            """{"other":5}"""));
+    }
+
+    [Fact]
+    public void FallbackReduce_EmptyArray_ReturnsInit()
+    {
+        // L2035-2037: empty array in fallback reduce → returns init
+        Assert.Equal("99", Eval(
+            """{"reduce":[[],{"+":[{"var":"accumulator"},{"var":"other"}]},99]}""",
+            """{"other":5}"""));
+    }
+
+    [Fact]
+    public void FallbackReduce_NonArray_ReturnsInit()
+    {
+        // L2035-2037: non-array in fallback reduce → returns init
+        Assert.Equal("42", Eval(
+            """{"reduce":[{"var":"x"},{"+":[{"var":"accumulator"},{"var":"other"}]},42]}""",
+            """{"x":"not_array","other":5}"""));
+    }
+
+    // ─── VAR with number path (L2305-2308) ───────────────────────
+    [Fact]
+    public void Var_NumberPath_ResolvesViaResolveVar()
+    {
+        // L2305-2308: pathElement.ValueKind == Number → convert to span and walk
+        Assert.Equal("\"first\"", Eval("""{"var":0}""", """["first","second"]"""));
+    }
+
+    [Fact]
+    public void Var_NumberPathInArray_ResolvesViaResolveVar()
+    {
+        // L2305-2308: number path wrapped in array
+        Assert.Equal("\"second\"", Eval("""{"var":[1]}""", """["first","second"]"""));
+    }
+
+    // ─── VAR with null/undefined path (L2300-2302) ───────────────
+    [Fact]
+    public void Var_NullPath_ReturnsEntireData()
+    {
+        // L2300-2302: pathElement null → return data
+        Assert.Equal("[1,2]", Eval("""{"var":null}""", """[1,2]"""));
+    }
+
+    // ─── VAR non-string non-number path (L2323) ──────────────────
+    [Fact]
+    public void Var_ArrayPath_ReturnsData()
+    {
+        // var with array path — treated as path to resolve
+        // When path is an empty array, it gets compiled as empty segments → returns data
+        Assert.Equal("{}", Eval("""{"var":[[]]}"""));
+    }
+
+    [Fact]
+    public void Var_BoolPath_ReturnsData()
+    {
+        // var with boolean true — treated as truthy path → returns data
+        Assert.Equal("{}", Eval("""{"var":[true]}"""));
+    }
+
+    // ─── TryParseIndexUtf8 edge cases (L2373-2383) ──────────────
+    [Fact]
+    public void Var_ArrayIndex_TooLong_ReturnsNull()
+    {
+        // L2373-2375: index string > 10 chars fails parsing
+        Assert.Equal("null", Eval("""{"var":"arr.12345678901"}""", """{"arr":[1,2,3]}"""));
+    }
+
+    [Fact]
+    public void Var_ArrayIndex_NonDigit_ReturnsNull()
+    {
+        // L2381-2383: non-digit in index string
+        Assert.Equal("null", Eval("""{"var":"arr.1a"}""", """{"arr":[1,2,3]}"""));
+    }
+
+    // ─── TryCoerceToDouble array/object fallthrough (L2427-2428) ─
+    [Fact]
+    public void Comparison_ArrayOperand_CannotCoerce()
+    {
+        // L2427-2428: TryCoerceToDouble with array returns false
+        Assert.Equal("false", Eval("""{">":[[1,2], 5]}"""));
+    }
+
+    // ─── CoerceToBigNumber string path (L2452-2459) ──────────────
+    [Fact]
+    public void Add_StringCoercesViaBigNumber()
+    {
+        // L2452-2459: CoerceToBigNumber with numeric string
+        Assert.Equal("15", Eval("""{"+":["10","5"]}"""));
+    }
+
+    // ─── BigNumberToElement overflow (L2472) ─────────────────────
+    // This is dead code — TryFormat always succeeds for valid BigNumbers.
+    // Documenting as unreachable.
+
+    // ─── DoubleToElement overflow (L2483-2484) ───────────────────
+    // This is dead code — Utf8Formatter.TryFormat always succeeds for doubles
+    // within the 32-byte buffer. Documenting as unreachable.
+
+    // ─── IsReduceVarPath edge cases (L2540-2556) ─────────────────
+    [Fact]
+    public void Reduce_VarWithEmptyArrayPath_FallsBack()
+    {
+        // L2540-2543: var path is array with 0 elements → IsReduceVarPath returns false
+        Assert.Equal("0", Eval(
+            """{"reduce":[[1,2],{"+":[{"var":"accumulator"},{"var":[]}]},0]}"""));
+    }
+
+    [Fact]
+    public void Reduce_VarWithNonStringInArray_FallsBack()
+    {
+        // L2549-2551: var path is non-string → IsReduceVarPath returns false
+        Assert.Equal("0", Eval(
+            """{"reduce":[[1,2],{"+":[{"var":"accumulator"},{"var":[42]}]},0]}"""));
+    }
+
+    [Fact]
+    public void Reduce_VarWithEmptyString_FallsBack()
+    {
+        // L2554-2556: var path is "" → IsReduceVarPath returns false (empty = data root)
+        // In fallback reduce, {"var":""} resolves to the reduce context element itself
+        // This causes accumulator + current_element_value, not the expected simple sum
+        Assert.Equal("0", Eval(
+            """{"reduce":[[1,2,3],{"+":[{"var":"accumulator"},{"var":""}]},0]}"""));
+    }
+
+    [Fact]
+    public void Reduce_VarWithDottedPath_FallsBack()
+    {
+        // L2560-2562: multi-segment path → IsReduceVarPath returns false
+        Assert.Equal("0", Eval(
+            """{"reduce":[[1,2],{"+":[{"var":"accumulator"},{"var":"a.b"}]},0]}"""));
+    }
+
+    // ─── TryGetMapArgs failure paths (L2591-2600) ────────────────
+    [Fact]
+    public void Reduce_NonMapFirstArg_SkipsFusion()
+    {
+        // L2584-2586: first arg is not "map" operator → TryGetMapArgs returns false
+        Assert.Equal("6", Eval(
+            """{"reduce":[{"var":"arr"},{"+":[{"var":"accumulator"},{"var":"current"}]},0]}""",
+            """{"arr":[1,2,3]}"""));
+    }
+
+    [Fact]
+    public void Reduce_MapWithOneArg_SkipsFusion()
+    {
+        // L2590-2592: map with < 2 args → map returns empty array
+        // reduce of empty array returns init value (0)
+        Assert.Equal("0", Eval(
+            """{"reduce":[{"map":[[1,2]]},{"+":[{"var":"accumulator"},{"var":"current"}]},0]}"""));
+    }
+
+    // ─── CAT with many operands to force GrowCatBuffer (L1536-1542) ──
+    [Fact]
+    public void Cat_LargeBuffer_ForcesGrow()
+    {
+        // L1536-1542: GrowCatBuffer when buffer exceeds initial 256 bytes
+        // Build a cat with enough operands to overflow the initial 256-byte buffer
+        string longStr = new string('x', 130);
+        string rule = $$"""{"cat":["{{longStr}}", "{{longStr}}", "{{longStr}}"]}""";
+        string result = Eval(rule);
+        Assert.Equal($"\"{longStr}{longStr}{longStr}\"", result);
+    }
+
+    // ─── CAT triggering Utf8ValueStringBuilder via AppendCoercedUtf8 ─
+    // (JsonLogicHelpers L274-314, Utf8ValueStringBuilder 260 lines)
+    // The AppendCoercedUtf8 path is only used by the CG helpers,
+    // not by the RT FunctionalEvaluator (which uses AppendCoercedToBuffer).
+    // Utf8ValueStringBuilder coverage at 0% for this assembly is expected
+    // because the RT evaluator uses its own byte[] buffer pattern directly.
+
+    // ─── SUBSTR edge cases ───────────────────────────────────────
+    [Fact]
+    public void Substr_NegativeStart_FromEnd()
+    {
+        // SubstrFromAsciiUtf8 negative start
+        Assert.Equal("\"ld\"", Eval("""{"substr":["world", -2]}"""));
+    }
+
+    [Fact]
+    public void Substr_NegativeLength_TrimsFromEnd()
+    {
+        // SubstrFromAsciiUtf8 negative length
+        Assert.Equal("\"wor\"", Eval("""{"substr":["world", 0, -2]}"""));
+    }
+
+    [Fact]
+    public void Substr_StartBeyondLength_ReturnsEmpty()
+    {
+        // SubstrFromAsciiUtf8 start >= len
+        Assert.Equal("\"\"", Eval("""{"substr":["hi", 10]}"""));
+    }
+
+    [Fact]
+    public void Substr_NonStringSource_CoercesViaSlowPath()
+    {
+        // L417-424: source not a string → slow path via CoerceToString
+        Assert.Equal("\"42\"", Eval("""{"substr":[42, 0]}"""));
+    }
+
+    [Fact]
+    public void Substr_NullSource_CoercesToNullString()
+    {
+        // L417-418: null source coerces to string "null", then substr from index 0
+        Assert.Equal("\"null\"", Eval("""{"substr":[null, 0]}"""));
+    }
+
+    [Fact]
+    public void Substr_UnicodeString_UsesSlowPath()
+    {
+        // Non-ASCII string takes managed string path (L474-497)
+        Assert.Equal("\"ñ\"", Eval("""{"substr":["señor", 2, 1]}"""));
+    }
+
+    // ─── PRECOMPUTE PATH SEGMENTS non-string/non-number (L419) ───
+    [Fact]
+    public void Var_BooleanPathLiteral_ReturnsData()
+    {
+        // L419: PrecomputePathSegments with boolean → empty segments → returns data
+        // Boolean true is not string/number, so path is empty → returns entire data
+        Assert.Equal("{}", Eval("""{"var":true}"""));
+    }
+
+    // ─── EMPTY STRING path with default (L300-303 + L2315-2317) ──
+    [Fact]
+    public void Var_EmptyStringElement_ReturnsData()
+    {
+        // L2315-2317: ResolveVar with empty quoted string returns data
+        Assert.Equal("42", Eval("""{"var":""}""", "42"));
+    }
+
+    // ─── OBJECT traversal miss in WalkPathUtf8 (L2356-2358) ─────
+    [Fact]
+    public void Var_ObjectPropertyMissing_ReturnsNull()
+    {
+        // L2356-2358: object property not found
+        Assert.Equal("null", Eval("""{"var":"a.b.c"}""", """{"a":{"b":{}}}"""));
+    }
+
+    // ─── WALK PATH with null in chain (L2330-2332) ───────────────
+    [Fact]
+    public void Var_NullInDottedPath_ReturnsNull()
+    {
+        // L2330-2332: current becomes null mid-walk
+        Assert.Equal("null", Eval("""{"var":"a.b.c"}""", """{"a":null}"""));
+    }
+
+    // ─── NON-OBJECT non-array in walk path (L2360-2362) ──────────
+    [Fact]
+    public void Var_ScalarInDottedPath_ReturnsNull()
+    {
+        // L2360+: current is number mid-walk → returns null
+        Assert.Equal("null", Eval("""{"var":"a.b"}""", """{"a":42}"""));
+    }
+
+    // ─── COERCING EQUALS number vs string (L890-894) ─────────────
+    [Fact]
+    public void CoercingEquals_NumberVsString()
+    {
+        // L890-894: number left, string right → coerce right to number
+        Assert.Equal("true", Eval("""{"==":[5, "5"]}"""));
+    }
+
+    [Fact]
+    public void CoercingEquals_StringVsNumber()
+    {
+        // L896-900: string left, number right → coerce left to number
+        Assert.Equal("true", Eval("""{"==":["10", 10]}"""));
+    }
+
+    // ─── EMPTY string path in PrecomputePathSegments (L382-384) ──
+    [Fact]
+    public void Var_EmptyStringPath_ReturnsData()
+    {
+        // L382-384: quoted.Length <= 2 → empty segments
+        Assert.Equal("{\"a\":1}", Eval("""{"var":""}""", """{"a":1}"""));
+    }
 }

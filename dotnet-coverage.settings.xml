@@ -35,6 +35,9 @@
              Matches both V5 layout (obj\...\generated\...) and
              regex/other generators (obj\...\System.Text.RegularExpressions.Generator\...) -->
         <Source>.*\\obj\\.*\.g\.cs$</Source>
+        <!-- Auto-generated resource strings (SR.cs, Strings.Designer.cs, etc.) -->
+        <Source>.*\\SR\.cs$</Source>
+        <Source>.*\.Designer\.cs$</Source>
       </Exclude>
     </Sources>
   </CodeCoverage>

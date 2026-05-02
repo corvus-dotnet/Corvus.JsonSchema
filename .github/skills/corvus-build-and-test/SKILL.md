@@ -196,8 +196,9 @@ The `dotnet-coverage.settings.xml` file controls which assemblies are instrument
 **Source exclusions** configured in the settings file:
 - `src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/` — V4 CLI-generated core types (~144 files) that inflate the denominator without meaningful coverage value
 - `*.g.cs` files under `obj/` — Roslyn source-generator output (regex generators, JSON schema generators, etc.)
+- `SR.cs` and `*.Designer.cs` — auto-generated resource string files that are not meaningfully testable
 
-When parsing Cobertura XML manually, apply the same exclusions: skip `<class>` entries whose `filename` contains `GeneratedCoreTypes` or has an `obj` directory segment. Failure to exclude these will significantly undercount V4 ExtendedTypes coverage.
+When parsing Cobertura XML manually, apply the same exclusions: skip `<class>` entries whose `filename` contains `GeneratedCoreTypes`, has an `obj` directory segment, ends with `SR.cs`, or ends with `.Designer.cs`. Failure to exclude these will significantly undercount coverage for packages with resource files (e.g., Validator has 130 untestable lines in SR.cs + Strings.Designer.cs).
 
 ### Parsing Cobertura XML
 
