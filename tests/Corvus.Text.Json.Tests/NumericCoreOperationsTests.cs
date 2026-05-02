@@ -98,6 +98,24 @@ public class NumericCoreOperationsTests
         Assert.False(result);
     }
 
+    [Theory]
+    [InlineData("abc")]      // non-numeric
+    [InlineData("")]         // empty
+    [InlineData("1.")]       // trailing dot
+    public void ParseNumber_InvalidInput_ThrowsFormatException(string input)
+    {
+        byte[] utf8 = Encoding.UTF8.GetBytes(input);
+        Assert.Throws<FormatException>(() =>
+        {
+            JsonElementHelpers.ParseNumber(
+                utf8,
+                out _,
+                out _,
+                out _,
+                out _);
+        });
+    }
+
     #endregion
 
     #region TryParseNumber - normalization

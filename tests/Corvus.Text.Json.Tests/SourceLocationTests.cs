@@ -246,4 +246,34 @@ public static class SourceLocationTests
         // lineByteOffset should be right after the \n on line 1 — byte index 2 ('{' '\n')
         Assert.Equal(2, lineByteOffset);
     }
+
+    [Fact]
+    public static void Utf8JsonPointer_TryResolve_InvalidPointer_ReturnsFalse()
+    {
+        string json = """{"name":"value"}""";
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        JsonElement root = doc.RootElement;
+
+        // "invalid" doesn't start with '/' so the pointer is structurally invalid
+        Assert.False(Utf8JsonPointer.TryCreateJsonPointer("invalid"u8, out Utf8JsonPointer pointer));
+        Assert.False(pointer.IsValid);
+        Assert.False(pointer.TryResolve<JsonElement, JsonElement>(in root, out JsonElement value));
+        Assert.Equal(default, value);
+    }
+
+    [Fact]
+    public static void Utf8JsonPointer_TryGetLineAndOffset_StructurallyInvalidPointer_ReturnsFalse()
+    {
+        string json = """{"name":"value"}""";
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        JsonElement root = doc.RootElement;
+
+        // "no-slash" doesn't start with '/' so the pointer is structurally invalid
+        Assert.False(Utf8JsonPointer.TryCreateJsonPointer("no-slash"u8, out Utf8JsonPointer pointer));
+        Assert.False(pointer.IsValid);
+        Assert.False(pointer.TryGetLineAndOffset(in root, out int line, out int charOffset, out long lineByteOffset));
+        Assert.Equal(0, line);
+        Assert.Equal(0, charOffset);
+        Assert.Equal(0, lineByteOffset);
+    }
 }
