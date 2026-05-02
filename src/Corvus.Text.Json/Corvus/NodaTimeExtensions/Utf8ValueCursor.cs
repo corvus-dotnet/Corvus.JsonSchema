@@ -128,78 +128,19 @@ internal ref struct Utf8ValueCursor
     }
 
     /// <summary>
-    /// Parses digits at the current point in the string as a fractional value.
-    /// </summary>
-    /// <param name="maximumDigits">The maximum allowed digits. Trusted to be less than or equal to scale.</param>
-    /// <param name="scale">The scale of the fractional value.</param>
-    /// <param name="result">The result value scaled by scale. The value of this is not guaranteed
-    /// to be anything specific if the return value is false.</param>
-    /// <param name="minimumDigits">The minimum number of digits that must be specified in the value.</param>
-    /// <returns><c>true</c> if the digits were parsed.</returns>
-    internal bool ParseFraction(int maximumDigits, int scale, out int result, int minimumDigits)
-    {
-        unchecked
-        {
-            result = 0;
-            int localIndex = Index;
-            int minIndex = localIndex + minimumDigits;
-            if (minIndex > Length)
-            {
-                // If we don't have all the digits we're meant to have, we can't possibly succeed.
-                return false;
-            }
-
-            int maxIndex = Math.Min(localIndex + maximumDigits, Length);
-            for (; localIndex < maxIndex; localIndex++)
-            {
-                // Optimized digit handling: rather than checking for the range, returning -1
-                // and then checking whether the result is -1, we can do both checks at once.
-                int digit = Value[localIndex] - '0';
-                if (digit < 0 || digit > 9)
-                {
-                    break;
-                }
-
-                result = (result * 10) + digit;
-            }
-
-            int count = localIndex - Index;
-
-            // Couldn't parse the minimum number of digits required?
-            if (count < minimumDigits)
-            {
-                return false;
-            }
-
-            result = (int)(result * Math.Pow(10.0, scale - count));
-            Move(localIndex);
-            return true;
-        }
-    }
-
-    /// <summary>
-    /// Parses digits at the current point in the string as a signed 64-bit integer value.
-    /// Currently this method only supports cultures whose negative sign is "-" (and
-    /// using ASCII digits).
+    /// Parses digits at the current point in the string as a non-negative 64-bit integer value.
     /// </summary>
     /// <param name="result">The result integer value. The value of this is not guaranteed
     /// to be anything specific if the return value is non-null.</param>
     /// <returns><see langword="true"/> if the value was parsed successfully.</returns>
+    /// <remarks>
+    /// The caller (Period parser) guarantees: (1) the cursor is at a digit, (2) no leading '-'.
+    /// </remarks>
     internal bool ParseInt64(out long result)
     {
         unchecked
         {
             result = 0L;
-            int startIndex = Index;
-            bool negative = Current == '-';
-            if (negative)
-            {
-                if (!MoveNext())
-                {
-                    Move(startIndex);
-                    return false;
-                }
-            }
 
             int count = 0;
             int digit;
@@ -215,7 +156,6 @@ internal ref struct Utf8ValueCursor
 
             if (count == 0)
             {
-                Move(startIndex);
                 return false;
             }
 
@@ -224,13 +164,6 @@ internal ref struct Utf8ValueCursor
                 if (result > 922337203685477580)
                 {
                     return false;
-                }
-
-                if (negative && digit == 8)
-                {
-                    MoveNext();
-                    result = long.MinValue;
-                    return true;
                 }
 
                 if (digit > 7)
@@ -246,11 +179,6 @@ internal ref struct Utf8ValueCursor
                     // Too many digits. Die.
                     return false;
                 }
-            }
-
-            if (negative)
-            {
-                result = -result;
             }
 
             return true;

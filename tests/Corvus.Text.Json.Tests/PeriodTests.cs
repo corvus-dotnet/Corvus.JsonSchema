@@ -566,4 +566,51 @@ public class PeriodTest
         var period = Corvus.Text.Json.Period.FromNanoseconds(1234567890L);
         Assert.Equal(1234567890L, period.Nanoseconds);
     }
+
+    [Theory]
+    [InlineData("P9999999999999999999Y")] // 19 digits, first 18 exceed threshold → overflow
+    [InlineData("P9223372036854775808Y")] // Int64.MaxValue + 1 → last digit > 7
+    [InlineData("P92233720368547758070Y")] // 20 digits → too many digits after boundary
+    [InlineData("P99999999999999999999Y")] // 20 digits all 9s → way over overflow
+    public void TryParse_OverflowValues_ReturnsFalse(string input)
+    {
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(input);
+        bool result = Corvus.Text.Json.Period.TryParse(utf8, out _);
+        Assert.False(result);
+    }
+
+    [Theory]
+    [InlineData("P9223372036854775807Y")] // Exactly Int64.MaxValue — parsed but truncated to int
+    [InlineData("P922337203685477580Y")] // Just at threshold boundary
+    public void TryParse_LargeValidValues_Succeeds(string input)
+    {
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(input);
+        bool result = Corvus.Text.Json.Period.TryParse(utf8, out _);
+        Assert.True(result);
+    }
+
+    [Theory]
+    [InlineData("P1Y2M3DT4H5M6S")] // Standard valid duration
+    [InlineData("PT0S")] // Zero seconds
+    [InlineData("P0D")] // Zero days
+    public void TryParse_ValidDurations_ReturnsTrue(string input)
+    {
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(input);
+        bool result = Corvus.Text.Json.Period.TryParse(utf8, out _);
+        Assert.True(result);
+    }
+
+    [Theory]
+    [InlineData("")] // Empty
+    [InlineData("P")] // Only prefix
+    [InlineData("PT")] // Only prefix with T
+    [InlineData("P-1Y")] // Negative (RFC 3339 disallows)
+    [InlineData("1Y")] // Missing P prefix
+    [InlineData("P1")] // Missing unit designator
+    public void TryParse_InvalidDurations_ReturnsFalse(string input)
+    {
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes(input);
+        bool result = Corvus.Text.Json.Period.TryParse(utf8, out _);
+        Assert.False(result);
+    }
 }
