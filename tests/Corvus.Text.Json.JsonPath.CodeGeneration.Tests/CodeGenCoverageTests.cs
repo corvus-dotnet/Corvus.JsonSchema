@@ -1218,4 +1218,276 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
         return count;
     }
+
+    // ── EscapeCSharpStringLiteral via regex patterns with control chars ──
+
+    [Fact]
+    public void RegexPattern_WithNewline()
+    {
+        // Regex literal "\n" → unescaped to actual newline char → EscapeCSharpStringLiteral hits '\n' branch (L34)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\nb")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        // Generated code should contain the C# escaped form \\n
+        Assert.Contains("\\n", compiled.GeneratedCode!);
+    }
+
+    [Fact]
+    public void RegexPattern_WithCarriageReturn()
+    {
+        // Regex literal "\r" → EscapeCSharpStringLiteral hits '\r' branch (L35)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\rb")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("\\r", compiled.GeneratedCode!);
+    }
+
+    [Fact]
+    public void RegexPattern_WithTab()
+    {
+        // Regex literal "\t" → EscapeCSharpStringLiteral hits '\t' branch (L36)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\tb")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("\\t", compiled.GeneratedCode!);
+    }
+
+    [Fact]
+    public void RegexPattern_WithBellChar()
+    {
+        // JSON \u0007 unescapes to bell char → EscapeCSharpStringLiteral hits '\a' branch (L38)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u0007")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("\\a", compiled.GeneratedCode!);
+    }
+
+    [Fact]
+    public void RegexPattern_WithNullChar()
+    {
+        // JSON \u0000 unescapes to null char → EscapeCSharpStringLiteral hits '\0' branch (L37)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u0000")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("\\0", compiled.GeneratedCode!);
+    }
+
+    [Fact]
+    public void RegexPattern_WithBackspaceChar()
+    {
+        // JSON \b unescapes to backspace → EscapeCSharpStringLiteral hits '\b' branch (L39)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "x\by")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("\\b", compiled.GeneratedCode!);
+    }
+
+    [Fact]
+    public void RegexPattern_WithFormFeedChar()
+    {
+        // JSON \f unescapes to form feed → EscapeCSharpStringLiteral hits '\f' branch (L40)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "x\fy")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("\\f", compiled.GeneratedCode!);
+    }
+
+    [Fact]
+    public void RegexPattern_WithVerticalTab()
+    {
+        // JSON \u000B unescapes to vertical tab → EscapeCSharpStringLiteral hits '\v' branch (L41)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u000B")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("\\v", compiled.GeneratedCode!);
+    }
+
+    [Fact]
+    public void RegexPattern_WithControlChar()
+    {
+        // JSON \u0001 unescapes to SOH (< 0x20) → EscapeCSharpStringLiteral hits unicode escape branch (L44-46)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u0001")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.Contains("\\u0001", compiled.GeneratedCode!);
+    }
+
+    // ── UnescapeJsonString escape sequences in match/search patterns ─────
+
+    [Fact]
+    public void RegexPattern_WithBackspace()
+    {
+        // "\b" in regex → UnescapeJsonString hits 'b' case (L136)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\b")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+    }
+
+    [Fact]
+    public void RegexPattern_WithFormFeed()
+    {
+        // "\f" in regex → UnescapeJsonString hits 'f' case (L137)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\f")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+    }
+
+    [Fact]
+    public void RegexPattern_WithForwardSlash()
+    {
+        // "\/" in regex → UnescapeJsonString hits '/' case (L135)
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\/b")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+    }
+
+    [Fact]
+    public void RegexPattern_WithUnicodeEscape_InUnescapeJsonString()
+    {
+        // "\u0041" in regex → UnescapeJsonString hits '\u' case (L141-153) → produces 'A'
+        CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u0041+")]""");
+        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+    }
+
+    // ── OpToSymbol NotEqual via non-specialized path (L1099) ─────────────
+
+    [Fact]
+    public void OpToSymbol_NotEqual_NonSpecialized()
+    {
+        // count(@..x) != 2 → EmitCountNumericComparison uses OpToSymbol for !=
+        this.AssertCgMatchesRuntime(
+            """$[?count(@..x) != 2]""",
+            """[{"x":1,"a":{"x":2}},{"x":1},{"x":1,"a":{"x":2,"b":{"x":3}}}]""");
+    }
+
+    // ── Parenthesized expression in value context (L1222) ───────────────
+
+    [Fact]
+    public void ParenExpression_InValueContext()
+    {
+        // $[?@.x == (@.y)] → paren wraps a non-specialized comparable, hits EmitFilterValue ParenExpressionNode (L1222)
+        this.AssertCgMatchesRuntime(
+            "$[?@.x == (@.y)]",
+            """[{"x":1,"y":1},{"x":1,"y":2},{"x":3,"y":3}]""");
+    }
+
+    // ── Empty-segments filter query helper (L1490-1495) ─────────────────
+
+    [Fact]
+    public void FilterQueryHelper_EmptySegments_CountSelf()
+    {
+        // count(@) → filter query with zero segments → GenerateFilterQueryHelper empty-segments path (L1490-1495)
+        this.AssertCgMatchesRuntime(
+            """$[?count(@) > 0]""",
+            """[1, "hello", null, true]""");
+    }
+
+    // ── Empty-segments nodes collector helper (L1793-1797) ──────────────
+
+    [Fact]
+    public void NodesCollectorHelper_EmptySegments()
+    {
+        // Custom function with nodes parameter using bare @ (no segments) → GenerateNodesCollectorHelper empty path (L1793-1797)
+        var customFn = new CustomFunction(
+            "count_self",
+            [new FunctionParameter(FunctionParamType.Nodes, "items")],
+            FunctionParamType.Value,
+            "JsonPathCodeGenHelpers.IntToElement(items.Length, workspace)",
+            isExpression: true);
+
+        const string expression = """$[?count_self(@) > 0]""";
+        string code = this.GenerateWithCustomFunctions(expression, [customFn]);
+        this.output.WriteLine("Generated code:");
+        this.output.WriteLine(code);
+
+        // Should contain the NodesCollector helper with the empty-segments early return
+        Assert.Contains("result.Append(source)", code);
+    }
+
+    // ── Custom function with Logical parameter type (L1644-1645) ────────
+
+    [Fact]
+    public void CustomFunction_LogicalParameter()
+    {
+        // Custom function accepting a logical (bool) parameter → EmitCustomFunctionCall Logical param case (L1644-1645)
+        var customFn = new CustomFunction(
+            "when_active",
+            [
+                new FunctionParameter(FunctionParamType.Logical, "flag"),
+                new FunctionParameter(FunctionParamType.Value, "x"),
+            ],
+            FunctionParamType.Value,
+            "flag ? x : default",
+            isExpression: true);
+
+        // Logical parameter requires a filter expression (comparison), not a value
+        const string expression = """$[?when_active(@.active == true, @.val) > 0]""";
+        string code = this.GenerateWithCustomFunctions(expression, [customFn]);
+        this.output.WriteLine("Generated code:");
+        this.output.WriteLine(code);
+
+        Assert.Contains("CustomFn_when_active", code);
+        Assert.Contains("bool flag", code);
+    }
+
+    // ── EnsureCustomFunctionHelper Logical and Nodes parameter types (L1740, L1742-1743) ─
+
+    [Fact]
+    public void CustomFunctionHelper_LogicalParam_MethodSignature()
+    {
+        // Custom function with logical parameter → EnsureCustomFunctionHelper emits 'bool' param type (L1740)
+        var customFn = new CustomFunction(
+            "check_flag",
+            [new FunctionParameter(FunctionParamType.Logical, "isOk")],
+            FunctionParamType.Value,
+            "isOk ? JsonPathCodeGenHelpers.IntToElement(1, workspace) : default",
+            isExpression: true);
+
+        // Logical parameter requires a filter expression (comparison), not a value
+        const string expression = """$[?check_flag(@.ok == true) > 0]""";
+        string code = this.GenerateWithCustomFunctions(expression, [customFn]);
+        this.output.WriteLine("Generated code:");
+        this.output.WriteLine(code);
+
+        Assert.Contains("bool isOk", code);
+    }
+
+    [Fact]
+    public void CustomFunctionHelper_NodesParam_MethodSignature()
+    {
+        // Custom function with nodes parameter → EnsureCustomFunctionHelper emits 'ReadOnlySpan<JsonElement>' param type (L1742-1743)
+        var customFn = new CustomFunction(
+            "sum_nodes",
+            [new FunctionParameter(FunctionParamType.Nodes, "ns")],
+            FunctionParamType.Value,
+            "JsonPathCodeGenHelpers.IntToElement(ns.Length, workspace)",
+            isExpression: true);
+
+        const string expression = """$[?sum_nodes(@.items[*]) > 0]""";
+        string code = this.GenerateWithCustomFunctions(expression, [customFn]);
+        this.output.WriteLine("Generated code:");
+        this.output.WriteLine(code);
+
+        Assert.Contains("ReadOnlySpan<JsonElement> ns", code);
+    }
+
+    // ── Custom function non-logical return in bool context (L1608-1610) ──
+    // Note: Value-returning custom functions can be used in comparison context
+    // and then reach EmitCustomFunctionCallAsBool when the parser recognizes them
+    // as bool producers (via IsCustomLogicalFunction). The L1608-1610 path is for
+    // non-logical custom functions in bool position. However, the parser only lets
+    // logical-return functions into filter-test position. This path is unreachable
+    // from parser-driven tests.
+
+    // ── IsSingularQuery: descendant segment returns false (L1425-1426) ───
+
+    [Fact]
+    public void IsSingularQuery_DescendantSegment()
+    {
+        // value(@..x) with descendant → IsSingularQuery returns false at L1425-1426
+        // Already tested by DescendantQueryInValueContext but let's verify with a different shape
+        this.AssertCgMatchesRuntime(
+            """$[?value(@..name) == "a"]""",
+            """[{"name":"a"},{"name":"a","x":{"name":"b"}}]""");
+    }
+
+    // ── Non-singular EmitFilterQueryAsValue (L1252-1257) ────────────────
+
+    [Fact]
+    public void EmitFilterQueryAsValue_NonSingular_Wildcard()
+    {
+        // @.items[*] as comparable in non-value() context → parser wraps in value()
+        // But direct value(@.items[*]) with multi-element produces Undefined
+        this.AssertCgMatchesRuntime(
+            """$[?value(@[*]) == 42]""",
+            """[[42],[1,42],[]]""");
+    }
 }

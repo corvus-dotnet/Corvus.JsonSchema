@@ -143,6 +143,16 @@ public class JpfnParserTests
     }
 
     [Fact]
+    public void LogicalParameterType_Parses()
+    {
+        const string input = "fn check(logical flag) : value => flag ? 1 : 0";
+        IReadOnlyList<CustomFunction> result = JpfnParser.Parse(input);
+        Assert.Single(result);
+        Assert.Equal(FunctionParamType.Logical, result[0].Parameters[0].Type);
+        Assert.Equal("flag", result[0].Parameters[0].Name);
+    }
+
+    [Fact]
     public void NodesParameterType_Parses()
     {
         const string input = "fn first(nodes n) : value => n[0]";
