@@ -38,6 +38,15 @@
         <!-- Auto-generated resource strings (SR.cs, Strings.Designer.cs, etc.) -->
         <Source>.*\\SR\.cs$</Source>
         <Source>.*\.Designer\.cs$</Source>
+        <!-- Common/ shared source files (Utf8ValueStringBuilder, CodeGenStringHelpers,
+             polyfills, etc.) are linked into many packages via <Compile Include>.
+             Each package only calls a subset of methods, inflating uncovered counts.
+             These files are already thoroughly tested via Corvus.Text.Json.Tests. -->
+        <Source>.*\\Common\\src\\.*</Source>
+        <Source>.*\\src\\Common\\.*</Source>
+        <!-- System.Private.CoreLib polyfills (ValueListBuilder, HashHelpers, etc.)
+             Same pattern: linked into many packages, only subset used per package. -->
+        <Source>.*\\System\.Private\.CoreLib\\.*</Source>
       </Exclude>
     </Sources>
   </CodeCoverage>
