@@ -624,4 +624,192 @@ public class JsonLogicHelpersDirectTests
         JsonElement result = JsonLogicEvaluator.Default.Evaluate(logicRule, dataElem);
         return result.GetRawText();
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ROUND 3: Additional JsonLogicHelpers coverage
+    // ═══════════════════════════════════════════════════════════════
+
+    // ─── AppendCoercedUtf8: null/undefined, true, false, null enum (L273-313) ──
+
+    [Fact]
+    public void AppendCoercedUtf8_True_AppendsTrue()
+    {
+        // L304-305: true → "true" bytes
+        string result = EvalCat("""{"cat":["x",true,"y"]}""");
+        Assert.Equal("\"xtruey\"", result);
+    }
+
+    [Fact]
+    public void AppendCoercedUtf8_False_AppendsFalse()
+    {
+        // L307-308: false → "false" bytes
+        string result = EvalCat("""{"cat":["x",false,"y"]}""");
+        Assert.Equal("\"xfalsey\"", result);
+    }
+
+    [Fact]
+    public void AppendCoercedUtf8_Null_AppendsNull()
+    {
+        // L310-312: null enum → "null" bytes
+        string result = EvalCat("""{"cat":["x",null,"y"]}""");
+        Assert.Equal("\"xnully\"", result);
+    }
+
+    [Fact]
+    public void AppendCoercedUtf8_UndefinedElement_AppendsNull()
+    {
+        // L275-278: IsNullOrUndefined → "null" bytes
+        // Use var of missing key to get undefined
+        string result = EvalCat("""{"cat":["a",{"var":"missing"},"b"]}""");
+        Assert.Equal("\"anullb\"", result);
+    }
+
+    // ─── CoerceToString: various branches (L326-334) ────────────────
+
+    [Fact]
+    public void CoerceToString_UndefinedVar_ReturnsNull()
+    {
+        // cat with missing var → undefined coerces to "null"
+        string result = EvalCat("""{"cat":[{"var":"missing"}]}""");
+        Assert.Equal("\"null\"", result);
+    }
+
+    [Fact]
+    public void Cat_WithObject_ReturnsEmptyForObject()
+    {
+        // Object data via cat: objects are not AppendCoercedUtf8'd (no Object case)
+        // so cat of an object via a var returns empty
+        string result = EvalCat("""{"cat":[{"var":""}]}""");
+        Assert.Equal("\"\"", result);
+    }
+
+    // ─── Substr slow path (managed string) (L474-497) ───────────────
+
+    [Fact]
+    public void Substr_NonAsciiString_UsesSlowPath()
+    {
+        // L418-424, L474-496: non-ASCII forces managed string path
+        // The source string contains multi-byte UTF-8
+        Assert.Equal("\"é\"", Eval("""{"substr":["café",3,1]}"""));
+    }
+
+    [Fact]
+    public void Substr_SlowPath_NegativeStart()
+    {
+        // L476-478: start < 0 → Math.Max(0, len + start)
+        Assert.Equal("\"é\"", Eval("""{"substr":["café",-1]}"""));
+    }
+
+    [Fact]
+    public void Substr_SlowPath_StartPastEnd()
+    {
+        // L481-483: start >= str.Length → EmptyString
+        Assert.Equal("\"\"", Eval("""{"substr":["café",99]}"""));
+    }
+
+    [Fact]
+    public void Substr_SlowPath_NegativeLength()
+    {
+        // L488: length < 0 → trim from end
+        Assert.Equal("\"af\"", Eval("""{"substr":["café",1,-1]}"""));
+    }
+
+    [Fact]
+    public void Substr_SlowPath_ZeroLength()
+    {
+        // L491-493: actualLength <= 0 → EmptyString
+        Assert.Equal("\"\"", Eval("""{"substr":["café",2,0]}"""));
+    }
+
+    // ─── SubstrFromAsciiUtf8 edge cases (L427-471) ──────────────────
+
+    [Fact]
+    public void Substr_Ascii_NegativeStart()
+    {
+        // L431-433: start < 0 with ASCII string
+        Assert.Equal("\"lo\"", Eval("""{"substr":["hello",-2]}"""));
+    }
+
+    [Fact]
+    public void Substr_Ascii_StartPastEnd()
+    {
+        // L436-438: start >= len → EmptyString
+        Assert.Equal("\"\"", Eval("""{"substr":["hello",99]}"""));
+    }
+
+    [Fact]
+    public void Substr_Ascii_NegativeLength()
+    {
+        // L443: length < 0 → trim from end
+        Assert.Equal("\"ell\"", Eval("""{"substr":["hello",1,-1]}"""));
+    }
+
+    [Fact]
+    public void Substr_Ascii_ZeroActualLength()
+    {
+        // L446-448: actualLength <= 0 → EmptyString
+        Assert.Equal("\"\"", Eval("""{"substr":["hello",2,0]}"""));
+    }
+
+    // ─── CoercingElementEquals: bool left/right (L759-771) ──────────
+
+    [Fact]
+    public void Equals_BoolVsNumber_CoercesBool()
+    {
+        // L759-762: left is True → coerce to 1, compare
+        Assert.Equal("true", Eval("""{"==":[true, 1]}"""));
+    }
+
+    [Fact]
+    public void Equals_NumberVsBool_CoercesBool()
+    {
+        // L765-768: right is True → coerce to 1, compare
+        Assert.Equal("true", Eval("""{"==":[0, false]}"""));
+    }
+
+    // ─── CompareCoerced (public helper L778-804) ────────────────────
+
+    [Fact]
+    public void CompareCoerced_NonCoercibleStrings_ReturnsFalse()
+    {
+        // L790-792: TryCoerceToNumber fails → false
+        Assert.Equal("false", Eval("""{"<":["abc","xyz"]}"""));
+    }
+
+    // ─── CoerceToBigNumber (public helper L809-840) ─────────────────
+
+    [Fact]
+    public void CoerceToBigNumber_True_One()
+    {
+        // L820-822: True → BigNumber.One (via CG helper path)
+        Assert.Equal("1", Eval("""{"asBigNumber":true}"""));
+    }
+
+    [Fact]
+    public void CoerceToBigNumber_String_Coerced()
+    {
+        // L830-837: string → coerce → parse
+        Assert.Equal("42", Eval("""{"asBigNumber":"42"}"""));
+    }
+
+    // ─── DoubleToElement format fail (L895-900) ─────────────────────
+    // This covers the unlikely path where Utf8Formatter.TryFormat fails.
+    // NaN/Infinity will typically be caught earlier, so this is hard to hit directly.
+    // The test below at least exercises the DoubleToElement path via large division:
+
+    [Fact]
+    public void Division_LargeResult_ProducesElement()
+    {
+        // Exercises DoubleToElement path
+        Assert.Equal("1000000000", Eval("""{"/":[10000000000,10]}"""));
+    }
+
+    private static string Eval(string rule, string data = "{}")
+    {
+        JsonElement ruleElem = JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(rule));
+        JsonElement dataElem = JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(data));
+        JsonLogicRule logicRule = new(ruleElem);
+        JsonElement result = JsonLogicEvaluator.Default.Evaluate(logicRule, dataElem);
+        return result.ValueKind == JsonValueKind.Undefined ? "undefined" : result.GetRawText();
+    }
 }

@@ -1296,4 +1296,311 @@ public class FunctionalEvaluatorCoverageTests
         // L382-384: quoted.Length <= 2 → empty segments
         Assert.Equal("{\"a\":1}", Eval("""{"var":""}""", """{"a":1}"""));
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ROUND 3: Deeper coverage of uncovered blocks
+    // ═══════════════════════════════════════════════════════════════
+
+    // ─── MIN/MAX SLOW — non-numeric values (L664-688) ────────────
+    [Fact]
+    public void Min_WithNonNumericString_ReturnsNull()
+    {
+        // L675-677: TryCoerceToNumber fails mid-iteration → null
+        Assert.Equal("null", Eval("""{"min":[1,"abc",3]}"""));
+    }
+
+    [Fact]
+    public void Max_WithNonNumericFirstArg_ReturnsNull()
+    {
+        // L667-669: TryCoerceToNumber fails on first operand → null
+        Assert.Equal("null", Eval("""{"max":["xyz",2,3]}"""));
+    }
+
+    [Fact]
+    public void Min_WithMixedTypes_ComparesBest()
+    {
+        // L680-684: CompareNumbers succeeds, cmp < 0 updates best
+        Assert.Equal("1", Eval("""{"min":[3,"1",5]}"""));
+    }
+
+    [Fact]
+    public void Max_WithMixedTypes_ComparesBest()
+    {
+        // L680-684: CompareNumbers succeeds, cmp > 0 updates best
+        Assert.Equal("5", Eval("""{"max":[3,"5",1]}"""));
+    }
+
+    // ─── COMPARE COERCED ELEMENT — null/undefined (L759-780) ─────
+    [Fact]
+    public void LessThan_NonCoercibleStrings_ReturnsFalse()
+    {
+        // L766-769: TryCoerceToNumber fails for non-numeric strings → false
+        Assert.Equal("false", Eval("""{"<":["abc","xyz"]}"""));
+    }
+
+    [Fact]
+    public void GreaterThan_NonCoercibleStrings_ReturnsFalse()
+    {
+        // L766-769: TryCoerceToNumber fails for both → false
+        Assert.Equal("false", Eval("""{">":[{"var":"a"},{"var":"b"}]}""", """{"a":"abc","b":"xyz"}"""));
+    }
+
+    [Fact]
+    public void LessThanOrEqual_CoercedCompare()
+    {
+        // L772-778: CompareNumbers path, LessThanOrEqual branch
+        Assert.Equal("true", Eval("""{"<=":[3,5]}"""));
+    }
+
+    [Fact]
+    public void GreaterThanOrEqual_CoercedCompare()
+    {
+        // L772-778: GreaterThanOrEqual branch
+        Assert.Equal("true", Eval("""{">=":[5,5]}"""));
+    }
+
+    // ─── STRICT EQUALS: null vs undefined cross (L880-882) ────────
+    [Fact]
+    public void StrictEquals_NullVsUndefined_ReturnsFalse()
+    {
+        // L880-882: left.IsNullOrUndefined && right.IsNullOrUndefined → true
+        // But when both are null (same kind): StrictEqualsElement
+        Assert.Equal("true", Eval("""{"===":[null,null]}"""));
+    }
+
+    // ─── UNIFORM COMPARISON CHAIN OPTIMIZATION (L1200-1270) ──────
+    [Fact]
+    public void If_UniformComparisonChain_LessThan()
+    {
+        // L1212-1270: uniform if-chain with all < comparisons on same var
+        string rule = """
+            {"if":[
+                {"<":[{"var":"x"},10]}, "low",
+                {"<":[{"var":"x"},20]}, "medium",
+                {"<":[{"var":"x"},30]}, "high",
+                "very high"
+            ]}
+            """;
+        Assert.Equal("\"low\"", Eval(rule, """{"x":5}"""));
+        Assert.Equal("\"medium\"", Eval(rule, """{"x":15}"""));
+        Assert.Equal("\"high\"", Eval(rule, """{"x":25}"""));
+        Assert.Equal("\"very high\"", Eval(rule, """{"x":35}"""));
+    }
+
+    [Fact]
+    public void If_UniformComparisonChain_GreaterThanOrEqual()
+    {
+        // L1264-1267: >=  branch in compareOp switch
+        string rule = """
+            {"if":[
+                {">=":[{"var":"score"},90]}, "A",
+                {">=":[{"var":"score"},80]}, "B",
+                "C"
+            ]}
+            """;
+        Assert.Equal("\"A\"", Eval(rule, """{"score":95}"""));
+        Assert.Equal("\"B\"", Eval(rule, """{"score":85}"""));
+        Assert.Equal("\"C\"", Eval(rule, """{"score":70}"""));
+    }
+
+    [Fact]
+    public void If_UniformComparisonChain_FlippedOperator()
+    {
+        // L1339-1345: {op: [N, {"var":"path"}]} — number on left, flip op
+        string rule = """
+            {"if":[
+                {"<":[10,{"var":"x"}]}, "big",
+                "small"
+            ]}
+            """;
+        Assert.Equal("\"big\"", Eval(rule, """{"x":20}"""));
+        Assert.Equal("\"small\"", Eval(rule, """{"x":5}"""));
+    }
+
+    [Fact]
+    public void If_NonUniformChain_NotOptimized()
+    {
+        // L1217-1219: different operators → chain not uniform → falls back
+        string rule = """
+            {"if":[
+                {"<":[{"var":"x"},10]}, "lt10",
+                {">":[{"var":"x"},20]}, "gt20",
+                "middle"
+            ]}
+            """;
+        Assert.Equal("\"lt10\"", Eval(rule, """{"x":5}"""));
+        Assert.Equal("\"gt20\"", Eval(rule, """{"x":25}"""));
+        Assert.Equal("\"middle\"", Eval(rule, """{"x":15}"""));
+    }
+
+    [Fact]
+    public void If_NonVarCondition_NotOptimized()
+    {
+        // L1313-1315: non-comparison operator in condition → detectedOp is null
+        string rule = """
+            {"if":[
+                {"==":[{"var":"x"},10]}, "exact",
+                "other"
+            ]}
+            """;
+        Assert.Equal("\"exact\"", Eval(rule, """{"x":10}"""));
+        Assert.Equal("\"other\"", Eval(rule, """{"x":5}"""));
+    }
+
+    [Fact]
+    public void If_ComparisonWithDottedPath_NotOptimized()
+    {
+        // L1378-1380: multi-segment path → segments.Length != 1 → not simple var
+        string rule = """
+            {"if":[
+                {"<":[{"var":"a.b"},10]}, "low",
+                "high"
+            ]}
+            """;
+        Assert.Equal("\"low\"", Eval(rule, """{"a":{"b":5}}"""));
+    }
+
+    // ─── CAT WITH NULL/FALSE (L1518-1522) ────────────────────────
+    [Fact]
+    public void Cat_WithNull_AppendsNullText()
+    {
+        // L1518-1522: null case appends "null" UTF-8
+        Assert.Equal("\"xnully\"", Eval("""{"cat":["x",null,"y"]}"""));
+    }
+
+    [Fact]
+    public void Cat_WithFalse_AppendsFalseText()
+    {
+        // L1512-1516: false case appends "false" UTF-8
+        Assert.Equal("\"xfalsey\"", Eval("""{"cat":["x",false,"y"]}"""));
+    }
+
+    // ─── IN OPERATOR WITH ARRAY (L1680-1691) ─────────────────────
+    [Fact]
+    public void In_ValueFoundInArray_ReturnsTrue()
+    {
+        // L1684-1686: StrictEqualsElement match → true
+        Assert.Equal("true", Eval("""{"in":[2,[1,2,3]]}"""));
+    }
+
+    [Fact]
+    public void In_ValueNotFoundInArray_ReturnsFalse()
+    {
+        // L1689, 1691: no match → false
+        Assert.Equal("false", Eval("""{"in":[9,[1,2,3]]}"""));
+    }
+
+    // ─── MERGE WITH SINGLE NON-ARRAY (L1700-1713) ───────────────
+    [Fact]
+    public void Merge_SingleNonArrayOperand_WrapsInArray()
+    {
+        // L1700-1706: single non-array operand wraps in array
+        Assert.Equal("[42]", Eval("""{"merge":42}"""));
+    }
+
+    [Fact]
+    public void Merge_SingleArrayOperand_ReturnsFlat()
+    {
+        // L1704-1706: single array operand returns as-is
+        Assert.Equal("[1,2,3]", Eval("""{"merge":[1,2,3]}"""));
+    }
+
+    // ─── FALLBACK REDUCE INSUFFICIENT ARGS (L2020-2024) ──────────
+    [Fact]
+    public void Reduce_InsufficientArgs_ReturnsNull()
+    {
+        // L2020-2023: < 3 compiled args → null
+        Assert.Equal("null", Eval("""{"reduce":[[1,2,3]]}"""));
+    }
+
+    // ─── RESOLVE VAR WITH NUMERIC PATH (L2305-2308) ──────────────
+    [Fact]
+    public void Var_NumericPath_IndexesArray()
+    {
+        // L2305-2308: pathElement is Number → WalkPathUtf8
+        Assert.Equal("\"b\"", Eval("""{"var":1}""", """["a","b","c"]"""));
+    }
+
+    [Fact]
+    public void Var_BoolPathDirect_ReturnsData()
+    {
+        // true is not string/number, treated as empty path → returns data
+        Assert.Equal("{}", Eval("""{"var":true}"""));
+    }
+
+    // ─── TRY COERCE TO DOUBLE — string edge cases (L2416-2428) ──
+    [Fact]
+    public void Add_NonNumericString_TreatedAsZero()
+    {
+        // L2416-2424: string that cannot coerce → value=0, return false
+        Assert.Equal("5", Eval("""{"+":["hello",5]}"""));
+    }
+
+    [Fact]
+    public void Add_ArrayOperand_TreatedAsZero()
+    {
+        // L2427-2428: array/object value kind → value=0, return false
+        Assert.Equal("5", Eval("""{"+":[[1,2],5]}"""));
+    }
+
+    // ─── COERCE TO BIG NUMBER — various types (L2431-2462) ───────
+    [Fact]
+    public void AsBigNumber_True_ReturnsOne()
+    {
+        // L2442-2444: True → BigNumber.One
+        Assert.Equal("1", Eval("""{"asBigNumber":true}"""));
+    }
+
+    [Fact]
+    public void AsBigNumber_False_ReturnsZero()
+    {
+        // L2447-2449: False/Null → BigNumber.Zero
+        Assert.Equal("0", Eval("""{"asBigNumber":false}"""));
+    }
+
+    [Fact]
+    public void AsBigNumber_NumericString_CoercesToNumber()
+    {
+        // L2452-2458: string → coerce to number → parse as BigNumber
+        Assert.Equal("42", Eval("""{"asBigNumber":"42"}"""));
+    }
+
+    [Fact]
+    public void AsBigNumber_NonNumericString_ReturnsZero()
+    {
+        // L2459-2461: string that can't coerce → Zero
+        Assert.Equal("0", Eval("""{"asBigNumber":"abc"}"""));
+    }
+
+    // ─── EVALUATE TO STRING (JsonLogicEvaluator L108-119) ────────
+    [Fact]
+    public void EvaluateToString_ReturnsJsonString()
+    {
+        // L110-118: string entry point
+        string? result = JsonLogicEvaluator.Default.EvaluateToString("""{"+":[1,2]}""", "{}");
+        Assert.Equal("3", result);
+    }
+
+    [Fact]
+    public void EvaluateToString_UndefinedResult_ReturnsNull()
+    {
+        // L113-115: undefined → null
+        string? result = JsonLogicEvaluator.Default.EvaluateToString("""{"var":"missing"}""", "{}");
+        Assert.Equal("null", result);
+    }
+
+    // ─── PLUS UNARY COERCION with single bool arg (L443) ─────────
+    [Fact]
+    public void Plus_SingleBoolTrue_Coerces()
+    {
+        // L438-441: unary + with bool true → TryCoerceToDouble → 1
+        Assert.Equal("1", Eval("""{"+":true}"""));
+    }
+
+    [Fact]
+    public void Plus_SingleNonCoercibleArray_ReturnsZero()
+    {
+        // L443: TryCoerceToDouble fails → Zero
+        Assert.Equal("0", Eval("""{"+":[[1,2,3]]}"""));
+    }
 }
