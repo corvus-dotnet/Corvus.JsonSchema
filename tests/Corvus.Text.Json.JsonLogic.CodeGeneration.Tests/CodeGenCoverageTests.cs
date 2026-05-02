@@ -432,6 +432,355 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         AssertCGMatchesRT(rule, data);
     }
 
+    // ---- Round 3: Empty-operand edge cases ----
+    // Each operator has an empty-operand guard that returns a specific default.
+    // These cover numerous 3-4 line blocks in JsonLogicCodeGenerator.
+
+    [Fact]
+    public void AddNoArgs_CG_MatchesRT()
+    {
+        // EmitAdd L1146-1149: operands.Length == 0 → Zero
+        AssertCGMatchesRT("""{"+":[]}""", "null", "0");
+    }
+
+    [Fact]
+    public void MulNoArgs_CG_MatchesRT()
+    {
+        // EmitMul L1247-1250: operands.Length == 0 → Zero
+        AssertCGMatchesRT("""{"*":[]}""", "null", "0");
+    }
+
+    [Fact]
+    public void DivOneArg_CG_MatchesRT()
+    {
+        // EmitDiv L1271-1274: operands.Length < 2 → Null
+        AssertCGMatchesRT("""{"/": [5]}""", "null");
+    }
+
+    [Fact]
+    public void MinNoArgs_CG_MatchesRT()
+    {
+        // EmitMinMax L1377-1380: operands.Length == 0 → Null
+        AssertCGMatchesRT("""{"min":[]}""", "null");
+    }
+
+    [Fact]
+    public void MaxNoArgs_CG_MatchesRT()
+    {
+        AssertCGMatchesRT("""{"max":[]}""", "null");
+    }
+
+    [Fact]
+    public void EqualityOneArg_CG_MatchesRT()
+    {
+        // EmitEquality L1689-1693: < 2 args, negate=false → false
+        AssertCGMatchesRT("""{"==":[1]}""", "null");
+    }
+
+    [Fact]
+    public void NotEqualOneArg_CG_MatchesRT()
+    {
+        // EmitEquality L1689-1693: < 2 args, negate=true → true
+        AssertCGMatchesRT("""{"!=":[1]}""", "null");
+    }
+
+    [Fact]
+    public void StrictEqualOneArg_CG_MatchesRT()
+    {
+        AssertCGMatchesRT("""{"===":[42]}""", "null");
+    }
+
+    [Fact]
+    public void StrictNotEqualOneArg_CG_MatchesRT()
+    {
+        AssertCGMatchesRT("""{"!==":[42]}""", "null");
+    }
+
+    [Fact]
+    public void NotNoArgs_CG_MatchesRT()
+    {
+        // EmitNot L1714-1717: 0 args → true
+        AssertCGMatchesRT("""{"!":[]}""", "null");
+    }
+
+    [Fact]
+    public void TruthyNoArgs_CG_MatchesRT()
+    {
+        // EmitTruthy L1731-1734: 0 args → false
+        AssertCGMatchesRT("""{"!!":[]}""", "null");
+    }
+
+    [Fact]
+    public void AndNoArgs_CG_MatchesRT()
+    {
+        // EmitAnd L1748-1751: 0 args → false
+        AssertCGMatchesRT("""{"and":[]}""", "null");
+    }
+
+    [Fact]
+    public void OrNoArgs_CG_MatchesRT()
+    {
+        // EmitOr L1794-1797: 0 args → false
+        AssertCGMatchesRT("""{"or":[]}""", "null");
+    }
+
+    [Fact]
+    public void LogNoArgs_CG_MatchesRT()
+    {
+        // EmitLog L3163-3166: 0 args → null
+        AssertCGMatchesRT("""{"log":[]}""", "null");
+    }
+
+    [Fact]
+    public void AsDoubleNoArgs_CG_MatchesRT()
+    {
+        // EmitAsDouble L3175-3178: 0 args → Zero
+        AssertCGMatchesRT("""{"asDouble":[]}""", "null");
+    }
+
+    [Fact]
+    public void AsLongNoArgs_CG_MatchesRT()
+    {
+        // EmitAsLong L3199-3202: 0 args → Zero
+        AssertCGMatchesRT("""{"asLong":[]}""", "null");
+    }
+
+    [Fact]
+    public void AsBigNumberNoArgs_CG_MatchesRT()
+    {
+        // EmitAsBigNumber L3223-3226: 0 args → Zero
+        AssertCGMatchesRT("""{"asBigNumber":[]}""", "null");
+    }
+
+    [Fact]
+    public void AsBigIntegerNoArgs_CG_MatchesRT()
+    {
+        // EmitAsBigInteger L3239-3242: 0 args → Zero
+        AssertCGMatchesRT("""{"asBigInteger":[]}""", "null");
+    }
+
+    [Fact]
+    public void MissingSomeOneArg_CG_MatchesRT()
+    {
+        // EmitMissingSome L3095-3098: < 2 args → empty array
+        AssertCGMatchesRT("""{"missing_some":[1]}""", "null");
+    }
+
+    // ---- If with no else ----
+    // Covers L1867-1869: if with single condition pair and no else → null fallback
+
+    [Fact]
+    public void IfNoElse_CG_MatchesRT()
+    {
+        AssertCGMatchesRT("""{"if":[false, 42]}""", "null");
+    }
+
+    [Fact]
+    public void IfNoElseCondTrue_CG_MatchesRT()
+    {
+        AssertCGMatchesRT("""{"if":[true, 42]}""", "null", "42");
+    }
+
+    // ---- Nested if chain flattening ----
+    // Covers FlattenIfChain L1946-1949
+
+    [Fact]
+    public void NestedIfChain_CG_MatchesRT()
+    {
+        AssertCGMatchesRT(
+            """{"if":[false, 1, {"if":[true, 2, 3]}]}""",
+            "null",
+            "2");
+    }
+
+    [Fact]
+    public void DeeplyNestedIfChain_CG_MatchesRT()
+    {
+        AssertCGMatchesRT(
+            """{"if":[false, 1, {"if":[false, 2, {"if":[true, 3, 4]}]}]}""",
+            "null",
+            "3");
+    }
+
+    // ---- Dynamic var with default ----
+    // Covers EmitDynamicVarPath L936-942
+
+    [Fact]
+    public void DynamicVarWithDefault_CG_MatchesRT()
+    {
+        // Variable path is dynamically computed; when var resolves to undefined, default is used
+        AssertCGMatchesRT(
+            """{"var":[{"cat":["x","y"]}, "fallback"]}""",
+            """{"ab": 1}""");
+    }
+
+    [Fact]
+    public void DynamicVarWithDefaultFound_CG_MatchesRT()
+    {
+        // Variable path resolves successfully
+        AssertCGMatchesRT(
+            """{"var":[{"cat":["a","b"]}, "fallback"]}""",
+            """{"ab": 99}""",
+            "99");
+    }
+
+    // ---- Unary subtraction with non-literal var ----
+    // Covers EmitSub L1204-1227 (deferred or TryCoerce unary negate path)
+
+    [Fact]
+    public void UnaryNegateVar_CG_MatchesRT()
+    {
+        AssertCGMatchesRT(
+            """{"-":[{"var":"x"}]}""",
+            """{"x": 7}""",
+            "-7");
+    }
+
+    // ---- Subtraction of deferred double (result of arithmetic) ----
+    // Covers EmitSub L1204-1215 (deferred double negate)
+
+    [Fact]
+    public void UnaryNegateDeferredDouble_CG_MatchesRT()
+    {
+        // Inner "+" produces a deferred double; outer "-" negates it
+        AssertCGMatchesRT(
+            """{"-":[{"+":[{"var":"a"}, {"var":"b"}]}]}""",
+            """{"a": 3, "b": 4}""",
+            "-7");
+    }
+
+    // ---- Binary arithmetic with deferred double operand ----
+    // Covers EmitDeferredBinaryArithmetic L1097-1101 (deferred double branch)
+
+    [Fact]
+    public void BinarySubWithDeferredLHS_CG_MatchesRT()
+    {
+        // First operand is result of +, which is deferred double; second is literal
+        AssertCGMatchesRT(
+            """{"-":[{"+":[{"var":"a"}, {"var":"b"}]}, 1]}""",
+            """{"a": 10, "b": 5}""",
+            "14");
+    }
+
+    [Fact]
+    public void BinarySubWithDeferredBoth_CG_MatchesRT()
+    {
+        // Both operands are deferred doubles (results of +)
+        AssertCGMatchesRT(
+            """{"-":[{"+":[{"var":"a"}, 1]}, {"+":[{"var":"b"}, 2]}]}""",
+            """{"a": 10, "b": 3}""",
+            "6");
+    }
+
+    // ---- N-ary arithmetic with deferred double operands ----
+    // Covers EmitDeferredArithmetic L1040-1054 paths
+
+    [Fact]
+    public void AddWithDeferredOperand_CG_MatchesRT()
+    {
+        // Mix of var (non-deferred) and arithmetic result (deferred)
+        AssertCGMatchesRT(
+            """{"+":[{"var":"a"}, {"*":[{"var":"b"}, 2]}, 5]}""",
+            """{"a": 1, "b": 3}""",
+            "12");
+    }
+
+    // ---- Static array cache hit ----
+    // Covers GetOrCreateStaticArray L659-660
+
+    [Fact]
+    public void InWithReusedLiteralArray_CG_MatchesRT()
+    {
+        // Two "in" ops referencing the same literal array → cache hit
+        AssertCGMatchesRT(
+            """{"and":[{"in":[1, [1,2,3]]}, {"in":[4, [1,2,3]]}]}""",
+            "null");
+    }
+
+    // ---- IsConstantLiteralArray false for nested arrays ----
+    // Covers IsConstantLiteralArray L685-686
+
+    [Fact]
+    public void InWithNonConstantArray_CG_MatchesRT()
+    {
+        // Array contains a nested array → not a constant literal, falls through to dynamic path
+        AssertCGMatchesRT(
+            """{"in":[1, [1, [2,3], 4]]}""",
+            "null");
+    }
+
+    // ---- Min/max with deferred double operands ----
+    // Covers EmitMinMax L1409-1412 (deferred double branch)
+
+    [Fact]
+    public void MinWithDeferredOperand_CG_MatchesRT()
+    {
+        // One operand is arithmetic result (deferred double)
+        AssertCGMatchesRT(
+            """{"min":[{"+":[{"var":"a"}, 1]}, {"var":"b"}]}""",
+            """{"a": 2, "b": 5}""",
+            "3");
+    }
+
+    [Fact]
+    public void MaxWithDeferredOperand_CG_MatchesRT()
+    {
+        AssertCGMatchesRT(
+            """{"max":[{"+":[{"var":"a"}, 1]}, {"var":"b"}]}""",
+            """{"a": 2, "b": 5}""",
+            "5");
+    }
+
+    // ---- Min/max with allElementBacked = false (has deferred double operand) ----
+    // Covers EmitMinMax L1428-1430 (allElementBacked = false)
+
+    [Fact]
+    public void MinMixedDeferredAndLiteral_CG_MatchesRT()
+    {
+        // Mix of deferred double and literal → allElementBacked=false, uses DoubleToElement path
+        AssertCGMatchesRT(
+            """{"min":[{"+":[{"var":"a"}, {"var":"b"}]}, 10]}""",
+            """{"a": 3, "b": 4}""",
+            "7");
+    }
+
+    // ---- Reduce with init from deferred double ----
+    // Covers EmitReduce L2683-2688 (initIsDeferred) and L2711-2715
+
+    [Fact]
+    public void ReduceWithDeferredInit_CG_MatchesRT()
+    {
+        // Init is result of arithmetic → deferred double
+        AssertCGMatchesRT(
+            """{"reduce":[{"var":"items"}, {"+":[{"var":"current"}, {"var":"accumulator"}]}, {"+":[{"var":"start"}, 1]}]}""",
+            """{"items":[10,20,30], "start": 4}""",
+            "65");
+    }
+
+    // ---- Quantifier (all/some/none) with < 2 args ----
+    // Covers EmitQuantifier L2965-2969
+
+    [Fact]
+    public void AllOneArg_CG_MatchesRT()
+    {
+        // all with < 2 operands → true (default for "all")
+        AssertCGMatchesRT("""{"all":[{"var":"items"}]}""", """{"items":[1,2,3]}""");
+    }
+
+    [Fact]
+    public void SomeOneArg_CG_MatchesRT()
+    {
+        // some with < 2 operands → false (default for "some")
+        AssertCGMatchesRT("""{"some":[{"var":"items"}]}""", """{"items":[1,2,3]}""");
+    }
+
+    [Fact]
+    public void NoneOneArg_CG_MatchesRT()
+    {
+        // none with < 2 operands → true (default for "none")
+        AssertCGMatchesRT("""{"none":[{"var":"items"}]}""", """{"items":[1,2,3]}""");
+    }
+
     /// <summary>
     /// Generates CG code for the rule, compiles it, executes it, then compares with RT.
     /// </summary>
