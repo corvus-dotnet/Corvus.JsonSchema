@@ -137,7 +137,6 @@
     <Compile Include="Corvus\NodaTimeExtensions\Period.cs" />
     <Compile Include="Corvus\NodaTimeExtensions\PeriodBuilder.cs" />
     <Compile Include="Corvus\NodaTimeExtensions\Utf8ValueCursor.cs" />
-    <Compile Include="Corvus\NodaTimeExtensions\ValueCursor.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Collections\HashHelpers.cs" Link="Common\System\Collections\HashHelpers.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />
     <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Common\System\Collections\Generic\ValueListBuilder.Pop.cs" />
@@ -354,7 +353,6 @@
     <Compile Include="Corvus\Globalization\CharUnicodeInfo.cs" />
     <Compile Include="Corvus\Globalization\CharUnicodeInfoData.cs" />
     <Compile Include="Corvus\Globalization\IdnMapping.Unicode.UTF8.cs" />
-    <Compile Include="Corvus\Globalization\IdnMapping.Unicode.cs" />
     <Compile Include="Corvus\Globalization\IdnMapping.Ascii.cs" />
     <Compile Include="Corvus\Globalization\StrongBidiCategory.cs" />
   </ItemGroup>
