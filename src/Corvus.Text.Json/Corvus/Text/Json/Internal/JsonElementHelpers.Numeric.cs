@@ -1756,6 +1756,8 @@ public static partial class JsonElementHelpers
                     break;
 
                 default:
+                    // CurrencyNegativePattern is validated by .NET to be 0-15; this branch is unreachable.
+                    Debug.Fail($"Unexpected CurrencyNegativePattern: {pattern}");
                     charsWritten = 0;
                     return false;
             }
@@ -1846,6 +1848,8 @@ public static partial class JsonElementHelpers
                     break;
 
                 default:
+                    // CurrencyPositivePattern is validated by .NET to be 0-3; this branch is unreachable.
+                    Debug.Fail($"Unexpected CurrencyPositivePattern: {pattern}");
                     charsWritten = 0;
                     return false;
             }
@@ -2559,32 +2563,16 @@ public static partial class JsonElementHelpers
                 scratch[significandStart + 1] = formatInfo.NumberDecimalSeparator[0];
                 pos++;
 
-                // Remove trailing zeros after decimal point
-                while (pos > significandStart + 2 && scratch[pos - 1] == '0')
-                {
-                    pos--;
-                }
-
-                // Remove decimal point if no fractional digits remain
-                if (scratch[pos - 1] == formatInfo.NumberDecimalSeparator[0])
-                {
-                    pos--;
-                }
+                // The first trailing-zero removal loop (above) guarantees the last digit is not '0',
+                // so after shifting for the decimal point the last character is still non-zero.
+                Debug.Assert(scratch[pos - 1] != '0', "Trailing zeros after decimal point should be impossible — first removal loop guarantees last digit is non-zero.");
+                Debug.Assert(scratch[pos - 1] != formatInfo.NumberDecimalSeparator[0], "Decimal point as last char should be impossible — at least one non-zero digit follows it.");
             }
-            else if (pos == significandStart)
+            else
             {
-                // If we removed all digits, write "0"
-                scratch[pos++] = '0';
-
-                if (pos > destination.Length)
-                {
-                    charsWritten = 0;
-                    return false;
-                }
-
-                scratch.Slice(0, pos).CopyTo(destination);
-                charsWritten = pos;
-                return true;
+                // The first trailing-zero removal loop stops at pos == significandStart + 1 (one digit remains),
+                // so pos can never be reduced to significandStart.
+                Debug.Assert(pos != significandStart, "All digits removed should be impossible — removal loop preserves at least one digit.");
             }
 
             // Write exponent
@@ -2602,11 +2590,8 @@ public static partial class JsonElementHelpers
                 scientificExponent = -scientificExponent;
             }
 
-            if (!scientificExponent.TryFormat(scratch.Slice(pos), out int expChars))
-            {
-                charsWritten = 0;
-                return false;
-            }
+            bool expFormatted = scientificExponent.TryFormat(scratch.Slice(pos), out int expChars);
+            Debug.Assert(expFormatted, "Exponent formatting should always succeed — scratch buffer is sized to include space for up to 10 exponent digits.");
 
             pos += expChars;
 
@@ -3428,6 +3413,8 @@ public static partial class JsonElementHelpers
                 break;
 
             default:
+                // CurrencyPositivePattern is validated by .NET to be 0-3; this branch is unreachable.
+                Debug.Fail($"Unexpected CurrencyPositivePattern: {pattern}");
                 charsWritten = 0;
                 return false;
         }
@@ -4795,6 +4782,8 @@ public static partial class JsonElementHelpers
                     break;
 
                 default:
+                    // CurrencyNegativePattern is validated by .NET to be 0-15; this branch is unreachable.
+                    Debug.Fail($"Unexpected CurrencyNegativePattern: {pattern}");
                     bytesWritten = 0;
                     return false;
             }
@@ -4887,6 +4876,8 @@ public static partial class JsonElementHelpers
                     break;
 
                 default:
+                    // CurrencyPositivePattern is validated by .NET to be 0-3; this branch is unreachable.
+                    Debug.Fail($"Unexpected CurrencyPositivePattern: {pattern}");
                     bytesWritten = 0;
                     return false;
             }
@@ -5655,32 +5646,16 @@ public static partial class JsonElementHelpers
                 scratch[significandStart + 1] = decimalSep;
                 pos++;
 
-                // Remove trailing zeros after decimal point
-                while (pos > significandStart + 2 && scratch[pos - 1] == '0')
-                {
-                    pos--;
-                }
-
-                // Remove decimal point if no fractional digits remain
-                if (scratch[pos - 1] == decimalSep)
-                {
-                    pos--;
-                }
+                // The first trailing-zero removal loop (above) guarantees the last digit is not '0',
+                // so after shifting for the decimal point the last character is still non-zero.
+                Debug.Assert(scratch[pos - 1] != '0', "Trailing zeros after decimal point should be impossible — first removal loop guarantees last digit is non-zero.");
+                Debug.Assert(scratch[pos - 1] != decimalSep, "Decimal point as last char should be impossible — at least one non-zero digit follows it.");
             }
-            else if (pos == significandStart)
+            else
             {
-                // If we removed all digits, write "0"
-                scratch[pos++] = (byte)'0';
-
-                if (pos > destination.Length)
-                {
-                    bytesWritten = 0;
-                    return false;
-                }
-
-                scratch.Slice(0, pos).CopyTo(destination);
-                bytesWritten = pos;
-                return true;
+                // The first trailing-zero removal loop stops at pos == significandStart + 1 (one digit remains),
+                // so pos can never be reduced to significandStart.
+                Debug.Assert(pos != significandStart, "All digits removed should be impossible — removal loop preserves at least one digit.");
             }
 
             // Write exponent
@@ -5688,31 +5663,20 @@ public static partial class JsonElementHelpers
 
             if (scientificExponent >= 0)
             {
-                if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.PositiveSign, scratch.Slice(pos), out int positiveSignLength))
-                {
-                    bytesWritten = 0;
-                    return false;
-                }
-
+                bool positiveSignWritten = JsonReaderHelper.TryGetUtf8FromText(formatInfo.PositiveSign, scratch.Slice(pos), out int positiveSignLength);
+                Debug.Assert(positiveSignWritten, "Positive sign write should always succeed — scratch buffer is sized to include maxExpSignLen.");
                 pos += positiveSignLength;
             }
             else
             {
-                if (!JsonReaderHelper.TryGetUtf8FromText(formatInfo.NegativeSign, scratch.Slice(pos), out int negativeSignLength))
-                {
-                    bytesWritten = 0;
-                    return false;
-                }
-
+                bool negativeSignWritten = JsonReaderHelper.TryGetUtf8FromText(formatInfo.NegativeSign, scratch.Slice(pos), out int negativeSignLength);
+                Debug.Assert(negativeSignWritten, "Negative sign write should always succeed — scratch buffer is sized to include maxExpSignLen.");
                 pos += negativeSignLength;
                 scientificExponent = -scientificExponent;
             }
 
-            if (!Utf8Formatter.TryFormat(scientificExponent, scratch.Slice(pos), out int expChars))
-            {
-                bytesWritten = 0;
-                return false;
-            }
+            bool expFormatted = Utf8Formatter.TryFormat(scientificExponent, scratch.Slice(pos), out int expChars);
+            Debug.Assert(expFormatted, "Exponent formatting should always succeed — scratch buffer is sized to include space for up to 10 exponent digits.");
 
             pos += expChars;
 
@@ -6629,6 +6593,8 @@ public static partial class JsonElementHelpers
                 break;
 
             default:
+                // CurrencyPositivePattern is validated by .NET to be 0-3; this branch is unreachable.
+                Debug.Fail($"Unexpected CurrencyPositivePattern: {pattern}");
                 bytesWritten = 0;
                 return false;
         }

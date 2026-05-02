@@ -357,4 +357,126 @@ public class CurrencyBufferOverflowTests
 
         return nfi;
     }
+
+    /// <summary>
+    /// For each positive currency pattern (0-3) formatting zero, every buffer size
+    /// from 0 to one-less-than-needed must return false without throwing.
+    /// This exercises the TryFormatZeroCurrency overflow guards.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]   // $n
+    [InlineData(1)]   // n$
+    [InlineData(2)]   // $ n
+    [InlineData(3)]   // n $
+    public void TryFormatZeroCurrency_Char_AllPatterns_AllBufferSizes_NeverThrows(int pattern)
+    {
+        NumberFormatInfo formatInfo = CreateCurrencyFormatInfo(pattern, isNegative: false);
+
+        Span<char> largeBuf = stackalloc char[64];
+        bool success = JsonElementHelpers.TryFormatZeroCurrency(largeBuf, out int requiredLength, 2, formatInfo);
+        Assert.True(success, $"Pattern {pattern} failed even with large buffer");
+
+        Span<char> pool = stackalloc char[requiredLength];
+        for (int bufSize = 0; bufSize < requiredLength; bufSize++)
+        {
+            Span<char> destination = pool.Slice(0, bufSize);
+
+            bool result = JsonElementHelpers.TryFormatZeroCurrency(destination, out int charsWritten, 2, formatInfo);
+
+            Assert.False(result, $"Pattern {pattern}, bufSize {bufSize}: expected false, got true (requiredLength={requiredLength})");
+            Assert.Equal(0, charsWritten);
+        }
+    }
+
+    /// <summary>
+    /// UTF-8 variant: for each positive currency pattern (0-3) formatting zero,
+    /// every buffer size from 0 to one-less-than-needed must return false without throwing.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]   // $n
+    [InlineData(1)]   // n$
+    [InlineData(2)]   // $ n
+    [InlineData(3)]   // n $
+    public void TryFormatZeroCurrency_Utf8_AllPatterns_AllBufferSizes_NeverThrows(int pattern)
+    {
+        NumberFormatInfo formatInfo = CreateCurrencyFormatInfo(pattern, isNegative: false);
+
+        Span<byte> largeBuf = stackalloc byte[64];
+        bool success = JsonElementHelpers.TryFormatZeroCurrency(largeBuf, out int requiredLength, 2, formatInfo);
+        Assert.True(success, $"Pattern {pattern} failed even with large buffer");
+
+        Span<byte> pool = stackalloc byte[requiredLength];
+        for (int bufSize = 0; bufSize < requiredLength; bufSize++)
+        {
+            Span<byte> destination = pool.Slice(0, bufSize);
+
+            bool result = JsonElementHelpers.TryFormatZeroCurrency(destination, out int bytesWritten, 2, formatInfo);
+
+            Assert.False(result, $"Pattern {pattern}, bufSize {bufSize}: expected false, got true (requiredLength={requiredLength})");
+            Assert.Equal(0, bytesWritten);
+        }
+    }
+
+    /// <summary>
+    /// TryFormatExponential with zero input and various buffer sizes.
+    /// Exercises the totalLength==0 special-case overflow guard.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    [InlineData(6)]
+    public void TryFormatExponential_Char_Zero_AllBufferSizes_NeverThrows(int precision)
+    {
+        NumberFormatInfo formatInfo = NumberFormatInfo.InvariantInfo;
+
+        Span<char> largeBuf = stackalloc char[64];
+        bool success = JsonElementHelpers.TryFormatExponential(
+            false, ReadOnlySpan<byte>.Empty, ReadOnlySpan<byte>.Empty, 0,
+            largeBuf, out int requiredLength, precision, 'e', formatInfo);
+        Assert.True(success, $"Precision {precision} failed even with large buffer");
+
+        Span<char> pool = stackalloc char[requiredLength];
+        for (int bufSize = 0; bufSize < requiredLength; bufSize++)
+        {
+            Span<char> destination = pool.Slice(0, bufSize);
+
+            bool result = JsonElementHelpers.TryFormatExponential(
+                false, ReadOnlySpan<byte>.Empty, ReadOnlySpan<byte>.Empty, 0,
+                destination, out int charsWritten, precision, 'e', formatInfo);
+
+            Assert.False(result, $"Precision {precision}, bufSize {bufSize}: expected false");
+            Assert.Equal(0, charsWritten);
+        }
+    }
+
+    /// <summary>
+    /// UTF-8 variant: TryFormatExponential with zero input and various buffer sizes.
+    /// </summary>
+    [Theory]
+    [InlineData(0)]
+    [InlineData(2)]
+    [InlineData(6)]
+    public void TryFormatExponential_Utf8_Zero_AllBufferSizes_NeverThrows(int precision)
+    {
+        NumberFormatInfo formatInfo = NumberFormatInfo.InvariantInfo;
+
+        Span<byte> largeBuf = stackalloc byte[64];
+        bool success = JsonElementHelpers.TryFormatExponential(
+            false, ReadOnlySpan<byte>.Empty, ReadOnlySpan<byte>.Empty, 0,
+            largeBuf, out int requiredLength, precision, 'e', formatInfo);
+        Assert.True(success, $"Precision {precision} failed even with large buffer");
+
+        Span<byte> pool = stackalloc byte[requiredLength];
+        for (int bufSize = 0; bufSize < requiredLength; bufSize++)
+        {
+            Span<byte> destination = pool.Slice(0, bufSize);
+
+            bool result = JsonElementHelpers.TryFormatExponential(
+                false, ReadOnlySpan<byte>.Empty, ReadOnlySpan<byte>.Empty, 0,
+                destination, out int bytesWritten, precision, 'e', formatInfo);
+
+            Assert.False(result, $"Precision {precision}, bufSize {bufSize}: expected false");
+            Assert.Equal(0, bytesWritten);
+        }
+    }
 }
