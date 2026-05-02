@@ -505,6 +505,165 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
         Assert.Equal(expected.GetRawText(), actual.GetRawText());
     }
 
+    // ═══════════════════════════════════════════════════════════
+    // Coverage Round 2: targeted tests for uncovered code paths
+    // in JsonataCodeGenerator.cs, CodeGenStringHelpers.cs
+    // ═══════════════════════════════════════════════════════════
+
+    [Theory]
+    [Trait("category", "codegen-edge")]
+    // Regex with case-insensitive flag (L542-544)
+    [InlineData("""$match("Hello World", /hello/i).match""", "\"Hello\"")]
+    // Regex with multiline flag (L545-547)
+    [InlineData("$contains(\"line1\\nline2\", /^line2/m)", "true")]
+    // Division operator (L2936+)
+    [InlineData("10 / 4", "2.5")]
+    // String with special characters that exercise EscapeCSharpStringLiteral (L37-46)
+    [InlineData("\"hello\\tworld\"", "\"hello\\tworld\"")]
+    [InlineData("\"line1\\nline2\"", "\"line1\\nline2\"")]
+    // Object constructor with numeric values (L811-824)
+    [InlineData("""{"x": 1, "y": 2, "z": 3}""", """{"x":1,"y":2,"z":3}""")]
+    // Transform operator ~> (L2880+)
+    [InlineData("$sum([1,2,3,4] ~> $map(function($v) { $v * $v }))", "30")]
+    // $each for object iteration
+    [InlineData("""$each({"a":1,"b":2}, function($v, $k) { $k & "=" & $string($v) })""", """["a=1","b=2"]""")]
+    // $spread
+    [InlineData("""$spread({"a":1,"b":2})""", """[{"a":1},{"b":2}]""")]
+    // $sift — filter object properties
+    [InlineData("""$sift({"a":1,"b":2,"c":3}, function($v) { $v > 1 })""", """{"b":2,"c":3}""")]
+    // Lambda expression used as value
+    [InlineData("$map([1,2,3], function($v) { $v * $v })", "[1,4,9]")]
+    // $pad
+    [InlineData("""$pad("hello", 10)""", "\"hello     \"")]
+    [InlineData("""$pad("hello", -10)""", "\"     hello\"")]
+    [InlineData("""$pad("hello", 10, "*")""", "\"hello*****\"")]
+    // $eval (falls back to RT)
+    [InlineData("""$eval("1+2")""", "3")]
+    // Chained comparison operators
+    [InlineData("1 < 2 and 2 < 3", "true")]
+    [InlineData("1 > 2 or 2 > 3", "false")]
+    public void EvaluateR2SelfContainedExpression(string expression, string expectedJson)
+    {
+        this.CompileAndAssert(expression, "null", expectedJson);
+    }
+
+    [Theory]
+    [Trait("category", "codegen-edge")]
+    // Group-by on path: data{key: value} (L793-806, L945-948)
+    [InlineData(
+        """Account.Order.Product{`Product Name`: Price}""",
+        """{"Account":{"Order":{"Product":[{"Product Name":"Bowler Hat","Price":34.45},{"Product Name":"Trilby hat","Price":21.67}]}}}""",
+        """{"Bowler Hat":34.45,"Trilby hat":21.67}""")]
+    // Group-by with $sum aggregation (L803-806)
+    [InlineData(
+        """Account.Order.Product{`Product Name`: $sum(Price)}""",
+        """{"Account":{"Order":[{"Product":[{"Product Name":"Hat","Price":10},{"Product Name":"Hat","Price":20}]},{"Product":[{"Product Name":"Shoes","Price":50}]}]}}""",
+        """{"Hat":30,"Shoes":50}""")]
+    // KeepSingletonArray on path after wildcard step (L826-836, L951-968)
+    [InlineData("*.name[]", """{"a":{"name":"x"},"b":{"name":"y"}}""", """["x","y"]""")]
+    // Descendant navigation (L844-870)
+    [InlineData("**.price", """{"store":{"book":{"price":10},"pen":{"price":2}}}""", "[10,2]")]
+    // Descendant + property fusion (L845-870)
+    [InlineData("**.name", """{"a":{"b":{"name":"deep"}}}""", "\"deep\"")]
+    // OR predicate extraction (L1147-1155)
+    [InlineData(
+        """items[type="a" or type="b"].name""",
+        """{"items":[{"type":"a","name":"x"},{"type":"b","name":"y"},{"type":"c","name":"z"}]}""",
+        """["x","y"]""")]
+    // Conditional with undefined-test optimization
+    [InlineData("a ? a : \"default\"", """{"a":"present"}""", "\"present\"")]
+    [InlineData("a ? a : \"default\"", """{}""", "\"default\"")]
+    // Multi-step path with fused chain + keepArray step (L663-668)
+    [InlineData("items[0].details.tags[]",
+        """{"items":[{"details":{"tags":["a","b"]}}]}""",
+        """["a","b"]""")]
+    // Constant index chain with multiple indices (L1412+)
+    [InlineData("matrix[0][1]",
+        """{"matrix":[[10,20,30],[40,50,60]]}""",
+        "20")]
+    // Pre-index step chain with post-index property (L1600+)
+    [InlineData("data.rows[0].name",
+        """{"data":{"rows":[{"name":"first"},{"name":"second"}]}}""",
+        "\"first\"")]
+    // Deep chain with filter and post-navigation
+    [InlineData("""orders[status="active"].items.product.name""",
+        """{"orders":[{"status":"active","items":[{"product":{"name":"Widget"}},{"product":{"name":"Gadget"}}]},{"status":"closed","items":[{"product":{"name":"Old"}}]}]}""",
+        """["Widget","Gadget"]""")]
+    // Wildcard enumerate all values then navigate (L837+)
+    [InlineData("*.val",
+        """{"a":{"val":1},"b":{"val":2},"c":{"val":3}}""",
+        "[1,2,3]")]
+    // NameNode with stages at step 0 (L774-786)
+    [InlineData("items[0].name",
+        """{"items":[{"name":"first"},{"name":"second"}]}""",
+        "\"first\"")]
+    // Sort with custom comparator on path (L2663+)
+    [InlineData("$sort(items, function($a, $b) { $a.age > $b.age }).name",
+        """{"items":[{"name":"Charlie","age":30},{"name":"Alice","age":25},{"name":"Bob","age":35}]}""",
+        """["Alice","Charlie","Bob"]""")]
+    public void EvaluateR2ExpressionWithData(string expression, string inputJson, string expectedJson)
+    {
+        this.CompileAndAssert(expression, inputJson, expectedJson);
+    }
+
+    [Theory]
+    [Trait("category", "codegen-edge")]
+    // FilterNode standalone — falls back to RT (L594)
+    [InlineData("[0]", "[10,20,30]")]
+    // Complex annotations with focus — falls back to RT (L602-604)
+    [InlineData("$sum(Account.Order.Product.(Price * Quantity))",
+        """{"Account":{"Order":[{"Product":{"Price":10,"Quantity":2}},{"Product":{"Price":20,"Quantity":1}}]}}""")]
+    public void FallbackExpressions_StillProduceCorrectResults(string expression, string inputJson)
+    {
+        // These expressions can't be inlined by CG; they fall back to RT.
+        // We still verify that CG compilation succeeds and produces correct results.
+        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+
+        // Run CG version
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputJson));
+        using JsonWorkspace cgWorkspace = JsonWorkspace.Create();
+        JsonElement cgResult = Invoke(compiled.Method, inputDoc.RootElement, cgWorkspace);
+
+        // Run RT version and compare
+        using var inputDoc2 = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputJson));
+        JsonElement rtResult = JsonataEvaluator.Default.Evaluate(expression, inputDoc2.RootElement);
+
+        Assert.Equal(rtResult.GetRawText(), cgResult.GetRawText());
+    }
+
+    [Fact]
+    [Trait("category", "codegen-edge")]
+    public void EvaluateExpressionWithCustomFunction_BlockFormWithBlankLines()
+    {
+        // L319-322: blank lines in custom function body
+        var customFns = new[]
+        {
+            new CustomFunction(
+                "add_ten",
+                new[] { "x" },
+                "double v = x.GetDouble();\n\nv = v + 10;\n\nreturn JsonataCodeGenHelpers.NumberFromDouble(v, workspace);",
+                isExpression: false),
+        };
+
+        CompiledExpression compiled = this.fixture.GetOrCompile("$add_ten(5)", customFns);
+
+        this.output.WriteLine($"Error: {compiled.Error}");
+        if (compiled.GeneratedCode is not null)
+        {
+            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+        }
+
+        Assert.Null(compiled.Error);
+        Assert.NotNull(compiled.Method);
+
+        using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
+        Assert.Equal("15", result.GetRawText());
+    }
+
     [Fact]
     [Trait("category", "codegen-edge")]
     public void EvaluateExpressionWithCustomFunction_ExpressionForm()

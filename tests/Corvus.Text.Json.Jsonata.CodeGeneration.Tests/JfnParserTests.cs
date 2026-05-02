@@ -126,4 +126,101 @@ public class JfnParserTests
         Assert.False(fns[0].IsExpression);
         Assert.Contains("return x;", fns[0].Body);
     }
+
+    // ═══════════════════════════════════════════════════════════
+    // Coverage: error paths and edge cases (L77-204)
+    // ═══════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Parse_MissingFunctionName_Throws()
+    {
+        // L76-78: empty function name
+        const string content = "fn (x) => x;";
+        Assert.Throws<FormatException>(() => JfnParser.Parse(content));
+    }
+
+    [Fact]
+    public void Parse_MissingClosingParen_Throws()
+    {
+        // L82-84: no closing ')'
+        const string content = "fn name(x => x;";
+        Assert.Throws<FormatException>(() => JfnParser.Parse(content));
+    }
+
+    [Fact]
+    public void Parse_EmptyExpressionBody_Throws()
+    {
+        // L103-105: empty body after =>
+        const string content = "fn name() => ;";
+        Assert.Throws<FormatException>(() => JfnParser.Parse(content));
+    }
+
+    [Fact]
+    public void Parse_InvalidAfterSignature_Throws()
+    {
+        // L185-187: no => or { after function signature
+        const string content = "fn name() invalid;";
+        Assert.Throws<FormatException>(() => JfnParser.Parse(content));
+    }
+
+    [Fact]
+    public void Parse_EofAfterSignature_Throws()
+    {
+        // L142-145: EOF before finding opening brace
+        const string content = "fn name()";
+        Assert.Throws<FormatException>(() => JfnParser.Parse(content));
+    }
+
+    [Fact]
+    public void Parse_NonBraceAfterSigNewLine_Throws()
+    {
+        // L138-139: non-brace, non-blank after separate-line signature
+        const string content = "fn name()\ninvalid";
+        Assert.Throws<FormatException>(() => JfnParser.Parse(content));
+    }
+
+    [Fact]
+    public void Parse_UnmatchedBraces_Throws()
+    {
+        // L176-178: unmatched opening brace
+        const string content = "fn name() {\n  x = 1;";
+        Assert.Throws<FormatException>(() => JfnParser.Parse(content));
+    }
+
+    [Fact]
+    public void Parse_EmptyParameterName_Throws()
+    {
+        // L202-204: empty parameter in comma-separated list
+        const string content = "fn name(, x) => x;";
+        Assert.Throws<FormatException>(() => JfnParser.Parse(content));
+    }
+
+    [Fact]
+    public void Parse_BlankLinesBeforeBrace_ParsesCorrectly()
+    {
+        // L126-129: blank lines and comments between sig and brace
+        const string content = "fn test(x)\n\n// comment\n\n{\n  return x;\n}";
+
+        IReadOnlyList<CustomFunction> fns = JfnParser.Parse(content);
+
+        Assert.Single(fns);
+        Assert.Equal("test", fns[0].Name);
+        Assert.False(fns[0].IsExpression);
+        Assert.Contains("return x;", fns[0].Body);
+    }
+
+    [Fact]
+    public void Parse_NestedBraces_ParsesCorrectly()
+    {
+        // L158-161: nested braces in body increment/decrement brace depth
+        const string content = "fn test(x) {\n  if (true) {\n    x = 1;\n  }\n}";
+
+        IReadOnlyList<CustomFunction> fns = JfnParser.Parse(content);
+
+        Assert.Single(fns);
+        Assert.Equal("test", fns[0].Name);
+        Assert.False(fns[0].IsExpression);
+        Assert.Contains("if (true)", fns[0].Body);
+        Assert.Contains("x = 1;", fns[0].Body);
+    }
 }
