@@ -893,25 +893,9 @@ public static partial class JsonElementHelpers
 
     private static bool DecimalToHexVirtualized(ReadOnlySpan<byte> integral, ReadOnlySpan<byte> fractional, int exponent, int totalLength, Span<char> destination, out int charsWritten, int precision, bool lowercase)
     {
-        // Handle zero
-        if (totalLength == 0 || (totalLength == 1 && GetDecimalDigitAtPosition(integral, fractional, exponent, 0) == (byte)'0'))
-        {
-            int requiredLength = precision > 0 ? precision : 1;
-            if (destination.Length < requiredLength)
-            {
-                charsWritten = 0;
-                return false;
-            }
-
-            destination[0] = '0';
-            for (int i = 1; i < requiredLength; i++)
-            {
-                destination[i] = '0';
-            }
-
-            charsWritten = requiredLength;
-            return true;
-        }
+        // Zero is handled by the TryFormatNumber dispatcher before reaching here.
+        // ParseNumber normalization: zero → integral=[], fractional=[], exponent=0 → caught by fast path.
+        Debug.Assert(totalLength > 0, "Zero should never reach format-specific methods.");
 
         // Working buffer includes significand digits + trailing zeros from positive exponent.
         int significandLength = integral.Length + fractional.Length;
@@ -1024,25 +1008,8 @@ public static partial class JsonElementHelpers
 
     private static bool DecimalToBinaryVirtualized(ReadOnlySpan<byte> integral, ReadOnlySpan<byte> fractional, int exponent, int totalLength, Span<char> destination, out int charsWritten, int precision)
     {
-        // Handle zero
-        if (totalLength == 0 || (totalLength == 1 && GetDecimalDigitAtPosition(integral, fractional, exponent, 0) == (byte)'0'))
-        {
-            int requiredLength = precision > 0 ? precision : 1;
-            if (destination.Length < requiredLength)
-            {
-                charsWritten = 0;
-                return false;
-            }
-
-            destination[0] = '0';
-            for (int i = 1; i < requiredLength; i++)
-            {
-                destination[i] = '0';
-            }
-
-            charsWritten = requiredLength;
-            return true;
-        }
+        // Zero is handled by the TryFormatNumber dispatcher before reaching here.
+        Debug.Assert(totalLength > 0, "Zero should never reach format-specific methods.");
 
         // Working buffer includes significand digits + trailing zeros from positive exponent.
         int significandLength = integral.Length + fractional.Length;
@@ -1151,25 +1118,8 @@ public static partial class JsonElementHelpers
 
     private static bool DecimalToHexVirtualizedUtf8(ReadOnlySpan<byte> integral, ReadOnlySpan<byte> fractional, int exponent, int totalLength, Span<byte> destination, out int bytesWritten, int precision, bool lowercase)
     {
-        // Handle zero
-        if (totalLength == 0 || (totalLength == 1 && GetDecimalDigitAtPosition(integral, fractional, exponent, 0) == (byte)'0'))
-        {
-            int requiredLength = precision > 0 ? precision : 1;
-            if (destination.Length < requiredLength)
-            {
-                bytesWritten = 0;
-                return false;
-            }
-
-            destination[0] = (byte)'0';
-            for (int i = 1; i < requiredLength; i++)
-            {
-                destination[i] = (byte)'0';
-            }
-
-            bytesWritten = requiredLength;
-            return true;
-        }
+        // Zero is handled by the TryFormatNumber dispatcher before reaching here.
+        Debug.Assert(totalLength > 0, "Zero should never reach format-specific methods.");
 
         // Working buffer includes significand digits + trailing zeros from positive exponent.
         int significandLength = integral.Length + fractional.Length;
@@ -1278,25 +1228,8 @@ public static partial class JsonElementHelpers
 
     private static bool DecimalToBinaryVirtualizedUtf8(ReadOnlySpan<byte> integral, ReadOnlySpan<byte> fractional, int exponent, int totalLength, Span<byte> destination, out int bytesWritten, int precision)
     {
-        // Handle zero
-        if (totalLength == 0 || (totalLength == 1 && GetDecimalDigitAtPosition(integral, fractional, exponent, 0) == (byte)'0'))
-        {
-            int requiredLength = precision > 0 ? precision : 1;
-            if (destination.Length < requiredLength)
-            {
-                bytesWritten = 0;
-                return false;
-            }
-
-            destination[0] = (byte)'0';
-            for (int i = 1; i < requiredLength; i++)
-            {
-                destination[i] = (byte)'0';
-            }
-
-            bytesWritten = requiredLength;
-            return true;
-        }
+        // Zero is handled by the TryFormatNumber dispatcher before reaching here.
+        Debug.Assert(totalLength > 0, "Zero should never reach format-specific methods.");
 
         // Working buffer includes significand digits + trailing zeros from positive exponent.
         int significandLength = integral.Length + fractional.Length;

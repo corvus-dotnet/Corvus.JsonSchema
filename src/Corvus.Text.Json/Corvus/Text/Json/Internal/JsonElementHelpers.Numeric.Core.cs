@@ -7,6 +7,7 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers.Text;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 
 #if CORVUS_TEXT_JSON_CODEGENERATION
@@ -157,14 +158,10 @@ public static partial class JsonElementHelpers
             frac = default;
         }
 
-        if (!(span[i] is (byte)'e' or (byte)'E'))
-        {
-            isNegative = default;
-            integral = default;
-            fractional = default;
-            exponent = default;
-            return false;
-        }
+        // IndexOfAny above guarantees span[i] is always 'e' or 'E' at this point:
+        // - In the else branch: IndexOfAny found '.', 'e', or 'E'; since it's not '.', it must be 'e'/'E'.
+        // - In the if branch: the second IndexOfAny searched only for 'e'/'E'.
+        Debug.Assert(span[i] is (byte)'e' or (byte)'E');
 
         if (!Utf8Parser.TryParse(span.Slice(i + 1), out exp, out _))
         {
@@ -326,19 +323,14 @@ public static partial class JsonElementHelpers
 
         int maxDigitLength = Math.Max(leftTotalLength, rightTotalLength);
 
-        // Adjust so we don't bother with matching leading zeros
-        if (leftLeadingZeros > rightLeadingZeros)
-        {
-            leftLeadingZeros -= rightLeadingZeros;
-            maxDigitLength -= rightLeadingZeros;
-            rightLeadingZeros = 0;
-        }
-        else
-        {
-            rightLeadingZeros -= leftLeadingZeros;
-            maxDigitLength -= leftLeadingZeros;
-            leftLeadingZeros = 0;
-        }
+        // Equal effective lengths imply equal leading zeros:
+        // leadingZeros = Max(0, -effectiveLength), and both effective lengths are equal at this point.
+        Debug.Assert(leftLeadingZeros == rightLeadingZeros, "Equal effective lengths imply equal leading zeros.");
+
+        // Subtract the common leading zeros to skip comparing positions where both return '0'.
+        maxDigitLength -= leftLeadingZeros;
+        leftLeadingZeros = 0;
+        rightLeadingZeros = 0;
 
         for (int i = 0; i < maxDigitLength; i++)
         {
@@ -372,40 +364,6 @@ public static partial class JsonElementHelpers
             int fractionalIndex = integralIndex - integral.Length;
             return fractionalIndex >= 0 && fractionalIndex < fractional.Length ? fractional[fractionalIndex] : (byte)'0';
         }
-    }
-
-    /// <summary>
-    /// Gets the decimal digit at a position in the complete decimal representation,
-    /// accounting for the exponent without materializing trailing zeros.
-    /// </summary>
-    /// <param name="integral">The integral digits.</param>
-    /// <param name="fractional">The fractional digits.</param>
-    /// <param name="exponent">The exponent.</param>
-    /// <param name="position">The position in the complete decimal representation.</param>
-    /// <returns>The digit at the position, or '0' if beyond the significant digits.</returns>
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static byte GetDecimalDigitAtPosition(
-        ReadOnlySpan<byte> integral,
-        ReadOnlySpan<byte> fractional,
-        int exponent,
-        int position)
-    {
-        int significandLength = integral.Length + fractional.Length;
-
-        // If position is within the significand, get it from integral/fractional
-        if (position < significandLength)
-        {
-            return GetDigitAtPosition(integral, fractional, position);
-        }
-
-        // If position is in the trailing zeros added by positive exponent
-        if (exponent > 0 && position < significandLength + exponent)
-        {
-            return (byte)'0';
-        }
-
-        // Beyond the decimal representation
-        return (byte)'0';
     }
 
     /// <summary>
