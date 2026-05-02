@@ -354,6 +354,54 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         AssertCGMatchesRT(expression, data);
     }
 
+    // ---- Round 3: Slice barrier in streaming pipeline ----
+    // Covers EmitStreamingStages Slice case L685-689
+
+    [Theory]
+    [InlineData("sort(items) | [1:3]", """{"items":[5,3,1,4,2]}""", "[2,3]")]
+    [InlineData("reverse(items) | [::2]", """{"items":[1,2,3,4,5]}""", "[5,3,1]")]
+    public void PipelineSliceBarrier_CG_MatchesRT(string expression, string data, string expected)
+    {
+        AssertCGMatchesRT(expression, data, expected);
+    }
+
+    // ---- ExpressionRefNode at top level ----
+    // Covers L174-175 (bare &expr throws)
+
+    [Fact]
+    public void ExpressionRefAtTopLevel_CG_HandlesError()
+    {
+        // &foo is an expression reference that can't appear at top level
+        var ex = Assert.ThrowsAny<Exception>(() =>
+        {
+            string code = JMESPathCodeGenerator.Generate("&foo", "TestExprRef", "Test.Generated");
+            this.output.WriteLine(code);
+        });
+
+        this.output.WriteLine($"Exception: {ex.GetType().Name}: {ex.Message}");
+    }
+
+    // ---- Flatten with deeper property projection ----
+    // Covers EmitFlattenProjection L1336-1343 and L1355-1361 (non-identity right side)
+
+    [Theory]
+    [InlineData("items[].details.name", """{"items":[{"details":{"name":"A"}},{"details":{"name":"B"}}]}""")]
+    [InlineData("data[].nested[].value", """{"data":[{"nested":[{"value":1},{"value":2}]},{"nested":[{"value":3}]}]}""")]
+    public void FlattenDeepProjection_CG_MatchesRT(string expression, string data)
+    {
+        AssertCGMatchesRT(expression, data);
+    }
+
+    // ---- Filter without projection (identity continuation) ----
+    // Covers EmitStreamingStages Filter L572-574 (no projection right)
+
+    [Theory]
+    [InlineData("items[?@ > `2`]", """{"items":[1,3,5,2,4]}""", "[3,5,4]")]
+    public void FilterIdentityContinuation_CG_MatchesRT(string expression, string data, string expected)
+    {
+        AssertCGMatchesRT(expression, data, expected);
+    }
+
     /// <summary>
     /// Generates CG code for the expression, compiles it, executes it, then compares with RT.
     /// </summary>

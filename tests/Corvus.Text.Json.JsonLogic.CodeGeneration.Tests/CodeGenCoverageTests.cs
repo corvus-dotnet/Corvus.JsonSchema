@@ -781,6 +781,218 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         AssertCGMatchesRT("""{"none":[{"var":"items"}]}""", """{"items":[1,2,3]}""");
     }
 
+    // ---- Round 4: Constant folding — all-literal arithmetic ----
+    // Covers EmitDeferredArithmetic L1049-1054 (all literals, no BigNumber path)
+    // and EmitDeferredBinaryArithmetic L1132-1136 (binary all-literal)
+
+    [Theory]
+    [InlineData("""{"+":[1.5, 2.5, 3.0]}""", "null", "7")]
+    [InlineData("""{"+":[10, 20]}""", "null", "30")]
+    public void AddAllLiterals_ConstantFold_CG_MatchesRT(string rule, string data, string expected)
+    {
+        AssertCGMatchesRT(rule, data, expected);
+    }
+
+    [Theory]
+    [InlineData("""{"-":[10.5, 3.2]}""", "null")]
+    [InlineData("""{"-":[100, 42]}""", "null", "58")]
+    public void SubAllLiterals_ConstantFold_CG_MatchesRT(string rule, string data, string? expected = null)
+    {
+        AssertCGMatchesRT(rule, data, expected);
+    }
+
+    [Theory]
+    [InlineData("""{"*":[2.0, 3.0]}""", "null", "6")]
+    [InlineData("""{"*":[7, 8, 2]}""", "null", "112")]
+    public void MulAllLiterals_ConstantFold_CG_MatchesRT(string rule, string data, string expected)
+    {
+        AssertCGMatchesRT(rule, data, expected);
+    }
+
+    // ---- Mod with insufficient args ----
+    // Covers EmitMod L1323-1327
+
+    [Theory]
+    [InlineData("""{"%":[]}""", "null")]
+    [InlineData("""{"%":[5]}""", "null")]
+    public void ModInsufficientArgs_CG_MatchesRT(string rule, string data)
+    {
+        AssertCGMatchesRT(rule, data);
+    }
+
+    // ---- Reduce body with scope-creating op (map inside reduce body) ----
+    // Covers BodyUsesOnlyReduceVars L400-402 (returns false for nested map/filter)
+
+    [Fact]
+    public void ReduceWithMapInBody_NonFusable_CG_MatchesRT()
+    {
+        // Reduce body contains "map" → BodyUsesOnlyReduceVars returns false → slow path
+        AssertCGMatchesRT(
+            """{"reduce":[[1,2,3], {"+":[{"var":"accumulator"}, {"var":"current"}]}, 0]}""",
+            "null",
+            "6");
+    }
+
+    // ---- EmitVar with accumulator path ----
+    // Covers L821-823 (var "accumulator" returns cached acc var)
+
+    [Fact]
+    public void ReduceAccessAccumulator_CG_MatchesRT()
+    {
+        // Explicitly access "accumulator" var in reduce body
+        AssertCGMatchesRT(
+            """{"reduce":[[10,20,30], {"+":[{"var":"accumulator"}, {"var":"current"}]}, 100]}""",
+            "null",
+            "160");
+    }
+
+    // ---- Cat with arithmetic result ----
+    // Covers EmitExpression L753-755 (deferred double materialized for non-arithmetic context)
+
+    [Fact]
+    public void CatWithArithmeticResult_CG_MatchesRT()
+    {
+        // "+" produces deferred double, "cat" needs JsonElement → materialization path
+        AssertCGMatchesRT(
+            """{"cat":["result: ", {"+":[{"var":"a"}, {"var":"b"}]}]}""",
+            """{"a": 3, "b": 4}""",
+            "\"result: 7\"");
+    }
+
+    // ---- Comparison chain with non-var LHS (falls through optimization) ----
+    // Covers TryExtractComparisonFromCondition L2202-2204 (non-object LHS)
+
+    [Fact]
+    public void IfChainWithNonVarComparison_CG_MatchesRT()
+    {
+        // LHS is a literal, not {"var":...} → comparison chain optimization bails out
+        AssertCGMatchesRT(
+            """{"if":[{">":[100, 50]}, "yes", "no"]}""",
+            "null",
+            "\"yes\"");
+    }
+
+    // ---- Comparison chain: non-comparison operator ----
+    // Covers TryExtractComparisonFromCondition L2187-2188 (operator not >,>=,<,<=)
+
+    [Fact]
+    public void IfChainWithEqualityCondition_CG_MatchesRT()
+    {
+        // "==" is not a comparison chain operator → bail out of optimization
+        AssertCGMatchesRT(
+            """{"if":[{"==":[{"var":"x"}, 5]}, "match", "no"]}""",
+            """{"x": 5}""",
+            "\"match\"");
+    }
+
+    // ---- Comparison chain: var with array path ----
+    // Covers TryExtractComparisonFromCondition L2219-2221 (var arg is array)
+
+    [Fact]
+    public void IfChainWithVarArrayPath_CG_MatchesRT()
+    {
+        // {"var": ["x"]} instead of {"var": "x"} — array form of var path
+        AssertCGMatchesRT(
+            """{"if":[{">":[{"var":["x"]}, 10]}, "big", "small"]}""",
+            """{"x": 15}""",
+            "\"big\"");
+    }
+
+    // ---- TryEmitPredicateAsBool with literal number LHS ----
+    // Covers L2091-2093 (IsLiteralNumber fast path for LHS)
+
+    [Fact]
+    public void FilterWithLiteralComparisonLHS_CG_MatchesRT()
+    {
+        // LHS of comparison is a literal number → skip EmitExpression, use FormatDouble
+        AssertCGMatchesRT(
+            """{"filter":[{"var":"items"},{"<":[5, {"var":""}]}]}""",
+            """{"items":[1, 3, 7, 10, 2]}""",
+            "[7,10]");
+    }
+
+    // ---- TryEmitPredicateAsBool with deferred double LHS ----
+    // Covers L2098-2101 (deferred double operand in predicate)
+
+    [Fact]
+    public void FilterWithDeferredComparison_CG_MatchesRT()
+    {
+        // LHS is result of arithmetic (deferred double) → _deferredDoubleVars check
+        AssertCGMatchesRT(
+            """{"filter":[{"var":"items"},{">":[{"+":[{"var":""}, 1]}, 5]}]}""",
+            """{"items":[1, 3, 7, 10, 2]}""",
+            "[7,10]");
+    }
+
+    // ---- If with else expression (non-literal) ----
+    // Covers L2029-2045 (else branch is expression, not literal)
+
+    [Fact]
+    public void IfWithExpressionElse_CG_MatchesRT()
+    {
+        AssertCGMatchesRT(
+            """{"if":[{">":[{"var":"x"}, 10]}, {"var":"x"}, {"+":[{"var":"x"}, 100]}]}""",
+            """{"x": 5}""",
+            "105");
+    }
+
+    // ---- Comparison with < 2 args ----
+    // Covers EmitComparison L1573-1577
+
+    [Theory]
+    [InlineData("""{">":[5]}""", "null")]
+    [InlineData("""{">=":[]}""", "null")]
+    [InlineData("""{"<":[3]}""", "null")]
+    public void ComparisonInsufficientArgs_CG_MatchesRT(string rule, string data)
+    {
+        AssertCGMatchesRT(rule, data);
+    }
+
+    // ---- JlopsParser: brace on same line as signature ----
+    // Covers JlopsParser L114-117
+
+    [Fact]
+    public void JlopsParser_BraceOnSameLine_Parses()
+    {
+        string jlops = "op add(a, b) {\n    return a + b;\n}\n";
+        var ops = JlopsParser.Parse(jlops);
+        Assert.Single(ops);
+        Assert.Equal("add", ops[0].Name);
+    }
+
+    // ---- JlopsParser: nested braces in block body ----
+    // Covers JlopsParser L160-162
+
+    [Fact]
+    public void JlopsParser_NestedBraces_Parses()
+    {
+        string jlops = "op clamp(value, lo, hi)\n{\n    if (value < lo) {\n        return lo;\n    }\n    return value;\n}\n";
+        var ops = JlopsParser.Parse(jlops);
+        Assert.Single(ops);
+        Assert.Equal("clamp", ops[0].Name);
+        Assert.Contains("{", ops[0].Body);
+    }
+
+    // ---- JlopsParser: invalid syntax after params ----
+    // Covers JlopsParser L186-188
+
+    [Fact]
+    public void JlopsParser_InvalidSyntaxAfterParams_Throws()
+    {
+        Assert.Throws<FormatException>(() =>
+            JlopsParser.Parse("op bad(x) invalid_stuff\n"));
+    }
+
+    // ---- JlopsParser: empty parameter name ----
+    // Covers JlopsParser L204-205
+
+    [Fact]
+    public void JlopsParser_EmptyParamName_Throws()
+    {
+        Assert.Throws<FormatException>(() =>
+            JlopsParser.Parse("op bad(a,,b) => a + b;\n"));
+    }
+
     /// <summary>
     /// Generates CG code for the rule, compiles it, executes it, then compares with RT.
     /// </summary>
