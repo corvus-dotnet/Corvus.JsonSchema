@@ -613,4 +613,53 @@ public class PeriodTest
         bool result = Corvus.Text.Json.Period.TryParse(utf8, out _);
         Assert.False(result);
     }
+
+    [Fact]
+    public void Equals_SamePeriods_ReturnsTrue()
+    {
+        byte[] utf8 = System.Text.Encoding.UTF8.GetBytes("P1Y2M3DT4H5M6S");
+        Assert.True(Corvus.Text.Json.Period.TryParse(utf8, out Corvus.Text.Json.Period p1));
+        Assert.True(Corvus.Text.Json.Period.TryParse(utf8, out Corvus.Text.Json.Period p2));
+        Assert.True(p1.Equals(p2));
+    }
+
+    [Fact]
+    public void Equals_DifferentPeriods_ReturnsFalse()
+    {
+        Assert.True(Corvus.Text.Json.Period.TryParse(System.Text.Encoding.UTF8.GetBytes("P1Y"), out Corvus.Text.Json.Period p1));
+        Assert.True(Corvus.Text.Json.Period.TryParse(System.Text.Encoding.UTF8.GetBytes("P2Y"), out Corvus.Text.Json.Period p2));
+        Assert.False(p1.Equals(p2));
+    }
+
+    [Fact]
+    public void ImplicitConversion_ToNodaTimePeriod()
+    {
+        Assert.True(Corvus.Text.Json.Period.TryParse(System.Text.Encoding.UTF8.GetBytes("P1Y2M4DT5H6M7S"), out Corvus.Text.Json.Period corvusPeriod));
+        NodaTime.Period nodaPeriod = corvusPeriod;
+        Assert.Equal(1, nodaPeriod.Years);
+        Assert.Equal(2, nodaPeriod.Months);
+        Assert.Equal(4, nodaPeriod.Days);
+        Assert.Equal(5, nodaPeriod.Hours);
+        Assert.Equal(6, nodaPeriod.Minutes);
+        Assert.Equal(7, nodaPeriod.Seconds);
+    }
+
+    [Fact]
+    public void ImplicitConversion_FromNodaTimePeriod()
+    {
+        NodaTime.PeriodBuilder builder = new()
+        {
+            Years = 3,
+            Months = 6,
+            Days = 15,
+            Hours = 12,
+        };
+
+        NodaTime.Period nodaPeriod = builder.Build();
+        Corvus.Text.Json.Period corvusPeriod = nodaPeriod;
+        Assert.Equal(3, corvusPeriod.Years);
+        Assert.Equal(6, corvusPeriod.Months);
+        Assert.Equal(15, corvusPeriod.Days);
+        Assert.Equal(12, corvusPeriod.Hours);
+    }
 }
