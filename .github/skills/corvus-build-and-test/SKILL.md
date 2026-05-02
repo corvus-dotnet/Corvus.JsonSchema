@@ -124,15 +124,48 @@ Plus 6 supporting model/utility projects that generate types consumed by other t
 
 Use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet. Coverlet 10.0.0 has a known instrumentation bug that reports 0% for many types despite tests exercising the code.
 
-### Full test suite coverage
+### Full test suite coverage (single TFM)
 
 ```powershell
+# 1. Build once
+dotnet build Corvus.Text.Json.Test.slnx
+
+# 2. Collect coverage — single TFM
 dotnet-coverage collect `
     --output TestResults\coverage.cobertura.xml `
     --output-format cobertura `
     -s dotnet-coverage.settings.xml `
     "dotnet test Corvus.Text.Json.Test.slnx -f net10.0 --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
 ```
+
+Full suite coverage runs ~80K tests across 21 test projects and takes 20–30 minutes. The `Corvus.Text.Json.Test.slnx` includes all V5 test projects (CG, SG, analyzer tests, etc.).
+
+### Full coverage across all TFMs (merged)
+
+For a true coverage picture, collect across all TFMs and merge. Some code paths are TFM-conditional (e.g., `netstandard2.0` polyfill branches, `net481` fallback paths), so a single-TFM run will miss them.
+
+```powershell
+# 1. Build all TFMs
+dotnet build Corvus.Text.Json.Test.slnx
+
+# 2. Collect per TFM
+foreach ($tfm in @('net10.0', 'net481')) {
+    dotnet-coverage collect `
+        --output "TestResults\coverage-$tfm.cobertura.xml" `
+        --output-format cobertura `
+        -s dotnet-coverage.settings.xml `
+        "dotnet test Corvus.Text.Json.Test.slnx -f $tfm --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
+}
+
+# 3. Merge into one report
+dotnet-coverage merge `
+    --output TestResults\coverage-merged.cobertura.xml `
+    --output-format cobertura `
+    TestResults\coverage-net10.0.cobertura.xml `
+    TestResults\coverage-net481.cobertura.xml
+```
+
+**Why merge?** `dotnet-coverage` instruments one TFM per run. The merged report has `hits = max(hits_net10, hits_net481)` for each line, giving the true combined coverage. Without merging, TFM-conditional branches (e.g., `#if NETSTANDARD2_0` paths, `unsafe` fallback code) appear uncovered.
 
 ### Single test class coverage
 
@@ -144,15 +177,49 @@ dotnet-coverage collect `
     "dotnet test Corvus.Text.Json.Test.slnx -f net10.0 --filter `"FullyQualifiedName~MyTestClass&category!=failing&category!=outerloop`" --no-build -v q --nologo"
 ```
 
-**Key points:**
-- The `dotnet-coverage.settings.xml` in the repo root filters coverage to core library assemblies only
-- Output is a single Cobertura XML — no merge step is needed (unlike Coverlet which produces one report per test project)
-- Always build before collecting: `dotnet build Corvus.Text.Json.slnx` first, then `--no-build` in the test command
-- Full suite coverage takes ~10 minutes (68K+ tests)
+### Key points
+
+- The `dotnet-coverage.settings.xml` in the repo root filters coverage to published library assemblies only (18 assemblies including Corvus.Numerics)
+- Output is a single Cobertura XML — no merge step is needed for single-TFM runs (unlike Coverlet which produces one report per test project)
+- Always build before collecting: `dotnet build Corvus.Text.Json.Test.slnx` first, then `--no-build` in the test command
+- When comparing before/after, always use the same TFM(s) and merge approach
+- The Cobertura XML uses full Windows paths in `filename` attributes — use `os.path.basename()` or equivalent when parsing
 
 ### ⚠️ Do NOT use Coverlet
 
 `--collect:"XPlat Code Coverage"` (Coverlet) reports 0% coverage for many types including ref structs, static classes, and even regular sealed classes. This was verified by running the same tests with both tools — `dotnet-coverage` correctly reported 65–92% coverage for types that Coverlet reported as 0%.
+
+### Coverage settings file
+
+The `dotnet-coverage.settings.xml` file controls which assemblies are instrumented. It includes all published V5 library assemblies plus V4 code generation assemblies. If you add a new published assembly, add a corresponding `<ModulePath>` entry.
+
+### Parsing Cobertura XML
+
+The Cobertura XML has `<class>` elements inside `<package>` elements. Each `<class>` has a `filename` attribute and `<line>` children with `number`, `hits`, and optional `condition-coverage` attributes.
+
+**Important:** Partial classes and compiler-generated closures (`<>c`) appear as separate `<class>` entries for the same file. When computing per-file coverage, aggregate across all `<class>` entries that share the same `filename`:
+
+```python
+import xml.etree.ElementTree as ET, os
+
+def get_coverage_by_file(xmlfile):
+    tree = ET.parse(xmlfile)
+    root = tree.getroot()
+    results = {}
+    for cls in root.iter('class'):
+        fn = cls.get('filename', '')
+        basename = os.path.basename(fn)
+        if basename not in results:
+            results[basename] = {'covered': set(), 'total': set()}
+        for l in cls.findall('.//line'):
+            num = int(l.get('number', 0))
+            results[basename]['total'].add(num)
+            if int(l.get('hits', 0)) > 0:
+                results[basename]['covered'].add(num)
+    return results
+```
+
+Use sets (not counts) to avoid double-counting lines that appear in multiple `<class>` entries.
 
 ### Coverage verification loop
 

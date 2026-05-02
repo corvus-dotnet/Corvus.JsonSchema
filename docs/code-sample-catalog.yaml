@@ -1324,9 +1324,11 @@ skills:
       - {index: 0, language: powershell, lines: [28, 34]}
       - {index: 1, language: powershell, lines: [50, 59]}
       - {index: 2, language: powershell, lines: [63, 87]}
-      - {index: 3, language: powershell, lines: [129, 135]}
-      - {index: 4, language: powershell, lines: [139, 145]}
-      - {index: 5, language: powershell, lines: [165, 171]}
+      - {index: 3, language: powershell, lines: [129, 139]}
+      - {index: 4, language: powershell, lines: [147, 166]}
+      - {index: 5, language: powershell, lines: [172, 178]}
+      - {index: 6, language: python, lines: [202, 220]}
+      - {index: 7, language: powershell, lines: [232, 238]}
   - path: ".github/skills/corvus-codegen/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [22, 25], category: compilable, verified: false}
