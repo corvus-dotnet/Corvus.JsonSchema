@@ -17,11 +17,13 @@ description: >
 
 | Solution | Purpose |
 |----------|---------|
-| `Corvus.Text.Json.slnx` | Main V5 solution — libraries + tests (use for `dotnet build`) |
-| `Corvus.Text.Json.Test.slnx` | Tests only (use for `dotnet test`) |
+| `Corvus.Text.Json.slnx` | Main V5 solution — all libraries + all tests (use for `dotnet build` and `dotnet test -f net10.0`) |
+| `Corvus.Text.Json.Test.slnx` | Multi-TFM safe tests — excludes net10.0-only projects (use for `dotnet test -f net481`) |
 | `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
 
-V4 projects live in `src-v4/` and `tests-v4/` and are included in the main solution.
+The main solution includes 11 net10.0-only test projects (Analyzers, Migration.Analyzers, CodeGenerator, 4× SourceGenerator, 4× CodeGeneration tests) that cannot run on net481. `Corvus.Text.Json.Test.slnx` excludes these so it can safely be used with any TFM.
+
+V4 projects live in `src-v4/` and `tests-v4/` and are included in both solutions.
 
 ## Build Commands
 
@@ -39,7 +41,7 @@ dotnet build src\Corvus.Text.Json\Corvus.Text.Json.csproj
 
 Before every commit, verify these mandatory gates:
 
-1. **Warning-free build**: `dotnet build Corvus.Text.Json.Test.slnx -v q --nologo` must report `0 Warning(s)`.
+1. **Warning-free build**: `dotnet build Corvus.Text.Json.slnx -v q --nologo` must report `0 Warning(s)`.
 2. **Code sample catalog**: if any file under `.github/`, `docs/`, or skill/instruction files was modified (even incidentally), update and verify:
 
 ```powershell
@@ -62,14 +64,17 @@ Test code and assertions must use `Corvus.Text.Json` types (`JsonElement`, `Json
 `System.Text.Json` is acceptable **only** for test data infrastructure — e.g., reading JSON fixture files with `System.Text.Json.JsonDocument` to enumerate test cases. In those cases, fully-qualify the STJ types (e.g., `System.Text.Json.JsonElement`).
 
 ```powershell
-# Run all tests (standard)
-dotnet test Corvus.Text.Json.Test.slnx --filter "category!=failing&category!=outerloop"
+# Run all tests (standard — includes all 21 test projects on net10.0)
+dotnet test Corvus.Text.Json.slnx -f net10.0 --filter "category!=failing&category!=outerloop"
 
 # Run a single test class
-dotnet test Corvus.Text.Json.Test.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.slnx -f net10.0 --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
 
 # Run a single test method
-dotnet test Corvus.Text.Json.Test.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.slnx -f net10.0 --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
+
+# Run on net481 (use Test.slnx which excludes net10.0-only projects)
+dotnet test Corvus.Text.Json.Test.slnx -f net481 --filter "category!=failing&category!=outerloop"
 ```
 
 ### Test by Feature Area
@@ -141,37 +146,42 @@ Use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet. Coverlet 10.0
 ### Full test suite coverage (single TFM)
 
 ```powershell
-# 1. Build once
-dotnet build Corvus.Text.Json.Test.slnx
+# 1. Build once (main solution has all test projects)
+dotnet build Corvus.Text.Json.slnx
 
-# 2. Collect coverage — single TFM
+# 2. Collect coverage — single TFM (net10.0, all 21 test projects)
 dotnet-coverage collect `
     --output TestResults\coverage.cobertura.xml `
     --output-format cobertura `
     -s dotnet-coverage.settings.xml `
-    "dotnet test Corvus.Text.Json.Test.slnx -f net10.0 --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
+    "dotnet test Corvus.Text.Json.slnx -f net10.0 --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
 ```
 
-Full suite coverage runs ~80K tests across 21 test projects and takes 20–30 minutes. The `Corvus.Text.Json.Test.slnx` includes all V5 test projects (CG, SG, analyzer tests, etc.).
+Full suite coverage runs ~80K tests across 21 test projects and takes 20–30 minutes.
 
 ### Full coverage across all TFMs (merged)
 
 For a true coverage picture, collect across all TFMs and merge. Some code paths are TFM-conditional (e.g., `netstandard2.0` polyfill branches, `net481` fallback paths), so a single-TFM run will miss them.
 
 ```powershell
-# 1. Build all TFMs
-dotnet build Corvus.Text.Json.Test.slnx
+# 1. Build both solutions
+dotnet build Corvus.Text.Json.slnx
 
-# 2. Collect per TFM
-foreach ($tfm in @('net10.0', 'net481')) {
-    dotnet-coverage collect `
-        --output "TestResults\coverage-$tfm.cobertura.xml" `
-        --output-format cobertura `
-        -s dotnet-coverage.settings.xml `
-        "dotnet test Corvus.Text.Json.Test.slnx -f $tfm --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
-}
+# 2. Collect net10.0 (all test projects via main solution)
+dotnet-coverage collect `
+    --output "TestResults\coverage-net10.0.cobertura.xml" `
+    --output-format cobertura `
+    -s dotnet-coverage.settings.xml `
+    "dotnet test Corvus.Text.Json.slnx -f net10.0 --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
 
-# 3. Merge into one report
+# 3. Collect net481 (multi-TFM safe subset via Test.slnx)
+dotnet-coverage collect `
+    --output "TestResults\coverage-net481.cobertura.xml" `
+    --output-format cobertura `
+    -s dotnet-coverage.settings.xml `
+    "dotnet test Corvus.Text.Json.Test.slnx -f net481 --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
+
+# 4. Merge into one report
 dotnet-coverage merge `
     --output TestResults\coverage-merged.cobertura.xml `
     --output-format cobertura `
@@ -181,6 +191,8 @@ dotnet-coverage merge `
 
 **Why merge?** `dotnet-coverage` instruments one TFM per run. The merged report has `hits = max(hits_net10, hits_net481)` for each line, giving the true combined coverage. Without merging, TFM-conditional branches (e.g., `#if NETSTANDARD2_0` paths, `unsafe` fallback code) appear uncovered.
 
+**Why different solutions per TFM?** 11 test projects (Analyzers, SourceGenerator, CodeGenerator, CodeGeneration tests) target net10.0 only and don't produce net481 DLLs. Using the main solution for net481 causes "test source file not found" errors. `Corvus.Text.Json.Test.slnx` excludes these projects.
+
 ### Single test class coverage
 
 ```powershell
@@ -188,7 +200,7 @@ dotnet-coverage collect `
     --output TestResults\mytest.cobertura.xml `
     --output-format cobertura `
     -s dotnet-coverage.settings.xml `
-    "dotnet test Corvus.Text.Json.Test.slnx -f net10.0 --filter `"FullyQualifiedName~MyTestClass&category!=failing&category!=outerloop`" --no-build -v q --nologo"
+    "dotnet test Corvus.Text.Json.slnx -f net10.0 --filter `"FullyQualifiedName~MyTestClass&category!=failing&category!=outerloop`" --no-build -v q --nologo"
 ```
 
 ### Key points
