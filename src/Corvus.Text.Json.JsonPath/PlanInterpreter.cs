@@ -748,7 +748,13 @@ internal static class PlanInterpreter
         }
 
         // Dynamic pattern
-        FilterResult patResult = EvalFilter(plan.DynamicPatternArg!, root, current, workspace).AsComparable();
+        if (plan.DynamicPatternArg is null)
+        {
+            // Static literal pattern failed to compile — treated as no match
+            return FilterResult.NothingResult;
+        }
+
+        FilterResult patResult = EvalFilter(plan.DynamicPatternArg, root, current, workspace).AsComparable();
 
         if (strResult.Kind != FilterResult.FilterResultKind.ValueType ||
             patResult.Kind != FilterResult.FilterResultKind.ValueType ||
