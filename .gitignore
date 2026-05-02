@@ -363,8 +363,8 @@ MigrationBackup/
 FodyWeavers.xsd
 /src/src.sln
 
-# Cobertura code coverage file
-coverage.cobertura.xml
+# Cobertura code coverage files
+*.cobertura.xml
 
 # VS Code config files
 /.vscode
