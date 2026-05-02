@@ -35,6 +35,20 @@ dotnet build src\Corvus.Text.Json\Corvus.Text.Json.csproj
 
 `TreatWarningsAsErrors=true` is set across all projects — any warning fails the build.
 
+## Pre-Commit Checks
+
+Before every commit, verify these mandatory gates:
+
+1. **Warning-free build**: `dotnet build Corvus.Text.Json.Test.slnx -v q --nologo` must report `0 Warning(s)`.
+2. **Code sample catalog**: if any file under `.github/`, `docs/`, or skill/instruction files was modified (even incidentally), update and verify:
+
+```powershell
+.\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>   # for each changed file
+.\docs\update-code-sample-catalog.ps1 -Check                         # must exit 0
+```
+
+CI runs the catalog check and fails the build if it is stale. This is the most commonly missed pre-commit gate.
+
 ## Running Tests
 
 ### Mandatory Filters

@@ -63,6 +63,20 @@ Always use `FullyQualifiedName~` (substring match) for test filters — not `Cla
 
 `TreatWarningsAsErrors=true` is set across all projects — the build will fail on any warning.
 
+### Pre-commit checks
+
+Before every commit, verify these mandatory gates in order:
+
+1. **Warning-free build**: `dotnet build Corvus.Text.Json.Test.slnx -v q --nologo` must report `0 Warning(s)`.
+2. **Code sample catalog**: if any file tracked by the catalog was modified (anything under `.github/`, `docs/`, or skill/instruction files), update and verify the catalog:
+
+```powershell
+.\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>   # for each changed file
+.\docs\update-code-sample-catalog.ps1 -Check                         # must exit 0
+```
+
+The catalog tracks line numbers of code blocks in documentation, instructions, and skill files. Editing these files shifts line numbers, making the catalog stale. CI runs `-Check` and fails if it is stale. This applies even when the edits are incidental to non-documentation work (e.g., adding a coverage rule to copilot-instructions.md while doing test work).
+
 See the `corvus-build-and-test` skill for TFM targeting, test project mapping, and common build failure diagnosis.
 
 ## Architecture

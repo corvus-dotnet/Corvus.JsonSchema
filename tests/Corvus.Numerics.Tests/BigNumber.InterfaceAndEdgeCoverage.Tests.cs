@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
 using Corvus.Numerics;
@@ -296,19 +297,19 @@ public class BigNumberInterfaceAndEdgeCoverageTests
     private static T ParseViaIParsable<T>(string s, IFormatProvider? provider) where T : IParsable<T>
         => T.Parse(s, provider);
 
-    private static bool TryParseViaIParsable<T>(string? s, IFormatProvider? provider, out T result) where T : IParsable<T>
+    private static bool TryParseViaIParsable<T>(string? s, IFormatProvider? provider, [MaybeNullWhen(false)] out T result) where T : IParsable<T>
         => T.TryParse(s, provider, out result);
 
     private static T ParseViaISpanParsable<T>(ReadOnlySpan<char> s, IFormatProvider? provider) where T : ISpanParsable<T>
         => T.Parse(s, provider);
 
-    private static bool TryParseViaISpanParsable<T>(ReadOnlySpan<char> s, IFormatProvider? provider, out T result) where T : ISpanParsable<T>
+    private static bool TryParseViaISpanParsable<T>(ReadOnlySpan<char> s, IFormatProvider? provider, [MaybeNullWhen(false)] out T result) where T : ISpanParsable<T>
         => T.TryParse(s, provider, out result);
 
     private static T ParseViaINumberBase<T>(string s, NumberStyles style, IFormatProvider? provider) where T : INumberBase<T>
         => T.Parse(s, style, provider);
 
-    private static bool TryParseViaINumberBase<T>(string? s, NumberStyles style, IFormatProvider? provider, out T result) where T : INumberBase<T>
+    private static bool TryParseViaINumberBase<T>(string? s, NumberStyles style, IFormatProvider? provider, [MaybeNullWhen(false)] out T result) where T : INumberBase<T>
         => T.TryParse(s, style, provider, out result);
 
     [Theory]
