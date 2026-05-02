@@ -296,4 +296,40 @@ public class DateTimeCoverageTests
     }
 
     #endregion
+
+    #region ParseTimeCore error paths
+
+    [Theory]
+    [InlineData("12:34:56X+00:00")]  // text[8] != '.' but length > 8
+    [InlineData("12:34:56/+00:00")]  // text[8] is '/' not '.'
+    public void TryParseOffsetTime_FractionalNotDot_ReturnsFalse(string input)
+    {
+        // Exercises ParseTimeCore lines 203-211: text[8] != '.' error path
+        byte[] data = Encoding.UTF8.GetBytes(input);
+        Assert.False(JsonElementHelpers.TryParseOffsetTime(data, out _));
+    }
+
+    [Theory]
+    [InlineData("12:34:56.X23+00:00")]  // non-numeric first ms digit
+    [InlineData("12:34:56.1X3+00:00")]  // non-numeric second ms digit
+    [InlineData("12:34:56.12X+00:00")]  // non-numeric third ms digit
+    public void TryParseOffsetTime_NonNumericMillisecond_ReturnsFalse(string input)
+    {
+        // Exercises ParseTimeCore lines 219-227: non-numeric ms digit error path
+        byte[] data = Encoding.UTF8.GetBytes(input);
+        Assert.False(JsonElementHelpers.TryParseOffsetTime(data, out _));
+    }
+
+    [Theory]
+    [InlineData("12:34:56.123X56+00:00")]  // non-numeric first μs digit
+    [InlineData("12:34:56.1231X6+00:00")]  // non-numeric second μs digit (total length offset)
+    [InlineData("12:34:56.12312X+00:00")]  // non-numeric third μs digit
+    public void TryParseOffsetTime_NonNumericMicrosecond_ReturnsFalse(string input)
+    {
+        // Exercises ParseTimeCore lines 238-246: non-numeric μs digit error path
+        byte[] data = Encoding.UTF8.GetBytes(input);
+        Assert.False(JsonElementHelpers.TryParseOffsetTime(data, out _));
+    }
+
+    #endregion
 }

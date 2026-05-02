@@ -376,4 +376,61 @@ public class BigNumberOptimizedFormattingTests
         result1.ShouldBe("333E3");
         result2.ShouldBe("444E4");
     }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_BufferExactlySignificandSize_ReturnsFalse()
+    {
+        // BigNumber(123, 5) formats as "123E5" (5 bytes).
+        // A buffer of 3 bytes fits "123" but not "E5", exercising the
+        // TryFormatRawUtf8 overflow guard at the 'E' character insertion.
+        BigNumber value = new(123, 5);
+        Span<byte> buffer = stackalloc byte[3]; // Only fits significand "123"
+
+        bool success = value.TryFormatUtf8Optimized(buffer, out int bytesWritten, default, null);
+
+        success.ShouldBeFalse();
+        bytesWritten.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_BufferOneLessThanNeeded_ReturnsFalse()
+    {
+        // BigNumber(99, -3) formats as "99E-3" (5 bytes).
+        // A buffer of 4 bytes fits "99E-" but not the final "3".
+        BigNumber value = new(99, -3);
+        Span<byte> buffer = stackalloc byte[4];
+
+        bool success = value.TryFormatUtf8Optimized(buffer, out int bytesWritten, default, null);
+
+        success.ShouldBeFalse();
+        bytesWritten.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_ZeroBufferTooSmall_ReturnsFalse()
+    {
+        // BigNumber(0, 0) formats as "0" (1 byte).
+        // An empty buffer should fail gracefully.
+        BigNumber value = new(0, 0);
+        Span<byte> buffer = Span<byte>.Empty;
+
+        bool success = value.TryFormatUtf8Optimized(buffer, out int bytesWritten, default, null);
+
+        success.ShouldBeFalse();
+        bytesWritten.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_ZeroWithAdequateBuffer_Succeeds()
+    {
+        // BigNumber(0, 0) formats as "0" (1 byte).
+        BigNumber value = new(0, 0);
+        Span<byte> buffer = stackalloc byte[1];
+
+        bool success = value.TryFormatUtf8Optimized(buffer, out int bytesWritten, default, null);
+
+        success.ShouldBeTrue();
+        bytesWritten.ShouldBe(1);
+        buffer[0].ShouldBe((byte)'0');
+    }
 }

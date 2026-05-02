@@ -7,6 +7,7 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
+using System.Diagnostics;
 using System.Globalization;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -532,12 +533,8 @@ readonly partial struct BigNumber
         {
             char c = source[i];
 
-            // All numeric output is ASCII (digits, minus, E)
-            if (c > 127)
-            {
-                bytesWritten = 0;
-                return false;
-            }
+            // All numeric output from BigInteger.TryFormat is ASCII (digits, minus, E).
+            Debug.Assert(c <= 127, "Non-ASCII character in BigInteger output is impossible.");
 
             destination[i] = (byte)c;
         }

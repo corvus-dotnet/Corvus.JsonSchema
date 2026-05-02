@@ -7,6 +7,7 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Buffers;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Numerics;
@@ -690,11 +691,8 @@ readonly partial struct BigNumber :
 
     private string FormatExponential(int precision, char exponentChar, NumberFormatInfo formatInfo)
     {
-        if (Significand.IsZero)
-        {
-            string zeros = precision > 0 ? formatInfo.NumberDecimalSeparator + new string('0', precision) : "";
-            return "0" + zeros + exponentChar + "+000";
-        }
+        // Zero is handled by FormatZero in ToString before FormatExponential is called.
+        Debug.Assert(!Significand.IsZero, "FormatExponential should never be called with a zero significand.");
 
         BigNumber normalized = Normalize();
         string sigStr = BigInteger.Abs(normalized.Significand).ToString(formatInfo);
