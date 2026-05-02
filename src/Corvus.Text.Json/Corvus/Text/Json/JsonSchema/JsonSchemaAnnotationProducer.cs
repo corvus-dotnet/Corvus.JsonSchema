@@ -203,52 +203,6 @@ public static class JsonSchemaAnnotationProducer
     }
 
     /// <summary>
-    /// Determines whether a <see cref="JsonSchemaResultsCollector.Result"/> represents an annotation.
-    /// </summary>
-    internal static bool IsAnnotation(in JsonSchemaResultsCollector.Result result, out ReadOnlySpan<byte> keyword)
-    {
-        keyword = default;
-
-        if (!result.IsMatch)
-        {
-            return false;
-        }
-
-        ReadOnlySpan<byte> message = result.Message;
-        if (message.Length == 0)
-        {
-            return false;
-        }
-
-        ReadOnlySpan<byte> evaluationLocation = result.EvaluationLocation;
-        int lastSlash = evaluationLocation.LastIndexOf((byte)'/');
-        if (lastSlash < 0)
-        {
-            return false;
-        }
-
-        // IgnoredKeyword pushes the keyword to EvaluationLocation but NOT to
-        // SchemaEvaluationLocation. EvaluatedKeyword pushes to both. We only
-        // want annotations (IgnoredKeyword), so skip results where the two
-        // locations are equal — those are validation results.
-        ReadOnlySpan<byte> schemaEvaluationLocation = result.SchemaEvaluationLocation;
-        if (evaluationLocation.SequenceEqual(schemaEvaluationLocation))
-        {
-            return false;
-        }
-
-        keyword = evaluationLocation[(lastSlash + 1)..];
-        if (keyword.Length == 0)
-        {
-            return false;
-        }
-
-        // Annotation values are raw JSON. Diagnostic messages from IgnoredKeyword
-        // (e.g., "The type was not 'object'") are NOT valid JSON.
-        return IsJsonValueStart(message[0]);
-    }
-
-    /// <summary>
     /// Represents a single annotation extracted from evaluation results.
     /// </summary>
     /// <remarks>
