@@ -276,4 +276,40 @@ public static class SourceLocationTests
         Assert.Equal(0, charOffset);
         Assert.Equal(0, lineByteOffset);
     }
+
+    [Fact]
+    public static void DecodeSegment_ValidEscapes_DecodesCorrectly()
+    {
+        // ~0 decodes to ~, ~1 decodes to /
+        ReadOnlySpan<byte> encoded = "foo~0bar~1baz"u8;
+        Span<byte> decoded = stackalloc byte[encoded.Length];
+
+        int written = Utf8JsonPointer.DecodeSegment(encoded, decoded);
+
+        Assert.Equal("foo~bar/baz"u8.ToArray(), decoded.Slice(0, written).ToArray());
+    }
+
+    [Fact]
+    public static void DecodeSegment_TildeAtEnd_Throws()
+    {
+        // ~ at end of segment should throw (incomplete escape sequence)
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            ReadOnlySpan<byte> encoded = "foo~"u8;
+            byte[] decoded = new byte[encoded.Length];
+            Utf8JsonPointer.DecodeSegment(encoded, decoded);
+        });
+    }
+
+    [Fact]
+    public static void DecodeSegment_TildeFollowedByInvalidDigit_Throws()
+    {
+        // ~2 is not a valid escape (only ~0 and ~1 are valid per RFC 6901)
+        Assert.Throws<InvalidOperationException>(() =>
+        {
+            ReadOnlySpan<byte> encoded = "foo~2bar"u8;
+            byte[] decoded = new byte[encoded.Length];
+            Utf8JsonPointer.DecodeSegment(encoded, decoded);
+        });
+    }
 }

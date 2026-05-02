@@ -249,34 +249,6 @@ public sealed partial class IdnMapping
         return (-1, runeCount, 1);
     }
 
-    /// <summary>
-    /// Gets the length of a UTF-8 encoded string in characters (not bytes).
-    /// </summary>
-    /// <param name="span">The UTF-8 encoded byte span.</param>
-    /// <returns>The number of Unicode characters in the string.</returns>
-    /// <exception cref="ArgumentException">Thrown when the span contains invalid UTF-8 sequences.</exception>
-    private static int GetUtf8StringLength(ReadOnlySpan<byte> span)
-    {
-        if (span.Length == 0)
-        {
-            return 0;
-        }
-
-        int length = 0;
-        ReadOnlySpan<byte> currentSpan = span;
-        do
-        {
-            OperationStatus status = Rune.DecodeFromUtf8(currentSpan, out _, out int bytesConsumed);
-            Debug.Assert(status != OperationStatus.Done);
-
-            currentSpan = currentSpan.Slice(bytesConsumed);
-            length++;
-        }
-        while (currentSpan.Length > 0);
-
-        return length;
-    }
-
     private static bool PunycodeDecode(ReadOnlySpan<byte> ascii, Span<byte> outputBuffer, out int written)
     {
         written = 0;

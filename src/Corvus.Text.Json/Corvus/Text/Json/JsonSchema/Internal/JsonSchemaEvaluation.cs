@@ -8,7 +8,6 @@
 // </licensing>
 using System.Buffers.Text;
 using System.Diagnostics;
-using System.Numerics;
 using System.Runtime.CompilerServices;
 
 namespace Corvus.Text.Json.Internal;
@@ -258,98 +257,6 @@ public static partial class JsonSchemaEvaluation
         written += bytesWritten;
 
         if (written == buffer.Length)
-        {
-            written = 0;
-            return false;
-        }
-
-        buffer[written++] = (byte)'\'';
-        return true;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool AppendValueAndExponent(ulong value, int exponent, Span<byte> buffer, ref int written)
-    {
-        if (buffer.Length < written + 3)
-        {
-            written = 0;
-            return false;
-        }
-
-        buffer[written++] = (byte)' ';
-        buffer[written++] = (byte)'\'';
-
-        if (!Utf8Formatter.TryFormat(value, buffer[written..], out int bytesWritten))
-        {
-            written = 0;
-            return false;
-        }
-
-        written += bytesWritten;
-
-        if (buffer.Length < written + 3)
-        {
-            written = 0;
-            return false;
-        }
-
-        buffer[written++] = (byte)'E';
-
-        if (!Utf8Formatter.TryFormat(exponent, buffer[written..], out bytesWritten))
-        {
-            written = 0;
-            return false;
-        }
-
-        written += bytesWritten;
-
-        if (buffer.Length < written + 1)
-        {
-            written = 0;
-            return false;
-        }
-
-        buffer[written++] = (byte)'\'';
-        return true;
-    }
-
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private static bool AppendValueAndExponent(BigInteger value, int exponent, Span<byte> buffer, ref int written)
-    {
-        if (buffer.Length < written + 3)
-        {
-            written = 0;
-            return false;
-        }
-
-        buffer[written++] = (byte)' ';
-        buffer[written++] = (byte)'\'';
-
-        if (!value.TryFormat(buffer[written..], out int bytesWritten))
-        {
-            written = 0;
-            return false;
-        }
-
-        written += bytesWritten;
-
-        if (buffer.Length < written + 3)
-        {
-            written = 0;
-            return false;
-        }
-
-        buffer[written++] = (byte)'E';
-
-        if (!Utf8Formatter.TryFormat(exponent, buffer[written..], out bytesWritten))
-        {
-            written = 0;
-            return false;
-        }
-
-        written += bytesWritten;
-
-        if (buffer.Length < written + 1)
         {
             written = 0;
             return false;
