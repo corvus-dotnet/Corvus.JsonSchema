@@ -30,9 +30,11 @@
       <Exclude>
         <!-- V4 generated core types inflate the denominator without meaningful coverage value -->
         <Source>.*\\src-v4\\Corvus\.Json\.ExtendedTypes\\Corvus\.Json\\GeneratedCoreTypes\\.*</Source>
-        <!-- Roslyn source-generator output (obj\...\generated\...\*.g.cs) — these are
-             machine-generated types whose coverage is not actionable -->
-        <Source>.*\\obj\\.*\\generated\\.*</Source>
+        <!-- Roslyn source-generator output under obj\ — these are
+             machine-generated types whose coverage is not actionable.
+             Matches both V5 layout (obj\...\generated\...) and
+             regex/other generators (obj\...\System.Text.RegularExpressions.Generator\...) -->
+        <Source>.*\\obj\\.*\.g\.cs$</Source>
       </Exclude>
     </Sources>
   </CodeCoverage>

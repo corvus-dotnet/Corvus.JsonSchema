@@ -191,7 +191,13 @@ dotnet-coverage collect `
 
 ### Coverage settings file
 
-The `dotnet-coverage.settings.xml` file controls which assemblies are instrumented. It includes all published V5 library assemblies plus V4 code generation assemblies. If you add a new published assembly, add a corresponding `<ModulePath>` entry.
+The `dotnet-coverage.settings.xml` file controls which assemblies are instrumented and which source files are excluded. It includes all published V5 library assemblies plus V4 code generation assemblies. If you add a new published assembly, add a corresponding `<ModulePath>` entry.
+
+**Source exclusions** configured in the settings file:
+- `src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/` — V4 CLI-generated core types (~144 files) that inflate the denominator without meaningful coverage value
+- `*.g.cs` files under `obj/` — Roslyn source-generator output (regex generators, JSON schema generators, etc.)
+
+When parsing Cobertura XML manually, apply the same exclusions: skip `<class>` entries whose `filename` contains `GeneratedCoreTypes` or has an `obj` directory segment. Failure to exclude these will significantly undercount V4 ExtendedTypes coverage.
 
 ### Parsing Cobertura XML
 
