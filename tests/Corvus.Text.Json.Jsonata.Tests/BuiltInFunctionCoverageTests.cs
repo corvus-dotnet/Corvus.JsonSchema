@@ -467,6 +467,287 @@ public class BuiltInFunctionCoverageTests
         Assert.Equal("[1,2,3]", result);
     }
 
+    // ─── XPathDateTimeFormatter: TryParseDateTime error branches (lines 227-324) ──────────────
+
+    [Fact]
+    public void ToMillis_BadYear_ReturnsUndefined()
+    {
+        // Invalid year "abc" should fail TryParseDateTime (line 249-251 return false)
+        string result = Eval("""$toMillis("abc-01-15", "[Y]-[M01]-[D01]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_BadDay_ReturnsUndefined()
+    {
+        // Invalid day "xx" should fail (line 265-267 return false)
+        string result = Eval("""$toMillis("2024-01-xx", "[Y]-[M01]-[D01]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_BadHour_ReturnsUndefined()
+    {
+        // Invalid hour "ab" should fail (line 281-283 return false)
+        string result = Eval("""$toMillis("2024-01-15 ab:30:00", "[Y]-[M01]-[D01] [H01]:[m01]:[s01]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_BadMinute_ReturnsUndefined()
+    {
+        // Invalid minute "xy" should fail (line 297-299 return false)
+        string result = Eval("""$toMillis("2024-01-15 10:xy:00", "[Y]-[M01]-[D01] [H01]:[m01]:[s01]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_BadSecond_ReturnsUndefined()
+    {
+        // Invalid second "zz" should fail (line 305-307 return false)
+        string result = Eval("""$toMillis("2024-01-15 10:30:zz", "[Y]-[M01]-[D01] [H01]:[m01]:[s01]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_BadFractional_ReturnsUndefined()
+    {
+        // Invalid fractional "abc" should fail (line 313-315 return false)
+        string result = Eval("""$toMillis("2024-01-15 10:30:00.abc", "[Y]-[M01]-[D01] [H01]:[m01]:[s01].[f001]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_BadAmPm_ReturnsUndefined()
+    {
+        // Invalid AM/PM "XY" should fail (line 322-324 return false)
+        string result = Eval("""$toMillis("10:30 XY", "[h01]:[m01] [P]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_LiteralMismatch_ReturnsUndefined()
+    {
+        // Literal text doesn't match (line 232-234 return false)
+        string result = Eval("""$toMillis("2024/01/15", "[Y]-[M01]-[D01]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_LiteralTooLong_ReturnsUndefined()
+    {
+        // Literal extends beyond input (line 226-228 return false)
+        string result = Eval("""$toMillis("24", "[Y]----[M01]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_BadMonth_ReturnsUndefined()
+    {
+        // Invalid month component (line 257-259 return false)
+        string result = Eval("""$toMillis("2024-zz-15", "[Y]-[M01]-[D01]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_Bad12Hour_ReturnsUndefined()
+    {
+        // Invalid 12-hour component (line 289-291 return false)
+        string result = Eval("""$toMillis("xx:30 am", "[h01]:[m01] [P]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_BadDayOfYear_ReturnsUndefined()
+    {
+        // Invalid day-of-year component (line 273-275 return false)
+        string result = Eval("""$toMillis("2024 abc", "[Y] [d001]")""");
+        Assert.Equal("undefined", result);
+    }
+
+    // ─── TryParseDateTime: AM/PM conversion (lines 327-340) ──────────────
+
+    [Fact]
+    public void ToMillis_PmHour_Converts12To24()
+    {
+        // pm with hour < 12 adds 12 (line 329-332)
+        string result = Eval("""$toMillis("2024-01-15 02:30 pm", "[Y]-[M01]-[D01] [h01]:[m01] [P]")""");
+        Assert.NotEqual("undefined", result);
+        // 2:30 PM = 14:30, verify by formatting back
+        string check = Eval("""$fromMillis($toMillis("2024-01-15 02:30 pm", "[Y]-[M01]-[D01] [h01]:[m01] [P]"), "[H01]:[m01]")""");
+        Assert.Equal("\"14:30\"", check);
+    }
+
+    [Fact]
+    public void ToMillis_AmHour12_ConvertsTo0()
+    {
+        // am with hour == 12 sets hour to 0 (line 336-339)
+        string result = Eval("""$toMillis("2024-01-15 12:00 am", "[Y]-[M01]-[D01] [h01]:[m01] [P]")""");
+        Assert.NotEqual("undefined", result);
+        string check = Eval("""$fromMillis($toMillis("2024-01-15 12:00 am", "[Y]-[M01]-[D01] [h01]:[m01] [P]"), "[H01]:[m01]")""");
+        Assert.Equal("\"00:00\"", check);
+    }
+
+    // ─── TryParseDateTime: DayOfYear, DayOfWeek, Era (lines 344-387) ──────────────
+
+    [Fact]
+    public void ToMillis_DayOfYear_ParsesCorrectly()
+    {
+        // Day-of-year parsing (line 272, 377-387)
+        string result = Eval("""$toMillis("2024 045", "[Y] [d001]")""");
+        Assert.NotEqual("undefined", result);
+        // Day 45 of 2024 = Feb 14
+        string check = Eval("""$fromMillis($toMillis("2024 045", "[Y] [d001]"), "[M01]-[D01]")""");
+        Assert.Equal("\"02-14\"", check);
+    }
+
+    [Fact]
+    public void ToMillis_DayOfWeek_NumericSkipped()
+    {
+        // Day of week with numeric presentation — just skipped (lines 3500-3507)
+        string result = Eval("""$toMillis("2024-01-15 1", "[Y]-[M01]-[D01] [F1]")""");
+        Assert.NotEqual("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_DayOfWeek_NameSkipped()
+    {
+        // Day of week with name presentation — skipped (lines 3492-3496)
+        string result = Eval("""$toMillis("Monday 2024-01-15", "[FNn] [Y]-[M01]-[D01]")""");
+        Assert.NotEqual("undefined", result);
+    }
+
+    // ─── FormatTimezoneOffset variants (lines 1068-1096) ──────────────
+
+    [Fact]
+    public void FromMillis_Timezone4Digit()
+    {
+        // 4-digit timezone format with no colon (line 1068-1072)
+        string result = Eval("""$fromMillis(1234567890000, "[H01][m01][Z0101]", "+0530")""");
+        Assert.Contains("+", result);
+    }
+
+    [Fact]
+    public void FromMillis_TimezoneMinimal()
+    {
+        // Minimal timezone format "0" (lines 1062-1067, 1097-1100)
+        string result = Eval("""$fromMillis(1234567890000, "[H01][m01][Z0]", "+0500")""");
+        Assert.Contains("+", result);
+    }
+
+    [Fact]
+    public void FromMillis_Timezone6DigitThrows()
+    {
+        // 6+ digit timezone format throws D3134 (lines 1074-1078)
+        Assert.Throws<JsonataException>(() => Eval("""$fromMillis(1234567890000, "[Z010101]")"""));
+    }
+
+    // ─── FormatInteger: TryFormatInteger span overload (lines 477-484) ──────────────
+
+    [Fact]
+    public void FromMillis_DayOfYear_Format()
+    {
+        // Day of year formatting exercises FormatComponent with 'd' which calls FormatInteger
+        // 2009-02-13 = day 44
+        string result = Eval("""$fromMillis(1234567890000, "[d]")""");
+        Assert.Equal("\"44\"", result);
+    }
+
+    [Fact]
+    public void FromMillis_DayOfYear_Padded()
+    {
+        // Padded day of year (3 digits)
+        string result = Eval("""$fromMillis(1234567890000, "[d001]")""");
+        Assert.Equal("\"044\"", result);
+    }
+
+    // ─── FormatDecimalDigit: grouping, padding (lines 1586-1622) ──────────────
+
+    [Fact]
+    public void FromMillis_Year_PaddedWidth()
+    {
+        // Year with width modifier ensuring 4 digits (tests padding path line 1611-1616)
+        string result = Eval("""$fromMillis(1234567890000, "[Y0001]")""");
+        Assert.Equal("\"2009\"", result);
+    }
+
+    [Fact]
+    public void FromMillis_DayWithGrouping()
+    {
+        // Day of year with 3-digit padding (exercises mandatory digit padding in FormatDecimalDigit)
+        // Day 44 padded to 3 digits → "044"
+        string result = Eval("""$fromMillis(1234567890000, "[d001]")""");
+        Assert.Equal("\"044\"", result);
+    }
+
+    // ─── FormatInteger double overload (lines 521-555) for huge values ──────────────
+    // This path is only reachable with values > long.MaxValue, which doesn't happen
+    // naturally with $fromMillis. Documenting as dead code for date formatting context.
+
+    // ─── TryParseDateTime: all-literal picture (lines 370-373) ──────────────
+
+    [Fact]
+    public void ToMillis_AllLiteral_ReturnsUndefined()
+    {
+        // Picture with no date/time components at all (lines 370-373)
+        string result = Eval("""$toMillis("hello world", "hello world")""");
+        Assert.Equal("undefined", result);
+    }
+
+    // ─── TryParseDateTime consistency errors (lines 379-393) ──────────────
+
+    [Fact]
+    public void ToMillis_DayOfYearNoYear_ThrowsD3136()
+    {
+        // Day of year without year component throws D3136 (lines 379-381)
+        Assert.Throws<JsonataException>(() => Eval("""$toMillis("045", "[d001]")"""));
+    }
+
+    [Fact]
+    public void ToMillis_DayAndYearNoMonth_ThrowsD3136()
+    {
+        // Day + year but no month (and no day-of-year) throws D3136 (lines 391-393)
+        Assert.Throws<JsonataException>(() => Eval("""$toMillis("2024 15", "[Y] [D01]")"""));
+    }
+
+    // ─── FormatTimezoneOffset: negative timezone (line 1091) ──────────────
+
+    [Fact]
+    public void FromMillis_NegativeTimezone()
+    {
+        // Negative timezone offset (line 1091 - branch)
+        string result = Eval("""$fromMillis(1234567890000, "[H01]:[m01][Z01:01]", "-0500")""");
+        Assert.Contains("-05:00", result);
+    }
+
+    // ─── ParseTimezoneOffset: various timezone strings in $toMillis ──────────────
+
+    [Fact]
+    public void ToMillis_WithTimezone_Parses()
+    {
+        // Parsing timezone offset (line 344)
+        string result = Eval("""$toMillis("2024-01-15 10:30+05:30", "[Y]-[M01]-[D01] [H01]:[m01][Z01:01]")""");
+        Assert.NotEqual("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_WithNegativeTimezone_Parses()
+    {
+        string result = Eval("""$toMillis("2024-01-15 10:30-04:00", "[Y]-[M01]-[D01] [H01]:[m01][Z01:01]")""");
+        Assert.NotEqual("undefined", result);
+    }
+
+    // ─── FormatFractionalSeconds (uncovered in FormatComponent) ──────────────
+
+    [Fact]
+    public void FromMillis_FractionalSeconds()
+    {
+        // Fractional seconds formatting
+        string result = Eval("""$fromMillis(1234567890123, "[s01].[f001]")""");
+        Assert.Contains(".", result);
+        Assert.Equal("\"30.123\"", result);
+    }
+
     // ─── $toMillis with non-string/number (lines 5952-5953) ───────────
 
     [Fact]
