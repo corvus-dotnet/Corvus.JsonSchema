@@ -147,4 +147,99 @@ public class WriterAndTemplateCoverageTests
     }
 
     #endregion
+
+    #region Period.Equals(NodaTime.Period)
+
+    [Fact]
+    public void Period_Equals_NodaTimePeriod_EqualValues()
+    {
+        var corvusPeriod = new Period(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        NodaTime.Period nodaPeriod = new NodaTime.PeriodBuilder
+        {
+            Years = 1,
+            Months = 2,
+            Weeks = 3,
+            Days = 4,
+            Hours = 5,
+            Minutes = 6,
+            Seconds = 7,
+            Milliseconds = 8,
+            Ticks = 9,
+            Nanoseconds = 10,
+        }.Build();
+
+        Assert.True(corvusPeriod.Equals(nodaPeriod));
+    }
+
+    [Fact]
+    public void Period_Equals_NodaTimePeriod_DifferentValues()
+    {
+        var corvusPeriod = new Period(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
+        NodaTime.Period nodaPeriod = new NodaTime.PeriodBuilder
+        {
+            Years = 1,
+            Months = 2,
+            Weeks = 3,
+            Days = 4,
+            Hours = 5,
+            Minutes = 6,
+            Seconds = 7,
+            Milliseconds = 8,
+            Ticks = 9,
+            Nanoseconds = 99,
+        }.Build();
+
+        Assert.False(corvusPeriod.Equals(nodaPeriod));
+    }
+
+    #endregion
+
+    #region ParsedJsonDocument IJsonDocument TryGetNamedPropertyValue (char overload with elementParent)
+
+    [Fact]
+    public void ParsedJsonDocument_IJsonDocument_TryGetNamedPropertyValue_Char_Found()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"hello","value":42}"""u8.ToArray());
+        IJsonDocument iDoc = doc;
+
+        bool found = iDoc.TryGetNamedPropertyValue(0, "name".AsSpan(), out IJsonDocument? parent, out int idx);
+        Assert.True(found);
+        Assert.Same(doc, parent);
+        Assert.True(idx > 0);
+    }
+
+    [Fact]
+    public void ParsedJsonDocument_IJsonDocument_TryGetNamedPropertyValue_Char_NotFound()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"hello"}"""u8.ToArray());
+        IJsonDocument iDoc = doc;
+
+        bool found = iDoc.TryGetNamedPropertyValue(0, "missing".AsSpan(), out IJsonDocument? parent, out int idx);
+        Assert.False(found);
+        Assert.Null(parent);
+        Assert.Equal(-1, idx);
+    }
+
+    #endregion
+
+    #region JsonWorkspace.Reset()
+
+    [Fact]
+    public void JsonWorkspace_Reset_ClearsDocuments()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> sourceDoc = ParsedJsonDocument<JsonElement>.Parse("""{"a":1}"""u8.ToArray());
+
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = sourceDoc.RootElement.CreateBuilder(workspace);
+
+        // Reset clears the workspace state
+        workspace.Reset();
+
+        // After reset, workspace can be reused for new builders
+        using ParsedJsonDocument<JsonElement> sourceDoc2 = ParsedJsonDocument<JsonElement>.Parse("""{"b":2}"""u8.ToArray());
+        using JsonDocumentBuilder<JsonElement.Mutable> builder2 = sourceDoc2.RootElement.CreateBuilder(workspace);
+        Assert.Equal("""{"b":2}""", builder2.RootElement.ToString());
+    }
+
+    #endregion
 }
