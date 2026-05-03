@@ -7,7 +7,6 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 using System.Diagnostics;
-using Corvus.Text.Json;
 
 namespace NodaTime.Text;
 
@@ -36,7 +35,8 @@ internal ref struct Utf8ValueCursor
         // Validated by caller.
         Value = value;
         Length = value.Length;
-        Move(-1);
+        Current = Nul;
+        Index = -1;
     }
 
     /// <summary>
@@ -58,50 +58,6 @@ internal ref struct Utf8ValueCursor
     /// Gets the string being parsed.
     /// </summary>
     internal ReadOnlySpan<byte> Value { get; }
-
-    /// <summary>
-    /// Returns a <see cref="string" /> that represents this instance.
-    /// </summary>
-    /// <returns>
-    /// A <see cref="string" /> that represents this instance.
-    /// </returns>
-    public override readonly string ToString() =>
-        Index <= 0 ? $"^{JsonReaderHelper.GetTextFromUtf8(Value)}"
-            : Index >= Length ? $"{JsonReaderHelper.GetTextFromUtf8(Value)}^"
-            : JsonReaderHelper.GetTextFromUtf8(Value).Insert(Index, "^");
-
-    /// <summary>
-    /// Moves the specified target index. If the new index is out of range of the valid indices
-    /// for this string then the index is set to the beginning or the end of the string whichever
-    /// is nearest the requested index.
-    /// </summary>
-    /// <param name="targetIndex">Index of the target.</param>
-    /// <returns><c>true</c> if the requested index is in range.</returns>
-    internal bool Move(int targetIndex)
-    {
-        unchecked
-        {
-            if (targetIndex >= 0)
-            {
-                if (targetIndex < Length)
-                {
-                    Index = targetIndex;
-                    Current = Value[Index];
-                    return true;
-                }
-                else
-                {
-                    Current = Nul;
-                    Index = Length;
-                    return false;
-                }
-            }
-
-            Current = Nul;
-            Index = -1;
-            return false;
-        }
-    }
 
     /// <summary>
     /// Moves to the next character.
