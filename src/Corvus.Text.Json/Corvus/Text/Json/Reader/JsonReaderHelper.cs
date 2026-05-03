@@ -178,7 +178,7 @@ internal static partial class JsonReaderHelper
             sourceUnescaped = sourceUnescaped.Slice(0, written);
             Debug.Assert(!sourceUnescaped.IsEmpty);
 
-            return JsonElementHelpers.TryParseOffsetDateTime(segment, out value);
+            return JsonElementHelpers.TryParseOffsetDateTime(sourceUnescaped, out value);
         }
 
         return JsonElementHelpers.TryParseOffsetDateTime(segment, out value);
@@ -203,7 +203,7 @@ internal static partial class JsonReaderHelper
             sourceUnescaped = sourceUnescaped.Slice(0, written);
             Debug.Assert(!sourceUnescaped.IsEmpty);
 
-            return JsonElementHelpers.TryParseOffsetDate(segment, out value);
+            return JsonElementHelpers.TryParseOffsetDate(sourceUnescaped, out value);
         }
 
         return JsonElementHelpers.TryParseOffsetDate(segment, out value);
@@ -228,7 +228,7 @@ internal static partial class JsonReaderHelper
             sourceUnescaped = sourceUnescaped.Slice(0, written);
             Debug.Assert(!sourceUnescaped.IsEmpty);
 
-            return JsonElementHelpers.TryParseOffsetTime(segment, out value);
+            return JsonElementHelpers.TryParseOffsetTime(sourceUnescaped, out value);
         }
 
         return JsonElementHelpers.TryParseOffsetTime(segment, out value);
@@ -253,7 +253,7 @@ internal static partial class JsonReaderHelper
             sourceUnescaped = sourceUnescaped.Slice(0, written);
             Debug.Assert(!sourceUnescaped.IsEmpty);
 
-            return JsonElementHelpers.TryParseLocalDate(segment, out value);
+            return JsonElementHelpers.TryParseLocalDate(sourceUnescaped, out value);
         }
 
         return JsonElementHelpers.TryParseLocalDate(segment, out value);
@@ -277,7 +277,7 @@ internal static partial class JsonReaderHelper
             sourceUnescaped = sourceUnescaped.Slice(0, written);
             Debug.Assert(!sourceUnescaped.IsEmpty);
 
-            return Period.TryParse(segment, out value);
+            return Period.TryParse(sourceUnescaped, out value);
         }
 
         return Period.TryParse(segment, out value);
