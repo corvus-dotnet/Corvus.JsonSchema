@@ -553,4 +553,93 @@ public class XPathDateTimeFormatterEdgeCaseTests
     }
 
     #endregion
+
+    #region Unicode digits with grouping separators (lines 1618-1637)
+
+    [Theory]
+    [InlineData(12345, "\u0661,\u0660\u0660\u0660", "\u0661\u0662,\u0663\u0664\u0665")]  // Arabic-Indic digits ١٢,٣٤٥
+    [InlineData(1000, "\u0661,\u0660\u0660\u0660", "\u0661,\u0660\u0660\u0660")]            // Arabic-Indic digits ١,٠٠٠
+    public void FormatInteger_UnicodeDigitsWithGrouping(int value, string picture, string expected)
+    {
+        string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
+        Assert.Equal($"\"{expected}\"", result);
+    }
+
+    [Theory]
+    [InlineData(42, "\u0661", "\u0664\u0662")]                        // Arabic-Indic digits without grouping
+    [InlineData(0, "\u0661", "\u0660")]                                // Zero in Arabic-Indic
+    public void FormatInteger_UnicodeDigitsNoGrouping(int value, string picture, string expected)
+    {
+        string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
+        Assert.Equal($"\"{expected}\"", result);
+    }
+
+    #endregion
+
+    #region ParseInteger with grouping separators (lines 2675-2689)
+
+    [Fact]
+    public void ParseInteger_WithGroupingSeparators()
+    {
+        // $parseInteger("1,234", "#,##0") should return 1234
+        string? result = Evaluator.EvaluateToString("""$parseInteger("1,234", "#,##0")""", "{}");
+        Assert.Equal("1234", result);
+    }
+
+    [Fact]
+    public void ParseInteger_NegativeWithGrouping()
+    {
+        string? result = Evaluator.EvaluateToString("""$parseInteger("-1,234", "#,##0")""", "{}");
+        Assert.Equal("-1234", result);
+    }
+
+    #endregion
+
+    #region $fromMillis with various picture components (lines 2730-2743, 3504-3517)
+
+    [Fact]
+    public void FromMillis_DayOfWeek()
+    {
+        // 2024-01-15 (Monday) at midnight UTC = 1705276800000
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[FNn]")""", "{}");
+        Assert.NotNull(result);
+        Assert.Contains("Monday", result);
+    }
+
+    [Fact]
+    public void FromMillis_WeekOfYear()
+    {
+        // Week number formatting
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[W01]")""", "{}");
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void FromMillis_MonthName()
+    {
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[MNn]")""", "{}");
+        Assert.NotNull(result);
+        Assert.Contains("January", result);
+    }
+
+    [Fact]
+    public void FromMillis_TimezoneOffset()
+    {
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[H01]:[m01]:[s01] [Z]")""", "{}");
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void FromMillis_EraAndCalendar()
+    {
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Y]-[M01]-[D01] [E]")""", "{}");
+        Assert.NotNull(result);
+    }
+
+    #endregion
 }
