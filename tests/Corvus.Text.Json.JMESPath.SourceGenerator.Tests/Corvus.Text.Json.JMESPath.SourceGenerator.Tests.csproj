@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -19,6 +19,7 @@
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="System.Text.Json" />
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
@@ -41,5 +42,9 @@
   <!-- JMESPath expression files as AdditionalFiles for the source generator -->
   <ItemGroup>
     <AdditionalFiles Include="Expressions\*.jmespath" />
+  </ItemGroup>
+  <!-- Diagnostic tests use TRUSTED_PLATFORM_ASSEMBLIES which is unavailable on net481. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Remove="SourceGeneratorDiagnosticTests.cs" />
   </ItemGroup>
 </Project>

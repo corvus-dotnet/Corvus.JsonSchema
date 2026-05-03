@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0</TargetFrameworks>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <LangVersion>preview</LangVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
@@ -30,5 +30,10 @@
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Jsonata.CodeGeneration\Corvus.Text.Json.Jsonata.CodeGeneration.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json.Jsonata\Corvus.Text.Json.Jsonata.csproj" />
     <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <!-- On net481 this project produces an empty assembly (no tests). The code
+       uses AssemblyLoadContext and DependencyModel APIs unavailable on net481. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Remove="**\*.cs" />
   </ItemGroup>
 </Project>

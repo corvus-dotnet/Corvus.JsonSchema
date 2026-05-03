@@ -127,21 +127,9 @@ task PreTest {
     # Turn down logging when running Specs to suppress ReqnRoll Given/When/Then output
     $script:LogLevelBackup = $LogLevel
     $script:LogLevel = "quiet"
-
-    # Multiple test projects target net10.0 only (analyzer, codegen, and source
-    # generator tests). When dotnet test runs for net8.0/net481 it can't find their
-    # DLLs and returns exit code 1, which aborts the InvokeBuild pipeline (skipping
-    # PostTest etc.). Switch to a test-specific solution that excludes those projects.
-    $script:SolutionToTestBackup = $SolutionToBuild
-    if ($TargetFrameworkMoniker -ne "net10.0") {
-        $testSlnx = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.Test.slnx")).Path
-        $script:SolutionToBuild = $testSlnx
-        Write-Build Yellow "PreTest: Using $testSlnx for $TargetFrameworkMoniker (excludes net10.0-only test projects)"
-    }
 }
 task PostTest {
-    # Revert solution and logging level
-    $script:SolutionToBuild = $SolutionToTestBackup
+    # Revert logging level
     $script:LogLevel = $LogLevelBackup
 }
 # task PreTestReport {}
