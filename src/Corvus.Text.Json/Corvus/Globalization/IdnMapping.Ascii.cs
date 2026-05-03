@@ -13,7 +13,7 @@ namespace Corvus.Globalization;
 
 /// <summary>
 /// IDN (Internationalized Domain Names) mapping class. This partial contains
-/// shared constants, the <see cref="Default"/> instance, and the <see cref="IsDot(char)"/>
+/// shared constants, the <see cref="Default"/> instance, and the <c>IsDot</c>
 /// helper. The UTF-8 punycode decode implementation is in <c>IdnMapping.Unicode.UTF8.cs</c>.
 /// </summary>
 public sealed partial class IdnMapping
