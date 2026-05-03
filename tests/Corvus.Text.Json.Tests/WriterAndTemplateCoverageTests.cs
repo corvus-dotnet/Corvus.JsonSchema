@@ -442,4 +442,25 @@ public class WriterAndTemplateCoverageTests
     }
 
     #endregion
+
+    #region GetHashCodeForString with long strings (>2048 chars triggers ArrayPool path)
+
+    [Fact]
+    public void GetHashCode_LongString_UsesArrayPoolPath()
+    {
+        // Build a JSON string with >2048 characters to exercise the ArrayPool<char> rent path
+        // in JsonDocument.GetHashCodeForString
+        string longValue = new string('a', 2100);
+        string json = $$"""{"key":"{{longValue}}"}""";
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(json));
+
+        JsonElement root = doc.RootElement;
+        JsonElement value = root.GetProperty("key"u8);
+
+        // Calling GetHashCode exercises the GetHashCodeForString path
+        int hash = value.GetHashCode();
+        Assert.NotEqual(0, hash);
+    }
+
+    #endregion
 }
