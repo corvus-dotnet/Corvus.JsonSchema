@@ -568,20 +568,6 @@ public sealed partial class Utf8JsonWriter
         }
     }
 
-    /// <summary>
-    /// Writes the unescaped property name to the output
-    /// </summary>
-    /// <param name="utf8PropertyName"></param>
-    internal void WritePropertyNameUnescaped(ReadOnlySpan<byte> utf8PropertyName)
-    {
-        JsonWriterHelper.ValidateProperty(utf8PropertyName);
-        WriteStringByOptionsPropertyName(utf8PropertyName);
-
-        _currentDepth &= JsonConstants.RemoveFlagsBitMask;
-        _tokenType = JsonTokenType.PropertyName;
-        _commentAfterNoneOrPropertyName = false;
-    }
-
     private void WritePropertyNameHelper(ReadOnlySpan<byte> utf8PropertyName)
     {
         Debug.Assert(utf8PropertyName.Length <= JsonConstants.MaxUnescapedTokenSize);

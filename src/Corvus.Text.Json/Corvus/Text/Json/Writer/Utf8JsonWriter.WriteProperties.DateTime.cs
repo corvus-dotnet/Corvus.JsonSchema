@@ -111,13 +111,6 @@ public sealed partial class Utf8JsonWriter
         _tokenType = JsonTokenType.String;
     }
 
-    internal void WritePropertyName(DateTime value)
-    {
-        Span<byte> buffer = stackalloc byte[JsonConstants.MaximumFormatDateTimeOffsetLength];
-        JsonWriterHelper.WriteDateTimeTrimmed(buffer, value, out int bytesWritten);
-        WritePropertyNameUnescaped(buffer.Slice(0, bytesWritten));
-    }
-
     private void WriteStringByOptions(ReadOnlySpan<char> propertyName, DateTime value)
     {
         ValidateWritingProperty();
