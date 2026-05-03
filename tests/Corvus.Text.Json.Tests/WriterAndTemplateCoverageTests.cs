@@ -322,4 +322,124 @@ public class WriterAndTemplateCoverageTests
     }
 
     #endregion
+
+    #region Format validation error messages at Detailed level
+
+    [Theory]
+    [InlineData("""{"date":"not-a-date"}""")]
+    [InlineData("""{"dateTime":"not-a-datetime"}""")]
+    [InlineData("""{"time":"not-a-time"}""")]
+    [InlineData("""{"duration":"not-a-duration"}""")]
+    [InlineData("""{"email":"not an email"}""")]
+    [InlineData("""{"hostname":"not a host!name"}""")]
+    [InlineData("""{"idnEmail":"not an email"}""")]
+    [InlineData("""{"uuid":"not-a-uuid"}""")]
+    [InlineData("""{"uri":":::not a uri"}""")]
+    [InlineData("""{"uriReference":":::not valid"}""")]
+    [InlineData("""{"iri":":::not a iri"}""")]
+    [InlineData("""{"iriReference":":::not valid"}""")]
+    [InlineData("""{"jsonPointer":"no-leading-slash"}""")]
+    [InlineData("""{"relativeJsonPointer":"not/valid"}""")]
+    [InlineData("""{"regex":"[invalid"}""")]
+    public void FormatTypes_StringFormat_InvalidValue_ProducesDetailedError(string json)
+    {
+        using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
+
+        ValidationContext result = doc.RootElement.Validate(
+            ValidationContext.ValidContext,
+            ValidationLevel.Detailed);
+
+        Assert.False(result.IsValid);
+        Assert.NotEmpty(result.Results);
+    }
+
+    [Theory]
+    [InlineData("""{"byte":999}""")]
+    [InlineData("""{"uint16":99999}""")]
+    [InlineData("""{"uint32":5000000000}""")]
+    [InlineData("""{"uint64":-1}""")]
+    [InlineData("""{"uint128":-1}""")]
+    [InlineData("""{"sbyte":200}""")]
+    [InlineData("""{"int16":40000}""")]
+    [InlineData("""{"int32":3000000000}""")]
+    [InlineData("""{"int64":1.5}""")]
+    [InlineData("""{"int128":1.5}""")]
+    [InlineData("""{"half":100000}""")]
+    [InlineData("""{"single":3.5e39}""")]
+    [InlineData("""{"double":1.8e309}""")]
+    [InlineData("""{"decimal":1e30}""")]
+    public void FormatTypes_NumericFormat_InvalidValue_ProducesDetailedError(string json)
+    {
+        using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
+
+        ValidationContext result = doc.RootElement.Validate(
+            ValidationContext.ValidContext,
+            ValidationLevel.Detailed);
+
+        Assert.False(result.IsValid);
+        Assert.NotEmpty(result.Results);
+    }
+
+    #endregion
+
+    #region Int64/Int128 format validation correctness (BUG: codegen was calling MatchUInt64/MatchUInt128)
+
+    [Theory]
+    [InlineData("""{"int64":-1}""")]
+    [InlineData("""{"int64":-9223372036854775808}""")]
+    [InlineData("""{"int64":9223372036854775807}""")]
+    public void FormatTypes_Int64_AcceptsNegativeAndMaxRange(string json)
+    {
+        using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
+
+        ValidationContext result = doc.RootElement.Validate(
+            ValidationContext.ValidContext,
+            ValidationLevel.Detailed);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Theory]
+    [InlineData("""{"int64":9223372036854775808}""")]
+    [InlineData("""{"int64":18446744073709551615}""")]
+    public void FormatTypes_Int64_RejectsAboveMaxInt64(string json)
+    {
+        using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
+
+        ValidationContext result = doc.RootElement.Validate(
+            ValidationContext.ValidContext,
+            ValidationLevel.Detailed);
+
+        Assert.False(result.IsValid);
+    }
+
+    [Theory]
+    [InlineData("""{"int128":-1}""")]
+    [InlineData("""{"int128":-170141183460469231731687303715884105728}""")]
+    [InlineData("""{"int128":170141183460469231731687303715884105727}""")]
+    public void FormatTypes_Int128_AcceptsNegativeAndMaxRange(string json)
+    {
+        using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
+
+        ValidationContext result = doc.RootElement.Validate(
+            ValidationContext.ValidContext,
+            ValidationLevel.Detailed);
+
+        Assert.True(result.IsValid);
+    }
+
+    [Theory]
+    [InlineData("""{"int128":170141183460469231731687303715884105728}""")]
+    public void FormatTypes_Int128_RejectsAboveMaxInt128(string json)
+    {
+        using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
+
+        ValidationContext result = doc.RootElement.Validate(
+            ValidationContext.ValidContext,
+            ValidationLevel.Detailed);
+
+        Assert.False(result.IsValid);
+    }
+
+    #endregion
 }

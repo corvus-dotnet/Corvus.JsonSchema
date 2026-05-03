@@ -130,7 +130,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
 
             case "int64":
                 generator.AppendIndent(
-                    "JsonSchemaEvaluation.MatchUInt64(",
+                    "JsonSchemaEvaluation.MatchInt64(",
                     isNegativeIdentifier, ", ",
                     integralIdentifier, ", ",
                     fractionalIdentifier, ", ",
@@ -141,7 +141,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
 
             case "int128":
                 generator.AppendIndent(
-                    "JsonSchemaEvaluation.MatchUInt128(",
+                    "JsonSchemaEvaluation.MatchInt128(",
                     isNegativeIdentifier, ", ",
                     integralIdentifier, ", ",
                     fractionalIdentifier, ", ",
