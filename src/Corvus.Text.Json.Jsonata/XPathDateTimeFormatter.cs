@@ -867,9 +867,20 @@ internal static class XPathDateTimeFormatter
         bool isOrdinal = false;
         ReadOnlySpan<byte> pres = presentation;
 
-        // Check for trailing 'o' ordinal modifier in presentation
-        if (pres.Length > 0 && pres[pres.Length - 1] == (byte)'o')
+        // Split on ';' to separate primary format from modifier (e.g. "1;o" → "1" + "o")
+        int semiIdx = pres.IndexOf((byte)';');
+        if (semiIdx >= 0)
         {
+            ReadOnlySpan<byte> modifier = pres.Slice(semiIdx + 1);
+            pres = pres.Slice(0, semiIdx);
+            if (modifier.IndexOf((byte)'o') >= 0)
+            {
+                isOrdinal = true;
+            }
+        }
+        else if (pres.Length > 0 && pres[pres.Length - 1] == (byte)'o')
+        {
+            // Also accept bare trailing 'o' without semicolon for compatibility
             isOrdinal = true;
             pres = pres.Slice(0, pres.Length - 1);
         }
