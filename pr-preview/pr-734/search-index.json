@@ -32,7 +32,7 @@
     "title": "Corvus.Globalization Namespace",
     "description": "API documentation for the Corvus.Globalization namespace",
     "keywords": "API reference Corvus.Globalization",
-    "body": "Provides Unicode and internationalization helpers for processing domain names and character categories in JSON string values. These types support IDN (Internationalized Domain Names) encoding used by URI and IRI validation.\r— Unicode character category lookups\r— IDN encoding and decoding for domain names\r\n\r\n  Type   Kind   Description  \r\n    \r\n  CharUnicodeInfo   class   This class implements a set of methods for retrieving character type information. Character type information is independent of culture and region.  \r\n  IdnMapping   class"
+    "body": "Provides Unicode and internationalization helpers for processing domain names and character categories in JSON string values. These types support IDN (Internationalized Domain Names) encoding used by URI and IRI validation.\r— Unicode character category lookups\r— IDN encoding and decoding for domain names\r\n\r\n  Type   Kind   Description  \r\n    \r\n  CharUnicodeInfo   class   This class implements a set of methods for retrieving character type information. Character type information is independent of culture and region.  \r\n  IdnMapping   class   IDN (Internationalized Domain Names) mapping class. This partial contains shared constants, the  instance, and the  helper. T..."
   },
   {
     "url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-numerics.html",
