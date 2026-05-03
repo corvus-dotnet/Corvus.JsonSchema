@@ -9107,69 +9107,6 @@
     "Body": ""
   },
   {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-rentedbacking.html",
-    "Title": "RentedBacking",
-    "Description": "Provides a fixed-size, rented backing structure for storing longer string values that will not fit in a [`SimpleTypesBacking`](/api/v5/corvus-text-json-internal-simpletypesbacking.html).",
-    "Keywords": "RentedBacking struct Corvus.Text.Json.Internal",
-    "Body": "Provides a fixed-size, rented backing structure for storing longer string values that will not fit in a [`SimpleTypesBacking`](/api/v5/corvus-text-json-internal-simpletypesbacking.html).\r\nThis is typically used as a backing field in a `[MyJsonElementType].Builder.Source` struct.\r\nSpan: Gets the written value as a span"
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-rentedbacking.initialize.html",
-    "Title": "RentedBacking.Initialize",
-    "Description": "",
-    "Keywords": "RentedBacking Initialize method Corvus.Text.Json.Internal",
-    "Body": ""
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-rentedbacking.dispose.html",
-    "Title": "RentedBacking.Dispose",
-    "Description": "",
-    "Keywords": "RentedBacking Dispose method Corvus.Text.Json.Internal",
-    "Body": ""
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-rentedbacking.span.html",
-    "Title": "RentedBacking.Span",
-    "Description": "Gets the written value as a span",
-    "Keywords": "RentedBacking Span method Corvus.Text.Json.Internal",
-    "Body": "Gets the written value as a span"
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-rentedbacking-writer-t.html",
-    "Title": "RentedBacking.Writer<T>",
-    "Description": "",
-    "Keywords": "RentedBacking.Writer<T> delegate Corvus.Text.Json.Internal T",
-    "Body": ""
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-rentedbacking-writer-t.ctor.html",
-    "Title": "RentedBacking.Writer<T> Constructor",
-    "Description": "",
-    "Keywords": "RentedBacking.Writer<T> constructor new Corvus.Text.Json.Internal",
-    "Body": ""
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-rentedbacking-writer-t.invoke.html",
-    "Title": "RentedBacking.Writer<T>.Invoke",
-    "Description": "",
-    "Keywords": "RentedBacking.Writer<T> Invoke method Corvus.Text.Json.Internal",
-    "Body": ""
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-rentedbacking-writer-t.begininvoke.html",
-    "Title": "RentedBacking.Writer<T>.BeginInvoke",
-    "Description": "",
-    "Keywords": "RentedBacking.Writer<T> BeginInvoke method Corvus.Text.Json.Internal",
-    "Body": ""
-  },
-  {
-    "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-rentedbacking-writer-t.endinvoke.html",
-    "Title": "RentedBacking.Writer<T>.EndInvoke",
-    "Description": "",
-    "Keywords": "RentedBacking.Writer<T> EndInvoke method Corvus.Text.Json.Internal",
-    "Body": ""
-  },
-  {
     "Url": "/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-text-json-internal-simpletypesbacking.html",
     "Title": "SimpleTypesBacking",
     "Description": "Provides a fixed-size backing structure for storing simple numeric, null and boolean values. for [`IJsonElement`](/api/v5/corvus-text-json-internal-ijsonelement.html) creation.",
