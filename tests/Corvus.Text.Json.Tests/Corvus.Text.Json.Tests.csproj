@@ -123,6 +123,7 @@
     <Compile Include="JsonElementHelpersDateTimeTests.cs" />
     <Compile Include="JsonElementHelpersParseNumberTests.cs" />
     <Compile Include="CurrencyBufferOverflowTests.cs" />
+    <Compile Include="CoreLibraryCoverageTests.cs" />
     <Compile Include="GeneralExponentialBufferOverflowTests.cs" />
     <Compile Include="JsonElementHelpersTryFormatCurrencyTests.cs" />
     <Compile Include="JsonElementHelpersTryFormatCurrencyUtf8Tests.cs" />
