@@ -277,6 +277,7 @@
     <Compile Include="JsonBase64TestData.cs" />
     <Compile Include="JsonDateTimeTestData.cs" />
     <Compile Include="ParsedJsonDocumentTests.cs" />
+    <Compile Include="JsonElementTensorHelpersCoverageTests.cs" />
     <Compile Include="RequiredPropertyResultsTests.cs" />
     <Compile Include="SourceLocationTests.cs" />
     <Compile Include="JsonElementCloneTests.cs" />
