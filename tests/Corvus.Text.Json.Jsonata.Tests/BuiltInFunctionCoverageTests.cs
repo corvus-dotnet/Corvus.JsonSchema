@@ -217,4 +217,142 @@ public class BuiltInFunctionCoverageTests
         string result = Eval("""$sort(["banana", "apple", "cherry"])""");
         Assert.Equal("""["apple","banana","cherry"]""", result);
     }
+
+    // ─── Context-argument patterns (lines 1414-1418, 3133-3138) ───────
+
+    [Fact]
+    public void Contains_ContextArgPattern()
+    {
+        // $contains with 1 arg uses context as the string (lines 1414-1418)
+        // Input is the string, expression uses implicit context
+        string result = Eval("$contains(\"world\")", "\"hello world\"");
+        Assert.Equal("true", result);
+    }
+
+    [Fact]
+    public void Contains_ContextArgNoMatch()
+    {
+        string result = Eval("$contains(\"xyz\")", "\"hello\"");
+        Assert.Equal("false", result);
+    }
+
+    [Fact]
+    public void Split_ContextArgPattern()
+    {
+        // $split with 1 arg uses context as the string (lines 1316-1321)
+        string result = Eval("$split(\",\")", "\"a,b,c\"");
+        Assert.Equal("""["a","b","c"]""", result);
+    }
+
+    [Fact]
+    public void Split_ContextArgWithLimit()
+    {
+        // $split with 2 args — still needs context (2 args = str + pattern)
+        string data = """{"text": "one-two-three"}""";
+        string result = Eval("$split(text, \"-\", 2)", data);
+        Assert.Equal("""["one","two"]""", result);
+    }
+
+    [Fact]
+    public void Match_ContextArgPattern()
+    {
+        // $match with 1 arg uses context as the string (lines 3133-3138)
+        string result = Eval("$match(/[0-9]+/)", "\"abc123def456\"");
+        Assert.Contains("\"match\"", result);
+        Assert.Contains("123", result);
+    }
+
+    // ─── $number with hex/binary/octal (TryParseSpecialRadix) ─────────
+
+    [Fact]
+    public void Number_HexPrefix()
+    {
+        // Covers TryParseSpecialRadix hex path (line 8744)
+        string result = Eval("""$number("0xFF")""");
+        Assert.Equal("255", result);
+    }
+
+    [Fact]
+    public void Number_HexUpperCase()
+    {
+        string result = Eval("""$number("0XAB")""");
+        Assert.Equal("171", result);
+    }
+
+    [Fact]
+    public void Number_BinaryPrefix()
+    {
+        // Covers TryParseSpecialRadix binary path (line 8756)
+        string result = Eval("""$number("0b1010")""");
+        Assert.Equal("10", result);
+    }
+
+    [Fact]
+    public void Number_OctalPrefix()
+    {
+        // Covers TryParseSpecialRadix octal path (line 8775)
+        string result = Eval("""$number("0o17")""");
+        Assert.Equal("15", result);
+    }
+
+    [Fact]
+    public void Number_InvalidBinary_ThrowsD3030()
+    {
+        // Invalid binary digits (not 0 or 1) — error path (line 8763)
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0b1234")"""));
+        Assert.StartsWith("D3030", ex.Message);
+    }
+
+    [Fact]
+    public void Number_InvalidOctal_ThrowsD3030()
+    {
+        // Invalid octal digits (8, 9) — error path (line 8781)
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0o89")"""));
+        Assert.StartsWith("D3030", ex.Message);
+    }
+
+    [Fact]
+    public void Number_InvalidHex_ThrowsD3030()
+    {
+        // Invalid hex string — error path (line 8752)
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0xGG")"""));
+        Assert.StartsWith("D3030", ex.Message);
+    }
+
+    [Fact]
+    public void Number_EmptyBinary_ThrowsD3030()
+    {
+        // Empty binary after prefix — (line 8772 digits.Length == 0)
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0b")"""));
+        Assert.StartsWith("D3030", ex.Message);
+    }
+
+    // ─── $substring with supplementary Unicode (CodePointsToString) ───
+
+    [Fact]
+    public void Substring_SupplementaryUnicode()
+    {
+        // Characters above U+FFFF trigger supplementary code point path
+        // 🎉 is U+1F389 (above BMP), needs surrogate pair handling
+        string result = Eval("""$substring("A🎉B", 1, 1)""");
+        Assert.Equal("\"🎉\"", result);
+    }
+
+    [Fact]
+    public void Substring_MultipleSurrogates()
+    {
+        // Multiple supplementary characters
+        string result = Eval("""$substring("🌍🌎🌏", 1, 2)""");
+        Assert.Equal("\"🌎🌏\"", result);
+    }
+
+    // ─── $replace on multi-value pattern ──────────────────────────────
+
+    [Fact]
+    public void Replace_ContextArgPattern()
+    {
+        // $replace with context arg (2 args: pattern + replacement, context provides string)
+        string result = Eval("$replace(\"world\", \"earth\")", "\"hello world\"");
+        Assert.Equal("\"hello earth\"", result);
+    }
 }

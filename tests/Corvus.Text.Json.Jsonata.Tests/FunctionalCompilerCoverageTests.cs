@@ -281,4 +281,102 @@ public class FunctionalCompilerCoverageTests
         string result = Eval("$append([], [])", """{}""");
         Assert.Equal("[]", result);
     }
+
+    // ─── Index binding variable (#$i syntax, lines 5085-5105) ─────────
+
+    [Fact]
+    public void IndexBinding_FilterByPosition()
+    {
+        // #$i creates an index binding variable that expands singleton arrays
+        // and enables position-based filtering (lines 5092-5105)
+        string data = """{"items": [10, 20, 30, 40, 50]}""";
+        string result = Eval("items#$i[$i >= 2]", data);
+        Assert.Equal("[30,40,50]", result);
+    }
+
+    [Fact]
+    public void IndexBinding_FirstElement()
+    {
+        string data = """{"items": ["a", "b", "c", "d"]}""";
+        string result = Eval("items#$i[$i = 0]", data);
+        Assert.Equal("\"a\"", result);
+    }
+
+    [Fact]
+    public void IndexBinding_LastElementExpression()
+    {
+        // Use a simple constant index instead of $count() which can't resolve in filter context
+        string data = """{"items": [1, 2, 3, 4, 5]}""";
+        string result = Eval("items#$i[$i = 4]", data);
+        Assert.Equal("5", result);
+    }
+
+    [Fact]
+    public void IndexBinding_WithObjectArray()
+    {
+        // Index binding on array of objects
+        string data = """{"orders": [{"id": "A"}, {"id": "B"}, {"id": "C"}]}""";
+        string result = Eval("orders#$i[$i > 0].id", data);
+        Assert.Equal("""["B","C"]""", result);
+    }
+
+    // ─── Transform on multi-value sequence (lines 8287-8296) ──────────
+
+    [Fact]
+    public void Transform_MultiValueSequence()
+    {
+        // When ~> |pattern|update| operates on a multi-element sequence
+        // (not a single array), the non-singleton path at lines 8287-8296 is taken.
+        // To get a multi-value sequence, the LHS must resolve through a path that
+        // navigates into array elements producing multiple results.
+        string data = """
+        {
+          "orders": [
+            {"product": {"type": "fruit", "name": "apple"}},
+            {"product": {"type": "veg", "name": "carrot"}},
+            {"product": {"type": "fruit", "name": "banana"}}
+          ]
+        }
+        """;
+        string result = Eval("""orders.product ~> |$[type="fruit"]|{"selected": true}|""", data);
+        Assert.Contains("\"selected\"", result);
+        Assert.Contains("true", result);
+    }
+
+    [Fact]
+    public void Transform_MultiValueWithDelete()
+    {
+        // Transform with delete field on multiple path-resolved items
+        string data = """
+        {
+          "records": [
+            {"inner": {"name": "A", "temp": 1, "value": 10}},
+            {"inner": {"name": "B", "temp": 2, "value": 20}}
+          ]
+        }
+        """;
+        string result = Eval("""records.inner ~> |$|{}, ["temp"]|""", data);
+        Assert.DoesNotContain("\"temp\"", result);
+        Assert.Contains("\"name\"", result);
+        Assert.Contains("\"value\"", result);
+    }
+
+    // ─── Numeric path with filter stages (lines 5344-5359) ────────────
+
+    [Fact]
+    public void NumericIndex_AfterFilter()
+    {
+        // Combining filter and numeric index stages
+        string data = """{"items": [1, 2, 3, 4, 5, 6, 7, 8]}""";
+        string result = Eval("items[$>3][0]", data);
+        Assert.Equal("4", result);
+    }
+
+    [Fact]
+    public void NumericIndex_NegativeOnFilteredResult()
+    {
+        string data = """{"items": [10, 20, 30, 40, 50]}""";
+        string result = Eval("items[$>=30][-1]", data);
+        Assert.Equal("50", result);
+    }
 }
