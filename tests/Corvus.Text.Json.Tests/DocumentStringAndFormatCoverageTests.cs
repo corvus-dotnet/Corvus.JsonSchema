@@ -1,5 +1,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 
+using Corvus.Text.Json.Internal;
 using Xunit;
 
 namespace Corvus.Text.Json.Tests;
@@ -387,6 +388,138 @@ public static class DocumentStringAndFormatCoverageTests
 
         string notExpected = padding + "\t" + padding;
         Assert.False(element.ValueEquals(notExpected.AsSpan()));
+    }
+
+    #endregion
+
+    #region Builder TryFormat with too-small destination
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Builder_TryFormat_Utf8_True_DestinationTooSmall()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("true");
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using var builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        Span<byte> destination = stackalloc byte[1];
+        bool result = root.TryFormat(destination, out int bytesWritten, default, null);
+
+        Assert.False(result);
+        Assert.Equal(0, bytesWritten);
+    }
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Builder_TryFormat_Utf8_False_DestinationTooSmall()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("false");
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using var builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        Span<byte> destination = stackalloc byte[1];
+        bool result = root.TryFormat(destination, out int bytesWritten, default, null);
+
+        Assert.False(result);
+        Assert.Equal(0, bytesWritten);
+    }
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Builder_TryFormat_Utf8_Array_DestinationTooSmall()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("[1,2,3]");
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using var builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        Span<byte> destination = stackalloc byte[1];
+        bool result = root.TryFormat(destination, out int bytesWritten, default, null);
+
+        Assert.False(result);
+        Assert.Equal(0, bytesWritten);
+    }
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Builder_TryFormat_Utf8_String_DestinationTooSmall()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"key\":\"hello world\"}");
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using var builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        // Get the string value element
+        JsonElement.Mutable value = root.GetProperty("key"u8);
+        Span<byte> destination = stackalloc byte[1];
+        bool result = value.TryFormat(destination, out int bytesWritten, default, null);
+
+        Assert.False(result);
+        Assert.Equal(0, bytesWritten);
+    }
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Builder_TryFormat_Char_True_DestinationTooSmall()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("true");
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using var builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        Span<char> destination = stackalloc char[1];
+        bool result = root.TryFormat(destination, out int charsWritten, default, null);
+
+        Assert.False(result);
+        Assert.Equal(0, charsWritten);
+    }
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Builder_TryFormat_Char_False_DestinationTooSmall()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("false");
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using var builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        Span<char> destination = stackalloc char[1];
+        bool result = root.TryFormat(destination, out int charsWritten, default, null);
+
+        Assert.False(result);
+        Assert.Equal(0, charsWritten);
+    }
+
+    #endregion
+
+    #region Builder TryGetLine (always returns false for builders)
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Builder_TryGetLine_ByteMemory_ReturnsFalse()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("42");
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using var builder = doc.RootElement.CreateBuilder(workspace);
+        IJsonDocument builderDoc = builder;
+
+        Assert.False(builderDoc.TryGetLine(0, out ReadOnlyMemory<byte> line));
+        Assert.Equal(0, line.Length);
+    }
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Builder_TryGetLine_String_ReturnsFalse()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("42");
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using var builder = doc.RootElement.CreateBuilder(workspace);
+        IJsonDocument builderDoc = builder;
+
+        Assert.False(builderDoc.TryGetLine(0, out string? line));
+        Assert.Null(line);
     }
 
     #endregion
