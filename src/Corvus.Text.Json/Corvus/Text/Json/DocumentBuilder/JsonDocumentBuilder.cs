@@ -2331,7 +2331,7 @@ public sealed partial class JsonDocumentBuilder<T> : JsonDocument, IMutableJsonD
 
     private void WritePropertyNameUnsafe(int index, Utf8JsonWriter writer)
     {
-        bool rowHasComplexChildren = _parsedData.Get(index - DbRow.Size).HasComplexChildren;
+        bool rowHasComplexChildren = _parsedData.Get(index).HasComplexChildren;
         if (rowHasComplexChildren)
         {
             ArraySegment<byte> rented = default;
