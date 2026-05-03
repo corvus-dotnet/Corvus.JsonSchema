@@ -931,17 +931,17 @@ public class BuiltInFunctionCoverageTests
     // in BuiltInFunctions.cs. The reference implementation routes ALL built-in functions through
     // signature validation, but ours only routes some (like $uppercase, $join, $substring).
     //
-    // BUGS IDENTIFIED (RT returns wrong result vs. reference implementation):
-    //   $sqrt("hello") => undefined (should throw T0410)
-    //   $abs(true) => 1 (should throw T0410; coerces boolean to number)
-    //   $floor({"a":1}) => undefined (should throw T0410)
-    //   $map([1,2,3], "notafunction") => undefined (should throw T0410)
-    //   $filter([1,2,3], "notfunc") => undefined (should throw T0410)
-    //   $reduce([1,2,3], "notfunc") => undefined (should throw T0410)
-    //   $match(42, /abc/) => undefined (should throw T0410)
-    //   $formatNumber("not a number", "#") => "" (should throw T0410)
+    // BUGS FIXED (previously returned wrong result vs. reference implementation, now correct):
+    //   $sqrt("hello") => T0410 ✓ (was: undefined)
+    //   $abs(true) => T0410 ✓ (was: 1 — coerced boolean to number)
+    //   $floor({"a":1}) => T0410 ✓ (was: undefined)
+    //   $map([1,2,3], "notafunction") => T0410 ✓ (was: undefined)
+    //   $filter([1,2,3], "notfunc") => T0410 ✓ (was: undefined)
+    //   $reduce([1,2,3], "notfunc") => T0410 ✓ (was: undefined)
+    //   $match(42, /abc/) => T0410 ✓ (was: undefined)
+    //   $formatNumber("not a number", "#") => T0410 ✓ (was: empty string)
+    //   $shuffle(42) => [42] ✓ (was: 42 — now wraps singleton in array)
     //
-    // These are EXISTING bugs in the runtime, not introduced by our tests. To be fixed separately.
     // The tests below exercise functions that DO correctly throw T0410/T0412.
 
     [Fact]
