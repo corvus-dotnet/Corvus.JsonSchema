@@ -280,6 +280,7 @@
     <Compile Include="DocumentStringAndFormatCoverageTests.cs" />
     <Compile Include="JsonElementTensorHelpersCoverageTests.cs" />
     <Compile Include="ObjectBuilderCharSpanArrayCoverageTests.cs" />
+    <Compile Include="DateTimeCoreParsingCoverageTests.cs" />
     <Compile Include="RequiredPropertyResultsTests.cs" />
     <Compile Include="SourceLocationTests.cs" />
     <Compile Include="JsonElementCloneTests.cs" />
