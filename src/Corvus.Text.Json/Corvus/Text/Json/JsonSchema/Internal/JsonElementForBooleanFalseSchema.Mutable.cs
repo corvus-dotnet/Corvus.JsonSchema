@@ -211,17 +211,6 @@ public readonly partial struct JsonElementForBooleanFalseSchema
         }
 
         /// <summary>
-        /// Determines if the JSON element at the specified index in the parent document is valid.
-        /// </summary>
-        /// <param name="parentDocument">The parent document containing the JSON element.</param>
-        /// <param name="parentIndex">The index of the JSON element within the parent document.</param>
-        /// <returns><see langword="true"/> if the element at the specified index is valid; otherwise, <see langword="false"/>.</returns>
-        internal static bool IsValid(IJsonDocument parentDocument, int parentIndex)
-        {
-            return IsValid(parentDocument, parentIndex);
-        }
-
-        /// <summary>
         /// Write the element into the provided writer as a JSON value.
         /// </summary>
         /// <param name="writer">The writer.</param>

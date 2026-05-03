@@ -162,7 +162,6 @@
     <Compile Include="Corvus\Text\Json\Compatibility\ValidationLevel.cs" />
     <Compile Include="Corvus\Text\Json\Compatibility\ValidationResult.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\Internal\BuildWithContext.cs" />
-    <Compile Include="Corvus\Text\Json\DocumentBuilder\Internal\RentedBacking.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\Internal\SimpleTypesBacking.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\Internal\IMutableJsonElement{T}.cs" />
     <Compile Include="Corvus\Text\Json\DocumentBuilder\Internal\ComplexValueBuilder.cs" />
