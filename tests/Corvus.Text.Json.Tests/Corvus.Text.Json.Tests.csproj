@@ -281,6 +281,7 @@
     <Compile Include="JsonElementTensorHelpersCoverageTests.cs" />
     <Compile Include="ObjectBuilderCharSpanArrayCoverageTests.cs" />
     <Compile Include="DateTimeCoreParsingCoverageTests.cs" />
+    <Compile Include="BooleanFalseSchemaTests.cs" />
     <Compile Include="RequiredPropertyResultsTests.cs" />
     <Compile Include="SourceLocationTests.cs" />
     <Compile Include="JsonElementCloneTests.cs" />
