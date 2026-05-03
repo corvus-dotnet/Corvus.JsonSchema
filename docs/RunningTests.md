@@ -218,7 +218,7 @@ Verifies that source-generated evaluators produce correct results for representa
 
 ```powershell
 # Single class
-dotnet test Corvus.Text.Json.Test.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
 
 # Single method (substring match)
 dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"

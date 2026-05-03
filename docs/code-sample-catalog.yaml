@@ -1275,20 +1275,20 @@ copilot-instructions:
   - path: ".github/copilot-instructions.md"
     blocks:
       - {index: 0, language: bash, lines: [38, 50]}
-      - {index: 1, language: powershell, lines: [75, 78]}
-      - {index: 2, language: csharp, lines: [124, 134], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [151, 170], category: compilable, verified: false}
-      - {index: 4, language: powershell, lines: [212, 214]}
-      - {index: 5, language: powershell, lines: [226, 230]}
-      - {index: 6, language: powershell, lines: [268, 273]}
-      - {index: 7, language: powershell, lines: [300, 306]}
-      - {index: 8, language: csharp, lines: [316, 326], category: compilable, verified: false}
-      - {index: 9, language: powershell, lines: [394, 403]}
-      - {index: 10, language: bash, lines: [431, 437]}
-      - {index: 11, language: bash, lines: [443, 446]}
-      - {index: 12, language: powershell, lines: [456, 471]}
-      - {index: 13, language: powershell, lines: [479, 481]}
-      - {index: 14, language: bash, lines: [514, 516]}
+      - {index: 1, language: powershell, lines: [74, 77]}
+      - {index: 2, language: csharp, lines: [123, 133], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [150, 169], category: compilable, verified: false}
+      - {index: 4, language: powershell, lines: [211, 213]}
+      - {index: 5, language: powershell, lines: [225, 229]}
+      - {index: 6, language: powershell, lines: [267, 272]}
+      - {index: 7, language: powershell, lines: [299, 305]}
+      - {index: 8, language: csharp, lines: [315, 325], category: compilable, verified: false}
+      - {index: 9, language: powershell, lines: [393, 402]}
+      - {index: 10, language: bash, lines: [430, 436]}
+      - {index: 11, language: bash, lines: [442, 445]}
+      - {index: 12, language: powershell, lines: [455, 470]}
+      - {index: 13, language: powershell, lines: [478, 480]}
+      - {index: 14, language: bash, lines: [513, 515]}
 
 skills:
   - path: ".github/skills/corvus-analyzers/SKILL.md"
@@ -1322,15 +1322,15 @@ skills:
       - {index: 4, language: csharp, lines: [183, 186], category: fragment, verified: false}
   - path: ".github/skills/corvus-build-and-test/SKILL.md"
     blocks:
-      - {index: 0, language: powershell, lines: [30, 36]}
-      - {index: 1, language: powershell, lines: [47, 50]}
-      - {index: 2, language: powershell, lines: [66, 78]}
-      - {index: 3, language: powershell, lines: [82, 106]}
-      - {index: 4, language: powershell, lines: [148, 158]}
-      - {index: 5, language: powershell, lines: [166, 190]}
-      - {index: 6, language: powershell, lines: [198, 204]}
-      - {index: 7, language: python, lines: [235, 253]}
-      - {index: 8, language: powershell, lines: [265, 271]}
+      - {index: 0, language: powershell, lines: [29, 35]}
+      - {index: 1, language: powershell, lines: [46, 49]}
+      - {index: 2, language: powershell, lines: [65, 77]}
+      - {index: 3, language: powershell, lines: [81, 105]}
+      - {index: 4, language: powershell, lines: [147, 157]}
+      - {index: 5, language: powershell, lines: [167, 173]}
+      - {index: 6, language: powershell, lines: [179, 185]}
+      - {index: 7, language: python, lines: [216, 234]}
+      - {index: 8, language: powershell, lines: [246, 252]}
   - path: ".github/skills/corvus-codegen/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [22, 25], category: compilable, verified: false}

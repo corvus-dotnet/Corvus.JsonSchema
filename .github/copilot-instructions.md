@@ -40,13 +40,13 @@ The repo structure mirrors the dotnet/runtime repository conventions: shared sou
 dotnet build Corvus.Text.Json.slnx
 
 # Run the standard test suite — exclude the 'failing' and 'outerloop' categories
-dotnet test Corvus.Text.Json.slnx -f net10.0 --filter "category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
 
 # Run a single test class
-dotnet test Corvus.Text.Json.slnx -f net10.0 --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
 
 # Run a single test method
-dotnet test Corvus.Text.Json.slnx -f net10.0 --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
+dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
 ```
 
 Always exclude `failing` and `outerloop` categories when running tests. Never run all tests without these filters.
@@ -57,11 +57,10 @@ Always use `FullyQualifiedName~` (substring match) for test filters — not `Cla
 
 | Solution | Purpose |
 |----------|---------|
-| `Corvus.Text.Json.slnx` | Main V5 solution — build and test (all projects including net10.0-only tests) |
-| `Corvus.Text.Json.Test.slnx` | Multi-TFM safe tests — excludes net10.0-only projects (Analyzers, SourceGenerator, CodeGenerator, CodeGeneration tests). Use for `dotnet test -f net481`. |
+| `Corvus.Text.Json.slnx` | Main V5 solution — build and test (all TFMs, all projects) |
 | `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
 
-For local development and coverage collection on net10.0, use `Corvus.Text.Json.slnx`. For net481 test runs, use `Corvus.Text.Json.Test.slnx`.
+All test projects target both `net10.0` and `net481`. Projects with .NET Core-only dependencies (Analyzers, CodeGenerator, CodeGeneration tests) use `<Compile Remove>` on net481 to produce empty assemblies with 0 tests (exit code 0). This means a single `dotnet test Corvus.Text.Json.slnx` without `-f` runs tests on both TFMs.
 
 `TreatWarningsAsErrors=true` is set across all projects — the build will fail on any warning.
 
@@ -192,7 +191,7 @@ finally
 - **`BigNumber`** — the custom arbitrary-precision decimal struct lives in `Corvus.Numerics`. Prefer it over `decimal` when the JSON value may have precision beyond 28 significant digits.
 - **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.
 - **Data-driven coverage improvement** — when working to improve code coverage, ONLY write tests that target specific uncovered branches/lines identified in Cobertura XML coverage reports. Never write generic tests for already-covered functions hoping they might help. The process is: (1) collect coverage with `dotnet-coverage` (see below), (2) parse the Cobertura XML to find exact uncovered line ranges, (3) read the actual source code at those lines to understand the uncovered logic, (4) devise expressions/inputs that exercise those specific code paths, (5) verify with the reference implementation where applicable, (6) **after writing tests, re-collect coverage for just those tests and verify the specific target lines moved from 0 to >0 hits** — "tests pass" does NOT mean "target code paths exercised." If target lines are still uncovered, the tests are exercising different code paths and must be revised, (7) **iterate until every target line is covered, or you have verified evidence that a path is unreachable** — do not stop after one attempt. For lines you cannot cover, verify the claim by tracing all callers and checking generated code before reporting to the user; provide the evidence (e.g., "grep for `Source<TContext>` across all `.cs` files finds no call sites that construct one"). The coverage report is the sole source of truth for what needs testing — not guesswork about what "might" be uncovered. Remove any tests that do not contribute novel coverage.
-- **Coverage tooling** — use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet (`--collect:"XPlat Code Coverage"`). Coverlet 10.0.0 has a known instrumentation bug that reports 0% coverage for many types (including ref structs, static classes, and regular sealed classes) despite tests exercising the code. The repo includes `dotnet-coverage.settings.xml` which filters to published library assemblies and excludes non-actionable source files. Collect single-TFM coverage with: `dotnet-coverage collect --output result.cobertura.xml --output-format cobertura -s dotnet-coverage.settings.xml "dotnet test Corvus.Text.Json.slnx -f net10.0 --filter \"category!=failing&category!=outerloop\" --no-build -v q --nologo"`. For true cross-TFM coverage, collect net10.0 with `Corvus.Text.Json.slnx` (all test projects) and net481 with `Corvus.Text.Json.Test.slnx` (multi-TFM safe subset), then merge: `dotnet-coverage merge --output merged.cobertura.xml --output-format cobertura coverage-net10.0.cobertura.xml coverage-net481.cobertura.xml`. The output is a single Cobertura XML — no per-project merge step is needed. See the `corvus-build-and-test` skill for the full multi-TFM workflow, XML parsing patterns, and the coverage verification loop.
+- **Coverage tooling** — use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet (`--collect:"XPlat Code Coverage"`). Coverlet 10.0.0 has a known instrumentation bug that reports 0% coverage for many types (including ref structs, static classes, and regular sealed classes) despite tests exercising the code. The repo includes `dotnet-coverage.settings.xml` which filters to published library assemblies and excludes non-actionable source files. All test projects target both net10.0 and net481, so a single `dotnet test` without `-f` runs both TFMs and `dotnet-coverage` merges them automatically: `dotnet-coverage collect --output result.cobertura.xml --output-format cobertura -s dotnet-coverage.settings.xml "dotnet test Corvus.Text.Json.slnx --filter \"category!=failing&category!=outerloop\" --no-build -v q --nologo"`. The output is a single Cobertura XML with merged multi-TFM coverage. See the `corvus-build-and-test` skill for XML parsing patterns and the coverage verification loop.
 - **Coverage exclusions** — the `dotnet-coverage.settings.xml` `<Sources><Exclude>` section filters out non-actionable source files that inflate coverage denominators: (1) `src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/` — V4 CLI-generated core types (~144 files), (2) all Roslyn source-generator output under `obj/` (matched by `.*\\obj\\.*\.g\.cs$`), and (3) auto-generated resource files (`SR.cs` and `*.Designer.cs`). When parsing Cobertura XML to calculate coverage percentages, apply the same exclusions: skip classes whose `filename` matches any of these patterns. Failure to exclude these will significantly undercount coverage for packages with generated code or resource files.
 - **Doc samples: prefer `Parse` over `ParseValue`** — documentation examples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Use `ParseValue` only where `Parse` is impractical (e.g., inline dictionary initializers for small constants).
 - **Doc samples: use implicit `JsonElement.Source` conversions** — write `PatchBuilder.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)` instead of wrapping scalars in `ParseValue`.
