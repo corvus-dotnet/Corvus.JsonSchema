@@ -6,7 +6,7 @@
 // The .NET Foundation licensed this code under the MIT license.
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
-using System.Buffers;
+using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -223,12 +223,8 @@ internal static class Utf8UriTemplate
             return true;
         }
 
-        // Handle Unicode (ucschar)
-        if (b > 0x7F)
-        {
-            return ParseUcsChar(input, ref position);
-        }
-
+        // The lookup table covers all bytes >= 0x80 so this is unreachable.
+        Debug.Fail("IsLiteralLookup should have handled all byte values that reach this point.");
         return false;
     }
 
@@ -416,53 +412,6 @@ internal static class Utf8UriTemplate
 
         position += 3;
         return true;
-    }
-
-    /// <summary>
-    /// Parses ucschar according to RFC 6570
-    /// ucschar = %xA0-D7FF / %xF900-FDCF / %xFDF0-FFEF
-    /// / %x10000-1FFFD / %x20000-2FFFD / %x30000-3FFFD
-    /// / %x40000-4FFFD / %x50000-5FFFD / %x60000-6FFFD
-    /// / %x70000-7FFFD / %x80000-8FFFD / %x90000-9FFFD
-    /// / %xA0000-AFFFD / %xB0000-BFFFD / %xC0000-CFFFD
-    /// / %xD0000-DFFFD / %xE1000-EFFFD
-    /// </summary>
-    private static bool ParseUcsChar(ReadOnlySpan<byte> input, ref int position)
-    {
-        // Use Rune to decode UTF-8 properly
-        OperationStatus status = Rune.DecodeFromUtf8(input.Slice(position), out Rune rune, out int bytesConsumed);
-
-        if (status != OperationStatus.Done)
-            return false;
-
-        uint codePoint = (uint)rune.Value;
-
-        // Check if the code point is in the valid UCS character ranges per RFC 6570
-        bool isValid = (codePoint >= 0xA0 && codePoint <= 0xD7FF) ||
-                       (codePoint >= 0xF900 && codePoint <= 0xFDCF) ||
-                       (codePoint >= 0xFDF0 && codePoint <= 0xFFEF) ||
-                       (codePoint >= 0x10000 && codePoint <= 0x1FFFD) ||
-                       (codePoint >= 0x20000 && codePoint <= 0x2FFFD) ||
-                       (codePoint >= 0x30000 && codePoint <= 0x3FFFD) ||
-                       (codePoint >= 0x40000 && codePoint <= 0x4FFFD) ||
-                       (codePoint >= 0x50000 && codePoint <= 0x5FFFD) ||
-                       (codePoint >= 0x60000 && codePoint <= 0x6FFFD) ||
-                       (codePoint >= 0x70000 && codePoint <= 0x7FFFD) ||
-                       (codePoint >= 0x80000 && codePoint <= 0x8FFFD) ||
-                       (codePoint >= 0x90000 && codePoint <= 0x9FFFD) ||
-                       (codePoint >= 0xA0000 && codePoint <= 0xAFFFD) ||
-                       (codePoint >= 0xB0000 && codePoint <= 0xBFFFD) ||
-                       (codePoint >= 0xC0000 && codePoint <= 0xCFFFD) ||
-                       (codePoint >= 0xD0000 && codePoint <= 0xDFFFD) ||
-                       (codePoint >= 0xE1000 && codePoint <= 0xEFFFD);
-
-        if (isValid)
-        {
-            position += bytesConsumed;
-            return true;
-        }
-
-        return false;
     }
 
     // Character classification helpers with aggressive inlining

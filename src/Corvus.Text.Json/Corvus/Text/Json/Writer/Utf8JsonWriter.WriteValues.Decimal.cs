@@ -45,14 +45,6 @@ public sealed partial class Utf8JsonWriter
         _tokenType = JsonTokenType.Number;
     }
 
-    internal void WriteNumberValueAsString(decimal value)
-    {
-        Span<byte> utf8Number = stackalloc byte[JsonConstants.MaximumFormatDecimalLength];
-        bool result = Utf8Formatter.TryFormat(value, utf8Number, out int bytesWritten);
-        Debug.Assert(result);
-        WriteNumberValueAsStringUnescaped(utf8Number.Slice(0, bytesWritten));
-    }
-
     private void WriteNumberValueIndented(decimal value)
     {
         int indent = Indentation;

@@ -303,6 +303,7 @@
     <Compile Include="Utf8JsonWriterTests.Values.StringSegment.cs" />
     <Compile Include="Utf8JsonWriterTests.cs" />
     <Compile Include="Utf8JsonWriterTests.WriteRaw.cs" />
+    <Compile Include="WriterAndTemplateCoverageTests.cs" />
     <Compile Include="Utf8UriTemplateTests.cs" />
     <Compile Include="Utf8UriFormatTests.cs" />
     <Compile Include="Utf8UriApplyTests.cs" />
