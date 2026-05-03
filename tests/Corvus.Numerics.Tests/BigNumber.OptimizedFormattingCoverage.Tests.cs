@@ -319,6 +319,69 @@ public class BigNumberOptimizedFormattingCoverageTests
     }
 
     [Fact]
+    public void TryFormatOptimized_RawFormat_Zero_BufferTooSmall()
+    {
+        BigNumber zero = BigNumber.Zero;
+        Span<char> buffer = Span<char>.Empty;
+
+        bool success = zero.TryFormatOptimized(buffer, out int written, ReadOnlySpan<char>.Empty, null);
+
+        success.ShouldBeFalse();
+        written.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatOptimized_RawFormat_ZeroExponent_BufferTooSmall()
+    {
+        BigNumber num = new(1234567890, 0);
+        Span<char> buffer = stackalloc char[3]; // Too small for "1234567890"
+
+        bool success = num.TryFormatOptimized(buffer, out int written, ReadOnlySpan<char>.Empty, null);
+
+        success.ShouldBeFalse();
+        written.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatOptimized_RawFormat_WithExponent_SigFitsButExponentDoesNot()
+    {
+        // Significand "1" fits but "E" doesn't
+        BigNumber num = new(1, 5);
+        Span<char> buffer = stackalloc char[1]; // Only room for "1", not "1E5"
+
+        bool success = num.TryFormatOptimized(buffer, out int written, ReadOnlySpan<char>.Empty, null);
+
+        success.ShouldBeFalse();
+        written.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatOptimized_RawFormat_ExponentTruncated()
+    {
+        // Significand "1" + "E" fit but exponent "12345" doesn't
+        BigNumber num = new(1, 12345);
+        Span<char> buffer = stackalloc char[3]; // Room for "1E" but not "1E12345"
+
+        bool success = num.TryFormatOptimized(buffer, out int written, ReadOnlySpan<char>.Empty, null);
+
+        success.ShouldBeFalse();
+        written.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatOptimized_Format_SignificandTooLargeForBuffer()
+    {
+        // Force the TryFormatBigIntegerUtf8 to fail because significand is larger than buffer
+        BigNumber num = new(1234567890, 0);
+        Span<char> buffer = stackalloc char[3]; // Too small
+
+        bool success = num.TryFormatOptimized(buffer, out int written, "F0", CultureInfo.InvariantCulture);
+
+        success.ShouldBeFalse();
+        written.ShouldBe(0);
+    }
+
+    [Fact]
     public void TryFormatOptimized_VerySmallNumber_WorksCorrectly()
     {
         BigNumber num = new(123456789, -100);
@@ -329,4 +392,251 @@ public class BigNumberOptimizedFormattingCoverageTests
         success.ShouldBeTrue();
         buffer.Slice(0, written).ToString().ShouldBe("1.23E-092");
     }
+
+#if NET
+    #region TryFormatUtf8Optimized (byte span with format)
+
+    [Fact]
+    public void TryFormatUtf8Optimized_WithFormat_Succeeds()
+    {
+        BigNumber value = new(12345, -2); // 123.45
+        Span<byte> dest = stackalloc byte[64];
+        bool success = value.TryFormatUtf8Optimized(dest, out int bytesWritten, "F2", CultureInfo.InvariantCulture);
+        success.ShouldBeTrue();
+        System.Text.Encoding.UTF8.GetString(dest.Slice(0, bytesWritten)).ShouldBe("123.45");
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_NegativeValue_WithFormat()
+    {
+        BigNumber value = new(-12345, -2); // -123.45
+        Span<byte> dest = stackalloc byte[64];
+        bool success = value.TryFormatUtf8Optimized(dest, out int bytesWritten, "F2", CultureInfo.InvariantCulture);
+        success.ShouldBeTrue();
+        System.Text.Encoding.UTF8.GetString(dest.Slice(0, bytesWritten)).ShouldBe("-123.45");
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_WithFormat_BufferTooSmall()
+    {
+        BigNumber value = new(12345, -2); // 123.45
+        Span<byte> dest = stackalloc byte[2]; // Too small
+        bool success = value.TryFormatUtf8Optimized(dest, out int bytesWritten, "F2", CultureInfo.InvariantCulture);
+        success.ShouldBeFalse();
+        bytesWritten.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_ZeroWithFormat()
+    {
+        BigNumber value = BigNumber.Zero;
+        Span<byte> dest = stackalloc byte[64];
+        bool success = value.TryFormatUtf8Optimized(dest, out int bytesWritten, "F2", CultureInfo.InvariantCulture);
+        success.ShouldBeTrue();
+        System.Text.Encoding.UTF8.GetString(dest.Slice(0, bytesWritten)).ShouldBe("0.00");
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_EmptyFormat_WithExponent()
+    {
+        BigNumber value = new(123, 5);
+        Span<byte> dest = stackalloc byte[64];
+        bool success = value.TryFormatUtf8Optimized(dest, out int bytesWritten, ReadOnlySpan<char>.Empty, null);
+        success.ShouldBeTrue();
+        System.Text.Encoding.UTF8.GetString(dest.Slice(0, bytesWritten)).ShouldBe("123E5");
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_EmptyFormat_Zero()
+    {
+        BigNumber value = BigNumber.Zero;
+        Span<byte> dest = stackalloc byte[64];
+        bool success = value.TryFormatUtf8Optimized(dest, out int bytesWritten, ReadOnlySpan<char>.Empty, null);
+        success.ShouldBeTrue();
+        System.Text.Encoding.UTF8.GetString(dest.Slice(0, bytesWritten)).ShouldBe("0");
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_EmptyFormat_Zero_BufferTooSmall()
+    {
+        BigNumber value = BigNumber.Zero;
+        Span<byte> dest = Span<byte>.Empty;
+        bool success = value.TryFormatUtf8Optimized(dest, out int bytesWritten, ReadOnlySpan<char>.Empty, null);
+        success.ShouldBeFalse();
+        bytesWritten.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_EmptyFormat_WithExponent_BufferTooSmall()
+    {
+        BigNumber value = new(12345, 10); // "12345E10"
+        Span<byte> dest = stackalloc byte[5]; // Too small
+        bool success = value.TryFormatUtf8Optimized(dest, out int bytesWritten, ReadOnlySpan<char>.Empty, null);
+        success.ShouldBeFalse();
+        bytesWritten.ShouldBe(0);
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_EmptyFormat_ZeroExponent()
+    {
+        BigNumber value = new(42, 0);
+        Span<byte> dest = stackalloc byte[64];
+        bool success = value.TryFormatUtf8Optimized(dest, out int bytesWritten, ReadOnlySpan<char>.Empty, null);
+        success.ShouldBeTrue();
+        System.Text.Encoding.UTF8.GetString(dest.Slice(0, bytesWritten)).ShouldBe("42");
+    }
+
+    [Fact]
+    public void TryFormatUtf8Optimized_AllFormats()
+    {
+        BigNumber value = new(12345, -2);
+        Span<byte> dest = stackalloc byte[128];
+
+        value.TryFormatUtf8Optimized(dest, out _, "N2", CultureInfo.InvariantCulture).ShouldBeTrue();
+        value.TryFormatUtf8Optimized(dest, out _, "E2", CultureInfo.InvariantCulture).ShouldBeTrue();
+        value.TryFormatUtf8Optimized(dest, out _, "C2", CultureInfo.InvariantCulture).ShouldBeTrue();
+        value.TryFormatUtf8Optimized(dest, out _, "P2", CultureInfo.InvariantCulture).ShouldBeTrue();
+        value.TryFormatUtf8Optimized(dest, out _, "G5", CultureInfo.InvariantCulture).ShouldBeTrue();
+    }
+
+    #endregion
+
+    #region TryParseJsonUtf8
+
+    [Fact]
+    public void TryParseJsonUtf8_EmptyInput_ReturnsFalse()
+    {
+        bool success = BigNumber.TryParseJsonUtf8(ReadOnlySpan<byte>.Empty, out BigNumber result);
+        success.ShouldBeFalse();
+        result.ShouldBe(BigNumber.Zero);
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_SingleZero()
+    {
+        ReadOnlySpan<byte> input = "0"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        result.ShouldBe(BigNumber.Zero);
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_SimpleInteger()
+    {
+        ReadOnlySpan<byte> input = "12345"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        result.ToString().ShouldBe("12345");
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_NegativeValue()
+    {
+        ReadOnlySpan<byte> input = "-456"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        result.ToString().ShouldBe("-456");
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_WithExponent()
+    {
+        ReadOnlySpan<byte> input = "123E5"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        result.ToString().ShouldBe("123E5");
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_WithNegativeExponent()
+    {
+        ReadOnlySpan<byte> input = "123E-3"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        result.ToString().ShouldBe("123E-3");
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_WithDecimal()
+    {
+        ReadOnlySpan<byte> input = "123.45"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        string formatted = result.ToString("F2", CultureInfo.InvariantCulture);
+        formatted.ShouldBe("123.45");
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_InvalidInput()
+    {
+        ReadOnlySpan<byte> input = "abc"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber _);
+        success.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_NegativeZero()
+    {
+        ReadOnlySpan<byte> input = "-0"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        result.ShouldBe(BigNumber.Zero);
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_DecimalWithExponent()
+    {
+        ReadOnlySpan<byte> input = "1.5E2"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        // 1.5E2 = 150
+        result.ToString("F0", CultureInfo.InvariantCulture).ShouldBe("150");
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_LeadingZeroDecimal()
+    {
+        ReadOnlySpan<byte> input = "0.001"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        result.ToString("F3", CultureInfo.InvariantCulture).ShouldBe("0.001");
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_LeadingWhitespace()
+    {
+        ReadOnlySpan<byte> input = "  123"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        result.ToString().ShouldBe("123");
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_AllWhitespace()
+    {
+        ReadOnlySpan<byte> input = "   "u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeFalse();
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_PlusSign()
+    {
+        ReadOnlySpan<byte> input = "+42"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeTrue();
+        result.ToString().ShouldBe("42");
+    }
+
+    [Fact]
+    public void TryParseJsonUtf8_SignOnly()
+    {
+        // Just a minus sign with no digits
+        ReadOnlySpan<byte> input = "-"u8;
+        bool success = BigNumber.TryParseJsonUtf8(input, out BigNumber result);
+        success.ShouldBeFalse();
+    }
+
+    #endregion
+#endif
 }
