@@ -796,41 +796,6 @@ public struct MetadataDb : IDisposable
     }
 
     /// <summary>
-    /// Finds the index of the first unset size or length entry for the specified token type.
-    /// </summary>
-    /// <param name="lookupType">The token type to search for (must be StartObject or StartArray).</param>
-    /// <returns>The index of the first unset entry, or -1 if not found.</returns>
-    internal int FindIndexOfFirstUnsetSizeOrLength(JsonTokenType lookupType)
-    {
-        Debug.Assert(lookupType == JsonTokenType.StartObject || lookupType == JsonTokenType.StartArray);
-        return FindOpenElement(lookupType);
-    }
-
-    /// <summary>
-    /// Finds an open element of the specified token type by searching backwards through the database.
-    /// </summary>
-    /// <param name="lookupType">The token type to search for.</param>
-    /// <returns>The index of the open element, or -1 if not found.</returns>
-    internal int FindOpenElement(JsonTokenType lookupType)
-    {
-        Span<byte> data = _data.AsSpan(0, Length);
-
-        for (int i = Length - DbRow.Size; i >= 0; i -= DbRow.Size)
-        {
-            DbRow row = MemoryMarshal.Read<DbRow>(data.Slice(i));
-
-            if (row.IsUnknownSize && row.TokenType == lookupType)
-            {
-                return i;
-            }
-        }
-
-        // We should never reach here.
-        Debug.Fail($"Unable to find expected {lookupType} token");
-        return -1;
-    }
-
-    /// <summary>
     /// Gets the database row at the specified index.
     /// </summary>
     /// <param name="index">The index of the database row to retrieve.</param>

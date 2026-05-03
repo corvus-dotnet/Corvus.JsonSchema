@@ -274,4 +274,52 @@ public class WriterAndTemplateCoverageTests
     }
 
     #endregion
+
+    #region Utf8JsonWriterCache.RentWriter / ReturnWriter
+
+    [Fact]
+    public void JsonWorkspace_RentWriter_ReturnWriter()
+    {
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        var bufferWriter = new ArrayBufferWriter<byte>();
+
+        Utf8JsonWriter writer = workspace.RentWriter(bufferWriter);
+        writer.WriteStartObject();
+        writer.WriteNumber("x"u8, 42);
+        writer.WriteEndObject();
+        writer.Flush();
+
+        workspace.ReturnWriter(writer);
+
+        string result = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
+        Assert.Equal("""{"x":42}""", result);
+    }
+
+    #endregion
+
+    #region ParsedJsonDocument generic TryGetNamedPropertyValue<TElement>(char overload)
+
+    [Fact]
+    public void ParsedJsonDocument_GenericTryGetNamedPropertyValue_Char_Found()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"hello","value":42}"""u8.ToArray());
+        IJsonDocument iDoc = doc;
+
+        bool found = iDoc.TryGetNamedPropertyValue<JsonElement>(0, "name".AsSpan(), out JsonElement value);
+        Assert.True(found);
+        Assert.Equal("hello", value.GetString());
+    }
+
+    [Fact]
+    public void ParsedJsonDocument_GenericTryGetNamedPropertyValue_Char_NotFound()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"hello"}"""u8.ToArray());
+        IJsonDocument iDoc = doc;
+
+        bool found = iDoc.TryGetNamedPropertyValue<JsonElement>(0, "missing".AsSpan(), out JsonElement value);
+        Assert.False(found);
+        Assert.Equal(JsonValueKind.Undefined, value.ValueKind);
+    }
+
+    #endregion
 }
