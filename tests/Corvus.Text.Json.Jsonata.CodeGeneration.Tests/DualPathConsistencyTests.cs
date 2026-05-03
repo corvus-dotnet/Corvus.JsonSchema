@@ -126,6 +126,23 @@ public class DualPathConsistencyTests : IClassFixture<CodeGenConformanceFixture>
         yield return ["""$formatNumber(1234.5, "#,##0.00")""", "null", "format-number-basic"];
         yield return ["""$formatNumber(-1234.5, "#,##0.00;(#,##0.00)")""", "null", "format-number-negative"];
 
+        // ─── T0410 type validation (bug fixes — both paths must throw) ───
+        yield return ["""$sqrt("hello")""", "null", "t0410-sqrt-string"];
+        yield return ["""$abs(true)""", "null", "t0410-abs-bool"];
+        yield return ["""$floor(null)""", "null", "t0410-floor-null"];
+        yield return ["""$ceil("test")""", "null", "t0410-ceil-string"];
+        yield return ["""$round("test")""", "null", "t0410-round-string"];
+        yield return ["""$power("a", 2)""", "null", "t0410-power-string-base"];
+        yield return ["""$power(2, "a")""", "null", "t0410-power-string-exp"];
+        yield return ["""$map([1,2,3], "notfunc")""", "null", "t0410-map-string-func"];
+        yield return ["""$filter([1,2,3], "notfunc")""", "null", "t0410-filter-string-func"];
+        yield return ["""$reduce([1,2,3], "notfunc")""", "null", "t0410-reduce-string-func"];
+        yield return ["""$match(42, /abc/)""", "null", "t0410-match-number-str"];
+        yield return ["""$formatNumber("not a number", "#")""", "null", "t0410-formatnumber-string"];
+
+        // ─── Shuffle fix (singleton wraps in array) ───
+        yield return ["""$shuffle(42)""", "null", "shuffle-singleton-wraps"];
+
         // ─── Environment limits ───
         yield return ["""$ + 1""", "42", "simple-arithmetic"];
     }

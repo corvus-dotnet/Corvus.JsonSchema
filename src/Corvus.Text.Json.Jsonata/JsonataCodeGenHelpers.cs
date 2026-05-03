@@ -3564,12 +3564,12 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        if (input.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
+            throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
         }
 
-        return JsonataHelpers.NumberFromDouble(Math.Abs(num), workspace);
+        return JsonataHelpers.NumberFromDouble(Math.Abs(input.GetDouble()), workspace);
     }
 
     /// <summary>
@@ -3582,12 +3582,12 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        if (input.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
+            throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
         }
 
-        return JsonataHelpers.NumberFromDouble(Math.Floor(num), workspace);
+        return JsonataHelpers.NumberFromDouble(Math.Floor(input.GetDouble()), workspace);
     }
 
     /// <summary>
@@ -3600,12 +3600,12 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        if (input.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
+            throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
         }
 
-        return JsonataHelpers.NumberFromDouble(Math.Ceiling(num), workspace);
+        return JsonataHelpers.NumberFromDouble(Math.Ceiling(input.GetDouble()), workspace);
     }
 
     /// <summary>
@@ -3618,11 +3618,12 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        if (input.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
+            throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
         }
 
+        double num = input.GetDouble();
         if (num < 0)
         {
             throw new JsonataException("D3060", SR.D3060_TheArgumentOfTheSqrtFunctionMustBeNonNegative, 0);
@@ -3643,16 +3644,21 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        if (input.ValueKind != JsonValueKind.Number)
         {
-            throw new JsonataException("T0410", SR.T0410_UnableToCastValueToANumber, 0);
+            throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
         }
 
+        double num = input.GetDouble();
+
         int precision = 0;
-        if (precisionElement.ValueKind != JsonValueKind.Undefined
-            && FunctionalCompiler.TryCoerceToNumber(precisionElement, out double precD))
+        if (precisionElement.ValueKind == JsonValueKind.Number)
         {
-            precision = (int)precD;
+            precision = (int)precisionElement.GetDouble();
+        }
+        else if (precisionElement.ValueKind != JsonValueKind.Undefined)
+        {
+            throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
         }
 
         double result;
@@ -3676,13 +3682,22 @@ public static class JsonataCodeGenHelpers
     /// </summary>
     public static JsonElement Power(in JsonElement baseInput, in JsonElement exponentInput, JsonWorkspace workspace)
     {
-        if (!FunctionalCompiler.TryCoerceToNumber(baseInput, out double baseNum)
-            || !FunctionalCompiler.TryCoerceToNumber(exponentInput, out double expNum))
+        if (baseInput.IsUndefined() || exponentInput.IsUndefined())
         {
             return default;
         }
 
-        double result = Math.Pow(baseNum, expNum);
+        if (baseInput.ValueKind != JsonValueKind.Number)
+        {
+            throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
+        }
+
+        if (exponentInput.ValueKind != JsonValueKind.Number)
+        {
+            throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
+        }
+
+        double result = Math.Pow(baseInput.GetDouble(), exponentInput.GetDouble());
         if (double.IsInfinity(result) || double.IsNaN(result))
         {
             throw new JsonataException("D3061", SR.D3061_PowerFunctionResultOutOfRange, 0);
@@ -5531,7 +5546,10 @@ public static class JsonataCodeGenHelpers
 
         if (input.ValueKind != JsonValueKind.Array)
         {
-            return input;
+            // Singleton non-array — wrap in single-element array (per JSONata reference)
+            JsonDocumentBuilder<JsonElement.Mutable> wrapDoc = JsonElement.CreateArrayBuilder(workspace, 1);
+            wrapDoc.RootElement.AddItem(input);
+            return (JsonElement)wrapDoc.RootElement;
         }
 
         int len = input.GetArrayLength();
