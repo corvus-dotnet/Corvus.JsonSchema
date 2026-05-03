@@ -318,6 +318,98 @@ public static class JsonDocumentBuilderParseTests
 
     #endregion
 
+    #region ParseValue from multi-segment ReadOnlySequence
+
+    [Fact]
+    public static void ParseValueFromReader_MultiSegment_Object()
+    {
+        // Split the JSON across two segments to exercise HasValueSequence paths
+        byte[] part1 = Encoding.UTF8.GetBytes("""{"name":"Ali""");
+        byte[] part2 = Encoding.UTF8.GetBytes("""ce","age":30}""");
+
+        ReadOnlySequence<byte> sequence = BufferFactory.Create(part1, part2);
+        var reader = new Utf8JsonReader(sequence);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        JsonElement.Mutable root = builder.RootElement;
+        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
+        Assert.Equal(30, root.GetProperty("age"u8).GetInt32());
+    }
+
+    [Fact]
+    public static void ParseValueFromReader_MultiSegment_Array()
+    {
+        // Split array JSON across segments to hit multi-segment StartArray path
+        byte[] part1 = Encoding.UTF8.GetBytes("[1,2,");
+        byte[] part2 = Encoding.UTF8.GetBytes("3,4]");
+
+        ReadOnlySequence<byte> sequence = BufferFactory.Create(part1, part2);
+        var reader = new Utf8JsonReader(sequence);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        JsonElement.Mutable root = builder.RootElement;
+        Assert.Equal("[1,2,3,4]", root.ToString());
+    }
+
+    [Fact]
+    public static void ParseValueFromReader_MultiSegment_NumberSplitAcrossSegments()
+    {
+        // Split a number value across segments so HasValueSequence is true for Number token
+        byte[] part1 = Encoding.UTF8.GetBytes("123");
+        byte[] part2 = Encoding.UTF8.GetBytes("456");
+
+        ReadOnlySequence<byte> sequence = BufferFactory.Create(part1, part2);
+        var reader = new Utf8JsonReader(sequence);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        Assert.Equal("123456", builder.RootElement.ToString());
+    }
+
+    [Fact]
+    public static void ParseValueFromReader_MultiSegment_StringSplitAcrossSegments()
+    {
+        // Split a string value across segments to hit the multi-segment string path
+        byte[] part1 = Encoding.UTF8.GetBytes("\"hel");
+        byte[] part2 = Encoding.UTF8.GetBytes("lo\"");
+
+        ReadOnlySequence<byte> sequence = BufferFactory.Create(part1, part2);
+        var reader = new Utf8JsonReader(sequence);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        Assert.Equal("hello", builder.RootElement.GetString());
+    }
+
+    [Fact]
+    public static void ParseValueFromReader_MultiSegment_TrueSplitAcrossSegments()
+    {
+        // Split 'true' across segments to hit HasValueSequence for True token
+        byte[] part1 = Encoding.UTF8.GetBytes("tr");
+        byte[] part2 = Encoding.UTF8.GetBytes("ue");
+
+        ReadOnlySequence<byte> sequence = BufferFactory.Create(part1, part2);
+        var reader = new Utf8JsonReader(sequence);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        Assert.True(builder.RootElement.GetBoolean());
+    }
+
+    #endregion
+
     #region Mutation after parse
 
     [Fact]

@@ -4,7 +4,9 @@
 
 using System.Buffers;
 using System.Text;
+using Corvus.Text.Json.Compatibility;
 using Corvus.Text.Json.Internal;
+using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
 using NodaTime;
 using Xunit;
 
@@ -239,6 +241,36 @@ public class WriterAndTemplateCoverageTests
         using ParsedJsonDocument<JsonElement> sourceDoc2 = ParsedJsonDocument<JsonElement>.Parse("""{"b":2}"""u8.ToArray());
         using JsonDocumentBuilder<JsonElement.Mutable> builder2 = sourceDoc2.RootElement.CreateBuilder(workspace);
         Assert.Equal("""{"b":2}""", builder2.RootElement.ToString());
+    }
+
+    #endregion
+
+    #region ValidationContext.Results (non-null collector path)
+
+    [Fact]
+    public void ValidationContext_Results_WithCollector_ReturnsResults()
+    {
+        // Validate an invalid instance to produce validation results with a non-empty collector
+        using var doc = ParsedJsonDocument<ClosedObjectNoPatterns>.Parse("{}");
+
+        ValidationContext result = doc.RootElement.Validate(
+            ValidationContext.ValidContext,
+            ValidationLevel.Detailed);
+
+        // Access Results to trigger BuildResults with non-null collector containing failures
+        var results = result.Results;
+        Assert.NotNull(results);
+        Assert.False(result.IsValid);
+        Assert.NotEmpty(results);
+    }
+
+    [Fact]
+    public void ValidationContext_Results_NullCollector_ReturnsEmpty()
+    {
+        // The static ValidContext has no collector — should return empty
+        var results = ValidationContext.ValidContext.Results;
+        Assert.NotNull(results);
+        Assert.Empty(results);
     }
 
     #endregion
