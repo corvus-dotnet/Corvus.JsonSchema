@@ -1,6 +1,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 
 using Corvus.Text.Json.Internal;
+using System.Linq;
 using Xunit;
 
 namespace Corvus.Text.Json.Tests;
@@ -520,6 +521,101 @@ public static class DocumentStringAndFormatCoverageTests
 
         Assert.False(builderDoc.TryGetLine(0, out string? line));
         Assert.Null(line);
+    }
+
+    #endregion
+
+    #region Writer large-escape buffer paths (ArrayPool rent for escaped property/value names)
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Writer_LargeEscapedPropertyName_Utf8_ExceedsStackallocThreshold()
+    {
+        // Property name with 50 control chars (U+0001): each escapes to \u0001 (6 bytes) → 300 > 256 threshold
+        string escapedChars = string.Concat(Enumerable.Repeat("\\u0001", 50));
+        string json = $"{{\"{escapedChars}\": \"hello\"}}";
+
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        JsonElement element = doc.RootElement;
+
+        // Use WriteTo to exercise the writer's escaping paths
+        using var buffer = new System.IO.MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            element.WriteTo(writer);
+        }
+
+        string result = System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+        Assert.Contains("hello", result);
+        Assert.Contains("\\u0001", result);
+    }
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Writer_LargeEscapedValue_ExceedsStackallocThreshold()
+    {
+        // Value with 50 control chars (U+0001): each escapes to \u0001 (6 bytes) → 300 > 256 threshold
+        string escapedChars = string.Concat(Enumerable.Repeat("\\u0001", 50));
+        string json = $"{{\"key\": \"{escapedChars}\"}}";
+
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        JsonElement element = doc.RootElement;
+
+        using var buffer = new System.IO.MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            element.WriteTo(writer);
+        }
+
+        string result = System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+        Assert.Contains("\\u0001", result);
+    }
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Writer_LargeEscapedPropertyAndValue_BothExceedThreshold()
+    {
+        // Both property name and value exceed the threshold
+        string escapedProp = string.Concat(Enumerable.Repeat("\\u0002", 50));
+        string escapedValue = string.Concat(Enumerable.Repeat("\\u0003", 50));
+        string json = $"{{\"{escapedProp}\": \"{escapedValue}\"}}";
+
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        JsonElement element = doc.RootElement;
+
+        using var buffer = new System.IO.MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            element.WriteTo(writer);
+        }
+
+        string result = System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+        Assert.Contains("\\u0002", result);
+        Assert.Contains("\\u0003", result);
+    }
+
+    [Fact]
+    [Trait("category", "coverage")]
+    public static void Writer_LargeEscapedPropertyName_Builder_ExceedsStackallocThreshold()
+    {
+        // Same but via builder serialization path
+        string escapedChars = string.Concat(Enumerable.Repeat("\\u0001", 50));
+        string json = $"{{\"{escapedChars}\": \"world\"}}";
+
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using var builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        using var buffer = new System.IO.MemoryStream();
+        using (var writer = new Utf8JsonWriter(buffer))
+        {
+            root.WriteTo(writer);
+        }
+
+        string result = System.Text.Encoding.UTF8.GetString(buffer.ToArray());
+        Assert.Contains("\\u0001", result);
+        Assert.Contains("world", result);
     }
 
     #endregion
