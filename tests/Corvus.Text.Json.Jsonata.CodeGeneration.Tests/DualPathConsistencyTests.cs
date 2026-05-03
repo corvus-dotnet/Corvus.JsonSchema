@@ -140,6 +140,33 @@ public class DualPathConsistencyTests : IClassFixture<CodeGenConformanceFixture>
         yield return ["""$match(42, /abc/)""", "null", "t0410-match-number-str"];
         yield return ["""$formatNumber("not a number", "#")""", "null", "t0410-formatnumber-string"];
 
+        // ─── FormatBase type validation (reference throws T0410) ───
+        yield return ["""$formatBase("hello", 16)""", "null", "t0410-formatbase-string"];
+        yield return ["""$formatBase(true, 16)""", "null", "t0410-formatbase-bool"];
+        yield return ["""$formatBase(null, 16)""", "null", "t0410-formatbase-null"];
+        yield return ["""$formatBase(255, "hex")""", "null", "t0410-formatbase-string-radix"];
+        yield return ["""$formatBase(255, true)""", "null", "t0410-formatbase-bool-radix"];
+        yield return ["""$formatBase(255, null)""", "null", "t0410-formatbase-null-radix"];
+        yield return ["""$formatBase(255, nosuchvar)""", "null", "formatbase-undefined-radix-default"];
+
+        // ─── Each type validation (reference throws T0410) ───
+        yield return ["""$each(42, function($v,$k){$v})""", "null", "t0410-each-number"];
+        yield return ["""$each(null, function($v,$k){$v})""", "null", "t0410-each-null"];
+        yield return ["""$each({"a":1}, 42)""", "null", "t0410-each-nonfunc"];
+        yield return ["""$each({"a":1}, nosuchvar)""", "null", "t0410-each-undefined-func"];
+
+        // ─── Sift type validation (reference throws T0410) ───
+        yield return ["""$sift(42, function($v,$k){true})""", "null", "t0410-sift-number"];
+        yield return ["""$sift(null, function($v,$k){true})""", "null", "t0410-sift-null"];
+        yield return ["""$sift({"a":1}, 42)""", "null", "t0410-sift-nonfunc"];
+        yield return ["""$sift({"a":1}, nosuchvar)""", "null", "t0410-sift-undefined-func"];
+
+        // ─── Match pattern type validation (reference throws T0410) ───
+        yield return ["""$match("hello", 42)""", "null", "t0410-match-nonregex-number"];
+        yield return ["""$match("hello", nosuchvar)""", "null", "t0410-match-nonregex-undef"];
+        yield return ["""$match("hello", null)""", "null", "t0410-match-nonregex-null"];
+        yield return ["""$match(null, /abc/)""", "null", "t0410-match-null-str"];
+
         // ─── Shuffle fix (singleton wraps in array) ───
         yield return ["""$shuffle(42)""", "null", "shuffle-singleton-wraps"];
 

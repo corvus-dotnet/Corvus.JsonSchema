@@ -7445,25 +7445,27 @@ public static class JsonataCodeGenHelpers
     /// </summary>
     public static JsonElement FormatBase(in JsonElement input, in JsonElement radixElement, JsonWorkspace workspace)
     {
-        if (input.IsNullOrUndefined())
+        if (input.IsUndefined())
         {
             return default;
         }
 
-        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        if (input.ValueKind != JsonValueKind.Number)
         {
-            return default;
+            throw new JsonataException("T0410", SR.T0410_FormatBaseFirstArgMustBeANumber, 0);
         }
+
+        double num = input.GetDouble();
 
         int radixInt = 10;
         if (radixElement.ValueKind != JsonValueKind.Undefined)
         {
-            if (!FunctionalCompiler.TryCoerceToNumber(radixElement, out double radix))
+            if (radixElement.ValueKind != JsonValueKind.Number)
             {
-                return default;
+                throw new JsonataException("T0410", SR.T0410_FormatBaseSecondArgMustBeANumber, 0);
             }
 
-            radixInt = (int)Math.Truncate(radix);
+            radixInt = (int)Math.Truncate(radixElement.GetDouble());
         }
 
         if (radixInt < 2 || radixInt > 36)
@@ -9103,14 +9105,14 @@ public static class JsonataCodeGenHelpers
         EachTransform transform,
         JsonWorkspace workspace)
     {
-        if (input.IsNullOrUndefined())
+        if (input.IsUndefined())
         {
             return default;
         }
 
         if (input.ValueKind != JsonValueKind.Object)
         {
-            return default;
+            throw new JsonataException("T0410", SR.T0410_EachFirstArgMustBeAnObject, 0);
         }
 
         var buffer = default(ElementBuffer);
@@ -9146,14 +9148,14 @@ public static class JsonataCodeGenHelpers
         EachTransformWithObject transform,
         JsonWorkspace workspace)
     {
-        if (input.IsNullOrUndefined())
+        if (input.IsUndefined())
         {
             return default;
         }
 
         if (input.ValueKind != JsonValueKind.Object)
         {
-            return default;
+            throw new JsonataException("T0410", SR.T0410_EachFirstArgMustBeAnObject, 0);
         }
 
         var buffer = default(ElementBuffer);
@@ -9191,14 +9193,14 @@ public static class JsonataCodeGenHelpers
         SiftPredicate predicate,
         JsonWorkspace workspace)
     {
-        if (input.IsNullOrUndefined())
+        if (input.IsUndefined())
         {
             return default;
         }
 
         if (input.ValueKind != JsonValueKind.Object)
         {
-            return default;
+            throw new JsonataException("T0410", SR.T0410_SiftFirstArgMustBeAnObject, 0);
         }
 
         JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(
@@ -9234,14 +9236,14 @@ public static class JsonataCodeGenHelpers
         SiftPredicateWithObject predicate,
         JsonWorkspace workspace)
     {
-        if (input.IsNullOrUndefined())
+        if (input.IsUndefined())
         {
             return default;
         }
 
         if (input.ValueKind != JsonValueKind.Object)
         {
-            return default;
+            throw new JsonataException("T0410", SR.T0410_SiftFirstArgMustBeAnObject, 0);
         }
 
         JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(

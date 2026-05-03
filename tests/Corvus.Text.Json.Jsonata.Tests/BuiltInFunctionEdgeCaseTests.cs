@@ -3876,10 +3876,11 @@ public class BuiltInFunctionEdgeCaseTests
         Assert.Equal("T0410", ex.Code);
     }
 
-    [Fact] // BF 3247-3249: $match with non-regex non-lambda pattern → undefined
-    public void Match_NonRegexPattern_ReturnsUndefined()
+    [Fact] // BF 3247-3249: $match with non-regex non-lambda pattern → T0410 (per reference impl)
+    public void Match_NonRegexPattern_ThrowsT0410()
     {
-        Assert.Equal("undefined", Eval("""$match("hello", 42)"""));
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$match("hello", 42)"""));
+        Assert.Equal("T0410", ex.Code);
     }
 
     [Fact] // BF 3270: $match with capture groups

@@ -84,9 +84,10 @@ public class ReduceAndErrorTests
     }
 
     [Fact]
-    public void Each_OnNonObject_ReturnsUndefined()
+    public void Each_OnNonObject_ThrowsT0410()
     {
-        string? result = Evaluator.EvaluateToString("""$each(42, function($v,$k){$k})""", "{}");
-        Assert.Null(result);
+        var ex = Assert.Throws<JsonataException>(
+            () => Evaluator.EvaluateToString("""$each(42, function($v,$k){$k})""", "{}"));
+        Assert.Equal("T0410", ex.Code);
     }
 }

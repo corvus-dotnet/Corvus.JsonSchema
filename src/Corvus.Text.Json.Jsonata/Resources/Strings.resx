@@ -446,6 +446,12 @@
   <data name="T0410_EachExpects12Arguments" xml:space="preserve">
     <value>$each expects 1-2 arguments</value>
   </data>
+  <data name="T0410_EachFirstArgMustBeAnObject" xml:space="preserve">
+    <value>Type error: first argument of $each must be an object</value>
+  </data>
+  <data name="T0410_EachSecondArgMustBeAFunction" xml:space="preserve">
+    <value>Type error: second argument of $each must be a function</value>
+  </data>
   <data name="T0410_EncodeurlExpects1Argument" xml:space="preserve">
     <value>$encodeUrl expects 1 argument</value>
   </data>
@@ -472,6 +478,12 @@
   </data>
   <data name="T0410_FormatbaseExpects1Or2Arguments" xml:space="preserve">
     <value>$formatBase expects 1 or 2 arguments</value>
+  </data>
+  <data name="T0410_FormatBaseFirstArgMustBeANumber" xml:space="preserve">
+    <value>Type error: first argument of $formatBase must be a number</value>
+  </data>
+  <data name="T0410_FormatBaseSecondArgMustBeANumber" xml:space="preserve">
+    <value>Type error: second argument of $formatBase must be a number</value>
   </data>
   <data name="T0410_FormatintegerExpectsAtLeast2Arguments" xml:space="preserve">
     <value>$formatInteger expects at least 2 arguments</value>
@@ -517,6 +529,9 @@
   </data>
   <data name="T0410_MatchFirstArgMustBeAString" xml:space="preserve">
     <value>First argument of $match must be a string</value>
+  </data>
+  <data name="T0410_MatchSecondArgMustBeARegex" xml:space="preserve">
+    <value>Type error: second argument of $match must be a regex</value>
   </data>
   <data name="T0410_FormatNumberFirstArgMustBeANumber" xml:space="preserve">
     <value>First argument of $formatNumber must be a number</value>
@@ -571,6 +586,12 @@
   </data>
   <data name="T0410_SiftExpects12Arguments" xml:space="preserve">
     <value>$sift expects 1-2 arguments</value>
+  </data>
+  <data name="T0410_SiftFirstArgMustBeAnObject" xml:space="preserve">
+    <value>Type error: first argument of $sift must be an object</value>
+  </data>
+  <data name="T0410_SiftSecondArgMustBeAFunction" xml:space="preserve">
+    <value>Type error: second argument of $sift must be a function</value>
   </data>
   <data name="T0410_SingleExpects12Arguments" xml:space="preserve">
     <value>$single expects 1-2 arguments</value>

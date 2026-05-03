@@ -2588,15 +2588,20 @@ internal static class BuiltInFunctions
             var seq = objArg(input, env);
             var funcSeq = funcArg(input, env);
 
-            if (seq.IsUndefined || !funcSeq.IsLambda)
+            if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
+            }
+
+            if (!funcSeq.IsLambda)
+            {
+                throw new JsonataException("T0410", SR.T0410_EachSecondArgMustBeAFunction, 0);
             }
 
             var obj = seq.FirstOrDefault;
             if (obj.ValueKind != JsonValueKind.Object)
             {
-                return Sequence.Undefined;
+                throw new JsonataException("T0410", SR.T0410_EachFirstArgMustBeAnObject, 0);
             }
 
             var lambda = funcSeq.Lambda!;
@@ -3066,15 +3071,21 @@ internal static class BuiltInFunctions
         {
             var seq = objArg(input, env);
             var funcSeq = funcArg(input, env);
-            if (seq.IsUndefined || !funcSeq.IsLambda)
+
+            if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
+            }
+
+            if (!funcSeq.IsLambda)
+            {
+                throw new JsonataException("T0410", SR.T0410_SiftSecondArgMustBeAFunction, 0);
             }
 
             var obj = seq.FirstOrDefault;
             if (obj.ValueKind != JsonValueKind.Object)
             {
-                return Sequence.Undefined;
+                throw new JsonataException("T0410", SR.T0410_SiftFirstArgMustBeAnObject, 0);
             }
 
             var lambda = funcSeq.Lambda!;
@@ -3230,11 +3241,12 @@ internal static class BuiltInFunctions
             // {match, start, end, groups, next} where next() returns the next match
             if (patSeq.IsLambda)
             {
-                string? matcherStr = strSeq.FirstOrDefault.GetString();
-                if (matcherStr is null)
+                if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
                 {
-                    return Sequence.Undefined;
+                    throw new JsonataException("T0410", SR.T0410_MatchFirstArgMustBeAString, 0);
                 }
+
+                string matcherStr = strSeq.FirstOrDefault.GetString()!;
 
                 int matcherLimit = int.MaxValue;
                 if (limitArg is not null)
@@ -3324,7 +3336,7 @@ internal static class BuiltInFunctions
 
             if (!patSeq.IsRegex)
             {
-                return Sequence.Undefined;
+                throw new JsonataException("T0410", SR.T0410_MatchSecondArgMustBeARegex, 0);
             }
 
             int limit = int.MaxValue;
@@ -5308,26 +5320,26 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            if (!FunctionalCompiler.TryCoerceToNumber(numSeq.FirstOrDefault, out double num))
+            if (numSeq.FirstOrDefault.ValueKind != JsonValueKind.Number)
             {
-                return Sequence.Undefined;
+                throw new JsonataException("T0410", SR.T0410_FormatBaseFirstArgMustBeANumber, 0);
             }
+
+            double num = numSeq.FirstOrDefault.GetDouble();
 
             int radixInt = 10;
             if (radixArg is not null)
             {
                 var radixSeq = radixArg(input, env);
-                if (radixSeq.IsUndefined)
+                if (!radixSeq.IsUndefined)
                 {
-                    return Sequence.Undefined;
-                }
+                    if (radixSeq.FirstOrDefault.ValueKind != JsonValueKind.Number)
+                    {
+                        throw new JsonataException("T0410", SR.T0410_FormatBaseSecondArgMustBeANumber, 0);
+                    }
 
-                if (!FunctionalCompiler.TryCoerceToNumber(radixSeq.FirstOrDefault, out double radix))
-                {
-                    return Sequence.Undefined;
+                    radixInt = (int)Math.Truncate(radixSeq.FirstOrDefault.GetDouble());
                 }
-
-                radixInt = (int)Math.Truncate(radix);
             }
 
             if (radixInt < 2 || radixInt > 36)

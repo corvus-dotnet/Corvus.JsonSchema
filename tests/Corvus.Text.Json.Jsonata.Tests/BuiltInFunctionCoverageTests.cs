@@ -1273,9 +1273,109 @@ public class BuiltInFunctionCoverageTests
     [InlineData("""$reduce(nosuchvar, function($a,$b){$a+$b})""")]
     [InlineData("""$match(nosuchvar, /abc/)""")]
     [InlineData("""$formatNumber(nosuchvar, "#")""")]
+    [InlineData("""$formatBase(nosuchvar, 16)""")]
+    [InlineData("""$each(nosuchvar, function($v,$k){$v})""")]
+    [InlineData("""$sift(nosuchvar, function($v,$k){true})""")]
     public void UndefinedInput_PropagatesToUndefined(string expression)
     {
         string result = Eval(expression);
         Assert.Equal("undefined", result);
+    }
+
+    // ─── $formatBase type validation (reference throws T0410) ─────────
+
+    [Theory]
+    [InlineData("""$formatBase("hello", 16)""")]
+    [InlineData("""$formatBase(true, 16)""")]
+    [InlineData("""$formatBase(null, 16)""")]
+    [InlineData("""$formatBase([1,2], 16)""")]
+    public void FormatBase_NonNumberFirstArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$formatBase(255, "hex")""")]
+    [InlineData("""$formatBase(255, true)""")]
+    [InlineData("""$formatBase(255, null)""")]
+    public void FormatBase_NonNumberRadix_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void FormatBase_UndefinedRadix_UsesDefault10()
+    {
+        // $formatBase(255, nothing) → uses default radix 10 → "255"
+        string result = Eval("""$formatBase(255, nosuchvar)""");
+        Assert.Equal("\"255\"", result);
+    }
+
+    // ─── $each type validation (reference throws T0410) ───────────────
+
+    [Theory]
+    [InlineData("""$each(42, function($v,$k){$v})""")]
+    [InlineData("""$each("hello", function($v,$k){$v})""")]
+    [InlineData("""$each(null, function($v,$k){$v})""")]
+    [InlineData("""$each([1,2], function($v,$k){$v})""")]
+    public void Each_NonObjectFirstArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$each({"a":1}, 42)""")]
+    [InlineData("""$each({"a":1}, nosuchvar)""")]
+    public void Each_NonFunctionSecondArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    // ─── $sift type validation (reference throws T0410) ───────────────
+
+    [Theory]
+    [InlineData("""$sift(42, function($v,$k){true})""")]
+    [InlineData("""$sift("hello", function($v,$k){true})""")]
+    [InlineData("""$sift(null, function($v,$k){true})""")]
+    [InlineData("""$sift([1,2], function($v,$k){true})""")]
+    public void Sift_NonObjectFirstArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$sift({"a":1}, 42)""")]
+    [InlineData("""$sift({"a":1}, nosuchvar)""")]
+    public void Sift_NonFunctionSecondArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    // ─── $match with non-regex pattern (reference throws T0410) ───────
+
+    [Theory]
+    [InlineData("""$match("hello", 42)""")]
+    [InlineData("""$match("hello", nosuchvar)""")]
+    [InlineData("""$match("hello", null)""")]
+    [InlineData("""$match("hello", true)""")]
+    public void Match_NonRegexPattern_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$match(42, /a/)""")]
+    [InlineData("""$match(null, /a/)""")]
+    public void Match_NonStringFirstArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
     }
 }
