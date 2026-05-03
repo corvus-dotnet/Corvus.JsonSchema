@@ -935,6 +935,68 @@ public partial class JsonRegexValidatorTests
     [InlineData(@"\uD87E\uDC94(?Pabc", JsonRegexOptions.None, false)]
     [InlineData(@"\uD87E\uDC94aaa(?Pabc", JsonRegexOptions.None, false)]
     [InlineData(@"\uD87E\uDC94\uD87E\uDC94\uD87E\uDC94(?Pabc", JsonRegexOptions.None, false)]
+
+    // Coverage: multi-char string with IgnoreCase where chars participate in case conversion (lines 310-315)
+    [InlineData("ABC", JsonRegexOptions.IgnoreCase, true)]
+    [InlineData("AbCdEf", JsonRegexOptions.IgnoreCase, true)]
+
+    // Coverage: ScanBlank failure in CountCaptures with IgnorePatternWhitespace (lines 366-367)
+    [InlineData("(?x)#\n(?#", JsonRegexOptions.None, false)]
+
+    // Coverage: ECMAScript [^] empty negated class (lines 976-978)
+    [InlineData("[^]", JsonRegexOptions.ECMAScript, true)]
+
+    // Coverage: \e escape sequence (lines 1203-1204)
+    [InlineData(@"\e", JsonRegexOptions.None, true)]
+    [InlineData(@"[\e]", JsonRegexOptions.None, true)]
+
+    // Coverage: ECMAScript backreference - forward reference (lines 794, 797-802)
+    [InlineData(@"(a)\1", JsonRegexOptions.ECMAScript, true)]
+    [InlineData(@"\1(a)", JsonRegexOptions.ECMAScript, true)]
+
+    // Coverage: ScanDecimal overflow in angled backreference (lines 759-761)
+    [InlineData(@"\k<2147483648>", JsonRegexOptions.None, false)]
+    [InlineData(@"\k<99999999999>", JsonRegexOptions.None, false)]
+
+    // Coverage: Balancing group decimal overflow (lines 1406-1408)
+    [InlineData(@"(?<1-2147483648>)", JsonRegexOptions.None, false)]
+
+    // Coverage: Balancing group with capture slot 0 (lines 1423-1427)
+    [InlineData(@"(?<a>)(?<0-a>)", JsonRegexOptions.None, false)]
+
+    // Coverage: Named backreference to undefined name (lines 851-853 - ScanCapname in angled context)
+    [InlineData(@"\k<foo>", JsonRegexOptions.None, false)]
+
+    // Coverage: IgnorePatternWhitespace # comment with newline (lines 914-916)
+    [InlineData("#comment\na", JsonRegexOptions.IgnorePatternWhitespace, true)]
+    [InlineData("#\n#\na", JsonRegexOptions.IgnorePatternWhitespace, true)]
+
+    // Coverage: \p in char class with bad property name (lines 1043-1044)
+    [InlineData(@"[\p{}]", JsonRegexOptions.None, false)]
+    [InlineData(@"[\p{]", JsonRegexOptions.None, false)]
+
+    // Coverage: ExpressionConditional with empty condition (valid - lines 602-604)
+    [InlineData(@"(?()|a)", JsonRegexOptions.None, true)]
+
+    // Coverage: Quantifier {startpos == _pos} path (lines 1992-1996)
+    [InlineData(@"a{}", JsonRegexOptions.None, true)]
+    [InlineData(@"b{,}", JsonRegexOptions.None, true)]
+
+    // Coverage: ScanBlank failure after quantifier in IgnorePatternWhitespace (lines 2006-2008)
+    [InlineData("a+ (?#", JsonRegexOptions.IgnorePatternWhitespace, false)]
+
+    // Coverage: AddGroup returns false at end of ScanRegex (lines 2039-2041)
+    [InlineData(@"(?(a)b|c|d)", JsonRegexOptions.None, false)]
+
+    // Coverage: Non-ECMAScript backreference with decimal overflow (lines 822-824)
+    [InlineData(@"(a)\2147483648", JsonRegexOptions.None, false)]
+
+    // Coverage: \a in ECMAScript mode - not valid (lines 1195-1196)
+    [InlineData(@"\a", JsonRegexOptions.ECMAScript, false)]
+    [InlineData(@"[\a]", JsonRegexOptions.ECMAScript, false)]
+
+    // Coverage: ECMAScript backreference scanOnly pass (line 814-816)
+    [InlineData(@"(a)(b)\2", JsonRegexOptions.ECMAScript, true)]
 #endif
     internal void Validate_Validates(string pattern, JsonRegexOptions options, bool expected)
     {
