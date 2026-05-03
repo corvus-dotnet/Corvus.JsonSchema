@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
 using Xunit;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
@@ -168,10 +169,12 @@ public class BuiltInFunctionCoverageTests
     }
 
     [Fact]
-    public void Shuffle_SingletonNonArray_ReturnsAsIs()
+    public void Shuffle_SingletonNonArray_WrapsInArray()
     {
+        // Reference impl (JSONata 1.8.7) returns [42] — wraps scalar in single-element array.
+        // Fixed to match reference behavior.
         string result = Eval("""$shuffle(42)""");
-        Assert.Equal("42", result);
+        Assert.Equal("[42]", result);
     }
 
     // ─── $map with index parameter ─────────────────────────────────────
@@ -263,11 +266,14 @@ public class BuiltInFunctionCoverageTests
     }
 
     // ─── $number with hex/binary/octal (TryParseSpecialRadix) ─────────
+    // NOTE: These are EXTENSIONS beyond the JSONata reference implementation.
+    // Reference impl (v1.8.7+) throws D3030 for hex/binary/octal prefixes.
+    // Our implementation adds support for 0x, 0b, 0o prefixes as a deliberate extension.
 
     [Fact]
     public void Number_HexPrefix()
     {
-        // Covers TryParseSpecialRadix hex path (line 8744)
+        // EXTENSION: Covers TryParseSpecialRadix hex path (line 8744)
         string result = Eval("""$number("0xFF")""");
         Assert.Equal("255", result);
     }
@@ -458,13 +464,26 @@ public class BuiltInFunctionCoverageTests
     }
 
     // ─── $sort with numeric comparator (lines 6443-6448) ──────────────
+    // BUG: Our implementation treats numeric comparator returns as signed comparison
+    // values (negative=a-first, positive=b-first). The JSONata reference treats them
+    // as boolean (truthy=swap, falsy=keep). This means $sort([3,1,2], function($a,$b){$a-$b})
+    // returns [1,2,3] in our impl (numeric semantics) but [2,1,3] in the reference (boolean).
+    // The boolean form ($a > $b → ascending) works correctly in both implementations.
 
     [Fact]
-    public void Sort_NumericComparator()
+    public void Sort_BooleanComparator_Ascending()
     {
-        // Reference: $sort([3,1,2], function($a,$b){$a - $b}) → [1,2,3]
-        string result = Eval("""$sort([3,1,2], function($a,$b){$a - $b})""");
+        // Reference: $sort([3,1,2], function($a,$b){$a > $b}) → [1,2,3] ✓
+        string result = Eval("""$sort([3,1,2], function($a,$b){$a > $b})""");
         Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void Sort_BooleanComparator_Descending()
+    {
+        // Reference: $sort([3,1,2], function($a,$b){$a < $b}) → [3,2,1] ✓
+        string result = Eval("""$sort([3,1,2], function($a,$b){$a < $b})""");
+        Assert.Equal("[3,2,1]", result);
     }
 
     // ─── XPathDateTimeFormatter: TryParseDateTime error branches (lines 227-324) ──────────────
@@ -827,5 +846,436 @@ public class BuiltInFunctionCoverageTests
         var ex = Assert.Throws<JsonataException>(
             () => Eval("""$formatNumber(1234.5, "#e,0")"""));
         Assert.Equal("D3093", ex.Code);
+    }
+
+    // ─── Evaluator: time limit (lines 524-528, 611-614, 855-858) ──────────────
+
+    [Fact]
+    public void Evaluate_WithTimeLimit_CompletesNormally()
+    {
+        // Exercise the timeLimitMs > 0 code path (lines 524-528)
+        // A simple expression should complete well within the limit
+        var evaluator = JsonataEvaluator.Default;
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes("42"));
+        var result = evaluator.Evaluate("$ + 1", doc.RootElement, timeLimitMs: 5000);
+        Assert.Equal(JsonValueKind.Number, result.ValueKind);
+    }
+
+    [Fact]
+    public void Evaluate_WithTimeLimit_ThrowsU1001OnTimeout()
+    {
+        // Very tight time limit with a complex expression should timeout (U1001)
+        var evaluator = JsonataEvaluator.Default;
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes("1"));
+        var ex = Assert.Throws<JsonataException>(
+            () => evaluator.Evaluate(
+                """($f := function($n){$n > 0 ? $f($n-1) + $f($n-2) : 1}; $f(50))""",
+                doc.RootElement,
+                timeLimitMs: 1));
+        Assert.Equal("U1001", ex.Code);
+    }
+
+    // ─── Environment: max depth exceeded (line 255) ──────────────
+
+    [Fact]
+    public void Evaluate_MaxDepthExceeded_ThrowsU1001()
+    {
+        // Very low maxDepth with recursive expression triggers depth exceeded
+        var evaluator = JsonataEvaluator.Default;
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes("1"));
+        var ex = Assert.Throws<JsonataException>(
+            () => evaluator.Evaluate(
+                """($f := function($n){$n > 0 ? $f($n-1) : 0}; $f(10))""",
+                doc.RootElement,
+                maxDepth: 3));
+        Assert.Equal("U1001", ex.Code);
+    }
+
+    // ─── Environment: lambda registration (lines 289-335) ──────────────
+    // NOTE: RegisterLambda, TryGetLambda, TryGetStoredLambda are DEAD CODE:
+    // they have zero callers in the runtime. They are public API surface that
+    // was added for potential external use but is never invoked by the evaluator.
+
+    [Fact]
+    public void HigherOrderFunction_PassedAsArgument()
+    {
+        // Exercises lambda handling in the evaluator (function as first-class value)
+        string result = Eval("""($apply := function($f, $x){ $f($x) }; $apply($sum, [1,2,3]))""");
+        Assert.Equal("6", result);
+    }
+
+    [Fact]
+    public void HigherOrderFunction_ReturnedFromFunction()
+    {
+        // Function returning a function exercises nested lambda creation
+        string result = Eval("""($adder := function($a){ function($b){ $a + $b } }; $adder(3)(7))""");
+        Assert.Equal("10", result);
+    }
+
+    // ─── JsonataHelpers: GrowBuffer with long concatenation (lines 678-683) ──────────────
+
+    [Fact]
+    public void LongConcatenation_TriggersGrowBuffer()
+    {
+        // $join on many strings produces a result large enough to overflow the initial buffer
+        // The initial ArrayPool rent is typically 256 bytes, so 300+ character result triggers GrowBuffer
+        string result = Eval("""$join($map([1..100], function($v){ "abcde" }), "-")""");
+        Assert.NotEqual("undefined", result);
+        // 100 × "abcde" + 99 × "-" = 500 + 99 = 599 chars
+        Assert.StartsWith("\"abcde-abcde", result);
+    }
+
+    // ─── SignatureValidator: type mismatch errors (lines 247-260, 317-336, 520-540) ──────────────
+    // NOTE: The SignatureValidator is ONLY called via the JsonataBinding API or user-defined
+    // function signatures (function<sig>(...){...}). Built-in functions do INLINE type checking
+    // in BuiltInFunctions.cs. The reference implementation routes ALL built-in functions through
+    // signature validation, but ours only routes some (like $uppercase, $join, $substring).
+    //
+    // BUGS IDENTIFIED (RT returns wrong result vs. reference implementation):
+    //   $sqrt("hello") => undefined (should throw T0410)
+    //   $abs(true) => 1 (should throw T0410; coerces boolean to number)
+    //   $floor({"a":1}) => undefined (should throw T0410)
+    //   $map([1,2,3], "notafunction") => undefined (should throw T0410)
+    //   $filter([1,2,3], "notfunc") => undefined (should throw T0410)
+    //   $reduce([1,2,3], "notfunc") => undefined (should throw T0410)
+    //   $match(42, /abc/) => undefined (should throw T0410)
+    //   $formatNumber("not a number", "#") => "" (should throw T0410)
+    //
+    // These are EXISTING bugs in the runtime, not introduced by our tests. To be fixed separately.
+    // The tests below exercise functions that DO correctly throw T0410/T0412.
+
+    [Fact]
+    public void TypeMismatch_NumberToStringFunction_ThrowsT0410()
+    {
+        // $uppercase expects a string; passing a number triggers T0410 ✓ (matches reference)
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$uppercase(42)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void TypeMismatch_SubstringWithNumber_ThrowsT0410()
+    {
+        // $substring expects a string as first arg; number triggers T0410 ✓ (matches reference)
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$substring(42, 1)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void TypeMismatch_SubstringWithBoolean_ThrowsT0410()
+    {
+        // $substring expects string; boolean triggers T0410
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$substring(true, 1)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void TypeMismatch_ContainsWithNumber_ThrowsT0410()
+    {
+        // $contains expects string as first arg; number triggers T0410 ✓ (matches reference)
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$contains(42, "x")"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void TypeMismatch_SplitWithNumber_ThrowsT0410()
+    {
+        // $split expects string; number triggers T0410 ✓ (matches reference)
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$split(42, "-")"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void TypeMismatch_ArrayOfNumbers_ToJoinExpectsStrings_ThrowsT0412()
+    {
+        // $join expects array of strings; passing array of numbers triggers T0412 ✓ (matches reference)
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$join([1,2,3])"""));
+        Assert.Equal("T0412", ex.Code);
+    }
+
+    [Fact]
+    public void TypeMismatch_ArrayOfBooleans_ToJoinExpectsStrings_ThrowsT0412()
+    {
+        // $join expects array of strings; passing array of booleans triggers T0412
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$join([true, false])"""));
+        Assert.Equal("T0412", ex.Code);
+    }
+
+    [Fact]
+    public void TypeMismatch_NullToStringFunction_ThrowsT0410()
+    {
+        // $uppercase expects a string; passing null triggers T0410 ✓ (matches reference)
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$uppercase(null)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void TypeMismatch_ReplaceWithNumber_ThrowsT0410()
+    {
+        // $replace expects string as first arg; number triggers T0410 ✓ (matches reference)
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$replace(42, "a", "b")"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void TypeMismatch_TrimWithNumber_ThrowsT0410()
+    {
+        // $trim expects string; number triggers T0410 ✓ (matches reference)
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$trim(42)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void TooManyArguments_ThrowsT0410()
+    {
+        // $sum has signature <a<n>>; passing 2 args triggers "too many arguments" ✓ (matches reference)
+        var ex = Assert.Throws<JsonataException>(
+            () => Eval("""$sum([1,2], [3,4])"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    // ─── SignatureValidator via JsonataBinding API (lines 247-260, 317-336, 520-540) ──
+
+    [Fact]
+    public void BindingWithSignature_ValidArgs_Succeeds()
+    {
+        // A custom binding with signature <n:n> (expects number, returns number)
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["double"] = JsonataBinding.FromFunction(
+                (args, ws) => Sequence.FromDouble(args[0].AsDouble() * 2, ws),
+                1,
+                "<n:n>"),
+        };
+
+        var evaluator = JsonataEvaluator.Default;
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes("null"));
+        var result = evaluator.Evaluate("$double(21)", doc.RootElement, bindings);
+        Assert.Equal(JsonValueKind.Number, result.ValueKind);
+        Assert.Equal(42.0, result.GetDouble());
+    }
+
+    [Fact]
+    public void BindingWithSignature_WrongType_ThrowsT0410()
+    {
+        // A custom binding with signature <n:n> called with a string → T0410
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["double"] = JsonataBinding.FromFunction(
+                (args, ws) => Sequence.FromDouble(args[0].AsDouble() * 2, ws),
+                1,
+                "<n:n>"),
+        };
+
+        var evaluator = JsonataEvaluator.Default;
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes("""{"x":"hello"}"""));
+        var ex = Assert.Throws<JsonataException>(
+            () => evaluator.Evaluate("$double(x)", doc.RootElement, bindings));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void BindingWithArraySignature_WrongElementType_ThrowsT0412()
+    {
+        // A custom binding with signature <a<s>:n> (expects array of strings) called with array of numbers → T0412
+        var bindings = new Dictionary<string, JsonataBinding>
+        {
+            ["countStrings"] = JsonataBinding.FromFunction(
+                (args, ws) => Sequence.FromDouble(args[0].Count, ws),
+                1,
+                "<a<s>:n>"),
+        };
+
+        var evaluator = JsonataEvaluator.Default;
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(System.Text.Encoding.UTF8.GetBytes("""{"arr":[1,2,3]}"""));
+        var ex = Assert.Throws<JsonataException>(
+            () => evaluator.Evaluate("$countStrings(arr)", doc.RootElement, bindings));
+        Assert.Equal("T0412", ex.Code);
+    }
+
+    // ─── Sequence: Enumerator paths (lines 706-731) exercised via multi-element arrays ──────────────
+
+    [Fact]
+    public void MultiElementArray_SortDescending()
+    {
+        // Sorting a multi-element array exercises Enumerator via iteration
+        string result = Eval("""$sort([5,3,8,1,4], function($a,$b){$a > $b})""");
+        Assert.Equal("[1,3,4,5,8]", result);
+    }
+
+    [Fact]
+    public void Reduce_ExercisesIteration()
+    {
+        // $reduce iterates over sequence elements
+        string result = Eval("""$reduce([1,2,3,4,5], function($prev,$curr){$prev + $curr})""");
+        Assert.Equal("15", result);
+    }
+
+    // ─── T0410 type validation tests (verified against reference JSONata 1.8.7) ──────────────
+    // These tests verify that built-in functions throw T0410 when given invalid argument types,
+    // matching the behavior of the reference implementation's SignatureValidator.
+
+    [Theory]
+    [InlineData("""$sqrt("hello")""")]
+    [InlineData("""$sqrt(true)""")]
+    [InlineData("""$sqrt(null)""")]
+    [InlineData("""$sqrt([1,2])""")]
+    public void Sqrt_NonNumericArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$abs("hello")""")]
+    [InlineData("""$abs(true)""")]
+    [InlineData("""$abs(null)""")]
+    public void Abs_NonNumericArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$floor("test")""")]
+    [InlineData("""$floor(null)""")]
+    [InlineData("""$floor({"a":1})""")]
+    public void Floor_NonNumericArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$ceil("test")""")]
+    [InlineData("""$ceil(true)""")]
+    public void Ceil_NonNumericArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$round("test")""")]
+    [InlineData("""$round(null)""")]
+    public void Round_NonNumericArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$power("a", 2)""")]
+    [InlineData("""$power(2, "a")""")]
+    [InlineData("""$power(true, 2)""")]
+    [InlineData("""$power(2, null)""")]
+    public void Power_NonNumericArg_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$map([1,2,3], "notfunc")""")]
+    [InlineData("""$map([1,2], 42)""")]
+    [InlineData("""$map([1,2], null)""")]
+    public void Map_SecondArgNotFunction_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$filter([1,2,3], "notfunc")""")]
+    [InlineData("""$filter([1,2], 42)""")]
+    [InlineData("""$filter([1,2], null)""")]
+    public void Filter_SecondArgNotFunction_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$reduce([1,2,3], "notfunc")""")]
+    [InlineData("""$reduce([1,2], 42)""")]
+    [InlineData("""$reduce([1,2], null)""")]
+    public void Reduce_SecondArgNotFunction_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$match(42, /abc/)""")]
+    [InlineData("""$match(true, /abc/)""")]
+    [InlineData("""$match([1,2], /abc/)""")]
+    public void Match_FirstArgNotString_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Theory]
+    [InlineData("""$formatNumber("not a number", "#")""")]
+    [InlineData("""$formatNumber(true, "#")""")]
+    [InlineData("""$formatNumber(null, "#")""")]
+    public void FormatNumber_FirstArgNotNumber_ThrowsT0410(string expression)
+    {
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void Shuffle_Singleton_WrapsInArray()
+    {
+        // Reference: $shuffle(42) returns [42]
+        string result = Eval("""$shuffle(42)""");
+        Assert.Equal("[42]", result);
+    }
+
+    [Fact]
+    public void Shuffle_Null_WrapsInArray()
+    {
+        // Reference: $shuffle(null) returns [null]
+        string result = Eval("""$shuffle(null)""");
+        Assert.Equal("[null]", result);
+    }
+
+    [Fact]
+    public void Shuffle_String_WrapsInArray()
+    {
+        // Reference: $shuffle("hello") returns ["hello"]
+        string result = Eval("""$shuffle("hello")""");
+        Assert.Equal("""["hello"]""", result);
+    }
+
+    // ─── Undefined propagation tests (T0410 should NOT fire for undefined inputs) ────────
+
+    [Theory]
+    [InlineData("""$sqrt(nosuchvar)""")]
+    [InlineData("""$abs(nosuchvar)""")]
+    [InlineData("""$floor(nosuchvar)""")]
+    [InlineData("""$ceil(nosuchvar)""")]
+    [InlineData("""$round(nosuchvar)""")]
+    [InlineData("""$power(nosuchvar, 2)""")]
+    [InlineData("""$power(2, nosuchvar)""")]
+    [InlineData("""$map(nosuchvar, function($v){$v})""")]
+    [InlineData("""$filter(nosuchvar, function($v){$v})""")]
+    [InlineData("""$reduce(nosuchvar, function($a,$b){$a+$b})""")]
+    [InlineData("""$match(nosuchvar, /abc/)""")]
+    [InlineData("""$formatNumber(nosuchvar, "#")""")]
+    public void UndefinedInput_PropagatesToUndefined(string expression)
+    {
+        string result = Eval(expression);
+        Assert.Equal("undefined", result);
     }
 }

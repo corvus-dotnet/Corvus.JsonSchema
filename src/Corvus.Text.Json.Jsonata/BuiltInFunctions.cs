@@ -1507,11 +1507,18 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
-            if (seq.IsUndefined || !FunctionalCompiler.TryCoerceToNumber(seq.FirstOrDefault, out double num))
+            if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
             }
 
+            var elem = seq.FirstOrDefault;
+            if (elem.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
+            }
+
+            double num = elem.GetDouble();
             if (num < 0)
             {
                 throw new JsonataException("D3060", SR.D3060_TheArgumentOfTheSqrtFunctionMustBeNonNegative, 0);
@@ -1534,18 +1541,26 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = numArg(input, env);
-            if (seq.IsUndefined || !FunctionalCompiler.TryCoerceToNumber(seq.FirstOrDefault, out double num))
+            if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
             }
+
+            var elem = seq.FirstOrDefault;
+            if (elem.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
+            }
+
+            double num = elem.GetDouble();
 
             int precision = 0;
             if (precArg is not null)
             {
                 var precSeq = precArg(input, env);
-                if (FunctionalCompiler.TryCoerceToNumber(precSeq.FirstOrDefault, out double precD))
+                if (!precSeq.IsUndefined && precSeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
                 {
-                    precision = (int)precD;
+                    precision = (int)precSeq.FirstOrDefault.GetDouble();
                 }
             }
 
@@ -1583,13 +1598,25 @@ internal static class BuiltInFunctions
             var baseSeq = baseArg(input, env);
             var expSeq = expArg(input, env);
 
-            if (!FunctionalCompiler.TryCoerceToNumber(baseSeq.FirstOrDefault, out double baseNum)
-                || !FunctionalCompiler.TryCoerceToNumber(expSeq.FirstOrDefault, out double expNum))
+            if (baseSeq.IsUndefined || expSeq.IsUndefined)
             {
                 return Sequence.Undefined;
             }
 
-            double result = Math.Pow(baseNum, expNum);
+            var baseElem = baseSeq.FirstOrDefault;
+            var expElem = expSeq.FirstOrDefault;
+
+            if (baseElem.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
+            }
+
+            if (expElem.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
+            }
+
+            double result = Math.Pow(baseElem.GetDouble(), expElem.GetDouble());
             if (double.IsInfinity(result) || double.IsNaN(result))
             {
                 throw new JsonataException("D3061", SR.D3061_PowerFunctionResultOutOfRange, 0);
@@ -1610,12 +1637,18 @@ internal static class BuiltInFunctions
         return (in JsonElement input, Environment env) =>
         {
             var seq = arg(input, env);
-            if (seq.IsUndefined || !FunctionalCompiler.TryCoerceToNumber(seq.FirstOrDefault, out double num))
+            if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
             }
 
-            return Sequence.FromDouble(func(num), env.Workspace);
+            var elem = seq.FirstOrDefault;
+            if (elem.ValueKind != JsonValueKind.Number)
+            {
+                throw new JsonataException("T0410", SR.T0410_MathFunctionArgumentMustBeANumber, 0);
+            }
+
+            return Sequence.FromDouble(func(elem.GetDouble()), env.Workspace);
         };
     }
 
@@ -2029,9 +2062,19 @@ internal static class BuiltInFunctions
             var seq = arrArg(input, env);
             var funcSeq = funcArg(input, env);
 
-            if (seq.IsUndefined || !funcSeq.IsLambda)
+            if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
+            }
+
+            if (!funcSeq.IsLambda)
+            {
+                if (funcSeq.IsUndefined)
+                {
+                    return Sequence.Undefined;
+                }
+
+                throw new JsonataException("T0410", SR.T0410_MapSecondArgMustBeAFunction, 0);
             }
 
             var lambda = funcSeq.Lambda!;
@@ -2232,9 +2275,19 @@ internal static class BuiltInFunctions
             var seq = arrArg(input, env);
             var funcSeq = funcArg(input, env);
 
-            if (seq.IsUndefined || !funcSeq.IsLambda)
+            if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
+            }
+
+            if (!funcSeq.IsLambda)
+            {
+                if (funcSeq.IsUndefined)
+                {
+                    return Sequence.Undefined;
+                }
+
+                throw new JsonataException("T0410", SR.T0410_FilterSecondArgMustBeAFunction, 0);
             }
 
             var lambda = funcSeq.Lambda!;
@@ -2399,9 +2452,19 @@ internal static class BuiltInFunctions
             var seq = arrArg(input, env);
             var funcSeq = funcArg(input, env);
 
-            if (seq.IsUndefined || !funcSeq.IsLambda)
+            if (seq.IsUndefined)
             {
                 return Sequence.Undefined;
+            }
+
+            if (!funcSeq.IsLambda)
+            {
+                if (funcSeq.IsUndefined)
+                {
+                    return Sequence.Undefined;
+                }
+
+                throw new JsonataException("T0410", SR.T0410_ReduceSecondArgMustBeAFunction, 0);
             }
 
             var lambda = funcSeq.Lambda!;
@@ -3279,7 +3342,7 @@ internal static class BuiltInFunctions
 #if NET
             if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                return Sequence.Undefined;
+                throw new JsonataException("T0410", SR.T0410_MatchFirstArgMustBeAString, 0);
             }
 
             bool hasGroups = regex.GetGroupNumbers().Length > 1;
@@ -3360,7 +3423,7 @@ internal static class BuiltInFunctions
 #else
             if (strSeq.FirstOrDefault.ValueKind != JsonValueKind.String)
             {
-                return Sequence.Undefined;
+                throw new JsonataException("T0410", SR.T0410_MatchFirstArgMustBeAString, 0);
             }
 
             string? regexStr = strSeq.FirstOrDefault.GetString();
@@ -4556,10 +4619,13 @@ internal static class BuiltInFunctions
                 return Sequence.Undefined;
             }
 
-            if (!FunctionalCompiler.TryCoerceToNumber(numSeq.FirstOrDefault, out double num))
+            var numElem = numSeq.FirstOrDefault;
+            if (numElem.ValueKind != JsonValueKind.Number)
             {
-                return Sequence.Undefined;
+                throw new JsonataException("T0410", SR.T0410_FormatNumberFirstArgMustBeANumber, 0);
             }
+
+            double num = numElem.GetDouble();
 
             string picture = FunctionalCompiler.CoerceElementToString(picSeq.FirstOrDefault);
 
@@ -5362,8 +5428,10 @@ internal static class BuiltInFunctions
             }
             else
             {
-                // Singleton non-array — return as-is
-                return seq;
+                // Singleton non-array — wrap in single-element array (per JSONata spec)
+                JsonDocumentBuilder<JsonElement.Mutable> wrapDoc = JsonElement.CreateArrayBuilder(env.Workspace, 1);
+                wrapDoc.RootElement.AddItem(seq.FirstOrDefault);
+                return new Sequence((JsonElement)wrapDoc.RootElement);
             }
 
             if (elements.Count == 0)

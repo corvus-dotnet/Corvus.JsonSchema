@@ -503,6 +503,24 @@
   <data name="T0410_MathFunctionExpects1Argument" xml:space="preserve">
     <value>Math function expects 1 argument</value>
   </data>
+  <data name="T0410_MathFunctionArgumentMustBeANumber" xml:space="preserve">
+    <value>Argument of math function must be a number</value>
+  </data>
+  <data name="T0410_MapSecondArgMustBeAFunction" xml:space="preserve">
+    <value>Second argument of $map must be a function</value>
+  </data>
+  <data name="T0410_FilterSecondArgMustBeAFunction" xml:space="preserve">
+    <value>Second argument of $filter must be a function</value>
+  </data>
+  <data name="T0410_ReduceSecondArgMustBeAFunction" xml:space="preserve">
+    <value>Second argument of $reduce must be a function</value>
+  </data>
+  <data name="T0410_MatchFirstArgMustBeAString" xml:space="preserve">
+    <value>First argument of $match must be a string</value>
+  </data>
+  <data name="T0410_FormatNumberFirstArgMustBeANumber" xml:space="preserve">
+    <value>First argument of $formatNumber must be a number</value>
+  </data>
   <data name="T0410_MaxExpects1Argument" xml:space="preserve">
     <value>$max expects 1 argument</value>
   </data>

@@ -7352,10 +7352,12 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        if (input.ValueKind != JsonValueKind.Number)
         {
-            return default;
+            throw new JsonataException("T0410", SR.T0410_FormatNumberFirstArgMustBeANumber, 0);
         }
+
+        double num = input.GetDouble();
 
         string picture = FunctionalCompiler.CoerceElementToString(pictureElement);
         JsonElement options = optionsElement.ValueKind != JsonValueKind.Undefined ? optionsElement : default;
@@ -7401,10 +7403,12 @@ public static class JsonataCodeGenHelpers
             return default;
         }
 
-        if (!FunctionalCompiler.TryCoerceToNumber(input, out double num))
+        if (input.ValueKind != JsonValueKind.Number)
         {
-            return default;
+            throw new JsonataException("T0410", SR.T0410_FormatNumberFirstArgMustBeANumber, 0);
         }
+
+        double num = input.GetDouble();
 
         Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
         try

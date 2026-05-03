@@ -2395,14 +2395,18 @@ public class BuiltInFunctionEdgeCaseTests
 
     // --- FC TryCoerceToNumber hex/binary/octal via $formatNumber first arg ---
     // (FunctionalCompiler lines 8649-8658, 8740-8796: TryParseSpecialRadix)
+    // NOTE: Reference JSONata 1.8.7 throws T0410 for any string first arg to $formatNumber.
+    // Our implementation previously coerced hex/binary/octal strings to numbers as an extension.
+    // We now align with the reference: strings are not valid as the first arg.
 
     [Theory]
-    [InlineData("$formatNumber(\"0xFF\", \"#\")", "\"255\"")]
-    [InlineData("$formatNumber(\"0b1010\", \"#\")", "\"10\"")]
-    [InlineData("$formatNumber(\"0o77\", \"#\")", "\"63\"")]
-    public void FormatNumber_HexBinaryOctalStringCoercion(string expression, string expected)
+    [InlineData("$formatNumber(\"0xFF\", \"#\")")]
+    [InlineData("$formatNumber(\"0b1010\", \"#\")")]
+    [InlineData("$formatNumber(\"0o77\", \"#\")")]
+    public void FormatNumber_HexBinaryOctalStringCoercion(string expression)
     {
-        Assert.Equal(expected, Eval(expression));
+        var ex = Assert.Throws<JsonataException>(() => Eval(expression));
+        Assert.Equal("T0410", ex.Code);
     }
 
     // --- FC ApplyFocusStages numeric predicate from string ---
@@ -3865,10 +3869,11 @@ public class BuiltInFunctionEdgeCaseTests
         Assert.Equal("undefined", Eval("""$match(nothing, /a/)"""));
     }
 
-    [Fact] // BF 3264-3267: $match with non-string and regex → undefined
-    public void Match_NonString_ReturnsUndefined()
+    [Fact] // BF 3264-3267: $match with non-string and regex → T0410 (per reference impl)
+    public void Match_NonString_ThrowsT0410()
     {
-        Assert.Equal("undefined", Eval("""$match(42, /a/)"""));
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$match(42, /a/)"""));
+        Assert.Equal("T0410", ex.Code);
     }
 
     [Fact] // BF 3247-3249: $match with non-regex non-lambda pattern → undefined

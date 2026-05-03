@@ -4219,14 +4219,17 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ═══════════════════════════════════════════════════════════════
 
     // --- FC TryCoerceToNumber hex/binary/octal via $formatNumber first arg ---
+    // NOTE: Reference JSONata 1.8.7 throws T0410 for any string first arg to $formatNumber.
+    // Our implementation previously coerced hex/binary/octal strings to numbers as an extension.
+    // We now align with the reference: strings are not valid as the first arg.
 
     [Theory]
-    [InlineData("$formatNumber(\"0xFF\", \"#\")", "\"255\"")]
-    [InlineData("$formatNumber(\"0b1010\", \"#\")", "\"10\"")]
-    [InlineData("$formatNumber(\"0o77\", \"#\")", "\"63\"")]
-    public void CG_FormatNumber_HexBinaryOctalStringCoercion(string expression, string expected)
+    [InlineData("$formatNumber(\"0xFF\", \"#\")")]
+    [InlineData("$formatNumber(\"0b1010\", \"#\")")]
+    [InlineData("$formatNumber(\"0o77\", \"#\")")]
+    public void CG_FormatNumber_HexBinaryOctalStringCoercion_ThrowsT0410(string expression)
     {
-        AssertCgAndRtMatch(expression, "{}", expected);
+        AssertCgAndRtThrow(expression, "{}", "T0410");
     }
 
     // --- FC ApplyFocusStages numeric predicate from string ---

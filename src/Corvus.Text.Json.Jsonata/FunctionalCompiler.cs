@@ -926,10 +926,13 @@ internal static class FunctionalCompiler
                 return Sequence.Undefined;
             }
 
-            if (!TryCoerceToNumber(numSeq.FirstOrDefault, out double num))
+            var numElem = numSeq.FirstOrDefault;
+            if (numElem.ValueKind != JsonValueKind.Number)
             {
-                return Sequence.Undefined;
+                throw new JsonataException("T0410", SR.T0410_FormatNumberFirstArgMustBeANumber, 0);
             }
+
+            double num = numElem.GetDouble();
 
             Utf8ValueStringBuilder sb = new(stackalloc byte[JsonConstants.StackallocByteThreshold]);
             try
