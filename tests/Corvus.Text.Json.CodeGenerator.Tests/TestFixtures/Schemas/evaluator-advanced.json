@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "level": {
+      "type": "integer",
+      "enum": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    },
+    "prefixField": {
+      "type": "string",
+      "pattern": "^prefix_"
+    },
+    "rangeField": {
+      "type": "string",
+      "pattern": "^.{3,20}$"
+    },
+    "nonEmptyField": {
+      "type": "string",
+      "pattern": "."
+    },
+    "noopField": {
+      "type": "string",
+      "pattern": ".*"
+    },
+    "contentField": {
+      "type": "string",
+      "contentEncoding": "base64",
+      "contentMediaType": "application/json"
+    },
+    "int32Value": {
+      "type": "number",
+      "format": "int32"
+    },
+    "int64Value": {
+      "type": "number",
+      "format": "int64"
+    },
+    "doubleValue": {
+      "type": "number",
+      "format": "double"
+    },
+    "byteValue": {
+      "type": "number",
+      "format": "byte"
+    },
+    "richObject": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "age": { "type": "integer", "minimum": 0 }
+      },
+      "patternProperties": {
+        "^meta_": { "type": "string" }
+      },
+      "additionalProperties": { "type": "boolean" }
+    },
+    "multiType": {
+      "type": ["object", "array", "number", "boolean", "null"]
+    }
+  }
+}

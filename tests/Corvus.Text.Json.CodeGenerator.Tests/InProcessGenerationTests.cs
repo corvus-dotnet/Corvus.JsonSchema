@@ -469,6 +469,50 @@ public class InProcessGenerationTests
     }
 
     [Fact]
+    public async Task GenerateCode_EvaluatorOnly_AdvancedPatterns_ExercisesEnumSwitchAndRegex()
+    {
+        // Schema exercises: numeric enum switch (int64), regex pattern categories
+        // (prefix, range, nonEmpty), numeric format validation (int32, int64, double, byte),
+        // additionalProperties with properties+patternProperties, multi-type validation.
+        string schemaPath = Path.Combine(SchemasDir, "evaluator-advanced.json");
+
+        CompoundDocumentResolver documentResolver = new(
+            new FileSystemDocumentResolver(),
+            new HttpClientDocumentResolver(new HttpClient()));
+
+        VocabularyRegistry vocabularyRegistry = new();
+        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+        JsonReference reference = new(schemaPath);
+        TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+            reference,
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+        var options = new CSharpLanguageProvider.Options(
+            defaultNamespace: "TestGenerated",
+            codeGenerationMode: CodeGenerationMode.SchemaEvaluationOnly);
+
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        languageProvider.SetEvaluatorRootTypes(rootType);
+
+        IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(
+            languageProvider,
+            [rootType],
+            CancellationToken.None);
+
+        Assert.NotEmpty(files);
+
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        // Verify enum switch is generated (numeric enum with 10 values)
+        Assert.Contains("switch", allCode);
+        // Verify format validation code is generated
+        Assert.Contains("MatchInt32", allCode);
+    }
+
+    [Fact]
     public async Task GenerateCode_ComposedWithArray_ExercisesArrayBuilderPath()
     {
         // A oneOf with an array branch triggers the ComposedBuilder.ArrayInstanceName path
