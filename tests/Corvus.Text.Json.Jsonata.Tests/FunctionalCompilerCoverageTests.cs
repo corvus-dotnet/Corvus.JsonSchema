@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Jsonata;
 using Xunit;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
@@ -378,5 +379,237 @@ public class FunctionalCompilerCoverageTests
         string data = """{"items": [10, 20, 30, 40, 50]}""";
         string result = Eval("items[$>=30][-1]", data);
         Assert.Equal("50", result);
+    }
+
+    // ─── Binary/Octal parsing via $number (exercises BuiltInFunctions paths) ───
+
+    [Fact]
+    public void Number_BinaryPrefix_LowerCase()
+    {
+        string result = Eval("""$number("0b1010")""");
+        Assert.Equal("10", result);
+    }
+
+    [Fact]
+    public void Number_BinaryPrefix_UpperCase()
+    {
+        string result = Eval("""$number("0B1111")""");
+        Assert.Equal("15", result);
+    }
+
+    [Fact]
+    public void Number_OctalPrefix_LowerCase()
+    {
+        string result = Eval("""$number("0o17")""");
+        Assert.Equal("15", result);
+    }
+
+    [Fact]
+    public void Number_OctalPrefix_UpperCase()
+    {
+        string result = Eval("""$number("0O777")""");
+        Assert.Equal("511", result);
+    }
+
+    [Fact]
+    public void Number_BinaryPrefix_InvalidDigits()
+    {
+        // "0b1234" has invalid binary digits — $number throws D3030
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0b1234")"""));
+        Assert.Equal("D3030", ex.Code);
+    }
+
+    [Fact]
+    public void Number_OctalPrefix_InvalidDigits()
+    {
+        // "0o89" has invalid octal digits — $number throws D3030
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0o89")"""));
+        Assert.Equal("D3030", ex.Code);
+    }
+
+    // ─── Property lookup on array input (lines 1018-1031) ─────────────
+
+    [Fact]
+    public void PropertyLookup_OnArrayOfObjects()
+    {
+        // Looking up a field on an array iterates each element
+        string result = Eval("""data.name""", """{"data":[{"name":"Alice"},{"name":"Bob"}]}""");
+        Assert.Equal("""["Alice","Bob"]""", result);
+    }
+
+    [Fact]
+    public void PropertyLookup_OnArrayWithMissingField()
+    {
+        // Some elements may not have the field
+        string result = Eval("""data.name""", """{"data":[{"name":"Alice"},{"x":1},{"name":"Carol"}]}""");
+        Assert.Equal("""["Alice","Carol"]""", result);
+    }
+
+    [Fact]
+    public void PropertyLookup_RootIsArray()
+    {
+        // When root input IS an array, property access should iterate
+        string result = Eval("name", """[{"name":"a"},{"name":"b"}]""");
+        Assert.Equal("""["a","b"]""", result);
+    }
+
+    // ─── Sort by terms applied to path (CompileSortStage, lines 7954-8017) ───
+
+    [Fact]
+    public void Sort_ByTerms_Ascending()
+    {
+        string result = Eval("""items^(v)""", """{"items":[{"v":3},{"v":1},{"v":2}]}""");
+        Assert.Equal("""[{"v":1},{"v":2},{"v":3}]""", result);
+    }
+
+    [Fact]
+    public void Sort_ByTerms_Descending()
+    {
+        string result = Eval("""items^(>v)""", """{"items":[{"v":3},{"v":1},{"v":2}]}""");
+        Assert.Equal("""[{"v":3},{"v":2},{"v":1}]""", result);
+    }
+
+    [Fact]
+    public void Sort_ByTerms_MultiKey()
+    {
+        string result = Eval(
+            """items^(a, >b)""",
+            """{"items":[{"a":1,"b":3},{"a":2,"b":1},{"a":1,"b":2}]}""");
+        Assert.Equal("""[{"a":1,"b":3},{"a":1,"b":2},{"a":2,"b":1}]""", result);
+    }
+
+    [Fact]
+    public void Sort_ByTerms_SingleElement_ReturnsSame()
+    {
+        string result = Eval("""items^(v)""", """{"items":[{"v":1}]}""");
+        Assert.Equal("""{"v":1}""", result);
+    }
+
+    [Fact]
+    public void Sort_ByTerms_Strings()
+    {
+        string result = Eval(
+            """items^(name)""",
+            """{"items":[{"name":"banana"},{"name":"apple"},{"name":"cherry"}]}""");
+        Assert.Equal("""[{"name":"apple"},{"name":"banana"},{"name":"cherry"}]""", result);
+    }
+
+    // ─── Focus variable + sort (triggers sort step with $var bound) ───
+
+    [Fact]
+    public void Focus_ThenSort()
+    {
+        // Account.Order^(Product.Price) — sort Orders by Product.Price
+        string result = Eval(
+            """Account.Order^(Product.Price)""",
+            """{"Account":{"Order":[{"Product":{"Price":3}},{"Product":{"Price":1}},{"Product":{"Price":2}}]}}""");
+        Assert.Equal("""[{"Product":{"Price":1}},{"Product":{"Price":2}},{"Product":{"Price":3}}]""", result);
+    }
+
+    // ─── Index binding (#$var) expansion (lines 5095-5108) ────────────
+
+    [Fact]
+    public void IndexBinding_OnArrayResult()
+    {
+        // #$i binds the position index to each element
+        string result = Eval(
+            """items#$i[$i=1]""",
+            """{"items":["a","b","c"]}""");
+        Assert.Equal("\"b\"", result);
+    }
+
+    [Fact]
+    public void IndexBinding_OnFilteredArray()
+    {
+        string result = Eval(
+            """items#$i[$i<=1]""",
+            """{"items":["a","b","c","d"]}""");
+        Assert.Equal("""["a","b"]""", result);
+    }
+
+    // ─── Array constructor paths (lines 6801-6836) ────────────────────
+
+    [Fact]
+    public void ArrayConstructor_WithSingletonValue()
+    {
+        string result = Eval("""[item]""", """{"item":"hello"}""");
+        Assert.Equal("""["hello"]""", result);
+    }
+
+    [Fact]
+    public void ArrayConstructor_WithNestedArray()
+    {
+        // Array within array constructor should flatten into the array
+        string result = Eval("""[items]""", """{"items":["a","b"]}""");
+        Assert.Equal("""["a","b"]""", result);
+    }
+
+    [Fact]
+    public void ArrayConstructor_MultipleExpressions()
+    {
+        string result = Eval("""[a, b, c]""", """{"a":1,"b":2,"c":3}""");
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void ArrayConstructor_MixedTypes()
+    {
+        string result = Eval("""[1, "two", true, null]""");
+        Assert.Equal("""[1,"two",true,null]""", result);
+    }
+
+    // ─── String-to-number coercion in filter predicates (TryCoerceToNumber string path) ───
+
+    [Fact]
+    public void FilterPredicate_StringNumericIndex()
+    {
+        // A variable holding a numeric-string "2" used as filter predicate → index access
+        string result = Eval(
+            """( $idx := "2"; items[$idx] )""",
+            """{"items":["a","b","c","d","e"]}""");
+        Assert.Equal("\"c\"", result);
+    }
+
+    [Fact]
+    public void FilterPredicate_HexStringIndex()
+    {
+        // A variable holding a hex string "0x2" used as filter predicate → index 2
+        string result = Eval(
+            """( $idx := "0x2"; items[$idx] )""",
+            """{"items":["a","b","c","d","e"]}""");
+        Assert.Equal("\"c\"", result);
+    }
+
+    [Fact]
+    public void FilterPredicate_BinaryStringIndex()
+    {
+        // A variable holding a binary string "0b10" used as filter predicate → index 2
+        string result = Eval(
+            """( $idx := "0b10"; items[$idx] )""",
+            """{"items":["a","b","c","d","e"]}""");
+        Assert.Equal("\"c\"", result);
+    }
+
+    [Fact]
+    public void FilterPredicate_OctalStringIndex()
+    {
+        // A variable holding an octal string "0o3" used as filter predicate → index 3
+        string result = Eval(
+            """( $idx := "0o3"; items[$idx] )""",
+            """{"items":["a","b","c","d","e"]}""");
+        Assert.Equal("\"d\"", result);
+    }
+
+    // ─── Transform operator (lines 121 dispatch, CompileTransform) ────
+
+    [Fact]
+    public void Transform_BasicPattern()
+    {
+        // ~> |pattern|transform| — transform matching objects
+        string result = Eval(
+            """$ ~> |Account.Order|{"total":Price * Quantity}|""",
+            """{"Account":{"Order":{"Price":5,"Quantity":3}}}""");
+        // The transform adds the "total" field
+        Assert.Contains("\"total\":15", result);
     }
 }
