@@ -1930,4 +1930,286 @@ public class BuiltInFunctionCoverageTests
     // The JSON parser produces valid UTF-8 (not WTF-8), and the JSONata lexer combines
     // surrogate pairs from \uXXXX escapes into proper 4-byte UTF-8 code points.
     // Unpaired surrogates cannot enter the runtime string pool.
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // $distinct (lines 1937-1997) — DistinctCore
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Distinct_ArrayWithDuplicates_RemovesDuplicates()
+    {
+        // Reference: $distinct([1,2,2,3,3,3]) → [1,2,3]
+        // Covers lines 1937-1997: entire DistinctCore function
+        string result = Eval("""$distinct([1,2,2,3,3,3])""");
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void Distinct_ArrayOfStrings_RemovesDuplicates()
+    {
+        // Covers line 1984 (hashSet.AddItemIfNotExists) dedup comparison
+        string result = Eval("""$distinct(["a","b","a","c","b"])""");
+        Assert.Equal("""["a","b","c"]""", result);
+    }
+
+    [Fact]
+    public void Distinct_SingleElement_ReturnsSingleElement()
+    {
+        // Covers line 1959: items.Count <= 1 && seq.Count == 1 && non-array → early return
+        string result = Eval("""$distinct(42)""");
+        Assert.Equal("42", result);
+    }
+
+    [Fact]
+    public void Distinct_Undefined_ReturnsUndefined()
+    {
+        // Covers line 1927-1929: undefined input → undefined
+        string result = Eval("""$distinct(nothing)""", """{}""");
+        Assert.Equal("undefined", result);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // $lowercase (lines 1097-1100)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Lowercase_BasicString()
+    {
+        // Covers line 1099-1100: CompileStringSpanTransform with ToLowerInvariant
+        string result = Eval("""$lowercase("HELLO WORLD")""");
+        Assert.Equal("\"hello world\"", result);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Aggregate function arg-count errors (lines 140, 193, 229, 265)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Count_TooManyArgs_ThrowsT0410()
+    {
+        // Covers lines 140-141
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$count(1, 2)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void Sum_TooManyArgs_ThrowsT0410()
+    {
+        // Covers lines 169-171 (CompileSum arg check)
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$sum(1, 2)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void Max_TooManyArgs_ThrowsT0410()
+    {
+        // Covers lines 193-194
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$max(1, 2)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void Min_TooManyArgs_ThrowsT0410()
+    {
+        // Covers lines 229-230
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$min(1, 2)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void Average_TooManyArgs_ThrowsT0410()
+    {
+        // Covers lines 265-266
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$average(1, 2)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // $substringBefore/$substringAfter non-string search (lines 1052-1055)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void SubstringBefore_NonStringSearch_ThrowsT0410()
+    {
+        // Covers lines 1052-1055: search arg is not a string
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$substringBefore("hello", 123)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void SubstringAfter_NonStringSearch_ThrowsT0410()
+    {
+        // Same path for substringAfter
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$substringAfter("hello", 123)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // Function body coverage — basic invocations (lines 780-813, 856, etc.)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Not_TrueValue_ReturnsFalse()
+    {
+        // Covers lines 780-791: $not delegate body (non-undefined path)
+        string result = Eval("""$not(true)""");
+        Assert.Equal("false", result);
+    }
+
+    [Fact]
+    public void Not_FalseValue_ReturnsTrue()
+    {
+        string result = Eval("""$not(false)""");
+        Assert.Equal("true", result);
+    }
+
+    [Fact]
+    public void Not_Undefined_ReturnsUndefined()
+    {
+        // Covers line 784-786: undefined input returns undefined
+        string result = Eval("""$not(nothing)""", """{}""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void Exists_DefinedValue_ReturnsTrue()
+    {
+        // Covers lines 800-813: $exists delegate body
+        string result = Eval("""$exists("hello")""");
+        Assert.Equal("true", result);
+    }
+
+    [Fact]
+    public void Exists_UndefinedValue_ReturnsFalse()
+    {
+        // Covers line 811: undefined → false
+        string result = Eval("""$exists(nothing)""", """{}""");
+        Assert.Equal("false", result);
+    }
+
+    [Fact]
+    public void Exists_Lambda_ReturnsTrue()
+    {
+        // Covers lines 806-808: lambda/function references exist
+        string result = Eval("""$exists($sum)""");
+        Assert.Equal("true", result);
+    }
+
+    [Fact]
+    public void Millis_ReturnsCurrentTimestamp()
+    {
+        // Covers line 126 (switch arm) + CompileMillis body
+        // $millis() returns current time in ms since epoch
+        string result = Eval("""$millis()""");
+        long ms = long.Parse(result);
+        Assert.True(ms > 1700000000000); // After Nov 2023
+    }
+
+    [Fact]
+    public void Number_TooManyArgs_ThrowsT0410()
+    {
+        // Covers lines 488-489
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$number(1, 2)"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void Length_TooManyArgs_ThrowsT0410()
+    {
+        // Covers lines 856-857
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$length("a", "b")"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void Substring_WrongArgCount_ThrowsT0410()
+    {
+        // Covers lines 894-896
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$substring("hello")"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void Join_WrongArgCount_ThrowsT0410()
+    {
+        // Covers lines 1218-1219
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$join()"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void SubstringBefore_OneArg_UsesContext()
+    {
+        // Covers lines 1004-1005: context-implied path
+        // $substringBefore("l") with "hello" as input data → "he"
+        string result = Eval("$substringBefore(\"l\")", "\"hello\"");
+        Assert.Equal("\"he\"", result);
+    }
+
+    [Fact]
+    public void SubstringAfter_OneArg_UsesContext()
+    {
+        // Covers lines 1019-1020: context-implied path
+        // $substringAfter("l") with "hello" as input data → "lo"
+        string result = Eval("$substringAfter(\"l\")", "\"hello\"");
+        Assert.Equal("\"lo\"", result);
+    }
+
+    [Fact]
+    public void Reverse_NonArray_ReturnsInput()
+    {
+        // Covers lines 1893-1896: non-array input returned as-is
+        string result = Eval("""$reverse(42)""");
+        Assert.Equal("42", result);
+    }
+
+    [Fact]
+    public void Reverse_Undefined_ReturnsUndefined()
+    {
+        // Covers lines 1888-1890: undefined → undefined
+        string result = Eval("""$reverse(nothing)""", """{}""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void Keys_SingleKeyObject_ReturnsSingleString()
+    {
+        // Covers lines 1700-1706: keySet.Count==0 or ==1 paths
+        string result = Eval("""$keys({"a":1})""");
+        Assert.Equal("\"a\"", result);
+    }
+
+    [Fact]
+    public void Keys_EmptyObject_ReturnsUndefined()
+    {
+        // Covers lines 1699-1701: keySet.Count == 0 → undefined
+        string result = Eval("""$keys({})""");
+        Assert.Equal("undefined", result);
+    }
+
+    [Fact]
+    public void Lowercase_TooManyArgs_ThrowsT0410()
+    {
+        // Covers lines 1159-1160: CompileStringSpanTransform arg check
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$lowercase("a", "b")"""));
+        Assert.Equal("T0410", ex.Code);
+    }
+
+    [Fact]
+    public void Number_OctalEmptyDigits_ThrowsD3030()
+    {
+        // $number("0o") — octal prefix with no digits → D3030
+        // Reference: D3030 "Unable to cast value to a number: \"0o\""
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0o")"""));
+        Assert.Equal("D3030", ex.Code);
+    }
+
+    [Fact]
+    public void Number_BinaryEmptyDigits_ThrowsD3030()
+    {
+        // $number("0b") — binary prefix with no digits → D3030
+        // Reference: D3030 "Unable to cast value to a number: \"0b\""
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0b")"""));
+        Assert.Equal("D3030", ex.Code);
+    }
 }
