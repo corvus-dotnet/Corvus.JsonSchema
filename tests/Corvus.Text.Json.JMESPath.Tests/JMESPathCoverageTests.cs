@@ -976,6 +976,114 @@ public class JMESPathCoverageTests
         Assert.Equal(3, result[2].GetDouble());
     }
 
+    // ─── Lexer Error and Edge-Case Tests ──
+
+    [Fact]
+    public void Lexer_RawString_BackslashNotQuote()
+    {
+        // L237-242: In raw string, backslash not followed by ' emits literal backslash + char
+        // JMESPath raw strings: 'text' where only \' is a real escape
+        // Using \\ triggers materialization, and the second \ is "not a quote"
+        JsonElement data = JsonElement.ParseValue("""{"a\\b": 1}"""u8);
+        // In JMESPath, raw string 'a\\b' materializes as literal "a\b"
+        // We need a quoted identifier to access the key: "a\\b"
+        JsonElement result = JMESPathEvaluator.Default.Search("\"a\\\\b\"", data);
+        Assert.Equal(1, result.GetDouble());
+    }
+
+    [Fact]
+    public void Lexer_RawString_BackslashTriggersElseBranch()
+    {
+        // L237-242: raw string with \\ followed by \' to trigger materialization AND else branch
+        // JMESPath raw string: 'foo\\\'bar' → materializes to foo\\'bar
+        // The \\ hits L237 (else branch: emit backslash + char), \' hits L232 (escaped quote)
+        string expr = """'foo\\\'bar'""";
+        JsonElement data = JsonElement.ParseValue("{}"u8);
+        JsonElement result = JMESPathEvaluator.Default.Search(expr, data);
+        Assert.Equal(JsonValueKind.String, result.ValueKind);
+        // Result: foo + \\ + ' + bar = "foo\\'bar"
+        Assert.Equal("foo\\\\'bar", result.GetString());
+    }
+
+    [Fact]
+    public void Lexer_RawString_LongTriggersBufferGrowth()
+    {
+        // L246-256, L264-266: Very long raw string with escapes → buffer growth + ArrayPool return
+        // Need > 512 bytes of materialized content to trigger double growth (stackalloc 256 → rent 512 → rent 1024)
+        // L250-252: Return previous rented array during second growth
+        string longVal = new string('x', 520) + "\\'"; // 520 x's then escaped quote
+        string expr = $"'{longVal}'";
+        JsonElement data = JsonElement.ParseValue("{}"u8);
+        JsonElement result = JMESPathEvaluator.Default.Search(expr, data);
+        Assert.Equal(JsonValueKind.String, result.ValueKind);
+        // The materialized value is 520 x's + single quote
+        Assert.Equal(520 + 1, result.GetString()!.Length);
+    }
+
+    [Fact]
+    public void Lexer_QuotedIdentifier_UnterminatedEscape_Throws()
+    {
+        // L301-303: Escape at end of quoted identifier
+        Assert.Throws<JMESPathException>(() =>
+            JMESPathEvaluator.Default.Search("\"abc\\", JsonElement.ParseValue("{}"u8)));
+    }
+
+    [Fact]
+    public void Lexer_UnicodeEscape_AsciiCodePoint()
+    {
+        // L409-412: \u escape producing ASCII code point (< 0x80)
+        // \u0041 = 'A'
+        JsonElement data = JsonElement.ParseValue("""{"A": 42}"""u8);
+        JsonElement result = JMESPathEvaluator.Default.Search("\"\\u0041\"", data);
+        Assert.Equal(42, result.GetDouble());
+    }
+
+    [Fact]
+    public void Lexer_UnicodeEscape_InvalidSurrogatePair_Throws()
+    {
+        // L395-397: High surrogate followed by invalid low surrogate
+        Assert.Throws<JMESPathException>(() =>
+            JMESPathEvaluator.Default.Search("\"\\uD800\\u0041\"", JsonElement.ParseValue("{}"u8)));
+    }
+
+    [Fact]
+    public void Lexer_UnicodeEscape_UnpairedHighSurrogate_Throws()
+    {
+        // L401-403: High surrogate not followed by \u sequence
+        Assert.Throws<JMESPathException>(() =>
+            JMESPathEvaluator.Default.Search("\"\\uD800abc\"", JsonElement.ParseValue("{}"u8)));
+    }
+
+    [Fact]
+    public void Lexer_InvalidHexDigit_Throws()
+    {
+        // L447: Invalid hex digit in \u escape
+        Assert.Throws<JMESPathException>(() =>
+            JMESPathEvaluator.Default.Search("\"\\uZZZZ\"", JsonElement.ParseValue("{}"u8)));
+    }
+
+    [Fact]
+    public void Lexer_Literal_UnterminatedEscapeAtEnd()
+    {
+        // L478-479: Escape at very end of backtick literal
+        Assert.Throws<JMESPathException>(() =>
+            JMESPathEvaluator.Default.Search("`\"hello\\", JsonElement.ParseValue("{}"u8)));
+    }
+
+    [Fact]
+    public void Lexer_QuotedIdentifier_LongTriggersGrowBuffer()
+    {
+        // L604-612: GrowBuffer path — quoted identifier with many escape sequences
+        // Need > 512 bytes of OUTPUT to trigger double growth (L607-609: return previous rented)
+        // 520 × \u0041 = 520 × 6 input bytes → 520 'A' output bytes > 512
+        string longKey = string.Concat(Enumerable.Repeat("\\u0041", 520));
+        string expectedKey = new('A', 520);
+        string json = $"{{\"{expectedKey}\": 77}}";
+        JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
+        JsonElement result = JMESPathEvaluator.Default.Search($"\"{longKey}\"", data);
+        Assert.Equal(77, result.GetDouble());
+    }
+
     // ─── sort_by with string comparisons (WriteJsonEscapedFromUtf8) ──────
     // Covers: Compiler.Functions.cs lines 989-1051
 
