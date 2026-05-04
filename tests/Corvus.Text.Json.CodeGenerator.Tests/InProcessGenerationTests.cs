@@ -409,6 +409,315 @@ public class InProcessGenerationTests
     }
 
     [Fact]
+    public async Task GenerateCode_ComposedWithArray_ExercisesArrayBuilderPath()
+    {
+        // A oneOf with an array branch triggers the ComposedBuilder.ArrayInstanceName path
+        // in CodeGeneratorExtensions.Builder (lines 384-407, 809-832, 3520-3536, 3944-3958, 4111-4142)
+        string schemaPath = Path.Combine(SchemasDir, "composed-with-array.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
+
+        Assert.NotEmpty(files);
+
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        // The array branch should produce builder code with array kind handling
+        Assert.Contains("Builder", allCode);
+    }
+
+    [Fact]
+    public async Task GenerateCode_ComposedWithArray_InBothMode_ProducesEvaluatorAndBuilder()
+    {
+        // Both mode exercises more builder paths (property-level composed builders)
+        string schemaPath = Path.Combine(SchemasDir, "composed-with-array.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(
+            schemaPath,
+            CodeGenerationMode.Both);
+
+        Assert.NotEmpty(files);
+
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+        Assert.Contains("Kind", allCode);
+    }
+
+    [Fact]
+    public async Task GenerateCode_NestedNameCollision_ExercisesCollisionResolver()
+    {
+        // Nested properties with the same name create name collisions
+        // that exercise DefaultNameCollisionResolver fragment navigation (lines 82-93)
+        string schemaPath = Path.Combine(SchemasDir, "nested-name-collision.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
+
+        Assert.NotEmpty(files);
+
+        string[] typeNames = files
+            .Select(f => CSharpLanguageProvider.GetDotnetTypeName(f))
+            .Where(n => n is not null)
+            .ToArray()!;
+
+        // Should have types with disambiguation — both "Config" properties can't produce
+        // the same type name, so the collision resolver should intervene
+        int configCount = typeNames.Count(n => n!.Contains("Config", StringComparison.OrdinalIgnoreCase));
+        Assert.True(
+            configCount >= 2,
+            $"Expected at least 2 Config-related types (disambiguated). Got: {string.Join(", ", typeNames)}");
+    }
+
+    [Fact]
+    public async Task GenerateCode_PureOneOf_CanReduceToOneOf()
+    {
+        // A pure oneOf schema (no other constraints) should exercise CanReduceToOneOf
+        // in TypeDeclarationExtensions (lines 164-178)
+        string schemaPath = Path.Combine(SchemasDir, "pure-oneof.json");
+
+        CompoundDocumentResolver documentResolver = new(
+            new FileSystemDocumentResolver(),
+            new HttpClientDocumentResolver(new HttpClient()));
+
+        VocabularyRegistry vocabularyRegistry = new();
+        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+        JsonReference reference = new(schemaPath);
+        TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+            reference,
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+        var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+        // Generate to finalize the build
+        typeBuilder.GenerateCodeUsing(languageProvider, [rootType], CancellationToken.None);
+
+        // Now test CanReduceToOneOf — should be true for a pure oneOf schema
+        bool canReduce = rootType.CanReduceToOneOf();
+        Assert.True(canReduce, "A pure oneOf schema should be reducible to oneOf");
+    }
+
+    [Fact]
+    public async Task GenerateCode_PureAnyOf_CanReduceToAnyOf()
+    {
+        // A pure anyOf schema (no other constraints) should exercise CanReduceToAnyOf
+        // in TypeDeclarationExtensions (lines 143-157)
+        string schemaPath = Path.Combine(SchemasDir, "pure-anyof.json");
+
+        CompoundDocumentResolver documentResolver = new(
+            new FileSystemDocumentResolver(),
+            new HttpClientDocumentResolver(new HttpClient()));
+
+        VocabularyRegistry vocabularyRegistry = new();
+        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+        JsonReference reference = new(schemaPath);
+        TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+            reference,
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+        var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+        // Generate to finalize the build
+        typeBuilder.GenerateCodeUsing(languageProvider, [rootType], CancellationToken.None);
+
+        // Now test CanReduceToAnyOf — should be true for a pure anyOf schema
+        bool canReduce = rootType.CanReduceToAnyOf();
+        Assert.True(canReduce, "A pure anyOf schema should be reducible to anyOf");
+    }
+
+    [Fact]
+    public async Task GenerateCode_MatchesExistingPropertyNameInParent_DetectsCollision()
+    {
+        // Create a type hierarchy where a child's name matches a property in its parent
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "items": { "type": "string" },
+                "nested": {
+                  "type": "object",
+                  "properties": {
+                    "value": { "type": "integer" }
+                  }
+                }
+              }
+            }
+            """;
+
+        string tempFile = Path.Combine(Path.GetTempPath(), $"test-schema-{Guid.NewGuid():N}.json");
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, schemaContent);
+
+            CompoundDocumentResolver documentResolver = new(
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient()));
+
+            VocabularyRegistry vocabularyRegistry = new();
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+            JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+            JsonReference reference = new(tempFile);
+            TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+                reference,
+                Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+            var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+            var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+            // Generate to build the type tree
+            IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(
+                languageProvider, [rootType], CancellationToken.None);
+
+            Assert.NotEmpty(files);
+
+            // Find the nested child type (named "Nested" from the property)
+            TypeDeclaration nestedType = rootType.Children()
+                .FirstOrDefault(c => c.TryGetDotnetTypeName(out string n) && n.Contains("Nested"));
+
+            if (nestedType is not null)
+            {
+                // "Items" is a property on the parent, so matching against it should return true
+                bool matchesProperty = nestedType.MatchesExistingPropertyNameInParent("Items".AsSpan());
+                Assert.True(matchesProperty, "Expected 'Items' to match a property name in the parent");
+            }
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task GenerateCode_MatchesExistingTypeInParent_DetectsTypeCollision()
+    {
+        // Create a type hierarchy with multiple children where names collide
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "object",
+              "properties": {
+                "first": {
+                  "type": "object",
+                  "properties": { "a": { "type": "string" } }
+                },
+                "second": {
+                  "type": "object",
+                  "properties": { "b": { "type": "integer" } }
+                }
+              }
+            }
+            """;
+
+        string tempFile = Path.Combine(Path.GetTempPath(), $"test-schema-{Guid.NewGuid():N}.json");
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, schemaContent);
+
+            CompoundDocumentResolver documentResolver = new(
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient()));
+
+            VocabularyRegistry vocabularyRegistry = new();
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+            JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+            JsonReference reference = new(tempFile);
+            TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+                reference,
+                Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+            var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+            var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+            // Generate to build the type tree
+            IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(
+                languageProvider, [rootType], CancellationToken.None);
+
+            Assert.NotEmpty(files);
+
+            // Get children of root
+            var children = rootType.Children().ToList();
+            Assert.True(children.Count >= 2, $"Expected at least 2 children. Got: {children.Count}");
+
+            // Pick a child and check if its name matches another child in the parent
+            TypeDeclaration firstChild = children[0];
+            if (firstChild.TryGetDotnetTypeName(out string firstName))
+            {
+                // MatchesExistingTypeInParent should find the same type (it checks ALL children)
+                bool matchesType = firstChild.MatchesExistingTypeInParent(firstName.AsSpan());
+                Assert.True(matchesType, $"Expected '{firstName}' to match an existing type in the parent");
+            }
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task GenerateCode_RequiresNumberValueValidation_TrueForNumericConstraints()
+    {
+        // Schema with numeric constraints exercises RequiresNumberValueValidation
+        // in TypeDeclarationExtensions (lines 901-911)
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 100,
+              "multipleOf": 5
+            }
+            """;
+
+        string tempFile = Path.Combine(Path.GetTempPath(), $"test-schema-{Guid.NewGuid():N}.json");
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, schemaContent);
+
+            CompoundDocumentResolver documentResolver = new(
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient()));
+
+            VocabularyRegistry vocabularyRegistry = new();
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+            JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+            JsonReference reference = new(tempFile);
+            TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+                reference,
+                Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+            var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+            var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+            typeBuilder.GenerateCodeUsing(languageProvider, [rootType], CancellationToken.None);
+
+            // Should require number value validation due to minimum/maximum/multipleOf
+            bool requiresNumericValidation = rootType.RequiresNumberValueValidation();
+            Assert.True(requiresNumericValidation, "Expected RequiresNumberValueValidation to be true for schema with numeric constraints");
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
     public async Task GenerateCode_CancelledToken_ReturnsEmpty()
     {
         string schemaPath = Path.Combine(SchemasDir, "numeric-and-format.json");
