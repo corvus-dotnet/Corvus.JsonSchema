@@ -352,6 +352,63 @@ public class InProcessGenerationTests
     }
 
     [Fact]
+    public async Task GenerateCode_ComplexValidation_ExercisesOneOfAnyOfIfThenElse()
+    {
+        // Schema with oneOf, anyOf, if/then/else, array constraints, additionalProperties,
+        // propertyNames, uniqueItems — exercises TypeDeclarationExtensions reduction methods
+        // and multiple CodeGeneratorExtensions paths
+        string schemaPath = Path.Combine(SchemasDir, "complex-validation.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(
+            schemaPath,
+            CodeGenerationMode.Both);
+
+        Assert.NotEmpty(files);
+
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        // Should generate oneOf-related discriminator code
+        Assert.True(allCode.Length > 1000, "Expected substantial generated code for complex schema");
+    }
+
+    [Fact]
+    public async Task GenerateCode_EvaluatorOnly_ComplexSchema_ProducesEvaluatorCode()
+    {
+        // Complex schema with multiple validation keywords should generate evaluator code
+        string schemaPath = Path.Combine(SchemasDir, "complex-validation.json");
+
+        CompoundDocumentResolver documentResolver = new(
+            new FileSystemDocumentResolver(),
+            new HttpClientDocumentResolver(new HttpClient()));
+
+        VocabularyRegistry vocabularyRegistry = new();
+        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+        JsonReference reference = new(schemaPath);
+        TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+            reference,
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+        var options = new CSharpLanguageProvider.Options(
+            defaultNamespace: "TestGenerated",
+            codeGenerationMode: CodeGenerationMode.SchemaEvaluationOnly);
+
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+        // Set the evaluator root types (exercises SetEvaluatorRootTypes)
+        languageProvider.SetEvaluatorRootTypes(rootType);
+
+        IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(
+            languageProvider,
+            [rootType],
+            CancellationToken.None);
+
+        // Evaluator-only mode with complex schema should produce at least one file
+        Assert.NotEmpty(files);
+    }
+
+    [Fact]
     public async Task GenerateCode_CancelledToken_ReturnsEmpty()
     {
         string schemaPath = Path.Combine(SchemasDir, "numeric-and-format.json");

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "shape": {
+      "oneOf": [
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "circle" },
+            "radius": { "type": "number", "minimum": 0 }
+          },
+          "required": ["type", "radius"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "type": { "const": "rectangle" },
+            "width": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 }
+          },
+          "required": ["type", "width", "height"]
+        }
+      ]
+    },
+    "metadata": {
+      "anyOf": [
+        { "type": "string" },
+        {
+          "type": "object",
+          "properties": {
+            "key": { "type": "string" },
+            "value": { "type": "string" }
+          }
+        }
+      ]
+    },
+    "conditionalField": {
+      "if": {
+        "properties": { "mode": { "const": "strict" } },
+        "required": ["mode"]
+      },
+      "then": {
+        "properties": {
+          "level": { "type": "integer", "minimum": 1, "maximum": 10 }
+        },
+        "required": ["level"]
+      },
+      "else": {
+        "properties": {
+          "level": { "type": "integer" }
+        }
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1, "maxLength": 50 },
+      "minItems": 1,
+      "maxItems": 10,
+      "uniqueItems": true
+    },
+    "config": {
+      "type": "object",
+      "additionalProperties": { "type": "string" },
+      "propertyNames": { "pattern": "^[a-z][a-zA-Z0-9]*$" },
+      "minProperties": 1,
+      "maxProperties": 20
+    }
+  }
+}
