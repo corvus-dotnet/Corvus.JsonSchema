@@ -1722,4 +1722,212 @@ public class BuiltInFunctionCoverageTests
     // These lines are reachable when using a non-ASCII zero-digit option, but the
     // reference implementation crashes with a TypeError for non-default digit families.
     // Cannot verify against reference. Documenting as reference-undefined behavior.
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // $replace regex replacement patterns (lines 3855-3925)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Replace_RegexDollarAtEnd_LiteralDollar()
+    {
+        // Reference: $replace("abc", /a(b)c/, "X$") → "X$"
+        // Covers line 3855-3857: $ at end of replacement string → literal $
+        string result = Eval("""$replace("abc", /a(b)c/, "X$")""");
+        Assert.Equal("\"X$\"", result);
+    }
+
+    [Fact]
+    public void Replace_RegexDoubleDollar_LiteralDollar()
+    {
+        // Reference: $replace("abc", /a(b)c/, "$$") → "$"
+        // Covers lines 3865-3868: $$ → literal $
+        string result = Eval("""$replace("abc", /a(b)c/, "$$")""");
+        Assert.Equal("\"$\"", result);
+    }
+
+    [Fact]
+    public void Replace_RegexGroupRef_ExcessDigitsLiteral()
+    {
+        // Reference: $replace("abc", /a(b)c/, "$12") → "b2"
+        // Covers lines 3895-3897: $1 matches group 1, remaining "2" is literal
+        string result = Eval("""$replace("abc", /a(b)c/, "$12")""");
+        Assert.Equal("\"b2\"", result);
+    }
+
+    [Fact]
+    public void Replace_RegexInvalidGroupRef_RemainingDigitsLiteral()
+    {
+        // Reference: $replace("abc", /a(b)c/, "$99") → "9"
+        // Covers lines 3909-3913: $99 has no valid group, remaining digits after first are literal
+        string result = Eval("""$replace("abc", /a(b)c/, "$99")""");
+        Assert.Equal("\"9\"", result);
+    }
+
+    [Fact]
+    public void Replace_RegexDollarNonDigit_LiteralDollarChar()
+    {
+        // Reference: $replace("abc", /a(b)c/, "$x") → "$x"
+        // Covers lines 3921-3925: $ followed by non-digit, non-$ → literal $<char>
+        string result = Eval("""$replace("abc", /a(b)c/, "$x")""");
+        Assert.Equal("\"$x\"", result);
+    }
+
+    [Fact]
+    public void Replace_RegexLambdaWithGroups_CaptureGroupsPopulated()
+    {
+        // Reference: $replace("hello world", /(\w+)/, function($m) { $uppercase($m.match) }) → "HELLO WORLD"
+        // Covers lines 3637-3640: building groups list for lambda replacement
+        string result = Eval("""$replace("hello world", /(\w+)/, function($m) { $uppercase($m.match) })""");
+        Assert.Equal("\"HELLO WORLD\"", result);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // $split with empty separator (lines 3966-3989)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Split_EmptySeparator_SplitsIntoCodePoints()
+    {
+        // Reference: $split("hello", "") → ["h","e","l","l","o"]
+        // Covers lines 3966-3989: empty sep splits into individual UTF-8 code points
+        string result = Eval("""$split("hello", "")""");
+        Assert.Equal("""["h","e","l","l","o"]""", result);
+    }
+
+    [Fact]
+    public void Split_EmptySeparator_WithLimit()
+    {
+        // Reference: $split("hello", "", 3) → ["h","e","l"]
+        // Covers line 3977: limit applied to code point split
+        string result = Eval("""$split("hello", "", 3)""");
+        Assert.Equal("""["h","e","l"]""", result);
+    }
+
+    [Fact]
+    public void Split_EmptySeparator_MultibyteChars()
+    {
+        // Verify multi-byte UTF-8 code points are handled correctly
+        // "café" has 'é' = 2 bytes in UTF-8, output as \u00E9 in JSON
+        string result = Eval("""$split("caf\u00e9", "")""");
+        Assert.Equal("[\"c\",\"a\",\"f\",\"\\u00E9\"]", result);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // $split with regex and limit (lines 4069-4124)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Split_RegexWithLimit_FewerMatchesThanLimit()
+    {
+        // Reference: $split("a-b-c", /-/, 10) → ["a","b","c"] (fewer matches than limit)
+        // Covers lines 4069-4101: exhausted=true branch
+        string result = Eval("""$split("a-b-c", /-/, 10)""");
+        Assert.Equal("""["a","b","c"]""", result);
+    }
+
+    [Fact]
+    public void Split_RegexWithLimit_ExactLimit()
+    {
+        // Reference: $split("a-b-c-d", /-/, 2) → ["a","b"]
+        // Covers lines 4069-4124: limit reached, !exhausted branch (lines 4103-4122)
+        string result = Eval("""$split("a-b-c-d", /-/, 2)""");
+        Assert.Equal("""["a","b"]""", result);
+    }
+
+    [Fact]
+    public void Split_RegexWithLimit_ThreeResults()
+    {
+        // Reference: $split("a-b-c-d", /-/, 3) → ["a","b","c"]
+        // Verifies the non-exhausted path with limit=3
+        string result = Eval("""$split("a-b-c-d", /-/, 3)""");
+        Assert.Equal("""["a","b","c"]""", result);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // $now and $fromMillis date formatting (lines 5797-5883)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Now_ReturnsIso8601UtcString()
+    {
+        // $now() → ISO 8601 UTC timestamp
+        // Covers lines 5797-5803: FormatIso8601Utc
+        string result = Eval("""$now()""");
+        // Result is a quoted ISO 8601 string like "2024-01-15T12:30:00.000Z"
+        Assert.StartsWith("\"", result);
+        Assert.EndsWith("Z\"", result);
+        Assert.Contains("T", result);
+    }
+
+    [Fact]
+    public void FromMillis_Utc_ReturnsIso8601()
+    {
+        // Reference: $fromMillis(1711929600000) → "2024-04-01T00:00:00.000Z"
+        // Covers lines 5797-5803: FormatIso8601Utc (called when no timezone)
+        string result = Eval("""$fromMillis(1711929600000)""");
+        Assert.Equal("\"2024-04-01T00:00:00.000Z\"", result);
+    }
+
+    [Fact]
+    public void FromMillis_WithPositiveOffset_ReturnsIso8601WithOffset()
+    {
+        // $fromMillis(0, undefined, "+05:30") → epoch + 5:30 offset
+        // Covers lines 5811-5833, 5860-5883: FormatIso8601WithOffset with positive offset
+        string result = Eval("""$fromMillis(0, undefined, "+05:30")""");
+        Assert.Equal("\"1970-01-01T05:30:00.000+05:30\"", result);
+    }
+
+    [Fact]
+    public void FromMillis_WithNegativeOffset_ReturnsIso8601WithOffset()
+    {
+        // $fromMillis(0, undefined, "-08:00") → epoch with -8h offset
+        // Covers lines 5874: negative offset sign branch
+        string result = Eval("""$fromMillis(0, undefined, "-08:00")""");
+        Assert.Equal("\"1969-12-31T16:00:00.000-08:00\"", result);
+    }
+
+    [Fact]
+    public void FromMillis_WithZeroOffset_ReturnsUtcZ()
+    {
+        // $fromMillis(0, undefined, "+00:00") → Z suffix (offset == TimeSpan.Zero)
+        // Covers line 5861-5863: zero offset fast path
+        string result = Eval("""$fromMillis(0, undefined, "+00:00")""");
+        Assert.Equal("\"1970-01-01T00:00:00.000Z\"", result);
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════
+    // $encodeUrl / $decodeUrl validation (lines 4528-4599)
+    // ═══════════════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void DecodeUrl_InvalidPercentEncoding_ThrowsD3140()
+    {
+        // A % followed by non-hex chars triggers HasInvalidPercentEncoding
+        // Covers lines 4528-4535 (char overload) or 4541-4556 (byte overload)
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$decodeUrl("hello%GGworld")"""));
+        Assert.Equal("D3140", ex.Code);
+    }
+
+    [Fact]
+    public void DecodeUrl_PercentAtEnd_ThrowsD3140()
+    {
+        // A % at end of string (i + 2 >= length) triggers error
+        // Covers the boundary check in HasInvalidPercentEncoding
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$decodeUrl("hello%2")"""));
+        Assert.Equal("D3140", ex.Code);
+    }
+
+    [Fact]
+    public void DecodeUrlComponent_InvalidPercentEncoding_ByteOverload_ThrowsD3140()
+    {
+        // Verifies the byte overload path for $decodeUrlComponent with different input
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$decodeUrlComponent("test%ZZvalue")"""));
+        Assert.Equal("D3140", ex.Code);
+    }
+
+    // ─── Dead code: ContainsUtf8Surrogate (4571-4577) and ValidateNoUnpairedSurrogates (4589-4599) ───
+    // These defensive checks cannot be reached through normal JSONata evaluation.
+    // The JSON parser produces valid UTF-8 (not WTF-8), and the JSONata lexer combines
+    // surrogate pairs from \uXXXX escapes into proper 4-byte UTF-8 code points.
+    // Unpaired surrogates cannot enter the runtime string pool.
 }
