@@ -409,6 +409,66 @@ public class InProcessGenerationTests
     }
 
     [Fact]
+    public async Task GenerateCode_EvaluatorOnly_AnyOfConst_ExercisesConstValidationHandler()
+    {
+        // Schema with anyOf branches using const values for strings, numbers, booleans, nulls.
+        // Also exercises contains, patternProperties, dependentSchemas, unevaluatedProperties.
+        string schemaPath = Path.Combine(SchemasDir, "anyof-const-evaluator.json");
+
+        CompoundDocumentResolver documentResolver = new(
+            new FileSystemDocumentResolver(),
+            new HttpClientDocumentResolver(new HttpClient()));
+
+        VocabularyRegistry vocabularyRegistry = new();
+        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+        JsonReference reference = new(schemaPath);
+        TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+            reference,
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+        var options = new CSharpLanguageProvider.Options(
+            defaultNamespace: "TestGenerated",
+            codeGenerationMode: CodeGenerationMode.SchemaEvaluationOnly);
+
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        languageProvider.SetEvaluatorRootTypes(rootType);
+
+        IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(
+            languageProvider,
+            [rootType],
+            CancellationToken.None);
+
+        Assert.NotEmpty(files);
+
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        // Should contain const string comparison code (anyOf with string consts)
+        Assert.Contains("active", allCode);
+        // Should contain validation method calls for the anyOf structure
+        Assert.Contains("AnyOf", allCode);
+    }
+
+    [Fact]
+    public async Task GenerateCode_BothMode_AnyOfConst_ExercisesDualPaths()
+    {
+        // Same schema in Both mode — exercises both type generation and evaluator paths
+        string schemaPath = Path.Combine(SchemasDir, "anyof-const-evaluator.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(
+            schemaPath,
+            CodeGenerationMode.Both);
+
+        Assert.NotEmpty(files);
+
+        string allCode = string.Join("\n", files.Select(f => f.FileContent));
+
+        // Both mode should produce evaluator and type code
+        Assert.True(allCode.Length > 5000, "Expected substantial code from both-mode generation");
+    }
+
+    [Fact]
     public async Task GenerateCode_ComposedWithArray_ExercisesArrayBuilderPath()
     {
         // A oneOf with an array branch triggers the ComposedBuilder.ArrayInstanceName path

@@ -1,0 +1,162 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "status": {
+      "anyOf": [
+        { "const": "active" },
+        { "const": "inactive" },
+        { "const": "pending" },
+        { "const": "archived" },
+        { "const": "deleted" }
+      ]
+    },
+    "priority": {
+      "anyOf": [
+        { "const": 1 },
+        { "const": 2 },
+        { "const": 3 },
+        { "const": 4 },
+        { "const": 5 }
+      ]
+    },
+    "enabled": {
+      "anyOf": [
+        { "const": true },
+        { "const": false }
+      ]
+    },
+    "nullableField": {
+      "anyOf": [
+        { "const": null },
+        { "const": "present" }
+      ]
+    },
+    "shape": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "circle" },
+            "radius": { "type": "number", "minimum": 0 }
+          },
+          "required": ["kind", "radius"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "square" },
+            "side": { "type": "number", "minimum": 0 }
+          },
+          "required": ["kind", "side"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "rectangle" },
+            "width": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 }
+          },
+          "required": ["kind", "width", "height"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "triangle" },
+            "base": { "type": "number", "minimum": 0 },
+            "height": { "type": "number", "minimum": 0 }
+          },
+          "required": ["kind", "base", "height"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "kind": { "const": "ellipse" },
+            "rx": { "type": "number", "minimum": 0 },
+            "ry": { "type": "number", "minimum": 0 }
+          },
+          "required": ["kind", "rx", "ry"]
+        }
+      ]
+    },
+    "score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100,
+      "exclusiveMinimum": 0,
+      "multipleOf": 0.5
+    },
+    "items": {
+      "type": "array",
+      "contains": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "string" }
+        },
+        "required": ["id"]
+      },
+      "minContains": 1,
+      "maxContains": 5
+    },
+    "data": {
+      "type": "object",
+      "patternProperties": {
+        "^x-": { "type": "string" },
+        "^num_": { "type": "number" }
+      },
+      "dependentSchemas": {
+        "foo": {
+          "properties": {
+            "bar": { "type": "string" }
+          },
+          "required": ["bar"]
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "event": {
+      "anyOf": [
+        {
+          "type": "object",
+          "properties": {
+            "code": { "const": 100 },
+            "message": { "type": "string" }
+          },
+          "required": ["code"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "code": { "const": 200 },
+            "payload": { "type": "object" }
+          },
+          "required": ["code"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "code": { "const": 300 },
+            "redirect": { "type": "string", "format": "uri" }
+          },
+          "required": ["code"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "code": { "const": 400 },
+            "error": { "type": "string" }
+          },
+          "required": ["code"]
+        },
+        {
+          "type": "object",
+          "properties": {
+            "code": { "const": 500 },
+            "details": { "type": "string" }
+          },
+          "required": ["code"]
+        }
+      ]
+    }
+  }
+}
