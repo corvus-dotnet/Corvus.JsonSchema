@@ -612,4 +612,280 @@ public class FunctionalCompilerCoverageTests
         // The transform adds the "total" field
         Assert.Contains("\"total\":15", result);
     }
+
+    // ─── WrapWithStages on non-PathNode (lines 175-201) ─────
+    // A variable with a filter predicate: $var[pred] produces a non-PathNode (VariableNode)
+    // with Stages containing a FilterNode. This is the only way to hit WrapWithStages.
+
+    [Fact]
+    public void WrapWithStages_VariableWithFilter()
+    {
+        // $arr[pred] — VariableNode with FilterNode stage, hits WrapWithStages.
+        // The SortNode branch (line 186) is dead code — parser never puts SortNode in Stages.
+        string result = Eval("""( $arr := [1,2,3,4,5]; $arr[$ > 3] )""");
+        Assert.Equal("[4,5]", result);
+    }
+
+    [Fact]
+    public void WrapWithStages_VariableWithMultipleFilters()
+    {
+        // Multiple filter stages on a non-PathNode variable: $arr[pred1][pred2]
+        string result = Eval("""( $arr := [1,2,3,4,5,6,7,8]; $arr[$ > 2][$ < 7] )""");
+        Assert.Equal("[3,4,5,6]", result);
+    }
+
+    // ─── Focus binding @$var cross-join with multi-valued parent (lines 2978-2998) ─────
+    // EvalFocusStep receives parentContext.Count > 1 when prior step produces
+    // multi-valued sequence. The cross-join navigates the remaining path from
+    // the parent context, filtering by the focus variable.
+
+    [Fact]
+    public void FocusBinding_MultiParentContext_CrossJoin()
+    {
+        // Multi-step path where the parent produces multiple elements for the focus step.
+        // library.loans produces array (singleton), then @$l processes each loan,
+        // navigating .books from the library context and filtering by $l.isbn.
+        string data = """
+        {
+          "library": {
+            "loans": [{"isbn": "A1"}, {"isbn": "B2"}, {"isbn": "C3"}],
+            "books": [
+              {"isbn": "A1", "title": "Alpha"},
+              {"isbn": "B2", "title": "Beta"},
+              {"isbn": "C3", "title": "Gamma"}
+            ]
+          }
+        }
+        """;
+        string result = Eval("""library.loans@$l.books[isbn=$l.isbn].title""", data);
+        Assert.Contains("Alpha", result);
+        Assert.Contains("Beta", result);
+        Assert.Contains("Gamma", result);
+    }
+
+    [Fact]
+    public void FocusBinding_WithArrayFlattening()
+    {
+        // Focus binding where the focus context is the parent step.
+        // In: orders.lines@$line.catalog[sku=$line.sku].name
+        // The focus context for @$line is each "order" object, so .catalog must
+        // be at the same level as .lines.
+        string data = """
+        {
+          "orders": [
+            {"lines": [{"sku": "X"}, {"sku": "Y"}], "catalog": [{"sku": "X", "name": "Widget"}, {"sku": "Y", "name": "Gadget"}]},
+            {"lines": [{"sku": "Z"}], "catalog": [{"sku": "Z", "name": "Doohickey"}]}
+          ]
+        }
+        """;
+        string result = Eval("""orders.lines@$line.catalog[sku=$line.sku].name""", data);
+        Assert.Contains("Widget", result);
+        Assert.Contains("Gadget", result);
+        Assert.Contains("Doohickey", result);
+    }
+
+    // ─── Sort continuation after sort step (lines 3057-3082, 4043-4061) ─────
+    // When a sort step is NOT the last step, elements must continue through remaining steps.
+
+    [Fact]
+    public void SortWithContinuation_PropertyAfterSort()
+    {
+        // Account.Order.Product^($.Price).Name: sort is intermediate, .Name continues
+        string data = """
+        {
+          "items": [
+            {"price": 30, "name": "C"},
+            {"price": 10, "name": "A"},
+            {"price": 20, "name": "B"}
+          ]
+        }
+        """;
+        string result = Eval("items^(price).name", data);
+        Assert.Equal("""["A","B","C"]""", result);
+    }
+
+    [Fact]
+    public void SortWithContinuation_DeepPath()
+    {
+        // Sort on intermediate step, then navigate deeper
+        string data = """
+        {
+          "store": {
+            "shelves": [
+              {"priority": 3, "books": [{"title": "C1"}, {"title": "C2"}]},
+              {"priority": 1, "books": [{"title": "A1"}]},
+              {"priority": 2, "books": [{"title": "B1"}, {"title": "B2"}]}
+            ]
+          }
+        }
+        """;
+        string result = Eval("store.shelves^(priority).books.title", data);
+        // Sorted by priority → shelf1, shelf2, shelf3 → their books' titles
+        Assert.Contains("A1", result);
+        Assert.Contains("B1", result);
+        Assert.Contains("C1", result);
+    }
+
+    // ─── Index binding #$i on multi-element parent (lines 4088-4108) ─────
+    // EvalIndexStep receives multi-element inputContext.
+
+    [Fact]
+    public void IndexBinding_MultiParentContext()
+    {
+        // groups.items produces multi-valued, then #$i binds index on multi-parent
+        string data = """
+        {
+          "groups": [
+            {"items": ["a", "b"]},
+            {"items": ["c", "d"]}
+          ]
+        }
+        """;
+        // groups.items gives [a,b,c,d] as multi-valued, #$i indexes each
+        string result = Eval("groups.items#$i[$i=0]", data);
+        // Should return first element(s) at index 0 within each group
+        Assert.Contains("a", result);
+    }
+
+    // ─── Sort stage with array flattening in ApplyStages (lines 5466-5501) ─────
+    // When applying sort stages, input contains arrays that need flattening first.
+
+    [Fact]
+    public void SortStage_ArrayOfArraysFlattening()
+    {
+        // Path producing array-of-arrays, then sort stage flattens before sorting
+        string data = """
+        {
+          "departments": [
+            {"people": [{"name": "Charlie", "age": 30}]},
+            {"people": [{"name": "Alice", "age": 25}, {"name": "Bob", "age": 35}]}
+          ]
+        }
+        """;
+        // departments.people produces arrays, [age>0] filters all (pass-through), ^(age) sorts
+        string result = Eval("departments.people[age > 0]^(age).name", data);
+        Assert.Equal("""["Alice","Charlie","Bob"]""", result);
+    }
+
+    [Fact]
+    public void SortStage_ArrayFlattening_SingleResult()
+    {
+        // When sort produces single element (sortElements.Count <= 1), lines 5486-5494
+        string data = """
+        {
+          "departments": [
+            {"people": [{"name": "Alice", "age": 25}]}
+          ]
+        }
+        """;
+        string result = Eval("departments.people[age > 20]^(age).name", data);
+        Assert.Equal("\"Alice\"", result);
+    }
+
+    // ─── Group-by with simple name pair optimization (lines 221-229) ─────
+    // WrapWithGroupBy fast path: single pair where both key and value are simple names.
+    // Requires a NON-PathNode expression with group-by (variables pass through ProcessAst
+    // unchanged as VariableNode, which is not PathNode).
+
+    [Fact]
+    public void GroupBy_SimpleNamePair_NonPathVariable()
+    {
+        // $items{category: price} — variable (non-PathNode) with simple NameNode key + value
+        // Hits WrapWithGroupBy (line 208) and the fast path at line 221.
+        string data = """
+        {
+          "items": [
+            {"category": "A", "price": 10},
+            {"category": "B", "price": 20},
+            {"category": "A", "price": 30}
+          ]
+        }
+        """;
+        string result = Eval("""( $items := items; $items{category: price} )""", data);
+        // Groups by category, collects prices: {"A": [10,30], "B": 20}
+        Assert.Contains("A", result);
+        Assert.Contains("B", result);
+    }
+
+    [Fact]
+    public void GroupBy_NonPath_FunctionResult()
+    {
+        // Group-by on a non-path expression (function result)
+        // $append() returns a non-PathNode result; group-by applied to it hits WrapWithGroupBy.
+        string result = Eval(
+            """( $data := $append([{"g":"X","v":1}], [{"g":"Y","v":2}]); $data{g: v} )""");
+        Assert.Contains("X", result);
+        Assert.Contains("Y", result);
+    }
+
+    // ─── Sort stage on intermediate step (lines 3394-3412) ─────
+    // Tuple-based path with sort at intermediate position.
+
+    [Fact]
+    public void SortOnIntermediateStep_WithLabels()
+    {
+        // Sort on an intermediate step where labels are involved
+        string data = """
+        {
+          "library": {
+            "books": [
+              {"title": "B", "year": 2020},
+              {"title": "A", "year": 2018},
+              {"title": "C", "year": 2022}
+            ]
+          }
+        }
+        """;
+        // Sort books by year, then get titles
+        string result = Eval("library.books^(year).title", data);
+        Assert.Equal("""["A","B","C"]""", result);
+    }
+
+    // ─── Multi-parent context in inner step (lines 3294-3314) ─────
+    // When inner focus evaluation has parentContext.Count > 1.
+
+    [Fact]
+    public void InnerFocusStep_MultiParent()
+    {
+        // Complex cross-join where navigation correlates across collections.
+        // The pattern orders.lines@$line.products[sku=$line.sku] produces a
+        // cross-join where each line is matched against the catalog.
+        string data = """
+        {
+          "data": {
+            "refs": [{"code": "A"}, {"code": "B"}],
+            "items": [
+              {"code": "A", "value": 100},
+              {"code": "B", "value": 200},
+              {"code": "C", "value": 300}
+            ]
+          }
+        }
+        """;
+        string result = Eval("""data.refs@$r.items[code=$r.code].value""", data);
+        Assert.Contains("100", result);
+        Assert.Contains("200", result);
+        Assert.DoesNotContain("300", result);
+    }
+
+    // ─── Path with sort at step > 0 and continuation (line 3057) ─────
+
+    [Fact]
+    public void Sort_IntermediateStepWithArrayInput()
+    {
+        // store.products^(price)[0] — sort at step 1, then index at step 2
+        string data = """
+        {
+          "store": {
+            "products": [
+              {"name": "Expensive", "price": 100},
+              {"name": "Cheap", "price": 5},
+              {"name": "Mid", "price": 50}
+            ]
+          }
+        }
+        """;
+        string result = Eval("store.products^(price)[0].name", data);
+        Assert.Equal("\"Cheap\"", result);
+    }
 }

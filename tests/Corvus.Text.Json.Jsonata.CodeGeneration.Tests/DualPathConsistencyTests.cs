@@ -174,6 +174,18 @@ public class DualPathConsistencyTests : IClassFixture<CodeGenConformanceFixture>
         yield return ["""$sort([3,1,4,1,5], function($a,$b){$a > $b})""", "null", "sort-asc-boolean"];
         yield return ["""$sort([3,1,4,1,5], function($a,$b){$a < $b})""", "null", "sort-desc-boolean"];
 
+        // ─── FunctionalCompiler coverage paths ───
+        // Focus binding cross-join
+        yield return ["""library.loans@$l.books[isbn=$l.isbn].title""", """{"library":{"loans":[{"isbn":"123"},{"isbn":"456"}],"books":[{"isbn":"123","title":"A"},{"isbn":"456","title":"B"}]}}""", "focus-crossjoin"];
+        // Sort with continuation
+        yield return ["""items^(price).name""", """{"items":[{"price":30,"name":"C"},{"price":10,"name":"A"},{"price":20,"name":"B"}]}""", "sort-continuation"];
+        // Index binding on multi-valued path
+        yield return ["""groups.items#$i[$i=0]""", """{"groups":[{"items":["a","b"]},{"items":["c","d"]}]}""", "index-binding-multiparent"];
+        // Variable with filter (WrapWithStages)
+        yield return ["""( $arr := [1,2,3,4,5]; $arr[$ > 3] )""", "null", "wrap-stages-varfilter"];
+        // Variable with group-by (WrapWithGroupBy fast path)
+        yield return ["""( $items := [{"cat":"A","val":10},{"cat":"B","val":20},{"cat":"A","val":30}]; $items{cat: val} )""", "null", "wrap-groupby-vargroup"];
+
         // ─── Environment limits ───
         yield return ["""$ + 1""", "42", "simple-arithmetic"];
     }
