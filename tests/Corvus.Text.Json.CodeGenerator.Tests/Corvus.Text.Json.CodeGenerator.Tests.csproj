@@ -29,6 +29,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
   </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <ProjectReference Include="..\..\src\Corvus.Json.Cli.Core\Corvus.Json.Cli.Core.csproj" />
+  </ItemGroup>
   <ItemGroup>
     <None Update="TestFixtures\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

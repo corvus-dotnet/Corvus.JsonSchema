@@ -1,0 +1,27 @@
+{
+  "$defs": {
+    "Address": {
+      "type": "object",
+      "properties": {
+        "street": { "type": "string" },
+        "city": { "type": "string" }
+      }
+    }
+  },
+  "type": "object",
+  "properties": {
+    "home": { "$ref": "#/$defs/Address" },
+    "work": { "$ref": "#/$defs/Address" },
+    "address": {
+      "type": "object",
+      "properties": {
+        "Address": {
+          "type": "object",
+          "properties": {
+            "line1": { "type": "string" }
+          }
+        }
+      }
+    }
+  }
+}

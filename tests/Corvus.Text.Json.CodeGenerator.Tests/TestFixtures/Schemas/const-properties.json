@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "kind": { "const": "alpha" },
+              "value": { "type": "string" }
+            },
+            "required": ["kind", "value"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": { "const": "beta" },
+              "count": { "type": "integer" }
+            },
+            "required": ["kind", "count"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "kind": { "const": "gamma" },
+              "flag": { "type": "boolean" }
+            },
+            "required": ["kind", "flag"]
+          },
+          {
+            "type": "object",
+            "properties": {
+              "type": { "const": "delta" },
+              "status": { "const": "active" },
+              "detail": { "type": "string" }
+            },
+            "required": ["type", "status"]
+          }
+        ]
+      }
+    }
+  }
+}

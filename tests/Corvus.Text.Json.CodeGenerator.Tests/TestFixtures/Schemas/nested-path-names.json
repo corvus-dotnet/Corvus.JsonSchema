@@ -1,0 +1,45 @@
+{
+  "type": "object",
+  "properties": {
+    "database": {
+      "type": "object",
+      "properties": {
+        "connection": {
+          "type": "object",
+          "properties": {
+            "host": { "type": "string" },
+            "port": { "type": "integer" }
+          }
+        },
+        "settings": {
+          "type": "object",
+          "properties": {
+            "maxConnections": { "type": "integer" },
+            "timeout": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "endpoints": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "url": { "type": "string" },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "0invalidStartName": {
+      "type": "object",
+      "properties": {
+        "data": { "type": "string" }
+      }
+    }
+  }
+}
