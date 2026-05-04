@@ -88,6 +88,7 @@ public static class CSharpMemberNameTests
     [InlineData("\u2026", "Hellip")]     // Horizontal ellipsis
     [InlineData("\u2020", "Dagger")]     // Dagger
     [InlineData("\u2021", "Dagger")]     // Double dagger ("Dagger" with capital D -> PascalCase)
+    [InlineData("\u02DC", "Tilde")]      // Small tilde (ModifierSymbol, NOT a letter)
     [InlineData("\u2030", "Permil")]     // Per mille sign
     [InlineData("\u2039", "Lsaquo")]     // Single left-pointing angle quotation
     public static void SingleNonLetter_PascalCase_TranslatesCorrectly_ExtendedPunctuation(string input, string expected)
