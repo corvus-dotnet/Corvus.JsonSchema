@@ -403,5 +403,115 @@ public class JsonCanonicalizerTests
         Assert.True(result.Length > 256, "Result should exceed stackalloc threshold");
     }
 
+    [Fact]
+    public void Canonicalize_LargeObject_MoreThan32Properties_RentsIndices()
+    {
+        // Object with >32 properties triggers ArrayPool rent for sort indices (L235-238)
+        var sb = new StringBuilder();
+        sb.Append('{');
+        for (int i = 0; i < 40; i++)
+        {
+            if (i > 0)
+            {
+                sb.Append(',');
+            }
+
+            sb.Append($"\"key_{i:D2}\":{i}");
+        }
+
+        sb.Append('}');
+
+        string input = sb.ToString();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(input);
+        byte[] result = JsonCanonicalizer.Canonicalize(doc.RootElement);
+        string actual = Encoding.UTF8.GetString(result);
+
+        // Verify sorted — key_00 before key_01, etc.
+        Assert.StartsWith("{\"key_00\":0,", actual);
+        Assert.Contains("\"key_39\":39}", actual);
+    }
+
+    [Fact]
+    public void Canonicalize_64LevelsDeep_Succeeds()
+    {
+        // 64 levels is exactly at MaxDepth — should succeed
+        // Note: L123-124 (depth > MaxDepth = 64) is defensive dead code because
+        // the JSON parser enforces the same limit and rejects deeper input first.
+        string nested = new string('[', 64) + "1" + new string(']', 64);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(nested);
+
+        byte[] result = JsonCanonicalizer.Canonicalize(doc.RootElement);
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void TryCanonicalize_NumberOverflow_ReturnsFalse()
+    {
+        // A number that needs more bytes than a tiny buffer allows
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("123456789.123456789");
+        Span<byte> buffer = stackalloc byte[3]; // too small for the number
+        bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
+
+        Assert.False(success);
+    }
+
+    [Fact]
+    public void TryCanonicalize_StringOverflow_ReturnsFalse()
+    {
+        // A string that needs escaping and won't fit in a tiny buffer
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("\"hello world this is a long string\"");
+        Span<byte> buffer = stackalloc byte[4]; // too small
+        bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
+
+        Assert.False(success);
+    }
+
+    [Fact]
+    public void TryCanonicalize_ArrayOverflow_WriteByteThenWriteNumber()
+    {
+        // An array where the string element causes overflow, then WriteNumber sees overflow=true (L284-285)
+        // ["aaaaaaaaaa",42] — buffer enough for ["aaaa but string overflows, then number check fires
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""["aaaaaaaaaa",42]""");
+        Span<byte> buffer = stackalloc byte[8]; // fits ["aaaa but not full string
+        bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
+
+        Assert.False(success);
+    }
+
+    [Fact]
+    public void TryCanonicalize_ObjectOverflow_WriteBytesOverflowsInStringWrite()
+    {
+        // Object where the property name string exceeds remaining buffer
+        // The string serialization uses WriteBytes for the escaped content
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"abcdefghijk":1}""");
+        Span<byte> buffer = stackalloc byte[8]; // enough for {"abcde but not the rest
+        bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
+
+        Assert.False(success);
+    }
+
+    [Fact]
+    public void TryCanonicalize_ArrayWithStringThenLiteral_OverflowInWriteBytes()
+    {
+        // After string overflow, WriteLiteral (which calls WriteBytes) sees overflow=true (L396-397)
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""["aaaaaaaaaa",true]""");
+        Span<byte> buffer = stackalloc byte[8]; // overflows during string, then WriteLiteral checks
+        bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
+
+        Assert.False(success);
+    }
+
+    [Fact]
+    public void TryCanonicalize_WriteBytesPartialOverflow()
+    {
+        // Buffer has some space but WriteBytes content exceeds it (L401-403)
+        // A literal "true" is 4 bytes; if only 2 bytes remain, WriteBytes overflows
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("[true]");
+        Span<byte> buffer = stackalloc byte[3]; // "[" takes 1, then "true" needs 4, only 2 remain
+        bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
+
+        Assert.False(success);
+    }
+
     #endregion
 }
