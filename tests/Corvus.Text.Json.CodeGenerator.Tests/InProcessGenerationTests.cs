@@ -285,6 +285,55 @@ public class InProcessGenerationTests
     }
 
     [Fact]
+    public async Task GenerateCode_EncodedUriDefs_ExercisesBaseSchemaNameHeuristic()
+    {
+        // $defs keys that are JSON-Pointer-encoded URIs trigger TryGetNameFromEncodedUri
+        // in BaseSchemaNameHeuristic, extracting filename stems as type names
+        string schemaPath = Path.Combine(SchemasDir, "encoded-uri-defs.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
+
+        Assert.NotEmpty(files);
+
+        string[] typeNames = files
+            .Select(f => CSharpLanguageProvider.GetDotnetTypeName(f))
+            .Where(n => n is not null)
+            .ToArray()!;
+
+        // BaseSchemaNameHeuristic should extract "AsyncAgent" from the encoded URI key
+        Assert.True(
+            typeNames.Any(n => n!.Contains("AsyncAgent", StringComparison.OrdinalIgnoreCase)),
+            $"Expected 'AsyncAgent' from encoded URI def. Got: {string.Join(", ", typeNames)}");
+
+        // And "ServiceConfig" from the second encoded URI key
+        Assert.True(
+            typeNames.Any(n => n!.Contains("ServiceConfig", StringComparison.OrdinalIgnoreCase)),
+            $"Expected 'ServiceConfig' from encoded URI def. Got: {string.Join(", ", typeNames)}");
+    }
+
+    [Fact]
+    public async Task GenerateCode_CollidingUriDefs_DisambiguatesWithParentSegment()
+    {
+        // Two $defs with the same filename stem ("agent.json") but different paths
+        // forces BaseSchemaNameHeuristic to use progressively longer path suffixes
+        // to disambiguate (e.g. "BackendAgent" and "FrontendAgent")
+        string schemaPath = Path.Combine(SchemasDir, "colliding-uri-defs.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
+
+        Assert.NotEmpty(files);
+
+        string[] typeNames = files
+            .Select(f => CSharpLanguageProvider.GetDotnetTypeName(f))
+            .Where(n => n is not null)
+            .ToArray()!;
+
+        // Both should be named differently — at least one should include the parent dir
+        int agentCount = typeNames.Count(n => n!.Contains("Agent", StringComparison.OrdinalIgnoreCase));
+        Assert.True(
+            agentCount >= 2,
+            $"Expected at least 2 Agent types (disambiguated). Got: {string.Join(", ", typeNames)}");
+    }
+
+    [Fact]
     public async Task GenerateCode_BothMode_ProducesMoreOrEqualFiles()
     {
         string schemaPath = Path.Combine(SchemasDir, "numeric-and-format.json");
