@@ -6520,9 +6520,22 @@ internal static class BuiltInFunctions
             return 0;
         }
 
-        if (FunctionalCompiler.TryCoerceToNumber(el, out double num))
+        // Any other truthy value (non-zero number, non-empty string, etc.) means swap
+        if (FunctionalCompiler.IsTruthy(result))
         {
-            return num < 0 ? -1 : (num > 0 ? 1 : 0);
+            return 1;
+        }
+
+        // Falsy (zero, null, empty string): check reverse
+#if NET9_0_OR_GREATER
+        var falseReverseResult = lambda.InvokeReusing([sb, sa], input, invokeEnv, callerEnv);
+#else
+        var falseReverseResult = lambda.InvokeReusing(new Sequence[] { sb, sa }, input, invokeEnv, callerEnv);
+#endif
+        if (!falseReverseResult.IsUndefined
+            && FunctionalCompiler.IsTruthy(falseReverseResult))
+        {
+            return -1;
         }
 
         return 0;

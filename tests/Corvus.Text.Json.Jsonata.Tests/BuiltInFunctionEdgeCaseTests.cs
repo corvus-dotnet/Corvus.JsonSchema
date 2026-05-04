@@ -1486,9 +1486,10 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void Sort_CustomDescending()
     {
+        // The reference uses boolean semantics: $a < $b means "swap if a < b" → descending
         Assert.Equal(
             "[5,4,3,1,1]",
-            Eval("""$sort([3,1,4,1,5], function($a,$b){$b - $a})"""));
+            Eval("""$sort([3,1,4,1,5], function($a,$b){$a < $b})"""));
     }
 
     // ─── Coalesce operator (??) — Corvus extension ──

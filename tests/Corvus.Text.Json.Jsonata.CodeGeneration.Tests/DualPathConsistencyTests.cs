@@ -170,6 +170,10 @@ public class DualPathConsistencyTests : IClassFixture<CodeGenConformanceFixture>
         // ─── Shuffle fix (singleton wraps in array) ───
         yield return ["""$shuffle(42)""", "null", "shuffle-singleton-wraps"];
 
+        // ─── Sort comparator uses boolean/truthy semantics ───
+        yield return ["""$sort([3,1,4,1,5], function($a,$b){$a > $b})""", "null", "sort-asc-boolean"];
+        yield return ["""$sort([3,1,4,1,5], function($a,$b){$a < $b})""", "null", "sort-desc-boolean"];
+
         // ─── Environment limits ───
         yield return ["""$ + 1""", "42", "simple-arithmetic"];
     }

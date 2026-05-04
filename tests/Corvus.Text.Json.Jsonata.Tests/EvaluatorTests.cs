@@ -707,7 +707,8 @@ public class EvaluatorTests
     [Fact]
     public void SortFunctionWithComparator()
     {
-        var result = Evaluator.EvaluateToString("""$sort([1,3,2], function($a, $b) { $b - $a })""", "{}");
+        // The reference uses boolean semantics: $a < $b means "swap if a < b" → descending
+        var result = Evaluator.EvaluateToString("""$sort([1,3,2], function($a, $b) { $a < $b })""", "{}");
         Assert.Equal("[3,2,1]", result);
     }
 
