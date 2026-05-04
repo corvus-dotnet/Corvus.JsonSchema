@@ -732,16 +732,21 @@ public class XPathDateTimeFormatterEdgeCaseTests
 
     #region ParseTimezoneArgument (XPathDateTimeFormatter lines 3550-3557, 3579-3588)
 
+#if NET
     [Fact]
     public void FromMillis_IanaTimezone()
     {
-        // IANA timezone name exercises FindSystemTimeZoneById (lines 3550-3557)
+        // Verifies that IANA timezone names (e.g. "America/New_York") are resolved
+        // and a UTC offset is applied. 1705276800000 ms = 2024-01-15 00:00:00 UTC.
+        // America/New_York is UTC-5 (EST) or UTC-4 (EDT), so the time portion must
+        // differ from midnight (the exact value depends on current DST rules).
+        // .NET Framework does not support IANA timezone IDs in FindSystemTimeZoneById.
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "America/New_York")""", "{}");
         Assert.NotNull(result);
-        // The offset applied depends on current DST, so just verify it's not UTC midnight
         Assert.DoesNotContain("00:00:00", result);
     }
+#endif
 
     [Fact]
     public void FromMillis_ShortOffset()
