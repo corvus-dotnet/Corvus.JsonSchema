@@ -1459,4 +1459,267 @@ public class BuiltInFunctionCoverageTests
         var ex = Assert.Throws<JsonataException>(() => Eval("""$decodeUrl("%ZZ")"""));
         Assert.Equal("D3140", ex.Code);
     }
+
+    // ─── $shuffle via standard (non-fused) path (lines 5431-5440) ──────────
+    // The buffer-fused optimisation (CompileBufferFusedShuffle) handles simple chains.
+    // A predicate path forces the standard CompileShuffle path which has the
+    // multi-element Sequence branch at line 5431.
+
+    [Fact]
+    public void Shuffle_NonChainPath_HitsStandardMultiElementBranch()
+    {
+        // items[x > 2].x uses a predicate — not a simple chain — so bypasses fused optimisation.
+        // Reference: $shuffle(items[x > 2].x) returns a 3-element array (order varies).
+        string data = """{"items":[{"x":1},{"x":2},{"x":3},{"x":4},{"x":5}]}""";
+        string result = Eval("""$count($shuffle(items[x > 2].x))""", data);
+        Assert.Equal("3", result);
+    }
+
+    // ─── $map double buffer resize (lines 2154-2160) ───────────────────────
+    // Initial rent is items.Count; when all results are doubles AND
+    // a resize is needed, we need > initial rent size doubles.
+
+    [Fact]
+    public void Map_ManyDoubles_TriggersBufferResize()
+    {
+        // Exactly 16 items — ArrayPool.Rent(16) returns length-16 (bucket boundary).
+        // After 16 iterations each producing a raw double, resultCount==doubleResults.Length
+        // triggers the buffer resize at lines 2154-2160.
+        // Using $v + 0.1 ensures every result is a non-integer double (always RawDouble).
+        string result = Eval(
+            """$map([1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16], function($v){$v + 0.1})""");
+        Assert.Contains("1.1", result);
+        Assert.Contains("16.1", result);
+    }
+
+    // ─── $zip with empty array (lines 5501-5505) ──────────────────────────
+
+    [Fact]
+    public void Zip_EmptyFirstArg_ReturnsEmptyArray()
+    {
+        // Reference: $zip([], [1,2,3]) → []
+        string result = Eval("""$zip([], [1,2,3])""");
+        Assert.Equal("[]", result);
+    }
+
+    [Fact]
+    public void Zip_EmptySecondArg_ReturnsEmptyArray()
+    {
+        // Reference: $zip([1,2,3], []) → []
+        string result = Eval("""$zip([1,2,3], [])""");
+        Assert.Equal("[]", result);
+    }
+
+    // ─── $eval with non-object context (lines 6156-6161) ──────────────────
+
+    [Fact]
+    public void Eval_NumberContext_BindsAsDollar()
+    {
+        // Reference: $eval("$ + 10", 50) → 60
+        string result = Eval("""$eval("$ + 10", 50)""");
+        Assert.Equal("60", result);
+    }
+
+    // ─── $uppercase with large string (lines 1205-1207: rented char return) ──
+
+    [Fact]
+    public void Uppercase_LargeString_RentsAndReturnsBuffer()
+    {
+        // >128 chars triggers rented char buffer (JsonConstants.StackallocCharThreshold = 128)
+        // Reference: $uppercase(x) with 200 'a's → 200 'A's
+        string longA = new string('a', 200);
+        string data = $$"""{"x":"{{longA}}"}""";
+        string result = Eval("""$uppercase(x)""", data);
+        Assert.Equal($"\"{new string('A', 200)}\"", result);
+    }
+
+    // ─── $base64encode with large string (lines 4182-4184: rented buffer) ──
+
+    [Fact]
+    public void Base64Encode_LargeString_RentsBuffer()
+    {
+        // >256 bytes UTF-8 triggers rented byte buffer (JsonConstants.StackallocByteThreshold)
+        // Reference: $base64encode(200 'a's) has length 268
+        string longA = new string('a', 200);
+        string data = $$"""{"x":"{{longA}}"}""";
+        string result = Eval("""$base64encode(x)""", data);
+        // base64 of 200 'a' bytes = "YWFh..." (268 chars)
+        string inner = result.Trim('"');
+        Assert.Equal(268, inner.Length);
+    }
+
+    // ─── $base64decode: non-string arg paths (lines 4241-4243) ──────────
+    // PARITY BUG: reference throws T0410 for non-string args.
+    // Our implementation coerces via CoerceElementToString. These paths
+    // should eventually be replaced with type validation. Skipping test.
+
+    // ─── $encodeUrlComponent: non-string arg paths (lines 4300-4302) ─────
+    // PARITY BUG: same as base64decode — reference throws T0410.
+
+    // ─── $encodeUrl large string (lines 4417-4419: rented buffer return) ──
+
+    [Fact]
+    public void EncodeUrl_LargeString_RentsBuffer()
+    {
+        // >256 bytes triggers rented buffer path
+        string longUrl = "http://example.com/" + new string('x', 250);
+        string data = $$"""{"u":"{{longUrl}}"}""";
+        string result = Eval("""$encodeUrl(u)""", data);
+        // URL with only safe chars should pass through unchanged
+        Assert.Contains("example.com", result);
+    }
+
+    // ─── $decodeUrl large string (lines 4498-4500: rented buffer return) ──
+
+    [Fact]
+    public void DecodeUrl_LargeString_RentsBuffer()
+    {
+        // >256 bytes triggers rented buffer path
+        string longUrl = "http://example.com/" + new string('x', 250);
+        string data = $$"""{"u":"{{longUrl}}"}""";
+        string result = Eval("""$decodeUrl(u)""", data);
+        Assert.Contains("example.com", result);
+    }
+
+    // ─── $sort with equal elements (line 6541: comparison returns 0) ──────
+
+    [Fact]
+    public void Sort_NumericComparator_EqualElements_ReturnsZero()
+    {
+        // When comparator returns a non-boolean falsy value (0) for both directions,
+        // the comparison falls through to line 6541 (return 0).
+        // Using $a-$b: for equal elements, 0 is non-boolean + falsy.
+        string data = """[{"a":1,"b":"x"},{"a":1,"b":"y"},{"a":2,"b":"z"}]""";
+        string result = Eval("""$sort($, function($l,$r){$l.a - $r.a})""", data);
+        // All three elements present
+        Assert.Contains("\"z\"", result);
+        Assert.Contains("\"x\"", result);
+        Assert.Contains("\"y\"", result);
+    }
+
+    // ─── $formatNumber error paths (lines 4878, 4904-4905, 4911-4912) ────
+
+    [Fact]
+    public void FormatNumber_MandatoryDigitBeforeOptional_ThrowsD3090()
+    {
+        // Reference: $formatNumber(1234.5, "0#.0") → D3090
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$formatNumber(1234.5, "0#.0")"""));
+        Assert.Equal("D3090", ex.Code);
+    }
+
+    // Lines 4903-4905 (D3093 empty exponent) — DEAD CODE: the parsing logic structurally
+    // prevents an empty exponent part. The suffix boundary is determined by the last
+    // IsActiveNotExp char, so the 'e' can never be the last character of the active region.
+
+    // ─── $formatNumber D3093 non-digit in exponent at RUNTIME (line 4911-4912) ────────
+    // The compile-time parser catches constant-picture errors first, so we need a
+    // variable picture to reach the runtime validator in BuiltInFunctions.cs.
+
+    [Fact]
+    public void FormatNumber_RuntimePicture_NonDigitInExponent_ThrowsD3093()
+    {
+        // "#" (optDigit) is not in the digit family → D3093 at runtime line 4912
+        var ex = Assert.Throws<JsonataException>(() => Eval("""($pic := "0e#"; $formatNumber(42, $pic))"""));
+        Assert.Equal("D3093", ex.Code);
+    }
+
+    // ─── $formatNumber non-default digit family (lines 5202-5204) ────────
+    // The reference implementation crashes with a TypeError for non-ASCII zero-digit
+    // options, but our implementation correctly supports it.
+
+    [Fact]
+    public void FormatNumber_ArabicDigitFamily_WithDecimalPoint()
+    {
+        // Pattern with fractional digits forces MakeString to produce a '.' via
+        // ToString("F2"), exercising the "else" branch at lines 5201-5204 where
+        // non-digit characters (the decimal point) are appended verbatim.
+        // Uses $string() to force runtime evaluation through BuiltInFunctions.cs
+        // (constant pictures are compiled by FunctionalCompiler at compile time).
+        string expr = """
+            (
+                $pic := "\u0660.\u0660\u0660";
+                $formatNumber(3.14, $pic, {"zero-digit":"\u0660"})
+            )
+        """;
+        string result = Eval(expr);
+        Assert.Contains(".", result); // decimal point preserved as non-digit
+        Assert.Contains("\u0663", result); // Arabic-Indic 3
+        Assert.Contains("\u0661", result); // Arabic-Indic 1
+    }
+
+    // ─── $split edge case: separator at end (lines 4012-4014) ────────────
+
+    [Fact]
+    public void Split_SeparatorAtEnd_ProducesEmptyTrailingPart()
+    {
+        // Reference: $split("abc", "c") → ["ab",""]
+        string result = Eval("""$split("abc", "c")""");
+        Assert.Equal("""["ab",""]""", result);
+    }
+
+    [Fact]
+    public void Split_AllMatches_ProducesEmptyParts()
+    {
+        // Reference: $split("abcabc", "abc") → ["","",""]
+        string result = Eval("""$split("abcabc", "abc")""");
+        Assert.Equal("""["","",""]""", result);
+    }
+
+    // ─── $split with non-string separator (line 3956-3958) ───────────────
+    // PARITY BUG: reference throws T0411 for non-string separator.
+    // Our implementation returns default (undefined). Documenting but not
+    // testing incorrect behavior.
+
+    // ─── $formatInteger with non-number first arg (lines 6032-6033) ──────
+    // PARITY BUG: reference throws T0410 for non-number first arg.
+    // Our implementation returns undefined. Documenting but not testing
+    // incorrect behavior.
+
+    // ─── $formatBase with negative number (lines 5394-5396) ─────────────────
+
+    [Fact]
+    public void FormatBase_Negative_ProducesSignedString()
+    {
+        // Reference: $formatBase(-42, 16) → "-2a"
+        // Exercises the negative branch at line 5394-5396
+        string result = Eval("""$formatBase(-42, 16)""");
+        Assert.Contains("-2a", result);
+    }
+
+    // ─── $zip with 3 arguments (line 5486: CompileZipN path) ─────────────────
+
+    [Fact]
+    public void Zip_ThreeArrays_UsesZipN()
+    {
+        // Reference: $zip([1,2],[3,4],[5,6]) → [[1,3,5],[2,4,6]]
+        // 3+ args forces CompileZipN at line 5486.
+        // Uses $append to create non-constant arrays, bypassing compile-time optimizations.
+        string expr = """($a := $append([1],[2]); $zip($a, [3,4], [5,6]))""";
+        string result = Eval(expr);
+        Assert.Equal("[[1,3,5],[2,4,6]]", result);
+    }
+
+    [Fact]
+    public void Zip_ThreeArgs_UndefinedArg_ReturnsEmptyArray()
+    {
+        // Reference: $zip($x, [1,2], [3,4]) where $x is undefined → []
+        // Hits GetZipArgLength undefined branch at lines 5599-5600
+        string result = Eval("""$zip($x, [1,2], [3,4])""");
+        Assert.Equal("[]", result);
+    }
+
+    // ─── $sort with default comparator and mixed types (lines 6460-6461) ─────
+
+    [Fact]
+    public void Sort_DefaultComparator_ObjectInArray_ThrowsD3070()
+    {
+        // Reference: $sort([1, {"a":1}, 3]) → D3070
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$sort([1, {"a":1}, 3])"""));
+        Assert.Equal("D3070", ex.Code);
+    }
+
+    // ─── $formatNumber non-default digit family (lines 5202-5204) ────────
+    // These lines are reachable when using a non-ASCII zero-digit option, but the
+    // reference implementation crashes with a TypeError for non-default digit families.
+    // Cannot verify against reference. Documenting as reference-undefined behavior.
 }
