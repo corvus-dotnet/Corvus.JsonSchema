@@ -23,6 +23,7 @@
     <Compile Include="$(CtjTestDir)JsonToYamlTests.cs" Link="JsonToYamlTests.cs" />
     <Compile Include="$(CtjTestDir)Utf8YamlWriterTests.cs" Link="Utf8YamlWriterTests.cs" />
     <Compile Include="$(CtjTestDir)YamlCoverageTests.cs" Link="YamlCoverageTests.cs" />
+    <Compile Include="$(CtjTestDir)YamlDocumentParseOverloadTests.cs" Link="YamlDocumentParseOverloadTests.cs" />
     <Compile Include="$(CtjTestDir)YamlEventConformanceTests.cs" Link="YamlEventConformanceTests.cs" />
   </ItemGroup>
   <ItemGroup>

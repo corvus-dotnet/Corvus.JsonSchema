@@ -5,8 +5,11 @@
 #if STJ
 
 using System.Buffers;
+using System.IO;
 using System.Text;
 using System.Text.Json;
+using System.Threading;
+using System.Threading.Tasks;
 using Corvus.Yaml.Internal;
 
 namespace Corvus.Yaml;
@@ -100,6 +103,153 @@ public static class YamlDocument
     }
 
     /// <summary>
+    /// Parses UTF-8 YAML bytes from a <see cref="ReadOnlySequence{T}"/> and returns a
+    /// <see cref="JsonDocument"/> containing the equivalent JSON representation.
+    /// </summary>
+    /// <param name="utf8Yaml">The UTF-8 encoded YAML bytes as a sequence.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A <see cref="JsonDocument"/> that must be disposed when no longer needed.</returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static JsonDocument Parse(
+        ReadOnlySequence<byte> utf8Yaml,
+        YamlReaderOptions options = default)
+    {
+        if (utf8Yaml.IsSingleSegment)
+        {
+            return Parse(utf8Yaml.First, options);
+        }
+
+        int length = checked((int)utf8Yaml.Length);
+        byte[] rentedArray = ArrayPool<byte>.Shared.Rent(length);
+
+        try
+        {
+            utf8Yaml.CopyTo(rentedArray);
+            return Parse(rentedArray.AsMemory(0, length), options);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rentedArray);
+        }
+    }
+
+    /// <summary>
+    /// Parses a YAML character memory and returns a <see cref="JsonDocument"/> containing
+    /// the equivalent JSON representation.
+    /// </summary>
+    /// <param name="yaml">The YAML content as a character memory.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A <see cref="JsonDocument"/> that must be disposed when no longer needed.</returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static JsonDocument Parse(
+        ReadOnlyMemory<char> yaml,
+        YamlReaderOptions options = default)
+    {
+        ReadOnlySpan<char> yamlChars = yaml.Span;
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(yamlChars.Length);
+        byte[]? rentedArray = null;
+
+        Span<byte> utf8Buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+            int bytesWritten;
+#if NET
+            bytesWritten = Encoding.UTF8.GetBytes(yamlChars, utf8Buffer);
+#else
+            unsafe
+            {
+                fixed (char* pChars = yamlChars)
+                fixed (byte* pBytes = utf8Buffer)
+                {
+                    bytesWritten = Encoding.UTF8.GetBytes(pChars, yamlChars.Length, pBytes, utf8Buffer.Length);
+                }
+            }
+#endif
+            return Parse(utf8Buffer.Slice(0, bytesWritten).ToArray(), options);
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Parses UTF-8 YAML from a <see cref="Stream"/> and returns a <see cref="JsonDocument"/>
+    /// containing the equivalent JSON representation. The stream will be read to completion.
+    /// </summary>
+    /// <param name="utf8YamlStream">The stream containing UTF-8 encoded YAML bytes.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A <see cref="JsonDocument"/> that must be disposed when no longer needed.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="utf8YamlStream"/> is <see langword="null"/>.</exception>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static JsonDocument Parse(
+        Stream utf8YamlStream,
+        YamlReaderOptions options = default)
+    {
+#if NET
+        ArgumentNullException.ThrowIfNull(utf8YamlStream);
+#else
+        if (utf8YamlStream is null)
+        {
+            throw new ArgumentNullException(nameof(utf8YamlStream));
+        }
+#endif
+
+        byte[] drained = ReadStreamToEnd(utf8YamlStream, out int length);
+
+        try
+        {
+            return Parse(drained.AsMemory(0, length), options);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(drained);
+        }
+    }
+
+    /// <summary>
+    /// Parses UTF-8 YAML from a <see cref="Stream"/> asynchronously and returns a <see cref="JsonDocument"/>
+    /// containing the equivalent JSON representation. The stream will be read to completion.
+    /// </summary>
+    /// <param name="utf8YamlStream">The stream containing UTF-8 encoded YAML bytes.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous parse operation.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="utf8YamlStream"/> is <see langword="null"/>.</exception>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static async Task<JsonDocument> ParseAsync(
+        Stream utf8YamlStream,
+        YamlReaderOptions options = default,
+        CancellationToken cancellationToken = default)
+    {
+#if NET
+        ArgumentNullException.ThrowIfNull(utf8YamlStream);
+#else
+        if (utf8YamlStream is null)
+        {
+            throw new ArgumentNullException(nameof(utf8YamlStream));
+        }
+#endif
+
+        (byte[] drained, int length) = await ReadStreamToEndAsync(utf8YamlStream, cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            return Parse(drained.AsMemory(0, length), options);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(drained);
+        }
+    }
+
+    /// <summary>
     /// Converts UTF-8 YAML bytes to a JSON string.
     /// </summary>
     /// <param name="utf8Yaml">The UTF-8 encoded YAML bytes.</param>
@@ -188,6 +338,122 @@ public static class YamlDocument
         internalWriter.Flush();
 
         writer.WriteRawValue(bufferWriter.WrittenSpan, skipInputValidation: true);
+    }
+
+    private static byte[] ReadStreamToEnd(Stream stream, out int length)
+    {
+        if (stream.CanSeek)
+        {
+            long expectedLength = stream.Length - stream.Position;
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(checked((int)expectedLength));
+            int offset = 0;
+            int remaining = (int)expectedLength;
+
+            while (remaining > 0)
+            {
+                int read = stream.Read(buffer, offset, remaining);
+                if (read == 0)
+                {
+                    break;
+                }
+
+                offset += read;
+                remaining -= read;
+            }
+
+            length = offset;
+            return buffer;
+        }
+        else
+        {
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(4096);
+            int offset = 0;
+
+            while (true)
+            {
+                if (offset == buffer.Length)
+                {
+                    byte[] newBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length * 2);
+                    Buffer.BlockCopy(buffer, 0, newBuffer, 0, offset);
+                    ArrayPool<byte>.Shared.Return(buffer);
+                    buffer = newBuffer;
+                }
+
+#if NET
+                int read = stream.Read(buffer.AsSpan(offset));
+#else
+                int read = stream.Read(buffer, offset, buffer.Length - offset);
+#endif
+                if (read == 0)
+                {
+                    break;
+                }
+
+                offset += read;
+            }
+
+            length = offset;
+            return buffer;
+        }
+    }
+
+    private static async Task<(byte[] Buffer, int Length)> ReadStreamToEndAsync(Stream stream, CancellationToken cancellationToken)
+    {
+        if (stream.CanSeek)
+        {
+            long expectedLength = stream.Length - stream.Position;
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(checked((int)expectedLength));
+            int offset = 0;
+            int remaining = (int)expectedLength;
+
+            while (remaining > 0)
+            {
+#if NET
+                int read = await stream.ReadAsync(buffer.AsMemory(offset, remaining), cancellationToken).ConfigureAwait(false);
+#else
+                int read = await stream.ReadAsync(buffer, offset, remaining, cancellationToken).ConfigureAwait(false);
+#endif
+                if (read == 0)
+                {
+                    break;
+                }
+
+                offset += read;
+                remaining -= read;
+            }
+
+            return (buffer, offset);
+        }
+        else
+        {
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(4096);
+            int offset = 0;
+
+            while (true)
+            {
+                if (offset == buffer.Length)
+                {
+                    byte[] newBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length * 2);
+                    Buffer.BlockCopy(buffer, 0, newBuffer, 0, offset);
+                    ArrayPool<byte>.Shared.Return(buffer);
+                    buffer = newBuffer;
+                }
+
+#if NET
+                int read = await stream.ReadAsync(buffer.AsMemory(offset, buffer.Length - offset), cancellationToken).ConfigureAwait(false);
+#else
+                int read = await stream.ReadAsync(buffer, offset, buffer.Length - offset, cancellationToken).ConfigureAwait(false);
+#endif
+                if (read == 0)
+                {
+                    break;
+                }
+
+                offset += read;
+            }
+
+            return (buffer, offset);
+        }
     }
 
 #if !BUILDING_SOURCE_GENERATOR
@@ -570,7 +836,10 @@ public static class YamlDocument
 #else
 
 using System.Buffers;
+using System.IO;
 using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Yaml.Internal;
 
@@ -717,6 +986,162 @@ public static class YamlDocument
     }
 
     /// <summary>
+    /// Parses UTF-8 YAML bytes from a <see cref="ReadOnlySequence{T}"/> and returns a
+    /// <see cref="ParsedJsonDocument{T}"/> containing the equivalent JSON representation.
+    /// </summary>
+    /// <typeparam name="TElement">The type of the JSON element.</typeparam>
+    /// <param name="utf8Yaml">The UTF-8 encoded YAML bytes as a sequence.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> that must be disposed when no longer needed.</returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static ParsedJsonDocument<TElement> Parse<TElement>(
+        ReadOnlySequence<byte> utf8Yaml,
+        YamlReaderOptions options = default)
+        where TElement : struct, IJsonElement<TElement>
+    {
+        if (utf8Yaml.IsSingleSegment)
+        {
+            return Parse<TElement>(utf8Yaml.First, options);
+        }
+
+        int length = checked((int)utf8Yaml.Length);
+        byte[] rentedArray = ArrayPool<byte>.Shared.Rent(length);
+
+        try
+        {
+            utf8Yaml.CopyTo(rentedArray);
+            return Parse<TElement>(rentedArray.AsMemory(0, length), options);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(rentedArray);
+        }
+    }
+
+    /// <summary>
+    /// Parses a YAML character memory and returns a <see cref="ParsedJsonDocument{T}"/> containing
+    /// the equivalent JSON representation.
+    /// </summary>
+    /// <typeparam name="TElement">The type of the JSON element.</typeparam>
+    /// <param name="yaml">The YAML content as a character memory.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> that must be disposed when no longer needed.</returns>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static ParsedJsonDocument<TElement> Parse<TElement>(
+        ReadOnlyMemory<char> yaml,
+        YamlReaderOptions options = default)
+        where TElement : struct, IJsonElement<TElement>
+    {
+        ReadOnlySpan<char> yamlChars = yaml.Span;
+        int maxByteCount = Encoding.UTF8.GetMaxByteCount(yamlChars.Length);
+        byte[]? rentedArray = null;
+
+        Span<byte> utf8Buffer = maxByteCount <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedArray = ArrayPool<byte>.Shared.Rent(maxByteCount));
+
+        try
+        {
+            int bytesWritten;
+#if NET
+            bytesWritten = Encoding.UTF8.GetBytes(yamlChars, utf8Buffer);
+#else
+            unsafe
+            {
+                fixed (char* pChars = yamlChars)
+                fixed (byte* pBytes = utf8Buffer)
+                {
+                    bytesWritten = Encoding.UTF8.GetBytes(pChars, yamlChars.Length, pBytes, utf8Buffer.Length);
+                }
+            }
+#endif
+            return Parse<TElement>(utf8Buffer.Slice(0, bytesWritten).ToArray(), options);
+        }
+        finally
+        {
+            if (rentedArray is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedArray);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Parses UTF-8 YAML from a <see cref="Stream"/> and returns a <see cref="ParsedJsonDocument{T}"/>
+    /// containing the equivalent JSON representation. The stream will be read to completion.
+    /// </summary>
+    /// <typeparam name="TElement">The type of the JSON element.</typeparam>
+    /// <param name="utf8YamlStream">The stream containing UTF-8 encoded YAML bytes.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <returns>A <see cref="ParsedJsonDocument{T}"/> that must be disposed when no longer needed.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="utf8YamlStream"/> is <see langword="null"/>.</exception>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static ParsedJsonDocument<TElement> Parse<TElement>(
+        Stream utf8YamlStream,
+        YamlReaderOptions options = default)
+        where TElement : struct, IJsonElement<TElement>
+    {
+#if NET
+        ArgumentNullException.ThrowIfNull(utf8YamlStream);
+#else
+        if (utf8YamlStream is null)
+        {
+            throw new ArgumentNullException(nameof(utf8YamlStream));
+        }
+#endif
+
+        byte[] drained = ReadStreamToEnd(utf8YamlStream, out int length);
+
+        try
+        {
+            return Parse<TElement>(drained.AsMemory(0, length), options);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(drained);
+        }
+    }
+
+    /// <summary>
+    /// Parses UTF-8 YAML from a <see cref="Stream"/> asynchronously and returns a
+    /// <see cref="ParsedJsonDocument{T}"/> containing the equivalent JSON representation.
+    /// The stream will be read to completion.
+    /// </summary>
+    /// <typeparam name="TElement">The type of the JSON element.</typeparam>
+    /// <param name="utf8YamlStream">The stream containing UTF-8 encoded YAML bytes.</param>
+    /// <param name="options">Optional YAML reader options.</param>
+    /// <param name="cancellationToken">The token to monitor for cancellation requests.</param>
+    /// <returns>A task that represents the asynchronous parse operation.</returns>
+    /// <exception cref="ArgumentNullException"><paramref name="utf8YamlStream"/> is <see langword="null"/>.</exception>
+    /// <exception cref="YamlException">The YAML content is invalid.</exception>
+    public static async Task<ParsedJsonDocument<TElement>> ParseAsync<TElement>(
+        Stream utf8YamlStream,
+        YamlReaderOptions options = default,
+        CancellationToken cancellationToken = default)
+        where TElement : struct, IJsonElement<TElement>
+    {
+#if NET
+        ArgumentNullException.ThrowIfNull(utf8YamlStream);
+#else
+        if (utf8YamlStream is null)
+        {
+            throw new ArgumentNullException(nameof(utf8YamlStream));
+        }
+#endif
+
+        (byte[] drained, int length) = await ReadStreamToEndAsync(utf8YamlStream, cancellationToken).ConfigureAwait(false);
+
+        try
+        {
+            return Parse<TElement>(drained.AsMemory(0, length), options);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(drained);
+        }
+    }
+
+    /// <summary>
     /// Converts UTF-8 YAML bytes to a JSON string.
     /// </summary>
     /// <param name="utf8Yaml">The UTF-8 encoded YAML bytes.</param>
@@ -824,6 +1249,122 @@ public static class YamlDocument
         finally
         {
             workspace.ReturnWriterAndBuffer(internalWriter, bufferWriter);
+        }
+    }
+
+    private static byte[] ReadStreamToEnd(Stream stream, out int length)
+    {
+        if (stream.CanSeek)
+        {
+            long expectedLength = stream.Length - stream.Position;
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(checked((int)expectedLength));
+            int offset = 0;
+            int remaining = (int)expectedLength;
+
+            while (remaining > 0)
+            {
+                int read = stream.Read(buffer, offset, remaining);
+                if (read == 0)
+                {
+                    break;
+                }
+
+                offset += read;
+                remaining -= read;
+            }
+
+            length = offset;
+            return buffer;
+        }
+        else
+        {
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(4096);
+            int offset = 0;
+
+            while (true)
+            {
+                if (offset == buffer.Length)
+                {
+                    byte[] newBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length * 2);
+                    Buffer.BlockCopy(buffer, 0, newBuffer, 0, offset);
+                    ArrayPool<byte>.Shared.Return(buffer);
+                    buffer = newBuffer;
+                }
+
+#if NET
+                int read = stream.Read(buffer.AsSpan(offset));
+#else
+                int read = stream.Read(buffer, offset, buffer.Length - offset);
+#endif
+                if (read == 0)
+                {
+                    break;
+                }
+
+                offset += read;
+            }
+
+            length = offset;
+            return buffer;
+        }
+    }
+
+    private static async Task<(byte[] Buffer, int Length)> ReadStreamToEndAsync(Stream stream, CancellationToken cancellationToken)
+    {
+        if (stream.CanSeek)
+        {
+            long expectedLength = stream.Length - stream.Position;
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(checked((int)expectedLength));
+            int offset = 0;
+            int remaining = (int)expectedLength;
+
+            while (remaining > 0)
+            {
+#if NET
+                int read = await stream.ReadAsync(buffer.AsMemory(offset, remaining), cancellationToken).ConfigureAwait(false);
+#else
+                int read = await stream.ReadAsync(buffer, offset, remaining, cancellationToken).ConfigureAwait(false);
+#endif
+                if (read == 0)
+                {
+                    break;
+                }
+
+                offset += read;
+                remaining -= read;
+            }
+
+            return (buffer, offset);
+        }
+        else
+        {
+            byte[] buffer = ArrayPool<byte>.Shared.Rent(4096);
+            int offset = 0;
+
+            while (true)
+            {
+                if (offset == buffer.Length)
+                {
+                    byte[] newBuffer = ArrayPool<byte>.Shared.Rent(buffer.Length * 2);
+                    Buffer.BlockCopy(buffer, 0, newBuffer, 0, offset);
+                    ArrayPool<byte>.Shared.Return(buffer);
+                    buffer = newBuffer;
+                }
+
+#if NET
+                int read = await stream.ReadAsync(buffer.AsMemory(offset, buffer.Length - offset), cancellationToken).ConfigureAwait(false);
+#else
+                int read = await stream.ReadAsync(buffer, offset, buffer.Length - offset, cancellationToken).ConfigureAwait(false);
+#endif
+                if (read == 0)
+                {
+                    break;
+                }
+
+                offset += read;
+            }
+
+            return (buffer, offset);
         }
     }
 
