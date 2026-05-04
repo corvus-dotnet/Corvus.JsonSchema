@@ -1603,4 +1603,182 @@ public class FunctionalEvaluatorCoverageTests
         // L443: TryCoerceToDouble fails → Zero
         Assert.Equal("0", Eval("""{"+":[[1,2,3]]}"""));
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    // FLIPPED COMPARISON in if-chain optimization (L1339-1351, 1391-1398)
+    // Requires >= 3 conditions for the optimization to fire (L1068)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void If_FlippedComparison_NumberOnLeftOfGreaterThan()
+    {
+        // L1339-1345: {">": [N, {"var":"x"}]} detected → flip to LessThan
+        // L1391-1398: FlipCompareOp called
+        // Need >= 3 conditions for TryCompileUniformComparisonChain to fire
+        string rule = """
+            {"if":[
+                {">":[10,{"var":"x"}]}, "below 10",
+                {">":[20,{"var":"x"}]}, "below 20",
+                {">":[30,{"var":"x"}]}, "below 30",
+                "above or equal 30"
+            ]}
+            """;
+        Assert.Equal("\"below 10\"", Eval(rule, """{"x":5}"""));
+        Assert.Equal("\"below 20\"", Eval(rule, """{"x":15}"""));
+        Assert.Equal("\"below 30\"", Eval(rule, """{"x":25}"""));
+        Assert.Equal("\"above or equal 30\"", Eval(rule, """{"x":35}"""));
+    }
+
+    [Fact]
+    public void If_FlippedComparison_NumberOnLeftOfLessThan()
+    {
+        // L1339-1345: {"<": [N, {"var":"x"}]} → flip to GreaterThan
+        // Use decreasing thresholds so later conditions are reachable
+        string rule = """
+            {"if":[
+                {"<":[20,{"var":"x"}]}, "above 20",
+                {"<":[10,{"var":"x"}]}, "above 10",
+                {"<":[5,{"var":"x"}]}, "above 5",
+                "5 or below"
+            ]}
+            """;
+        Assert.Equal("\"above 20\"", Eval(rule, """{"x":25}"""));
+        Assert.Equal("\"above 10\"", Eval(rule, """{"x":15}"""));
+        Assert.Equal("\"above 5\"", Eval(rule, """{"x":7}"""));
+        Assert.Equal("\"5 or below\"", Eval(rule, """{"x":3}"""));
+    }
+
+    [Fact]
+    public void If_FlippedComparison_LessThanOrEqual()
+    {
+        // L1393: LessThanOrEqual → flips to GreaterThanOrEqual
+        // Use decreasing thresholds so later conditions are reachable
+        string rule = """
+            {"if":[
+                {"<=":[30,{"var":"x"}]}, "x >= 30",
+                {"<=":[20,{"var":"x"}]}, "x >= 20",
+                {"<=":[10,{"var":"x"}]}, "x >= 10",
+                "x < 10"
+            ]}
+            """;
+        Assert.Equal("\"x >= 30\"", Eval(rule, """{"x":30}"""));
+        Assert.Equal("\"x >= 20\"", Eval(rule, """{"x":25}"""));
+        Assert.Equal("\"x >= 10\"", Eval(rule, """{"x":15}"""));
+        Assert.Equal("\"x < 10\"", Eval(rule, """{"x":5}"""));
+    }
+
+    [Fact]
+    public void If_FlippedComparison_GreaterThanOrEqual_UniformChain()
+    {
+        // L1395: GreaterThanOrEqual → flips to LessThanOrEqual
+        string rule = """
+            {"if":[
+                {">=":[10,{"var":"x"}]}, "x <= 10",
+                {">=":[20,{"var":"x"}]}, "x <= 20",
+                {">=":[30,{"var":"x"}]}, "x <= 30",
+                "x > 30"
+            ]}
+            """;
+        Assert.Equal("\"x <= 10\"", Eval(rule, """{"x":5}"""));
+        Assert.Equal("\"x <= 20\"", Eval(rule, """{"x":15}"""));
+        Assert.Equal("\"x <= 30\"", Eval(rule, """{"x":25}"""));
+        Assert.Equal("\"x > 30\"", Eval(rule, """{"x":35}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // VAR via DYNAMIC PATH (L2305-2308, L2340-2349)
+    // ResolveVar is only called for dynamic (computed) var paths
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Var_DynamicNumericPath_ResolvesArrayIndex()
+    {
+        // L2305-2308: pathElement.ValueKind == Number → WalkPathUtf8
+        // Dynamic path: the var argument is a computed expression returning a number
+        Assert.Equal("\"b\"", Eval(
+            """{"var":{"+":[0,1]}}""",
+            """["a","b","c"]"""));
+    }
+
+    [Fact]
+    public void Var_DynamicStringPath_ArrayIndex()
+    {
+        // L2340-2343: WalkPathUtf8 encounters array, resolves index
+        // Dynamic path resolves to "0.name" string via cat
+        Assert.Equal("\"first\"", Eval(
+            """{"var":{"cat":["0",".","name"]}}""",
+            """[{"name":"first"},{"name":"second"}]"""));
+    }
+
+    [Fact]
+    public void Var_DynamicStringPath_ArrayIndexOutOfBounds()
+    {
+        // L2345-2348: WalkPathUtf8 array index out of bounds → null
+        Assert.Equal("null", Eval(
+            """{"var":{"cat":["5",".","name"]}}""",
+            """[{"name":"first"}]"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // VAR compiled multi-segment with array data (L344-355)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Var_CompiledArrayIndexInPath_ResolvesElement()
+    {
+        // L344-348: compiled multi-segment path hits array
+        Assert.Equal("\"first\"", Eval(
+            """{"var":"0.name"}""",
+            """[{"name":"first"},{"name":"second"}]"""));
+    }
+
+    [Fact]
+    public void Var_CompiledArrayIndexOutOfBounds_ReturnsNull()
+    {
+        // L350-354: compiled path, array index out of bounds → null
+        Assert.Equal("null", Eval(
+            """{"var":"5.name"}""",
+            """[{"name":"first"}]"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // CAT with various types (L1471-1515)
+    // Note: L1518-1522 (case Null) is dead code — caught by
+    // IsNullOrUndefined() early return at L1471
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Cat_NullValue_AppendsNullText()
+    {
+        // L1471-1476: IsNullOrUndefined() → "null"
+        Assert.Equal("\"null\"", Eval("""{"cat":[null]}"""));
+    }
+
+    [Fact]
+    public void Cat_BoolAndNumberAndNull_CoercesAll()
+    {
+        // L1506-1510 (true), L1512-1515 (false), L1471-1476 (null),
+        // L1496-1503 (number), L1481-1493 (string)
+        Assert.Equal("\"true42falsenullhi\"", Eval("""{"cat":[true,42,false,null,"hi"]}"""));
+    }
+
+    [Fact]
+    public void Cat_EmptyString_AppendsNothing()
+    {
+        // L1485: span.Length <= 2 for empty string (just quotes "")
+        Assert.Equal("\"hello\"", Eval("""{"cat":["hello",""]}"""));
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // NUMERIC VAR PATH — compiled single-segment with array (L317-322)
+    // ═══════════════════════════════════════════════════════════════
+
+    [Fact]
+    public void Var_NumericSingleSegment_ResolvesArrayIndex()
+    {
+        // L317-322: single-segment path, data is array, TryParseIndexUtf8 succeeds
+        Assert.Equal("\"b\"", Eval(
+            """{"var":"1"}""",
+            """["a","b","c"]"""));
+    }
 }
