@@ -993,6 +993,166 @@ public class JsonPathCoverageTests
         Assert.Equal(3, result.Count);
     }
 
+    // ─── Parser Error Branch Tests (targeting uncovered throw paths) ──
+
+    [Fact]
+    public void Parse_Utf8Overload_Works()
+    {
+        // L32-34: Exercises the Parse(ReadOnlySpan<byte>) overload directly
+        ReadOnlySpan<byte> utf8Expr = "$[0]"u8;
+        QueryNode node = Parser.Parse(utf8Expr);
+        Assert.NotNull(node);
+    }
+
+    [Fact]
+    public void Parse_MissingCloseParen_InFilter_Throws()
+    {
+        // L374-376: Expected ')' in parenthesized filter expression
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[?(@.a == 1]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_MissingOpenParen_AfterFunction_Throws()
+    {
+        // L454-456: Expected '(' after function name
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[?length]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_MissingCloseParen_AfterFunctionArgs_Throws()
+    {
+        // L474-476: Expected ')' after function arguments
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[?length(@.a]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_LeadingZeros_InInteger_Throws()
+    {
+        // L516-517: Leading zeros not allowed
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[01]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_NegativeZero_InInteger_Throws()
+    {
+        // L509-511: -0 is not a valid JSONPath integer
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[-0]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_LogicalAnd_AsComparable_Throws()
+    {
+        // L808-809: AND cannot be used as a comparable value
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[?(@.a && @.b) == true]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_LogicalOr_AsComparable_Throws()
+    {
+        // L818-819: OR cannot be used as a comparable value
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[?(@.a || @.b) == true]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_LogicalNot_AsComparable_Throws()
+    {
+        // L828-829: NOT cannot be used as a comparable value
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[?!@.a == true]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_Comparison_AsComparable_Throws()
+    {
+        // L838-839: Comparison cannot be used as a comparable value
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[?(@.a > 1) == true]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_UnknownFunction_Throws()
+    {
+        // L956: Unknown function name
+        Assert.Throws<JsonPathException>(() =>
+            JsonPathEvaluator.Default.QueryNodes("$[?unknownfn(@)]", JsonElement.ParseValue("[]"u8)));
+    }
+
+    [Fact]
+    public void Parse_UnicodeEscape_TwoByteRange()
+    {
+        // L696-700: 2-byte UTF-8 encoding for code points 0x80-0x7FF (e.g., \u00E9 = é)
+        string json = """[{"name":"caf\u00E9"},{"name":"tea"}]""";
+        JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
+        using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+            "$[?@.name == 'caf\\u00E9']", data);
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public void Parse_UnicodeEscape_OneByteRange()
+    {
+        // L691-693: 1-byte UTF-8 encoding for code points ≤ 0x7F (e.g., \u0041 = 'A')
+        string json = """[{"code":"A"},{"code":"B"}]""";
+        JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
+        using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+            "$[?@.code == '\\u0041']", data);
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public void Parse_StringLiteral_WithBackspace()
+    {
+        // L759-761: \b escape in string literal → EscapeJsonString hits backspace case
+        string json = """[{"x":"a\u0008b"},{"x":"ab"}]""";
+        JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
+        using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+            "$[?@.x == 'a\\bb']", data);
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public void Parse_StringLiteral_WithFormfeed()
+    {
+        // L762-764: \f escape in string literal → EscapeJsonString hits formfeed case
+        string json = """[{"x":"a\u000Cb"},{"x":"ab"}]""";
+        JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
+        using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+            "$[?@.x == 'a\\fb']", data);
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public void Parse_StringLiteral_WithControlChar()
+    {
+        // L776-778: Control char < 0x20 in EscapeJsonString (via \u0001)
+        string json = """[{"x":"a\u0001b"},{"x":"ab"}]""";
+        JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
+        using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
+            "$[?@.x == 'a\\u0001b']", data);
+        Assert.Equal(1, result.Count);
+    }
+
+    [Fact]
+    public void Parse_NodesTypeFunction_InComparison_Throws()
+    {
+        // L887-890: Custom function returning NodesType used in comparable context
+        JsonElement data = JsonElement.ParseValue("""[1,2,3]"""u8);
+        JsonPathEvaluator evaluator = new(new Dictionary<string, IJsonPathFunction>
+        {
+            ["nodesfn"] = new NodesReturnFunction(),
+        });
+
+        Assert.Throws<JsonPathException>(() =>
+            evaluator.QueryNodes("$[?nodesfn(@.x) == 1]", data));
+    }
+
     // ─── Helper types for custom function tests ──
 
     private sealed class ThrowingFunction : IJsonPathFunction
@@ -1075,5 +1235,13 @@ public class JsonPathCoverageTests
             int count = args[0].NodeCount;
             return JsonPathFunctionResult.FromValue(count, workspace);
         }
+    }
+
+    private sealed class NodesReturnFunction : IJsonPathFunction
+    {
+        public ReadOnlySpan<JsonPathFunctionType> ParameterTypes => [JsonPathFunctionType.ValueType];
+        public JsonPathFunctionType ReturnType => JsonPathFunctionType.NodesType;
+        public JsonPathFunctionResult Evaluate(ReadOnlySpan<JsonPathFunctionArgument> args, JsonWorkspace workspace)
+            => JsonPathFunctionResult.Nothing;
     }
 }

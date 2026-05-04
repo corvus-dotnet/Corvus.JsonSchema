@@ -1911,4 +1911,79 @@ public class PatchCoverageTests
     }
 
     #endregion
+
+    #region Move/Copy from array error paths
+
+    [Fact]
+    public void TryMove_FromArrayNonNumericSegment_Fails()
+    {
+        // L431-435: TryMove from array path with non-numeric segment
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"arr":[1,2,3],"b":0}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        // "foo" is not a valid array index — TryParseArrayIndex fails
+        Assert.False(root.TryMove("/arr/foo"u8, "/b"u8));
+    }
+
+    [Fact]
+    public void TryMove_FromArrayOutOfBounds_Fails()
+    {
+        // L438-440: TryMove from array with index out of bounds
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"arr":[1,2,3],"b":0}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        // index 10 is out of bounds for 3-element array
+        Assert.False(root.TryMove("/arr/10"u8, "/b"u8));
+    }
+
+    [Fact]
+    public void TryMove_FromNonContainerParent_Fails()
+    {
+        // L452-454: fromParent is not array or object (it's a scalar)
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"a":"hello","b":0}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        // /a is a string, /a/0 tries to traverse into it
+        Assert.False(root.TryMove("/a/0"u8, "/b"u8));
+    }
+
+    [Fact]
+    public void PatchApply_Move_FromArrayNonNumericSegment_Fails()
+    {
+        // L822-824: TryApplyMove from array path with non-numeric segment (via TryApplyPatch)
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"arr":[1,2,3],"b":0}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        string patchJson = """[{"op":"move","from":"/arr/foo","path":"/b"}]""";
+        using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(patchJson);
+        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+    }
+
+    [Fact]
+    public void PatchApply_Move_FromArrayOutOfBounds_Fails()
+    {
+        // L827-829: TryApplyMove from array with index out of bounds (via TryApplyPatch)
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"arr":[1,2,3],"b":0}""");
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+        JsonElement.Mutable root = builder.RootElement;
+
+        string patchJson = """[{"op":"move","from":"/arr/10","path":"/b"}]""";
+        using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(patchJson);
+        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+    }
+
+    // Note: L81-83 (opBytes.Length < 5) is unreachable in Debug builds because
+    // Debug.Assert(patch.EvaluateSchema()) fires first. It's a defensive guard for
+    // Release-mode callers who pass an invalid patch.
+
+    #endregion
 }
