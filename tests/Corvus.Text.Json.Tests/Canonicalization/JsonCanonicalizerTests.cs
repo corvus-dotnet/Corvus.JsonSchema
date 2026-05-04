@@ -373,5 +373,35 @@ public class JsonCanonicalizerTests
         Assert.Equal(expected, actual);
     }
 
+    [Fact]
+    public void Canonicalize_LargeDocument_UsesArrayPoolFallback()
+    {
+        // Construct a JSON object large enough to exceed the 256-byte stackalloc buffer,
+        // triggering the ArrayPool rent/return path (lines 65-83).
+        var sb = new StringBuilder();
+        sb.Append('{');
+        for (int i = 0; i < 30; i++)
+        {
+            if (i > 0)
+            {
+                sb.Append(',');
+            }
+
+            sb.Append($"\"property_{i:D3}\":{i}");
+        }
+
+        sb.Append('}');
+
+        string input = sb.ToString();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(input);
+        byte[] result = JsonCanonicalizer.Canonicalize(doc.RootElement);
+        string actual = Encoding.UTF8.GetString(result);
+
+        // Verify sorted keys (JCS lexicographic sort by UTF-16 code units)
+        Assert.StartsWith("{\"property_000\":0,", actual);
+        Assert.Contains("\"property_029\":29", actual);
+        Assert.True(result.Length > 256, "Result should exceed stackalloc threshold");
+    }
+
     #endregion
 }
