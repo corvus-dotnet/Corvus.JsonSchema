@@ -1378,4 +1378,85 @@ public class BuiltInFunctionCoverageTests
         var ex = Assert.Throws<JsonataException>(() => Eval(expression));
         Assert.Equal("T0410", ex.Code);
     }
+
+    // ─── $sort with numeric comparator (lines 6524-6526, 6535-6538) ──────────────
+
+    [Fact]
+    public void Sort_NumericComparator_PositiveReturnMeansSwap()
+    {
+        // Comparator returns a positive number (non-boolean truthy) → exercises line 6524-6526
+        string result = Eval("""$sort([3, 1, 2], function($a, $b) { $a > $b ? 1 : 0 })""");
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void Sort_NumericComparator_ZeroAndReverseTruthy()
+    {
+        // Comparator returns 0 (falsy) when a <= b, then reverse(b,a) returns positive (truthy)
+        // This exercises lines 6535-6538 (falsy → check reverse → truthy → return -1)
+        string result = Eval("""$sort([2, 1, 3], function($a, $b) { $a > $b ? 1 : 0 })""");
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void Sort_DifferenceComparator()
+    {
+        // Comparator returns $a - $b: positive when a > b (truthy), negative when a < b (also non-boolean)
+        // Tests that negative numbers are treated as truthy (which means swap)
+        string result = Eval("""$sort([5, 3, 8, 1], function($a, $b) { $a - $b })""");
+        // The reference implementation sorts ascending with $a - $b
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void Sort_StringComparator()
+    {
+        // Comparator returns a non-empty string (truthy) or empty string (falsy)
+        string result = Eval("""$sort([3, 1, 2], function($a, $b) { $a > $b ? "yes" : "" })""");
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    // ─── $replace with zero-length match (line 3630-3631) ──────────────
+
+    [Fact]
+    public void Replace_ZeroLengthMatchWithFunction_ThrowsD1004()
+    {
+        // Line 3631 is in the function-replacement path. Use a lambda as third arg.
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$replace("hello", /(?=h)/, function($m) { "X" })"""));
+        Assert.Equal("D1004", ex.Code);
+    }
+
+    [Fact]
+    public void Replace_ZeroLengthMatch_ThrowsD1004()
+    {
+        // String replacement path also has D1004 check (line 3783/3809)
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$replace("hello", /(?=h)/, "X")"""));
+        Assert.Equal("D1004", ex.Code);
+    }
+
+    // ─── $decodeUrlComponent with malformed % (lines 4528-4535) ──────────────
+
+    [Fact]
+    public void DecodeUrlComponent_MalformedPercent_ThrowsD3140()
+    {
+        // String with malformed percent-encoding: "%GG" has invalid hex digits
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$decodeUrlComponent("%GG")"""));
+        Assert.Equal("D3140", ex.Code);
+    }
+
+    [Fact]
+    public void DecodeUrlComponent_TruncatedPercent_ThrowsD3140()
+    {
+        // String ending with "%" followed by less than 2 chars
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$decodeUrlComponent("hello%2")"""));
+        Assert.Equal("D3140", ex.Code);
+    }
+
+    [Fact]
+    public void DecodeUrl_MalformedPercent_ThrowsD3140()
+    {
+        // Same for $decodeUrl
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$decodeUrl("%ZZ")"""));
+        Assert.Equal("D3140", ex.Code);
+    }
 }

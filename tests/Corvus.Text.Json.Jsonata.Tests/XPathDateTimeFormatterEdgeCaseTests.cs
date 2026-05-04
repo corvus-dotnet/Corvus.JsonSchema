@@ -595,6 +595,197 @@ public class XPathDateTimeFormatterEdgeCaseTests
 
     #endregion
 
+    #region Timezone format variations (XPathDateTimeFormatter lines 1079-1089)
+
+    [Fact]
+    public void FromMillis_TimezoneWithTModifier_EmptyPAfterStrip()
+    {
+        // [Zt] means: use Z for UTC, else +HH:MM. With non-UTC timezone, "t" is stripped leaving empty p.
+        // Exercises line 1079-1083 (p.Length == 0 after stripping 't')
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Zt]", "+0530")""", "{}");
+        Assert.NotNull(result);
+        // Should format with colon since p.Length == 0 → useColon=true, digits=2
+        Assert.Contains("+05:30", result);
+    }
+
+    [Fact]
+    public void FromMillis_TimezoneWithTModifier_Utc()
+    {
+        // [Zt] with UTC should produce "Z"
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Zt]")""", "{}");
+        Assert.NotNull(result);
+        Assert.Contains("Z", result);
+    }
+
+    [Fact]
+    public void FromMillis_TimezoneWithTwoDigitsNoColon()
+    {
+        // [Z01] → presentation is "01", length 2, no colon → hits else branch (lines 1085-1088)
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Z01]", "+0530")""", "{}");
+        Assert.NotNull(result);
+        // Should format without colon: +0530
+        Assert.Contains("+0530", result);
+    }
+
+    [Fact]
+    public void FromMillis_TimezoneMinimalFormat()
+    {
+        // [Z0] → presentation is "0", length 1 → minimal format (digits=0, no leading zero)
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Z0]", "+0530")""", "{}");
+        Assert.NotNull(result);
+        // Should format as "5:30" (minimal, no leading zero on hour, minutes if non-zero)
+        Assert.Contains("+5:30", result);
+    }
+
+    [Fact]
+    public void FromMillis_TimezoneNoColonFourDigits()
+    {
+        // [Z0101] → presentation is "0101", length 4 → no colon, 2 digits
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Z0101]", "+0530")""", "{}");
+        Assert.NotNull(result);
+        Assert.Contains("+0530", result);
+    }
+
+    [Fact]
+    public void FromMillis_NegativeTimezone()
+    {
+        // Verify negative timezone offset formatting
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Z01:01]", "-0800")""", "{}");
+        Assert.NotNull(result);
+        Assert.Contains("-08:00", result);
+    }
+
+    #endregion
+
+    #region Escaped bracket in picture string (XPathDateTimeFormatter lines 2989-3001)
+
+    [Fact]
+    public void FromMillis_EscapedClosingBracket()
+    {
+        // ]] in picture string = literal ']'
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Y]-[M01]-[D01]]]")""", "{}");
+        Assert.NotNull(result);
+        Assert.EndsWith("]", result!.Trim('"'));
+    }
+
+    [Fact]
+    public void FromMillis_EscapedClosingBracketInMiddle()
+    {
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Y]]][M01]")""", "{}");
+        Assert.NotNull(result);
+        // Should have ']' between year and month
+        Assert.Contains("]", result!.Trim('"'));
+    }
+
+    #endregion
+
+    #region $toMillis with era/calendar name (XPathDateTimeFormatter SkipWord lines 3515-3528)
+
+    [Fact]
+    public void ToMillis_WithEraComponent()
+    {
+        // [E] = Era component — parsing calls SkipWord to skip "AD"/"CE"/etc.
+        string? result = Evaluator.EvaluateToString(
+            """$toMillis("2024 AD", "[Y] [E]")""", "{}");
+        Assert.NotNull(result);
+        // Should parse successfully even with the era text
+        Assert.NotEqual("undefined", result);
+    }
+
+    [Fact]
+    public void ToMillis_WithCalendarComponent()
+    {
+        // [C] = Calendar component — parsing calls SkipWord to skip "ISO"/"Gregorian"/etc.
+        string? result = Evaluator.EvaluateToString(
+            """$toMillis("2024 ISO", "[Y] [C]")""", "{}");
+        Assert.NotNull(result);
+    }
+
+    [Fact]
+    public void ToMillis_WithDayName()
+    {
+        // $toMillis with picture that includes [FNn] (day of week name) exercises SkipDayOfWeek
+        string? result = Evaluator.EvaluateToString(
+            """$toMillis("Monday 15 January 2024", "[FNn] [D] [MNn] [Y]")""", "{}");
+        Assert.NotNull(result);
+        Assert.Equal("1705276800000", result);
+    }
+
+    [Fact]
+    public void ToMillis_WithAbbreviatedDayName()
+    {
+        string? result = Evaluator.EvaluateToString(
+            """$toMillis("Mon 15 Jan 2024", "[FNn,*-3] [D] [MNn,*-3] [Y]")""", "{}");
+        Assert.NotNull(result);
+        Assert.NotEqual("undefined", result);
+    }
+
+    #endregion
+
+    #region ParseTimezoneArgument (XPathDateTimeFormatter lines 3550-3557, 3579-3588)
+
+    [Fact]
+    public void FromMillis_IanaTimezone()
+    {
+        // IANA timezone name exercises FindSystemTimeZoneById (lines 3550-3557)
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "America/New_York")""", "{}");
+        Assert.NotNull(result);
+        // The offset applied depends on current DST, so just verify it's not UTC midnight
+        Assert.DoesNotContain("00:00:00", result);
+    }
+
+    [Fact]
+    public void FromMillis_ShortOffset()
+    {
+        // Short offset like "+5" (1-2 chars after sign) exercises lines 3579-3582
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "+5")""", "{}");
+        Assert.NotNull(result);
+        Assert.Contains("05:00:00", result);
+    }
+
+    [Fact]
+    public void FromMillis_ColonOffset()
+    {
+        // Offset with colon "+05:30"
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "+05:30")""", "{}");
+        Assert.NotNull(result);
+        Assert.Contains("05:30:00", result);
+    }
+
+    [Fact]
+    public void FromMillis_InvalidTimezone_TreatedAsUtc()
+    {
+        // Invalid timezone falls back to UTC (lines 3554-3557)
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "Not/A/Zone")""", "{}");
+        Assert.NotNull(result);
+        Assert.Contains("00:00:00", result);
+    }
+
+    [Fact]
+    public void FromMillis_WeirdOffsetLength()
+    {
+        // Offset with 3 chars after sign "123" → hits else branch (lines 3585-3588)
+        string? result = Evaluator.EvaluateToString(
+            """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "+123")""", "{}");
+        Assert.NotNull(result);
+        // Falls through to hours=0, minutes=0 → treated as UTC
+        Assert.Contains("00:00:00", result);
+    }
+
+    #endregion
+
     #region $fromMillis with various picture components (lines 2730-2743, 3504-3517)
 
     [Fact]
