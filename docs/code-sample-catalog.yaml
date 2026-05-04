@@ -1326,11 +1326,11 @@ skills:
       - {index: 1, language: powershell, lines: [46, 49]}
       - {index: 2, language: powershell, lines: [65, 77]}
       - {index: 3, language: powershell, lines: [81, 105]}
-      - {index: 4, language: powershell, lines: [147, 157]}
-      - {index: 5, language: powershell, lines: [167, 173]}
-      - {index: 6, language: powershell, lines: [179, 185]}
-      - {index: 7, language: python, lines: [216, 234]}
-      - {index: 8, language: powershell, lines: [246, 252]}
+      - {index: 4, language: powershell, lines: [151, 161]}
+      - {index: 5, language: powershell, lines: [171, 177]}
+      - {index: 6, language: powershell, lines: [183, 189]}
+      - {index: 7, language: python, lines: [220, 238]}
+      - {index: 8, language: powershell, lines: [250, 256]}
   - path: ".github/skills/corvus-codegen/SKILL.md"
     blocks:
       - {index: 0, language: csharp, lines: [22, 25], category: compilable, verified: false}

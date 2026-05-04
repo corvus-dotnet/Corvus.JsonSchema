@@ -144,6 +144,10 @@ Use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet. Coverlet 10.0
 
 ### Full test suite coverage (all TFMs, merged automatically)
 
+### ⚠️ CRITICAL: Always collect baseline/full coverage WITHOUT `-f`
+
+**NEVER** pass `-f net10.0` when collecting baseline or full coverage. This misses all `#if !NET` / `#if NETSTANDARD2_0` code paths (unsafe pointer fallbacks, polyfills, etc.) and produces incomplete results. Omit `-f` entirely — both TFMs run and `dotnet-coverage` merges them automatically. Only use `-f` for targeted single-test-class verification during iterative improvement.
+
 ```powershell
 # 1. Build once
 dotnet build Corvus.Text.Json.slnx
