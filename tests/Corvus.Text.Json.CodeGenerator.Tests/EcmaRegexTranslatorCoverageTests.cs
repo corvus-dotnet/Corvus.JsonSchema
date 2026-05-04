@@ -333,4 +333,129 @@ public class EcmaRegexTranslatorCoverageTests
         bool matched = re.IsMatch(input);
         Assert.Equal(shouldMatch, matched);
     }
+
+    // ================================================================
+    // 13. Named backreferences (\k<name>) — targets L1027-1084
+    //     ECMAScript non-participating group semantics:
+    //     \k<name> → (?(name)\k<name>) in .NET
+    // ================================================================
+
+    [Theory]
+    [InlineData(@"(?<word>\w+)\s+\k<word>", "hello hello", true)]     // repeated word
+    [InlineData(@"(?<word>\w+)\s+\k<word>", "hello world", false)]    // different words
+    [InlineData(@"(?<num>\d+)-\k<num>", "42-42", true)]               // repeated number
+    [InlineData(@"(?<num>\d+)-\k<num>", "42-99", false)]
+    public void NamedBackreferenceTranslatesCorrectly(string ecma, string input, bool shouldMatch)
+    {
+        AssertMatch(ecma, input, shouldMatch);
+    }
+
+    // ================================================================
+    // 14. Numeric backreferences (\1, \2) — targets L1087-1133
+    //     ECMAScript non-participating group semantics:
+    //     \1 → (?(1)\1) in .NET
+    // ================================================================
+
+    [Theory]
+    [InlineData(@"(\w+)\s+\1", "hello hello", true)]     // repeated word via \1
+    [InlineData(@"(\w+)\s+\1", "hello world", false)]
+    [InlineData(@"(\d+)-(\w+)-\1-\2", "42-abc-42-abc", true)]   // multi-group backrefs
+    [InlineData(@"(\d+)-(\w+)-\1-\2", "42-abc-42-xyz", false)]
+    public void NumericBackreferenceTranslatesCorrectly(string ecma, string input, bool shouldMatch)
+    {
+        AssertMatch(ecma, input, shouldMatch);
+    }
+
+    // ================================================================
+    // 15. Character class escapes inside [...] — targets L1765-1828
+    //     \d, \w, \s, \u, \x, \c, \p escapes and surrogate pairs inside classes
+    //     EmitOneCharClassAtom is only called when class has an alternation
+    //     property (e.g. \p{Script=Latin}) combined with other escapes.
+    // ================================================================
+
+    [Theory]
+    [InlineData(@"[\d\w]+", "a1b2", true)]           // \d and \w in same class
+    [InlineData(@"[\d\w]+", "!@#", false)]
+    [InlineData(@"[\s\d]+", " 1 2", true)]           // \s and \d in same class
+    [InlineData(@"[\s\d]+", "abc", false)]
+    [InlineData(@"[\u0041-\u005A]+", "ABC", true)]   // Unicode escape range in class
+    [InlineData(@"[\u0041-\u005A]+", "abc", false)]
+    public void MultiEscapeInCharClassTranslates(string ecma, string input, bool shouldMatch)
+    {
+        AssertMatch(ecma, input, shouldMatch);
+    }
+
+    // ================================================================
+    // 15b. EmitOneCharClassAtom — targets L1765-1828 specifically
+    //      Requires class with alternation property + other escapes/chars
+    //      so EmitCharClassContentSkippingAlternationProperties is used.
+    // ================================================================
+
+    [Theory]
+    [InlineData(@"[\p{Script=Latin}\d]+", "a1", true)]     // \d in alternation-property class
+    [InlineData(@"[\p{Script=Latin}\d]+", "\u4e00", false)] // CJK not Latin or digit
+    [InlineData(@"[\p{Script=Latin}\w]+", "foo_", true)]   // \w in alternation-property class
+    [InlineData(@"[\p{Script=Latin}\w]+", "!!!", false)]
+    [InlineData(@"[\p{Script=Latin}\s]+", "a b", true)]    // \s in alternation-property class
+    [InlineData(@"[\p{Script=Latin}\x41]+", "A", true)]    // \x41 = 'A' in alt-prop class
+    [InlineData(@"[\p{Script=Latin}\x41]+", "\u4e00", false)]
+    [InlineData(@"[\p{Script=Latin}\u0030-\u0039]+", "a5", true)]  // \u escape range in alt-prop class
+    [InlineData(@"[\p{Script=Latin}\u0030-\u0039]+", "!", false)]
+    [InlineData(@"[\p{Script=Latin}\-]+", "a-", true)]     // \- identity escape in alt-prop class
+    [InlineData(@"[\p{Script=Latin}\0]+", "a\0", true)]    // \0 null in alt-prop class
+    [InlineData(@"[\p{Script=Latin}\t]+", "a\t", true)]    // \t tab in alt-prop class
+    [InlineData(@"[\p{Script=Latin}\cA]+", "a\x01", true)] // \cA control escape in alt-prop class
+    [InlineData(@"[\p{Script=Latin}\cA]+", "!", false)]
+    [InlineData(@"[\p{Script=Latin}\p{Nd}]+", "a5", true)] // \p{Nd} inside alt-prop class
+    [InlineData(@"[\p{Script=Latin}\p{Nd}]+", "!", false)]
+    public void EmitOneCharClassAtomWithAlternationProperty(string ecma, string input, bool shouldMatch)
+    {
+        AssertMatch(ecma, input, shouldMatch);
+    }
+
+    // ================================================================
+    // 15c. Literal surrogate pair inside char class with alternation property
+    //      Targets L1823-1828 (surrogate pair emission via EmitOneCharClassAtom)
+    // ================================================================
+
+    [Theory]
+    [InlineData("[\\p{Script=Latin}\U0001F600]+", "a\U0001F600", true)]   // emoji in alt-prop class
+    [InlineData("[\\p{Script=Latin}\U0001F600]+", "!", false)]
+    public void LiteralSurrogatePairInAlternationPropertyClass(string ecma, string input, bool shouldMatch)
+    {
+        AssertMatch(ecma, input, shouldMatch);
+    }
+
+    // ================================================================
+    // 16. Supplementary Unicode range (surrogate pair range emission)
+    //     Targets L2380-2463+ (multi-surrogate pair range splitting)
+    //     A range like [\u{10000}-\u{1FFFF}] spans multiple high surrogates
+    // ================================================================
+
+    [Theory]
+    [InlineData(@"[\u{10000}-\u{1FFFF}]+", "\U00010000", true)]   // Linear B Syllable B008 A
+    [InlineData(@"[\u{10000}-\u{1FFFF}]+", "\U0001F000", true)]   // Mahjong tile
+    [InlineData(@"[\u{10000}-\u{1FFFF}]+", "a", false)]
+    [InlineData(@"[\u{10300}-\u{1FAFF}]+", "\U00010300", true)]   // Old Italic
+    [InlineData(@"[\u{10300}-\u{1FAFF}]+", "\U0001F600", true)]   // 😀
+    [InlineData(@"[\u{10300}-\u{1FAFF}]+", "z", false)]
+    public void SupplementaryUnicodeRangeInCharClass(string ecma, string input, bool shouldMatch)
+    {
+        AssertMatch(ecma, input, shouldMatch);
+    }
+
+    // ================================================================
+    // 17. Non-BMP literal character outside character class — targets L878-889
+    //     A literal emoji outside [...] should be wrapped in (?:...)
+    // ================================================================
+
+    [Theory]
+    [InlineData("\U0001F600+", "\U0001F600\U0001F600", true)]   // 😀+ matches two
+    [InlineData("\U0001F600+", "a", false)]
+    [InlineData("a\U0001F4A9b", "a\U0001F4A9b", true)]          // Literal 💩 inline
+    [InlineData("a\U0001F4A9b", "axb", false)]
+    public void NonBmpLiteralOutsideCharClass(string ecma, string input, bool shouldMatch)
+    {
+        AssertMatch(ecma, input, shouldMatch);
+    }
 }
