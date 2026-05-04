@@ -4,6 +4,7 @@
 
 using System.Buffers;
 using System.Buffers.Text;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.Runtime.CompilerServices;
@@ -185,6 +186,8 @@ internal static class FunctionalCompiler
             }
             else if (stage is SortNode sortNode)
             {
+                // DEAD CODE: Same as CompilePath — the parser never adds SortNode as a stage.
+                Debug.Fail("SortNode should never appear as a stage annotation in WrapWithStages.");
                 stageEvaluators[i] = CompileSortStage(sortNode);
                 isSortStage[i] = true;
             }
@@ -2078,6 +2081,11 @@ internal static class FunctionalCompiler
                         }
                         else if (stage is SortNode sortNode)
                         {
+                            // DEAD CODE: The parser (ProcessSortBinary) always adds SortNode
+                            // as a path step, never as a stage annotation on another step.
+                            // Only FilterNode and VariableNode appear as stages.
+                            Debug.Fail("SortNode should never appear as a stage annotation. The parser always adds it as a path step. If this fires, the parser has changed.");
+
                             // Use focus-aware sort when this step has a focus binding,
                             // so the focus variable is re-bound per comparison element.
                             stages[i]![s] = focusVars[i] is not null
@@ -3055,6 +3063,11 @@ internal static class FunctionalCompiler
                     }
                     else
                     {
+                        // DEAD CODE: sortTermsPerStep[sortIdx] is always non-null when
+                        // isSortStep[sortIdx] is true, because CompilePath unconditionally
+                        // populates sortTermsPerStep for every SortNode step (lines ~2041-2045).
+                        Debug.Fail("sortTermsPerStep[sortIdx] should never be null when isSortStep is true. If this fires, CompilePath's sort setup has changed.");
+
                         var sortInput = JsonataHelpers.ArrayFromBuilder(ref elements, env.Workspace);
                         var sortedSeq = steps[sortIdx](sortInput, env);
                         if (sortedSeq.IsSingleton)
@@ -5189,6 +5202,11 @@ internal static class FunctionalCompiler
 
             if (isSortStage[s])
             {
+                // DEAD CODE: isSortStage[s] is only set to true when a SortNode appears as
+                // a stage annotation, but the parser never adds SortNode as a stage (only as
+                // a path step). This entire block is unreachable under the current parser.
+                Debug.Fail("isSortStage should never be true in ApplyStages: the parser never adds SortNode as a stage annotation. If this fires, the parser has changed.");
+
                 // In path contexts, property steps can produce arrays of arrays
                 // (e.g. Account.Order.Product yields [productArray1, productArray2]).
                 // Flatten one level so the sort sees individual elements.
@@ -5464,6 +5482,9 @@ internal static class FunctionalCompiler
 
             if (isSortStage[s])
             {
+                // DEAD CODE: Same as above — isSortStage is never true under the current parser.
+                Debug.Fail("isSortStage should never be true in ApplyStages (index-tracking overload).");
+
                 var sortElements = default(SequenceBuilder);
                 for (int i = 0; i < elements.Count; i++)
                 {
@@ -5957,6 +5978,10 @@ internal static class FunctionalCompiler
         {
             return current;
         }
+
+        // DEAD CODE: The parser never adds SortNode as a stage annotation, so isSortStage
+        // is always all-false, and hasSortStage is always false. We always return above.
+        Debug.Fail("ApplySortStagesOnly should always early-return: isSortStage is never true because the parser never adds SortNode as a stage.");
 
         // Build arrays containing only sort stages
         int sortCount = 0;
@@ -7878,6 +7903,13 @@ internal static class FunctionalCompiler
 
     private static ExpressionEvaluator CompileFilter(FilterNode filter)
     {
+        // DEAD CODE: The parser always adds FilterNode as a stage annotation on a step
+        // (Parser.cs ProcessPredicate → stepAnnotations.Stages.Add(filter)), never as a
+        // top-level AST node. CompileCore dispatches here only if a FilterNode were the
+        // primary compiled node, which the current parser cannot produce. If the parser
+        // changes to emit standalone FilterNode, this code path would need activation.
+        Debug.Fail("CompileFilter should be unreachable: the parser always adds FilterNode as a stage, never as a top-level node. If this fires, the parser has changed to emit standalone FilterNode and this code path needs testing.");
+
         var predicate = Compile(filter.Expression);
         return (in JsonElement input, Environment env) =>
         {
@@ -8024,6 +8056,14 @@ internal static class FunctionalCompiler
     /// </summary>
     private static ExpressionEvaluator CompileFocusSortStage(SortNode sort, string focusVar)
     {
+        // DEAD CODE: Only callable from CompilePath stage processing (line ~2084) when
+        // a stage is a SortNode AND the step has a focus variable. However, the parser
+        // (ProcessSortBinary) always adds SortNode as a path STEP (pathResult.Steps.Add),
+        // never as a stage annotation. The "stage is SortNode" check therefore never
+        // matches. If the parser changes to support sort-as-stage (e.g. for
+        // expr@$v[pred]^(key) with sort embedded in stages), this code would activate.
+        Debug.Fail("CompileFocusSortStage should be unreachable: the parser adds SortNode as a path step, never as a stage annotation. If this fires, the parser has changed.");
+
         var terms = new (ExpressionEvaluator Expr, bool Descending)[sort.Terms.Count];
         for (int i = 0; i < sort.Terms.Count; i++)
         {
