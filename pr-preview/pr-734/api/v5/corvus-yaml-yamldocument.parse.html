@@ -116,6 +116,18 @@
 <td><a href="#parse-string-yamlreaderoptions">Parse(string, YamlReaderOptions)</a></td>
 <td>Parses a YAML string and returns a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a> containing the equivalent JSON representation.</td>
 </tr>
+<tr>
+<td><a href="#parse-readonlysequence-byte-yamlreaderoptions">Parse(ReadOnlySequence&lt;byte&gt;, YamlReaderOptions)</a></td>
+<td>Parses UTF-8 YAML bytes from a <a href="https://learn.microsoft.com/dotnet/api/system.buffers.readonlysequence-1"><code>ReadOnlySequence</code></a> and returns a...</td>
+</tr>
+<tr>
+<td><a href="#parse-readonlymemory-char-yamlreaderoptions">Parse(ReadOnlyMemory&lt;char&gt;, YamlReaderOptions)</a></td>
+<td>Parses a YAML character memory and returns a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a> containing the equivalent JSON representation.</td>
+</tr>
+<tr>
+<td><a href="#parse-stream-yamlreaderoptions">Parse(Stream, YamlReaderOptions)</a></td>
+<td>Parses UTF-8 YAML from a <a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a> and returns a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a> con...</td>
+</tr>
 </tbody>
 </table>
 <h2 id="parse-readonlymemory-byte-yamlreaderoptions">Parse(ReadOnlyMemory&lt;byte&gt;, YamlReaderOptions)</h2>
@@ -227,6 +239,202 @@
 </tbody>
 </table>
 <h2 id="applies-to-1">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="parse-readonlysequence-byte-yamlreaderoptions">Parse(ReadOnlySequence&lt;byte&gt;, YamlReaderOptions)</h2>
+<p>Parses UTF-8 YAML bytes from a <a href="https://learn.microsoft.com/dotnet/api/system.buffers.readonlysequence-1"><code>ReadOnlySequence</code></a> and returns a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a> containing the equivalent JSON representation.</p>
+<pre><code class="language-csharp">public static JsonDocument Parse(ReadOnlySequence&lt;byte&gt; utf8Yaml, YamlReaderOptions options)
+</code></pre>
+<h3 id="parameters-2">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>utf8Yaml</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.buffers.readonlysequence-1"><code>ReadOnlySequence&lt;byte&gt;</code></a></td>
+<td>The UTF-8 encoded YAML bytes as a sequence.</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-yaml-yamlreaderoptions.html"><code>YamlReaderOptions</code></a></td>
+<td>Optional YAML reader options. <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-2">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a></p>
+<p>A <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a> that must be disposed when no longer needed.</p>
+<h3 id="exceptions-2">Exceptions</h3>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-yaml-yamlexception.html"><code>YamlException</code></a></td>
+<td>The YAML content is invalid.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-2">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="parse-readonlymemory-char-yamlreaderoptions">Parse(ReadOnlyMemory&lt;char&gt;, YamlReaderOptions)</h2>
+<p>Parses a YAML character memory and returns a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a> containing the equivalent JSON representation.</p>
+<pre><code class="language-csharp">public static JsonDocument Parse(ReadOnlyMemory&lt;char&gt; yaml, YamlReaderOptions options)
+</code></pre>
+<h3 id="parameters-3">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>yaml</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.readonlymemory-1"><code>ReadOnlyMemory&lt;char&gt;</code></a></td>
+<td>The YAML content as a character memory.</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-yaml-yamlreaderoptions.html"><code>YamlReaderOptions</code></a></td>
+<td>Optional YAML reader options. <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-3">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a></p>
+<p>A <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a> that must be disposed when no longer needed.</p>
+<h3 id="exceptions-3">Exceptions</h3>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-yaml-yamlexception.html"><code>YamlException</code></a></td>
+<td>The YAML content is invalid.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-3">Applies To</h2>
+<table>
+<thead>
+<tr>
+<th>Product</th>
+<th>Versions</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>.NET</td>
+<td>9, 10</td>
+</tr>
+<tr>
+<td>.NET Standard</td>
+<td>2.0, 2.1</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="parse-stream-yamlreaderoptions">Parse(Stream, YamlReaderOptions)</h2>
+<p>Parses UTF-8 YAML from a <a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a> and returns a <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a> containing the equivalent JSON representation. The stream will be read to completion.</p>
+<pre><code class="language-csharp">public static JsonDocument Parse(Stream utf8YamlStream, YamlReaderOptions options)
+</code></pre>
+<h3 id="parameters-4">Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>utf8YamlStream</code></td>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.io.stream"><code>Stream</code></a></td>
+<td>The stream containing UTF-8 encoded YAML bytes.</td>
+</tr>
+<tr>
+<td><code>options</code></td>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-yaml-yamlreaderoptions.html"><code>YamlReaderOptions</code></a></td>
+<td>Optional YAML reader options. <em>(optional)</em></td>
+</tr>
+</tbody>
+</table>
+<h3 id="returns-4">Returns</h3>
+<p><a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a></p>
+<p>A <a href="https://learn.microsoft.com/dotnet/api/system.text.json.jsondocument"><code>JsonDocument</code></a> that must be disposed when no longer needed.</p>
+<h3 id="exceptions-4">Exceptions</h3>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://learn.microsoft.com/dotnet/api/system.argumentnullexception"><code>ArgumentNullException</code></a></td>
+<td><code>utf8YamlStream</code> is <code>null</code>.</td>
+</tr>
+<tr>
+<td><a href="/Corvus.JsonSchema/pr-preview/pr-734/api/v5/corvus-yaml-yamlexception.html"><code>YamlException</code></a></td>
+<td>The YAML content is invalid.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="applies-to-4">Applies To</h2>
 <table>
 <thead>
 <tr>
