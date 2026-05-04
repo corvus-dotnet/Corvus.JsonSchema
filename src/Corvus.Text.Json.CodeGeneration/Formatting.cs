@@ -269,29 +269,6 @@ public static class Formatting
     }
 
     /// <summary>
-    /// Format a composite name into the type name buffer.
-    /// </summary>
-    /// <param name="typeDeclaration">The type declaration.</param>
-    /// <param name="typeNameBuffer">The buffer into which to format the name.</param>
-    /// <param name="first">The first part of the name.</param>
-    /// <param name="second">The second part of the name.</param>
-    /// <returns>The length of the name.</returns>
-    public static int FormatCompositeName(TypeDeclaration typeDeclaration, Span<char> typeNameBuffer, ReadOnlySpan<char> first, ReadOnlySpan<char> second)
-    {
-        if (!first.TryCopyTo(typeNameBuffer))
-        {
-            Formatting.ThrowIdentifierTooLongException(typeDeclaration);
-        }
-
-        if (!second.TryCopyTo(typeNameBuffer[first.Length..]))
-        {
-            Formatting.ThrowIdentifierTooLongException(typeDeclaration);
-        }
-
-        return first.Length + second.Length;
-    }
-
-    /// <summary>
     /// Gets the required buffer length for the formatting operations on the string.
     /// </summary>
     /// <param name="stringLength">The length of string which requires formatting.</param>

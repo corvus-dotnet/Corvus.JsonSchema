@@ -36,7 +36,6 @@
     <Compile Include="CodeFileBuilders\MutableCorePartial.cs" />
     <Compile Include="CodeFileBuilders\CorePartial.cs" />
     <Compile Include="CodeGeneratorExtensions.Validation.cs" />
-    <Compile Include="CodeGeneratorExtensions.Number.cs" />
     <Compile Include="CodeGeneratorExtensions.JsonSchema.cs" />
     <Compile Include="CodeGeneratorExtensions.Array.cs" />
     <Compile Include="CodeGeneratorExtensions.CloneAndFreeze.cs" />
