@@ -1049,6 +1049,197 @@ public class FunctionalCompilerCoverageTests
         Assert.Contains("50", result);
     }
 
+    // ─── Non-singleton Sequence numeric filter in ApplyStages (lines 5352-5390) ──
+    // When a filter predicate returns a non-singleton Sequence of numeric values
+    // (Count > 1), the allNum path processes each as a numeric index.
+
+    [Fact]
+    public void NonSingletonSequence_NumericFilter()
+    {
+        // $idx.* produces a Sequence with multiple numeric elements (0 and 2)
+        // Hits line 5352: !result.IsSingleton && result.Count > 0
+        // and lines 5365-5380: numeric index matching from multi-element Sequence
+        string data = """{"idx": {"a": 0, "b": 2}, "items": ["x","y","z","w"]}""";
+        string result = Eval("items[$$.idx.*]", data);
+        // Elements at indices 0 and 2
+        Assert.Equal("""["x","z"]""", result);
+    }
+
+    [Fact]
+    public void NonSingletonSequence_NumericFilter_NegativeIndex()
+    {
+        // Non-singleton Sequence with a negative index triggers idx + elements.Count
+        string data = """{"idx": {"a": 0, "b": -1}, "items": ["x","y","z"]}""";
+        string result = Eval("items[$$.idx.*]", data);
+        // Index 0 → "x", index -1 → 2 → "z"
+        Assert.Equal("""["x","z"]""", result);
+    }
+
+    [Fact]
+    public void NonSingletonSequence_NonNumericFallback()
+    {
+        // Non-singleton Sequence with mixed types hits allNum=false; break
+        // Then falls through to IsTruthy
+        string data = """{"idx": {"a": 1, "b": "foo"}, "items": ["x","y","z"]}""";
+        string result = Eval("items[$$.idx.*]", data);
+        // Result is [1, "foo"] which is truthy → all elements included
+        Assert.Equal("""["x","y","z"]""", result);
+    }
+
+    // ─── Non-singleton Sequence filter in ApplyFocusStages (lines 5621-5650) ─────
+    // Same logic as above but in the focus-binding variant (ApplyFocusStages).
+    // Requires a step with @$var focus binding AND a filter that returns non-singleton.
+    // Note: focus binding has cross-join semantics — remaining steps evaluate from
+    // the PARENT context, not the focus elements. If no remaining steps, focus
+    // elements are returned directly.
+
+    [Fact]
+    public void FocusStages_NonSingletonSequence_NumericFilter()
+    {
+        // items@$x creates a focus binding; filter [$$.idx.*] returns Sequence(0,2)
+        // This exercises ApplyFocusStages line 5621: !result.IsSingleton && result.Count > 0
+        // No remaining steps after focus → returns filtered elements directly.
+        string data = """{"idx": {"a": 0, "b": 2}, "items": ["x","y","z","w"]}""";
+        string result = Eval("items@$x[$$.idx.*]", data);
+        // Elements at indices 0 and 2 survive the filter
+        Assert.Contains("x", result);
+        Assert.Contains("z", result);
+        Assert.DoesNotContain("y", result);
+    }
+
+    [Fact]
+    public void FocusStages_NonSingletonSequence_NegativeIndex()
+    {
+        // Focus binding with negative index in the Sequence → line 5634-5636 (idx < 0)
+        string data = """{"idx": {"a": 0, "b": -1}, "items": ["x","y","z"]}""";
+        string result = Eval("items@$x[$$.idx.*]", data);
+        // Index 0 → element 0 ("x"), index -1 → elements.Count + (-1) = 2 → "z"
+        Assert.Contains("x", result);
+        Assert.Contains("z", result);
+        Assert.DoesNotContain("y", result);
+    }
+
+    [Fact]
+    public void FocusStages_NonSingletonSequence_NonNumericFallback()
+    {
+        // Focus binding with mixed type filter → allNum=false → IsTruthy fallback
+        string data = """{"idx": {"a": 1, "b": "foo"}, "items": ["x","y","z"]}""";
+        string result = Eval("items@$x[$$.idx.*]", data);
+        // Non-numeric element makes allNum=false, falls through to IsTruthy
+        Assert.Contains("x", result);
+        Assert.Contains("y", result);
+        Assert.Contains("z", result);
+    }
+
+    // ─── Fused array-of-objects with multi-element prefix (lines 7000-7015) ──────
+    // CompileFusedArrayOfObjects generates code for [path.{"key": val}].
+    // When the prefix path produces a non-singleton Sequence, lines 7000-7015 fire.
+
+    [Fact]
+    public void FusedArrayOfObjects_MultiElementPrefix()
+    {
+        // $data.* produces a multi-element Sequence (non-singleton)
+        // The array constructor [path.*.{"name": name}] triggers the fused optimization
+        string data = """{"items": {"a": {"name": "Alice", "age": 30}, "b": {"name": "Bob", "age": 25}}}""";
+        string result = Eval("[items.*.{\"label\": name}]", data);
+        Assert.Contains("Alice", result);
+        Assert.Contains("Bob", result);
+    }
+
+    [Fact]
+    public void FusedArrayOfObjects_MultiElementPrefix_ArrayElements()
+    {
+        // When prefix produces multiple elements that ARE arrays, trigger inner flattening (7004-7009)
+        string data = """{"groups": [{"people": [{"name": "A"}, {"name": "B"}]}, {"people": [{"name": "C"}]}]}""";
+        string result = Eval("[groups.people.{\"label\": name}]", data);
+        Assert.Contains("A", result);
+        Assert.Contains("B", result);
+        Assert.Contains("C", result);
+    }
+
+    // ─── Multi-element parentContext in EvalFocusStep (lines 2986-3003) ─────────
+    // When a focus-bound step receives a non-singleton parentContext (multiple
+    // elements from prior steps), lines 2986-3003 iterate each element.
+    // If any element is an array AND stepIdx > 0, FlattenArrayStep is called.
+
+    [Fact]
+    public void MultiElementParentContext_InFocusStep()
+    {
+        // *.n@$x where wildcard produces nested arrays (one-level flatten leaves inner arrays).
+        // parentContext for the focus step contains Array elements → FlattenArrayStep (lines 2991-2995).
+        string data = """{"a": [[{"n": 1}], [{"n": 2}]], "b": [[{"n": 3}]]}""";
+        string result = Eval("*.n@$x", data);
+        // * flattens one level: [{n:1}], [{n:2}], [{n:3}] — each is an Array
+        // Focus step .n: FlattenArrayStep on each array → looks up "n" per element
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    [Fact]
+    public void MultiElementParentContext_InFocusStep_NoArrays()
+    {
+        // When all elements are objects (not arrays), takes the else branch at line 2997
+        string data = """{"a": {"name": "Alice"}, "b": {"name": "Bob"}}""";
+        string result = Eval("*.name@$x", data);
+        Assert.Contains("Alice", result);
+        Assert.Contains("Bob", result);
+    }
+
+    // ─── Group-by on a step within a path (lines 2123-2132) ─────────────────────
+    // When a STEP in the path (not the path itself) has a Group annotation.
+    // This happens with `expr{key:val}.property` — the { operator (bp=70) binds
+    // less tightly than . (bp=75), so items{k:v}.x parses as path[items(Group), x].
+    // Group-by is applied AFTER all steps evaluate, so the key/value expressions
+    // must be valid on the final step results.
+
+    [Fact]
+    public void GroupBy_OnWildcardStep_ThenNavigate()
+    {
+        // *{type: v}.items → wildcard step with group-by, then navigate to "items".
+        // ProcessGroupBy sets Group on WildcardNode directly (not a PathNode),
+        // so in CompilePath the step annotations.Group is not null → lines 2123-2132.
+        // * → [{items:[{type:"A",v:1},{type:"B",v:2}]},{items:[{type:"A",v:3}]}]
+        // .items → [{type:"A",v:1},{type:"B",v:2},{type:"A",v:3}]
+        // Group by type:v → {"A":[1,3],"B":2}
+        string data = """{"g1": {"items": [{"type": "A", "v": 1}, {"type": "B", "v": 2}]}, "g2": {"items": [{"type": "A", "v": 3}]}}""";
+        string result = Eval("*{type: v}.items", data);
+        Assert.Equal("""{"A":[1,3],"B":2}""", result);
+    }
+
+    // ─── CompileName array input (lines 1020-1035) ──────────────────────────────
+    // When CompileName's delegate is called with a JSON array as input,
+    // it iterates each element looking up the field. This fires when:
+    // - Nested arrays flow through FlattenArrayStep (outer level is flattened,
+    //   inner arrays reach CompileName directly)
+    // - The step has annotations (preventing inline optimization)
+    // The filter [0] prevents inline, and nested arrays mean CompileName
+    // sees array input from FlattenArrayStep.
+
+    [Fact]
+    public void CompileName_ArrayInput_NestedArrayWithWildcard()
+    {
+        // *.n[0] on triple-nested data where wildcard produces double-nested arrays.
+        // Filter [0] prevents name step from being inlined → CompileName delegate used.
+        // In standard multi-value evaluation, FlattenArrayStep on [[{n:1},{n:2}]] iterates
+        // items: [{n:1},{n:2}] is itself an array → CompileName receives Array → lines 1020-1035.
+        string data = """{"a": [[[{"n": 1}, {"n": 2}]]], "b": [[[{"n": 3}]]]}""";
+        string result = Eval("*.n[0]", data);
+        // * → [[[{n:1},{n:2}]], [[{n:3}]]]
+        // .n step on [{n:1},{n:2}] (array input) → CompileName iterates → [1,2]
+        // [0] filter selects first from each group → [1, 3]
+        Assert.Equal("[1,3]", result);
+    }
+
+    [Fact]
+    public void CompileName_ScalarInput_ReturnsUndefined()
+    {
+        // *.n[0] on data with scalars inside nested arrays.
+        // FlattenArrayStep iterates items; scalar (Number) → CompileName line 1037 (else fallback).
+        // Scalars are skipped, only objects contribute results.
+        string data = """{"a": [[[1, {"n": 2}]]]}""";
+        string result = Eval("*.n[0]", data);
+        Assert.Equal("2", result);
+    }
+
     // ─── Multi-element input context with array flattening (lines 4088-4098) ───
     // When inputContext has multiple elements and some are arrays that need
     // flattening at step > 0.
@@ -1170,5 +1361,191 @@ public class FunctionalCompilerCoverageTests
         Assert.Contains("world", result);
         // Empty string is falsy — should be excluded
         Assert.DoesNotContain("\"\"", result);
+    }
+
+    // ─── ObjectDeepEquals (lines 9055-9082) ──────────────────────────────
+    // Deep equality comparison between JSON objects (order-independent).
+
+    [Fact]
+    public void ObjectDeepEquals_SameProperties_DifferentOrder()
+    {
+        // Object equality is order-independent → lines 9055-9091
+        string result = Eval("""{"a":1, "b":2} = {"b":2, "a":1}""");
+        Assert.Equal("true", result);
+    }
+
+    [Fact]
+    public void ObjectDeepEquals_DifferentPropertyCount()
+    {
+        // Different property counts → line 9072-9074 (early return false)
+        string result = Eval("""{"a":1, "b":2} = {"a":1}""");
+        Assert.Equal("false", result);
+    }
+
+    [Fact]
+    public void ObjectDeepEquals_MissingProperty()
+    {
+        // Same count but missing key → line 9080-9082
+        string result = Eval("""{"a":1, "b":2} = {"a":1, "c":2}""");
+        Assert.Equal("false", result);
+    }
+
+    [Fact]
+    public void ObjectDeepEquals_NestedObjectDifference()
+    {
+        // Nested object value mismatch → line 9085-9088
+        string result = Eval("""{"x": {"a":1}} = {"x": {"a":2}}""");
+        Assert.Equal("false", result);
+    }
+
+    [Fact]
+    public void ArrayDeepEquals_ElementMismatch()
+    {
+        // Array elements differ → lines 9046-9048
+        string result = Eval("[1,2,3] = [1,2,4]");
+        Assert.Equal("false", result);
+    }
+
+    [Fact]
+    public void ArrayDeepEquals_LengthMismatch()
+    {
+        // Array length differs → lines 9035-9037
+        string result = Eval("[1,2] = [1,2,3]");
+        Assert.Equal("false", result);
+    }
+
+    // ─── FocusStages singleton array filter with negative index (lines 5599-5607) ──
+
+    [Fact]
+    public void FocusStages_SingletonArrayFilter_NegativeIndex()
+    {
+        // Focus filter evaluates to singleton array containing negative index.
+        // [-1, 0] selects last and first elements → lines 5599-5601 (negative idx adjustment)
+        string data = """{"items": ["a","b","c","d"]}""";
+        string result = Eval("items@$x[[-1, 0]]", data);
+        Assert.Equal("""["a","d"]""", result);
+    }
+
+    [Fact]
+    public void FocusStages_SingletonArrayFilter_BooleanBreaksAllNum()
+    {
+        // Focus filter array contains boolean → breaks allNum loop → lines 5589-5591
+        // Falls through to truthiness fallback (non-numeric array → all truthy = keep all)
+        string data = """{"items": ["a","b","c"]}""";
+        string result = Eval("items@$x[[true, 0]]", data);
+        Assert.Equal("""["a","b","c"]""", result);
+    }
+
+    // ─── CollectAndContinue nested array and array-valued properties (lines 1565-1586) ──
+
+    [Fact]
+    public void SimplePropertyChain_CollectAndContinue_ArrayProperty()
+    {
+        // n[0] on data where objects have array-valued "n" property.
+        // Item {n:[10,20]}: propValue.ValueKind == Array → lines 1565-1570 (flatten children)
+        // Item {n:30}: propValue is Number → line 1574
+        string data = """[{"n": [10, 20]}, {"n": 30}]""";
+        string result = Eval("n[0]", data);
+        // Collected: [10, 20, 30], apply index [0] → 10
+        Assert.Equal("10", result);
+    }
+
+    [Fact]
+    public void SimplePropertyChain_CollectAndContinue_NestedArray()
+    {
+        // n[0] on data with nested array items → lines 1578-1586 (CollectAndContinue recurse)
+        string data = """[[{"n": [10, 20]}], {"n": 30}]""";
+        string result = Eval("n[0]", data);
+        // Outer iteration: [{n:[10,20]}] is Array → recurse
+        //   Inner: {n:[10,20]} → prop "n" = [10,20] (Array) → flatten → [10, 20]
+        // {n:30} → prop "n" = 30 → [30]
+        // Collected: [10, 20, 30], index [0] → 10
+        Assert.Equal("10", result);
+    }
+
+    // ─── EvalChainOverArrayIntoStatic branches (lines 1969-1986) ──────────────────
+
+    [Fact]
+    public void CoalesceChain_NestedArrayTraversal()
+    {
+        // The ?? operator desugars to $exists(lhs) ? lhs : rhs with shared AST reference.
+        // For simple property chains, this triggers EvalSimplePropertyChainStatic.
+        // After navigating to items (Array), recurse into array items containing nested arrays.
+        // [{name:"x"}] is Array → line 1977 (recursive call)
+        string data = """{"data": {"items": [[{"name": "x"}], {"name": "y"}]}}""";
+        string result = Eval("data.items.name ?? \"none\"", data);
+        Assert.Equal("""["x","y"]""", result);
+    }
+
+    [Fact]
+    public void CoalesceChain_ScalarFallback()
+    {
+        // data.items.name via ?? coalesce where items array has scalars mixed with objects.
+        // scalar (Number) → line 1983-1986 (found = false, break)
+        string data = """{"data": {"items": [1, {"name": "z"}]}}""";
+        string result = Eval("data.items.name ?? \"none\"", data);
+        Assert.Equal("\"z\"", result);
+    }
+
+    [Fact]
+    public void CoalesceChain_PropertyNotFound()
+    {
+        // prop.x ?? "y" — chain where prop is an array; second item lacks property "x".
+        // EvalChainOverArrayStatic iterates: {"x":1} → found; {"y":2} → TryGetProperty fails
+        // → lines 1972-1974 (found = false, break for that item).
+        string data = """{"prop": [{"x": 1}, {"y": 2}]}""";
+        string result = Eval("prop.x ?? \"y\"", data);
+        Assert.Equal("1", result);
+    }
+
+    [Fact]
+    public void FocusStages_ArrayFilter_NonNumericElement()
+    {
+        // items@$x[["abc"]] — items is a path step with focus @$x and filter stage [["abc"]].
+        // Filter returns singleton array ["abc"]. In ApplyFocusStages, iterating the array:
+        // "abc" is not boolean (passes line 5589), fails TryCoerceToNumber → lines 5610-5612.
+        // All elements pass (treated as truthy non-numeric filter).
+        string data = """{"items": [1, 2, 3]}""";
+        string result = Eval("items@$x[[\"abc\"]]", data);
+        Assert.Equal("[1,2,3]", result);
+    }
+
+    // ─── AccumulateGroupBy with singleton array sub-result (lines 4427-4437) ──────
+
+    [Fact]
+    public void GroupBy_SingletonArrayResult_Flattened()
+    {
+        // *#$i{$string($i): $}.vals — wildcard with index + group-by (step-level) then navigate
+        // to array-valued property. WildcardNode has BOTH Index and Group annotations.
+        // EvalIndexStep: for each element, EvalPathFrom returns singleton array (.vals = [1,2]).
+        // AccumulateGroupBy: subResult.IsSingleton && el.ValueKind == Array → lines 4432-4437.
+        string data = """{"x": {"vals": [1,2]}, "y": {"vals": [3]}}""";
+        string result = Eval("*#$i{$string($i): $}.vals", data);
+        Assert.Contains("\"0\"", result);
+        Assert.Contains("\"1\"", result);
+    }
+
+    [Fact]
+    public void GroupBy_ScalarSingletonResult()
+    {
+        // *#$i{$string($i): $}.name — wildcard with index + group-by (step-level) then navigate
+        // to scalar-valued property. EvalPathFrom returns singleton string.
+        // AccumulateGroupBy: subResult.IsSingleton && el.ValueKind != Array → lines 4440-4442.
+        string data = """{"x": {"name": "alice"}, "y": {"name": "bob"}}""";
+        string result = Eval("*#$i{$string($i): $}.name", data);
+        Assert.Contains("\"0\"", result);
+        Assert.Contains("alice", result);
+    }
+
+    [Fact]
+    public void GroupBy_MultiValueResult()
+    {
+        // *#$i{$string($i): $}.* — wildcard with index + group-by (step-level) then
+        // remaining path .* produces multi-value result (all property values).
+        // AccumulateGroupBy: subResult is NOT singleton → lines 4444-4450.
+        string data = """{"x": {"a": 1, "b": 2}, "y": {"c": 3}}""";
+        string result = Eval("*#$i{$string($i): $}.*", data);
+        Assert.Contains("\"0\"", result);
+        Assert.Contains("\"1\"", result);
     }
 }
