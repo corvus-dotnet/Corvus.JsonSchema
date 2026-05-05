@@ -1548,4 +1548,171 @@ public class FunctionalCompilerCoverageTests
         Assert.Contains("\"0\"", result);
         Assert.Contains("\"1\"", result);
     }
+
+    // ─── TryParseSpecialRadix: hex/binary/octal string-to-number (lines 8731-8770) ──
+
+    [Fact]
+    public void TryCoerceToNumber_HexString()
+    {
+        // Filter array with hex string "0x01" → TryCoerceToNumber → String case →
+        // prefix 'x' detected → TryParseSpecialRadix → valid hex → lines 8736-8739.
+        string data = """{"items": [10, 20, 30]}""";
+        string result = Eval("items[[\"0x01\"]]", data);
+        Assert.Equal("20", result);
+    }
+
+    [Fact]
+    public void TryCoerceToNumber_BinaryString()
+    {
+        // Filter with binary string "0b10" → TryParseSpecialRadix → binary → lines 8750-8751.
+        string data = """{"items": [10, 20, 30]}""";
+        string result = Eval("items[[\"0b10\"]]", data);
+        Assert.Equal("30", result);
+    }
+
+    [Fact]
+    public void TryCoerceToNumber_OctalString()
+    {
+        // Filter with octal string "0o02" → TryParseSpecialRadix → octal → lines 8760+.
+        string data = """{"items": [10, 20, 30]}""";
+        string result = Eval("items[[\"0o02\"]]", data);
+        Assert.Equal("30", result);
+    }
+
+    [Fact]
+    public void TryCoerceToNumber_InvalidHexString()
+    {
+        // "0xZZ" → TryParseSpecialRadix → hex parse fails → lines 8742-8743.
+        // allNum becomes false, filter treated as truthy → all elements pass.
+        string data = """{"items": [10, 20, 30]}""";
+        string result = Eval("items[[\"0xZZ\"]]", data);
+        Assert.Equal("[10,20,30]", result);
+    }
+
+    [Fact]
+    public void TryCoerceToNumber_InvalidBinaryString()
+    {
+        // "0b222" → TryParseSpecialRadix → binary: char '2' is not '0' or '1'
+        // → lines 8805-8808 (invalid binary digit) on NET; lines 8754-8756 on net481.
+        string data = """{"items": [10, 20, 30]}""";
+        string result = Eval("items[[\"0b222\"]]", data);
+        Assert.Equal("[10,20,30]", result);
+    }
+
+    [Fact]
+    public void TryCoerceToNumber_InvalidOctalString()
+    {
+        // "0o89" → TryParseSpecialRadix → octal: char '8' is > '7'
+        // → lines 8824-8827 (invalid octal digit) on NET.
+        string data = """{"items": [10, 20, 30]}""";
+        string result = Eval("items[[\"0o89\"]]", data);
+        Assert.Equal("[10,20,30]", result);
+    }
+
+    [Fact]
+    public void TryCoerceToNumber_NullInFilterArray()
+    {
+        // [null, 1] in filter array → null passes boolean check (not True/False),
+        // reaches TryCoerceToNumber → case Null → value=0, return true → lines 8673-8675.
+        // Selects indices 0 and 1.
+        string data = """{"items": [10, 20, 30]}""";
+        string result = Eval("items[[null, 1]]", data);
+        Assert.Equal("[10,20]", result);
+    }
+
+    // ─── AnyChainOverArray: scalar/array branches (lines 1897-1910) ─────────────────
+
+    [Fact]
+    public void CoalesceChain_ScalarIntermediateInArray()
+    {
+        // x.y.z ?? "default" where y contains [42, {"z":1}]. Parser desugars ?? to
+        // $exists(x.y.z)?x.y.z:"default" with shared ref → uses AnySimplePropertyChain.
+        // x.y = [42, {"z":1}] → AnyChainOverArray iterates items:
+        //   item=42 (Number) → lines 1907-1910: not Object, not Array → found=false, break
+        //   item={"z":1} → Object → get "z" → found=true → return true.
+        string data = """{"x": {"y": [42, {"z": 1}]}}""";
+        string result = Eval("x.y.z ?? \"default\"", data);
+        Assert.Equal("1", result);
+    }
+
+    [Fact]
+    public void CoalesceChain_NestedArrayInArray()
+    {
+        // x.y.z ?? "default" where y contains [[[1]], {"z":99}].
+        // AnyChainOverArray iterates: item=[[1]] (Array) → line 1897: recurse →
+        //   inner: item=[1] (Array) → recurse → item=1 (Number) → found=false
+        // Recursion returns false → lines 1904-1905: found=false, break.
+        // Next item: {"z":99} → Object → found=true → return true.
+        string data = """{"x": {"y": [[[1]], {"z": 99}]}}""";
+        string result = Eval("x.y.z ?? \"default\"", data);
+        Assert.Equal("99", result);
+    }
+
+    [Fact]
+    public void CoalesceChain_ScalarIntermediateReturnsFalse()
+    {
+        // x.y.z ?? "default" where y=42 (scalar). AnySimplePropertyChain:
+        // step=0: Object, get "x" → {"y":42}. step=1: Object, get "y" → 42.
+        // step=2: current=42 (Number) → else branch → lines 1945-1947: return Undefined.
+        string data = """{"x": {"y": 42}}""";
+        string result = Eval("x.y.z ?? \"default\"", data);
+        Assert.Equal("\"default\"", result);
+    }
+
+    [Fact]
+    public void ExistsChain_ScalarInAnyChainOverArray()
+    {
+        // $exists(a.missing.deep) where a=[{"missing":42}]. Fused $exists uses AnySimplePropertyChain.
+        // step=0: Object, get "a" → [...]. step=1: Array → AnyChainOverArray([{"missing":42}], names, 1).
+        // Inside: item={"missing":42}: step=1, Object, get "missing" → 42.
+        // step=2: current=42 (Number) → else → lines 1907-1910: found=false, break.
+        string data = """{"a": [{"missing": 42}]}""";
+        string result = Eval("$exists(a.missing.deep)", data);
+        Assert.Equal("false", result);
+    }
+
+    [Fact]
+    public void ExistsChain_NestedArrayInAnyChainOverArray()
+    {
+        // $exists(a.missing.deep) where a=[{"missing":[[1]]}]. AnyChainOverArray:
+        // item={"missing":[[1]]}: step=1, Object, get "missing" → [[1]].
+        // step=2: current=[[1]] (Array) → line 1897: recurse AnyChainOverArray([[1]], names, 2).
+        //   item=[1]: Array → recurse → item=1: Number → found=false.
+        //   Returns false. → lines 1904-1905: found=false, break.
+        string data = """{"a": [{"missing": [[1]]}]}""";
+        string result = Eval("$exists(a.missing.deep)", data);
+        Assert.Equal("false", result);
+    }
+
+    [Fact]
+    public void ExistsChain_NestedArrayReturnsTrue()
+    {
+        // $exists(a.missing.deep) where "missing" is array containing {"deep":99}.
+        // AnyChainOverArray recursion SUCCEEDS → lines 1900-1901: return true.
+        string data = """{"a": [{"missing": [{"deep": 99}]}]}""";
+        string result = Eval("$exists(a.missing.deep)", data);
+        Assert.Equal("true", result);
+    }
+
+    [Fact]
+    public void ExistsChain_ScalarAtTopLevel()
+    {
+        // $exists(a.b.c) where "a"=42 (scalar). AnySimplePropertyChain:
+        // step=0: Object, get "a" → 42. step=1: current=42 (Number) →
+        // else branch → lines 1872-1874: return false.
+        string data = """{"a": 42}""";
+        string result = Eval("$exists(a.b.c)", data);
+        Assert.Equal("false", result);
+    }
+
+    // ─── $substring with hex string params (TryCoerceToNumber via BuiltInFunctions) ──
+
+    [Fact]
+    public void Substring_HexStartAndLength()
+    {
+        // $substring("hello", "0x01", "0x03") — BuiltInFunctions calls TryCoerceToNumber
+        // on start/length string params → hex string path → TryParseSpecialRadix.
+        string result = Eval("$substring(\"hello\", \"0x01\", \"0x03\")");
+        Assert.Equal("\"ell\"", result);
+    }
 }

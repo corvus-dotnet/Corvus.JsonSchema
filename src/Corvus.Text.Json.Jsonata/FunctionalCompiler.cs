@@ -8772,6 +8772,7 @@ internal static class FunctionalCompiler
         }
 
         value = 0;
+        Debug.Fail("TryParseSpecialRadix(string) fallback is unreachable because the caller at line ~8695 only invokes this method when the prefix byte is one of x/X/b/B/o/O, and those cases are all handled above.");
         return false;
     }
 
@@ -8835,6 +8836,7 @@ internal static class FunctionalCompiler
         }
 
         value = 0;
+        Debug.Fail("TryParseSpecialRadix fallback is unreachable because the caller at line ~8695 only invokes this method when the prefix byte is one of x/X/b/B/o/O, and those cases are all handled above.");
         return false;
     }
 #endif
