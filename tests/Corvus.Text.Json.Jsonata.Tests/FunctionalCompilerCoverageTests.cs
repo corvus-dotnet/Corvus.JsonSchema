@@ -1166,13 +1166,13 @@ public class FunctionalCompilerCoverageTests
     [Fact]
     public void MultiElementParentContext_InFocusStep()
     {
-        // *.n@$x where wildcard produces nested arrays (one-level flatten leaves inner arrays).
-        // parentContext for the focus step contains Array elements → FlattenArrayStep (lines 2991-2995).
+        // *.n@$x where wildcard deep-flattens nested arrays to individual objects.
+        // Reference: focus without continuation returns the parent context element
+        // that produced each focus element. * → [{n:1},{n:2},{n:3}], so *.n@$x
+        // returns the parent objects (each produced one focus element via .n).
         string data = """{"a": [[{"n": 1}], [{"n": 2}]], "b": [[{"n": 3}]]}""";
         string result = Eval("*.n@$x", data);
-        // * flattens one level: [{n:1}], [{n:2}], [{n:3}] — each is an Array
-        // Focus step .n: FlattenArrayStep on each array → looks up "n" per element
-        Assert.Equal("[1,2,3]", result);
+        Assert.Equal("""[{"n":1},{"n":2},{"n":3}]""", result);
     }
 
     [Fact]
@@ -1195,15 +1195,21 @@ public class FunctionalCompilerCoverageTests
     [Fact]
     public void GroupBy_OnWildcardStep_ThenNavigate()
     {
-        // *{type: v}.items → wildcard step with group-by, then navigate to "items".
-        // ProcessGroupBy sets Group on WildcardNode directly (not a PathNode),
-        // so in CompilePath the step annotations.Group is not null → lines 2123-2132.
-        // * → [{items:[{type:"A",v:1},{type:"B",v:2}]},{items:[{type:"A",v:3}]}]
-        // .items → [{type:"A",v:1},{type:"B",v:2},{type:"A",v:3}]
-        // Group by type:v → {"A":[1,3],"B":2}
+        // *{type: v}.items → group-by is on the wildcard step.
+        // Reference: group-by applies to wildcard results first (which are {items:[...]} objects),
+        // those objects don't have type/v properties → {} (empty object),
+        // then .items on {} → undefined.
         string data = """{"g1": {"items": [{"type": "A", "v": 1}, {"type": "B", "v": 2}]}, "g2": {"items": [{"type": "A", "v": 3}]}}""";
         string result = Eval("*{type: v}.items", data);
-        Assert.Equal("""{"A":[1,3],"B":2}""", result);
+        Assert.Equal("undefined", result); // {} has no .items property → undefined
+
+        // *{type: v} alone returns {} (group-by always produces an object, even with no valid keys)
+        string result2 = Eval("*{type: v}", data);
+        Assert.Equal("{}", result2);
+
+        // *.items{type: v} → group-by on the LAST step (items) works correctly
+        string result3 = Eval("*.items{type: v}", data);
+        Assert.Equal("""{"A":[1,3],"B":2}""", result3);
     }
 
     // ─── CompileName array input (lines 1020-1035) ──────────────────────────────
@@ -1218,16 +1224,12 @@ public class FunctionalCompilerCoverageTests
     [Fact]
     public void CompileName_ArrayInput_NestedArrayWithWildcard()
     {
-        // *.n[0] on triple-nested data where wildcard produces double-nested arrays.
-        // Filter [0] prevents name step from being inlined → CompileName delegate used.
-        // In standard multi-value evaluation, FlattenArrayStep on [[{n:1},{n:2}]] iterates
-        // items: [{n:1},{n:2}] is itself an array → CompileName receives Array → lines 1020-1035.
+        // *.n[0] on triple-nested data where wildcard deep-flattens all nested arrays.
+        // With deep flatten: * → [{n:1},{n:2},{n:3}], .n → [1,2,3], [0] → [1,2,3]
+        // (each n is position 0 in its own single-element context)
         string data = """{"a": [[[{"n": 1}, {"n": 2}]]], "b": [[[{"n": 3}]]]}""";
         string result = Eval("*.n[0]", data);
-        // * → [[[{n:1},{n:2}]], [[{n:3}]]]
-        // .n step on [{n:1},{n:2}] (array input) → CompileName iterates → [1,2]
-        // [0] filter selects first from each group → [1, 3]
-        Assert.Equal("[1,3]", result);
+        Assert.Equal("[1,2,3]", result);
     }
 
     [Fact]

@@ -1061,13 +1061,11 @@ internal static class FunctionalCompiler
             var builder = default(SequenceBuilder);
             foreach (var prop in input.EnumerateObject())
             {
-                // Flatten array property values into individual elements
+                // Deep-flatten array property values into individual non-array elements.
+                // JSONata's wildcard operator recursively flattens nested arrays.
                 if (prop.Value.ValueKind == JsonValueKind.Array)
                 {
-                    foreach (var item in prop.Value.EnumerateArray())
-                    {
-                        builder.Add(item);
-                    }
+                    DeepFlattenArray(prop.Value, ref builder);
                 }
                 else
                 {
@@ -1082,6 +1080,25 @@ internal static class FunctionalCompiler
             // managed by the path evaluator's traversal loop.
             return result;
         };
+    }
+
+    /// <summary>
+    /// Recursively flattens nested arrays into individual non-array elements.
+    /// Used by the wildcard operator to match JSONata's deep-flatten semantics.
+    /// </summary>
+    private static void DeepFlattenArray(JsonElement array, ref SequenceBuilder builder)
+    {
+        foreach (var item in array.EnumerateArray())
+        {
+            if (item.ValueKind == JsonValueKind.Array)
+            {
+                DeepFlattenArray(item, ref builder);
+            }
+            else
+            {
+                builder.Add(item);
+            }
+        }
     }
 
     private static ExpressionEvaluator CompileDescendant()
@@ -2070,6 +2087,7 @@ internal static class FunctionalCompiler
         var sortTermsPerStep = new (ExpressionEvaluator Expr, bool Descending)[]?[path.Steps.Count];
         (ExpressionEvaluator Key, ExpressionEvaluator Value)[]? groupByPairs = null;
         GroupBy? groupByAst = null;
+        int groupByStepIndex = -1;
 
         for (int i = 0; i < path.Steps.Count; i++)
         {
@@ -2160,6 +2178,7 @@ internal static class FunctionalCompiler
                 {
                     var group = annotations.Group;
                     groupByAst = group;
+                    groupByStepIndex = i;
                     groupByPairs = new (ExpressionEvaluator, ExpressionEvaluator)[group.Pairs.Count];
                     for (int g = 0; g < group.Pairs.Count; g++)
                     {
@@ -2789,11 +2808,35 @@ internal static class FunctionalCompiler
                             currentArrayOwned = true;
                         }
                     }
+
+                    // Per-step group-by: when the group-by annotation is on a non-final step,
+                    // apply it after that step completes (before continuing to subsequent steps).
+                    // This matches JSONata semantics where *{key:val}.prop groups the wildcard
+                    // results first, then navigates .prop on the grouped object.
+                    if (groupByStepIndex >= 0 && stepIdx == groupByStepIndex && stepIdx < steps.Length - 1)
+                    {
+                        Sequence previous = current;
+                        bool previousOwned = currentArrayOwned;
+                        currentArrayOwned = false;
+
+                        if (simpleGroupByKeyPropUtf8.HasValue && tupleIndexVar is null)
+                        {
+                            current = ApplySimpleNamePairGroupBy(current, simpleGroupByKeyPropUtf8, simpleGroupByValuePropUtf8, env);
+                        }
+                        else
+                        {
+                            current = ApplyGroupBy(current, groupByPairs!, env, tupleIndexVar, tupleGroupIndices);
+                        }
+
+                        if (previousOwned) { previous.ReturnBackingArray(); }
+                    }
                 }
 
                 // Apply group-by if present (only at the outermost level;
                 // focus-bound paths handle group-by inside EvalFocusStep).
-                if (startStep == 0 && groupByPairs is not null)
+                // Skip if already applied mid-path (non-final step group-by).
+                if (startStep == 0 && groupByPairs is not null
+                    && (groupByStepIndex < 0 || groupByStepIndex >= steps.Length - 1))
                 {
                     // Save old sequence so we can return its backing array after group-by.
                     // We must NOT return the array before the call because the group-by
@@ -3037,6 +3080,10 @@ internal static class FunctionalCompiler
 
                 // Evaluate the step on the parent context to get focus elements
                 Sequence focusResult;
+
+                // For multi-element parentContext, track which parent produced each focus element
+                // so that no-continuation returns can map back to the source parent.
+                List<int>? focusParentIndices = parentContext.IsSingleton ? null : new();
                 if (parentContext.IsSingleton)
                 {
                     var el = parentContext.FirstOrDefault;
@@ -3058,13 +3105,42 @@ internal static class FunctionalCompiler
                         if (el.ValueKind == JsonValueKind.Array && (stepIdx > 0 || isPropertyStep[stepIdx]))
                         {
                             var flat = FlattenArrayStep(el, step, env, isConsArrayStep[stepIdx]);
+
+                            // Track which parent produced each focus element
+                            for (int f = 0; f < flat.Count; f++)
+                            {
+                                focusParentIndices!.Add(i);
+                            }
+
                             builder.AddRange(flat);
                             flat.ReturnBackingArray();
                         }
                         else
                         {
                             var sr = step(el, env);
-                            builder.AddRange(sr);
+
+                            // Auto-flatten: when a property step returns a single array element,
+                            // expand it into individual focus elements (same as path evaluator).
+                            if (isPropertyStep[stepIdx] && sr.IsSingleton
+                                && sr.FirstOrDefault.ValueKind == JsonValueKind.Array)
+                            {
+                                foreach (var item in sr.FirstOrDefault.EnumerateArray())
+                                {
+                                    builder.Add(item);
+                                    focusParentIndices!.Add(i);
+                                }
+                            }
+                            else
+                            {
+                                // Track which parent produced each focus element
+                                for (int f = 0; f < sr.Count; f++)
+                                {
+                                    focusParentIndices!.Add(i);
+                                }
+
+                                builder.AddRange(sr);
+                            }
+
                             sr.ReturnBackingArray();
                         }
                     }
@@ -3284,18 +3360,36 @@ internal static class FunctionalCompiler
                     Sequence subResult;
                     if (nextStep < steps.Length)
                     {
-                        subResult = EvalPathFrom(parentContext, nextStep, env);
+                        // For multi-element parentContext, evaluate from the specific parent
+                        // element that produced this focus element (avoids cross-join duplication).
+                        if (!parentContext.IsSingleton && focusParentIndices is not null && i < focusParentIndices.Count)
+                        {
+                            subResult = EvalPathFrom(new Sequence(parentContext[focusParentIndices[i]]), nextStep, env);
+                        }
+                        else
+                        {
+                            subResult = EvalPathFrom(parentContext, nextStep, env);
+                        }
                     }
                     else
                     {
                         // No remaining steps: the result of a focus binding without
-                        // continuation is the parent context, not the focus element.
-                        // The focus variable ($x in items@$x) already binds to each element,
-                        // so downstream expressions can access elements via $x.
-                        // This only applies when parentContext is a singleton (the common
-                        // case for items@$x, Account.Order@$o, etc.). Multi-element parent
-                        // contexts arise from wildcard paths and return elements directly.
-                        subResult = parentContext.IsSingleton ? parentContext : new Sequence(el);
+                        // continuation is the parent context element that produced this
+                        // focus element. For singleton parents, the same parent is returned
+                        // each time. For multi-element parents (from wildcard paths), we
+                        // use focusParentIndices to map back to the source parent element.
+                        if (parentContext.IsSingleton)
+                        {
+                            subResult = parentContext;
+                        }
+                        else if (focusParentIndices is not null && i < focusParentIndices.Count)
+                        {
+                            subResult = new Sequence(parentContext[focusParentIndices[i]]);
+                        }
+                        else
+                        {
+                            subResult = new Sequence(el);
+                        }
                     }
 
                     if (subResult.IsUndefined)
@@ -5024,7 +5118,9 @@ internal static class FunctionalCompiler
 
             if (pairCount == 0)
             {
-                return Sequence.Undefined;
+                // No valid pairs — reference returns {} (empty grouping object), not undefined.
+                JsonDocumentBuilder<JsonElement.Mutable> emptyObj = JsonElement.CreateObjectBuilder(env.Workspace, 0);
+                return new Sequence((JsonElement)emptyObj.RootElement);
             }
 
             // Phase 2: Group by key and build CVB with exactly one SetProperty per group.
