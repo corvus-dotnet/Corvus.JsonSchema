@@ -3740,6 +3740,13 @@ internal static class FunctionalCompiler
                 {
                     return BuildGroupByResult(groupKeys!, groupData!, groupByPairs!, env);
                 }
+                else if (applyGroupByHere)
+                {
+                    // No groups accumulated (e.g., navigation yielded undefined).
+                    // Reference returns {} for empty group-by, not undefined.
+                    JsonDocumentBuilder<JsonElement.Mutable> emptyObj = JsonElement.CreateObjectBuilder(env.Workspace, 0);
+                    return new Sequence((JsonElement)emptyObj.RootElement);
+                }
 
                 // Store per-element tuple bindings as JSON arrays in the env.
                 // The outer path can use these to restore correct ancestor bindings
@@ -4200,6 +4207,13 @@ internal static class FunctionalCompiler
                 {
                     return BuildGroupByResult(groupKeys!, groupData!, groupByPairs!, env);
                 }
+                else if (applyGroupByHere)
+                {
+                    // No groups accumulated (e.g., navigation yielded undefined).
+                    // Reference returns {} for empty group-by, not undefined.
+                    JsonDocumentBuilder<JsonElement.Mutable> emptyObj = JsonElement.CreateObjectBuilder(env.Workspace, 0);
+                    return new Sequence((JsonElement)emptyObj.RootElement);
+                }
 
                 return resultBuilder.ToSequence();
             }
@@ -4465,8 +4479,10 @@ internal static class FunctionalCompiler
                 {
                     keyStr = keySeq.FirstOrDefault.GetString()!;
                 }
-                else if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
+                else if (keySeq.FirstOrDefault.ValueKind is JsonValueKind.Number
+                    or JsonValueKind.True or JsonValueKind.False)
                 {
+                    // Reference throws T1003 for non-string keys (numbers and booleans)
                     throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
                 }
                 else
@@ -4588,8 +4604,10 @@ internal static class FunctionalCompiler
                 {
                     keyStr = keySeq.FirstOrDefault.GetString()!;
                 }
-                else if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
+                else if (keySeq.FirstOrDefault.ValueKind is JsonValueKind.Number
+                    or JsonValueKind.True or JsonValueKind.False)
                 {
+                    // Reference throws T1003 for non-string keys (numbers and booleans)
                     throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
                 }
                 else
@@ -4740,7 +4758,9 @@ internal static class FunctionalCompiler
     {
         if (current.IsUndefined)
         {
-            return Sequence.Undefined;
+            // Reference returns {} for group-by when input is undefined, not undefined.
+            JsonDocumentBuilder<JsonElement.Mutable> emptyObj = JsonElement.CreateObjectBuilder(env.Workspace, 0);
+            return new Sequence((JsonElement)emptyObj.RootElement);
         }
 
         // Collect all elements to iterate — flatten arrays in the sequence,
@@ -4808,8 +4828,10 @@ internal static class FunctionalCompiler
                 {
                     keyStr = keySeq.FirstOrDefault.GetString()!;
                 }
-                else if (keySeq.FirstOrDefault.ValueKind == JsonValueKind.Number)
+                else if (keySeq.FirstOrDefault.ValueKind is JsonValueKind.Number
+                    or JsonValueKind.True or JsonValueKind.False)
                 {
+                    // Reference throws T1003 for non-string keys (numbers and booleans)
                     throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
                 }
                 else
@@ -4891,7 +4913,9 @@ internal static class FunctionalCompiler
     {
         if (current.IsUndefined)
         {
-            return Sequence.Undefined;
+            // Reference returns {} for group-by when input is undefined, not undefined.
+            JsonDocumentBuilder<JsonElement.Mutable> emptyObj = JsonElement.CreateObjectBuilder(env.Workspace, 0);
+            return new Sequence((JsonElement)emptyObj.RootElement);
         }
 
         // Phase 1: Collect (keyElement, valueElement) pairs from all elements.
@@ -4899,7 +4923,9 @@ internal static class FunctionalCompiler
         int maxElements = CountSequenceElements(current);
         if (maxElements == 0)
         {
-            return Sequence.Undefined;
+            // Empty input (e.g., empty array) — reference returns {}
+            JsonDocumentBuilder<JsonElement.Mutable> emptyObj = JsonElement.CreateObjectBuilder(env.Workspace, 0);
+            return new Sequence((JsonElement)emptyObj.RootElement);
         }
 
         JsonElement[] keyBuffer = ArrayPool<JsonElement>.Shared.Rent(maxElements);
@@ -5036,8 +5062,10 @@ internal static class FunctionalCompiler
                 return;
             }
 
-            if (keyEl.ValueKind == JsonValueKind.Number)
+            if (keyEl.ValueKind is JsonValueKind.Number
+                or JsonValueKind.True or JsonValueKind.False)
             {
+                // Reference throws T1003 for non-string keys (numbers and booleans)
                 throw new JsonataException("T1003", SR.T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber, 0);
             }
 
@@ -6361,6 +6389,10 @@ internal static class FunctionalCompiler
         double value = elem.GetDouble();
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
+            // Defensive: JSON text cannot represent NaN/Infinity, so a parsed JsonElement
+            // will never have these values. All arithmetic built-ins ($power, $sqrt, etc.)
+            // guard against overflow/NaN before storing results.
+            Debug.Fail("AppendNumberToBuffer(JsonElement): NaN/Infinity is unreachable because JSON text cannot encode these values and all arithmetic built-ins guard against producing them.");
             AppendNullToBuffer(ref buffer, ref pos);
             return;
         }
@@ -6404,6 +6436,10 @@ internal static class FunctionalCompiler
     {
         if (double.IsNaN(value) || double.IsInfinity(value))
         {
+            // Defensive: all arithmetic built-ins ($power throws D3061, $sqrt returns
+            // undefined for negative args, division by zero returns undefined) prevent
+            // NaN/Infinity from reaching the serialization path.
+            Debug.Fail("AppendNumberToBuffer(double): NaN/Infinity is unreachable because all arithmetic built-ins guard against producing these values.");
             AppendNullToBuffer(ref buffer, ref pos);
             return;
         }

@@ -626,6 +626,9 @@
   <data name="T0410_TomillisExpectsAtLeast1Argument" xml:space="preserve">
     <value>$toMillis expects at least 1 argument</value>
   </data>
+  <data name="T0410_Argument1OfTomillisIsNotAString" xml:space="preserve">
+    <value>Argument 1 of function "toMillis" does not match function signature</value>
+  </data>
   <data name="T0410_TooManyArgumentsForFunction" xml:space="preserve">
     <value>Too many arguments for function {0}</value>
   </data>
@@ -644,10 +647,10 @@
   <data name="T0410_ValuesExpects1Argument" xml:space="preserve">
     <value>$values expects 1 argument</value>
   </data>
-  <data name="T0411_SubstringafterExpects2Arguments" xml:space="preserve">
+  <data name="T0410_SubstringafterExpects2Arguments" xml:space="preserve">
     <value>$substringAfter expects 2 arguments</value>
   </data>
-  <data name="T0411_SubstringbeforeExpects2Arguments" xml:space="preserve">
+  <data name="T0410_SubstringbeforeExpects2Arguments" xml:space="preserve">
     <value>$substringBefore expects 2 arguments</value>
   </data>
   <data name="T0412_Argument1OfAggregateFunctionMustBeAnArrayOfNumbers" xml:space="preserve">

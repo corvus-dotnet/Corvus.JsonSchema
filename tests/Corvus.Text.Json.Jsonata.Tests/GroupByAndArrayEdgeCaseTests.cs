@@ -53,12 +53,13 @@ public class GroupByAndArrayEdgeCaseTests
     }
 
     [Fact]
-    public void GroupBy_EmptyInput_ReturnsUndefined()
+    public void GroupBy_EmptyInput_ReturnsEmptyObject()
     {
         string? result = Evaluator.EvaluateToString(
             """missing{key: value}""",
             """{"other": 1}""");
-        Assert.Null(result);
+        // Reference returns {} for group-by when navigation yields undefined
+        Assert.Equal("{}", result);
     }
 
     // ─── Array wrapping / keep-array ─────────────────────────────────

@@ -169,11 +169,14 @@ internal readonly struct FormatNumberPicture
                 }
             }
 
-            // Find suffix (after last active char, excluding expSep).
+            // Find suffix (after last active char, including expSep so that
+            // a trailing exponent separator like "#.##e" is not absorbed into
+            // the suffix — the reference implementation treats it as an empty
+            // exponent and throws D3093).
             int suffixStart = 0;
             for (int i = sub.Length - 1; i >= 0; i--)
             {
-                if (IsActiveNotExp(sub[i]))
+                if (IsActive(sub[i]))
                 {
                     suffixStart = i + 1;
                     break;
@@ -251,6 +254,27 @@ internal readonly struct FormatNumberPicture
                 throw new JsonataException("D3084", SR.D3084_PictureStringBothPercentAndPerMille, 0);
             }
 
+            // Check grouping separator placement before the "must have digit"
+            // check, so that "," alone is reported as D3088 (grouping separator
+            // at end of integer part) rather than D3085 (no digit), matching the
+            // reference implementation.
+            int decPosInSub = sub.IndexOf(decSep);
+            if (decPosInSub != -1)
+            {
+                if ((decPosInSub > 0 && sub[decPosInSub - 1] == grpSep) ||
+                    (decPosInSub < sub.Length - 1 && sub[decPosInSub + 1] == grpSep))
+                {
+                    throw new JsonataException("D3087", SR.D3087_GroupingSeparatorAdjacentToDecimal, 0);
+                }
+            }
+            else
+            {
+                if (intPart.Length > 0 && intPart[intPart.Length - 1] == grpSep)
+                {
+                    throw new JsonataException("D3088", SR.D3088_IntegerPartEndsWithGroupingSeparator, 0);
+                }
+            }
+
             bool hasDigit = false;
             for (int i = 0; i < mantissa.Length; i++)
             {
@@ -271,23 +295,6 @@ internal readonly struct FormatNumberPicture
                 if (!IsActive(active[i]))
                 {
                     throw new JsonataException("D3086", SR.D3086_PassiveCharacterBetweenActive, 0);
-                }
-            }
-
-            int decPosInSub = sub.IndexOf(decSep);
-            if (decPosInSub != -1)
-            {
-                if ((decPosInSub > 0 && sub[decPosInSub - 1] == grpSep) ||
-                    (decPosInSub < sub.Length - 1 && sub[decPosInSub + 1] == grpSep))
-                {
-                    throw new JsonataException("D3087", SR.D3087_GroupingSeparatorAdjacentToDecimal, 0);
-                }
-            }
-            else
-            {
-                if (intPart.Length > 0 && intPart[intPart.Length - 1] == grpSep)
-                {
-                    throw new JsonataException("D3088", SR.D3088_IntegerPartEndsWithGroupingSeparator, 0);
                 }
             }
 

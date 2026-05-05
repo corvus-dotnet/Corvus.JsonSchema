@@ -135,13 +135,13 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void SubstringBefore_TooManyArgs_Throws()
     {
-        EvalThrows("""$substringBefore("hello", "l", "extra")""", "null", "T0411");
+        EvalThrows("""$substringBefore("hello", "l", "extra")""", "null", "T0410");
     }
 
     [Fact]
     public void SubstringAfter_TooManyArgs_Throws()
     {
-        EvalThrows("""$substringAfter("hello", "l", "extra")""", "null", "T0411");
+        EvalThrows("""$substringAfter("hello", "l", "extra")""", "null", "T0410");
     }
 
     // ─── $filter with multi-valued sequence containing arrays (lines 2222-2257) ─
@@ -2129,9 +2129,10 @@ public class BuiltInFunctionEdgeCaseTests
     // ═══════════════════════════════════════════════════════════════
 
     [Fact]
-    public void FormatNumber_NoMantissaDigit_ThrowsD3085()
+    public void FormatNumber_NoMantissaDigit_ThrowsD3088()
     {
-        EvalThrows("""$formatNumber(42, ",")""", "null", "D3085");
+        // "," alone = grouping separator at end of integer part (D3088), matching reference
+        EvalThrows("""$formatNumber(42, ",")""", "null", "D3088");
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -3856,10 +3857,10 @@ public class BuiltInFunctionEdgeCaseTests
         Assert.Equal("42", Eval("""$filter(42, function($v){$v > 10})"""));
     }
 
-    [Fact] // BF 2344-2346: $filter array input, no matches → empty array
-    public void Filter_ArrayNoMatch_ReturnsEmptyArray()
+    [Fact] // BF 2344-2346: $filter array input, no matches → undefined (reference behavior)
+    public void Filter_ArrayNoMatch_ReturnsUndefined()
     {
-        Assert.Equal("[]", Eval("""$filter([1,2,3], function($v){$v > 100})"""));
+        Assert.Equal("undefined", Eval("""$filter([1,2,3], function($v){$v > 100})"""));
     }
 
     // --- $match edge cases (DisplayClass76_0, lines 3140-3275) ---
@@ -3964,7 +3965,7 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact] // BF 5851-5852: $toMillis with non-string → error
     public void ToMillis_NonString_ThrowsError()
     {
-        EvalThrows("""$toMillis(42)""", "{}", "D3110");
+        EvalThrows("""$toMillis(42)""", "{}", "T0410");
     }
 
     [Fact] // BF 5843-5845, 5865-5873: $toMillis with non-string picture
@@ -4616,6 +4617,9 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void SumOverChainEmptyValues()
     {
+        // BUG: items.values on [{values:[]}] should yield [], $sum([]) = 0.
+        // Corvus currently collapses the empty array to undefined during chain navigation.
+        // Reference returns "0". TODO: Fix chain navigation for empty array fields.
         Assert.Equal("undefined", Eval("items.values ~> $sum", """{"items":[{"values":[]}]}"""));
     }
 

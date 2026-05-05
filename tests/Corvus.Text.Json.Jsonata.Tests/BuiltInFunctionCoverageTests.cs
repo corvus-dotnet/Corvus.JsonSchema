@@ -443,14 +443,13 @@ public class BuiltInFunctionCoverageTests
     // ─── $formatNumber D3093 empty exponent (lines 4826-4827) ─────────
 
     [Fact]
-    public void FormatNumber_EmptyExponent_IsTreatedAsSuffix()
+    public void FormatNumber_EmptyExponent_ThrowsD3093()
     {
-        // The pattern "#.##e" has exponent separator at the boundary of the active region.
-        // Due to parsing logic, the trailing 'e' is treated as suffix (not an empty exponent),
-        // so no D3093 error is thrown. The lines 4825-4827 are unreachable with this parsing.
-        // This test documents the actual behavior.
-        string result = Eval("""$formatNumber(1234.5, "#.##e")""");
-        Assert.NotNull(result);
+        // "#.##e" has exponent separator with no digits after it.
+        // The reference implementation throws D3093 for this pattern.
+        var ex = Assert.Throws<JsonataException>(() =>
+            Eval("""$formatNumber(1234.5, "#.##e")"""));
+        Assert.Equal("D3093", ex.Code);
     }
 
     // ─── $sort with undefined comparator result (lines 6416-6417) ─────
@@ -770,13 +769,12 @@ public class BuiltInFunctionCoverageTests
     // ─── $toMillis with non-string/number (lines 5952-5953) ───────────
 
     [Fact]
-    public void ToMillis_BooleanArg_ThrowsParseError()
+    public void ToMillis_BooleanArg_ThrowsTypeError()
     {
-        // Reference: $toMillis(true) → T0410 error (type mismatch)
-        // Our implementation: boolean coerced to string "true" then fails ISO parse → D3110
+        // Reference: $toMillis(true) → T0410 error (non-string argument)
         var ex = Assert.Throws<JsonataException>(
             () => Eval("$toMillis(true)"));
-        Assert.Equal("D3110", ex.Code);
+        Assert.Equal("T0410", ex.Code);
     }
 
     // ─── $fromMillis with lone bracket (XPathDateTimeFormatter 157-160) ──

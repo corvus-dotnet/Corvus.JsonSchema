@@ -1007,7 +1007,7 @@ internal static class BuiltInFunctions
 
         if (args.Length != 2)
         {
-            throw new JsonataException("T0411", SR.T0411_SubstringbeforeExpects2Arguments, 0);
+            throw new JsonataException("T0410", SR.T0410_SubstringbeforeExpects2Arguments, 0);
         }
 
         return CompileStringSearch(args[0], args[1], before: true);
@@ -1022,7 +1022,7 @@ internal static class BuiltInFunctions
 
         if (args.Length != 2)
         {
-            throw new JsonataException("T0411", SR.T0411_SubstringafterExpects2Arguments, 0);
+            throw new JsonataException("T0410", SR.T0410_SubstringafterExpects2Arguments, 0);
         }
 
         return CompileStringSearch(args[0], args[1], before: false);
@@ -2406,7 +2406,7 @@ internal static class BuiltInFunctions
 
                 if (matchCount == 0)
                 {
-                    return new Sequence(JsonataHelpers.EmptyArray());
+                    return Sequence.Undefined;
                 }
 
                 // Build via CVB — writes directly to MetadataDb, no Mutable per-item overhead.
@@ -4728,11 +4728,14 @@ internal static class BuiltInFunctions
                 }
             }
 
-            // Find suffix: everything after last active char (excluding expSep).
+            // Find suffix: everything after last active char (including expSep
+            // so that a trailing exponent separator like "#.##e" is not absorbed
+            // into the suffix — the reference treats it as an empty exponent and
+            // throws D3093).
             int suffixStart = 0;
             for (int i = sub.Length - 1; i >= 0; i--)
             {
-                if (IsActiveNotExp(sub[i]))
+                if (IsActive(sub[i]))
                 {
                     suffixStart = i + 1;
                     break;
@@ -4820,6 +4823,26 @@ internal static class BuiltInFunctions
                 throw new JsonataException("D3084", SR.D3084_PictureStringBothPercentAndPerMille, 0);
             }
 
+            // Check grouping separator placement before the "must have digit"
+            // check, so that "," alone is reported as D3088 rather than D3085,
+            // matching the reference implementation.
+            int decPosInSub = sub.IndexOf(decSep);
+            if (decPosInSub != -1)
+            {
+                if ((decPosInSub > 0 && sub[decPosInSub - 1] == grpSep) ||
+                    (decPosInSub < sub.Length - 1 && sub[decPosInSub + 1] == grpSep))
+                {
+                    throw new JsonataException("D3087", SR.D3087_GroupingSeparatorAdjacentToDecimal, 0);
+                }
+            }
+            else
+            {
+                if (integerParts[p].Length > 0 && integerParts[p][integerParts[p].Length - 1] == grpSep)
+                {
+                    throw new JsonataException("D3088", SR.D3088_IntegerPartEndsWithGroupingSeparator, 0);
+                }
+            }
+
             bool hasDigit = false;
             for (int i = 0; i < mantissaParts[p].Length; i++)
             {
@@ -4840,23 +4863,6 @@ internal static class BuiltInFunctions
                 if (!IsActive(activeParts[p][i]))
                 {
                     throw new JsonataException("D3086", SR.D3086_PassiveCharacterBetweenActive, 0);
-                }
-            }
-
-            int decPosInSub = sub.IndexOf(decSep);
-            if (decPosInSub != -1)
-            {
-                if ((decPosInSub > 0 && sub[decPosInSub - 1] == grpSep) ||
-                    (decPosInSub < sub.Length - 1 && sub[decPosInSub + 1] == grpSep))
-                {
-                    throw new JsonataException("D3087", SR.D3087_GroupingSeparatorAdjacentToDecimal, 0);
-                }
-            }
-            else
-            {
-                if (integerParts[p].Length > 0 && integerParts[p][integerParts[p].Length - 1] == grpSep)
-                {
-                    throw new JsonataException("D3088", SR.D3088_IntegerPartEndsWithGroupingSeparator, 0);
                 }
             }
 
@@ -5931,6 +5937,11 @@ internal static class BuiltInFunctions
                 if (el.ValueKind == JsonValueKind.String && el.TryGetDateTimeOffset(out var dto))
                 {
                     return Sequence.FromDouble(dto.ToUnixTimeMilliseconds(), env.Workspace);
+                }
+
+                if (el.ValueKind != JsonValueKind.String)
+                {
+                    throw new JsonataException("T0410", SR.T0410_Argument1OfTomillisIsNotAString, 0);
                 }
 
                 string str = FunctionalCompiler.CoerceElementToString(el);
