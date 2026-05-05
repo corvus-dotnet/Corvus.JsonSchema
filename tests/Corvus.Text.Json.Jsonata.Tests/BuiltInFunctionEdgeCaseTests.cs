@@ -3233,24 +3233,36 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FormatNumber_MultiplePercent_ThrowsD3082()
     {
+        // Reference implementation gives D3086 (passive inside active) which is a less
+        // specific diagnosis. Our D3082 correctly identifies multiple percent markers.
+        // See: https://github.com/jsonata-js/jsonata/issues/XXXX
         EvalThrows("$formatNumber(42, \"0%0%0\")", "{}", "D3082");
     }
 
     [Fact]
     public void FormatNumber_MultiplePerMille_ThrowsD3083()
     {
+        // Reference implementation gives D3086 (passive inside active) which is a less
+        // specific diagnosis. Our D3083 correctly identifies multiple per-mille markers.
+        // See: https://github.com/jsonata-js/jsonata/issues/XXXX
         EvalThrows("$formatNumber(42, \"0\u20300\u20300\")", "{}", "D3083");
     }
 
     [Fact]
     public void FormatNumber_MixPercentPerMille_ThrowsD3084()
     {
+        // Reference implementation gives D3086 (passive inside active) which is a less
+        // specific diagnosis. Our D3084 correctly identifies mixed percent + per-mille.
+        // See: https://github.com/jsonata-js/jsonata/issues/XXXX
         EvalThrows("$formatNumber(42, \"0%\u20300\")", "{}", "D3084");
     }
 
     [Fact]
     public void FormatNumber_NoDigitChars_ThrowsD3085()
     {
+        // Reference implementation bug: crashes at splitParts (jsonata.js:2196) with
+        // code: undefined. Our D3085 is the correct behavior per XPath/XQuery spec.
+        // See: https://github.com/jsonata-js/jsonata/issues/XXXX
         EvalThrows("$formatNumber(42, \"---\")", "{}", "D3085");
     }
 
@@ -3334,6 +3346,7 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FormatNumberRuntime_MultiplePercent_ThrowsD3082()
     {
+        // Reference gives D3086 (less specific). Our D3082 is more precise.
         EvalThrows(
             "$formatNumber(42, $string(pic))",
             """{"pic":"0%0%0"}""",
@@ -3343,6 +3356,7 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FormatNumberRuntime_MultiplePerMille_ThrowsD3083()
     {
+        // Reference gives D3086 (less specific). Our D3083 is more precise.
         EvalThrows(
             "$formatNumber(42, $string(pic))",
             """{"pic":"0\u20300\u20300"}""",
@@ -3352,6 +3366,7 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FormatNumberRuntime_MixPercentPerMille_ThrowsD3084()
     {
+        // Reference gives D3086 (less specific). Our D3084 is more precise.
         EvalThrows(
             "$formatNumber(42, $string(pic))",
             """{"pic":"0%\u20300"}""",
@@ -3361,6 +3376,8 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FormatNumberRuntime_NoDigitChars_ThrowsD3085()
     {
+        // Reference implementation bug: crashes with code: undefined.
+        // Our D3085 is the correct behavior per XPath/XQuery spec.
         EvalThrows(
             "$formatNumber(42, $string(pic))",
             """{"pic":"---"}""",
