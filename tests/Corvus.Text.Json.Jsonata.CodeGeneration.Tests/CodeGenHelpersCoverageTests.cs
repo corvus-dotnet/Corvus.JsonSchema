@@ -4232,13 +4232,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         AssertCgAndRtThrow(expression, "{}", "T0410");
     }
 
-    // --- FC ApplyFocusStages numeric predicate from string ---
+    // --- FC ApplyFocusStages: string predicates are boolean (truthy/falsy) ---
 
     [Theory]
-    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "\"b\"")]
-    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "\"b\"")]
+    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[\"a\",\"b\",\"c\"]")]
+    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[\"a\",\"b\",\"c\"]")]
     public void CG_FocusStages_StringPredicateCoercedToNumericIndex(string expression, string data, string expected)
     {
+        // Reference: strings in predicates are truthy/falsy, not numeric indices.
         AssertCgAndRtMatch(expression, data, expected);
     }
 

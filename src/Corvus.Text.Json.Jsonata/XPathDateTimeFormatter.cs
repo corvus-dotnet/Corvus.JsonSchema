@@ -505,7 +505,8 @@ internal static class XPathDateTimeFormatter
 
         if (primary.Length == 0)
         {
-            primary = "0"u8;
+            // Empty primary format (e.g. ";o") is not supported — reference throws D3130.
+            throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
         }
 
         FormatIntegerWithPresentation(value, primary, isOrdinal, ref sb);
@@ -545,7 +546,8 @@ internal static class XPathDateTimeFormatter
 
         if (primary.Length == 0)
         {
-            primary = "0"u8;
+            // Empty primary format (e.g. ";o") is not supported — reference throws D3130.
+            throw new JsonataException("D3130", SR.D3130_TheFormatPictureStringIsNotValid, 0);
         }
 
         if (primary.SequenceEqual("W"u8) || primary.SequenceEqual("w"u8) || primary.SequenceEqual("Ww"u8))

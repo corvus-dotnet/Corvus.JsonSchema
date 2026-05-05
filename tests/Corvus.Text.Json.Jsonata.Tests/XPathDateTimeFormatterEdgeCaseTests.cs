@@ -319,9 +319,10 @@ public class XPathDateTimeFormatterEdgeCaseTests
     [Fact]
     public void FormatInteger_EmptyPicture_DefaultsToDecimal()
     {
-        // Empty primary defaults to "0" pattern
-        string? result = Evaluator.EvaluateToString("$formatInteger(42, ';o')", "{}");
-        Assert.Equal("\"42nd\"", result);
+        // Empty primary format (";o") throws D3130 — reference behavior.
+        var ex = Assert.Throws<JsonataException>(() =>
+            Evaluator.EvaluateToString("$formatInteger(42, ';o')", "{}"));
+        Assert.Equal("D3130", ex.Code);
     }
 
     [Fact]

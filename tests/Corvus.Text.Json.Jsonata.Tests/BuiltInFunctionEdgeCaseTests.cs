@@ -2411,14 +2411,16 @@ public class BuiltInFunctionEdgeCaseTests
         Assert.Equal("T0410", ex.Code);
     }
 
-    // --- FC ApplyFocusStages numeric predicate from string ---
-    // (FunctionalCompiler lines 5548-5643: non-boolean, non-constant-int predicates)
+    // --- FC ApplyFocusStages: string predicates are boolean (truthy/falsy) ---
+    // (With focus binding returning items directly in current implementation,
+    // a truthy string predicate returns all items.)
 
     [Theory]
-    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "\"b\"")]
-    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "\"b\"")]
+    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[\"a\",\"b\",\"c\"]")]
+    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[\"a\",\"b\",\"c\"]")]
     public void FocusStages_StringPredicateCoercedToNumericIndex(string expression, string data, string expected)
     {
+        // Reference treats strings as boolean: non-empty = truthy → all elements pass.
         Assert.Equal(expected, Eval(expression, data));
     }
 
@@ -2428,13 +2430,16 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void ApplyStages_StringPredicateCoercedToIndex()
     {
-        Assert.Equal("20", Eval("[10,20,30][\"1\"]"));
+        // Reference: strings in predicates are boolean (truthy/falsy), not numeric indices.
+        // Non-empty string "1" is truthy → all elements pass → returns whole array.
+        Assert.Equal("[10,20,30]", Eval("[10,20,30][\"1\"]"));
     }
 
     [Fact]
     public void ApplyStages_HexStringPredicateCoercedToIndex()
     {
-        Assert.Equal("20", Eval("[10,20,30][\"0x01\"]"));
+        // Reference: "0x01" is a truthy string → all pass → returns whole array.
+        Assert.Equal("[10,20,30]", Eval("[10,20,30][\"0x01\"]"));
     }
 
     // --- BF FormatNumber runtime path (non-constant picture) ---

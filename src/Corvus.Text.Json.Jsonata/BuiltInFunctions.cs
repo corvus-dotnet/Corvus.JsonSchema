@@ -6245,8 +6245,9 @@ internal static class BuiltInFunctions
         {
             action(ref accumulator, el.GetDouble());
         }
-        else if (el.ValueKind is JsonValueKind.String or JsonValueKind.True or JsonValueKind.False or JsonValueKind.Object or JsonValueKind.Array)
+        else
         {
+            // Any non-number (string, bool, null, object, array, lambda/undefined) throws T0412.
             throw new JsonataException("T0412", SR.T0412_Argument1OfAggregateFunctionMustBeAnArrayOfNumbers, 0);
         }
     }

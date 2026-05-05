@@ -558,46 +558,46 @@ public class FunctionalCompilerCoverageTests
         Assert.Equal("""[1,"two",true,null]""", result);
     }
 
-    // ─── String-to-number coercion in filter predicates (TryCoerceToNumber string path) ───
+    // ─── String predicates are boolean (truthy/falsy), not coerced to numeric indices ───
 
     [Fact]
     public void FilterPredicate_StringNumericIndex()
     {
-        // A variable holding a numeric-string "2" used as filter predicate → index access
+        // String "2" in predicate is truthy → all items pass → returns whole array.
         string result = Eval(
             """( $idx := "2"; items[$idx] )""",
             """{"items":["a","b","c","d","e"]}""");
-        Assert.Equal("\"c\"", result);
+        Assert.Equal("""["a","b","c","d","e"]""", result);
     }
 
     [Fact]
     public void FilterPredicate_HexStringIndex()
     {
-        // A variable holding a hex string "0x2" used as filter predicate → index 2
+        // String "0x2" in predicate is truthy → all items pass → returns whole array.
         string result = Eval(
             """( $idx := "0x2"; items[$idx] )""",
             """{"items":["a","b","c","d","e"]}""");
-        Assert.Equal("\"c\"", result);
+        Assert.Equal("""["a","b","c","d","e"]""", result);
     }
 
     [Fact]
     public void FilterPredicate_BinaryStringIndex()
     {
-        // A variable holding a binary string "0b10" used as filter predicate → index 2
+        // String "0b10" in predicate is truthy → all items pass → returns whole array.
         string result = Eval(
             """( $idx := "0b10"; items[$idx] )""",
             """{"items":["a","b","c","d","e"]}""");
-        Assert.Equal("\"c\"", result);
+        Assert.Equal("""["a","b","c","d","e"]""", result);
     }
 
     [Fact]
     public void FilterPredicate_OctalStringIndex()
     {
-        // A variable holding an octal string "0o3" used as filter predicate → index 3
+        // String "0o3" in predicate is truthy → all items pass → returns whole array.
         string result = Eval(
             """( $idx := "0o3"; items[$idx] )""",
             """{"items":["a","b","c","d","e"]}""");
-        Assert.Equal("\"d\"", result);
+        Assert.Equal("""["a","b","c","d","e"]""", result);
     }
 
     // ─── Transform operator (lines 121 dispatch, CompileTransform) ────
@@ -991,11 +991,11 @@ public class FunctionalCompilerCoverageTests
         // that variable inside ANOTHER array constructor. The variable is a
         // VariableNode (not ArrayConstructorNode) so isArrayCtor=false, but it
         // evaluates to a tuple sequence → hits the IsTupleSequence branch (6826-6832).
-        // We verify by applying numeric functions to the outer result.
-        string result = Eval("( $inner := [function($x){$x*2}, 10, 20]; $sum([$inner, 30]) )");
         // Inner tuple: [lambda, 10, 20]. Outer spreads it: [lambda, 10, 20, 30].
-        // $sum skips non-numeric (lambda) items: 10 + 20 + 30 = 60
-        Assert.Equal("60", result);
+        // Reference: $sum throws T0412 because lambda is not a number.
+        var ex = Assert.Throws<JsonataException>(() =>
+            Eval("( $inner := [function($x){$x*2}, 10, 20]; $sum([$inner, 30]) )"));
+        Assert.Equal("T0412", ex.Code);
     }
 
     [Fact]
@@ -1549,34 +1549,33 @@ public class FunctionalCompilerCoverageTests
         Assert.Contains("\"1\"", result);
     }
 
-    // ─── TryParseSpecialRadix: hex/binary/octal string-to-number (lines 8731-8770) ──
+    // ─── String arrays in predicates are truthy (not numeric indices) ──
 
     [Fact]
     public void TryCoerceToNumber_HexString()
     {
-        // Filter array with hex string "0x01" → TryCoerceToNumber → String case →
-        // prefix 'x' detected → TryParseSpecialRadix → valid hex → lines 8736-8739.
+        // ["0x01"] is a truthy array (non-empty, contains non-number) → all items pass.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[\"0x01\"]]", data);
-        Assert.Equal("20", result);
+        Assert.Equal("[10,20,30]", result);
     }
 
     [Fact]
     public void TryCoerceToNumber_BinaryString()
     {
-        // Filter with binary string "0b10" → TryParseSpecialRadix → binary → lines 8750-8751.
+        // ["0b10"] is a truthy array → all items pass.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[\"0b10\"]]", data);
-        Assert.Equal("30", result);
+        Assert.Equal("[10,20,30]", result);
     }
 
     [Fact]
     public void TryCoerceToNumber_OctalString()
     {
-        // Filter with octal string "0o02" → TryParseSpecialRadix → octal → lines 8760+.
+        // ["0o02"] is a truthy array → all items pass.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[\"0o02\"]]", data);
-        Assert.Equal("30", result);
+        Assert.Equal("[10,20,30]", result);
     }
 
     [Fact]
@@ -1612,12 +1611,11 @@ public class FunctionalCompilerCoverageTests
     [Fact]
     public void TryCoerceToNumber_NullInFilterArray()
     {
-        // [null, 1] in filter array → null passes boolean check (not True/False),
-        // reaches TryCoerceToNumber → case Null → value=0, return true → lines 8673-8675.
-        // Selects indices 0 and 1.
+        // [null, 1] — array with non-number element (null) is not treated as numeric indices.
+        // Falls through to truthiness: non-empty array is truthy → all items pass.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[null, 1]]", data);
-        Assert.Equal("[10,20]", result);
+        Assert.Equal("[10,20,30]", result);
     }
 
     // ─── AnyChainOverArray: scalar/array branches (lines 1897-1910) ─────────────────

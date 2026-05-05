@@ -3485,8 +3485,9 @@ internal static class FunctionalCompiler
                                 continue;
                             }
 
-                            // Numeric index
-                            if (result.IsSingleton && TryCoerceToNumber(firstResult, out double singleIdx))
+                            // Numeric index — only actual numbers, not strings
+                            if (result.IsSingleton && firstResult.ValueKind == JsonValueKind.Number
+                                && TryCoerceToNumber(firstResult, out double singleIdx))
                             {
                                 int idx = (int)Math.Floor(singleIdx);
                                 if (idx < 0)
@@ -5319,12 +5320,13 @@ internal static class FunctionalCompiler
                 }
 
                 // Check if the predicate result is a numeric index (or set of indices).
-                // Instead of materializing a List<int>, check each index against
-                // the current loop position inline to avoid per-element allocation.
+                // Only actual numeric values are treated as indices — strings are ALWAYS
+                // treated as boolean predicates (truthy/falsy), matching the reference.
                 bool isNumericIndices = false;
                 bool matchedCurrentIndex = false;
 
-                if (result.IsSingleton && TryCoerceToNumber(firstResult, out double singleIdx))
+                if (result.IsSingleton && firstResult.ValueKind == JsonValueKind.Number
+                    && TryCoerceToNumber(firstResult, out double singleIdx))
                 {
                     isNumericIndices = true;
                     int idx = (int)Math.Floor(singleIdx);
@@ -5337,15 +5339,14 @@ internal static class FunctionalCompiler
                 }
                 else if (result.IsSingleton && firstResult.ValueKind == JsonValueKind.Array)
                 {
-                    // Singleton JSON array — check if all elements are numbers.
-                    // Booleans in a predicate array are NOT numeric indices;
-                    // their presence makes this a mixed predicate that falls
-                    // through to truthiness evaluation.
+                    // Singleton JSON array — check if all elements are actual numbers.
+                    // Only JsonValueKind.Number values are indices; strings and booleans
+                    // make this fall through to truthiness evaluation.
                     bool allNum = true;
                     bool hasAnyIndex = false;
                     foreach (var arrEl in firstResult.EnumerateArray())
                     {
-                        if (arrEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                        if (arrEl.ValueKind != JsonValueKind.Number)
                         {
                             allNum = false;
                             break;
@@ -5379,12 +5380,12 @@ internal static class FunctionalCompiler
                 }
                 else if (!result.IsSingleton && result.Count > 0)
                 {
-                    // Multi-value sequence — check if all are numeric
+                    // Multi-value sequence — only actual numbers are indices
                     bool allNum = true;
                     for (int j = 0; j < result.Count; j++)
                     {
                         var rj = result[j];
-                        if (rj.ValueKind is JsonValueKind.True or JsonValueKind.False || !TryCoerceToNumber(rj, out double numVal))
+                        if (rj.ValueKind != JsonValueKind.Number || !TryCoerceToNumber(rj, out double numVal))
                         {
                             allNum = false;
                             break;
@@ -5594,10 +5595,12 @@ internal static class FunctionalCompiler
                 }
 
                 // Check if the predicate result is a numeric index (or set of indices).
+                // Only actual numeric values are treated as indices — strings are boolean predicates.
                 bool isNumericIndices = false;
                 bool matchedCurrentIndex = false;
 
-                if (result.IsSingleton && TryCoerceToNumber(firstResult, out double singleIdx))
+                if (result.IsSingleton && firstResult.ValueKind == JsonValueKind.Number
+                    && TryCoerceToNumber(firstResult, out double singleIdx))
                 {
                     isNumericIndices = true;
                     int idx = (int)Math.Floor(singleIdx);
@@ -5614,7 +5617,7 @@ internal static class FunctionalCompiler
                     bool hasAnyIndex = false;
                     foreach (var arrEl in firstResult.EnumerateArray())
                     {
-                        if (arrEl.ValueKind is JsonValueKind.True or JsonValueKind.False)
+                        if (arrEl.ValueKind != JsonValueKind.Number)
                         {
                             allNum = false;
                             break;
@@ -5652,7 +5655,7 @@ internal static class FunctionalCompiler
                     for (int j = 0; j < result.Count; j++)
                     {
                         var rj = result[j];
-                        if (rj.ValueKind is JsonValueKind.True or JsonValueKind.False || !TryCoerceToNumber(rj, out double numVal))
+                        if (rj.ValueKind != JsonValueKind.Number || !TryCoerceToNumber(rj, out double numVal))
                         {
                             allNum = false;
                             break;
@@ -7964,8 +7967,9 @@ internal static class FunctionalCompiler
                 return first.ValueKind == JsonValueKind.True ? new Sequence(input) : Sequence.Undefined;
             }
 
-            // Numeric filter = index access
-            if (result.IsSingleton && TryCoerceToNumber(first, out double idx))
+            // Numeric filter = index access — only actual numbers
+            if (result.IsSingleton && first.ValueKind == JsonValueKind.Number
+                && TryCoerceToNumber(first, out double idx))
             {
                 if (input.ValueKind == JsonValueKind.Array)
                 {
@@ -7995,7 +7999,8 @@ internal static class FunctionalCompiler
                     {
                         builder.Add(input);
                     }
-                    else if (TryCoerceToNumber(elem, out double elemIdx) && input.ValueKind == JsonValueKind.Array)
+                    else if (elem.ValueKind == JsonValueKind.Number
+                        && TryCoerceToNumber(elem, out double elemIdx) && input.ValueKind == JsonValueKind.Array)
                     {
                         int eIdx = (int)elemIdx;
                         if (eIdx < 0) eIdx = input.GetArrayLength() + eIdx;

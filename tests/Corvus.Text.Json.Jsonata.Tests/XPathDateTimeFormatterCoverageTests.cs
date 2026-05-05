@@ -60,10 +60,9 @@ public class XPathDateTimeFormatterCoverageTests
     [Fact]
     public void FormatInteger_VeryLargeDouble_EmptyPrimary()
     {
-        // Very large value with ";o" (empty primary → defaults to "0") (line 547-549)
-        // Requires .NET (Core) — .NET Framework throws FormatException for large double formatting.
-        string result = Eval("""$formatInteger(10000000000000000000, ";o")""");
-        Assert.NotNull(result);
+        // Empty primary format (e.g. ";o") throws D3130 — reference behavior.
+        var ex = Assert.Throws<JsonataException>(() => Eval("""$formatInteger(10000000000000000000, ";o")"""));
+        Assert.Equal("D3130", ex.Code);
     }
 #endif
 
