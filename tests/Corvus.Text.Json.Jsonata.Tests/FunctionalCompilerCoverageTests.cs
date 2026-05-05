@@ -1098,25 +1098,26 @@ public class FunctionalCompilerCoverageTests
     {
         // items@$x creates a focus binding; filter [$$.idx.*] returns Sequence(0,2)
         // This exercises ApplyFocusStages line 5621: !result.IsSingleton && result.Count > 0
-        // No remaining steps after focus → returns filtered elements directly.
+        // Focus without continuation returns parent context per surviving element.
         string data = """{"idx": {"a": 0, "b": 2}, "items": ["x","y","z","w"]}""";
         string result = Eval("items@$x[$$.idx.*]", data);
-        // Elements at indices 0 and 2 survive the filter
-        Assert.Contains("x", result);
-        Assert.Contains("z", result);
-        Assert.DoesNotContain("y", result);
+        // Elements at indices 0 and 2 survive the filter; result is parent repeated.
+        Assert.Equal(
+            """[{"idx":{"a":0,"b":2},"items":["x","y","z","w"]},{"idx":{"a":0,"b":2},"items":["x","y","z","w"]}]""",
+            result);
     }
 
     [Fact]
     public void FocusStages_NonSingletonSequence_NegativeIndex()
     {
         // Focus binding with negative index in the Sequence → line 5634-5636 (idx < 0)
+        // Focus without continuation returns parent context per surviving element.
         string data = """{"idx": {"a": 0, "b": -1}, "items": ["x","y","z"]}""";
         string result = Eval("items@$x[$$.idx.*]", data);
-        // Index 0 → element 0 ("x"), index -1 → elements.Count + (-1) = 2 → "z"
-        Assert.Contains("x", result);
-        Assert.Contains("z", result);
-        Assert.DoesNotContain("y", result);
+        // Index 0 → element 0 ("x"), index -1 → last element ("z"); parent repeated.
+        Assert.Equal(
+            """[{"idx":{"a":0,"b":-1},"items":["x","y","z"]},{"idx":{"a":0,"b":-1},"items":["x","y","z"]}]""",
+            result);
     }
 
     [Fact]
@@ -1421,9 +1422,12 @@ public class FunctionalCompilerCoverageTests
     {
         // Focus filter evaluates to singleton array containing negative index.
         // [-1, 0] selects last and first elements → lines 5599-5601 (negative idx adjustment)
+        // Focus without continuation returns parent context per surviving element.
         string data = """{"items": ["a","b","c","d"]}""";
         string result = Eval("items@$x[[-1, 0]]", data);
-        Assert.Equal("""["a","d"]""", result);
+        Assert.Equal(
+            """[{"items":["a","b","c","d"]},{"items":["a","b","c","d"]}]""",
+            result);
     }
 
     [Fact]
@@ -1431,9 +1435,12 @@ public class FunctionalCompilerCoverageTests
     {
         // Focus filter array contains boolean → breaks allNum loop → lines 5589-5591
         // Falls through to truthiness fallback (non-numeric array → all truthy = keep all)
+        // Focus without continuation returns parent context per surviving element.
         string data = """{"items": ["a","b","c"]}""";
         string result = Eval("items@$x[[true, 0]]", data);
-        Assert.Equal("""["a","b","c"]""", result);
+        Assert.Equal(
+            """[{"items":["a","b","c"]},{"items":["a","b","c"]},{"items":["a","b","c"]}]""",
+            result);
     }
 
     // ─── CollectAndContinue nested array and array-valued properties (lines 1565-1586) ──
@@ -1505,9 +1512,12 @@ public class FunctionalCompilerCoverageTests
         // Filter returns singleton array ["abc"]. In ApplyFocusStages, iterating the array:
         // "abc" is not boolean (passes line 5589), fails TryCoerceToNumber → lines 5610-5612.
         // All elements pass (treated as truthy non-numeric filter).
+        // Focus without continuation returns parent context per surviving element.
         string data = """{"items": [1, 2, 3]}""";
         string result = Eval("items@$x[[\"abc\"]]", data);
-        Assert.Equal("[1,2,3]", result);
+        Assert.Equal(
+            """[{"items":[1,2,3]},{"items":[1,2,3]},{"items":[1,2,3]}]""",
+            result);
     }
 
     // ─── AccumulateGroupBy with singleton array sub-result (lines 4427-4437) ──────

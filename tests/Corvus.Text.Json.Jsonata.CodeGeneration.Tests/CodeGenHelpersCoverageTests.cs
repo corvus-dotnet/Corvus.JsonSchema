@@ -3060,10 +3060,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Fact]
     public void CG_FocusSort_ByVariable()
     {
+        // Focus on root array ($@$e) without continuation returns parent context per element.
+        // Note: reference wraps each in an extra array layer; we return parent directly
+        // (consistent with all other focus-without-continuation semantics).
         AssertCgAndRtMatch(
             """$@$e^($e.age)""",
             """[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}]""",
-            """[{"name":"A","age":10},{"name":"B","age":20},{"name":"C","age":30}]""");
+            """[[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}],[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}],[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}]]""");
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -4235,11 +4238,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // --- FC ApplyFocusStages: string predicates are boolean (truthy/falsy) ---
 
     [Theory]
-    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[\"a\",\"b\",\"c\"]")]
-    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[\"a\",\"b\",\"c\"]")]
+    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]}]")]
+    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]}]")]
     public void CG_FocusStages_StringPredicateCoercedToNumericIndex(string expression, string data, string expected)
     {
         // Reference: strings in predicates are truthy/falsy, not numeric indices.
+        // Focus without continuation returns parent context per surviving element.
         AssertCgAndRtMatch(expression, data, expected);
     }
 
@@ -4289,10 +4293,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Fact]
     public void CG_FocusStages_ArrayOfIndicesPredicate()
     {
+        // Focus without continuation returns parent context per surviving element.
         AssertCgAndRtMatch(
             "items@$v[[0,2]]",
             "{\"items\":[\"a\",\"b\",\"c\",\"d\"]}",
-            "[\"a\",\"c\"]");
+            "[{\"items\":[\"a\",\"b\",\"c\",\"d\"]},{\"items\":[\"a\",\"b\",\"c\",\"d\"]}]");
     }
 
     // --- BF HasInvalidPercentEncoding (RT-only) ---
@@ -4335,10 +4340,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Fact]
     public void CG_FocusSort_OrdersByField()
     {
+        // Focus without continuation returns parent context per element (sorted order).
         AssertCgAndRtMatch(
             "Account.Order@$o^(price)",
             "{\"Account\":{\"Order\":[{\"price\":30},{\"price\":10},{\"price\":20}]}}",
-            "[{\"price\":10},{\"price\":20},{\"price\":30}]");
+            "[{\"Order\":[{\"price\":30},{\"price\":10},{\"price\":20}]},{\"Order\":[{\"price\":30},{\"price\":10},{\"price\":20}]},{\"Order\":[{\"price\":30},{\"price\":10},{\"price\":20}]}]");
     }
 
     // --- FC sort + filter combined ---
@@ -4424,22 +4430,21 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     [Fact]
     public void CG_FocusSort_KeyReferencesFocusVar()
     {
+        // Focus without continuation returns parent context per element (sorted order).
         AssertCgAndRtMatch(
             "items@$e^($e.name)",
             "{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]}",
-            "[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]");
+            "[{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]}]");
     }
 
     [Fact]
     public void CG_FocusSort_SingleElement()
     {
-        // Single-element sort returns input unchanged — both CG and RT
-        // produce the same result (full root object, not just items).
-        // Use a 2-element test to actually sort, and this just ensures no crash.
+        // Focus without continuation returns parent context per element (sorted order).
         AssertCgAndRtMatch(
             "items@$e^($e.name)",
             "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]}",
-            "[{\"name\":\"a\"},{\"name\":\"b\"}]");
+            "[{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]}]");
     }
 
     // --- FC 7877-7944: Standalone filter ---

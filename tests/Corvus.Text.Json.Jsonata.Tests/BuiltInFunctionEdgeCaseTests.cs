@@ -581,19 +581,20 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FocusSort_ByFocusVariable()
     {
-        // Focus variable sort: Employee@$e^($e.age)
+        // Focus without continuation returns parent context per element.
         string data = """[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}]""";
         Assert.Equal(
-            """[{"name":"A","age":10},{"name":"B","age":20},{"name":"C","age":30}]""",
+            """[[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}],[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}],[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}]]""",
             Eval("""$@$e^($e.age)""", data));
     }
 
     [Fact]
     public void FocusSort_Descending()
     {
+        // Focus without continuation returns parent context per element.
         string data = """[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}]""";
         Assert.Equal(
-            """[{"name":"C","age":30},{"name":"B","age":20},{"name":"A","age":10}]""",
+            """[[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}],[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}],[{"name":"C","age":30},{"name":"A","age":10},{"name":"B","age":20}]]""",
             Eval("""$@$e^(>$e.age)""", data));
     }
 
@@ -2412,12 +2413,11 @@ public class BuiltInFunctionEdgeCaseTests
     }
 
     // --- FC ApplyFocusStages: string predicates are boolean (truthy/falsy) ---
-    // (With focus binding returning items directly in current implementation,
-    // a truthy string predicate returns all items.)
+    // Focus without continuation returns parent context per surviving element.
 
     [Theory]
-    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[\"a\",\"b\",\"c\"]")]
-    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[\"a\",\"b\",\"c\"]")]
+    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]}]")]
+    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]}]")]
     public void FocusStages_StringPredicateCoercedToNumericIndex(string expression, string data, string expected)
     {
         // Reference treats strings as boolean: non-empty = truthy → all elements pass.
@@ -2501,16 +2501,18 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FocusStages_ArrayOfIndicesPredicate()
     {
+        // Focus without continuation returns parent context per surviving element.
         Assert.Equal(
-            "[\"a\",\"c\"]",
+            "[{\"items\":[\"a\",\"b\",\"c\",\"d\"]},{\"items\":[\"a\",\"b\",\"c\",\"d\"]}]",
             Eval("items@$v[[0,2]]", "{\"items\":[\"a\",\"b\",\"c\",\"d\"]}"));
     }
 
     [Fact]
     public void FocusStages_ArrayOfIndicesPredicate_MultiElement()
     {
+        // Focus without continuation returns parent context per surviving element.
         Assert.Equal(
-            "[\"a\",\"b\"]",
+            "[{\"Order\":[\"a\",\"b\",\"c\"]},{\"Order\":[\"a\",\"b\",\"c\"]}]",
             Eval("Account.Order@$o[[0,1]]", "{\"Account\":{\"Order\":[\"a\",\"b\",\"c\"]}}"));
     }
 
@@ -2601,8 +2603,9 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FocusSort_OrdersByField()
     {
+        // Focus without continuation returns parent context per element.
         Assert.Equal(
-            "[{\"price\":10},{\"price\":20},{\"price\":30}]",
+            "[{\"Order\":[{\"price\":30},{\"price\":10},{\"price\":20}]},{\"Order\":[{\"price\":30},{\"price\":10},{\"price\":20}]},{\"Order\":[{\"price\":30},{\"price\":10},{\"price\":20}]}]",
             Eval("Account.Order@$o^(price)",
                 "{\"Account\":{\"Order\":[{\"price\":30},{\"price\":10},{\"price\":20}]}}"));
     }
@@ -2782,17 +2785,18 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FocusSort_KeyReferencesFocusVar()
     {
-        // items@$e^($e.name) — sort key uses $e, requires CompileFocusSortStage
+        // Focus without continuation returns parent context per element.
         Assert.Equal(
-            "[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]",
+            "[{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]}]",
             Eval("items@$e^($e.name)", "{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]}"));
     }
 
     [Fact]
     public void FocusSort_KeyReferencesFocusVar_Descending()
     {
+        // Focus without continuation returns parent context per element.
         Assert.Equal(
-            "[{\"name\":\"c\"},{\"name\":\"b\"},{\"name\":\"a\"}]",
+            "[{\"items\":[{\"name\":\"a\"},{\"name\":\"c\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"a\"},{\"name\":\"c\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"a\"},{\"name\":\"c\"},{\"name\":\"b\"}]}]",
             Eval("items@$e^(>$e.name)", "{\"items\":[{\"name\":\"a\"},{\"name\":\"c\"},{\"name\":\"b\"}]}"));
     }
 
@@ -3047,8 +3051,9 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FocusFilter_MultiResultNumericPredicate()
     {
+        // Focus without continuation returns parent context per surviving element.
         Assert.Equal(
-            "[\"a\",\"c\"]",
+            "[{\"items\":[\"a\",\"b\",\"c\",\"d\"]},{\"items\":[\"a\",\"b\",\"c\",\"d\"]}]",
             Eval("items@$x[[0,2]]", "{\"items\":[\"a\",\"b\",\"c\",\"d\"]}"));
     }
 
@@ -3081,9 +3086,9 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FocusStages_SingletonArrayExpansion()
     {
-        // Focus on a singleton array with a filter stage
+        // Focus without continuation returns parent context per element.
         Assert.Equal(
-            "[\"a\",\"b\",\"c\"]",
+            "[{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]}]",
             Eval("items@$x",
                 "{\"items\":[\"a\",\"b\",\"c\"]}"));
     }

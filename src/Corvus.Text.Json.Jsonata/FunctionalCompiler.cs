@@ -3288,7 +3288,14 @@ internal static class FunctionalCompiler
                     }
                     else
                     {
-                        subResult = new Sequence(el);
+                        // No remaining steps: the result of a focus binding without
+                        // continuation is the parent context, not the focus element.
+                        // The focus variable ($x in items@$x) already binds to each element,
+                        // so downstream expressions can access elements via $x.
+                        // This only applies when parentContext is a singleton (the common
+                        // case for items@$x, Account.Order@$o, etc.). Multi-element parent
+                        // contexts arise from wildcard paths and return elements directly.
+                        subResult = parentContext.IsSingleton ? parentContext : new Sequence(el);
                     }
 
                     if (subResult.IsUndefined)
