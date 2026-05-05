@@ -5634,7 +5634,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // --- SumOverChainCore: empty chain (lines 2498-2505) ---
     [Theory]
     [InlineData("items.values ~> $sum", "{\"items\":[]}", "undefined")]
-    [InlineData("items.values ~> $sum", "{\"items\":[{\"values\":[]}]}", "undefined")]
+    [InlineData("items.values ~> $sum", "{\"items\":[{\"values\":[]}]}", "0")]
     public void SumOverChainEdgeCases(string expression, string data, string expected)
     {
         if (expected == "undefined")

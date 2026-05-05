@@ -4622,10 +4622,9 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void SumOverChainEmptyValues()
     {
-        // BUG: items.values on [{values:[]}] should yield [], $sum([]) = 0.
-        // Corvus currently collapses the empty array to undefined during chain navigation.
-        // Reference returns "0". TODO: Fix chain navigation for empty array fields.
-        Assert.Equal("undefined", Eval("items.values ~> $sum", """{"items":[{"values":[]}]}"""));
+        // items.values on [{values:[]}] yields [] (single-element array = transparent navigation).
+        // $sum([]) = 0. Reference verified.
+        Assert.Equal("0", Eval("items.values ~> $sum", """{"items":[{"values":[]}]}"""));
     }
 
     // $map with empty chain

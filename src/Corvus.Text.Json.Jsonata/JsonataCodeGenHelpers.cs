@@ -213,7 +213,16 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
-                // First array encountered — collect via ElementBuffer to avoid builder overhead.
+                // Single-element arrays: navigate directly without flattening.
+                // JSONata treats [obj].prop identically to obj.prop.
+                if (current.GetArrayLength() == 1)
+                {
+                    current = current.EnumerateArray().First();
+                    i--; // Re-process this step with the unwrapped element
+                    continue;
+                }
+
+                // Multi-element array — collect via ElementBuffer with flattening.
                 var buffer = default(ElementBuffer);
                 try
                 {
@@ -264,6 +273,15 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
+                // Single-element arrays: navigate directly without flattening.
+                // JSONata treats [obj].prop identically to obj.prop.
+                if (current.GetArrayLength() == 1)
+                {
+                    current = current.EnumerateArray().First();
+                    i--; // Re-process this step with the unwrapped element
+                    continue;
+                }
+
                 var buffer = default(ElementBuffer);
                 try
                 {
@@ -426,6 +444,14 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
+                // Single-element arrays: navigate directly without flattening.
+                if (current.GetArrayLength() == 1)
+                {
+                    current = current.EnumerateArray().First();
+                    i--; // Re-process this step with the unwrapped element
+                    continue;
+                }
+
                 CollectChainFlatInto(current, names, i, ref buffer);
                 return;
             }
@@ -498,6 +524,14 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
+                // Single-element arrays: navigate directly without flattening.
+                if (current.GetArrayLength() == 1)
+                {
+                    current = current.EnumerateArray().First();
+                    i--;
+                    continue;
+                }
+
                 CollectChainFlatInto(current, names, i, ref buffer);
                 return;
             }
@@ -545,6 +579,14 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
+                // Single-element arrays: navigate directly without flattening.
+                if (current.GetArrayLength() == 1)
+                {
+                    current = current.EnumerateArray().First();
+                    i--;
+                    continue;
+                }
+
                 CollectChainFlatInto(current, names, i, ref buffer);
                 return;
             }
@@ -609,6 +651,14 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
+                // Single-element arrays: navigate directly without flattening.
+                if (current.GetArrayLength() == 1)
+                {
+                    current = current.EnumerateArray().First();
+                    i--;
+                    continue;
+                }
+
                 CollectChainFlatInto(current, names, i, ref buffer);
                 return;
             }
@@ -713,6 +763,14 @@ public static class JsonataCodeGenHelpers
             }
             else if (current.ValueKind == JsonValueKind.Array)
             {
+                // Single-element arrays: navigate directly without flattening.
+                if (current.GetArrayLength() == 1)
+                {
+                    current = current.EnumerateArray().First();
+                    step--;
+                    continue;
+                }
+
                 // Array input: collect-then-predicate semantics
                 return FusedCollectAndContinue(current, names, constantIndices, equalityPredicates, step, workspace);
             }
@@ -971,6 +1029,14 @@ public static class JsonataCodeGenHelpers
 
         if (data.ValueKind == JsonValueKind.Array)
         {
+            // Single-element arrays: navigate directly without flattening.
+            // JSONata treats [obj].prop identically to obj.prop.
+            if (data.GetArrayLength() == 1)
+            {
+                JsonElement single = data.EnumerateArray().First();
+                return NavigateProperty(single, name, workspace);
+            }
+
             return NavigatePropertyOverArray(data, name, workspace);
         }
 
@@ -2219,16 +2285,36 @@ public static class JsonataCodeGenHelpers
         byte[][] chainNames,
         JsonWorkspace workspace)
     {
-        var buffer = default(ElementBuffer);
-        try
+        JsonElement chainResult = NavigatePropertyChain(data, chainNames, workspace);
+        if (chainResult.IsNullOrUndefined())
         {
-            NavigatePropertyChainInto(data, chainNames, ref buffer);
-            return SumBuffer(ref buffer, workspace);
+            return default;
         }
-        finally
+
+        if (chainResult.ValueKind == JsonValueKind.Array)
         {
-            buffer.Dispose();
+            double sum = 0;
+            foreach (JsonElement el in chainResult.EnumerateArray())
+            {
+                if (el.ValueKind == JsonValueKind.Number)
+                {
+                    sum += el.GetDouble();
+                }
+                else if (!el.IsNullOrUndefined())
+                {
+                    throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionSumMustBeAnArrayOfNumbers, 0);
+                }
+            }
+
+            return JsonataHelpers.NumberFromDouble(sum, workspace);
         }
+
+        if (chainResult.ValueKind == JsonValueKind.Number)
+        {
+            return chainResult;
+        }
+
+        throw new JsonataException("T0412", SR.T0412_Argument1OfFunctionSumMustBeAnArrayOfNumbers, 0);
     }
 
     /// <summary>
@@ -2240,16 +2326,19 @@ public static class JsonataCodeGenHelpers
         byte[][] chainNames,
         JsonWorkspace workspace)
     {
-        var buffer = default(ElementBuffer);
-        try
+        JsonElement chainResult = NavigatePropertyChain(data, chainNames, workspace);
+        if (chainResult.IsNullOrUndefined())
         {
-            NavigatePropertyChainInto(data, chainNames, ref buffer);
-            return buffer.Count == 0 ? default : JsonataHelpers.NumberFromDouble(buffer.Count, workspace);
+            return default;
         }
-        finally
+
+        if (chainResult.ValueKind == JsonValueKind.Array)
         {
-            buffer.Dispose();
+            return JsonataHelpers.NumberFromDouble(chainResult.GetArrayLength(), workspace);
         }
+
+        // Singleton value counts as 1
+        return JsonataHelpers.NumberFromDouble(1, workspace);
     }
 
     /// <summary>

@@ -1377,6 +1377,42 @@ internal static class FunctionalCompiler
 
         static Sequence EvalChainOverArray(in JsonElement array, Utf8Name[] utf8Names, int fromStep)
         {
+            // Single-element arrays: navigate directly without flattening.
+            // JSONata treats [obj].prop identically to obj.prop.
+            if (array.GetArrayLength() == 1)
+            {
+                JsonElement singleItem = default;
+                foreach (var child in array.EnumerateArray())
+                {
+                    singleItem = child;
+                    break;
+                }
+
+                // Continue the chain on the single item
+                JsonElement current = singleItem;
+                for (int step = fromStep; step < utf8Names.Length; step++)
+                {
+                    if (current.ValueKind == JsonValueKind.Object)
+                    {
+                        if (!current.TryGetProperty(utf8Names[step].Span, out current))
+                        {
+                            return Sequence.Undefined;
+                        }
+                    }
+                    else if (current.ValueKind == JsonValueKind.Array)
+                    {
+                        // Nested array: same transparent-if-single rule applies recursively
+                        return EvalChainOverArray(current, utf8Names, step);
+                    }
+                    else
+                    {
+                        return Sequence.Undefined;
+                    }
+                }
+
+                return new Sequence(current);
+            }
+
             var builder = default(SequenceBuilder);
             EvalChainOverArrayInto(array, utf8Names, fromStep, ref builder);
             return builder.ToSequence();
@@ -2298,10 +2334,41 @@ internal static class FunctionalCompiler
                             var element = current.FirstOrDefault;
                             if (element.ValueKind == JsonValueKind.Array)
                             {
-                                // Auto-flatten: map name lookup over array elements
-                                var nameBuilder = default(SequenceBuilder);
-                                InlineNameOverArray(element, nameSpan, ref nameBuilder);
-                                current = nameBuilder.ToSequence();
+                                // Single-element arrays are transparent for navigation:
+                                // [obj].prop behaves like obj.prop (no flattening).
+                                if (element.GetArrayLength() == 1)
+                                {
+                                    JsonElement singleItem = default;
+                                    foreach (var child in element.EnumerateArray())
+                                    {
+                                        singleItem = child;
+                                        break;
+                                    }
+
+                                    if (singleItem.ValueKind == JsonValueKind.Object)
+                                    {
+                                        current = singleItem.TryGetProperty(nameSpan, out var val)
+                                            ? new Sequence(val) : Sequence.Undefined;
+                                    }
+                                    else if (singleItem.ValueKind == JsonValueKind.Array)
+                                    {
+                                        var nameBuilder = default(SequenceBuilder);
+                                        InlineNameOverArray(singleItem, nameSpan, ref nameBuilder);
+                                        current = nameBuilder.ToSequence();
+                                    }
+                                    else
+                                    {
+                                        current = Sequence.Undefined;
+                                    }
+                                }
+                                else
+                                {
+                                    // Multi-element: flatten as before
+                                    var nameBuilder = default(SequenceBuilder);
+                                    InlineNameOverArray(element, nameSpan, ref nameBuilder);
+                                    current = nameBuilder.ToSequence();
+                                }
+
                                 currentArrayOwned = current.Count >= 2;
                             }
                             else if (element.ValueKind == JsonValueKind.Object)
@@ -5800,6 +5867,24 @@ internal static class FunctionalCompiler
         bool[]? stageIsSortFlags = null,
         int[]? constantIntValues = null)
     {
+        // Single-element arrays: evaluate step on the one element directly without
+        // flattening. JSONata treats navigation through a single-element array
+        // identically to navigation on the element itself (arrays are transparent).
+        // E.g. [{"b":[1]}].b => [1] (preserved), but [{"b":[1]},{"b":[2]}].b => [1,2] (flattened).
+        if (array.GetArrayLength() == 1)
+        {
+            JsonElement singleItem = default;
+            foreach (var item in array.EnumerateArray())
+            {
+                singleItem = item;
+                break;
+            }
+
+            var result = step(singleItem, env);
+            result = ApplyPerElementFilterStages(result, filterStages, stageIsSortFlags, env, constantIntValues);
+            return result;
+        }
+
         var builder = default(SequenceBuilder);
         foreach (var item in array.EnumerateArray())
         {
