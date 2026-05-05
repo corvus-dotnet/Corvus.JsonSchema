@@ -1,5 +1,7 @@
 # $fromMillis timezone offset hours treated as minutes
 
+> Filed as [jsonata-js/jsonata#786](https://github.com/jsonata-js/jsonata/issues/786)
+
 ## Summary
 
 `$fromMillis` with a timezone offset string (third parameter) incorrectly treats the hours portion of the offset as minutes. For example, `+05:00` applies a 5-minute offset instead of a 5-hour offset. The minutes portion of the timezone string is silently ignored.

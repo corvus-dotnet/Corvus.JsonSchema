@@ -1,5 +1,7 @@
 # $formatNumber infinite loop with zero/negative values and exponent patterns
 
+> Filed as [jsonata-js/jsonata#785](https://github.com/jsonata-js/jsonata/issues/785)
+
 ## Summary
 
 `$formatNumber(0, "0e0")` and `$formatNumber(-42, "0e0")` cause an infinite loop in jsonata v2.1.0. Positive numbers with the same pattern work correctly (e.g., `$formatNumber(42, "0e0")` returns `"4e1"`).

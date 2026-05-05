@@ -3235,7 +3235,7 @@ public class BuiltInFunctionEdgeCaseTests
     {
         // Reference implementation gives D3086 (passive inside active) which is a less
         // specific diagnosis. Our D3082 correctly identifies multiple percent markers.
-        // See: https://github.com/jsonata-js/jsonata/issues/XXXX
+        // See: https://github.com/jsonata-js/jsonata/issues/787
         EvalThrows("$formatNumber(42, \"0%0%0\")", "{}", "D3082");
     }
 
@@ -3244,7 +3244,7 @@ public class BuiltInFunctionEdgeCaseTests
     {
         // Reference implementation gives D3086 (passive inside active) which is a less
         // specific diagnosis. Our D3083 correctly identifies multiple per-mille markers.
-        // See: https://github.com/jsonata-js/jsonata/issues/XXXX
+        // See: https://github.com/jsonata-js/jsonata/issues/787
         EvalThrows("$formatNumber(42, \"0\u20300\u20300\")", "{}", "D3083");
     }
 
@@ -3253,7 +3253,7 @@ public class BuiltInFunctionEdgeCaseTests
     {
         // Reference implementation gives D3086 (passive inside active) which is a less
         // specific diagnosis. Our D3084 correctly identifies mixed percent + per-mille.
-        // See: https://github.com/jsonata-js/jsonata/issues/XXXX
+        // See: https://github.com/jsonata-js/jsonata/issues/787
         EvalThrows("$formatNumber(42, \"0%\u20300\")", "{}", "D3084");
     }
 
@@ -3262,7 +3262,7 @@ public class BuiltInFunctionEdgeCaseTests
     {
         // Reference implementation bug: crashes at splitParts (jsonata.js:2196) with
         // code: undefined. Our D3085 is the correct behavior per XPath/XQuery spec.
-        // See: https://github.com/jsonata-js/jsonata/issues/XXXX
+        // See: https://github.com/jsonata-js/jsonata/issues/787
         EvalThrows("$formatNumber(42, \"---\")", "{}", "D3085");
     }
 

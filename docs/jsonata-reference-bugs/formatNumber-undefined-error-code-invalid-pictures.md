@@ -1,5 +1,7 @@
 # $formatNumber crashes with undefined error code for certain invalid picture strings
 
+> Filed as [jsonata-js/jsonata#787](https://github.com/jsonata-js/jsonata/issues/787)
+
 ## Summary
 
 Several invalid `$formatNumber` picture strings cause an unhandled crash with `code: undefined` instead of a proper error code. The crash occurs at `splitParts` (jsonata.js:2196) when the regex-based picture parsing fails before reaching the validation phase.
