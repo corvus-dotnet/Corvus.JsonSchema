@@ -839,4 +839,44 @@ public class XPathDateTimeFormatterEdgeCaseTests
     }
 
     #endregion
+
+    #region Width modifier parsing (fix for jsonata-js#750)
+
+    [Fact]
+    public void ToMillis_WidthModifier_FixedWidth()
+    {
+        // Tests fix for jsonata-js#750: width modifier ,min-max was not applied
+        // when maxWidthFromPic > digitWidth (e.g. [H1,2-2] has digit=1, max=2).
+        // Reference: $toMillis("20250703T231120Z","[Y1111][M11][D11]T[H1,2-2][m1,2-2][s1,2-2]Z") => 1751584280000
+        string? result = Evaluator.EvaluateToString(
+            """$toMillis("20250703T231120Z","[Y1111][M11][D11]T[H1,2-2][m1,2-2][s1,2-2]Z")""", "{}");
+        Assert.Equal("1751584280000", result);
+    }
+
+    [Fact]
+    public void ToMillis_WidthModifier_AllComponents()
+    {
+        // Width modifiers on all components: [Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z
+        // Reference: 1751584280000
+        string? result = Evaluator.EvaluateToString(
+            """$toMillis("20250703T231120Z","[Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z")""", "{}");
+        Assert.Equal("1751584280000", result);
+    }
+
+    [Fact]
+    public void FromMillis_WidthModifier_RoundTrip()
+    {
+        // Verify $fromMillis produces correct output with width modifiers, then round-trip
+        // Reference: $fromMillis(1751584280000, "[Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z") => "20250703T231120Z"
+        string? formatted = Evaluator.EvaluateToString(
+            """$fromMillis(1751584280000, "[Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z")""", "{}");
+        Assert.Equal("\"20250703T231120Z\"", formatted);
+
+        // Round-trip: parse the formatted string back to millis
+        string? millis = Evaluator.EvaluateToString(
+            """$toMillis("20250703T231120Z","[Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z")""", "{}");
+        Assert.Equal("1751584280000", millis);
+    }
+
+    #endregion
 }

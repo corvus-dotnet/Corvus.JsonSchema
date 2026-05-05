@@ -2954,8 +2954,9 @@ internal static class XPathDateTimeFormatter
                     }
                 }
 
-                // If the width modifier specifies a max that's less, use it
-                if (maxWidthFromPic > 0 && (digitWidth == 0 || maxWidthFromPic < digitWidth))
+                // Width modifier always overrides the presentation digit count for parsing.
+                // E.g., [H1,2-2] means "2 digits max" even though presentation has only 1 digit.
+                if (maxWidthFromPic > 0)
                 {
                     digitWidth = maxWidthFromPic;
                 }
