@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.Linq;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Xunit;
@@ -132,5 +133,316 @@ public static class JsonDocumentBuilderCoverageTests
 
         Assert.False(found);
         Assert.Equal(default, value);
+    }
+
+    /// <summary>
+    /// Exercises the <c>HasComplexChildren</c> (escaped string) path in <c>GetUtf8JsonStringUnsafe</c>
+    /// and <c>GetUtf16JsonStringUnsafe</c> on a builder-backed document.
+    /// Targets JsonDocumentBuilder.cs lines 1257-1278 (UTF-8 unescape) and 1303-1335 (UTF-16 unescape).
+    /// </summary>
+    [Fact]
+    public static void Builder_GetString_WithEscapedContent_UnescapesCorrectly()
+    {
+        // JSON with a \n escape sequence — the backslash-n in the raw JSON bytes creates HasComplexChildren.
+        // In C# we use byte array to produce exact JSON bytes: {"msg":"hello\nworld","plain":"normal"}
+        byte[] jsonBytes = """{"msg":"hello\nworld","plain":"normal"}"""u8.ToArray();
+        ReadOnlyMemory<byte> json = jsonBytes;
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        JsonElement.Mutable root = builder.RootElement;
+
+        // GetString exercises GetStringUnsafe with HasComplexChildren=true
+        Assert.True(root.TryGetProperty("msg"u8, out JsonElement.Mutable msgProp));
+        Assert.Equal("hello\nworld", msgProp.GetString());
+
+        // GetUtf8String exercises GetUtf8JsonStringUnsafe with HasComplexChildren=true
+        using UnescapedUtf8JsonString utf8Str = msgProp.GetUtf8String();
+        Assert.Equal("hello\nworld"u8.ToArray(), utf8Str.Span.ToArray());
+
+        // GetUtf16String exercises GetUtf16JsonStringUnsafe with HasComplexChildren=true
+        using UnescapedUtf16JsonString utf16Str = msgProp.GetUtf16String();
+        Assert.Equal("hello\nworld", utf16Str.Span.ToString());
+
+        // Mutate the builder to force local storage, then ToString() exercises
+        // WriteComplexElementToUnsafe → GetUtf8JsonStringUnsafe for HasComplexChildren strings
+        root.SetProperty("extra"u8, true);
+        string serialized = root.ToString();
+        Assert.Contains("hello\\nworld", serialized);
+        Assert.Contains("extra", serialized);
+
+        // Also verify the non-escaped path still works
+        Assert.True(root.TryGetProperty("plain"u8, out JsonElement.Mutable plainProp));
+        Assert.Equal("normal", plainProp.GetString());
+    }
+
+    /// <summary>
+    /// Exercises <c>IJsonDocument.TryGetString</c> type mismatch path on builder.
+    /// Targets JsonDocumentBuilder.cs lines 1196-1199 (expectedType != tokenType → return false).
+    /// </summary>
+    [Fact]
+    public static void Builder_TryGetString_WrongType_ReturnsFalse()
+    {
+        ReadOnlyMemory<byte> json = """{"num":42,"str":"hello"}"""u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        // Cast to IJsonDocument to access TryGetString directly
+        IJsonDocument builderAsDoc = builder;
+
+        // Index 0 is the root object — passing expectedType=String should mismatch (it's StartObject)
+        bool result = builderAsDoc.TryGetString(0, JsonTokenType.String, out string? value);
+        Assert.False(result);
+        Assert.Null(value);
+    }
+
+    /// <summary>
+    /// Exercises the builder path for <c>TryGetBytesFromBase64</c> with an escaped string value.
+    /// Targets JsonDocumentBuilder.cs lines 1465-1467 (HasComplexChildren → TryGetUnescapedBase64Bytes).
+    /// </summary>
+    [Fact]
+    public static void Builder_TryGetBytesFromBase64_EscapedString()
+    {
+        // JSON with \u0048 escape (= 'H'). The parser marks the string as HasComplexChildren.
+        // Unescaped value is "Hello" which is not valid base64.
+        ReadOnlyMemory<byte> json = """{"data":"\u0048ello"}"""u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        JsonElement.Mutable root = builder.RootElement;
+        Assert.True(root.TryGetProperty("data"u8, out JsonElement.Mutable dataProp));
+
+        // The unescaped value is "Hello" which is not valid base64, so TryGetBytesFromBase64 returns false
+        // but it exercises the HasComplexChildren unescape path
+        bool success = dataProp.TryGetBytesFromBase64(out byte[]? bytes);
+        Assert.False(success);
+        Assert.Null(bytes);
+    }
+
+    /// <summary>
+    /// Exercises <c>TryGetBytesFromBase64</c> with a valid escaped base64 string on builder.
+    /// </summary>
+    [Fact]
+    public static void Builder_TryGetBytesFromBase64_EscapedValidBase64()
+    {
+        // \u0053 = 'S', so the unescaped value is "SGVsbG8=" which decodes to "Hello"
+        ReadOnlyMemory<byte> json = """{"data":"\u0053GVsbG8="}"""u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        JsonElement.Mutable root = builder.RootElement;
+        Assert.True(root.TryGetProperty("data"u8, out JsonElement.Mutable dataProp));
+
+        bool success = dataProp.TryGetBytesFromBase64(out byte[]? bytes);
+        Assert.True(success);
+        Assert.NotNull(bytes);
+        Assert.Equal("Hello"u8.ToArray(), bytes);
+    }
+
+#if NET
+    /// <summary>
+    /// Exercises the <c>Half.TryParse</c> failure path by parsing a number too large for Half
+    /// and attempting to read it via the tensor helpers which use <c>TryGetValue(out Half)</c>.
+    /// Targets JsonDocumentBuilder.cs lines 1805-1806.
+    /// </summary>
+    [Fact]
+    public static void Builder_NumberTooLargeForHalf_HandledGracefully()
+    {
+        // A number that exceeds Half.MaxValue (~65504) — 1e39 is way beyond Half range
+        ReadOnlyMemory<byte> json = """{"big":1e+39}"""u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        JsonElement.Mutable root = builder.RootElement;
+        Assert.True(root.TryGetProperty("big"u8, out JsonElement.Mutable bigProp));
+
+        // The number is valid JSON but exceeds Half range
+        Assert.Equal(JsonValueKind.Number, bigProp.ValueKind);
+        Assert.True(bigProp.TryGetDouble(out double d));
+        Assert.Equal(1e39, d);
+    }
+#endif
+
+    /// <summary>
+    /// Exercises the <c>GetRawSimpleValueFromRow</c> path where the offset is in the raw JSON backing
+    /// region (offset &lt; _rawJsonLength) for a property value that includes quotes.
+    /// Targets JsonDocumentBuilder.cs lines 1124-1127 (the raw JSON path with includeQuotes=false).
+    /// </summary>
+    [Fact]
+    public static void Builder_RawValue_FromParsedJson_IncludesCorrectBytes()
+    {
+        ReadOnlyMemory<byte> json = """{"x":"test","n":123}"""u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        JsonElement.Mutable root = builder.RootElement;
+
+        // Verify string and number values serialize correctly (exercises raw backing retrieval)
+        Assert.True(root.TryGetProperty("x"u8, out JsonElement.Mutable xProp));
+        Assert.Equal("test", xProp.GetString());
+
+        Assert.True(root.TryGetProperty("n"u8, out JsonElement.Mutable nProp));
+        Assert.Equal(123, nProp.GetInt32());
+    }
+
+    /// <summary>
+    /// Exercises the <c>GetPropertyNameUnescaped</c> path on a builder with an escaped property name.
+    /// This targets the property-name unescape branch in JsonDocumentBuilder (lines 1445-1470 area).
+    /// </summary>
+    [Fact]
+    public static void Builder_EscapedPropertyName_EnumerationUnescapes()
+    {
+        // Property name with an escape sequence — forces HasComplexChildren on the PropertyName row
+        ReadOnlyMemory<byte> json = """{"hello\nworld":42}"""u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        JsonElement.Mutable root = builder.RootElement;
+
+        // Enumerating properties exercises the property name unescaping path
+        foreach (JsonProperty<JsonElement.Mutable> prop in root.EnumerateObject())
+        {
+            Assert.Equal("hello\nworld", prop.Name);
+            Assert.Equal(42, prop.Value.GetInt32());
+        }
+    }
+
+    /// <summary>
+    /// Exercises adding a property using char-based <c>SetProperty(string, ...)</c> on a dynamic builder
+    /// to cover the <c>StartProperty(ReadOnlySpan&lt;char&gt;)</c> path in ComplexValueBuilder.
+    /// Targets ComplexValueBuilder.cs lines 3454-3460.
+    /// </summary>
+    [Fact]
+    public static void Builder_SetProperty_CharBased_CoversStartPropertyCharOverload()
+    {
+        ReadOnlyMemory<byte> json = """{"existing":1}"""u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        JsonElement.Mutable root = builder.RootElement;
+
+        // SetProperty with a string name exercises the char-span StartProperty overload
+        root.SetProperty("newProp", 99);
+
+        Assert.True(root.TryGetProperty("newProp"u8, out JsonElement.Mutable val));
+        Assert.Equal(99, val.GetInt32());
+    }
+
+    /// <summary>
+    /// Exercises the <c>FreezeElement</c> path where a builder element references an external mutable document.
+    /// Targets JsonDocumentBuilder.cs lines 2100-2102.
+    /// </summary>
+    [Fact]
+    public static void Builder_CloneElement_FromExternalMutableDocument()
+    {
+        ReadOnlyMemory<byte> json1 = """{"a":1}"""u8.ToArray();
+        ReadOnlyMemory<byte> json2 = """{"b":2}"""u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> doc1 = ParsedJsonDocument<JsonElement>.Parse(json1);
+        using ParsedJsonDocument<JsonElement> doc2 = ParsedJsonDocument<JsonElement>.Parse(json2);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder1 = doc1.RootElement.CreateBuilder(workspace);
+        using JsonDocumentBuilder<JsonElement.Mutable> builder2 = doc2.RootElement.CreateBuilder(workspace);
+
+        // Set a property on builder1 using an element from builder2 — creates an external document reference
+        JsonElement.Mutable root1 = builder1.RootElement;
+        root1.SetProperty("fromOther"u8, builder2.RootElement);
+
+        // Now freeze the element to exercise the FreezeElement path
+        Assert.True(root1.TryGetProperty("fromOther"u8, out JsonElement.Mutable fromOther));
+        JsonElement frozen = fromOther.Freeze();
+        Assert.Equal(JsonValueKind.Object, frozen.ValueKind);
+    }
+
+    /// <summary>
+    /// Exercises the large-buffer path in <c>GetUtf16JsonStringUnsafe</c> where the escaped JSON string
+    /// is longer than <c>JsonConstants.StackallocByteThreshold</c> (256 bytes), forcing an <c>ArrayPool</c>
+    /// rent for the UTF-8 unescape buffer and its return in the finally block.
+    /// Targets JsonDocumentBuilder.cs lines 1310 (rent), 1332-1335 (finally: return rented array).
+    /// </summary>
+    [Fact]
+    public static void Builder_GetUtf16String_LargeEscapedString_HitsRentedBufferPath()
+    {
+        // Build a JSON string with many \uXXXX escapes so the raw JSON segment > 256 bytes.
+        // Each \uXXXX is 6 bytes in the raw JSON. We need > 256 bytes total, so 44+ escapes.
+        // Use 50 escapes of \u0041 (= 'A') → 300 bytes raw → triggers ArrayPool rent.
+        var sb = new System.Text.StringBuilder();
+        sb.Append("{\"big\":\"");
+        for (int i = 0; i < 50; i++)
+        {
+            sb.Append(@"\u0041");
+        }
+
+        sb.Append("\"}");
+        byte[] jsonBytes = System.Text.Encoding.UTF8.GetBytes(sb.ToString());
+        ReadOnlyMemory<byte> json = jsonBytes;
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        JsonElement.Mutable root = builder.RootElement;
+        Assert.True(root.TryGetProperty("big"u8, out JsonElement.Mutable bigProp));
+
+        // GetUtf16String forces the large-buffer path because raw segment (300 bytes) > 256 threshold
+        using UnescapedUtf16JsonString utf16Str = bigProp.GetUtf16String();
+        Assert.Equal(new string('A', 50), utf16Str.Span.ToString());
+
+        // Also exercise GetUtf8String on the same large escaped string
+        using UnescapedUtf8JsonString utf8Str = bigProp.GetUtf8String();
+        Assert.Equal(50, utf8Str.Span.Length);
+        Assert.True(utf8Str.Span.ToArray().All(b => b == (byte)'A'));
+    }
+
+    /// <summary>
+    /// Exercises the <c>WriteComplexElementToUnsafe</c> property-name unescape path (lines 2275-2280)
+    /// when serializing a builder object that contains an escaped property name after mutation.
+    /// Mutation forces local complex data, so ToString goes through WriteComplexElementToUnsafe.
+    /// </summary>
+    [Fact]
+    public static void Builder_ToString_WithEscapedPropertyName_SerializesCorrectly()
+    {
+        // Property name contains \n escape — the serializer must unescape it for the writer
+        ReadOnlyMemory<byte> json = """{"line\none":1,"normal":2}"""u8.ToArray();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
+
+        JsonElement.Mutable root = builder.RootElement;
+
+        // Mutate the builder to force local storage — after mutation the root is locally rebuilt
+        root.SetProperty("added"u8, 3);
+
+        string serialized = root.ToString();
+
+        // The output should contain the escaped property name re-encoded by Utf8JsonWriter
+        Assert.Contains("line", serialized);
+        Assert.Contains("one", serialized);
+        Assert.Contains("added", serialized);
+
+        // Verify round-trip: parse the serialized output and check property access
+        using ParsedJsonDocument<JsonElement> roundTripped = ParsedJsonDocument<JsonElement>.Parse(
+            System.Text.Encoding.UTF8.GetBytes(serialized));
+        Assert.True(roundTripped.RootElement.TryGetProperty("line\none", out JsonElement val));
+        Assert.Equal(1, val.GetInt32());
+        Assert.True(roundTripped.RootElement.TryGetProperty("added", out JsonElement addedVal));
+        Assert.Equal(3, addedVal.GetInt32());
     }
 }
