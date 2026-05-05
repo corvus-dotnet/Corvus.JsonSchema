@@ -1869,27 +1869,30 @@ public class BuiltInFunctionCoverageTests
     [Fact]
     public void FromMillis_WithPositiveOffset_ReturnsIso8601WithOffset()
     {
-        // $fromMillis(0, undefined, "+05:30") → epoch + 5:30 offset
+        // $fromMillis(0, undefined, "+0530") → epoch + 5:30 offset
+        // Spec format: ±HHMM (no colon)
         // Covers lines 5811-5833, 5860-5883: FormatIso8601WithOffset with positive offset
-        string result = Eval("""$fromMillis(0, undefined, "+05:30")""");
+        string result = Eval("""$fromMillis(0, undefined, "+0530")""");
         Assert.Equal("\"1970-01-01T05:30:00.000+05:30\"", result);
     }
 
     [Fact]
     public void FromMillis_WithNegativeOffset_ReturnsIso8601WithOffset()
     {
-        // $fromMillis(0, undefined, "-08:00") → epoch with -8h offset
+        // $fromMillis(0, undefined, "-0800") → epoch with -8h offset
+        // Spec format: ±HHMM (no colon)
         // Covers lines 5874: negative offset sign branch
-        string result = Eval("""$fromMillis(0, undefined, "-08:00")""");
+        string result = Eval("""$fromMillis(0, undefined, "-0800")""");
         Assert.Equal("\"1969-12-31T16:00:00.000-08:00\"", result);
     }
 
     [Fact]
     public void FromMillis_WithZeroOffset_ReturnsUtcZ()
     {
-        // $fromMillis(0, undefined, "+00:00") → Z suffix (offset == TimeSpan.Zero)
+        // $fromMillis(0, undefined, "+0000") → Z suffix (offset == TimeSpan.Zero)
+        // Spec format: ±HHMM (no colon)
         // Covers line 5861-5863: zero offset fast path
-        string result = Eval("""$fromMillis(0, undefined, "+00:00")""");
+        string result = Eval("""$fromMillis(0, undefined, "+0000")""");
         Assert.Equal("\"1970-01-01T00:00:00.000Z\"", result);
     }
 

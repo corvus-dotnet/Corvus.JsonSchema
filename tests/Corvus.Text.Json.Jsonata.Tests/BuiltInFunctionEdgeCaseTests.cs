@@ -671,8 +671,8 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FromMillis_WithTimezone()
     {
-        // UTC+5:30 -> 2021-01-01T05:30:00
-        string result = Eval("""$fromMillis(1609459200000, "[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]", "+05:30")""");
+        // UTC+5:30 -> 2021-01-01T05:30:00 (spec format: ±HHMM, no colon)
+        string result = Eval("""$fromMillis(1609459200000, "[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]", "+0530")""");
         Assert.Equal("\"2021-01-01T05:30:00\"", result);
     }
 
@@ -716,8 +716,8 @@ public class BuiltInFunctionEdgeCaseTests
     [Fact]
     public void FromMillis_NegativeTimezone()
     {
-        // UTC-5:00 -> 2020-12-31T19:00:00
-        string result = Eval("""$fromMillis(1609459200000, "[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]", "-05:00")""");
+        // UTC-5:00 -> 2020-12-31T19:00:00 (spec format: ±HHMM, no colon)
+        string result = Eval("""$fromMillis(1609459200000, "[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01]", "-0500")""");
         Assert.Equal("\"2020-12-31T19:00:00\"", result);
     }
 

@@ -760,9 +760,9 @@ public class XPathDateTimeFormatterEdgeCaseTests
     }
 
     [Fact]
-    public void FromMillis_ColonOffset()
+    public void FromMillis_ColonOffset_BackwardCompat()
     {
-        // Offset with colon "+05:30"
+        // Offset with colon "+05:30" — not the spec format (±HHMM) but accepted for backward compat
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "+05:30")""", "{}");
         Assert.NotNull(result);
