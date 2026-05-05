@@ -93,6 +93,7 @@
     <Compile Include="DummyDocument.cs" />
     <Compile Include="DummyResultsCollector.cs" />
     <Compile Include="JsonDocumentBuilderComplexObjectTests.cs" />
+    <Compile Include="CoverageBatch3Tests.cs" />
     <Compile Include="JsonDocumentBuilderCoverageTests.cs" />
     <Compile Include="JsonDocumentBuilderCreateDynamicTests.cs" />
     <Compile Include="JsonDocumentBuilderInsertItemTests.cs" />
