@@ -198,4 +198,286 @@ public static class CoverageBatch3Tests
         bool result = JsonRegexValidator.Validate("(x)(?(1)yes|no)", JsonRegexOptions.None);
         Assert.True(result);
     }
+
+    /// <summary>
+    /// Exercises <c>CompareNormalizedJsonNumbers</c> sign comparison path (lines 302-303)
+    /// by comparing numbers with different signs.
+    /// </summary>
+    [Fact]
+    public static void NumericCore_CompareNormalizedJsonNumbers_DifferentSigns()
+    {
+        // Negative vs positive — exercises sign comparison (lines 302-303)
+        int result = JsonElementHelpers.CompareNormalizedJsonNumbers(
+            leftIsNegative: true, leftIntegral: "5"u8, leftFractional: default, leftExponent: 0,
+            rightIsNegative: false, rightIntegral: "3"u8, rightFractional: default, rightExponent: 0);
+        Assert.Equal(-1, result);
+
+        // Positive vs negative
+        result = JsonElementHelpers.CompareNormalizedJsonNumbers(
+            leftIsNegative: false, leftIntegral: "3"u8, leftFractional: default, leftExponent: 0,
+            rightIsNegative: true, rightIntegral: "5"u8, rightFractional: default, rightExponent: 0);
+        Assert.Equal(1, result);
+    }
+
+    /// <summary>
+    /// Exercises <c>CompareNormalizedJsonNumbers</c> equality path (line 347)
+    /// when both numbers are identical.
+    /// </summary>
+    [Fact]
+    public static void NumericCore_CompareNormalizedJsonNumbers_Equal()
+    {
+        // 12.5 normalized: integral="12", fractional="5", exponent=-1 (adjusted by -frac.Length)
+        int result = JsonElementHelpers.CompareNormalizedJsonNumbers(
+            leftIsNegative: false, leftIntegral: "12"u8, leftFractional: "5"u8, leftExponent: -1,
+            rightIsNegative: false, rightIntegral: "12"u8, rightFractional: "5"u8, rightExponent: -1);
+        Assert.Equal(0, result);
+    }
+
+    /// <summary>
+    /// Exercises <c>GetDigitAtPosition</c> fractional part access (lines 362-365)
+    /// by comparing numbers that differ in fractional digits.
+    /// </summary>
+    [Fact]
+    public static void NumericCore_CompareNormalizedJsonNumbers_FractionalDifference()
+    {
+        // 1.25 normalized: integral="1", fractional="25", exponent=-2
+        // 1.3 normalized: integral="1", fractional="3", exponent=-1
+        int result = JsonElementHelpers.CompareNormalizedJsonNumbers(
+            leftIsNegative: false, leftIntegral: "1"u8, leftFractional: "25"u8, leftExponent: -2,
+            rightIsNegative: false, rightIntegral: "1"u8, rightFractional: "3"u8, rightExponent: -1);
+        Assert.Equal(-1, result); // 1.25 < 1.3
+    }
+
+    /// <summary>
+    /// Exercises <c>TryParseNumber</c> with fractional+exponent (line 154-155)
+    /// for a number like 1.5e2.
+    /// </summary>
+    [Fact]
+    public static void NumericCore_ParseNumber_FractionalAndExponent()
+    {
+        // 1.5e2 = 150 — has both fractional AND exponent parts
+        bool equal = JsonElementHelpers.AreEqualJsonNumbers("1.5e2"u8, "150"u8);
+        Assert.True(equal);
+    }
+
+    /// <summary>
+    /// Exercises <c>TryParseNumber</c> with negative exponent to test normalization.
+    /// </summary>
+    [Fact]
+    public static void NumericCore_ParseNumber_NegativeExponent()
+    {
+        // 15e-1 = 1.5
+        bool equal = JsonElementHelpers.AreEqualJsonNumbers("15e-1"u8, "1.5"u8);
+        Assert.True(equal);
+    }
+
+    /// <summary>
+    /// Exercises comparison with numbers of different effective magnitudes.
+    /// </summary>
+    [Fact]
+    public static void NumericCore_CompareNormalizedJsonNumbers_DifferentMagnitudes()
+    {
+        // 100 vs 99 — different effective length
+        int result = JsonElementHelpers.CompareNormalizedJsonNumbers(
+            leftIsNegative: false, leftIntegral: "1"u8, leftFractional: default, leftExponent: 2,
+            rightIsNegative: false, rightIntegral: "99"u8, rightFractional: default, rightExponent: 0);
+        Assert.Equal(1, result); // 100 > 99
+    }
+
+    #region JsonDocumentBuilder.ParseValue single-span paths
+
+    /// <summary>
+    /// Exercises <c>ParseValue</c> with a single-span reader on a Number token (lines 269-271).
+    /// </summary>
+    [Fact]
+    public static void BuilderParseValue_SingleSpan_Number()
+    {
+        byte[] json = "42"u8.ToArray();
+        var reader = new Utf8JsonReader(json);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        Assert.Equal(42, builder.RootElement.GetInt32());
+    }
+
+    /// <summary>
+    /// Exercises <c>ParseValue</c> with a single-span reader on a True token (lines 269-271).
+    /// </summary>
+    [Fact]
+    public static void BuilderParseValue_SingleSpan_True()
+    {
+        byte[] json = "true"u8.ToArray();
+        var reader = new Utf8JsonReader(json);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        Assert.True(builder.RootElement.GetBoolean());
+    }
+
+    /// <summary>
+    /// Exercises <c>ParseValue</c> with a single-span reader on a String token (lines 281-284).
+    /// </summary>
+    [Fact]
+    public static void BuilderParseValue_SingleSpan_String()
+    {
+        byte[] json = "\"hello world\""u8.ToArray();
+        var reader = new Utf8JsonReader(json);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        Assert.Equal("hello world", builder.RootElement.GetString());
+    }
+
+    /// <summary>
+    /// Exercises <c>ParseValue</c> with a single-span reader on a Null token (lines 269-271).
+    /// </summary>
+    [Fact]
+    public static void BuilderParseValue_SingleSpan_Null()
+    {
+        byte[] json = "null"u8.ToArray();
+        var reader = new Utf8JsonReader(json);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        Assert.Equal(JsonValueKind.Null, builder.RootElement.ValueKind);
+    }
+
+    /// <summary>
+    /// Exercises <c>ParseValue</c> with a single-span reader on an Object (lines 245-249,
+    /// TrySkip + OriginalSpan.Slice path).
+    /// </summary>
+    [Fact]
+    public static void BuilderParseValue_SingleSpan_Object()
+    {
+        byte[] json = """{"a":1}"""u8.ToArray();
+        var reader = new Utf8JsonReader(json);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        Assert.Equal(1, builder.RootElement.GetProperty("a"u8).GetInt32());
+    }
+
+    /// <summary>
+    /// Exercises <c>ParseValue</c> with multi-segment reader on a string where
+    /// <c>HasValueSequence</c> is false — the string content is entirely within one segment
+    /// but the reader is backed by a multi-segment sequence (lines 294-296).
+    /// </summary>
+    [Fact]
+    public static void BuilderParseValue_MultiSegment_StringInOneSegment()
+    {
+        // Place the string entirely in the second segment so HasValueSequence is false
+        // but OriginalSequence is non-empty.
+        byte[] part1 = "   "u8.ToArray(); // whitespace in first segment
+        byte[] part2 = "\"hi\""u8.ToArray(); // string in second segment
+
+        System.Buffers.ReadOnlySequence<byte> sequence = BufferFactory.Create(part1, part2);
+        var reader = new Utf8JsonReader(sequence);
+
+        using var workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
+
+        Assert.Equal("hi", builder.RootElement.GetString());
+    }
+
+    #endregion
+
+    #region ParsedJsonDocument.Parse paths
+
+    /// <summary>
+    /// Exercises <c>ParsedJsonDocument.Parse</c> from a Stream with UTF-8 BOM
+    /// to hit BOM-stripping path (lines 840-877 in ParsedJsonDocument.Parse.cs).
+    /// </summary>
+    [Fact]
+    public static void ParsedDocument_ParseFromStreamWithBom()
+    {
+        byte[] bom = [0xEF, 0xBB, 0xBF];
+        byte[] json = "42"u8.ToArray();
+        byte[] withBom = new byte[bom.Length + json.Length];
+        bom.CopyTo(withBom, 0);
+        json.CopyTo(withBom, bom.Length);
+
+        using var stream = new System.IO.MemoryStream(withBom);
+        using var doc = ParsedJsonDocument<JsonElement>.Parse(stream);
+        Assert.Equal(42, doc.RootElement.GetInt32());
+    }
+
+    /// <summary>
+    /// Exercises <c>ParseValue</c> (useArrayPools=false) with a multi-segment reader
+    /// where a number token spans segments (lines 697-699 in ParsedJsonDocument.Parse.cs).
+    /// </summary>
+    [Fact]
+    public static void ParsedDocument_ParseValue_MultiSegment_NumberSpansSegments()
+    {
+        // Split number "123456" across two segments so HasValueSequence=true
+        byte[] part1 = "123"u8.ToArray();
+        byte[] part2 = "456"u8.ToArray();
+
+        System.Buffers.ReadOnlySequence<byte> sequence = BufferFactory.Create(part1, part2);
+        var reader = new Utf8JsonReader(sequence);
+
+        JsonElement result = JsonElementHelpers.ParseValue<JsonElement>(ref reader);
+        Assert.Equal(123456, result.GetInt32());
+    }
+
+    /// <summary>
+    /// Exercises <c>ParseValue</c> (useArrayPools=false) with a multi-segment reader
+    /// where a string token spans segments, and the string has escape sequences
+    /// (hits lines 697-706 + 756-759 via ParseUnrented with escaped string).
+    /// </summary>
+    [Fact]
+    public static void ParsedDocument_ParseValue_MultiSegment_EscapedStringSpansSegments()
+    {
+        // Split an escaped string across segments: "hel\\nlo" → "hel\nlo"
+        byte[] part1 = "\"hel\\"u8.ToArray();
+        byte[] part2 = "nlo\""u8.ToArray();
+
+        System.Buffers.ReadOnlySequence<byte> sequence = BufferFactory.Create(part1, part2);
+        var reader = new Utf8JsonReader(sequence);
+
+        JsonElement result = JsonElementHelpers.ParseValue<JsonElement>(ref reader);
+        Assert.Equal("hel\nlo", result.GetString());
+    }
+
+    /// <summary>
+    /// Exercises <c>ParseValue(Stream)</c> path (lines 213-226 in ParsedJsonDocument.Parse.cs)
+    /// via <c>ParsedJsonDocument.ParseValue</c> with a stream.
+    /// </summary>
+    [Fact]
+    public static void ParsedDocument_ParseValueFromStream()
+    {
+        byte[] json = "\"hello\""u8.ToArray();
+        using var stream = new System.IO.MemoryStream(json);
+
+        // ParseValue(Stream, options) is internal — uses ParseUnrented (non-disposable copy)
+        using ParsedJsonDocument<JsonElement> doc =
+            ParsedJsonDocument<JsonElement>.ParseValue(stream, default);
+        Assert.Equal("hello", doc.RootElement.GetString());
+    }
+
+    /// <summary>
+    /// Exercises <c>CreateConstant</c> string path with escape characters
+    /// (lines 756-759 in ParsedJsonDocument.Parse.cs — SetHasComplexChildren for backslash).
+    /// </summary>
+    [Fact]
+    public static void ParsedDocument_StringConstant_WithEscape()
+    {
+        // "hel\\nlo" (quoted JSON string with a \n escape)
+        byte[] quotedString = "\"hel\\nlo\""u8.ToArray();
+
+        JsonElement result = ParsedJsonDocument<JsonElement>.StringConstant(quotedString);
+        Assert.Equal("hel\nlo", result.GetString());
+    }
+
+    #endregion
 }
