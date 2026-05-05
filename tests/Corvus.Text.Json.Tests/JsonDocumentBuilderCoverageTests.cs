@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Linq;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
+using NodaTime;
 using Xunit;
 
 namespace Corvus.Text.Json.Tests;
@@ -444,5 +445,186 @@ public static class JsonDocumentBuilderCoverageTests
         Assert.Equal(1, val.GetInt32());
         Assert.True(roundTripped.RootElement.TryGetProperty("added", out JsonElement addedVal));
         Assert.Equal(3, addedVal.GetInt32());
+    }
+
+    // =====================================================================
+    // Batch 2: ParsedJsonDocument and Builder.Parse coverage paths
+    // =====================================================================
+
+    /// <summary>
+    /// Exercises <c>ParsedJsonDocument.TryGetString</c> (lines 402-405) via the
+    /// <c>IJsonDocument</c> explicit interface when the token type does not match.
+    /// </summary>
+    [Fact]
+    public static void ParsedDocument_TryGetString_TypeMismatch_ReturnsFalse()
+    {
+        // Parse a JSON number — its token type is Number, not String
+        ReadOnlyMemory<byte> json = "42"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+
+        // Cast to IJsonDocument and call TryGetString expecting String — should fail
+        IJsonDocument ijsonDoc = doc;
+        bool result = ijsonDoc.TryGetString(0, JsonTokenType.String, out string? str);
+
+        Assert.False(result);
+        Assert.Null(str);
+    }
+
+    /// <summary>
+    /// Exercises <c>ParsedJsonDocument.TryGetValue(out OffsetDate)</c> early return
+    /// (lines 1096-1098) when the string is longer than
+    /// <c>MaximumEscapedDateTimeOffsetParseLength</c>.
+    /// </summary>
+    [Fact]
+    public static void ParsedDocument_TryGetOffsetDate_TooLongString_ReturnsFalse()
+    {
+        // Create a JSON string that exceeds MaximumEscapedDateTimeOffsetParseLength (~294 chars)
+        string longValue = new string('x', 300);
+        byte[] json = System.Text.Encoding.UTF8.GetBytes($"\"{longValue}\"");
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+
+        // TryGetOffsetDate delegates to IJsonDocument.TryGetValue(out OffsetDate)
+        bool result = doc.RootElement.TryGetOffsetDate(out NodaTime.OffsetDate _);
+
+        Assert.False(result);
+    }
+
+    /// <summary>
+    /// Exercises <c>JsonDocumentBuilder.GetRawSimpleValueUnsafe(ref MetadataDb, int)</c>
+    /// local raw JSON backing path (lines 1124-1127) via <c>JsonDocumentBuilder.Parse</c>.
+    /// When a builder is created via Parse, values reside in the raw JSON backing region.
+    /// The no-quotes overload (without includeQuotes parameter) is called from DeepEquals
+    /// comparisons via <c>IJsonDocument.GetRawSimpleValueUnsafe(int index)</c>.
+    /// </summary>
+    [Fact]
+    public static void BuilderParse_DeepEquals_UsesLocalRawJsonBacking_NoQuotesPath()
+    {
+        byte[] json = System.Text.Encoding.UTF8.GetBytes("""{"x":42}""");
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, json);
+
+        JsonElement.Mutable root = builder.RootElement;
+        Assert.True(root.TryGetProperty("x"u8, out JsonElement.Mutable xElement));
+
+        // DeepEquals on a number calls IJsonDocument.GetRawSimpleValueUnsafe(index)
+        // which routes to the no-quotes overload → GetRawSimpleValueUnsafe(ref MetadataDb, int)
+        // with offset < _rawJsonLength → lines 1124-1127
+        using ParsedJsonDocument<JsonElement> otherDoc = ParsedJsonDocument<JsonElement>.Parse("42"u8.ToArray());
+        bool equal = JsonElementHelpers.DeepEquals(xElement, otherDoc.RootElement);
+        Assert.True(equal);
+    }
+
+    /// <summary>
+    /// Exercises <c>ReadRawJsonBackingValue</c> with <c>includeQuotes=true</c>
+    /// (lines 1169-1172). This path is taken when getting a raw value with quotes
+    /// from local JSON backing data (for String/PropertyName tokens).
+    /// </summary>
+    [Fact]
+    public static void BuilderParse_GetPropertyRawValueAsString_UsesLocalQuotedPath()
+    {
+        byte[] json = System.Text.Encoding.UTF8.GetBytes("""{"key":"val"}""");
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, json);
+
+        JsonElement.Mutable root = builder.RootElement;
+
+        // Enumerate properties — JsonProperty.ToString() calls GetPropertyRawValueAsString
+        // which calls GetRawSimpleValueUnsafe with includeQuotes:true on both name and value
+        foreach (JsonProperty<JsonElement.Mutable> prop in root.EnumerateObject())
+        {
+            string propString = prop.ToString();
+            Assert.Contains("key", propString);
+            Assert.Contains("val", propString);
+        }
+    }
+
+    /// <summary>
+    /// Exercises the ArrayPool path in <c>GetPropertyRawValueAsString</c> (lines 2065-2069)
+    /// by using a property name long enough that name+colon+value exceeds 256 bytes.
+    /// </summary>
+    [Fact]
+    public static void BuilderParse_GetPropertyRawValueAsString_LargeProperty_HitsArrayPool()
+    {
+        // Create a property name with >250 characters so name+colon+value > 256 bytes
+        string longName = new string('a', 260);
+        string json = $"{{\"{longName}\":\"value\"}}";
+        byte[] jsonBytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, jsonBytes);
+
+        JsonElement.Mutable root = builder.RootElement;
+
+        // JsonProperty.ToString() calls GetPropertyRawValueAsString which rents from ArrayPool
+        foreach (JsonProperty<JsonElement.Mutable> prop in root.EnumerateObject())
+        {
+            string propString = prop.ToString();
+            Assert.Contains(longName, propString);
+            Assert.Contains("value", propString);
+        }
+    }
+
+    /// <summary>
+    /// Exercises <c>BuildRentedMetadataDb</c> complex local value path (lines 2561-2564)
+    /// by freezing a Parse-based builder that contains a local complex value (object),
+    /// then creating a new builder from a child complex element.
+    /// </summary>
+    [Fact]
+    public static void BuilderParse_BuildRentedMetadataDb_LocalComplexValue()
+    {
+        byte[] json = System.Text.Encoding.UTF8.GetBytes("""{"nested":{"a":1,"b":2}}""");
+
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<JsonElement.Mutable> builder =
+            JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, json);
+
+        // Freeze the builder so BuildRentedMetadataDb can be called on it
+        builder.Freeze();
+
+        // Get the nested object (a complex value — not IsSimpleValue)
+        JsonElement.Mutable root = builder.RootElement;
+        Assert.True(root.TryGetProperty("nested", out JsonElement.Mutable nested));
+
+        // Creating a new builder from the nested element triggers BuildRentedMetadataDb
+        // on the frozen builder for the complex (object) element
+        using JsonDocumentBuilder<JsonElement.Mutable> newBuilder = nested.CreateBuilder(workspace);
+
+        JsonElement.Mutable newRoot = newBuilder.RootElement;
+        Assert.Equal(JsonValueKind.Object, newRoot.ValueKind);
+        Assert.True(newRoot.TryGetProperty("a", out JsonElement.Mutable aVal));
+        Assert.Equal(1, aVal.GetInt32());
+    }
+
+    /// <summary>
+    /// Exercises <c>ParsedJsonDocument.GetArrayIndexElement</c> (lines 222-227) explicit
+    /// interface method via direct IJsonDocument cast. This out-param overload returns
+    /// both the parent document and the element index, and is only reachable through
+    /// the explicit interface.
+    /// </summary>
+    [Fact]
+    public static void ParsedDocument_GetArrayIndexElement_ExplicitInterface()
+    {
+        ReadOnlyMemory<byte> json = "[10, 20, 30]"u8.ToArray();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+
+        // Cast to IJsonDocument and call the explicit out-param overload directly
+        IJsonDocument ijsonDoc = doc;
+        ijsonDoc.GetArrayIndexElement(0, 1, out IJsonDocument parentDoc, out int parentIdx);
+
+        // The parent document should be the same parsed document
+        Assert.Same(doc, parentDoc);
+
+        // Use the returned index to verify we got the right element (value 20)
+        // We can verify by calling the single-return overload and comparing
+        JsonElement element = ijsonDoc.GetArrayIndexElement(0, 1);
+        Assert.Equal(20, element.GetInt32());
+
+        // Also verify the index is consistent
+        Assert.True(parentIdx > 0);
     }
 }
