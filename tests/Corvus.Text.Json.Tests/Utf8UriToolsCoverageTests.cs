@@ -1049,7 +1049,7 @@ public class Utf8UriToolsCoverageTests
         bool result = TryApply(baseBytes, baseOffsets, baseFlags, targetBytes, targetOffsets, targetFlags, dest, out int written);
         Assert.True(result);
         string resolved = Str(dest, written);
-        Assert.Contains("example.com", resolved);
+        Assert.Equal("http://example.com/a/e", resolved);
     }
 
     [Fact]
@@ -1108,9 +1108,7 @@ public class Utf8UriToolsCoverageTests
         Span<byte> dest = stackalloc byte[256];
         Assert.True(TryEscapeUri(source, dest, out int written));
         string result = Str(dest, written);
-        Assert.Contains("%20", result);
-        Assert.Contains("http", result);
-        Assert.Contains("://", result);
+        Assert.Equal("http://host/path%20with%20spaces", result);
     }
 
     [Fact]
@@ -1125,7 +1123,7 @@ public class Utf8UriToolsCoverageTests
         Assert.True(result);
         string canonical = Str(dest, written);
         // The unreserved char 'a' should be decoded from %61
-        Assert.Contains("/a", canonical);
+        Assert.Equal("http://example.com/a", canonical);
     }
 
     [Fact]
@@ -1141,8 +1139,7 @@ public class Utf8UriToolsCoverageTests
         bool result = TryApply(baseBytes, baseOffsets, baseFlags, targetBytes, targetOffsets, targetFlags, dest, out int written);
         Assert.True(result);
         string resolved = Str(dest, written);
-        Assert.Contains("?q=1", resolved);
-        Assert.Contains("#f", resolved);
+        Assert.Equal("http://example.com/a/c?q=1#f", resolved);
     }
 
     [Fact]
@@ -1158,8 +1155,7 @@ public class Utf8UriToolsCoverageTests
         bool result = MakeRelative(baseBytes, baseOffsets, baseFlags, targetBytes, targetOffsets, targetFlags, dest, out int written);
         Assert.True(result);
         string relative = Str(dest, written);
-        Assert.Contains("?q=2", relative);
-        Assert.Contains("#f2", relative);
+        Assert.Equal("?q=2#f2", relative);
     }
 
     [Fact]
@@ -1188,7 +1184,7 @@ public class Utf8UriToolsCoverageTests
         bool result = TryFormatDisplay(uriBytes, offsets, flags, dest, out int written);
         Assert.True(result);
         string display = Str(dest, written);
-        Assert.Contains("[::1]", display);
+        Assert.Equal("http://[::1]:8080/path", display);
     }
 
     [Fact]
@@ -1201,7 +1197,7 @@ public class Utf8UriToolsCoverageTests
         bool result = TryFormatCanonical(uriBytes, offsets, flags, allowIri: false, dest, out int written);
         Assert.True(result);
         string canonical = Str(dest, written);
-        Assert.Contains("[::1]", canonical);
+        Assert.Equal("http://[::1]:8080/path", canonical);
     }
 
     [Fact]
@@ -1217,7 +1213,7 @@ public class Utf8UriToolsCoverageTests
         bool result = TryApply(baseBytes, baseOffsets, baseFlags, targetBytes, targetOffsets, targetFlags, dest, out int written, strict: false);
         Assert.True(result);
         string resolved = Str(dest, written);
-        Assert.Contains("https://", resolved);
+        Assert.Equal("https://example.com/c/d", resolved);
     }
 
     [Fact]
