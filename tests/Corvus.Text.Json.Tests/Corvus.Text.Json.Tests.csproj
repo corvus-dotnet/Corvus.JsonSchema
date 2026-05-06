@@ -109,6 +109,7 @@
     <Compile Include="CoverageBatch16Tests.cs" />
     <Compile Include="CoverageBatch17Tests.cs" />
     <Compile Include="CoverageBatch18Tests.cs" />
+    <Compile Include="CoverageBatch19Tests.cs" />
     <Compile Include="JsonDocumentBuilderCoverageTests.cs" />
     <Compile Include="JsonDocumentBuilderCreateDynamicTests.cs" />
     <Compile Include="JsonDocumentBuilderInsertItemTests.cs" />
