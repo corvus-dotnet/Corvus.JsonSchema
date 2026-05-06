@@ -28,18 +28,38 @@ internal static class TestCaseGenerator
     {
         StringBuilder builder = new();
 
-        string outputPath = Config["outputPath"] ?? throw new InvalidOperationException("You must provide an <outputPath> in app settings.");
-        outputPath = Path.GetFullPath(outputPath);
+        string defaultOutputPath = Config["outputPath"] ?? throw new InvalidOperationException("You must provide an <outputPath> in app settings.");
+        defaultOutputPath = Path.GetFullPath(defaultOutputPath);
 
-        // Delete the output directory
-        if (Directory.Exists(outputPath))
+        // Collect all test groups first to determine which output directories to clean
+        List<TestGroup> allGroups = [.. ProvideTestGroups()];
+
+        // Determine the set of distinct output directories
+        HashSet<string> outputDirectories = [];
+        foreach (TestGroup group in allGroups)
         {
-            Directory.Delete(outputPath, true);
+            string dir = group.OutputDirectory is not null
+                ? Path.GetFullPath(group.OutputDirectory)
+                : defaultOutputPath;
+            outputDirectories.Add(dir);
         }
 
-        foreach (TestGroup testGroup in ProvideTestGroups())
+        // Delete each output directory before regenerating
+        foreach (string dir in outputDirectories)
+        {
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, true);
+            }
+        }
+
+        foreach (TestGroup testGroup in allGroups)
         {
             string namespaceGroup = ToPascalCase(testGroup.Name);
+            string outputPath = testGroup.OutputDirectory is not null
+                ? Path.GetFullPath(testGroup.OutputDirectory)
+                : defaultOutputPath;
+            string namespaceRoot = testGroup.NamespacePrefix ?? "JsonSchemaTestSuite";
 
             foreach (TestFile testFile in testGroup.Files)
             {
@@ -49,7 +69,7 @@ internal static class TestCaseGenerator
                 string outputFile = Path.Combine(outputPath, relativePath);
 
                 string namespaceSuffix = GetNamespaceFromPath(testFile.NamespaceRelativePath);
-                string namespaceValue = $"JsonSchemaTestSuite.{namespaceGroup}{(namespaceSuffix.Length > 0 ? "." : string.Empty)}{namespaceSuffix}";
+                string namespaceValue = $"{namespaceRoot}.{namespaceGroup}{(namespaceSuffix.Length > 0 ? "." : string.Empty)}{namespaceSuffix}";
 
                 // The featureName passed to the V4 driver becomes a namespace prefix via
                 // "{featureName}Feature.{scenarioName}". Using the dotted namespaceValue
@@ -284,7 +304,7 @@ internal static class TestCaseGenerator
 
             if (testFiles.Count > 0)
             {
-                yield return new(collection.Name, collection.DriverSettingsKey, testFiles);
+                yield return new(collection.Name, collection.DriverSettingsKey, testFiles, collection.OutputDirectory, collection.NamespacePrefix);
             }
         }
     }
@@ -373,7 +393,7 @@ internal static class TestCaseGenerator
     }
 }
 
-public record TestGroup(string Name, string DriverSettingsKey, List<TestFile> Files);
+public record TestGroup(string Name, string DriverSettingsKey, List<TestFile> Files, string? OutputDirectory = null, string? NamespacePrefix = null);
 public record TestFile(string BaseDirectory, string RelativePath, string NamespaceRelativePath, List<TestSuite> TestSuites, string? TfmCondition = null);
 public record TestSuite(string SuiteName, string SchemaPath, List<TestSpecification> TestSpecifications, bool ValidateFormat);
 public record TestSpecification(string TestDescription, string Instance, bool Expectation);
@@ -390,6 +410,8 @@ public class TestCollection
     public string DriverSettingsKey { get; set; }
     public string Directory { get; set; }
     public string? BaseDirectory { get; set; }
+    public string? OutputDirectory { get; set; }
+    public string? NamespacePrefix { get; set; }
     public bool UseVirtualFile { get; set; }
     public List<PathOptions>? Options { get; set; }
     public List<FileExclusions>? Exclusions { get; set; }
