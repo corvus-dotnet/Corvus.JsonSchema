@@ -112,6 +112,7 @@
     <Compile Include="CoverageBatch19Tests.cs" />
     <Compile Include="CoverageBatch20Tests.cs" />
     <Compile Include="CoverageBatch21Tests.cs" />
+    <Compile Include="CoverageBatch22Tests.cs" />
     <Compile Include="JsonDocumentBuilderCoverageTests.cs" />
     <Compile Include="JsonDocumentBuilderCreateDynamicTests.cs" />
     <Compile Include="JsonDocumentBuilderInsertItemTests.cs" />
