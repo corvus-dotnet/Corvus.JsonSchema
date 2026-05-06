@@ -1,0 +1,620 @@
+[
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "\"\""
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "\"\""
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "\"\""
+  },
+  {
+    "valid": false,
+    "count": 140,
+    "level": "Verbose",
+    "inputData": "\"\""
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "\"foo\""
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "\"foo\""
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "\"foo\""
+  },
+  {
+    "valid": false,
+    "count": 140,
+    "level": "Verbose",
+    "inputData": "\"foo\""
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "null"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "null"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "null"
+  },
+  {
+    "valid": false,
+    "count": 128,
+    "level": "Verbose",
+    "inputData": "null"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "-1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "0"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "256"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "-256"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "256.1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "-256.1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "256"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "-32769"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "32769"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "-32769.1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "32769.1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "-65536"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "65536"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "-65536.1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "65536.1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "-2147483648"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "2147483648"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "-2147483648.1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "2147483648.1"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "true"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "[1,2,3]"
+  },
+  {
+    "valid": false,
+    "count": 0,
+    "level": "Flag",
+    "inputData": "{ \"foo\": \"bar\" }"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "-1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "0"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "256"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "-256"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "256.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "-256.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "256"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "-32769"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "32769"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "-32769.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "32769.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "-65536"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "65536"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "-65536.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "65536.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "-2147483648"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "2147483648"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "-2147483648.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "2147483648.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "true"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "[1,2,3]"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Basic",
+    "inputData": "{ \"foo\": \"bar\" }"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "-1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "0"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "256"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "-256"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "256.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "-256.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "256"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "-32769"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "32769"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "-32769.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "32769.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "-65536"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "65536"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "-65536.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "65536.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "-2147483648"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "2147483648"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "-2147483648.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "2147483648.1"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "true"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "[1,2,3]"
+  },
+  {
+    "valid": false,
+    "count": 1,
+    "level": "Detailed",
+    "inputData": "{ \"foo\": \"bar\" }"
+  },
+  {
+    "valid": false,
+    "count": 137,
+    "level": "Verbose",
+    "inputData": "-1"
+  },
+  {
+    "valid": false,
+    "count": 142,
+    "level": "Verbose",
+    "inputData": "0"
+  },
+  {
+    "valid": false,
+    "count": 142,
+    "level": "Verbose",
+    "inputData": "1"
+  },
+  {
+    "valid": false,
+    "count": 140,
+    "level": "Verbose",
+    "inputData": "256"
+  },
+  {
+    "valid": false,
+    "count": 136,
+    "level": "Verbose",
+    "inputData": "-256"
+  },
+  {
+    "valid": false,
+    "count": 132,
+    "level": "Verbose",
+    "inputData": "256.1"
+  },
+  {
+    "valid": false,
+    "count": 132,
+    "level": "Verbose",
+    "inputData": "-256.1"
+  },
+  {
+    "valid": false,
+    "count": 135,
+    "level": "Verbose",
+    "inputData": "-32769"
+  },
+  {
+    "valid": false,
+    "count": 139,
+    "level": "Verbose",
+    "inputData": "32769"
+  },
+  {
+    "valid": false,
+    "count": 132,
+    "level": "Verbose",
+    "inputData": "-32769.1"
+  },
+  {
+    "valid": false,
+    "count": 132,
+    "level": "Verbose",
+    "inputData": "32769.1"
+  },
+  {
+    "valid": false,
+    "count": 134,
+    "level": "Verbose",
+    "inputData": "-65536"
+  },
+  {
+    "valid": false,
+    "count": 137,
+    "level": "Verbose",
+    "inputData": "65536"
+  },
+  {
+    "valid": false,
+    "count": 131,
+    "level": "Verbose",
+    "inputData": "-65536.1"
+  },
+  {
+    "valid": false,
+    "count": 131,
+    "level": "Verbose",
+    "inputData": "65536.1"
+  },
+  {
+    "valid": false,
+    "count": 134,
+    "level": "Verbose",
+    "inputData": "-2147483648"
+  },
+  {
+    "valid": false,
+    "count": 136,
+    "level": "Verbose",
+    "inputData": "2147483648"
+  },
+  {
+    "valid": false,
+    "count": 131,
+    "level": "Verbose",
+    "inputData": "-2147483648.1"
+  },
+  {
+    "valid": false,
+    "count": 131,
+    "level": "Verbose",
+    "inputData": "2147483648.1"
+  },
+  {
+    "valid": false,
+    "count": 128,
+    "level": "Verbose",
+    "inputData": "true"
+  },
+  {
+    "valid": false,
+    "count": 128,
+    "level": "Verbose",
+    "inputData": "[1,2,3]"
+  },
+  {
+    "valid": false,
+    "count": 127,
+    "level": "Verbose",
+    "inputData": "{ \"foo\": \"bar\" }"
+  }
+]
