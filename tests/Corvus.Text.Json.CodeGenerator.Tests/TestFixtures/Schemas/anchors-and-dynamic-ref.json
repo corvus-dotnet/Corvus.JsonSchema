@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/anchor-test",
+  "type": "object",
+  "$defs": {
+    "stringType": {
+      "$anchor": "myAnchor",
+      "type": "string",
+      "minLength": 1
+    },
+    "recursiveBase": {
+      "$dynamicAnchor": "node",
+      "type": "object",
+      "properties": {
+        "value": { "type": "string" },
+        "children": {
+          "type": "array",
+          "items": { "$dynamicRef": "#node" }
+        }
+      }
+    }
+  },
+  "properties": {
+    "name": { "$ref": "#myAnchor" },
+    "tree": { "$ref": "#/$defs/recursiveBase" }
+  }
+}

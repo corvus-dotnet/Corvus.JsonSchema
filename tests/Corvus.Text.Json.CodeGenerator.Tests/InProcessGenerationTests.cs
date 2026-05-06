@@ -858,6 +858,76 @@ public class InProcessGenerationTests
         Assert.Empty(files);
     }
 
+    [Fact]
+    public async Task GenerateCode_ContentMediaTypePre201909_ExercisesAllFormatPaths()
+    {
+        // Exercises ContentMediaTypePre201909Keyword.TryGetFormat:
+        // - application/json (no encoding) → corvus-json-content-pre201909
+        // - application/json + base64 → corvus-base64-content-pre201909
+        // - application/octet-stream + base64 → corvus-base64-content
+        // - application/json + gzip → returns false (lines 73-75)
+        // - text/plain → returns false (lines 94-95)
+        string schemaPath = Path.Combine(SchemasDir, "content-media-pre201909.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
+
+        Assert.NotEmpty(files);
+    }
+
+    [Fact]
+    public async Task GenerateCode_ContentMediaType202012_ExercisesAllFormatPaths()
+    {
+        // Exercises ContentMediaTypeKeyword.TryGetFormat paths (same structure, different keyword)
+        string schemaPath = Path.Combine(SchemasDir, "content-media-202012.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
+
+        Assert.NotEmpty(files);
+    }
+
+    [Fact]
+    public async Task GenerateCode_RefHidesSiblings_Draft7_ExercisesDollarRefHidesSiblingsKeyword()
+    {
+        // Exercises DollarRefHidesSiblingsKeyword: in Draft 7, $ref hides sibling keywords
+        string schemaPath = Path.Combine(SchemasDir, "ref-hides-siblings-draft7.json");
+
+        CompoundDocumentResolver documentResolver = new(
+            new FileSystemDocumentResolver(),
+            new HttpClientDocumentResolver(new HttpClient()));
+
+        VocabularyRegistry vocabularyRegistry = new();
+        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+
+        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+        JsonReference reference = new(schemaPath);
+        TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+            reference,
+            Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary);
+
+        var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+        IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(
+            languageProvider, [rootType], CancellationToken.None);
+
+        Assert.NotEmpty(files);
+
+        // Verify that has-siblings-hiding-keyword is detected
+        Assert.True(rootType.HasSiblingHidingKeyword() || rootType.Children().Any(c => c.HasSiblingHidingKeyword()),
+            "Expected DollarRefHidesSiblingsKeyword to be detected in Draft 7 schema with $ref");
+    }
+
+    [Fact]
+    public async Task GenerateCode_AnchorsAndDynamicRef_ExercisesAnchorResolution()
+    {
+        // Exercises Anchors.cs: AddAnchors, GetLocationAndPointerForAnchor, ApplyScopeToNewType
+        string schemaPath = Path.Combine(SchemasDir, "anchors-and-dynamic-ref.json");
+        IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
+
+        Assert.NotEmpty(files);
+    }
+
     private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcess(
         string schemaPath,
         CodeGenerationMode mode = CodeGenerationMode.TypeGeneration)
@@ -890,6 +960,219 @@ public class InProcessGenerationTests
             languageProvider,
             [rootType],
             CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task Validation_TryGetValidationConstantForKeyword_ReturnsMinimumValue()
+    {
+        // Exercises Validation.TryGetValidationConstantForKeyword (lines 25-38)
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "integer",
+              "minimum": 42
+            }
+            """;
+
+        string tempFile = Path.Combine(Path.GetTempPath(), $"test-schema-{Guid.NewGuid():N}.json");
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, schemaContent);
+
+            CompoundDocumentResolver documentResolver = new(
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient()));
+
+            VocabularyRegistry vocabularyRegistry = new();
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+            JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+            JsonReference reference = new(tempFile);
+            TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+                reference,
+                Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+            var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+            var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+            typeBuilder.GenerateCodeUsing(languageProvider, [rootType], CancellationToken.None);
+
+            // Now rootType.BuildComplete is true; exercise validation constant retrieval
+            var minimumKeyword = Corvus.Json.CodeGeneration.Keywords.MinimumKeyword.Instance;
+
+            bool found = rootType.TryGetValidationConstantForKeyword(minimumKeyword, null, out System.Text.Json.JsonElement value);
+
+            Assert.True(found, "Expected to find validation constant for minimum keyword");
+            Assert.Equal(42, value.GetInt32());
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Validation_GetValidationConstantCountForKeyword_ReturnsCorrectCount()
+    {
+        // Exercises Validation.GetValidationConstantCountForKeyword (lines 47-56)
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "enum": ["alpha", "beta", "gamma"]
+            }
+            """;
+
+        string tempFile = Path.Combine(Path.GetTempPath(), $"test-schema-{Guid.NewGuid():N}.json");
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, schemaContent);
+
+            CompoundDocumentResolver documentResolver = new(
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient()));
+
+            VocabularyRegistry vocabularyRegistry = new();
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+            JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+            JsonReference reference = new(tempFile);
+            TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+                reference,
+                Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+            var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+            var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+            typeBuilder.GenerateCodeUsing(languageProvider, [rootType], CancellationToken.None);
+
+            // Exercise GetValidationConstantCountForKeyword
+            var enumKeyword = Corvus.Json.CodeGeneration.Keywords.EnumKeyword.Instance;
+
+            int count = rootType.GetValidationConstantCountForKeyword(enumKeyword);
+
+            // enum with 3 values should yield 3 validation constants
+            Assert.Equal(3, count);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Validation_TryGetValidationConstant_NotFound_ReturnsFalse()
+    {
+        // Exercises the false-return path (lines 36-37 of Validation.cs)
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string"
+            }
+            """;
+
+        string tempFile = Path.Combine(Path.GetTempPath(), $"test-schema-{Guid.NewGuid():N}.json");
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, schemaContent);
+
+            CompoundDocumentResolver documentResolver = new(
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient()));
+
+            VocabularyRegistry vocabularyRegistry = new();
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+            JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+            JsonReference reference = new(tempFile);
+            TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+                reference,
+                Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+            var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+            var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+            typeBuilder.GenerateCodeUsing(languageProvider, [rootType], CancellationToken.None);
+
+            // No minimum keyword on a plain string type
+            var minimumKeyword = Corvus.Json.CodeGeneration.Keywords.MinimumKeyword.Instance;
+
+            bool found = rootType.TryGetValidationConstantForKeyword(minimumKeyword, null, out System.Text.Json.JsonElement value);
+
+            Assert.False(found);
+            Assert.Equal(default, value);
+
+            int count = rootType.GetValidationConstantCountForKeyword(minimumKeyword);
+            Assert.Equal(0, count);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
+    }
+
+    [Fact]
+    public async Task Validation_TryGetValidationConstant_WithIndex_ReturnsCorrectElement()
+    {
+        // Exercises the index path (line 26: int i = index ?? 0)
+        string schemaContent = """
+            {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "type": "string",
+              "enum": ["first", "second", "third"]
+            }
+            """;
+
+        string tempFile = Path.Combine(Path.GetTempPath(), $"test-schema-{Guid.NewGuid():N}.json");
+        try
+        {
+            await File.WriteAllTextAsync(tempFile, schemaContent);
+
+            CompoundDocumentResolver documentResolver = new(
+                new FileSystemDocumentResolver(),
+                new HttpClientDocumentResolver(new HttpClient()));
+
+            VocabularyRegistry vocabularyRegistry = new();
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+
+            JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+            JsonReference reference = new(tempFile);
+            TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+                reference,
+                Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+
+            var options = new CSharpLanguageProvider.Options(defaultNamespace: "TestGenerated");
+            var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+            typeBuilder.GenerateCodeUsing(languageProvider, [rootType], CancellationToken.None);
+
+            var enumKeyword = Corvus.Json.CodeGeneration.Keywords.EnumKeyword.Instance;
+
+            // Get the second element (index 1)
+            bool found = rootType.TryGetValidationConstantForKeyword(enumKeyword, 1, out System.Text.Json.JsonElement value);
+            Assert.True(found);
+            Assert.Equal("second", value.GetString());
+
+            // Out-of-range index returns false
+            bool outOfRange = rootType.TryGetValidationConstantForKeyword(enumKeyword, 99, out _);
+            Assert.False(outOfRange);
+        }
+        finally
+        {
+            if (File.Exists(tempFile))
+            {
+                File.Delete(tempFile);
+            }
+        }
     }
 
     private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcessFromContent(
