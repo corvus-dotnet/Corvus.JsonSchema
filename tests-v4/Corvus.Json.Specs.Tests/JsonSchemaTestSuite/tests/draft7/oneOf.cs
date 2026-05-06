@@ -22,7 +22,7 @@ public class SuiteOneOf : IClassFixture<SuiteOneOf.Fixture>
     public void TestFirstOneOfValid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteOneOf : IClassFixture<SuiteOneOf.Fixture>
     public void TestSecondOneOfValid()
     {
         using var doc = JsonDocument.Parse("2.5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteOneOf : IClassFixture<SuiteOneOf.Fixture>
     public void TestBothOneOfValid()
     {
         using var doc = JsonDocument.Parse("3");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteOneOf : IClassFixture<SuiteOneOf.Fixture>
     public void TestNeitherOneOfValid()
     {
         using var doc = JsonDocument.Parse("1.5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -90,7 +90,7 @@ public class SuiteOneOfWithBaseSchema : IClassFixture<SuiteOneOfWithBaseSchema.F
     public void TestMismatchBaseSchema()
     {
         using var doc = JsonDocument.Parse("3");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -98,7 +98,7 @@ public class SuiteOneOfWithBaseSchema : IClassFixture<SuiteOneOfWithBaseSchema.F
     public void TestOneOneOfValid()
     {
         using var doc = JsonDocument.Parse("\"foobar\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -106,7 +106,7 @@ public class SuiteOneOfWithBaseSchema : IClassFixture<SuiteOneOfWithBaseSchema.F
     public void TestBothOneOfValid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteOneOfWithBooleanSchemasAllTrue : IClassFixture<SuiteOneOfWithB
     public void TestAnyValueIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -194,7 +194,7 @@ public class SuiteOneOfWithBooleanSchemasOneTrue : IClassFixture<SuiteOneOfWithB
     public void TestAnyValueIsValid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteOneOfWithBooleanSchemasMoreThanOneTrue : IClassFixture<SuiteOn
     public void TestAnyValueIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -282,7 +282,7 @@ public class SuiteOneOfWithBooleanSchemasAllFalse : IClassFixture<SuiteOneOfWith
     public void TestAnyValueIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -326,7 +326,7 @@ public class SuiteOneOfComplexTypes : IClassFixture<SuiteOneOfComplexTypes.Fixtu
     public void TestFirstOneOfValidComplex()
     {
         using var doc = JsonDocument.Parse("{\"bar\": 2}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -334,7 +334,7 @@ public class SuiteOneOfComplexTypes : IClassFixture<SuiteOneOfComplexTypes.Fixtu
     public void TestSecondOneOfValidComplex()
     {
         using var doc = JsonDocument.Parse("{\"foo\": \"baz\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -342,7 +342,7 @@ public class SuiteOneOfComplexTypes : IClassFixture<SuiteOneOfComplexTypes.Fixtu
     public void TestBothOneOfValidComplex()
     {
         using var doc = JsonDocument.Parse("{\"foo\": \"baz\", \"bar\": 2}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -350,7 +350,7 @@ public class SuiteOneOfComplexTypes : IClassFixture<SuiteOneOfComplexTypes.Fixtu
     public void TestNeitherOneOfValidComplex()
     {
         using var doc = JsonDocument.Parse("{\"foo\": 2, \"bar\": \"quux\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -394,7 +394,7 @@ public class SuiteOneOfWithEmptySchema : IClassFixture<SuiteOneOfWithEmptySchema
     public void TestOneValidValid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -402,7 +402,7 @@ public class SuiteOneOfWithEmptySchema : IClassFixture<SuiteOneOfWithEmptySchema
     public void TestBothValidInvalid()
     {
         using var doc = JsonDocument.Parse("123");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -446,7 +446,7 @@ public class SuiteOneOfWithRequired : IClassFixture<SuiteOneOfWithRequired.Fixtu
     public void TestBothInvalidInvalid()
     {
         using var doc = JsonDocument.Parse("{\"bar\": 2}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -454,7 +454,7 @@ public class SuiteOneOfWithRequired : IClassFixture<SuiteOneOfWithRequired.Fixtu
     public void TestFirstValidValid()
     {
         using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -462,7 +462,7 @@ public class SuiteOneOfWithRequired : IClassFixture<SuiteOneOfWithRequired.Fixtu
     public void TestSecondValidValid()
     {
         using var doc = JsonDocument.Parse("{\"foo\": 1, \"baz\": 3}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -470,7 +470,7 @@ public class SuiteOneOfWithRequired : IClassFixture<SuiteOneOfWithRequired.Fixtu
     public void TestBothValidInvalid()
     {
         using var doc = JsonDocument.Parse("{\"foo\": 1, \"bar\": 2, \"baz\" : 3}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -514,7 +514,7 @@ public class SuiteOneOfWithMissingOptionalProperty : IClassFixture<SuiteOneOfWit
     public void TestFirstOneOfValid()
     {
         using var doc = JsonDocument.Parse("{\"bar\": 8}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -522,7 +522,7 @@ public class SuiteOneOfWithMissingOptionalProperty : IClassFixture<SuiteOneOfWit
     public void TestSecondOneOfValid()
     {
         using var doc = JsonDocument.Parse("{\"foo\": \"foo\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -530,7 +530,7 @@ public class SuiteOneOfWithMissingOptionalProperty : IClassFixture<SuiteOneOfWit
     public void TestBothOneOfValid()
     {
         using var doc = JsonDocument.Parse("{\"foo\": \"foo\", \"bar\": 8}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -538,7 +538,7 @@ public class SuiteOneOfWithMissingOptionalProperty : IClassFixture<SuiteOneOfWit
     public void TestNeitherOneOfValid()
     {
         using var doc = JsonDocument.Parse("{\"baz\": \"quux\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -582,7 +582,7 @@ public class SuiteNestedOneOfToCheckValidationSemantics : IClassFixture<SuiteNes
     public void TestNullIsValid()
     {
         using var doc = JsonDocument.Parse("null");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -590,7 +590,7 @@ public class SuiteNestedOneOfToCheckValidationSemantics : IClassFixture<SuiteNes
     public void TestAnythingNonNullIsInvalid()
     {
         using var doc = JsonDocument.Parse("123");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

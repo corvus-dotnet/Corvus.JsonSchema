@@ -22,7 +22,7 @@ public class SuiteReproSimilarDefinitionNames : IClassFixture<SuiteReproSimilarD
     public void TestDataIdFooId2Bar()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"id\": \"foo\",\r\n          \"id2\": \"bar\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

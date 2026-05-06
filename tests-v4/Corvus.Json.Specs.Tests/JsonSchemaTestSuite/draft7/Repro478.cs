@@ -22,7 +22,7 @@ public class SuiteGenerationErrorWithRegularExpressions : IClassFixture<SuiteGen
     public void TestDataVersion02LanguageEnWordsAesEc()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"version\": \"0.2\",\r\n          \"language\": \"en\",\r\n          \"words\": [\r\n            \"aes\",\r\n            \"ecies\",\r\n            \"eciespy\",\r\n            \"fastapi\",\r\n            \"secp256k1\",\r\n            \"Spacefile\",\r\n            \"uvicorn\"\r\n          ],\r\n          \"flagWords\": [\r\n            \"hte\"\r\n          ],\r\n          \"ignorePaths\": [\r\n            \".git\",\r\n            \".github\",\r\n            \".gitignore\",\r\n            \".cspell.jsonc\",\r\n            \".pre-commit-config.yaml\",\r\n            \"LICENSE\",\r\n            \"poetry.lock\"\r\n          ]\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

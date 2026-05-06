@@ -22,7 +22,7 @@ public class SuiteDependabotSchema : IClassFixture<SuiteDependabotSchema.Fixture
     public void TestData()
     {
         using var doc = JsonDocument.Parse("{}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

@@ -22,7 +22,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAllStringFormatsIgnoreIntegers()
     {
         using var doc = JsonDocument.Parse("12");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAllStringFormatsIgnoreFloats()
     {
         using var doc = JsonDocument.Parse("13.7");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAllStringFormatsIgnoreObjects()
     {
         using var doc = JsonDocument.Parse("{}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAllStringFormatsIgnoreArrays()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -54,7 +54,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAllStringFormatsIgnoreBooleans()
     {
         using var doc = JsonDocument.Parse("false");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -62,7 +62,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAllStringFormatsIgnoreNulls()
     {
         using var doc = JsonDocument.Parse("null");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -70,7 +70,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAValidHostName()
     {
         using var doc = JsonDocument.Parse("\"www.example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -78,7 +78,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAValidPunycodedIDNHostname()
     {
         using var doc = JsonDocument.Parse("\"xn--4gbwdl.xn--wgbh1c\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -86,7 +86,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestHostnameWithConsecutiveHyphensRFC1123()
     {
         using var doc = JsonDocument.Parse("\"ab--cd.example\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -94,7 +94,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAHostNameStartingWithAnIllegalCharacter()
     {
         using var doc = JsonDocument.Parse("\"-a-host-name-that-starts-with--\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -102,7 +102,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAHostNameContainingIllegalCharacters()
     {
         using var doc = JsonDocument.Parse("\"not_a_valid_host_name\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -110,7 +110,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestAHostNameWithAComponentTooLong()
     {
         using var doc = JsonDocument.Parse("\"a-vvvvvvvvvvvvvvvveeeeeeeeeeeeeeeerrrrrrrrrrrrrrrryyyyyyyyyyyyyyyy-long-host-name-component\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -118,7 +118,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestStartsWithHyphen()
     {
         using var doc = JsonDocument.Parse("\"-hostname\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestEndsWithHyphen()
     {
         using var doc = JsonDocument.Parse("\"hostname-\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestStartsWithUnderscore()
     {
         using var doc = JsonDocument.Parse("\"_hostname\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -142,7 +142,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestEndsWithUnderscore()
     {
         using var doc = JsonDocument.Parse("\"hostname_\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestContainsUnderscore()
     {
         using var doc = JsonDocument.Parse("\"host_name\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestMaximumLabelLength()
     {
         using var doc = JsonDocument.Parse("\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijk.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestExceedsMaximumLabelLength()
     {
         using var doc = JsonDocument.Parse("\"abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijkl.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -174,7 +174,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestSingleLabel()
     {
         using var doc = JsonDocument.Parse("\"hostname\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -182,7 +182,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestSingleLabelWithHyphen()
     {
         using var doc = JsonDocument.Parse("\"host-name\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -190,7 +190,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestSingleLabelWithDigits()
     {
         using var doc = JsonDocument.Parse("\"h0stn4me\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -198,7 +198,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestSingleLabelEndingWithDigit()
     {
         using var doc = JsonDocument.Parse("\"hostnam3\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -206,7 +206,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestEmptyString()
     {
         using var doc = JsonDocument.Parse("\"\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -214,7 +214,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestSingleDot()
     {
         using var doc = JsonDocument.Parse("\".\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -222,7 +222,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestLeadingDot()
     {
         using var doc = JsonDocument.Parse("\".example\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -230,7 +230,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestTrailingDot()
     {
         using var doc = JsonDocument.Parse("\"example.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
     public void TestIDNLabelSeparator()
     {
         using var doc = JsonDocument.Parse("\"example\\uff0ecom\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

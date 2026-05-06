@@ -22,7 +22,7 @@ public class SuiteReproTildeDescription : IClassFixture<SuiteReproTildeDescripti
     public void TestDataDry123()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"dry\": 123\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

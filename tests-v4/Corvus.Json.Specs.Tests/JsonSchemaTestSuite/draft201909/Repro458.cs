@@ -22,7 +22,7 @@ public class SuiteAnEmptyRequiredArray : IClassFixture<SuiteAnEmptyRequiredArray
     public void TestDataFlagFalseBar3()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"flag\": false,\r\n          \"bar\": 3\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteAnEmptyRequiredArray : IClassFixture<SuiteAnEmptyRequiredArray
     public void TestDataFlagTrue()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"flag\": true\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteAnEmptyRequiredArray : IClassFixture<SuiteAnEmptyRequiredArray
     public void TestDataFlagFalse()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"flag\": false\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

@@ -22,7 +22,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestAllStringFormatsIgnoreIntegers()
     {
         using var doc = JsonDocument.Parse("12");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestAllStringFormatsIgnoreFloats()
     {
         using var doc = JsonDocument.Parse("13.7");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestAllStringFormatsIgnoreObjects()
     {
         using var doc = JsonDocument.Parse("{}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestAllStringFormatsIgnoreArrays()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -54,7 +54,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestAllStringFormatsIgnoreBooleans()
     {
         using var doc = JsonDocument.Parse("false");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -62,7 +62,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestAllStringFormatsIgnoreNulls()
     {
         using var doc = JsonDocument.Parse("null");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -70,7 +70,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestAValidEMailAddress()
     {
         using var doc = JsonDocument.Parse("\"joe.bloggs@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -78,7 +78,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestAnInvalidEMailAddress()
     {
         using var doc = JsonDocument.Parse("\"2962\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -86,7 +86,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestTildeInLocalPartIsValid()
     {
         using var doc = JsonDocument.Parse("\"te~st@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -94,7 +94,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestTildeBeforeLocalPartIsValid()
     {
         using var doc = JsonDocument.Parse("\"~test@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -102,7 +102,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestTildeAfterLocalPartIsValid()
     {
         using var doc = JsonDocument.Parse("\"test~@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -110,7 +110,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestDotBeforeLocalPartIsNotValid()
     {
         using var doc = JsonDocument.Parse("\".test@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -118,7 +118,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestDotAfterLocalPartIsNotValid()
     {
         using var doc = JsonDocument.Parse("\"test.@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestTwoSeparatedDotsInsideLocalPartAreValid()
     {
         using var doc = JsonDocument.Parse("\"te.s.t@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestTwoSubsequentDotsInsideLocalPartAreNotValid()
     {
         using var doc = JsonDocument.Parse("\"te..st@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -142,7 +142,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestTwoEmailAddressesIsNotValid()
     {
         using var doc = JsonDocument.Parse("\"user1@oceania.org, user2@oceania.org\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestFullFromHeaderIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"\\\"Winston Smith\\\" <winston.smith@recdep.minitrue> (Records Department)\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestLocalPartIsRequired()
     {
         using var doc = JsonDocument.Parse("\"@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestDomainIsRequired()
     {
         using var doc = JsonDocument.Parse("\"joe.bloggs@\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -174,7 +174,7 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
     public void TestUnquotedSpaceInLocalPartIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"joe bloggs@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

@@ -22,7 +22,7 @@ public class SuiteMaxContainsWithoutContainsIsIgnored : IClassFixture<SuiteMaxCo
     public void TestOneItemValidAgainstLoneMaxContains()
     {
         using var doc = JsonDocument.Parse("[ 1 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteMaxContainsWithoutContainsIsIgnored : IClassFixture<SuiteMaxCo
     public void TestTwoItemsStillValidAgainstLoneMaxContains()
     {
         using var doc = JsonDocument.Parse("[ 1, 2 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -74,7 +74,7 @@ public class SuiteMaxContainsWithContains : IClassFixture<SuiteMaxContainsWithCo
     public void TestEmptyData()
     {
         using var doc = JsonDocument.Parse("[ ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteMaxContainsWithContains : IClassFixture<SuiteMaxContainsWithCo
     public void TestAllElementsMatchValidMaxContains()
     {
         using var doc = JsonDocument.Parse("[ 1 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -90,7 +90,7 @@ public class SuiteMaxContainsWithContains : IClassFixture<SuiteMaxContainsWithCo
     public void TestAllElementsMatchInvalidMaxContains()
     {
         using var doc = JsonDocument.Parse("[ 1, 1 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -98,7 +98,7 @@ public class SuiteMaxContainsWithContains : IClassFixture<SuiteMaxContainsWithCo
     public void TestSomeElementsMatchValidMaxContains()
     {
         using var doc = JsonDocument.Parse("[ 1, 2 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -106,7 +106,7 @@ public class SuiteMaxContainsWithContains : IClassFixture<SuiteMaxContainsWithCo
     public void TestSomeElementsMatchInvalidMaxContains()
     {
         using var doc = JsonDocument.Parse("[ 1, 2, 1 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteMaxContainsWithContainsValueWithADecimal : IClassFixture<Suite
     public void TestOneElementMatchesValidMaxContains()
     {
         using var doc = JsonDocument.Parse("[ 1 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteMaxContainsWithContainsValueWithADecimal : IClassFixture<Suite
     public void TestTooManyElementsMatchInvalidMaxContains()
     {
         using var doc = JsonDocument.Parse("[ 1, 1 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -202,7 +202,7 @@ public class SuiteMinContainsMaxContains : IClassFixture<SuiteMinContainsMaxCont
     public void TestActualMinContainsMaxContains()
     {
         using var doc = JsonDocument.Parse("[ ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -210,7 +210,7 @@ public class SuiteMinContainsMaxContains : IClassFixture<SuiteMinContainsMaxCont
     public void TestMinContainsActualMaxContains()
     {
         using var doc = JsonDocument.Parse("[ 1, 1 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -218,7 +218,7 @@ public class SuiteMinContainsMaxContains : IClassFixture<SuiteMinContainsMaxCont
     public void TestMinContainsMaxContainsActual()
     {
         using var doc = JsonDocument.Parse("[ 1, 1, 1, 1 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -262,7 +262,7 @@ public class SuiteMaxContains0WithMinContains0 : IClassFixture<SuiteMaxContains0
     public void TestEmptyArray()
     {
         using var doc = JsonDocument.Parse("[ ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -270,7 +270,7 @@ public class SuiteMaxContains0WithMinContains0 : IClassFixture<SuiteMaxContains0
     public void TestOneMatchingItem()
     {
         using var doc = JsonDocument.Parse("[ 1 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

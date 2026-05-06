@@ -22,7 +22,7 @@ public class SuiteValidationWithoutSchema : IClassFixture<SuiteValidationWithout
     public void TestA3CharacterStringIsValid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteValidationWithoutSchema : IClassFixture<SuiteValidationWithout
     public void TestA1CharacterStringIsNotValid()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteValidationWithoutSchema : IClassFixture<SuiteValidationWithout
     public void TestANonStringIsValid()
     {
         using var doc = JsonDocument.Parse("5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

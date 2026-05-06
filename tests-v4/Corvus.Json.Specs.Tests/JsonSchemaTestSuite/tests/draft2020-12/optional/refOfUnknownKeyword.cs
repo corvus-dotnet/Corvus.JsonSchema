@@ -22,7 +22,7 @@ public class SuiteReferenceOfARootArbitraryKeyword : IClassFixture<SuiteReferenc
     public void TestMatch()
     {
         using var doc = JsonDocument.Parse("{\"bar\": 3}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteReferenceOfARootArbitraryKeyword : IClassFixture<SuiteReferenc
     public void TestMismatch()
     {
         using var doc = JsonDocument.Parse("{\"bar\": true}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -74,7 +74,7 @@ public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef : IClassFixture
     public void TestMatch()
     {
         using var doc = JsonDocument.Parse("{\"bar\": 3}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef : IClassFixture
     public void TestMismatch()
     {
         using var doc = JsonDocument.Parse("{\"bar\": true}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema : IClassFixture<Suit
     public void TestMatch()
     {
         using var doc = JsonDocument.Parse("{\"bar\": 3}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema : IClassFixture<Suit
     public void TestMismatch()
     {
         using var doc = JsonDocument.Parse("{\"bar\": true}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -178,7 +178,7 @@ public class SuiteReferenceInternalsOfKnownNonApplicator : IClassFixture<SuiteRe
     public void TestMatch()
     {
         using var doc = JsonDocument.Parse("\"a string\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -186,7 +186,7 @@ public class SuiteReferenceInternalsOfKnownNonApplicator : IClassFixture<SuiteRe
     public void TestMismatch()
     {
         using var doc = JsonDocument.Parse("42");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -230,7 +230,7 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef : ICla
     public void TestMatch()
     {
         using var doc = JsonDocument.Parse("{\"bar\": 3}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef : ICla
     public void TestMismatch()
     {
         using var doc = JsonDocument.Parse("{\"bar\": true}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

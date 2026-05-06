@@ -22,7 +22,7 @@ public class SuiteAPropertyThatMatchesABuiltInName : IClassFixture<SuiteAPropert
     public void TestDataMatchFoo()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"match\": \"foo\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteAPropertyThatMatchesABuiltInName : IClassFixture<SuiteAPropert
     public void TestDataMatchF()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"match\": \"f\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -74,7 +74,7 @@ public class SuiteRepro625CollidesWithSystem : IClassFixture<SuiteRepro625Collid
     public void TestDataSystemFooSomeOtherPropBar()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"system\": \"foo\",\r\n          \"someOtherProp\": \"bar\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteRepro625CollidesWithSystem : IClassFixture<SuiteRepro625Collid
     public void TestDataSomeOtherPropBar()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"someOtherProp\": \"bar\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

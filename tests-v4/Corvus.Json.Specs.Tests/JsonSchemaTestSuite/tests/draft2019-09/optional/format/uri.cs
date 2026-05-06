@@ -22,7 +22,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAllStringFormatsIgnoreIntegers()
     {
         using var doc = JsonDocument.Parse("12");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAllStringFormatsIgnoreFloats()
     {
         using var doc = JsonDocument.Parse("13.7");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAllStringFormatsIgnoreObjects()
     {
         using var doc = JsonDocument.Parse("{}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAllStringFormatsIgnoreArrays()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -54,7 +54,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAllStringFormatsIgnoreBooleans()
     {
         using var doc = JsonDocument.Parse("false");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -62,7 +62,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAllStringFormatsIgnoreNulls()
     {
         using var doc = JsonDocument.Parse("null");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -70,7 +70,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidURLWithAnchorTag()
     {
         using var doc = JsonDocument.Parse("\"http://foo.bar/?baz=qux#quux\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -78,7 +78,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidURLWithAnchorTagAndParentheses()
     {
         using var doc = JsonDocument.Parse("\"http://foo.com/blah_(wikipedia)_blah#cite-1\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -86,7 +86,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidURLWithURLEncodedStuff()
     {
         using var doc = JsonDocument.Parse("\"http://foo.bar/?q=Test%20URL-encoded%20stuff\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -94,7 +94,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidPunyCodedURL()
     {
         using var doc = JsonDocument.Parse("\"http://xn--nw2a.xn--j6w193g/\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -102,7 +102,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidURLWithManySpecialCharacters()
     {
         using var doc = JsonDocument.Parse("\"http://-.~_!$&'()*+,;=:%40:80%2f::::::@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -110,7 +110,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidURLBasedOnIPv4()
     {
         using var doc = JsonDocument.Parse("\"http://223.255.255.254\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -118,7 +118,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidURLWithFtpScheme()
     {
         using var doc = JsonDocument.Parse("\"ftp://ftp.is.co.za/rfc/rfc1808.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidURLForASimpleTextFile()
     {
         using var doc = JsonDocument.Parse("\"http://www.ietf.org/rfc/rfc2396.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidURL()
     {
         using var doc = JsonDocument.Parse("\"ldap://[2001:db8::7]/c=GB?objectClass?one\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -142,7 +142,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidMailtoURI()
     {
         using var doc = JsonDocument.Parse("\"mailto:John.Doe@example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidNewsgroupURI()
     {
         using var doc = JsonDocument.Parse("\"news:comp.infosystems.www.servers.unix\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidTelURI()
     {
         using var doc = JsonDocument.Parse("\"tel:+1-816-555-1212\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAValidURN()
     {
         using var doc = JsonDocument.Parse("\"urn:oasis:names:specification:docbook:dtd:xml:4.1.2\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -174,7 +174,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAnInvalidProtocolRelativeURIReference()
     {
         using var doc = JsonDocument.Parse("\"//foo.bar/?baz=qux#quux\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -182,7 +182,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAnInvalidRelativeURIReference()
     {
         using var doc = JsonDocument.Parse("\"/abc\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -190,7 +190,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAnInvalidURI()
     {
         using var doc = JsonDocument.Parse("\"\\\\\\\\WINDOWS\\\\fileshare\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -198,7 +198,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAnInvalidURIThoughValidURIReference()
     {
         using var doc = JsonDocument.Parse("\"abc\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -206,7 +206,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAnInvalidURIWithSpaces()
     {
         using var doc = JsonDocument.Parse("\"http:// shouldfail.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -214,7 +214,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAnInvalidURIWithSpacesAndMissingScheme()
     {
         using var doc = JsonDocument.Parse("\":// should fail\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -222,7 +222,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestAnInvalidURIWithCommaInScheme()
     {
         using var doc = JsonDocument.Parse("\"bar,baz:foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -230,7 +230,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidUserinfo()
     {
         using var doc = JsonDocument.Parse("\"https://[@example.org/test.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestUnescapedNonUSASCIICharacters()
     {
         using var doc = JsonDocument.Parse("\"https://example.org/foobar®.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -246,7 +246,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidBackslashCharacter()
     {
         using var doc = JsonDocument.Parse("\"https://example.org/foobar\\\\.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -254,7 +254,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidCharacter()
     {
         using var doc = JsonDocument.Parse("\"https://example.org/foobar\\\".txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -262,7 +262,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidCharacters()
     {
         using var doc = JsonDocument.Parse("\"https://example.org/foobar<>.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -270,7 +270,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidCharacters1()
     {
         using var doc = JsonDocument.Parse("\"https://example.org/foobar{}.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -278,7 +278,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidCharacter1()
     {
         using var doc = JsonDocument.Parse("\"https://example.org/foobar^.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -286,7 +286,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidCharacter2()
     {
         using var doc = JsonDocument.Parse("\"https://example.org/foobar`.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -294,7 +294,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidSPACECharacter()
     {
         using var doc = JsonDocument.Parse("\"https://example.org/foo bar.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -302,7 +302,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidCharacter3()
     {
         using var doc = JsonDocument.Parse("\"https://example.org/foobar|.txt\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -310,7 +310,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestURIWithLeadingZeroIPv4IsStructurallyValidAsARegName()
     {
         using var doc = JsonDocument.Parse("\"http://087.10.0.1/\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -318,7 +318,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestURIWithOutOfBoundsIPv4IsStructurallyValidAsARegName()
     {
         using var doc = JsonDocument.Parse("\"http://999.999.999.999/\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -326,7 +326,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidPercentEncodingWithNonHexDigits()
     {
         using var doc = JsonDocument.Parse("\"http://example.com/%6G\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -334,7 +334,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestIncompletePercentEncodingTriplet()
     {
         using var doc = JsonDocument.Parse("\"http://example.com/%A\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -342,7 +342,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestLonePercentSignIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"http://example.com/%\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -350,7 +350,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestSchemeMustStartWithALetter()
     {
         using var doc = JsonDocument.Parse("\"1http://example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -358,7 +358,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestInvalidCharacterInScheme()
     {
         using var doc = JsonDocument.Parse("\"ht_tp://example.com\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -366,7 +366,7 @@ public class SuiteValidationOfURIs : IClassFixture<SuiteValidationOfURIs.Fixture
     public void TestNonNumericPortIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"http://example.com:abc/path\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

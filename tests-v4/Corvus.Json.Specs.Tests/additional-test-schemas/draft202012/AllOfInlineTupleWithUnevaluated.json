@@ -1,0 +1,53 @@
+[
+  {
+    "description": "An inline tuple with unevaluated properties composed as with allOf",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "title": "AllOfInlineTupleWithUnevaluated",
+      "description": "An inline tuple within allOf with unevaluatedItems at the top level.",
+      "allOf": [
+        {
+          "prefixItems": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ]
+        }
+      ],
+      "unevaluatedItems": {
+        "type": "boolean"
+      }
+    },
+    "tests": [
+      {
+        "description": "data: [\u0022foo\u0022, 32]",
+        "data": [
+          "foo",
+          32
+        ],
+        "valid": true
+      },
+      {
+        "description": "data: [\u0022foo\u0022, 32, true ]",
+        "data": [
+          "foo",
+          32,
+          true
+        ],
+        "valid": true
+      },
+      {
+        "description": "data: [\u0022foo\u0022, 32, 33 ]",
+        "data": [
+          "foo",
+          32,
+          33
+        ],
+        "valid": false
+      }
+    ]
+  }
+]

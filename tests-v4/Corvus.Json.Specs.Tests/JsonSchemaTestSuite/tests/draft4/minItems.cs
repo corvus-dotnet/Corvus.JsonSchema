@@ -22,7 +22,7 @@ public class SuiteMinItemsValidation : IClassFixture<SuiteMinItemsValidation.Fix
     public void TestLongerIsValid()
     {
         using var doc = JsonDocument.Parse("[1, 2]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteMinItemsValidation : IClassFixture<SuiteMinItemsValidation.Fix
     public void TestExactLengthIsValid()
     {
         using var doc = JsonDocument.Parse("[1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteMinItemsValidation : IClassFixture<SuiteMinItemsValidation.Fix
     public void TestTooShortIsInvalid()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteMinItemsValidation : IClassFixture<SuiteMinItemsValidation.Fix
     public void TestIgnoresNonArrays()
     {
         using var doc = JsonDocument.Parse("\"\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

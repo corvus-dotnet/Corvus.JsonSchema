@@ -22,7 +22,7 @@ public class SuiteBase64EncodedApplicationOctetStream : IClassFixture<SuiteBase6
     public void TestDataFileContentEyJmb28iOiAiYmFyIn0K()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"file\": {\r\n            \"content\": \"eyJmb28iOiAiYmFyIn0K\"\r\n          }\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

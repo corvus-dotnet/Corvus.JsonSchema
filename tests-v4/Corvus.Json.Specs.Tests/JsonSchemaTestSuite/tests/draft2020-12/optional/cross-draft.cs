@@ -22,7 +22,7 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts : IClassFixtu
     public void TestFirstItemNotAStringIsValid()
     {
         using var doc = JsonDocument.Parse("[1, 2, 3]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

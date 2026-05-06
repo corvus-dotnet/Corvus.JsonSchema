@@ -22,7 +22,7 @@ public class SuiteContainsKeywordValidation : IClassFixture<SuiteContainsKeyword
     public void TestArrayWithItemMatchingSchema5IsValid()
     {
         using var doc = JsonDocument.Parse("[3, 4, 5]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteContainsKeywordValidation : IClassFixture<SuiteContainsKeyword
     public void TestArrayWithItemMatchingSchema6IsValid()
     {
         using var doc = JsonDocument.Parse("[3, 4, 6]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteContainsKeywordValidation : IClassFixture<SuiteContainsKeyword
     public void TestArrayWithTwoItemsMatchingSchema56IsValid()
     {
         using var doc = JsonDocument.Parse("[3, 4, 5, 6]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteContainsKeywordValidation : IClassFixture<SuiteContainsKeyword
     public void TestArrayWithoutItemsMatchingSchemaIsInvalid()
     {
         using var doc = JsonDocument.Parse("[2, 3, 4]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -54,7 +54,7 @@ public class SuiteContainsKeywordValidation : IClassFixture<SuiteContainsKeyword
     public void TestEmptyArrayIsInvalid()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -62,7 +62,7 @@ public class SuiteContainsKeywordValidation : IClassFixture<SuiteContainsKeyword
     public void TestNotArrayIsValid()
     {
         using var doc = JsonDocument.Parse("{}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -106,7 +106,7 @@ public class SuiteContainsKeywordWithConstKeyword : IClassFixture<SuiteContainsK
     public void TestArrayWithItem5IsValid()
     {
         using var doc = JsonDocument.Parse("[3, 4, 5]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -114,7 +114,7 @@ public class SuiteContainsKeywordWithConstKeyword : IClassFixture<SuiteContainsK
     public void TestArrayWithTwoItems5IsValid()
     {
         using var doc = JsonDocument.Parse("[3, 4, 5, 5]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -122,7 +122,7 @@ public class SuiteContainsKeywordWithConstKeyword : IClassFixture<SuiteContainsK
     public void TestArrayWithoutItem5IsInvalid()
     {
         using var doc = JsonDocument.Parse("[1, 2, 3, 4]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue : IClassFixture<SuiteCont
     public void TestAnyNonEmptyArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -174,7 +174,7 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue : IClassFixture<SuiteCont
     public void TestEmptyArrayIsInvalid()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -218,7 +218,7 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse : IClassFixture<SuiteCon
     public void TestAnyNonEmptyArrayIsInvalid()
     {
         using var doc = JsonDocument.Parse("[\"foo\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -226,7 +226,7 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse : IClassFixture<SuiteCon
     public void TestEmptyArrayIsInvalid()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -234,7 +234,7 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse : IClassFixture<SuiteCon
     public void TestNonArraysAreValid()
     {
         using var doc = JsonDocument.Parse("\"contains does not apply to strings\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -278,7 +278,7 @@ public class SuiteItemsContains : IClassFixture<SuiteItemsContains.Fixture>
     public void TestMatchesItemsDoesNotMatchContains()
     {
         using var doc = JsonDocument.Parse("[ 2, 4, 8 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -286,7 +286,7 @@ public class SuiteItemsContains : IClassFixture<SuiteItemsContains.Fixture>
     public void TestDoesNotMatchItemsMatchesContains()
     {
         using var doc = JsonDocument.Parse("[ 3, 6, 9 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -294,7 +294,7 @@ public class SuiteItemsContains : IClassFixture<SuiteItemsContains.Fixture>
     public void TestMatchesBothItemsAndContains()
     {
         using var doc = JsonDocument.Parse("[ 6, 12 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -302,7 +302,7 @@ public class SuiteItemsContains : IClassFixture<SuiteItemsContains.Fixture>
     public void TestMatchesNeitherItemsNorContains()
     {
         using var doc = JsonDocument.Parse("[ 1, 5 ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -346,7 +346,7 @@ public class SuiteContainsWithFalseIfSubschema : IClassFixture<SuiteContainsWith
     public void TestAnyNonEmptyArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -354,7 +354,7 @@ public class SuiteContainsWithFalseIfSubschema : IClassFixture<SuiteContainsWith
     public void TestEmptyArrayIsInvalid()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -398,7 +398,7 @@ public class SuiteContainsWithNullInstanceElements : IClassFixture<SuiteContains
     public void TestAllowsNullItems()
     {
         using var doc = JsonDocument.Parse("[ null ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

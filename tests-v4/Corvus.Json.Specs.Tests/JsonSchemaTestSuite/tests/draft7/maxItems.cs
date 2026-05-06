@@ -22,7 +22,7 @@ public class SuiteMaxItemsValidation : IClassFixture<SuiteMaxItemsValidation.Fix
     public void TestShorterIsValid()
     {
         using var doc = JsonDocument.Parse("[1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteMaxItemsValidation : IClassFixture<SuiteMaxItemsValidation.Fix
     public void TestExactLengthIsValid()
     {
         using var doc = JsonDocument.Parse("[1, 2]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteMaxItemsValidation : IClassFixture<SuiteMaxItemsValidation.Fix
     public void TestTooLongIsInvalid()
     {
         using var doc = JsonDocument.Parse("[1, 2, 3]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteMaxItemsValidation : IClassFixture<SuiteMaxItemsValidation.Fix
     public void TestIgnoresNonArrays()
     {
         using var doc = JsonDocument.Parse("\"foobar\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -90,7 +90,7 @@ public class SuiteMaxItemsValidationWithADecimal : IClassFixture<SuiteMaxItemsVa
     public void TestShorterIsValid()
     {
         using var doc = JsonDocument.Parse("[1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -98,7 +98,7 @@ public class SuiteMaxItemsValidationWithADecimal : IClassFixture<SuiteMaxItemsVa
     public void TestTooLongIsInvalid()
     {
         using var doc = JsonDocument.Parse("[1, 2, 3]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

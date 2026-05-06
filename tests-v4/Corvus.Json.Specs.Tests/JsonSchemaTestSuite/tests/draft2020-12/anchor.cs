@@ -22,7 +22,7 @@ public class SuiteLocationIndependentIdentifier : IClassFixture<SuiteLocationInd
     public void TestMatch()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteLocationIndependentIdentifier : IClassFixture<SuiteLocationInd
     public void TestMismatch()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -74,7 +74,7 @@ public class SuiteLocationIndependentIdentifierWithAbsoluteURI : IClassFixture<S
     public void TestMatch()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteLocationIndependentIdentifierWithAbsoluteURI : IClassFixture<S
     public void TestMismatch()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteLocationIndependentIdentifierWithBaseURIChangeInSubschema : IC
     public void TestMatch()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteLocationIndependentIdentifierWithBaseURIChangeInSubschema : IC
     public void TestMismatch()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -178,7 +178,7 @@ public class SuiteSameAnchorWithDifferentBaseUri : IClassFixture<SuiteSameAnchor
     public void TestRefResolvesToDefsAAllOf1()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -186,7 +186,7 @@ public class SuiteSameAnchorWithDifferentBaseUri : IClassFixture<SuiteSameAnchor
     public void TestRefDoesNotResolveToDefsAAllOf0()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

@@ -22,7 +22,7 @@ public class SuiteMinimumValidation : IClassFixture<SuiteMinimumValidation.Fixtu
     public void TestAboveTheMinimumIsValid()
     {
         using var doc = JsonDocument.Parse("2.6");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteMinimumValidation : IClassFixture<SuiteMinimumValidation.Fixtu
     public void TestBoundaryPointIsValid()
     {
         using var doc = JsonDocument.Parse("1.1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteMinimumValidation : IClassFixture<SuiteMinimumValidation.Fixtu
     public void TestBelowTheMinimumIsInvalid()
     {
         using var doc = JsonDocument.Parse("0.6");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteMinimumValidation : IClassFixture<SuiteMinimumValidation.Fixtu
     public void TestIgnoresNonNumbers()
     {
         using var doc = JsonDocument.Parse("\"x\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -90,7 +90,7 @@ public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimu
     public void TestNegativeAboveTheMinimumIsValid()
     {
         using var doc = JsonDocument.Parse("-1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -98,7 +98,7 @@ public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimu
     public void TestPositiveAboveTheMinimumIsValid()
     {
         using var doc = JsonDocument.Parse("0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -106,7 +106,7 @@ public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimu
     public void TestBoundaryPointIsValid()
     {
         using var doc = JsonDocument.Parse("-2");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -114,7 +114,7 @@ public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimu
     public void TestBoundaryPointWithFloatIsValid()
     {
         using var doc = JsonDocument.Parse("-2.0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -122,7 +122,7 @@ public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimu
     public void TestFloatBelowTheMinimumIsInvalid()
     {
         using var doc = JsonDocument.Parse("-2.0001");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -130,7 +130,7 @@ public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimu
     public void TestIntBelowTheMinimumIsInvalid()
     {
         using var doc = JsonDocument.Parse("-3");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -138,7 +138,7 @@ public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimu
     public void TestIgnoresNonNumbers()
     {
         using var doc = JsonDocument.Parse("\"x\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

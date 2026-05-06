@@ -22,7 +22,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestAllStringFormatsIgnoreIntegers()
     {
         using var doc = JsonDocument.Parse("12");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestAllStringFormatsIgnoreFloats()
     {
         using var doc = JsonDocument.Parse("13.7");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestAllStringFormatsIgnoreObjects()
     {
         using var doc = JsonDocument.Parse("{}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestAllStringFormatsIgnoreArrays()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -54,7 +54,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestAllStringFormatsIgnoreBooleans()
     {
         using var doc = JsonDocument.Parse("false");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -62,7 +62,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestAllStringFormatsIgnoreNulls()
     {
         using var doc = JsonDocument.Parse("null");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -70,7 +70,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestAValidDurationString()
     {
         using var doc = JsonDocument.Parse("\"P4DT12H30M5S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -78,7 +78,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestAnInvalidDurationString()
     {
         using var doc = JsonDocument.Parse("\"PT1D\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -86,7 +86,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestMustStartWithP()
     {
         using var doc = JsonDocument.Parse("\"4DT12H30M5S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -94,7 +94,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestNoElementsPresent()
     {
         using var doc = JsonDocument.Parse("\"P\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -102,7 +102,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestNoTimeElementsPresent()
     {
         using var doc = JsonDocument.Parse("\"P1YT\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -110,7 +110,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestNoDateOrTimeElementsPresent()
     {
         using var doc = JsonDocument.Parse("\"PT\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -118,7 +118,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestElementsOutOfOrder()
     {
         using var doc = JsonDocument.Parse("\"P2D1Y\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestMissingTimeSeparator()
     {
         using var doc = JsonDocument.Parse("\"P1D2H\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestTimeElementInTheDatePosition()
     {
         using var doc = JsonDocument.Parse("\"P2S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -142,7 +142,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestFourYearsDuration()
     {
         using var doc = JsonDocument.Parse("\"P4Y\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestZeroTimeInSeconds()
     {
         using var doc = JsonDocument.Parse("\"PT0S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestZeroTimeInDays()
     {
         using var doc = JsonDocument.Parse("\"P0D\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestOneMonthDuration()
     {
         using var doc = JsonDocument.Parse("\"P1M\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -174,7 +174,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestOneMinuteDuration()
     {
         using var doc = JsonDocument.Parse("\"PT1M\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -182,7 +182,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestOneAndAHalfDaysInHours()
     {
         using var doc = JsonDocument.Parse("\"PT36H\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -190,7 +190,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestOneAndAHalfDaysInDaysAndHours()
     {
         using var doc = JsonDocument.Parse("\"P1DT12H\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -198,7 +198,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestTwoWeeks()
     {
         using var doc = JsonDocument.Parse("\"P2W\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -206,7 +206,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestWeeksCannotBeCombinedWithOtherUnits()
     {
         using var doc = JsonDocument.Parse("\"P1Y2W\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -214,7 +214,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestInvalidNonASCII২ABengali2()
     {
         using var doc = JsonDocument.Parse("\"P২Y\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -222,7 +222,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestElementWithoutUnit()
     {
         using var doc = JsonDocument.Parse("\"P1\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -230,7 +230,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestAllDateAndTimeComponents()
     {
         using var doc = JsonDocument.Parse("\"P1Y2M3DT4H5M6S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestDateComponentsOnly()
     {
         using var doc = JsonDocument.Parse("\"P1Y2M3D\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -246,7 +246,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestTimeComponentsOnly()
     {
         using var doc = JsonDocument.Parse("\"PT1H2M3S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -254,7 +254,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestMonthAndDay()
     {
         using var doc = JsonDocument.Parse("\"P1M2D\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -262,7 +262,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestHourAndMinute()
     {
         using var doc = JsonDocument.Parse("\"PT1H30M\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -270,7 +270,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestMultiDigitValuesInAllComponents()
     {
         using var doc = JsonDocument.Parse("\"P10Y10M10DT10H10M10S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -278,7 +278,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestFractionalDurationIsNotAllowedByRFC3339ABNF()
     {
         using var doc = JsonDocument.Parse("\"PT0.5S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -286,7 +286,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestLeadingWhitespaceIsInvalid()
     {
         using var doc = JsonDocument.Parse("\" P1D\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -294,7 +294,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestTrailingWhitespaceIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"P1D \"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -302,7 +302,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestEmptyStringIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -310,7 +310,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestYearsAndMonthsCanAppearWithoutDays()
     {
         using var doc = JsonDocument.Parse("\"P1Y2M\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -318,7 +318,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestYearsAndDaysCannotAppearWithoutMonths()
     {
         using var doc = JsonDocument.Parse("\"P1Y2D\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -326,7 +326,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestMonthsAndDaysCanAppearWithoutYears()
     {
         using var doc = JsonDocument.Parse("\"P1M2D\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -334,7 +334,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestHoursAndMinutesCanAppearWithoutSeconds()
     {
         using var doc = JsonDocument.Parse("\"PT1H2M\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -342,7 +342,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestHoursAndSecondsCannotAppearWithoutMinutes()
     {
         using var doc = JsonDocument.Parse("\"PT1H2S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -350,7 +350,7 @@ public class SuiteValidationOfDurationStrings : IClassFixture<SuiteValidationOfD
     public void TestMinutesAndSecondsCanAppearWithoutHour()
     {
         using var doc = JsonDocument.Parse("\"PT1M2S\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

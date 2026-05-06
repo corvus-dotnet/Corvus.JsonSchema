@@ -22,7 +22,7 @@ public class SuiteEvaluatingTheSameSchemaLocationAgainstTheSameDataLocationTwice
     public void TestPassingCase()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteEvaluatingTheSameSchemaLocationAgainstTheSameDataLocationTwice
     public void TestFailingCase()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": \"a string\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

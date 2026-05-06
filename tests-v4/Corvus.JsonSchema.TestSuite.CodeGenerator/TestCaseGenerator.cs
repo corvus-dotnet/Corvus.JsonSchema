@@ -107,7 +107,7 @@ internal static class TestCaseGenerator
                             .AppendLine($"    public void Test{testName}()")
                             .AppendLine("    {")
                             .AppendLine($"        using var doc = JsonDocument.Parse({SymbolDisplay.FormatLiteral(test.Instance, true)});")
-                            .AppendLine($"        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());")
+                            .AppendLine($"        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);")
                             .AppendLine($"        Assert.{(test.Expectation ? "True" : "False")}(instance.Validate(ValidationContext.ValidContext).IsValid);")
                             .AppendLine("    }");
                     }

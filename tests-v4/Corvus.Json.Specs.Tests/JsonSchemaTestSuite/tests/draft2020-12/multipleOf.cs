@@ -22,7 +22,7 @@ public class SuiteByInt : IClassFixture<SuiteByInt.Fixture>
     public void TestIntByInt()
     {
         using var doc = JsonDocument.Parse("10");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteByInt : IClassFixture<SuiteByInt.Fixture>
     public void TestIntByIntFail()
     {
         using var doc = JsonDocument.Parse("7");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteByInt : IClassFixture<SuiteByInt.Fixture>
     public void TestIgnoresNonNumbers()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
     public void TestZeroIsMultipleOfAnything()
     {
         using var doc = JsonDocument.Parse("0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -90,7 +90,7 @@ public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
     public void Test_45IsMultipleOf15()
     {
         using var doc = JsonDocument.Parse("4.5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -98,7 +98,7 @@ public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
     public void Test_45IsMultipleOf151()
     {
         using var doc = JsonDocument.Parse("-4.5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -106,7 +106,7 @@ public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
     public void Test_35IsNotMultipleOf15()
     {
         using var doc = JsonDocument.Parse("35");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteBySmallNumber : IClassFixture<SuiteBySmallNumber.Fixture>
     public void Test_00075IsMultipleOf00001()
     {
         using var doc = JsonDocument.Parse("0.0075");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteBySmallNumber : IClassFixture<SuiteBySmallNumber.Fixture>
     public void Test_000751IsNotMultipleOf00001()
     {
         using var doc = JsonDocument.Parse("0.00751");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -202,7 +202,7 @@ public class SuiteFloatDivisionInf : IClassFixture<SuiteFloatDivisionInf.Fixture
     public void TestAlwaysInvalidButNaiveImplementationsMayRaiseAnOverflowError()
     {
         using var doc = JsonDocument.Parse("1e308");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -246,7 +246,7 @@ public class SuiteSmallMultipleOfLargeInteger : IClassFixture<SuiteSmallMultiple
     public void TestAnyIntegerIsAMultipleOf1e8()
     {
         using var doc = JsonDocument.Parse("12391239123");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

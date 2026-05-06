@@ -22,7 +22,7 @@ public class SuiteReproStreamTitle : IClassFixture<SuiteReproStreamTitle.Fixture
     public void TestDataFoo123()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"foo\": 123\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

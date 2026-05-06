@@ -22,7 +22,7 @@ public class SuiteReproUnableToGetTypeDeclaration : IClassFixture<SuiteReproUnab
     public void TestDataPluginsFooBar3()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"plugins\": [\r\n            [\r\n              \"foo\",\r\n              {\r\n                \"bar\": 3\r\n              }\r\n            ]\r\n          ]\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

@@ -22,7 +22,7 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts : IClassFixture<S
     public void TestMissingBarIsInvalid()
     {
         using var doc = JsonDocument.Parse("{\"foo\": \"any value\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts : IClassFixture<S
     public void TestPresentBarIsValid()
     {
         using var doc = JsonDocument.Parse("{\"foo\": \"any value\", \"bar\": \"also any value\"}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

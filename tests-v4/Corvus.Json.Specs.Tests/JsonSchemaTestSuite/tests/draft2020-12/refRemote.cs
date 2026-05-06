@@ -22,7 +22,7 @@ public class SuiteRemoteRef : IClassFixture<SuiteRemoteRef.Fixture>
     public void TestRemoteRefValid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteRemoteRef : IClassFixture<SuiteRemoteRef.Fixture>
     public void TestRemoteRefInvalid()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -74,7 +74,7 @@ public class SuiteFragmentWithinRemoteRef : IClassFixture<SuiteFragmentWithinRem
     public void TestRemoteFragmentValid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteFragmentWithinRemoteRef : IClassFixture<SuiteFragmentWithinRem
     public void TestRemoteFragmentInvalid()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteAnchorWithinRemoteRef : IClassFixture<SuiteAnchorWithinRemoteR
     public void TestRemoteAnchorValid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteAnchorWithinRemoteRef : IClassFixture<SuiteAnchorWithinRemoteR
     public void TestRemoteAnchorInvalid()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -178,7 +178,7 @@ public class SuiteRefWithinRemoteRef : IClassFixture<SuiteRefWithinRemoteRef.Fix
     public void TestRefWithinRefValid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -186,7 +186,7 @@ public class SuiteRefWithinRemoteRef : IClassFixture<SuiteRefWithinRemoteRef.Fix
     public void TestRefWithinRefInvalid()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -230,7 +230,7 @@ public class SuiteBaseURIChange : IClassFixture<SuiteBaseURIChange.Fixture>
     public void TestBaseURIChangeRefValid()
     {
         using var doc = JsonDocument.Parse("[[1]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteBaseURIChange : IClassFixture<SuiteBaseURIChange.Fixture>
     public void TestBaseURIChangeRefInvalid()
     {
         using var doc = JsonDocument.Parse("[[\"a\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -282,7 +282,7 @@ public class SuiteBaseURIChangeChangeFolder : IClassFixture<SuiteBaseURIChangeCh
     public void TestNumberIsValid()
     {
         using var doc = JsonDocument.Parse("{\"list\": [1]}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -290,7 +290,7 @@ public class SuiteBaseURIChangeChangeFolder : IClassFixture<SuiteBaseURIChangeCh
     public void TestStringIsInvalid()
     {
         using var doc = JsonDocument.Parse("{\"list\": [\"a\"]}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -334,7 +334,7 @@ public class SuiteBaseURIChangeChangeFolderInSubschema : IClassFixture<SuiteBase
     public void TestNumberIsValid()
     {
         using var doc = JsonDocument.Parse("{\"list\": [1]}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -342,7 +342,7 @@ public class SuiteBaseURIChangeChangeFolderInSubschema : IClassFixture<SuiteBase
     public void TestStringIsInvalid()
     {
         using var doc = JsonDocument.Parse("{\"list\": [\"a\"]}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -386,7 +386,7 @@ public class SuiteRootRefInRemoteRef : IClassFixture<SuiteRootRefInRemoteRef.Fix
     public void TestStringIsValid()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"name\": \"foo\"\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -394,7 +394,7 @@ public class SuiteRootRefInRemoteRef : IClassFixture<SuiteRootRefInRemoteRef.Fix
     public void TestNullIsValid()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"name\": null\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -402,7 +402,7 @@ public class SuiteRootRefInRemoteRef : IClassFixture<SuiteRootRefInRemoteRef.Fix
     public void TestObjectIsInvalid()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"name\": {\r\n                        \"name\": null\r\n                    }\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -446,7 +446,7 @@ public class SuiteRemoteRefWithRefToDefs : IClassFixture<SuiteRemoteRefWithRefTo
     public void TestInvalid()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"bar\": 1\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -454,7 +454,7 @@ public class SuiteRemoteRefWithRefToDefs : IClassFixture<SuiteRemoteRefWithRefTo
     public void TestValid()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"bar\": \"a\"\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -498,7 +498,7 @@ public class SuiteLocationIndependentIdentifierInRemoteRef : IClassFixture<Suite
     public void TestIntegerIsValid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -506,7 +506,7 @@ public class SuiteLocationIndependentIdentifierInRemoteRef : IClassFixture<Suite
     public void TestStringIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -550,7 +550,7 @@ public class SuiteRetrievedNestedRefsResolveRelativeToTheirURINotId : IClassFixt
     public void TestNumberIsInvalid()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"name\": {\"foo\":  1}\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -558,7 +558,7 @@ public class SuiteRetrievedNestedRefsResolveRelativeToTheirURINotId : IClassFixt
     public void TestStringIsValid()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"name\": {\"foo\":  \"a\"}\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -602,7 +602,7 @@ public class SuiteRemoteHTTPRefWithDifferentId : IClassFixture<SuiteRemoteHTTPRe
     public void TestNumberIsInvalid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -610,7 +610,7 @@ public class SuiteRemoteHTTPRefWithDifferentId : IClassFixture<SuiteRemoteHTTPRe
     public void TestStringIsValid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -654,7 +654,7 @@ public class SuiteRemoteHTTPRefWithDifferentURNId : IClassFixture<SuiteRemoteHTT
     public void TestNumberIsInvalid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -662,7 +662,7 @@ public class SuiteRemoteHTTPRefWithDifferentURNId : IClassFixture<SuiteRemoteHTT
     public void TestStringIsValid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -706,7 +706,7 @@ public class SuiteRemoteHTTPRefWithNestedAbsoluteRef : IClassFixture<SuiteRemote
     public void TestNumberIsInvalid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -714,7 +714,7 @@ public class SuiteRemoteHTTPRefWithNestedAbsoluteRef : IClassFixture<SuiteRemote
     public void TestStringIsValid()
     {
         using var doc = JsonDocument.Parse("\"foo\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -758,7 +758,7 @@ public class SuiteRefToRefFindsDetachedAnchor : IClassFixture<SuiteRefToRefFinds
     public void TestNumberIsValid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -766,7 +766,7 @@ public class SuiteRefToRefFindsDetachedAnchor : IClassFixture<SuiteRefToRefFinds
     public void TestNonNumberIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

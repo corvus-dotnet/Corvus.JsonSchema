@@ -22,7 +22,7 @@ public class SuiteAnchorInsideAnEnumIsNotARealIdentifier : IClassFixture<SuiteAn
     public void TestExactMatchToEnumAndTypeMatches()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"$anchor\": \"my_anchor\",\r\n                    \"type\": \"null\"\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteAnchorInsideAnEnumIsNotARealIdentifier : IClassFixture<SuiteAn
     public void TestInImplementationsThatStripAnchorThisMayMatchEitherDef()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"type\": \"null\"\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteAnchorInsideAnEnumIsNotARealIdentifier : IClassFixture<SuiteAn
     public void TestMatchRefToAnchor()
     {
         using var doc = JsonDocument.Parse("\"a string to match #/$defs/anchor_in_enum\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteAnchorInsideAnEnumIsNotARealIdentifier : IClassFixture<SuiteAn
     public void TestNoMatchOnEnumOrRefToAnchor()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

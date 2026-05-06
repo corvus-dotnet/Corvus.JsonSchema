@@ -22,7 +22,7 @@ public class SuiteGenerationError : IClassFixture<SuiteGenerationError.Fixture>
     public void TestDataLanguageEn()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"language\": \"en\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

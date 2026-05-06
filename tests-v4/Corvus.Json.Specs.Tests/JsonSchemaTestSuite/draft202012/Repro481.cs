@@ -22,7 +22,7 @@ public class SuiteMixedCaseEmail : IClassFixture<SuiteMixedCaseEmail.Fixture>
     public void TestDataEndjinCorvusNet()
     {
         using var doc = JsonDocument.Parse("\"Endjin@corvus.net\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

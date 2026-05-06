@@ -22,7 +22,7 @@ public class SuiteExclusiveMaximumValidation : IClassFixture<SuiteExclusiveMaxim
     public void TestBelowTheExclusiveMaximumIsValid()
     {
         using var doc = JsonDocument.Parse("2.2");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteExclusiveMaximumValidation : IClassFixture<SuiteExclusiveMaxim
     public void TestBoundaryPointIsInvalid()
     {
         using var doc = JsonDocument.Parse("3.0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteExclusiveMaximumValidation : IClassFixture<SuiteExclusiveMaxim
     public void TestAboveTheExclusiveMaximumIsInvalid()
     {
         using var doc = JsonDocument.Parse("3.5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteExclusiveMaximumValidation : IClassFixture<SuiteExclusiveMaxim
     public void TestIgnoresNonNumbers()
     {
         using var doc = JsonDocument.Parse("\"x\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

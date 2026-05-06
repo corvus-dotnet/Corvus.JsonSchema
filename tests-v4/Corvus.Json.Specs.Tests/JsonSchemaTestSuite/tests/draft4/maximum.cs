@@ -22,7 +22,7 @@ public class SuiteMaximumValidation : IClassFixture<SuiteMaximumValidation.Fixtu
     public void TestBelowTheMaximumIsValid()
     {
         using var doc = JsonDocument.Parse("2.6");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteMaximumValidation : IClassFixture<SuiteMaximumValidation.Fixtu
     public void TestBoundaryPointIsValid()
     {
         using var doc = JsonDocument.Parse("3.0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteMaximumValidation : IClassFixture<SuiteMaximumValidation.Fixtu
     public void TestAboveTheMaximumIsInvalid()
     {
         using var doc = JsonDocument.Parse("3.5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteMaximumValidation : IClassFixture<SuiteMaximumValidation.Fixtu
     public void TestIgnoresNonNumbers()
     {
         using var doc = JsonDocument.Parse("\"x\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -90,7 +90,7 @@ public class SuiteMaximumValidationWithUnsignedInteger : IClassFixture<SuiteMaxi
     public void TestBelowTheMaximumIsValid()
     {
         using var doc = JsonDocument.Parse("299.97");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -98,7 +98,7 @@ public class SuiteMaximumValidationWithUnsignedInteger : IClassFixture<SuiteMaxi
     public void TestBoundaryPointIntegerIsValid()
     {
         using var doc = JsonDocument.Parse("300");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -106,7 +106,7 @@ public class SuiteMaximumValidationWithUnsignedInteger : IClassFixture<SuiteMaxi
     public void TestBoundaryPointFloatIsValid()
     {
         using var doc = JsonDocument.Parse("300.00");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -114,7 +114,7 @@ public class SuiteMaximumValidationWithUnsignedInteger : IClassFixture<SuiteMaxi
     public void TestAboveTheMaximumIsInvalid()
     {
         using var doc = JsonDocument.Parse("300.5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteMaximumValidationExplicitFalseExclusivity : IClassFixture<Suit
     public void TestBelowTheMaximumIsValid()
     {
         using var doc = JsonDocument.Parse("2.6");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteMaximumValidationExplicitFalseExclusivity : IClassFixture<Suit
     public void TestBoundaryPointIsValid()
     {
         using var doc = JsonDocument.Parse("3.0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -174,7 +174,7 @@ public class SuiteMaximumValidationExplicitFalseExclusivity : IClassFixture<Suit
     public void TestAboveTheMaximumIsInvalid()
     {
         using var doc = JsonDocument.Parse("3.5");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -182,7 +182,7 @@ public class SuiteMaximumValidationExplicitFalseExclusivity : IClassFixture<Suit
     public void TestIgnoresNonNumbers()
     {
         using var doc = JsonDocument.Parse("\"x\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -226,7 +226,7 @@ public class SuiteExclusiveMaximumValidation : IClassFixture<SuiteExclusiveMaxim
     public void TestBelowTheMaximumIsStillValid()
     {
         using var doc = JsonDocument.Parse("2.2");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -234,7 +234,7 @@ public class SuiteExclusiveMaximumValidation : IClassFixture<SuiteExclusiveMaxim
     public void TestBoundaryPointIsInvalid()
     {
         using var doc = JsonDocument.Parse("3.0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

@@ -22,7 +22,7 @@ public class SuiteASchemaThatProducesDuplicateDocumentation : IClassFixture<Suit
     public void TestDataOauth2DevicePollingInterval33()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"oauth2DevicePollingInterval\": 33\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteASchemaThatProducesDuplicateDocumentation : IClassFixture<Suit
     public void TestDataOAuth2DevicePollingInterval33()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"oAuth2DevicePollingInterval\": 33\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteASchemaThatProducesDuplicateDocumentation : IClassFixture<Suit
     public void TestDataFoo33()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"foo\": 33\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

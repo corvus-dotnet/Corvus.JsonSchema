@@ -23,7 +23,7 @@ public class SuiteInt128Format : IClassFixture<SuiteInt128Format.Fixture>
     public void TestData170141183460469231731687303715884105728()
     {
         using var doc = JsonDocument.Parse("-170141183460469231731687303715884105728");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -31,7 +31,7 @@ public class SuiteInt128Format : IClassFixture<SuiteInt128Format.Fixture>
     public void TestData170141183460469231731687303715884105727()
     {
         using var doc = JsonDocument.Parse("170141183460469231731687303715884105727");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -39,7 +39,7 @@ public class SuiteInt128Format : IClassFixture<SuiteInt128Format.Fixture>
     public void TestData170141183460469231731687303715884105729()
     {
         using var doc = JsonDocument.Parse("-170141183460469231731687303715884105729");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -47,7 +47,7 @@ public class SuiteInt128Format : IClassFixture<SuiteInt128Format.Fixture>
     public void TestData1701411834604692317316873037158841057281()
     {
         using var doc = JsonDocument.Parse("170141183460469231731687303715884105728");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -91,7 +91,7 @@ public class SuiteUint128Format : IClassFixture<SuiteUint128Format.Fixture>
     public void TestData0()
     {
         using var doc = JsonDocument.Parse("0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -99,7 +99,7 @@ public class SuiteUint128Format : IClassFixture<SuiteUint128Format.Fixture>
     public void TestData340282366920938463463374607431768211455()
     {
         using var doc = JsonDocument.Parse("340282366920938463463374607431768211455");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -107,7 +107,7 @@ public class SuiteUint128Format : IClassFixture<SuiteUint128Format.Fixture>
     public void TestData340282366920938463463374607431768211456()
     {
         using var doc = JsonDocument.Parse("340282366920938463463374607431768211456");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -115,7 +115,7 @@ public class SuiteUint128Format : IClassFixture<SuiteUint128Format.Fixture>
     public void TestData1()
     {
         using var doc = JsonDocument.Parse("-1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

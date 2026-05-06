@@ -22,7 +22,7 @@ public class SuiteIgnoreIfWithoutThenOrElse : IClassFixture<SuiteIgnoreIfWithout
     public void TestValidWhenValidAgainstLoneIf()
     {
         using var doc = JsonDocument.Parse("0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteIgnoreIfWithoutThenOrElse : IClassFixture<SuiteIgnoreIfWithout
     public void TestValidWhenInvalidAgainstLoneIf()
     {
         using var doc = JsonDocument.Parse("\"hello\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -74,7 +74,7 @@ public class SuiteIgnoreThenWithoutIf : IClassFixture<SuiteIgnoreThenWithoutIf.F
     public void TestValidWhenValidAgainstLoneThen()
     {
         using var doc = JsonDocument.Parse("0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteIgnoreThenWithoutIf : IClassFixture<SuiteIgnoreThenWithoutIf.F
     public void TestValidWhenInvalidAgainstLoneThen()
     {
         using var doc = JsonDocument.Parse("\"hello\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteIgnoreElseWithoutIf : IClassFixture<SuiteIgnoreElseWithoutIf.F
     public void TestValidWhenValidAgainstLoneElse()
     {
         using var doc = JsonDocument.Parse("0");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteIgnoreElseWithoutIf : IClassFixture<SuiteIgnoreElseWithoutIf.F
     public void TestValidWhenInvalidAgainstLoneElse()
     {
         using var doc = JsonDocument.Parse("\"hello\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -178,7 +178,7 @@ public class SuiteIfAndThenWithoutElse : IClassFixture<SuiteIfAndThenWithoutElse
     public void TestValidThroughThen()
     {
         using var doc = JsonDocument.Parse("-1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -186,7 +186,7 @@ public class SuiteIfAndThenWithoutElse : IClassFixture<SuiteIfAndThenWithoutElse
     public void TestInvalidThroughThen()
     {
         using var doc = JsonDocument.Parse("-100");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -194,7 +194,7 @@ public class SuiteIfAndThenWithoutElse : IClassFixture<SuiteIfAndThenWithoutElse
     public void TestValidWhenIfTestFails()
     {
         using var doc = JsonDocument.Parse("3");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteIfAndElseWithoutThen : IClassFixture<SuiteIfAndElseWithoutThen
     public void TestValidWhenIfTestPasses()
     {
         using var doc = JsonDocument.Parse("-1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -246,7 +246,7 @@ public class SuiteIfAndElseWithoutThen : IClassFixture<SuiteIfAndElseWithoutThen
     public void TestValidThroughElse()
     {
         using var doc = JsonDocument.Parse("4");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -254,7 +254,7 @@ public class SuiteIfAndElseWithoutThen : IClassFixture<SuiteIfAndElseWithoutThen
     public void TestInvalidThroughElse()
     {
         using var doc = JsonDocument.Parse("3");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -298,7 +298,7 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse : IClassFixture<SuiteVa
     public void TestValidThroughThen()
     {
         using var doc = JsonDocument.Parse("-1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -306,7 +306,7 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse : IClassFixture<SuiteVa
     public void TestInvalidThroughThen()
     {
         using var doc = JsonDocument.Parse("-100");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -314,7 +314,7 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse : IClassFixture<SuiteVa
     public void TestValidThroughElse()
     {
         using var doc = JsonDocument.Parse("4");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -322,7 +322,7 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse : IClassFixture<SuiteVa
     public void TestInvalidThroughElse()
     {
         using var doc = JsonDocument.Parse("3");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -366,7 +366,7 @@ public class SuiteNonInterferenceAcrossCombinedSchemas : IClassFixture<SuiteNonI
     public void TestValidButWouldHaveBeenInvalidThroughThen()
     {
         using var doc = JsonDocument.Parse("-100");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -374,7 +374,7 @@ public class SuiteNonInterferenceAcrossCombinedSchemas : IClassFixture<SuiteNonI
     public void TestValidButWouldHaveBeenInvalidThroughElse()
     {
         using var doc = JsonDocument.Parse("3");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -418,7 +418,7 @@ public class SuiteIfWithBooleanSchemaTrue : IClassFixture<SuiteIfWithBooleanSche
     public void TestBooleanSchemaTrueInIfAlwaysChoosesTheThenPathValid()
     {
         using var doc = JsonDocument.Parse("\"then\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -426,7 +426,7 @@ public class SuiteIfWithBooleanSchemaTrue : IClassFixture<SuiteIfWithBooleanSche
     public void TestBooleanSchemaTrueInIfAlwaysChoosesTheThenPathInvalid()
     {
         using var doc = JsonDocument.Parse("\"else\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -470,7 +470,7 @@ public class SuiteIfWithBooleanSchemaFalse : IClassFixture<SuiteIfWithBooleanSch
     public void TestBooleanSchemaFalseInIfAlwaysChoosesTheElsePathInvalid()
     {
         using var doc = JsonDocument.Parse("\"then\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -478,7 +478,7 @@ public class SuiteIfWithBooleanSchemaFalse : IClassFixture<SuiteIfWithBooleanSch
     public void TestBooleanSchemaFalseInIfAlwaysChoosesTheElsePathValid()
     {
         using var doc = JsonDocument.Parse("\"else\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -522,7 +522,7 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence : ICl
     public void TestYesRedirectsToThenAndPasses()
     {
         using var doc = JsonDocument.Parse("\"yes\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -530,7 +530,7 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence : ICl
     public void TestOtherRedirectsToElseAndPasses()
     {
         using var doc = JsonDocument.Parse("\"other\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -538,7 +538,7 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence : ICl
     public void TestNoRedirectsToThenAndFails()
     {
         using var doc = JsonDocument.Parse("\"no\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -546,7 +546,7 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence : ICl
     public void TestInvalidRedirectsToElseAndFails()
     {
         using var doc = JsonDocument.Parse("\"invalid\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -590,7 +590,7 @@ public class SuiteThenFalseFailsWhenConditionMatches : IClassFixture<SuiteThenFa
     public void TestMatchesIfThenFalseInvalid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -598,7 +598,7 @@ public class SuiteThenFalseFailsWhenConditionMatches : IClassFixture<SuiteThenFa
     public void TestDoesNotMatchIfThenIgnoredValid()
     {
         using var doc = JsonDocument.Parse("2");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -642,7 +642,7 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch : IClassFixture<SuiteE
     public void TestMatchesIfElseIgnoredValid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -650,7 +650,7 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch : IClassFixture<SuiteE
     public void TestDoesNotMatchIfElseExecutesInvalid()
     {
         using var doc = JsonDocument.Parse("2");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

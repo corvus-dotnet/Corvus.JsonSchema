@@ -22,7 +22,7 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType : IClassFixtu
     public void TestAValidJSONDocument()
     {
         using var doc = JsonDocument.Parse("\"{\\\"foo\\\": \\\"bar\\\"}\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType : IClassFixtu
     public void TestAnInvalidJSONDocument()
     {
         using var doc = JsonDocument.Parse("\"{:}\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType : IClassFixtu
     public void TestIgnoresNonStrings()
     {
         using var doc = JsonDocument.Parse("100");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteValidationOfBinaryStringEncoding : IClassFixture<SuiteValidati
     public void TestAValidBase64String()
     {
         using var doc = JsonDocument.Parse("\"eyJmb28iOiAiYmFyIn0K\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -90,7 +90,7 @@ public class SuiteValidationOfBinaryStringEncoding : IClassFixture<SuiteValidati
     public void TestAnInvalidBase64StringIsNotAValidCharacter()
     {
         using var doc = JsonDocument.Parse("\"eyJmb28iOi%iYmFyIn0K\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -98,7 +98,7 @@ public class SuiteValidationOfBinaryStringEncoding : IClassFixture<SuiteValidati
     public void TestIgnoresNonStrings()
     {
         using var doc = JsonDocument.Parse("100");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -142,7 +142,7 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments : IClassFixture<Su
     public void TestAValidBase64EncodedJSONDocument()
     {
         using var doc = JsonDocument.Parse("\"eyJmb28iOiAiYmFyIn0K\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments : IClassFixture<Su
     public void TestAValidlyEncodedInvalidJSONDocument()
     {
         using var doc = JsonDocument.Parse("\"ezp9Cg==\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments : IClassFixture<Su
     public void TestAnInvalidBase64StringThatIsValidJSON()
     {
         using var doc = JsonDocument.Parse("\"{}\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments : IClassFixture<Su
     public void TestIgnoresNonStrings()
     {
         using var doc = JsonDocument.Parse("100");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

@@ -22,7 +22,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse : IClas
     public void TestFormatAssertionFalseValidString()
     {
         using var doc = JsonDocument.Parse("\"127.0.0.1\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse : IClas
     public void TestFormatAssertionFalseInvalidString()
     {
         using var doc = JsonDocument.Parse("\"not-an-ipv4\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -74,7 +74,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue : IClass
     public void TestFormatAssertionTrueValidString()
     {
         using var doc = JsonDocument.Parse("\"127.0.0.1\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue : IClass
     public void TestFormatAssertionTrueInvalidString()
     {
         using var doc = JsonDocument.Parse("\"not-an-ipv4\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

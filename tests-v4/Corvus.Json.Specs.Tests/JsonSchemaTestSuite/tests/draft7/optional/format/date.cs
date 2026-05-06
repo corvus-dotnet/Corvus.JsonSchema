@@ -22,7 +22,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAllStringFormatsIgnoreIntegers()
     {
         using var doc = JsonDocument.Parse("12");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAllStringFormatsIgnoreFloats()
     {
         using var doc = JsonDocument.Parse("13.7");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAllStringFormatsIgnoreObjects()
     {
         using var doc = JsonDocument.Parse("{}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAllStringFormatsIgnoreArrays()
     {
         using var doc = JsonDocument.Parse("[]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -54,7 +54,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAllStringFormatsIgnoreBooleans()
     {
         using var doc = JsonDocument.Parse("false");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -62,7 +62,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAllStringFormatsIgnoreNulls()
     {
         using var doc = JsonDocument.Parse("null");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -70,7 +70,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateString()
     {
         using var doc = JsonDocument.Parse("\"1963-06-19\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -78,7 +78,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith31DaysInJanuary()
     {
         using var doc = JsonDocument.Parse("\"2020-01-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -86,7 +86,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith32DaysInJanuary()
     {
         using var doc = JsonDocument.Parse("\"2020-01-32\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -94,7 +94,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith28DaysInFebruaryNormal()
     {
         using var doc = JsonDocument.Parse("\"2021-02-28\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -102,7 +102,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith29DaysInFebruaryNormal()
     {
         using var doc = JsonDocument.Parse("\"2021-02-29\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -110,7 +110,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith29DaysInFebruaryLeap()
     {
         using var doc = JsonDocument.Parse("\"2020-02-29\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -118,7 +118,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith30DaysInFebruaryLeap()
     {
         using var doc = JsonDocument.Parse("\"2020-02-30\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith31DaysInMarch()
     {
         using var doc = JsonDocument.Parse("\"2020-03-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith32DaysInMarch()
     {
         using var doc = JsonDocument.Parse("\"2020-03-32\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -142,7 +142,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith30DaysInApril()
     {
         using var doc = JsonDocument.Parse("\"2020-04-30\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith31DaysInApril()
     {
         using var doc = JsonDocument.Parse("\"2020-04-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith31DaysInMay()
     {
         using var doc = JsonDocument.Parse("\"2020-05-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith32DaysInMay()
     {
         using var doc = JsonDocument.Parse("\"2020-05-32\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -174,7 +174,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith30DaysInJune()
     {
         using var doc = JsonDocument.Parse("\"2020-06-30\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -182,7 +182,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith31DaysInJune()
     {
         using var doc = JsonDocument.Parse("\"2020-06-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -190,7 +190,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith31DaysInJuly()
     {
         using var doc = JsonDocument.Parse("\"2020-07-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -198,7 +198,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith32DaysInJuly()
     {
         using var doc = JsonDocument.Parse("\"2020-07-32\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -206,7 +206,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith31DaysInAugust()
     {
         using var doc = JsonDocument.Parse("\"2020-08-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -214,7 +214,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith32DaysInAugust()
     {
         using var doc = JsonDocument.Parse("\"2020-08-32\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -222,7 +222,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith30DaysInSeptember()
     {
         using var doc = JsonDocument.Parse("\"2020-09-30\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -230,7 +230,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith31DaysInSeptember()
     {
         using var doc = JsonDocument.Parse("\"2020-09-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith31DaysInOctober()
     {
         using var doc = JsonDocument.Parse("\"2020-10-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -246,7 +246,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith32DaysInOctober()
     {
         using var doc = JsonDocument.Parse("\"2020-10-32\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -254,7 +254,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith30DaysInNovember()
     {
         using var doc = JsonDocument.Parse("\"2020-11-30\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -262,7 +262,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith31DaysInNovember()
     {
         using var doc = JsonDocument.Parse("\"2020-11-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -270,7 +270,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAValidDateStringWith31DaysInDecember()
     {
         using var doc = JsonDocument.Parse("\"2020-12-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -278,7 +278,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWith32DaysInDecember()
     {
         using var doc = JsonDocument.Parse("\"2020-12-32\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -286,7 +286,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAInvalidDateStringWithInvalidMonth()
     {
         using var doc = JsonDocument.Parse("\"2020-13-01\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -294,7 +294,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAnInvalidDateString()
     {
         using var doc = JsonDocument.Parse("\"06/19/1963\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -302,7 +302,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestOnlyRFC3339NotAllOfISO8601AreValid()
     {
         using var doc = JsonDocument.Parse("\"2013-350\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -310,7 +310,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestNonPaddedMonthDatesAreNotValid()
     {
         using var doc = JsonDocument.Parse("\"1998-1-20\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -318,7 +318,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestNonPaddedDayDatesAreNotValid()
     {
         using var doc = JsonDocument.Parse("\"1998-01-1\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -326,7 +326,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestInvalidMonth()
     {
         using var doc = JsonDocument.Parse("\"1998-13-01\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -334,7 +334,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestInvalidMonthDayCombination()
     {
         using var doc = JsonDocument.Parse("\"1998-04-31\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -342,7 +342,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void Test_2021IsNotALeapYear()
     {
         using var doc = JsonDocument.Parse("\"2021-02-29\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -350,7 +350,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void Test_2020IsALeapYear()
     {
         using var doc = JsonDocument.Parse("\"2020-02-29\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -358,7 +358,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestInvalidNonASCII৪ABengali4()
     {
         using var doc = JsonDocument.Parse("\"1963-06-1৪\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -366,7 +366,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestISO8601NonRFC3339YYYYMMDDWithoutDashes20230328()
     {
         using var doc = JsonDocument.Parse("\"20230328\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -374,7 +374,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestISO8601NonRFC3339WeekNumberImplicitDayOfWeek20230102()
     {
         using var doc = JsonDocument.Parse("\"2023-W01\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -382,7 +382,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestISO8601NonRFC3339WeekNumberWithDayOfWeek20230328()
     {
         using var doc = JsonDocument.Parse("\"2023-W13-2\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -390,7 +390,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestISO8601NonRFC3339WeekNumberRolloverToNextYear20230101()
     {
         using var doc = JsonDocument.Parse("\"2022W527\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -398,7 +398,7 @@ public class SuiteValidationOfDateStrings : IClassFixture<SuiteValidationOfDateS
     public void TestAnInvalidTimeStringInDateTimeFormat()
     {
         using var doc = JsonDocument.Parse("\"2020-11-28T23:55:45Z\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

@@ -22,7 +22,7 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema : IClassFixture<Suit
     public void TestDataBar3()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"bar\": 3\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema : IClassFixture<Suit
     public void TestDataBarHello()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"bar\": \"hello\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

@@ -22,7 +22,7 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled : IClassFixture
     public void TestValidIfOptionalOverflowHandlingIsImplemented()
     {
         using var doc = JsonDocument.Parse("1e308");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

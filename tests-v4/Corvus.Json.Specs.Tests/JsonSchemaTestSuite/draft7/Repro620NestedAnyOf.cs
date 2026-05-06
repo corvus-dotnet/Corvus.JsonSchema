@@ -22,7 +22,7 @@ public class SuiteRepro620NamesCollideInIsAndAsMatchers : IClassFixture<SuiteRep
     public void TestDataKindFooDataKindBar()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"kind\": \"foo\",\r\n          \"data\": {\r\n            \"kind\": \"bar\"\r\n          }\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteRepro620NamesCollideInIsAndAsMatchers : IClassFixture<SuiteRep
     public void TestDataKindFooDataKindBat()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"kind\": \"foo\",\r\n          \"data\": {\r\n            \"kind\": \"bat\"\r\n          }\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

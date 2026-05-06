@@ -22,7 +22,7 @@ public class SuiteGenerationErrorWithOptionalNullableAndDependentSchemas : IClas
     public void TestDataRecognitionFoo()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"recognition\": \"foo\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -66,7 +66,7 @@ public class SuiteGenerationErrorWithOptionalNullableAndDependentSchemasNonJsonA
     public void TestDataRecognitionFooBarThere()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"recognition\": \"foo\",\r\n          \"bar\": \"there\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -74,7 +74,7 @@ public class SuiteGenerationErrorWithOptionalNullableAndDependentSchemasNonJsonA
     public void TestDataRecognitionFoo()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"recognition\": \"foo\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

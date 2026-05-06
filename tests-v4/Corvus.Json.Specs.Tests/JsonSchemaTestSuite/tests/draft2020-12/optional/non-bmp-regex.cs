@@ -22,7 +22,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern : IClassFixture<SuiteP
     public void TestMatchesEmpty()
     {
         using var doc = JsonDocument.Parse("\"\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern : IClassFixture<SuiteP
     public void TestMatchesSingle()
     {
         using var doc = JsonDocument.Parse("\"🐲\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern : IClassFixture<SuiteP
     public void TestMatchesTwo()
     {
         using var doc = JsonDocument.Parse("\"🐲🐲\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern : IClassFixture<SuiteP
     public void TestDoesnTMatchOne()
     {
         using var doc = JsonDocument.Parse("\"🐉\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -54,7 +54,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern : IClassFixture<SuiteP
     public void TestDoesnTMatchTwo()
     {
         using var doc = JsonDocument.Parse("\"🐉🐉\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -62,7 +62,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern : IClassFixture<SuiteP
     public void TestDoesnTMatchOneASCII()
     {
         using var doc = JsonDocument.Parse("\"D\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -70,7 +70,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern : IClassFixture<SuiteP
     public void TestDoesnTMatchTwoASCII()
     {
         using var doc = JsonDocument.Parse("\"DD\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -114,7 +114,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPatternProperties : IClassFixt
     public void TestMatchesEmpty()
     {
         using var doc = JsonDocument.Parse("{ \"\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -122,7 +122,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPatternProperties : IClassFixt
     public void TestMatchesSingle()
     {
         using var doc = JsonDocument.Parse("{ \"🐲\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -130,7 +130,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPatternProperties : IClassFixt
     public void TestMatchesTwo()
     {
         using var doc = JsonDocument.Parse("{ \"🐲🐲\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -138,7 +138,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPatternProperties : IClassFixt
     public void TestDoesnTMatchOne()
     {
         using var doc = JsonDocument.Parse("{ \"🐲\": \"hello\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -146,7 +146,7 @@ public class SuiteProperUTF16SurrogatePairHandlingPatternProperties : IClassFixt
     public void TestDoesnTMatchTwo()
     {
         using var doc = JsonDocument.Parse("{ \"🐲🐲\": \"hello\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

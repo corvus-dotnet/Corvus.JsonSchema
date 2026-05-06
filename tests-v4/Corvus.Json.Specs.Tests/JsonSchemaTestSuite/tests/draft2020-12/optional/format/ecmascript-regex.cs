@@ -22,7 +22,7 @@ public class SuiteAIsNotAnECMA262ControlEscape : IClassFixture<SuiteAIsNotAnECMA
     public void TestWhenUsedAsAPattern()
     {
         using var doc = JsonDocument.Parse("\"\\\\a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

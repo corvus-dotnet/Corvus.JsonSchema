@@ -22,7 +22,7 @@ public class SuiteIdInsideAnUnknownKeywordIsNotARealIdentifier : IClassFixture<S
     public void TestTypeMatchesSecondAnyOfWhichHasARealSchemaInIt()
     {
         using var doc = JsonDocument.Parse("\"a string\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteIdInsideAnUnknownKeywordIsNotARealIdentifier : IClassFixture<S
     public void TestTypeMatchesNonSchemaInFirstAnyOf()
     {
         using var doc = JsonDocument.Parse("null");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteIdInsideAnUnknownKeywordIsNotARealIdentifier : IClassFixture<S
     public void TestTypeMatchesNonSchemaInThirdAnyOf()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

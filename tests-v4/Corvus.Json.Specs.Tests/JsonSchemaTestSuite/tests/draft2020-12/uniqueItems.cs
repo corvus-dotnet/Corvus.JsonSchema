@@ -22,7 +22,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestUniqueArrayOfIntegersIsValid()
     {
         using var doc = JsonDocument.Parse("[1, 2]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNonUniqueArrayOfIntegersIsInvalid()
     {
         using var doc = JsonDocument.Parse("[1, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNonUniqueArrayOfMoreThanTwoIntegersIsInvalid()
     {
         using var doc = JsonDocument.Parse("[1, 2, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNumbersAreUniqueIfMathematicallyUnequal()
     {
         using var doc = JsonDocument.Parse("[1.0, 1.00, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -54,7 +54,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestFalseIsNotEqualToZero()
     {
         using var doc = JsonDocument.Parse("[0, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -62,7 +62,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestTrueIsNotEqualToOne()
     {
         using var doc = JsonDocument.Parse("[1, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -70,7 +70,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestUniqueArrayOfStringsIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", \"bar\", \"baz\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -78,7 +78,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNonUniqueArrayOfStringsIsInvalid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", \"bar\", \"foo\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -86,7 +86,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestUniqueArrayOfObjectsIsValid()
     {
         using var doc = JsonDocument.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -94,7 +94,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNonUniqueArrayOfObjectsIsInvalid()
     {
         using var doc = JsonDocument.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -102,7 +102,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestPropertyOrderOfArrayOfObjectsIsIgnored()
     {
         using var doc = JsonDocument.Parse("[{\"foo\": \"bar\", \"bar\": \"foo\"}, {\"bar\": \"foo\", \"foo\": \"bar\"}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -110,7 +110,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestUniqueArrayOfNestedObjectsIsValid()
     {
         using var doc = JsonDocument.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -118,7 +118,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNonUniqueArrayOfNestedObjectsIsInvalid()
     {
         using var doc = JsonDocument.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestUniqueArrayOfArraysIsValid()
     {
         using var doc = JsonDocument.Parse("[[\"foo\"], [\"bar\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNonUniqueArrayOfArraysIsInvalid()
     {
         using var doc = JsonDocument.Parse("[[\"foo\"], [\"foo\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -142,7 +142,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNonUniqueArrayOfMoreThanTwoArraysIsInvalid()
     {
         using var doc = JsonDocument.Parse("[[\"foo\"], [\"bar\"], [\"foo\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -150,7 +150,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void Test_1AndTrueAreUnique()
     {
         using var doc = JsonDocument.Parse("[1, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -158,7 +158,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void Test_0AndFalseAreUnique()
     {
         using var doc = JsonDocument.Parse("[0, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void Test_1AndTrueAreUnique1()
     {
         using var doc = JsonDocument.Parse("[[1], [true]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -174,7 +174,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void Test_0AndFalseAreUnique1()
     {
         using var doc = JsonDocument.Parse("[[0], [false]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -182,7 +182,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNested1AndTrueAreUnique()
     {
         using var doc = JsonDocument.Parse("[[[1], \"foo\"], [[true], \"foo\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -190,7 +190,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNested0AndFalseAreUnique()
     {
         using var doc = JsonDocument.Parse("[[[0], \"foo\"], [[false], \"foo\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -198,7 +198,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestUniqueHeterogeneousTypesAreValid()
     {
         using var doc = JsonDocument.Parse("[{}, [1], true, null, 1, \"{}\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -206,7 +206,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestNonUniqueHeterogeneousTypesAreInvalid()
     {
         using var doc = JsonDocument.Parse("[{}, [1], true, null, {}, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -214,7 +214,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestDifferentObjectsAreUnique()
     {
         using var doc = JsonDocument.Parse("[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 1}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -222,7 +222,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestObjectsAreNonUniqueDespiteKeyOrder()
     {
         using var doc = JsonDocument.Parse("[{\"a\": 1, \"b\": 2}, {\"b\": 2, \"a\": 1}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -230,7 +230,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestAFalseAndA0AreUnique()
     {
         using var doc = JsonDocument.Parse("[{\"a\": false}, {\"a\": 0}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     public void TestATrueAndA1AreUnique()
     {
         using var doc = JsonDocument.Parse("[{\"a\": true}, {\"a\": 1}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -282,7 +282,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
     public void TestFalseTrueFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[false, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -290,7 +290,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
     public void TestTrueFalseFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[true, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -298,7 +298,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
     public void TestFalseFalseFromItemsArrayIsNotValid()
     {
         using var doc = JsonDocument.Parse("[false, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -306,7 +306,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
     public void TestTrueTrueFromItemsArrayIsNotValid()
     {
         using var doc = JsonDocument.Parse("[true, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -314,7 +314,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
     public void TestUniqueArrayExtendedFromFalseTrueIsValid()
     {
         using var doc = JsonDocument.Parse("[false, true, \"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -322,7 +322,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
     public void TestUniqueArrayExtendedFromTrueFalseIsValid()
     {
         using var doc = JsonDocument.Parse("[true, false, \"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -330,7 +330,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
     public void TestNonUniqueArrayExtendedFromFalseTrueIsNotValid()
     {
         using var doc = JsonDocument.Parse("[false, true, \"foo\", \"foo\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -338,7 +338,7 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
     public void TestNonUniqueArrayExtendedFromTrueFalseIsNotValid()
     {
         using var doc = JsonDocument.Parse("[true, false, \"foo\", \"foo\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -382,7 +382,7 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse : IClassF
     public void TestFalseTrueFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[false, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -390,7 +390,7 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse : IClassF
     public void TestTrueFalseFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[true, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -398,7 +398,7 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse : IClassF
     public void TestFalseFalseFromItemsArrayIsNotValid()
     {
         using var doc = JsonDocument.Parse("[false, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -406,7 +406,7 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse : IClassF
     public void TestTrueTrueFromItemsArrayIsNotValid()
     {
         using var doc = JsonDocument.Parse("[true, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -414,7 +414,7 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse : IClassF
     public void TestExtraItemsAreInvalidEvenIfUnique()
     {
         using var doc = JsonDocument.Parse("[false, true, null]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -458,7 +458,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestUniqueArrayOfIntegersIsValid()
     {
         using var doc = JsonDocument.Parse("[1, 2]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -466,7 +466,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestNonUniqueArrayOfIntegersIsValid()
     {
         using var doc = JsonDocument.Parse("[1, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -474,7 +474,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestNumbersAreUniqueIfMathematicallyUnequal()
     {
         using var doc = JsonDocument.Parse("[1.0, 1.00, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -482,7 +482,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestFalseIsNotEqualToZero()
     {
         using var doc = JsonDocument.Parse("[0, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -490,7 +490,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestTrueIsNotEqualToOne()
     {
         using var doc = JsonDocument.Parse("[1, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -498,7 +498,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestUniqueArrayOfObjectsIsValid()
     {
         using var doc = JsonDocument.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -506,7 +506,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestNonUniqueArrayOfObjectsIsValid()
     {
         using var doc = JsonDocument.Parse("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -514,7 +514,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestUniqueArrayOfNestedObjectsIsValid()
     {
         using var doc = JsonDocument.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -522,7 +522,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestNonUniqueArrayOfNestedObjectsIsValid()
     {
         using var doc = JsonDocument.Parse("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -530,7 +530,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestUniqueArrayOfArraysIsValid()
     {
         using var doc = JsonDocument.Parse("[[\"foo\"], [\"bar\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -538,7 +538,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestNonUniqueArrayOfArraysIsValid()
     {
         using var doc = JsonDocument.Parse("[[\"foo\"], [\"foo\"]]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -546,7 +546,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void Test_1AndTrueAreUnique()
     {
         using var doc = JsonDocument.Parse("[1, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -554,7 +554,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void Test_0AndFalseAreUnique()
     {
         using var doc = JsonDocument.Parse("[0, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -562,7 +562,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestUniqueHeterogeneousTypesAreValid()
     {
         using var doc = JsonDocument.Parse("[{}, [1], true, null, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -570,7 +570,7 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     public void TestNonUniqueHeterogeneousTypesAreValid()
     {
         using var doc = JsonDocument.Parse("[{}, [1], true, null, {}, 1]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -614,7 +614,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
     public void TestFalseTrueFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[false, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -622,7 +622,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
     public void TestTrueFalseFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[true, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -630,7 +630,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
     public void TestFalseFalseFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[false, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -638,7 +638,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
     public void TestTrueTrueFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[true, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -646,7 +646,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
     public void TestUniqueArrayExtendedFromFalseTrueIsValid()
     {
         using var doc = JsonDocument.Parse("[false, true, \"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -654,7 +654,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
     public void TestUniqueArrayExtendedFromTrueFalseIsValid()
     {
         using var doc = JsonDocument.Parse("[true, false, \"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -662,7 +662,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
     public void TestNonUniqueArrayExtendedFromFalseTrueIsValid()
     {
         using var doc = JsonDocument.Parse("[false, true, \"foo\", \"foo\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -670,7 +670,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
     public void TestNonUniqueArrayExtendedFromTrueFalseIsValid()
     {
         using var doc = JsonDocument.Parse("[true, false, \"foo\", \"foo\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -714,7 +714,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse : IC
     public void TestFalseTrueFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[false, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -722,7 +722,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse : IC
     public void TestTrueFalseFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[true, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -730,7 +730,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse : IC
     public void TestFalseFalseFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[false, false]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -738,7 +738,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse : IC
     public void TestTrueTrueFromItemsArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[true, true]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -746,7 +746,7 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse : IC
     public void TestExtraItemsAreInvalidEvenIfUnique()
     {
         using var doc = JsonDocument.Parse("[false, true, null]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

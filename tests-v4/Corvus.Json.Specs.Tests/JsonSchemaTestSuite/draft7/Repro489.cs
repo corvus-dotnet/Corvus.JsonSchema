@@ -22,7 +22,7 @@ public class SuiteGenerationErrorWithMultiplePatternProperties : IClassFixture<S
     public void TestDataFooADocAaaBDocBbb()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"foo\": {\r\n            \"a_doc\": \"aaa\",\r\n            \"b_doc\": \"bbb\"\r\n          }\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

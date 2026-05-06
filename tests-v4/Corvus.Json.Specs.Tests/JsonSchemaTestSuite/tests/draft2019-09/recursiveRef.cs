@@ -22,7 +22,7 @@ public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef : IClassFixture
     public void TestMatch()
     {
         using var doc = JsonDocument.Parse("{\"foo\": false}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef : IClassFixture
     public void TestRecursiveMatch()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"foo\": false } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef : IClassFixture
     public void TestMismatch()
     {
         using var doc = JsonDocument.Parse("{ \"bar\": false }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -46,7 +46,7 @@ public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef : IClassFixture
     public void TestRecursiveMismatch()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": false } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -90,7 +90,7 @@ public class SuiteRecursiveRefWithoutUsingNesting : IClassFixture<SuiteRecursive
     public void TestIntegerMatchesAtTheOuterLevel()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -98,7 +98,7 @@ public class SuiteRecursiveRefWithoutUsingNesting : IClassFixture<SuiteRecursive
     public void TestSingleLevelMatch()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": \"hi\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -106,7 +106,7 @@ public class SuiteRecursiveRefWithoutUsingNesting : IClassFixture<SuiteRecursive
     public void TestIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -114,7 +114,7 @@ public class SuiteRecursiveRefWithoutUsingNesting : IClassFixture<SuiteRecursive
     public void TestTwoLevelsPropertiesMatchWithInnerDefinition()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": \"hi\" } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -122,7 +122,7 @@ public class SuiteRecursiveRefWithoutUsingNesting : IClassFixture<SuiteRecursive
     public void TestTwoLevelsNoMatch()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": 1 } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -166,7 +166,7 @@ public class SuiteRecursiveRefWithNesting : IClassFixture<SuiteRecursiveRefWithN
     public void TestIntegerMatchesAtTheOuterLevel()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -174,7 +174,7 @@ public class SuiteRecursiveRefWithNesting : IClassFixture<SuiteRecursiveRefWithN
     public void TestSingleLevelMatch()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": \"hi\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -182,7 +182,7 @@ public class SuiteRecursiveRefWithNesting : IClassFixture<SuiteRecursiveRefWithN
     public void TestIntegerNowMatchesAsAPropertyValue()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -190,7 +190,7 @@ public class SuiteRecursiveRefWithNesting : IClassFixture<SuiteRecursiveRefWithN
     public void TestTwoLevelsPropertiesMatchWithInnerDefinition()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": \"hi\" } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -198,7 +198,7 @@ public class SuiteRecursiveRefWithNesting : IClassFixture<SuiteRecursiveRefWithN
     public void TestTwoLevelsPropertiesMatchWithRecursiveRef()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": 1 } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -242,7 +242,7 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef : IClassFixtu
     public void TestIntegerMatchesAtTheOuterLevel()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -250,7 +250,7 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef : IClassFixtu
     public void TestSingleLevelMatch()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": \"hi\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -258,7 +258,7 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef : IClassFixtu
     public void TestIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -266,7 +266,7 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef : IClassFixtu
     public void TestTwoLevelsPropertiesMatchWithInnerDefinition()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": \"hi\" } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -274,7 +274,7 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef : IClassFixtu
     public void TestTwoLevelsIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": 1 } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -318,7 +318,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef : IClassFixture<
     public void TestIntegerMatchesAtTheOuterLevel()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -326,7 +326,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef : IClassFixture<
     public void TestSingleLevelMatch()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": \"hi\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -334,7 +334,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef : IClassFixture<
     public void TestIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -342,7 +342,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef : IClassFixture<
     public void TestTwoLevelsPropertiesMatchWithInnerDefinition()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": \"hi\" } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -350,7 +350,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef : IClassFixture<
     public void TestTwoLevelsIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": 1 } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -394,7 +394,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResou
     public void TestLeafNodeDoesNotMatchNoRecursion()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": true }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -402,7 +402,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResou
     public void TestLeafNodeMatchesRecursionUsesTheInnerSchema()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": 1 } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -410,7 +410,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResou
     public void TestLeafNodeDoesNotMatchRecursionUsesTheInnerSchema()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": true } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -454,7 +454,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource : IC
     public void TestLeafNodeDoesNotMatchNoRecursion()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": true }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -462,7 +462,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource : IC
     public void TestLeafNodeMatchesRecursionOnlyUsesInnerSchema()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": 1 } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -470,7 +470,7 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource : IC
     public void TestLeafNodeDoesNotMatchRecursionOnlyUsesInnerSchema()
     {
         using var doc = JsonDocument.Parse("{ \"foo\": { \"bar\": true } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -514,7 +514,7 @@ public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword : IClassFixture<S
     public void TestRecurseToAnyLeafNodeFloatsAreAllowed()
     {
         using var doc = JsonDocument.Parse("{ \"alpha\": 1.1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -522,7 +522,7 @@ public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword : IClassFixture<S
     public void TestRecurseToIntegerNodeFloatsAreNotAllowed()
     {
         using var doc = JsonDocument.Parse("{ \"november\": 1.1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -566,7 +566,7 @@ public class SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTim
     public void TestNumericNode()
     {
         using var doc = JsonDocument.Parse("{ \"alpha\": 1.1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -574,7 +574,7 @@ public class SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTim
     public void TestIntegerNode()
     {
         using var doc = JsonDocument.Parse("{ \"november\": 1.1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

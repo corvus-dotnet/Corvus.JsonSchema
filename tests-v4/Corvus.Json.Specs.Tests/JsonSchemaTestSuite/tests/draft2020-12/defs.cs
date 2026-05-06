@@ -22,7 +22,7 @@ public class SuiteValidateDefinitionAgainstMetaschema : IClassFixture<SuiteValid
     public void TestValidDefinitionSchema()
     {
         using var doc = JsonDocument.Parse("{\"$defs\": {\"foo\": {\"type\": \"integer\"}}}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteValidateDefinitionAgainstMetaschema : IClassFixture<SuiteValid
     public void TestInvalidDefinitionSchema()
     {
         using var doc = JsonDocument.Parse("{\"$defs\": {\"foo\": {\"type\": 1}}}");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

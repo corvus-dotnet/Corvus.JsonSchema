@@ -22,7 +22,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary :
     public void TestApplicatorVocabularyStillWorks()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"badProperty\": \"this property should not exist\"\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary :
     public void TestNoValidationValidNumber()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"numberProperty\": 20\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -38,7 +38,7 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary :
     public void TestNoValidationInvalidNumberButItStillValidates()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"numberProperty\": 1\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteIgnoreUnrecognizedOptionalVocabulary : IClassFixture<SuiteIgno
     public void TestStringValue()
     {
         using var doc = JsonDocument.Parse("\"foobar\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -90,7 +90,7 @@ public class SuiteIgnoreUnrecognizedOptionalVocabulary : IClassFixture<SuiteIgno
     public void TestNumberValue()
     {
         using var doc = JsonDocument.Parse("20");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

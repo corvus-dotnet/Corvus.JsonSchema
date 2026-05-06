@@ -22,7 +22,7 @@ public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeA
     public void TestAnArrayOfStringsIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -30,7 +30,7 @@ public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeA
     public void TestAnArrayContainingNonStringsIsInvalid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -74,7 +74,7 @@ public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormal
     public void TestAnArrayOfStringsIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -82,7 +82,7 @@ public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormal
     public void TestAnArrayContainingNonStringsIsInvalid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -126,7 +126,7 @@ public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalR
     public void TestAnArrayOfStringsIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -134,7 +134,7 @@ public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalR
     public void TestAnArrayContainingNonStringsIsInvalid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -178,7 +178,7 @@ public class SuiteADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEn
     public void TestAnArrayOfStringsIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -186,7 +186,7 @@ public class SuiteADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEn
     public void TestAnArrayContainingNonStringsIsInvalid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -230,7 +230,7 @@ public class SuiteADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef : ICla
     public void TestAnArrayOfStringsIsInvalid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -238,7 +238,7 @@ public class SuiteADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef : ICla
     public void TestAnArrayOfNumbersIsValid()
     {
         using var doc = JsonDocument.Parse("[24, 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -282,7 +282,7 @@ public class SuiteADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynam
     public void TestAnArrayOfStringsIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", \"bar\"]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -290,7 +290,7 @@ public class SuiteADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynam
     public void TestAnArrayContainingNonStringsIsInvalid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -334,7 +334,7 @@ public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScop
     public void TestAnyArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -378,7 +378,7 @@ public class SuiteADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourc
     public void TestAnyArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -422,7 +422,7 @@ public class SuiteADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourc
     public void TestAnyArrayIsValid()
     {
         using var doc = JsonDocument.Parse("[\"foo\", 42]");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -466,7 +466,7 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicA
     public void TestTheRecursivePartIsValidAgainstTheRoot()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"foo\": \"pass\",\r\n                    \"bar\": {\r\n                        \"baz\": { \"foo\": \"pass\" }\r\n                    }\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -474,7 +474,7 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicA
     public void TestTheRecursivePartIsNotValidAgainstTheRoot()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"foo\": \"pass\",\r\n                    \"bar\": {\r\n                        \"baz\": { \"foo\": \"fail\" }\r\n                    }\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -518,7 +518,7 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynam
     public void TestTheRecursivePartDoesnTNeedToValidateAgainstTheRoot()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"foo\": \"pass\",\r\n                    \"bar\": {\r\n                        \"baz\": { \"foo\": \"fail\" }\r\n                    }\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -562,7 +562,7 @@ public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword : IClassFixture<Sui
     public void TestNumberListWithNumberValues()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"kindOfList\": \"numbers\",\r\n                    \"list\": [1.1]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -570,7 +570,7 @@ public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword : IClassFixture<Sui
     public void TestNumberListWithStringValues()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"kindOfList\": \"numbers\",\r\n                    \"list\": [\"foo\"]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -578,7 +578,7 @@ public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword : IClassFixture<Sui
     public void TestStringListWithNumberValues()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"kindOfList\": \"strings\",\r\n                    \"list\": [1.1]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -586,7 +586,7 @@ public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword : IClassFixture<Sui
     public void TestStringListWithStringValues()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"kindOfList\": \"strings\",\r\n                    \"list\": [\"foo\"]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -630,7 +630,7 @@ public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef : IClassFixt
     public void TestStringMatchesDefsThingyButTheDynamicRefDoesNotStopHere()
     {
         using var doc = JsonDocument.Parse("\"a string\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -638,7 +638,7 @@ public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef : IClassFixt
     public void TestFirstScopeIsNotInDynamicScopeForTheDynamicRef()
     {
         using var doc = JsonDocument.Parse("42");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -646,7 +646,7 @@ public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef : IClassFixt
     public void TestThenDefsThingyIsTheFinalStopForTheDynamicRef()
     {
         using var doc = JsonDocument.Parse("null");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -690,7 +690,7 @@ public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties : IClassFixt
     public void TestInstanceWithMisspelledField()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"children\": [{\r\n                            \"daat\": 1\r\n                        }]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -698,7 +698,7 @@ public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties : IClassFixt
     public void TestInstanceWithCorrectField()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"children\": [{\r\n                            \"data\": 1\r\n                        }]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -742,7 +742,7 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink : IClassFi
     public void TestIncorrectParentSchema()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"a\": true\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -750,7 +750,7 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink : IClassFi
     public void TestIncorrectExtendedSchema()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"b\": 1 }\r\n                    ]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -758,7 +758,7 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink : IClassFi
     public void TestCorrectExtendedSchema()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"a\": 1 }\r\n                    ]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -802,7 +802,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst : IClassFixt
     public void TestIncorrectParentSchema()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"a\": true\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -810,7 +810,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst : IClassFixt
     public void TestIncorrectExtendedSchema()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"b\": 1 }\r\n                    ]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -818,7 +818,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst : IClassFixt
     public void TestCorrectExtendedSchema()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"a\": 1 }\r\n                    ]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -862,7 +862,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst : IClassFixtu
     public void TestIncorrectParentSchema()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"a\": true\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -870,7 +870,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst : IClassFixtu
     public void TestIncorrectExtendedSchema()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"b\": 1 }\r\n                    ]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -878,7 +878,7 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst : IClassFixtu
     public void TestCorrectExtendedSchema()
     {
         using var doc = JsonDocument.Parse("{\r\n                    \"elements\": [\r\n                        { \"a\": 1 }\r\n                    ]\r\n                }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -922,7 +922,7 @@ public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor : IClassFixture<Suit
     public void TestNumberIsValid()
     {
         using var doc = JsonDocument.Parse("1");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -930,7 +930,7 @@ public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor : IClassFixture<Suit
     public void TestNonNumberIsInvalid()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -974,7 +974,7 @@ public class SuiteDynamicRefPointsToABooleanSchema : IClassFixture<SuiteDynamicR
     public void TestFollowDynamicRefToATrueSchema()
     {
         using var doc = JsonDocument.Parse("{ \"true\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -982,7 +982,7 @@ public class SuiteDynamicRefPointsToABooleanSchema : IClassFixture<SuiteDynamicR
     public void TestFollowDynamicRefToAFalseSchema()
     {
         using var doc = JsonDocument.Parse("{ \"false\": 1 }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -1026,7 +1026,7 @@ public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference : ICla
     public void TestIntegerPropertyPasses()
     {
         using var doc = JsonDocument.Parse("{ \"bar-item\": { \"content\": 42 } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -1034,7 +1034,7 @@ public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference : ICla
     public void TestStringPropertyFails()
     {
         using var doc = JsonDocument.Parse("{ \"bar-item\": { \"content\": \"value\" } }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -1078,7 +1078,7 @@ public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered
     public void TestDataIsSufficientForSchemaAtSecondDefsLength()
     {
         using var doc = JsonDocument.Parse("\"hi\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
@@ -1086,7 +1086,7 @@ public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered
     public void TestDataIsNotSufficientForSchemaAtSecondDefsLength()
     {
         using var doc = JsonDocument.Parse("\"hey\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement.Clone());
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
         Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 

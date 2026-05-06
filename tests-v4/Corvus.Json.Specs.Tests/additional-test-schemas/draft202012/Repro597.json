@@ -1,0 +1,44 @@
+[
+  {
+    "description": "Validate date-time with and without minutes on the offset",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "format": "date-time"
+    },
+    "tests": [
+      {
+        "description": "data: \u00222025-04-09T12:00:00\u002B01\u0022",
+        "data": "2025-04-09T12:00:00\u002B01",
+        "valid": true
+      },
+      {
+        "description": "data: \u00222025-04-09T12:00:00\u002B01:00\u0022",
+        "data": "2025-04-09T12:00:00\u002B01:00",
+        "valid": true
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "Validate time with and without minutes on the offset",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "string",
+      "format": "time"
+    },
+    "tests": [
+      {
+        "description": "data: \u002212:00:00\u002B01\u0022",
+        "data": "12:00:00\u002B01",
+        "valid": true
+      },
+      {
+        "description": "data: \u002212:00:00\u002B01:00\u0022",
+        "data": "12:00:00\u002B01:00",
+        "valid": true
+      }
+    ],
+    "validateFormat": true
+  }
+]
