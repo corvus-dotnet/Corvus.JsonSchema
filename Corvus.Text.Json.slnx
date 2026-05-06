@@ -54,8 +54,8 @@
 
   <Folder Name="/.tests/">
     <Project Path="Common/tests/TestUtilities/TestUtilities.csproj" />
-    <Project Path="tests-v4/Corvus.Text.Json.Analyzers.Tests/Corvus.Text.Json.Analyzers.Tests.csproj" />
-    <Project Path="tests-v4/Corvus.Text.Json.Migration.Analyzers.Tests/Corvus.Text.Json.Migration.Analyzers.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Analyzers.Tests/Corvus.Text.Json.Analyzers.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.Migration.Analyzers.Tests/Corvus.Text.Json.Migration.Analyzers.Tests.csproj" />
     <Project Path="tests/Corvus.JsonSchemaTestSuite.CodeGenerator/Corvus.JsonSchemaTestSuite.CodeGenerator.csproj" Id="fc46ebe0-6bd7-4a8a-abae-6271aff53420" />
     <Project Path="tests/Corvus.Numerics.Tests/Corvus.Numerics.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.CodeGenerator.Tests/Corvus.Text.Json.CodeGenerator.Tests.csproj" />
