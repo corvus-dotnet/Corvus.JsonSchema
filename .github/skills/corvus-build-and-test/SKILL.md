@@ -62,6 +62,28 @@ Test code and assertions must use `Corvus.Text.Json` types (`JsonElement`, `Json
 
 `System.Text.Json` is acceptable **only** for test data infrastructure — e.g., reading JSON fixture files with `System.Text.Json.JsonDocument` to enumerate test cases. In those cases, fully-qualify the STJ types (e.g., `System.Text.Json.JsonElement`).
 
+### ⚠️ Prefer exact assertions
+
+Always use `Assert.Equal` with the complete expected value. Do **not** use `Assert.Contains`, `Assert.StartsWith`, or `Assert.EndsWith` for output verification — these mask bugs where the format changes but still contains the checked substring.
+
+**Acceptable exceptions:**
+- Error/exception message substring checks (e.g., `Assert.Contains("T0410", ex.Message)`)
+- Buffer-growth tests writing 15+ iterations in a loop (output is hundreds of bytes; Contains verifying data integrity is fine)
+- Non-deterministic output that cannot be reproduced exactly
+
+**Technique for capturing exact values:**
+1. Write a temporary `Assert.Fail(actualValue)` or `Console.WriteLine` to capture the exact output
+2. Or use a file-based app (`.cs` script) referencing the library project to call the API directly
+3. Use raw string literals (`"""`) for JSON expected values — `\u002B`, `\n`, `\t` are literal characters matching JSON content
+
+```csharp
+// GOOD — exact assertion with raw string literal
+Assert.Equal("""{"name":"Alice","age":30}""", json);
+
+// BAD — weak assertion that passes even if output is wrong
+Assert.Contains("Alice", json);
+```
+
 ```powershell
 # Run all tests (standard — all 21 test projects, both TFMs)
 dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
