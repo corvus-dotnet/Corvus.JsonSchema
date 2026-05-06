@@ -99,6 +99,7 @@
     <Compile Include="CoverageBatch6Tests.cs" />
     <Compile Include="CoverageBatch7Tests.cs" />
     <Compile Include="CoverageBatch8Tests.cs" />
+    <Compile Include="CoverageBatch9Tests.cs" />
     <Compile Include="JsonDocumentBuilderCoverageTests.cs" />
     <Compile Include="JsonDocumentBuilderCreateDynamicTests.cs" />
     <Compile Include="JsonDocumentBuilderInsertItemTests.cs" />
