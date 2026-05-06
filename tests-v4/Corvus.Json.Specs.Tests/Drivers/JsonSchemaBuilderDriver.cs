@@ -594,7 +594,15 @@ public class JsonSchemaBuilderDriver : IDisposable
 
         if (isCorvusType)
         {
-            return AssemblyLoadContext.Default.Assemblies.Single(a => a.GetName().Name == "Corvus.Json.ExtendedTypes").ExportedTypes.Single(t => t.FullName == rootTypeName);
+            Assembly? corvusAssembly = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == "Corvus.Json.ExtendedTypes")
+                ?? AssemblyLoadContext.Default.Assemblies.FirstOrDefault(a => a.GetName().Name == "Corvus.Json.ExtendedTypes");
+            if (corvusAssembly is null)
+            {
+                // Force load the assembly by referencing a type in it
+                corvusAssembly = typeof(Corvus.Json.JsonAny).Assembly;
+            }
+
+            return corvusAssembly.ExportedTypes.Single(t => t.FullName == rootTypeName);
         }
 
         return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootTypeName);
