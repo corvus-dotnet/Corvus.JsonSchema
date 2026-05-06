@@ -1,0 +1,31 @@
+[
+  {
+    "description": "Repro duplicate anyOf schema",
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "additionalProperties": false,
+      "anyOf": [
+        {
+          "type": "string"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "tests": [
+      {
+        "description": "data: \u0022foo\u0022",
+        "data": "foo",
+        "valid": true
+      },
+      {
+        "description": "data: { \u0022bar\u0022: 3 }",
+        "data": {
+          "bar": 3
+        },
+        "valid": false
+      }
+    ]
+  }
+]

@@ -1,0 +1,33 @@
+[
+  {
+    "description": "reference of an arbitrary keyword of a sub-schema",
+    "schema": {
+      "properties": {
+        "foo": {
+          "path/like/keyword": {
+            "type": "integer"
+          }
+        },
+        "bar": {
+          "$ref": "#/properties/foo/path~1like~1keyword"
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022bar\u0022: 3}",
+        "data": {
+          "bar": 3
+        },
+        "valid": true
+      },
+      {
+        "description": "data: {\u0022bar\u0022: \u0022hello\u0022}",
+        "data": {
+          "bar": "hello"
+        },
+        "valid": false
+      }
+    ]
+  }
+]

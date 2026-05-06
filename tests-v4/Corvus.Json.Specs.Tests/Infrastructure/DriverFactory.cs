@@ -131,6 +131,72 @@ public static class DriverFactory
             "jsonSchemaBuilderOpenApi30DriverSettings");
     }
 
+    /// <summary>
+    /// Creates a driver for additional draft 4 schemas.
+    /// </summary>
+    /// <returns>A configured <see cref="JsonSchemaBuilderDriver"/>.</returns>
+    public static JsonSchemaBuilderDriver CreateAdditionalDraft4Driver()
+    {
+        return CreateDriver(
+            Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary,
+            "jsonSchemaBuilderAdditional4DriverSettings");
+    }
+
+    /// <summary>
+    /// Creates a driver for additional draft 6 schemas.
+    /// </summary>
+    /// <returns>A configured <see cref="JsonSchemaBuilderDriver"/>.</returns>
+    public static JsonSchemaBuilderDriver CreateAdditionalDraft6Driver()
+    {
+        return CreateDriver(
+            Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary,
+            "jsonSchemaBuilderAdditional6DriverSettings");
+    }
+
+    /// <summary>
+    /// Creates a driver for additional draft 7 schemas.
+    /// </summary>
+    /// <returns>A configured <see cref="JsonSchemaBuilderDriver"/>.</returns>
+    public static JsonSchemaBuilderDriver CreateAdditionalDraft7Driver()
+    {
+        return CreateDriver(
+            Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary,
+            "jsonSchemaBuilderAdditional7DriverSettings");
+    }
+
+    /// <summary>
+    /// Creates a driver for additional draft 2019-09 schemas.
+    /// </summary>
+    /// <returns>A configured <see cref="JsonSchemaBuilderDriver"/>.</returns>
+    public static JsonSchemaBuilderDriver CreateAdditionalDraft201909Driver()
+    {
+        return CreateDriver(
+            Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary,
+            "jsonSchemaBuilderAdditional201909DriverSettings");
+    }
+
+    /// <summary>
+    /// Creates a driver for additional draft 2020-12 schemas.
+    /// </summary>
+    /// <returns>A configured <see cref="JsonSchemaBuilderDriver"/>.</returns>
+    public static JsonSchemaBuilderDriver CreateAdditionalDraft202012Driver()
+    {
+        return CreateDriver(
+            Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
+            "jsonSchemaBuilderAdditional202012DriverSettings");
+    }
+
+    /// <summary>
+    /// Creates a driver for additional OpenAPI 3.0 schemas.
+    /// </summary>
+    /// <returns>A configured <see cref="JsonSchemaBuilderDriver"/>.</returns>
+    public static JsonSchemaBuilderDriver CreateAdditionalOpenApi30Driver()
+    {
+        return CreateDriver(
+            Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
+            "jsonSchemaBuilderAdditionalOpenApi30DriverSettings");
+    }
+
     private static JsonSchemaBuilderDriver CreateDriver(IVocabulary vocabulary, string settingsKey)
     {
 #if !NET

@@ -1,0 +1,29 @@
+[
+  {
+    "description": "An enum with an empty string",
+    "schema": {
+      "type": "string",
+      "enum": [
+        "",
+        "emptyString"
+      ]
+    },
+    "tests": [
+      {
+        "description": "data: \u0022\u0022",
+        "data": "",
+        "valid": true
+      },
+      {
+        "description": "data: \u0022emptyString\u0022",
+        "data": "emptyString",
+        "valid": true
+      },
+      {
+        "description": "data: \u0022foo\u0022",
+        "data": "foo",
+        "valid": false
+      }
+    ]
+  }
+]

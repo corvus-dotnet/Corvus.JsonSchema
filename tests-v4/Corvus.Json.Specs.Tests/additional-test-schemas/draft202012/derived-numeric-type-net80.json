@@ -1,0 +1,64 @@
+[
+  {
+    "description": "type derived by reference supports implicit conversions",
+    "schema": {
+      "$ref": "#/$defs/base",
+      "maximum": 64,
+      "$defs": {
+        "base": {
+          "type": "number",
+          "format": "{{format}}",
+          "exclusiveMinimum": 0
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: 0",
+        "data": 0,
+        "valid": false
+      },
+      {
+        "description": "data: 1",
+        "data": 1,
+        "valid": true
+      },
+      {
+        "description": "data: 65",
+        "data": 65,
+        "valid": false
+      },
+      {
+        "description": "data: 0",
+        "data": 0,
+        "valid": false
+      },
+      {
+        "description": "data: 1",
+        "data": 1,
+        "valid": true
+      },
+      {
+        "description": "data: 65",
+        "data": 65,
+        "valid": false
+      },
+      {
+        "description": "data: 0",
+        "data": 0,
+        "valid": false
+      },
+      {
+        "description": "data: 1.1",
+        "data": 1.1,
+        "valid": true
+      },
+      {
+        "description": "data: 64.1",
+        "data": 64.1,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  }
+]

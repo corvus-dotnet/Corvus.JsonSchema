@@ -1,0 +1,58 @@
+[
+  {
+    "description": "Generation error with optional nullable and dependent schemas.",
+    "schema": {
+      "$schema": "https://json-schema.org/draft-07/schema",
+      "type": "object",
+      "dependencies": {
+        "recognition": {}
+      }
+    },
+    "tests": [
+      {
+        "description": "data: { \u0022recognition\u0022: \u0022foo\u0022 }",
+        "data": {
+          "recognition": "foo"
+        },
+        "valid": true
+      }
+    ]
+  },
+  {
+    "description": "Generation error with optional nullable and dependent schemas non-JsonAny",
+    "schema": {
+      "$schema": "https://json-schema.org/draft-07/schema",
+      "type": "object",
+      "dependencies": {
+        "recognition": {
+          "type": "object",
+          "required": [
+            "bar"
+          ],
+          "properties": {
+            "bar": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: { \u0022recognition\u0022: \u0022foo\u0022, \u0022bar\u0022: \u0022there\u0022 }",
+        "data": {
+          "recognition": "foo",
+          "bar": "there"
+        },
+        "valid": true
+      },
+      {
+        "description": "data: { \u0022recognition\u0022: \u0022foo\u0022 }",
+        "data": {
+          "recognition": "foo"
+        },
+        "valid": false
+      }
+    ]
+  }
+]

@@ -1,0 +1,34 @@
+[
+  {
+    "description": "Generation error with multiple pattern properties.",
+    "schema": {
+      "$schema": "https://json-schema.org/draft-07/schema",
+      "type": "object",
+      "patternProperties": {
+        "^(?!.*?\\$schema).*$": {
+          "type": "object",
+          "patternProperties": {
+            ".*_doc$|^doc$": {
+              "type": "string"
+            },
+            ".*_code$|^code$": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: { \u0022foo\u0022: { \u0022a_doc\u0022: \u0022aaa\u0022, \u0022b_doc\u0022: \u0022bbb\u0022 } }",
+        "data": {
+          "foo": {
+            "a_doc": "aaa",
+            "b_doc": "bbb"
+          }
+        },
+        "valid": true
+      }
+    ]
+  }
+]
