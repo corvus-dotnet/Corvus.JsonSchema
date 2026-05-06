@@ -61,7 +61,7 @@ public class PrebakedPropertyNameWriteTests
             ObjectWithMixedProperties.CreateBuilder(workspace, age: 30, name: "Alice", email: "alice@example.com", isActive: true);
 
         var buffer = new ArrayBufferWriter<byte>(1024);
-        var options = new JsonWriterOptions { Indented = true };
+        var options = new JsonWriterOptions { Indented = true, NewLine = "\n" };
 
         using (var writer = new Utf8JsonWriter(buffer, options))
         {
@@ -77,7 +77,7 @@ public class PrebakedPropertyNameWriteTests
               "email": "alice@example.com",
               "isActive": true
             }
-            """,
+            """.Replace("\r\n", "\n"),
             json);
     }
 
@@ -123,6 +123,7 @@ public class PrebakedPropertyNameWriteTests
         var options = new JsonWriterOptions
         {
             Indented = true,
+            NewLine = "\n",
             Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
         };
 
@@ -140,7 +141,7 @@ public class PrebakedPropertyNameWriteTests
               "email": "alice@example.com",
               "isActive": true
             }
-            """,
+            """.Replace("\r\n", "\n"),
             json);
     }
 
