@@ -26,7 +26,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[1,2,3]}""", json);
     }
 
     [Fact]
@@ -44,7 +44,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[10,20]}""", json);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[1,2]}""", json);
     }
 
     [Fact]
@@ -80,7 +80,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[1,-1]}""", json);
     }
 
     [Fact]
@@ -98,7 +98,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[100,200]}""", json);
     }
 
     [Fact]
@@ -116,7 +116,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[5,6]}""", json);
     }
 
     [Fact]
@@ -134,7 +134,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[7,8]}""", json);
     }
 
     [Fact]
@@ -152,7 +152,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[0,255]}""", json);
     }
 
     [Fact]
@@ -171,7 +171,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[1.5,2.5]}""", json);
     }
 
     [Fact]
@@ -189,7 +189,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[1.1,2.2]}""", json);
     }
 
     [Fact]
@@ -207,7 +207,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[3.14,2.71]}""", json);
     }
 
 #if NET
@@ -228,7 +228,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[42,99]}""", json);
     }
 
     [Fact]
@@ -247,7 +247,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[1,2]}""", json);
     }
 
     [Fact]
@@ -266,7 +266,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Contains("\"items\"", json);
+        Assert.Equal("""{"items":[1,2]}""", json);
     }
 
 #endif

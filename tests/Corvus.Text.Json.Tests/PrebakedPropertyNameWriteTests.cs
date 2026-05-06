@@ -47,10 +47,7 @@ public class PrebakedPropertyNameWriteTests
         }
 
         string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
-        Assert.Contains("\"name\":\"Alice\"", json);
-        Assert.Contains("\"age\":30", json);
-        Assert.Contains("\"email\":\"alice@example.com\"", json);
-        Assert.Contains("\"isActive\":true", json);
+        Assert.Equal("""{"age":30,"name":"Alice","email":"alice@example.com","isActive":true}""", json);
     }
 
     /// <summary>
@@ -72,10 +69,16 @@ public class PrebakedPropertyNameWriteTests
         }
 
         string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
-        Assert.Contains("\"name\": \"Alice\"", json);
-        Assert.Contains("\"age\": 30", json);
-        Assert.Contains("\"email\": \"alice@example.com\"", json);
-        Assert.Contains("\"isActive\": true", json);
+        Assert.Equal(
+            """
+            {
+              "age": 30,
+              "name": "Alice",
+              "email": "alice@example.com",
+              "isActive": true
+            }
+            """,
+            json);
     }
 
     /// <summary>
@@ -102,10 +105,7 @@ public class PrebakedPropertyNameWriteTests
         }
 
         string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
-        Assert.Contains("\"name\":\"Alice\"", json);
-        Assert.Contains("\"age\":30", json);
-        Assert.Contains("\"email\":\"alice@example.com\"", json);
-        Assert.Contains("\"isActive\":true", json);
+        Assert.Equal("""{"age":30,"name":"Alice","email":"alice@example.com","isActive":true}""", json);
     }
 
     /// <summary>
@@ -132,10 +132,16 @@ public class PrebakedPropertyNameWriteTests
         }
 
         string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
-        Assert.Contains("\"name\": \"Alice\"", json);
-        Assert.Contains("\"age\": 30", json);
-        Assert.Contains("\"email\": \"alice@example.com\"", json);
-        Assert.Contains("\"isActive\": true", json);
+        Assert.Equal(
+            """
+            {
+              "age": 30,
+              "name": "Alice",
+              "email": "alice@example.com",
+              "isActive": true
+            }
+            """,
+            json);
     }
 
     /// <summary>

@@ -24,6 +24,11 @@ public static class CoverageBatch6Tests
     /// Exercises <c>WriteNumber</c> throw when TryGetDouble fails (lines 273-274).
     /// A number like 1e999 is valid JSON but overflows IEEE 754 double.
     /// </summary>
+    /// <remarks>
+    /// This test is excluded on net481 because .NET Framework's JSON number parsing
+    /// handles overflow differently (does not produce the same InvalidOperationException path).
+    /// </remarks>
+#if NET
     [Fact]
     public static void Canonicalizer_NumberOverflowsDouble_ThrowsInvalidOperation()
     {
@@ -45,6 +50,7 @@ public static class CoverageBatch6Tests
         Assert.NotNull(ex);
         Assert.Contains("Infinity", ex!.Message, StringComparison.OrdinalIgnoreCase);
     }
+#endif
 
     #endregion
 

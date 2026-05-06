@@ -127,7 +127,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Contains(",\"2024-06-20", json);
+        Assert.Equal("""["2024-01-15T10:30:00Z","2024-06-20T14:45:00Z"]""", json);
     }
 
     #endregion
@@ -153,7 +153,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Contains(",\"2024-06-20", json);
+        Assert.Equal("""["2024-01-15T10:30:00+00:00","2024-06-20T14:45:00+02:00"]""", json);
     }
 
     #endregion
@@ -236,8 +236,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Contains(",\"", json);
-        Assert.StartsWith("[\"", json);
+        Assert.Equal("""["AQIDBA==","BQYHCA=="]""", json);
     }
 
     #endregion

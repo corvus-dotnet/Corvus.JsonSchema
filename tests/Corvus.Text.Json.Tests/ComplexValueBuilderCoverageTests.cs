@@ -44,7 +44,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (byte)255);
             });
 
-        Assert.Contains("255", json);
+        Assert.Equal("""{"val":255}""", json);
     }
 
     #endregion
@@ -60,7 +60,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (sbyte)-42);
             });
 
-        Assert.Contains("-42", json);
+        Assert.Equal("""{"val":-42}""", json);
     }
 
     #endregion
@@ -76,7 +76,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (short)-1000);
             });
 
-        Assert.Contains("-1000", json);
+        Assert.Equal("""{"val":-1000}""", json);
     }
 
     #endregion
@@ -92,7 +92,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (ushort)60000);
             });
 
-        Assert.Contains("60000", json);
+        Assert.Equal("""{"val":60000}""", json);
     }
 
     #endregion
@@ -108,7 +108,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 3000000000U);
             });
 
-        Assert.Contains("3000000000", json);
+        Assert.Equal("""{"val":3000000000}""", json);
     }
 
     #endregion
@@ -124,7 +124,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 9999999999999UL);
             });
 
-        Assert.Contains("9999999999999", json);
+        Assert.Equal("""{"val":9999999999999}""", json);
     }
 
     #endregion
@@ -140,7 +140,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 1.5f);
             });
 
-        Assert.Contains("1.5", json);
+        Assert.Equal("""{"val":1.5}""", json);
     }
 
     #endregion
@@ -156,7 +156,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 3.14);
             });
 
-        Assert.Contains("3.14", json);
+        Assert.Equal("""{"val":3.14}""", json);
     }
 
     #endregion
@@ -172,7 +172,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 123.456m);
             });
 
-        Assert.Contains("123.456", json);
+        Assert.Equal("""{"val":123.456}""", json);
     }
 
     #endregion
@@ -188,7 +188,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new BigInteger(999999999999999));
             });
 
-        Assert.Contains("999999999999999", json);
+        Assert.Equal("""{"val":999999999999999}""", json);
     }
 
     #endregion
@@ -205,7 +205,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), bn);
             });
 
-        Assert.Contains("12345", json);
+        Assert.Equal("""{"val":123456789E-4}""", json);
     }
 
     #endregion
@@ -221,7 +221,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new Guid("12345678-1234-1234-1234-123456789abc"));
             });
 
-        Assert.Contains("12345678-1234-1234-1234-123456789abc", json);
+        Assert.Equal("""{"val":"12345678-1234-1234-1234-123456789abc"}""", json);
     }
 
     #endregion
@@ -237,7 +237,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc));
             });
 
-        Assert.Contains("2024", json);
+        Assert.Equal("""{"val":"2024-01-15T10:30:00Z"}""", json);
     }
 
     #endregion
@@ -253,7 +253,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new DateTimeOffset(2024, 6, 15, 12, 0, 0, TimeSpan.FromHours(5)));
             });
 
-        Assert.Contains("2024", json);
+        Assert.Equal("""{"val":"2024-06-15T12:00:00\u002B05:00"}""", json);
     }
 
     #endregion
@@ -269,7 +269,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), true);
             });
 
-        Assert.Contains("true", json);
+        Assert.Equal("""{"val":true}""", json);
     }
 
     #endregion
@@ -287,7 +287,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (Half)2.5);
             });
 
-        Assert.Contains("2.5", json);
+        Assert.Equal("""{"val":2.5}""", json);
     }
 
     #endregion
@@ -306,7 +306,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), odt);
             });
 
-        Assert.Contains("2024", json);
+        Assert.Equal("""{"val":"2024-01-15T10:30:00.0000000\u002B05:00"}""", json);
     }
 
     #endregion
@@ -323,7 +323,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), od);
             });
 
-        Assert.Contains("2024", json);
+        Assert.Equal("""{"val":"2024-01-15\u002B05:00"}""", json);
     }
 
     #endregion
@@ -340,7 +340,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), ot);
             });
 
-        Assert.Contains("10", json);
+        Assert.Equal("""{"val":"10:30:00.0000000\u002B05:00"}""", json);
     }
 
     #endregion
@@ -356,7 +356,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new LocalDate(2024, 1, 15));
             });
 
-        Assert.Contains("2024", json);
+        Assert.Equal("""{"val":"2024-01-15"}""", json);
     }
 
     #endregion
@@ -372,7 +372,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(3));
             });
 
-        Assert.Contains("P1Y2M3D", json);
+        Assert.Equal("""{"val":"P1Y2M3D"}""", json);
     }
 
     #endregion
@@ -391,7 +391,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("99", json);
+        Assert.Equal("""{"num":99}""", json);
     }
 
     #endregion
@@ -410,7 +410,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("77", json);
+        Assert.Equal("""{"num":77}""", json);
     }
 
     #endregion
@@ -429,7 +429,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("raw", json);
+        Assert.Equal("""{"prop":"raw"}""", json);
     }
 
     #endregion
@@ -448,7 +448,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("null", json);
+        Assert.Equal("""{"n":null}""", json);
     }
 
     #endregion
@@ -467,7 +467,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("hello", json);
+        Assert.Equal("""{"s":"hello"}""", json);
     }
 
     #endregion
@@ -486,7 +486,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee", json);
+        Assert.Equal("""{"myGuid":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}""", json);
     }
 
     [Fact]
@@ -501,7 +501,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("2025", json);
+        Assert.Equal("""{"dt":"2025-03-20T08:00:00Z"}""", json);
     }
 
     [Fact]
@@ -516,7 +516,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("2025", json);
+        Assert.Equal("""{"dto":"2025-03-20T08:00:00\u002B02:00"}""", json);
     }
 
     [Fact]
@@ -531,7 +531,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("false", json);
+        Assert.Equal("""{"flag":false}""", json);
     }
 
     [Fact]
@@ -547,7 +547,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("2024", json);
+        Assert.Equal("""{"odt":"2024-06-01T12:00:00.0000000\u002B03:00"}""", json);
     }
 
     [Fact]
@@ -563,7 +563,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("2024", json);
+        Assert.Equal("""{"od":"2024-06-01\u002B03:00"}""", json);
     }
 
     [Fact]
@@ -579,7 +579,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("14", json);
+        Assert.Equal("""{"ot":"14:30:00.0000000\u002B03:00"}""", json);
     }
 
     [Fact]
@@ -594,7 +594,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("2024", json);
+        Assert.Equal("""{"ld":"2024-12-25"}""", json);
     }
 
     [Fact]
@@ -609,7 +609,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("7D", json);
+        Assert.Equal("""{"p":"P0Y0M7D"}""", json);
     }
 
     [Fact]
@@ -624,7 +624,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("-100", json);
+        Assert.Equal("""{"sb":-100}""", json);
     }
 
     [Fact]
@@ -639,7 +639,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("200", json);
+        Assert.Equal("""{"b":200}""", json);
     }
 
     [Fact]
@@ -654,7 +654,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("12345", json);
+        Assert.Equal("""{"sh":12345}""", json);
     }
 
     [Fact]
@@ -669,7 +669,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("50000", json);
+        Assert.Equal("""{"us":50000}""", json);
     }
 
     [Fact]
@@ -684,7 +684,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("4000000000", json);
+        Assert.Equal("""{"ui":4000000000}""", json);
     }
 
     [Fact]
@@ -699,7 +699,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("9876543210", json);
+        Assert.Equal("""{"lg":9876543210}""", json);
     }
 
     [Fact]
@@ -714,7 +714,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("18000000000000000000", json);
+        Assert.Equal("""{"ul":18000000000000000000}""", json);
     }
 
     [Fact]
@@ -729,7 +729,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("2.5", json);
+        Assert.Equal("""{"fl":2.5}""", json);
     }
 
     [Fact]
@@ -744,7 +744,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("9.99", json);
+        Assert.Equal("""{"db":9.99}""", json);
     }
 
     [Fact]
@@ -759,7 +759,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("77.77", json);
+        Assert.Equal("""{"dec":77.77}""", json);
     }
 
     [Fact]
@@ -774,7 +774,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("1234567890123456789", json);
+        Assert.Equal("""{"bi":1234567890123456789}""", json);
     }
 
     [Fact]
@@ -790,7 +790,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("555", json);
+        Assert.Equal("""{"bn":555123E-3}""", json);
     }
 
     #endregion
@@ -809,7 +809,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("value", json);
+        Assert.Equal("""{"key":"value"}""", json);
     }
 
     [Fact]
@@ -824,7 +824,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("null", json);
+        Assert.Equal("""{"nul":null}""", json);
     }
 
     #endregion
@@ -850,8 +850,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("inner", json);
-        Assert.Contains("42", json);
+        Assert.Equal("""{"nested":{"inner":42}}""", json);
     }
 
     [Fact]
@@ -873,8 +872,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("nested", json);
-        Assert.Contains("99", json);
+        Assert.Equal("""{"nested":{"x":99}}""", json);
     }
 
     #endregion
@@ -901,7 +899,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("77", json);
+        Assert.Equal("""{"ctx":{"val":77}}""", json);
     }
 
     [Fact]
@@ -924,7 +922,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("88", json);
+        Assert.Equal("""{"ctx":{"val":88}}""", json);
     }
 
     #endregion
@@ -943,7 +941,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("1234", json);
+        Assert.Equal("""{"num":1234}""", json);
     }
 
     #endregion
@@ -962,7 +960,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("data", json);
+        Assert.Equal("""{"raw":"data"}""", json);
     }
 
     #endregion
@@ -983,7 +981,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("999888777666", json);
+        Assert.Equal("""{"val":999888777666}""", json);
     }
 
     [Fact]
@@ -998,7 +996,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("111222333", json);
+        Assert.Equal("""{"val":111222333}""", json);
     }
 
     #endregion
@@ -1017,7 +1015,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("888777666555", json);
+        Assert.Equal("""{"val":888777666555}""", json);
     }
 
     [Fact]
@@ -1032,7 +1030,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("444555666", json);
+        Assert.Equal("""{"val":444555666}""", json);
     }
 
     #endregion
@@ -1051,7 +1049,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Contains("1.5", json);
+        Assert.Equal("""{"h":1.5}""", json);
     }
 
     #endregion

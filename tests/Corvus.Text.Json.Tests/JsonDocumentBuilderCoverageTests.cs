@@ -171,8 +171,7 @@ public static class JsonDocumentBuilderCoverageTests
         // WriteComplexElementToUnsafe → GetUtf8JsonStringUnsafe for HasComplexChildren strings
         root.SetProperty("extra"u8, true);
         string serialized = root.ToString();
-        Assert.Contains("hello\\nworld", serialized);
-        Assert.Contains("extra", serialized);
+        Assert.Equal("""{"msg":"hello\nworld","plain":"normal","extra":true}""", serialized);
 
         // Also verify the non-escaped path still works
         Assert.True(root.TryGetProperty("plain"u8, out JsonElement.Mutable plainProp));
@@ -434,9 +433,7 @@ public static class JsonDocumentBuilderCoverageTests
         string serialized = root.ToString();
 
         // The output should contain the escaped property name re-encoded by Utf8JsonWriter
-        Assert.Contains("line", serialized);
-        Assert.Contains("one", serialized);
-        Assert.Contains("added", serialized);
+        Assert.Equal("""{"line\none":1,"normal":2,"added":3}""", serialized);
 
         // Verify round-trip: parse the serialized output and check property access
         using ParsedJsonDocument<JsonElement> roundTripped = ParsedJsonDocument<JsonElement>.Parse(
