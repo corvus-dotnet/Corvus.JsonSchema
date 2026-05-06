@@ -43,9 +43,9 @@ public class SuiteIgnoreIfWithoutThenOrElse : IClassFixture<SuiteIgnoreIfWithout
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": {\r\n                \"const\": 0\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IgnoreIfWithoutThenOrElse",
                 validateFormat: false,
@@ -95,9 +95,9 @@ public class SuiteIgnoreThenWithoutIf : IClassFixture<SuiteIgnoreThenWithoutIf.F
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"then\": {\r\n                \"const\": 0\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IgnoreThenWithoutIf",
                 validateFormat: false,
@@ -147,9 +147,9 @@ public class SuiteIgnoreElseWithoutIf : IClassFixture<SuiteIgnoreElseWithoutIf.F
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"else\": {\r\n                \"const\": 0\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IgnoreElseWithoutIf",
                 validateFormat: false,
@@ -207,9 +207,9 @@ public class SuiteIfAndThenWithoutElse : IClassFixture<SuiteIfAndThenWithoutElse
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": {\r\n                \"exclusiveMaximum\": 0\r\n            },\r\n            \"then\": {\r\n                \"minimum\": -10\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfAndThenWithoutElse",
                 validateFormat: false,
@@ -267,9 +267,9 @@ public class SuiteIfAndElseWithoutThen : IClassFixture<SuiteIfAndElseWithoutThen
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": {\r\n                \"exclusiveMaximum\": 0\r\n            },\r\n            \"else\": {\r\n                \"multipleOf\": 2\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfAndElseWithoutThen",
                 validateFormat: false,
@@ -335,9 +335,9 @@ public class SuiteValidateAgainstCorrectBranchThenVsElse : IClassFixture<SuiteVa
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": {\r\n                \"exclusiveMaximum\": 0\r\n            },\r\n            \"then\": {\r\n                \"minimum\": -10\r\n            },\r\n            \"else\": {\r\n                \"multipleOf\": 2\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "ValidateAgainstCorrectBranchThenVsElse",
                 validateFormat: false,
@@ -387,9 +387,9 @@ public class SuiteNonInterferenceAcrossCombinedSchemas : IClassFixture<SuiteNonI
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"if\": {\r\n                        \"exclusiveMaximum\": 0\r\n                    }\r\n                },\r\n                {\r\n                    \"then\": {\r\n                        \"minimum\": -10\r\n                    }\r\n                },\r\n                {\r\n                    \"else\": {\r\n                        \"multipleOf\": 2\r\n                    }\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "NonInterferenceAcrossCombinedSchemas",
                 validateFormat: false,
@@ -439,9 +439,9 @@ public class SuiteIfWithBooleanSchemaTrue : IClassFixture<SuiteIfWithBooleanSche
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": true,\r\n            \"then\": { \"const\": \"then\" },\r\n            \"else\": { \"const\": \"else\" }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -491,9 +491,9 @@ public class SuiteIfWithBooleanSchemaFalse : IClassFixture<SuiteIfWithBooleanSch
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"if\": false,\r\n            \"then\": { \"const\": \"then\" },\r\n            \"else\": { \"const\": \"else\" }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -559,9 +559,9 @@ public class SuiteIfAppearsAtTheEndWhenSerializedKeywordProcessingSequence : ICl
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"then\": { \"const\": \"yes\" },\r\n            \"else\": { \"const\": \"other\" },\r\n            \"if\": { \"maxLength\": 4 }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "IfAppearsAtTheEndWhenSerializedKeywordProcessingSequence",
                 validateFormat: false,
@@ -611,9 +611,9 @@ public class SuiteThenFalseFailsWhenConditionMatches : IClassFixture<SuiteThenFa
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"if\": { \"const\": 1 },\r\n            \"then\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "ThenFalseFailsWhenConditionMatches",
                 validateFormat: false,
@@ -663,9 +663,9 @@ public class SuiteElseFalseFailsWhenConditionDoesNotMatch : IClassFixture<SuiteE
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"if\": { \"const\": 1 },\r\n            \"else\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "if-then-else.json",
+                "#/11/schema",
                 "JsonSchemaTestSuiteDraft201909IfThenElse",
                 "ElseFalseFailsWhenConditionDoesNotMatch",
                 validateFormat: false,

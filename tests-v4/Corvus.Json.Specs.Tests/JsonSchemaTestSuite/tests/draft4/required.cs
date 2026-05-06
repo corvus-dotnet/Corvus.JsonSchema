@@ -83,9 +83,9 @@ public class SuiteRequiredValidation : IClassFixture<SuiteRequiredValidation.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {},\r\n                \"bar\": {}\r\n            },\r\n            \"required\": [\"foo\"]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "required.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4Required",
                 "RequiredValidation",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteRequiredDefaultValidation : IClassFixture<SuiteRequiredDefault
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "required.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4Required",
                 "RequiredDefaultValidation",
                 validateFormat: false,
@@ -179,9 +179,9 @@ public class SuiteRequiredWithEscapedCharacters : IClassFixture<SuiteRequiredWit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"required\": [\r\n                \"foo\\nbar\",\r\n                \"foo\\\"bar\",\r\n                \"foo\\\\bar\",\r\n                \"foo\\rbar\",\r\n                \"foo\\tbar\",\r\n                \"foo\\fbar\"\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "required.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4Required",
                 "RequiredWithEscapedCharacters",
                 validateFormat: false,
@@ -271,9 +271,9 @@ public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames :
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"required\": [\"__proto__\", \"toString\", \"constructor\"] }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "required.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4Required",
                 "RequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames",
                 validateFormat: false,

@@ -99,9 +99,9 @@ public class SuiteValidationOfAnInternationalizedEMailAddresses : IClassFixture<
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"idn-email\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\idn-email.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalFormatIdnEmail",
                 "ValidationOfAnInternationalizedEMailAddresses",
                 validateFormat: true,

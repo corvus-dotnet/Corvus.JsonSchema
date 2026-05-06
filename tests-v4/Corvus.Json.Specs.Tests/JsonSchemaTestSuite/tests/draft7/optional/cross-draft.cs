@@ -43,9 +43,9 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts : IClassFixture<S
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"object\",\r\n            \"allOf\": [\r\n                { \"properties\": { \"foo\": true } },\r\n                { \"$ref\": \"http://localhost:1234/draft2019-09/dependentRequired.json\" }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\cross-draft.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalCrossDraft",
                 "RefsToFutureDraftsAreProcessedAsFutureDrafts",
                 validateFormat: false,

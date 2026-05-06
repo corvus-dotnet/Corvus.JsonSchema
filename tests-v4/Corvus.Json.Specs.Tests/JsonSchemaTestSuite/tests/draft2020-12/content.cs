@@ -51,9 +51,9 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType : IClassFixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contentMediaType\": \"application/json\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "content.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012Content",
                 "ValidationOfStringEncodedContentBasedOnMediaType",
                 validateFormat: false,
@@ -111,9 +111,9 @@ public class SuiteValidationOfBinaryStringEncoding : IClassFixture<SuiteValidati
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contentEncoding\": \"base64\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "content.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012Content",
                 "ValidationOfBinaryStringEncoding",
                 validateFormat: false,
@@ -179,9 +179,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments : IClassFixture<Su
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contentMediaType\": \"application/json\",\r\n            \"contentEncoding\": \"base64\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "content.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012Content",
                 "ValidationOfBinaryEncodedMediaTypeDocuments",
                 validateFormat: false,
@@ -279,9 +279,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocumentsWithSchema : IClass
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contentMediaType\": \"application/json\",\r\n            \"contentEncoding\": \"base64\",\r\n            \"contentSchema\": { \"type\": \"object\", \"required\": [\"foo\"], \"properties\": { \"foo\": { \"type\": \"string\" } } }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "content.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012Content",
                 "ValidationOfBinaryEncodedMediaTypeDocumentsWithSchema",
                 validateFormat: false,

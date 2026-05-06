@@ -75,9 +75,9 @@ public class SuitePropertyNamesValidation : IClassFixture<SuitePropertyNamesVali
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"propertyNames\": {\"maxLength\": 3}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7PropertyNames",
                 "PropertyNamesValidation",
                 validateFormat: false,
@@ -135,9 +135,9 @@ public class SuitePropertyNamesValidationWithPattern : IClassFixture<SuiteProper
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"propertyNames\": { \"pattern\": \"^a+$\" }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7PropertyNames",
                 "PropertyNamesValidationWithPattern",
                 validateFormat: false,
@@ -187,9 +187,9 @@ public class SuitePropertyNamesWithBooleanSchemaTrue : IClassFixture<SuiteProper
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"propertyNames\": true}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft7PropertyNames",
                 "PropertyNamesWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -239,9 +239,9 @@ public class SuitePropertyNamesWithBooleanSchemaFalse : IClassFixture<SuitePrope
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"propertyNames\": false}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft7PropertyNames",
                 "PropertyNamesWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -299,9 +299,9 @@ public class SuitePropertyNamesWithConst : IClassFixture<SuitePropertyNamesWithC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"propertyNames\": {\"const\": \"foo\"}}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft7PropertyNames",
                 "PropertyNamesWithConst",
                 validateFormat: false,
@@ -367,9 +367,9 @@ public class SuitePropertyNamesWithEnum : IClassFixture<SuitePropertyNamesWithEn
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"propertyNames\": {\"enum\": [\"foo\", \"bar\"]}}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft7PropertyNames",
                 "PropertyNamesWithEnum",
                 validateFormat: false,

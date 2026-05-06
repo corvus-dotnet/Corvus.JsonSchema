@@ -83,9 +83,9 @@ public class SuiteDependencies : IClassFixture<SuiteDependencies.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\"bar\": [\"foo\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6Dependencies",
                 "Dependencies",
                 validateFormat: false,
@@ -143,9 +143,9 @@ public class SuiteDependenciesWithEmptyArray : IClassFixture<SuiteDependenciesWi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\"bar\": []}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6Dependencies",
                 "DependenciesWithEmptyArray",
                 validateFormat: false,
@@ -227,9 +227,9 @@ public class SuiteMultipleDependencies : IClassFixture<SuiteMultipleDependencies
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\"quux\": [\"foo\", \"bar\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft6Dependencies",
                 "MultipleDependencies",
                 validateFormat: false,
@@ -303,9 +303,9 @@ public class SuiteMultipleDependenciesSubschema : IClassFixture<SuiteMultipleDep
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\r\n                \"bar\": {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"integer\"},\r\n                        \"bar\": {\"type\": \"integer\"}\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft6Dependencies",
                 "MultipleDependenciesSubschema",
                 validateFormat: false,
@@ -371,9 +371,9 @@ public class SuiteDependenciesWithBooleanSubschemas : IClassFixture<SuiteDepende
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\r\n                \"foo\": true,\r\n                \"bar\": false\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft6Dependencies",
                 "DependenciesWithBooleanSubschemas",
                 validateFormat: false,
@@ -463,9 +463,9 @@ public class SuiteDependenciesWithEscapedCharacters : IClassFixture<SuiteDepende
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\r\n                \"foo\\nbar\": [\"foo\\rbar\"],\r\n                \"foo\\tbar\": {\r\n                    \"minProperties\": 4\r\n                },\r\n                \"foo'bar\": {\"required\": [\"foo\\\"bar\"]},\r\n                \"foo\\\"bar\": [\"foo'bar\"]\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft6Dependencies",
                 "DependenciesWithEscapedCharacters",
                 validateFormat: false,
@@ -531,9 +531,9 @@ public class SuiteDependentSubschemaIncompatibleWithRoot : IClassFixture<SuiteDe
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {}\r\n            },\r\n            \"dependencies\": {\r\n                \"foo\": {\r\n                    \"properties\": {\r\n                        \"bar\": {}\r\n                    },\r\n                    \"additionalProperties\": false\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft6Dependencies",
                 "DependentSubschemaIncompatibleWithRoot",
                 validateFormat: false,

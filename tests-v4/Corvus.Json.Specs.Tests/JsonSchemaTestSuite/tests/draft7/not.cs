@@ -43,9 +43,9 @@ public class SuiteNot : IClassFixture<SuiteNot.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"not\": {\"type\": \"integer\"}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "not.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7Not",
                 "Not",
                 validateFormat: false,
@@ -103,9 +103,9 @@ public class SuiteNotMultipleTypes : IClassFixture<SuiteNotMultipleTypes.Fixture
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"not\": {\"type\": [\"integer\", \"boolean\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "not.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7Not",
                 "NotMultipleTypes",
                 validateFormat: false,
@@ -163,9 +163,9 @@ public class SuiteNotMoreComplexSchema : IClassFixture<SuiteNotMoreComplexSchema
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"not\": {\r\n                \"type\": \"object\",\r\n                \"properties\": {\r\n                    \"foo\": {\r\n                        \"type\": \"string\"\r\n                    }\r\n                }\r\n             }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "not.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft7Not",
                 "NotMoreComplexSchema",
                 validateFormat: false,
@@ -215,9 +215,9 @@ public class SuiteForbiddenProperty : IClassFixture<SuiteForbiddenProperty.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": { \r\n                    \"not\": {}\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "not.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft7Not",
                 "ForbiddenProperty",
                 validateFormat: false,
@@ -323,9 +323,9 @@ public class SuiteForbidEverythingWithEmptySchema : IClassFixture<SuiteForbidEve
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"not\": {} }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "not.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft7Not",
                 "ForbidEverythingWithEmptySchema",
                 validateFormat: false,
@@ -431,9 +431,9 @@ public class SuiteForbidEverythingWithBooleanSchemaTrue : IClassFixture<SuiteFor
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"not\": true }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "not.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft7Not",
                 "ForbidEverythingWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -539,9 +539,9 @@ public class SuiteAllowEverythingWithBooleanSchemaFalse : IClassFixture<SuiteAll
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"not\": false }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "not.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft7Not",
                 "AllowEverythingWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -583,9 +583,9 @@ public class SuiteDoubleNegation : IClassFixture<SuiteDoubleNegation.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"not\": { \"not\": {} } }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "not.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft7Not",
                 "DoubleNegation",
                 validateFormat: false,

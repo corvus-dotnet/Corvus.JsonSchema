@@ -59,9 +59,9 @@ public class SuiteMaximumValidation : IClassFixture<SuiteMaximumValidation.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maximum\": 3.0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012Maximum",
                 "MaximumValidation",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteMaximumValidationWithUnsignedInteger : IClassFixture<SuiteMaxi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maximum\": 300\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012Maximum",
                 "MaximumValidationWithUnsignedInteger",
                 validateFormat: false,

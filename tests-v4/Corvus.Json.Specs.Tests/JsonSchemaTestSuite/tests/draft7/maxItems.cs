@@ -59,9 +59,9 @@ public class SuiteMaxItemsValidation : IClassFixture<SuiteMaxItemsValidation.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maxItems\": 2}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxItems.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7MaxItems",
                 "MaxItemsValidation",
                 validateFormat: false,
@@ -111,9 +111,9 @@ public class SuiteMaxItemsValidationWithADecimal : IClassFixture<SuiteMaxItemsVa
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maxItems\": 2.0}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxItems.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7MaxItems",
                 "MaxItemsValidationWithADecimal",
                 validateFormat: false,

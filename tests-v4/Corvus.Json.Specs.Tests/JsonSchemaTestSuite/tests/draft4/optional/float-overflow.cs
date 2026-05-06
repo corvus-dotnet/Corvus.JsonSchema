@@ -35,9 +35,9 @@ public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled : IClassFixture
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"type\": \"number\", \"multipleOf\": 0.5}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\float-overflow.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4OptionalFloatOverflow",
                 "AllIntegersAreMultiplesOf05IfOverflowIsHandled",
                 validateFormat: false,

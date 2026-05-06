@@ -115,9 +115,9 @@ internal static class TestCaseGenerator
                         .AppendLine("        public async Task InitializeAsync()")
                         .AppendLine("        {")
                         .AppendLine($"            _driver = DriverFactory.{GetFactoryMethodName(testGroup.DriverSettingsKey)}();")
-                        .AppendLine($"            GeneratedType = await _driver.GenerateTypeForVirtualFile(")
-                        .AppendLine($"                {SymbolDisplay.FormatLiteral(testSuite.Schema, true)},")
+                        .AppendLine($"            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(")
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(testFile.NamespaceRelativePath, true)},")
+                        .AppendLine($"                {SymbolDisplay.FormatLiteral(testSuite.SchemaPath, true)},")
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(flatFeatureName, true)},")
                         .AppendLine($"                {SymbolDisplay.FormatLiteral(pascalSuiteName, true)},")
                         .AppendLine($"                validateFormat: {(testSuite.ValidateFormat ? "true" : "false")},")
@@ -182,11 +182,12 @@ internal static class TestCaseGenerator
                 string json = File.ReadAllText(file);
                 using JsonDocument doc = JsonDocument.Parse(json);
 
+                int suiteIndex = 0;
                 foreach (JsonElement testSuiteElement in doc.RootElement.EnumerateArray())
                 {
                     List<TestSpecification> testList = [];
                     string suiteName = testSuiteElement.GetProperty("description").GetString()!;
-                    string schema = testSuiteElement.GetProperty("schema").GetRawText();
+                    string schemaPath = $"#/{suiteIndex}/schema";
 
                     SuiteExclusions? suiteExclusions = null;
                     if (fileExclusions is FileExclusions fe)
@@ -197,6 +198,7 @@ internal static class TestCaseGenerator
                     // If the entire suite is excluded (no individual tests specified), skip it
                     if (suiteExclusions is SuiteExclusions se2 && se2.Tests is null)
                     {
+                        suiteIndex++;
                         continue;
                     }
 
@@ -221,8 +223,10 @@ internal static class TestCaseGenerator
 
                     if (testList.Count > 0)
                     {
-                        testSuites.Add(new TestSuite(suiteName, schema, testList, pathOptions?.ValidateFormat ?? false));
+                        testSuites.Add(new TestSuite(suiteName, schemaPath, testList, pathOptions?.ValidateFormat ?? false));
                     }
+
+                    suiteIndex++;
                 }
 
                 if (testSuites.Count > 0)
@@ -324,7 +328,7 @@ internal static class TestCaseGenerator
 
 public record TestGroup(string Name, string DriverSettingsKey, List<TestFile> Files);
 public record TestFile(string BaseDirectory, string RelativePath, string NamespaceRelativePath, List<TestSuite> TestSuites);
-public record TestSuite(string SuiteName, string Schema, List<TestSpecification> TestSpecifications, bool ValidateFormat);
+public record TestSuite(string SuiteName, string SchemaPath, List<TestSpecification> TestSpecifications, bool ValidateFormat);
 public record TestSpecification(string TestDescription, string Instance, bool Expectation);
 
 public class TestConfiguration

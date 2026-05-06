@@ -43,9 +43,9 @@ public class SuiteInvalidTypeForDefault : IClassFixture<SuiteInvalidTypeForDefau
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"type\": \"integer\",\r\n                    \"default\": []\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "default.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7Default",
                 "InvalidTypeForDefault",
                 validateFormat: false,
@@ -95,9 +95,9 @@ public class SuiteInvalidStringValueForDefault : IClassFixture<SuiteInvalidStrin
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"bar\": {\r\n                    \"type\": \"string\",\r\n                    \"minLength\": 4,\r\n                    \"default\": \"bad\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "default.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7Default",
                 "InvalidStringValueForDefault",
                 validateFormat: false,
@@ -155,9 +155,9 @@ public class SuiteTheDefaultKeywordDoesNotDoAnythingIfThePropertyIsMissing : ICl
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"alpha\": {\r\n                    \"type\": \"number\",\r\n                    \"maximum\": 3,\r\n                    \"default\": 5\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "default.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft7Default",
                 "TheDefaultKeywordDoesNotDoAnythingIfThePropertyIsMissing",
                 validateFormat: false,

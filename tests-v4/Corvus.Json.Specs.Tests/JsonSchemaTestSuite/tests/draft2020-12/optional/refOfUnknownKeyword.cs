@@ -43,9 +43,9 @@ public class SuiteReferenceOfARootArbitraryKeyword : IClassFixture<SuiteReferenc
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"unknown-keyword\": {\"type\": \"integer\"},\r\n            \"properties\": {\r\n                \"bar\": {\"$ref\": \"#/unknown-keyword\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\refOfUnknownKeyword.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalRefOfUnknownKeyword",
                 "ReferenceOfARootArbitraryKeyword",
                 validateFormat: false,
@@ -95,9 +95,9 @@ public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef : IClassFixture
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"unknown/keyword\": {\"type\": \"integer\"},\r\n            \"properties\": {\r\n                \"bar\": {\"$ref\": \"#/unknown~1keyword\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\refOfUnknownKeyword.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalRefOfUnknownKeyword",
                 "ReferenceOfARootArbitraryKeywordWithEncodedRef",
                 validateFormat: false,
@@ -147,9 +147,9 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\"unknown-keyword\": {\"type\": \"integer\"}},\r\n                \"bar\": {\"$ref\": \"#/properties/foo/unknown-keyword\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\refOfUnknownKeyword.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalRefOfUnknownKeyword",
                 "ReferenceOfAnArbitraryKeywordOfASubSchema",
                 validateFormat: false,
@@ -199,9 +199,9 @@ public class SuiteReferenceInternalsOfKnownNonApplicator : IClassFixture<SuiteRe
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"examples\": [\r\n              { \"type\": \"string\" }\r\n            ],\r\n            \"$ref\": \"#/examples/0\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\refOfUnknownKeyword.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalRefOfUnknownKeyword",
                 "ReferenceInternalsOfKnownNonApplicator",
                 validateFormat: false,
@@ -251,9 +251,9 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef : ICla
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\"unknown/keyword\": {\"type\": \"integer\"}},\r\n                \"bar\": {\"$ref\": \"#/properties/foo/unknown~1keyword\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\refOfUnknownKeyword.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalRefOfUnknownKeyword",
                 "ReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef",
                 validateFormat: false,

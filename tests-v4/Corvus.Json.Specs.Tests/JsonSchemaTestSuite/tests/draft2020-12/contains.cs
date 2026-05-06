@@ -75,9 +75,9 @@ public class SuiteContainsKeywordValidation : IClassFixture<SuiteContainsKeyword
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"minimum\": 5}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012Contains",
                 "ContainsKeywordValidation",
                 validateFormat: false,
@@ -135,9 +135,9 @@ public class SuiteContainsKeywordWithConstKeyword : IClassFixture<SuiteContainsK
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": { \"const\": 5 }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012Contains",
                 "ContainsKeywordWithConstKeyword",
                 validateFormat: false,
@@ -187,9 +187,9 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue : IClassFixture<SuiteCont
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012Contains",
                 "ContainsKeywordWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -247,9 +247,9 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse : IClassFixture<SuiteCon
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012Contains",
                 "ContainsKeywordWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -315,9 +315,9 @@ public class SuiteItemsContains : IClassFixture<SuiteItemsContains.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"items\": { \"multipleOf\": 2 },\r\n            \"contains\": { \"multipleOf\": 3 }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012Contains",
                 "ItemsContains",
                 validateFormat: false,
@@ -367,9 +367,9 @@ public class SuiteContainsWithFalseIfSubschema : IClassFixture<SuiteContainsWith
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\r\n                \"if\": false,\r\n                \"else\": true\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft202012Contains",
                 "ContainsWithFalseIfSubschema",
                 validateFormat: false,
@@ -411,9 +411,9 @@ public class SuiteContainsWithNullInstanceElements : IClassFixture<SuiteContains
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft202012Contains",
                 "ContainsWithNullInstanceElements",
                 validateFormat: false,

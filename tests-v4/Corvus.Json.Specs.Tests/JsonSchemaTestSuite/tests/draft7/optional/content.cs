@@ -51,9 +51,9 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType : IClassFixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"contentMediaType\": \"application/json\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\content.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalContent",
                 "ValidationOfStringEncodedContentBasedOnMediaType",
                 validateFormat: false,
@@ -111,9 +111,9 @@ public class SuiteValidationOfBinaryStringEncoding : IClassFixture<SuiteValidati
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"contentEncoding\": \"base64\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\content.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7OptionalContent",
                 "ValidationOfBinaryStringEncoding",
                 validateFormat: false,
@@ -179,9 +179,9 @@ public class SuiteValidationOfBinaryEncodedMediaTypeDocuments : IClassFixture<Su
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"contentMediaType\": \"application/json\",\r\n            \"contentEncoding\": \"base64\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\content.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft7OptionalContent",
                 "ValidationOfBinaryEncodedMediaTypeDocuments",
                 validateFormat: false,

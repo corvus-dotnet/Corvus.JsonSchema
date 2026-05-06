@@ -163,9 +163,9 @@ public class SuiteValidationOfURIReferences : IClassFixture<SuiteValidationOfURI
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"uri-reference\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\uri-reference.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6OptionalFormatUriReference",
                 "ValidationOfURIReferences",
                 validateFormat: true,

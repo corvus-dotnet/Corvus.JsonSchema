@@ -291,9 +291,9 @@ public class SuiteValidationOfTimeStrings : IClassFixture<SuiteValidationOfTimeS
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"time\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\time.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalFormatTime",
                 "ValidationOfTimeStrings",
                 validateFormat: true,

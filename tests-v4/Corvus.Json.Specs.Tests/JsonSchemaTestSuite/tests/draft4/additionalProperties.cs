@@ -75,9 +75,9 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties : IC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\"foo\": {}, \"bar\": {}},\r\n            \"patternProperties\": { \"^v\": {} },\r\n            \"additionalProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesBeingFalseDoesNotAllowOtherProperties",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteNonASCIIPatternWithAdditionalProperties : IClassFixture<SuiteN
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"patternProperties\": {\"^á\": {}},\r\n            \"additionalProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "NonASCIIPatternWithAdditionalProperties",
                 validateFormat: false,
@@ -187,9 +187,9 @@ public class SuiteAdditionalPropertiesWithSchema : IClassFixture<SuiteAdditional
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\"foo\": {}, \"bar\": {}},\r\n            \"additionalProperties\": {\"type\": \"boolean\"}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesWithSchema",
                 validateFormat: false,
@@ -239,9 +239,9 @@ public class SuiteAdditionalPropertiesCanExistByItself : IClassFixture<SuiteAddi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"additionalProperties\": {\"type\": \"boolean\"}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesCanExistByItself",
                 validateFormat: false,
@@ -283,9 +283,9 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault : IClassFixture<SuiteA
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"properties\": {\"foo\": {}, \"bar\": {}}}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesAreAllowedByDefault",
                 validateFormat: false,
@@ -327,9 +327,9 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators : IClassFixture<S
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [\r\n                {\"properties\": {\"foo\": {}}}\r\n            ],\r\n            \"additionalProperties\": {\"type\": \"boolean\"}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesDoesNotLookInApplicators",
                 validateFormat: false,
@@ -371,9 +371,9 @@ public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties : IClassF
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"additionalProperties\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalProperties.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft4AdditionalProperties",
                 "AdditionalPropertiesWithNullValuedInstanceProperties",
                 validateFormat: false,

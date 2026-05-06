@@ -107,9 +107,9 @@ public class SuiteFormatUriTemplate : IClassFixture<SuiteFormatUriTemplate.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"uri-template\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\uri-template.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6OptionalFormatUriTemplate",
                 "FormatUriTemplate",
                 validateFormat: true,

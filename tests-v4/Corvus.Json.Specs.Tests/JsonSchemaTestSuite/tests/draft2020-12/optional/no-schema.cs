@@ -51,9 +51,9 @@ public class SuiteValidationWithoutSchema : IClassFixture<SuiteValidationWithout
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"minLength\": 2\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\no-schema.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalNoSchema",
                 "ValidationWithoutSchema",
                 validateFormat: false,

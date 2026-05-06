@@ -75,9 +75,9 @@ public class SuiteEmailFormat : IClassFixture<SuiteEmailFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"email\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "EmailFormat",
                 validateFormat: false,
@@ -159,9 +159,9 @@ public class SuiteIdnEmailFormat : IClassFixture<SuiteIdnEmailFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"idn-email\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "IdnEmailFormat",
                 validateFormat: false,
@@ -243,9 +243,9 @@ public class SuiteRegexFormat : IClassFixture<SuiteRegexFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"regex\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "RegexFormat",
                 validateFormat: false,
@@ -327,9 +327,9 @@ public class SuiteIpv4Format : IClassFixture<SuiteIpv4Format.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"ipv4\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "Ipv4Format",
                 validateFormat: false,
@@ -411,9 +411,9 @@ public class SuiteIpv6Format : IClassFixture<SuiteIpv6Format.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"ipv6\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "Ipv6Format",
                 validateFormat: false,
@@ -495,9 +495,9 @@ public class SuiteIdnHostnameFormat : IClassFixture<SuiteIdnHostnameFormat.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"idn-hostname\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "IdnHostnameFormat",
                 validateFormat: false,
@@ -579,9 +579,9 @@ public class SuiteHostnameFormat : IClassFixture<SuiteHostnameFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"hostname\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "HostnameFormat",
                 validateFormat: false,
@@ -663,9 +663,9 @@ public class SuiteDateFormat : IClassFixture<SuiteDateFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"date\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "DateFormat",
                 validateFormat: false,
@@ -747,9 +747,9 @@ public class SuiteDateTimeFormat : IClassFixture<SuiteDateTimeFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"date-time\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "DateTimeFormat",
                 validateFormat: false,
@@ -831,9 +831,9 @@ public class SuiteTimeFormat : IClassFixture<SuiteTimeFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"time\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "TimeFormat",
                 validateFormat: false,
@@ -915,9 +915,9 @@ public class SuiteJsonPointerFormat : IClassFixture<SuiteJsonPointerFormat.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"json-pointer\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "JsonPointerFormat",
                 validateFormat: false,
@@ -999,9 +999,9 @@ public class SuiteRelativeJsonPointerFormat : IClassFixture<SuiteRelativeJsonPoi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"relative-json-pointer\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/11/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "RelativeJsonPointerFormat",
                 validateFormat: false,
@@ -1083,9 +1083,9 @@ public class SuiteIriFormat : IClassFixture<SuiteIriFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"iri\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/12/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "IriFormat",
                 validateFormat: false,
@@ -1167,9 +1167,9 @@ public class SuiteIriReferenceFormat : IClassFixture<SuiteIriReferenceFormat.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"iri-reference\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/13/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "IriReferenceFormat",
                 validateFormat: false,
@@ -1251,9 +1251,9 @@ public class SuiteUriFormat : IClassFixture<SuiteUriFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"uri\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/14/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "UriFormat",
                 validateFormat: false,
@@ -1335,9 +1335,9 @@ public class SuiteUriReferenceFormat : IClassFixture<SuiteUriReferenceFormat.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"uri-reference\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/15/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "UriReferenceFormat",
                 validateFormat: false,
@@ -1419,9 +1419,9 @@ public class SuiteUriTemplateFormat : IClassFixture<SuiteUriTemplateFormat.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"uri-template\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "format.json",
+                "#/16/schema",
                 "JsonSchemaTestSuiteDraft7Format",
                 "UriTemplateFormat",
                 validateFormat: false,

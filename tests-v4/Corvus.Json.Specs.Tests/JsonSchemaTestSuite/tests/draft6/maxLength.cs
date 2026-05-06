@@ -67,9 +67,9 @@ public class SuiteMaxLengthValidation : IClassFixture<SuiteMaxLengthValidation.F
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maxLength\": 2}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxLength.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6MaxLength",
                 "MaxLengthValidation",
                 validateFormat: false,
@@ -119,9 +119,9 @@ public class SuiteMaxLengthValidationWithADecimal : IClassFixture<SuiteMaxLength
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maxLength\": 2.0}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxLength.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6MaxLength",
                 "MaxLengthValidationWithADecimal",
                 validateFormat: false,

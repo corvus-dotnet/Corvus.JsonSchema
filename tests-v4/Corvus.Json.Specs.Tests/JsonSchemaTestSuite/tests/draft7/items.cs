@@ -59,9 +59,9 @@ public class SuiteASchemaGivenForItems : IClassFixture<SuiteASchemaGivenForItems
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": {\"type\": \"integer\"}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "items.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7Items",
                 "ASchemaGivenForItems",
                 validateFormat: false,
@@ -143,9 +143,9 @@ public class SuiteAnArrayOfSchemasForItems : IClassFixture<SuiteAnArrayOfSchemas
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": [\r\n                {\"type\": \"integer\"},\r\n                {\"type\": \"string\"}\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "items.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7Items",
                 "AnArrayOfSchemasForItems",
                 validateFormat: false,
@@ -195,9 +195,9 @@ public class SuiteItemsWithBooleanSchemaTrue : IClassFixture<SuiteItemsWithBoole
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"items\": true}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "items.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft7Items",
                 "ItemsWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -247,9 +247,9 @@ public class SuiteItemsWithBooleanSchemaFalse : IClassFixture<SuiteItemsWithBool
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"items\": false}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "items.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft7Items",
                 "ItemsWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -307,9 +307,9 @@ public class SuiteItemsWithBooleanSchemas : IClassFixture<SuiteItemsWithBooleanS
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": [true, false]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "items.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft7Items",
                 "ItemsWithBooleanSchemas",
                 validateFormat: false,
@@ -391,9 +391,9 @@ public class SuiteItemsAndSubitems : IClassFixture<SuiteItemsAndSubitems.Fixture
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"definitions\": {\r\n                \"item\": {\r\n                    \"type\": \"array\",\r\n                    \"additionalItems\": false,\r\n                    \"items\": [\r\n                        { \"$ref\": \"#/definitions/sub-item\" },\r\n                        { \"$ref\": \"#/definitions/sub-item\" }\r\n                    ]\r\n                },\r\n                \"sub-item\": {\r\n                    \"type\": \"object\",\r\n                    \"required\": [\"foo\"]\r\n                }\r\n            },\r\n            \"type\": \"array\",\r\n            \"additionalItems\": false,\r\n            \"items\": [\r\n                { \"$ref\": \"#/definitions/item\" },\r\n                { \"$ref\": \"#/definitions/item\" },\r\n                { \"$ref\": \"#/definitions/item\" }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "items.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft7Items",
                 "ItemsAndSubitems",
                 validateFormat: false,
@@ -451,9 +451,9 @@ public class SuiteNestedItems : IClassFixture<SuiteNestedItems.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"array\",\r\n            \"items\": {\r\n                \"type\": \"array\",\r\n                \"items\": {\r\n                    \"type\": \"array\",\r\n                    \"items\": {\r\n                        \"type\": \"array\",\r\n                        \"items\": {\r\n                            \"type\": \"number\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "items.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft7Items",
                 "NestedItems",
                 validateFormat: false,
@@ -495,9 +495,9 @@ public class SuiteSingleFormItemsWithNullInstanceElements : IClassFixture<SuiteS
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "items.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft7Items",
                 "SingleFormItemsWithNullInstanceElements",
                 validateFormat: false,
@@ -539,9 +539,9 @@ public class SuiteArrayFormItemsWithNullInstanceElements : IClassFixture<SuiteAr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": [\r\n                {\r\n                    \"type\": \"null\"\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "items.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft7Items",
                 "ArrayFormItemsWithNullInstanceElements",
                 validateFormat: false,

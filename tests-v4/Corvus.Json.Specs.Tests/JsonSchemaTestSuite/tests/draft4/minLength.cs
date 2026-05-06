@@ -67,9 +67,9 @@ public class SuiteMinLengthValidation : IClassFixture<SuiteMinLengthValidation.F
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minLength\": 2}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minLength.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4MinLength",
                 "MinLengthValidation",
                 validateFormat: false,

@@ -59,9 +59,9 @@ public class SuiteOneOf : IClassFixture<SuiteOneOf.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"oneOf\": [\r\n                {\r\n                    \"type\": \"integer\"\r\n                },\r\n                {\r\n                    \"minimum\": 2\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "oneOf.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4OneOf",
                 "OneOf",
                 validateFormat: false,
@@ -119,9 +119,9 @@ public class SuiteOneOfWithBaseSchema : IClassFixture<SuiteOneOfWithBaseSchema.F
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"oneOf\" : [\r\n                {\r\n                    \"minLength\": 2\r\n                },\r\n                {\r\n                    \"maxLength\": 4\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "oneOf.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4OneOf",
                 "OneOfWithBaseSchema",
                 validateFormat: false,
@@ -187,9 +187,9 @@ public class SuiteOneOfComplexTypes : IClassFixture<SuiteOneOfComplexTypes.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"oneOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": {\"type\": \"integer\"}\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"string\"}\r\n                    },\r\n                    \"required\": [\"foo\"]\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "oneOf.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4OneOf",
                 "OneOfComplexTypes",
                 validateFormat: false,
@@ -239,9 +239,9 @@ public class SuiteOneOfWithEmptySchema : IClassFixture<SuiteOneOfWithEmptySchema
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"oneOf\": [\r\n                { \"type\": \"number\" },\r\n                {}\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "oneOf.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4OneOf",
                 "OneOfWithEmptySchema",
                 validateFormat: false,
@@ -307,9 +307,9 @@ public class SuiteOneOfWithRequired : IClassFixture<SuiteOneOfWithRequired.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"object\",\r\n            \"oneOf\": [\r\n                { \"required\": [\"foo\", \"bar\"] },\r\n                { \"required\": [\"foo\", \"baz\"] }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "oneOf.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft4OneOf",
                 "OneOfWithRequired",
                 validateFormat: false,
@@ -375,9 +375,9 @@ public class SuiteOneOfWithMissingOptionalProperty : IClassFixture<SuiteOneOfWit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"oneOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": {},\r\n                        \"baz\": {}\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": {}\r\n                    },\r\n                    \"required\": [\"foo\"]\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "oneOf.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft4OneOf",
                 "OneOfWithMissingOptionalProperty",
                 validateFormat: false,
@@ -427,9 +427,9 @@ public class SuiteNestedOneOfToCheckValidationSemantics : IClassFixture<SuiteNes
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"oneOf\": [\r\n                {\r\n                    \"oneOf\": [\r\n                        {\r\n                            \"type\": \"null\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "oneOf.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft4OneOf",
                 "NestedOneOfToCheckValidationSemantics",
                 validateFormat: false,

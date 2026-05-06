@@ -75,9 +75,9 @@ public class SuiteMinPropertiesValidation : IClassFixture<SuiteMinPropertiesVali
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minProperties\": 1}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minProperties.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4MinProperties",
                 "MinPropertiesValidation",
                 validateFormat: false,

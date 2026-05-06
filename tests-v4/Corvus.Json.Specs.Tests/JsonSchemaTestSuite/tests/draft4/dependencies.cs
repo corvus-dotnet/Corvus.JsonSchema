@@ -83,9 +83,9 @@ public class SuiteDependencies : IClassFixture<SuiteDependencies.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\"bar\": [\"foo\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4Dependencies",
                 "Dependencies",
                 validateFormat: false,
@@ -167,9 +167,9 @@ public class SuiteMultipleDependencies : IClassFixture<SuiteMultipleDependencies
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\"quux\": [\"foo\", \"bar\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4Dependencies",
                 "MultipleDependencies",
                 validateFormat: false,
@@ -243,9 +243,9 @@ public class SuiteMultipleDependenciesSubschema : IClassFixture<SuiteMultipleDep
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\r\n                \"bar\": {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"integer\"},\r\n                        \"bar\": {\"type\": \"integer\"}\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4Dependencies",
                 "MultipleDependenciesSubschema",
                 validateFormat: false,
@@ -335,9 +335,9 @@ public class SuiteDependenciesWithEscapedCharacters : IClassFixture<SuiteDepende
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"dependencies\": {\r\n                \"foo\\nbar\": [\"foo\\rbar\"],\r\n                \"foo\\tbar\": {\r\n                    \"minProperties\": 4\r\n                },\r\n                \"foo'bar\": {\"required\": [\"foo\\\"bar\"]},\r\n                \"foo\\\"bar\": [\"foo'bar\"]\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4Dependencies",
                 "DependenciesWithEscapedCharacters",
                 validateFormat: false,
@@ -403,9 +403,9 @@ public class SuiteDependentSubschemaIncompatibleWithRoot : IClassFixture<SuiteDe
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {}\r\n            },\r\n            \"dependencies\": {\r\n                \"foo\": {\r\n                    \"properties\": {\r\n                        \"bar\": {}\r\n                    },\r\n                    \"additionalProperties\": false\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependencies.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft4Dependencies",
                 "DependentSubschemaIncompatibleWithRoot",
                 validateFormat: false,

@@ -83,9 +83,9 @@ public class SuiteUnknownFormat : IClassFixture<SuiteUnknownFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"unknown\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\unknown.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalFormatUnknown",
                 "UnknownFormat",
                 validateFormat: true,

@@ -83,9 +83,9 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex : IClassFix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"patternProperties\": {\r\n                \"f.*o\": {\"type\": \"integer\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4PatternProperties",
                 "PatternPropertiesValidatesPropertiesMatchingARegex",
                 validateFormat: false,
@@ -167,9 +167,9 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"patternProperties\": {\r\n                \"a*\": {\"type\": \"integer\"},\r\n                \"aaa*\": {\"maximum\": 20}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4PatternProperties",
                 "MultipleSimultaneousPatternPropertiesAreValidated",
                 validateFormat: false,
@@ -235,9 +235,9 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"patternProperties\": {\r\n                \"[0-9]{2,}\": { \"type\": \"boolean\" },\r\n                \"X_\": { \"type\": \"string\" }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4PatternProperties",
                 "RegexesAreNotAnchoredByDefaultAndAreCaseSensitive",
                 validateFormat: false,
@@ -279,9 +279,9 @@ public class SuitePatternPropertiesWithNullValuedInstanceProperties : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"patternProperties\": {\r\n                \"^.*bar$\": {\"type\": \"null\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4PatternProperties",
                 "PatternPropertiesWithNullValuedInstanceProperties",
                 validateFormat: false,

@@ -51,9 +51,9 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary :
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"https://schema/using/no/validation\",\r\n            \"$schema\": \"http://localhost:1234/draft2019-09/metaschema-no-validation.json\",\r\n            \"properties\": {\r\n                \"badProperty\": false,\r\n                \"numberProperty\": {\r\n                    \"minimum\": 10\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "vocabulary.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909Vocabulary",
                 "SchemaThatUsesCustomMetaschemaWithWithNoValidationVocabulary",
                 validateFormat: false,
@@ -103,9 +103,9 @@ public class SuiteIgnoreUnrecognizedOptionalVocabulary : IClassFixture<SuiteIgno
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n             \"$schema\": \"http://localhost:1234/draft2019-09/metaschema-optional-vocabulary.json\",\r\n             \"type\": \"number\"\r\n         }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "vocabulary.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909Vocabulary",
                 "IgnoreUnrecognizedOptionalVocabulary",
                 validateFormat: false,

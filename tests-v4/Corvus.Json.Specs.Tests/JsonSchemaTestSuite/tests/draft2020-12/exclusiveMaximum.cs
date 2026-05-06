@@ -59,9 +59,9 @@ public class SuiteExclusiveMaximumValidation : IClassFixture<SuiteExclusiveMaxim
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"exclusiveMaximum\": 3.0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "exclusiveMaximum.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012ExclusiveMaximum",
                 "ExclusiveMaximumValidation",
                 validateFormat: false,

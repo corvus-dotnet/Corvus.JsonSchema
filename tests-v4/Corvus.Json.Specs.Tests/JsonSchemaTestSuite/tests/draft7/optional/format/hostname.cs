@@ -219,9 +219,9 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"hostname\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\hostname.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalFormatHostname",
                 "ValidationOfHostNames",
                 validateFormat: true,
@@ -551,9 +551,9 @@ public class SuiteValidationOfALabelPunycodeHostNames : IClassFixture<SuiteValid
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"hostname\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\hostname.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7OptionalFormatHostname",
                 "ValidationOfALabelPunycodeHostNames",
                 validateFormat: true,

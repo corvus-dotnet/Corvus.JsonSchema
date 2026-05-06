@@ -59,9 +59,9 @@ public class SuiteAllOf : IClassFixture<SuiteAllOf.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": {\"type\": \"integer\"}\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"string\"}\r\n                    },\r\n                    \"required\": [\"foo\"]\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "allOf.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4AllOf",
                 "AllOf",
                 validateFormat: false,
@@ -135,9 +135,9 @@ public class SuiteAllOfWithBaseSchema : IClassFixture<SuiteAllOfWithBaseSchema.F
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\"bar\": {\"type\": \"integer\"}},\r\n            \"required\": [\"bar\"],\r\n            \"allOf\" : [\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"string\"}\r\n                    },\r\n                    \"required\": [\"foo\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"baz\": {\"type\": \"null\"}\r\n                    },\r\n                    \"required\": [\"baz\"]\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "allOf.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4AllOf",
                 "AllOfWithBaseSchema",
                 validateFormat: false,
@@ -187,9 +187,9 @@ public class SuiteAllOfSimpleTypes : IClassFixture<SuiteAllOfSimpleTypes.Fixture
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [\r\n                {\"maximum\": 30},\r\n                {\"minimum\": 20}\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "allOf.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4AllOf",
                 "AllOfSimpleTypes",
                 validateFormat: false,
@@ -231,9 +231,9 @@ public class SuiteAllOfWithOneEmptySchema : IClassFixture<SuiteAllOfWithOneEmpty
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [\r\n                {}\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "allOf.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4AllOf",
                 "AllOfWithOneEmptySchema",
                 validateFormat: false,
@@ -275,9 +275,9 @@ public class SuiteAllOfWithTwoEmptySchemas : IClassFixture<SuiteAllOfWithTwoEmpt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [\r\n                {},\r\n                {}\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "allOf.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft4AllOf",
                 "AllOfWithTwoEmptySchemas",
                 validateFormat: false,
@@ -327,9 +327,9 @@ public class SuiteAllOfWithTheFirstEmptySchema : IClassFixture<SuiteAllOfWithThe
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [\r\n                {},\r\n                { \"type\": \"number\" }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "allOf.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft4AllOf",
                 "AllOfWithTheFirstEmptySchema",
                 validateFormat: false,
@@ -379,9 +379,9 @@ public class SuiteAllOfWithTheLastEmptySchema : IClassFixture<SuiteAllOfWithTheL
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [\r\n                { \"type\": \"number\" },\r\n                {}\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "allOf.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft4AllOf",
                 "AllOfWithTheLastEmptySchema",
                 validateFormat: false,
@@ -431,9 +431,9 @@ public class SuiteNestedAllOfToCheckValidationSemantics : IClassFixture<SuiteNes
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [\r\n                {\r\n                    \"allOf\": [\r\n                        {\r\n                            \"type\": \"null\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "allOf.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft4AllOf",
                 "NestedAllOfToCheckValidationSemantics",
                 validateFormat: false,
@@ -531,9 +531,9 @@ public class SuiteAllOfCombinedWithAnyOfOneOf : IClassFixture<SuiteAllOfCombined
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [ { \"multipleOf\": 2 } ],\r\n            \"anyOf\": [ { \"multipleOf\": 3 } ],\r\n            \"oneOf\": [ { \"multipleOf\": 5 } ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "allOf.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft4AllOf",
                 "AllOfCombinedWithAnyOfOneOf",
                 validateFormat: false,

@@ -203,9 +203,9 @@ public class SuiteUuidFormat : IClassFixture<SuiteUuidFormat.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"uuid\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\uuid.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalFormatUuid",
                 "UuidFormat",
                 validateFormat: true,

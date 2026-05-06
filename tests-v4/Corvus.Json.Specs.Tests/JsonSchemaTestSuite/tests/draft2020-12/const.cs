@@ -51,9 +51,9 @@ public class SuiteConstValidation : IClassFixture<SuiteConstValidation.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": 2\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstValidation",
                 validateFormat: false,
@@ -119,9 +119,9 @@ public class SuiteConstWithObject : IClassFixture<SuiteConstWithObject.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": {\"foo\": \"bar\", \"baz\": \"bax\"}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWithObject",
                 validateFormat: false,
@@ -179,9 +179,9 @@ public class SuiteConstWithArray : IClassFixture<SuiteConstWithArray.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": [{ \"foo\": \"bar\" }]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWithArray",
                 validateFormat: false,
@@ -231,9 +231,9 @@ public class SuiteConstWithNull : IClassFixture<SuiteConstWithNull.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": null\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWithNull",
                 validateFormat: false,
@@ -291,9 +291,9 @@ public class SuiteConstWithFalseDoesNotMatch0 : IClassFixture<SuiteConstWithFals
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWithFalseDoesNotMatch0",
                 validateFormat: false,
@@ -351,9 +351,9 @@ public class SuiteConstWithTrueDoesNotMatch1 : IClassFixture<SuiteConstWithTrueD
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWithTrueDoesNotMatch1",
                 validateFormat: false,
@@ -411,9 +411,9 @@ public class SuiteConstWithFalseDoesNotMatch01 : IClassFixture<SuiteConstWithFal
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": [false]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWithFalseDoesNotMatch01",
                 validateFormat: false,
@@ -471,9 +471,9 @@ public class SuiteConstWithTrueDoesNotMatch11 : IClassFixture<SuiteConstWithTrue
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": [true]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWithTrueDoesNotMatch11",
                 validateFormat: false,
@@ -531,9 +531,9 @@ public class SuiteConstWithAFalseDoesNotMatchA0 : IClassFixture<SuiteConstWithAF
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": {\"a\": false}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWithAFalseDoesNotMatchA0",
                 validateFormat: false,
@@ -591,9 +591,9 @@ public class SuiteConstWithATrueDoesNotMatchA1 : IClassFixture<SuiteConstWithATr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": {\"a\": true}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWithATrueDoesNotMatchA1",
                 validateFormat: false,
@@ -675,9 +675,9 @@ public class SuiteConstWith0DoesNotMatchOtherZeroLikeTypes : IClassFixture<Suite
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": 0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWith0DoesNotMatchOtherZeroLikeTypes",
                 validateFormat: false,
@@ -735,9 +735,9 @@ public class SuiteConstWith1DoesNotMatchTrue : IClassFixture<SuiteConstWith1Does
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": 1\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/11/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWith1DoesNotMatchTrue",
                 validateFormat: false,
@@ -811,9 +811,9 @@ public class SuiteConstWith20MatchesIntegerAndFloatTypes : IClassFixture<SuiteCo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": -2.0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/12/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "ConstWith20MatchesIntegerAndFloatTypes",
                 validateFormat: false,
@@ -879,9 +879,9 @@ public class SuiteFloatAndIntegersAreEqualUpTo64BitRepresentationLimits : IClass
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": 9007199254740992\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/13/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "FloatAndIntegersAreEqualUpTo64BitRepresentationLimits",
                 validateFormat: false,
@@ -931,9 +931,9 @@ public class SuiteNulCharactersInStrings : IClassFixture<SuiteNulCharactersInStr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": \"hello\\u0000there\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/14/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "NulCharactersInStrings",
                 validateFormat: false,
@@ -983,9 +983,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": \"μ\",\r\n            \"$comment\": \"U+03BC\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/15/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "CharactersWithTheSameVisualRepresentationButDifferentCodepoint",
                 validateFormat: false,
@@ -1035,9 +1035,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"const\": \"ä\",\r\n            \"$comment\": \"U+00E4\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "const.json",
+                "#/16/schema",
                 "JsonSchemaTestSuiteDraft202012Const",
                 "CharactersWithTheSameVisualRepresentationButDifferentNumberOfCodepoints",
                 validateFormat: false,

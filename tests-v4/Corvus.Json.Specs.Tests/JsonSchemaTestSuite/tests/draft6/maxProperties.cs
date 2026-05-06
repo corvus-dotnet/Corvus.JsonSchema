@@ -75,9 +75,9 @@ public class SuiteMaxPropertiesValidation : IClassFixture<SuiteMaxPropertiesVali
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maxProperties\": 2}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxProperties.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6MaxProperties",
                 "MaxPropertiesValidation",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteMaxPropertiesValidationWithADecimal : IClassFixture<SuiteMaxPr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maxProperties\": 2.0}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxProperties.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6MaxProperties",
                 "MaxPropertiesValidationWithADecimal",
                 validateFormat: false,
@@ -179,9 +179,9 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty : IClassFixture<SuiteMaxPr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"maxProperties\": 0 }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxProperties.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft6MaxProperties",
                 "MaxProperties0MeansTheObjectIsEmpty",
                 validateFormat: false,

@@ -251,9 +251,9 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"uniqueItems\": true}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4UniqueItems",
                 "UniqueItemsValidation",
                 validateFormat: false,
@@ -351,9 +351,9 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4UniqueItems",
                 "UniqueItemsWithAnArrayOfItems",
                 validateFormat: false,
@@ -427,9 +427,9 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse : IClassF
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": true,\r\n            \"additionalItems\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4UniqueItems",
                 "UniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse",
                 validateFormat: false,
@@ -583,9 +583,9 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"uniqueItems\": false }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4UniqueItems",
                 "UniqueItemsFalseValidation",
                 validateFormat: false,
@@ -683,9 +683,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft4UniqueItems",
                 "UniqueItemsFalseWithAnArrayOfItems",
                 validateFormat: false,
@@ -759,9 +759,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse : IC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": false,\r\n            \"additionalItems\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft4UniqueItems",
                 "UniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse",
                 validateFormat: false,

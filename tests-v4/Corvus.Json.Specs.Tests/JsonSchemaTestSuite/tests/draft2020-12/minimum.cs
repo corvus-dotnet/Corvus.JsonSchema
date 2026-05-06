@@ -59,9 +59,9 @@ public class SuiteMinimumValidation : IClassFixture<SuiteMinimumValidation.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"minimum\": 1.1\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minimum.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012Minimum",
                 "MinimumValidation",
                 validateFormat: false,
@@ -151,9 +151,9 @@ public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"minimum\": -2\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minimum.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012Minimum",
                 "MinimumValidationWithSignedInteger",
                 validateFormat: false,

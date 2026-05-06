@@ -59,9 +59,9 @@ public class SuiteRootPointerRef : IClassFixture<SuiteRootPointerRef.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#\"}\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RootPointerRef",
                 validateFormat: false,
@@ -111,9 +111,9 @@ public class SuiteRelativePointerRefToObject : IClassFixture<SuiteRelativePointe
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {\"type\": \"integer\"},\r\n                \"bar\": {\"$ref\": \"#/properties/foo\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RelativePointerRefToObject",
                 validateFormat: false,
@@ -163,9 +163,9 @@ public class SuiteRelativePointerRefToArray : IClassFixture<SuiteRelativePointer
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": [\r\n                {\"type\": \"integer\"},\r\n                {\"$ref\": \"#/items/0\"}\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RelativePointerRefToArray",
                 validateFormat: false,
@@ -247,9 +247,9 @@ public class SuiteEscapedPointerRef : IClassFixture<SuiteEscapedPointerRef.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"definitions\": {\r\n                \"tilde~field\": {\"type\": \"integer\"},\r\n                \"slash/field\": {\"type\": \"integer\"},\r\n                \"percent%field\": {\"type\": \"integer\"}\r\n            },\r\n            \"properties\": {\r\n                \"tilde\": {\"$ref\": \"#/definitions/tilde~0field\"},\r\n                \"slash\": {\"$ref\": \"#/definitions/slash~1field\"},\r\n                \"percent\": {\"$ref\": \"#/definitions/percent%25field\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "EscapedPointerRef",
                 validateFormat: false,
@@ -299,9 +299,9 @@ public class SuiteNestedRefs : IClassFixture<SuiteNestedRefs.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"definitions\": {\r\n                \"a\": {\"type\": \"integer\"},\r\n                \"b\": {\"$ref\": \"#/definitions/a\"},\r\n                \"c\": {\"$ref\": \"#/definitions/b\"}\r\n            },\r\n            \"allOf\": [{ \"$ref\": \"#/definitions/c\" }]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "NestedRefs",
                 validateFormat: false,
@@ -359,9 +359,9 @@ public class SuiteRefOverridesAnySiblingKeywords : IClassFixture<SuiteRefOverrid
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"definitions\": {\r\n                \"reffed\": {\r\n                    \"type\": \"array\"\r\n                }\r\n            },\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"$ref\": \"#/definitions/reffed\",\r\n                    \"maxItems\": 2\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RefOverridesAnySiblingKeywords",
                 validateFormat: false,
@@ -411,9 +411,9 @@ public class SuiteRefPreventsASiblingIdFromChangingTheBaseUri : IClassFixture<Su
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"http://localhost:1234/sibling_id/base/\",\r\n            \"definitions\": {\r\n                \"foo\": {\r\n                    \"$id\": \"http://localhost:1234/sibling_id/foo.json\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"base_foo\": {\r\n                    \"$comment\": \"this canonical uri is http://localhost:1234/sibling_id/base/foo.json\",\r\n                    \"$id\": \"foo.json\",\r\n                    \"type\": \"number\"\r\n                }\r\n            },\r\n            \"allOf\": [\r\n                {\r\n                    \"$comment\": \"$ref resolves to http://localhost:1234/sibling_id/base/foo.json, not http://localhost:1234/sibling_id/foo.json\",\r\n                    \"$id\": \"http://localhost:1234/sibling_id/\",\r\n                    \"$ref\": \"foo.json\"\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RefPreventsASiblingIdFromChangingTheBaseUri",
                 validateFormat: false,
@@ -463,9 +463,9 @@ public class SuiteRemoteRefContainingRefsItself : IClassFixture<SuiteRemoteRefCo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"$ref\": \"http://json-schema.org/draft-06/schema#\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RemoteRefContainingRefsItself",
                 validateFormat: false,
@@ -515,9 +515,9 @@ public class SuitePropertyNamedRefThatIsNotAReference : IClassFixture<SuitePrope
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"$ref\": {\"type\": \"string\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "PropertyNamedRefThatIsNotAReference",
                 validateFormat: false,
@@ -567,9 +567,9 @@ public class SuitePropertyNamedRefContainingAnActualRef : IClassFixture<SuitePro
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"$ref\": {\"$ref\": \"#/definitions/is-string\"}\r\n            },\r\n            \"definitions\": {\r\n                \"is-string\": {\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "PropertyNamedRefContainingAnActualRef",
                 validateFormat: false,
@@ -611,9 +611,9 @@ public class SuiteRefToBooleanSchemaTrue : IClassFixture<SuiteRefToBooleanSchema
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [{ \"$ref\": \"#/definitions/bool\" }],\r\n            \"definitions\": {\r\n                \"bool\": true\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RefToBooleanSchemaTrue",
                 validateFormat: false,
@@ -655,9 +655,9 @@ public class SuiteRefToBooleanSchemaFalse : IClassFixture<SuiteRefToBooleanSchem
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [{ \"$ref\": \"#/definitions/bool\" }],\r\n            \"definitions\": {\r\n                \"bool\": false\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/11/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RefToBooleanSchemaFalse",
                 validateFormat: false,
@@ -707,9 +707,9 @@ public class SuiteRecursiveReferencesBetweenSchemas : IClassFixture<SuiteRecursi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"http://localhost:1234/tree\",\r\n            \"description\": \"tree of nodes\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"meta\": {\"type\": \"string\"},\r\n                \"nodes\": {\r\n                    \"type\": \"array\",\r\n                    \"items\": {\"$ref\": \"node\"}\r\n                }\r\n            },\r\n            \"required\": [\"meta\", \"nodes\"],\r\n            \"definitions\": {\r\n                \"node\": {\r\n                    \"$id\": \"http://localhost:1234/node\",\r\n                    \"description\": \"node\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"value\": {\"type\": \"number\"},\r\n                        \"subtree\": {\"$ref\": \"tree\"}\r\n                    },\r\n                    \"required\": [\"value\"]\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/12/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RecursiveReferencesBetweenSchemas",
                 validateFormat: false,
@@ -759,9 +759,9 @@ public class SuiteRefsWithQuote : IClassFixture<SuiteRefsWithQuote.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\\\"bar\": {\"$ref\": \"#/definitions/foo%22bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"foo\\\"bar\": {\"type\": \"number\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/13/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RefsWithQuote",
                 validateFormat: false,
@@ -811,9 +811,9 @@ public class SuiteLocationIndependentIdentifier : IClassFixture<SuiteLocationInd
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"allOf\": [{\r\n                \"$ref\": \"#foo\"\r\n            }],\r\n            \"definitions\": {\r\n                \"A\": {\r\n                    \"$id\": \"#foo\",\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/14/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "LocationIndependentIdentifier",
                 validateFormat: false,
@@ -863,9 +863,9 @@ public class SuiteReferenceAnAnchorWithANonRelativeURI : IClassFixture<SuiteRefe
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"https://example.com/schema-with-anchor\",\r\n            \"allOf\": [{\r\n                \"$ref\": \"https://example.com/schema-with-anchor#foo\"\r\n            }],\r\n            \"definitions\": {\r\n                \"A\": {\r\n                    \"$id\": \"#foo\",\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/15/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "ReferenceAnAnchorWithANonRelativeURI",
                 validateFormat: false,
@@ -915,9 +915,9 @@ public class SuiteLocationIndependentIdentifierWithBaseURIChangeInSubschema : IC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"http://localhost:1234/root\",\r\n            \"allOf\": [{\r\n                \"$ref\": \"http://localhost:1234/nested.json#foo\"\r\n            }],\r\n            \"definitions\": {\r\n                \"A\": {\r\n                    \"$id\": \"nested.json\",\r\n                    \"definitions\": {\r\n                        \"B\": {\r\n                            \"$id\": \"#foo\",\r\n                            \"type\": \"integer\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/16/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "LocationIndependentIdentifierWithBaseURIChangeInSubschema",
                 validateFormat: false,
@@ -975,9 +975,9 @@ public class SuiteNaiveReplacementOfRefWithItsDestinationIsNotCorrect : IClassFi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"definitions\": {\r\n                \"a_string\": { \"type\": \"string\" }\r\n            },\r\n            \"enum\": [\r\n                { \"$ref\": \"#/definitions/a_string\" }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/17/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "NaiveReplacementOfRefWithItsDestinationIsNotCorrect",
                 validateFormat: false,
@@ -1035,9 +1035,9 @@ public class SuiteRefsWithRelativeUrisAndDefs : IClassFixture<SuiteRefsWithRelat
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"http://example.com/schema-relative-uri-defs1.json\",\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"$id\": \"schema-relative-uri-defs2.json\",\r\n                    \"definitions\": {\r\n                        \"inner\": {\r\n                            \"properties\": {\r\n                                \"bar\": { \"type\": \"string\" }\r\n                            }\r\n                        }\r\n                    },\r\n                    \"allOf\": [ { \"$ref\": \"#/definitions/inner\" } ]\r\n                }\r\n            },\r\n            \"allOf\": [ { \"$ref\": \"schema-relative-uri-defs2.json\" } ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/18/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RefsWithRelativeUrisAndDefs",
                 validateFormat: false,
@@ -1095,9 +1095,9 @@ public class SuiteRelativeRefsWithAbsoluteUrisAndDefs : IClassFixture<SuiteRelat
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"http://example.com/schema-refs-absolute-uris-defs1.json\",\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"$id\": \"http://example.com/schema-refs-absolute-uris-defs2.json\",\r\n                    \"definitions\": {\r\n                        \"inner\": {\r\n                            \"properties\": {\r\n                                \"bar\": { \"type\": \"string\" }\r\n                            }\r\n                        }\r\n                    },\r\n                    \"allOf\": [ { \"$ref\": \"#/definitions/inner\" } ]\r\n                }\r\n            },\r\n            \"allOf\": [ { \"$ref\": \"schema-refs-absolute-uris-defs2.json\" } ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/19/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RelativeRefsWithAbsoluteUrisAndDefs",
                 validateFormat: false,
@@ -1147,9 +1147,9 @@ public class SuiteSimpleURNBaseURIWithRefViaTheURN : IClassFixture<SuiteSimpleUR
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\r\n            \"$id\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\",\r\n            \"minimum\": 30,\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ffff-ffff-4321feebdaed\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/20/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "SimpleURNBaseURIWithRefViaTheURN",
                 validateFormat: false,
@@ -1199,9 +1199,9 @@ public class SuiteSimpleURNBaseURIWithJSONPointer : IClassFixture<SuiteSimpleURN
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$comment\": \"URIs do not have to have HTTP(s) schemes\",\r\n            \"$id\": \"urn:uuid:deadbeef-1234-00ff-ff00-4321feebdaed\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/21/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "SimpleURNBaseURIWithJSONPointer",
                 validateFormat: false,
@@ -1251,9 +1251,9 @@ public class SuiteURNBaseURIWithNSS : IClassFixture<SuiteURNBaseURIWithNSS.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$comment\": \"RFC 8141 §2.2\",\r\n            \"$id\": \"urn:example:1/406/47452/2\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/22/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "URNBaseURIWithNSS",
                 validateFormat: false,
@@ -1303,9 +1303,9 @@ public class SuiteURNBaseURIWithRComponent : IClassFixture<SuiteURNBaseURIWithRC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$comment\": \"RFC 8141 §2.3.1\",\r\n            \"$id\": \"urn:example:foo-bar-baz-qux?+CCResolve:cc=uk\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/23/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "URNBaseURIWithRComponent",
                 validateFormat: false,
@@ -1355,9 +1355,9 @@ public class SuiteURNBaseURIWithQComponent : IClassFixture<SuiteURNBaseURIWithQC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$comment\": \"RFC 8141 §2.3.2\",\r\n            \"$id\": \"urn:example:weather?=op=map&lat=39.56&lon=-104.85&datetime=1969-07-21T02:56:15Z\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/24/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "URNBaseURIWithQComponent",
                 validateFormat: false,
@@ -1407,9 +1407,9 @@ public class SuiteURNBaseURIWithURNAndJSONPointerRef : IClassFixture<SuiteURNBas
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-0000-0000-4321feebdaed#/definitions/bar\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/25/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "URNBaseURIWithURNAndJSONPointerRef",
                 validateFormat: false,
@@ -1459,9 +1459,9 @@ public class SuiteURNBaseURIWithURNAndAnchorRef : IClassFixture<SuiteURNBaseURIW
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed\",\r\n            \"properties\": {\r\n                \"foo\": {\"$ref\": \"urn:uuid:deadbeef-1234-ff00-00ff-4321feebdaed#something\"}\r\n            },\r\n            \"definitions\": {\r\n                \"bar\": {\r\n                    \"$id\": \"#something\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/26/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "URNBaseURIWithURNAndAnchorRef",
                 validateFormat: false,
@@ -1511,9 +1511,9 @@ public class SuiteRefWithAbsolutePathReference : IClassFixture<SuiteRefWithAbsol
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n             \"$id\": \"http://example.com/ref/absref.json\",\r\n             \"definitions\": {\r\n                 \"a\": {\r\n                     \"$id\": \"http://example.com/ref/absref/foobar.json\",\r\n                     \"type\": \"number\"\r\n                  },\r\n                  \"b\": {\r\n                      \"$id\": \"http://example.com/absref/foobar.json\",\r\n                      \"type\": \"string\"\r\n                  }\r\n             },\r\n             \"allOf\": [\r\n                 { \"$ref\": \"/absref/foobar.json\" }\r\n             ]\r\n         }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/27/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "RefWithAbsolutePathReference",
                 validateFormat: false,
@@ -1563,9 +1563,9 @@ public class SuiteIdWithFileURIStillResolvesPointersNix : IClassFixture<SuiteIdW
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n             \"$id\": \"file:///folder/file.json\",\r\n             \"definitions\": {\r\n                 \"foo\": {\r\n                     \"type\": \"number\"\r\n                 }\r\n             },\r\n             \"allOf\": [\r\n                 {\r\n                     \"$ref\": \"#/definitions/foo\"\r\n                 }\r\n             ]\r\n         }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/28/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "IdWithFileURIStillResolvesPointersNix",
                 validateFormat: false,
@@ -1615,9 +1615,9 @@ public class SuiteIdWithFileURIStillResolvesPointersWindows : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n             \"$id\": \"file:///c:/folder/file.json\",\r\n             \"definitions\": {\r\n                 \"foo\": {\r\n                     \"type\": \"number\"\r\n                 }\r\n             },\r\n             \"allOf\": [\r\n                 {\r\n                     \"$ref\": \"#/definitions/foo\"\r\n                 }\r\n             ]\r\n         }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/29/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "IdWithFileURIStillResolvesPointersWindows",
                 validateFormat: false,
@@ -1667,9 +1667,9 @@ public class SuiteEmptyTokensInRefJsonPointer : IClassFixture<SuiteEmptyTokensIn
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n             \"definitions\": {\r\n                 \"\": {\r\n                     \"definitions\": {\r\n                         \"\": { \"type\": \"number\" }\r\n                     }\r\n                 } \r\n             },\r\n             \"allOf\": [\r\n                 {\r\n                     \"$ref\": \"#/definitions//definitions/\"\r\n                 }\r\n             ]\r\n         }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "ref.json",
+                "#/30/schema",
                 "JsonSchemaTestSuiteDraft6Ref",
                 "EmptyTokensInRefJsonPointer",
                 validateFormat: false,

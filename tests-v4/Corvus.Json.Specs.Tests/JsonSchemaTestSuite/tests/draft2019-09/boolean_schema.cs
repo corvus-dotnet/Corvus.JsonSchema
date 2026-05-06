@@ -99,9 +99,9 @@ public class SuiteBooleanSchemaTrue : IClassFixture<SuiteBooleanSchemaTrue.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "true",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "boolean_schema.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909BooleanSchema",
                 "BooleanSchemaTrue",
                 validateFormat: false,
@@ -207,9 +207,9 @@ public class SuiteBooleanSchemaFalse : IClassFixture<SuiteBooleanSchemaFalse.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "false",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "boolean_schema.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909BooleanSchema",
                 "BooleanSchemaFalse",
                 validateFormat: false,

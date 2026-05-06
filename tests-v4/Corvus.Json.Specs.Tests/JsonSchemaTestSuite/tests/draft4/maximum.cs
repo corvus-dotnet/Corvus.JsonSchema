@@ -59,9 +59,9 @@ public class SuiteMaximumValidation : IClassFixture<SuiteMaximumValidation.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maximum\": 3.0}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4Maximum",
                 "MaximumValidation",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteMaximumValidationWithUnsignedInteger : IClassFixture<SuiteMaxi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maximum\": 300}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4Maximum",
                 "MaximumValidationWithUnsignedInteger",
                 validateFormat: false,
@@ -195,9 +195,9 @@ public class SuiteMaximumValidationExplicitFalseExclusivity : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maximum\": 3.0, \"exclusiveMaximum\": false}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4Maximum",
                 "MaximumValidationExplicitFalseExclusivity",
                 validateFormat: false,
@@ -247,9 +247,9 @@ public class SuiteExclusiveMaximumValidation : IClassFixture<SuiteExclusiveMaxim
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"maximum\": 3.0,\r\n            \"exclusiveMaximum\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4Maximum",
                 "ExclusiveMaximumValidation",
                 validateFormat: false,

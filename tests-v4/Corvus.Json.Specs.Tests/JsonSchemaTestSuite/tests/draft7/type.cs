@@ -99,9 +99,9 @@ public class SuiteIntegerTypeMatchesIntegers : IClassFixture<SuiteIntegerTypeMat
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"type\": \"integer\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "IntegerTypeMatchesIntegers",
                 validateFormat: false,
@@ -207,9 +207,9 @@ public class SuiteNumberTypeMatchesNumbers : IClassFixture<SuiteNumberTypeMatche
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"type\": \"number\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "NumberTypeMatchesNumbers",
                 validateFormat: false,
@@ -315,9 +315,9 @@ public class SuiteStringTypeMatchesStrings : IClassFixture<SuiteStringTypeMatche
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"type\": \"string\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "StringTypeMatchesStrings",
                 validateFormat: false,
@@ -407,9 +407,9 @@ public class SuiteObjectTypeMatchesObjects : IClassFixture<SuiteObjectTypeMatche
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"type\": \"object\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "ObjectTypeMatchesObjects",
                 validateFormat: false,
@@ -499,9 +499,9 @@ public class SuiteArrayTypeMatchesArrays : IClassFixture<SuiteArrayTypeMatchesAr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"type\": \"array\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "ArrayTypeMatchesArrays",
                 validateFormat: false,
@@ -615,9 +615,9 @@ public class SuiteBooleanTypeMatchesBooleans : IClassFixture<SuiteBooleanTypeMat
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"type\": \"boolean\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "BooleanTypeMatchesBooleans",
                 validateFormat: false,
@@ -731,9 +731,9 @@ public class SuiteNullTypeMatchesOnlyTheNullObject : IClassFixture<SuiteNullType
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"type\": \"null\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "NullTypeMatchesOnlyTheNullObject",
                 validateFormat: false,
@@ -823,9 +823,9 @@ public class SuiteMultipleTypesCanBeSpecifiedInAnArray : IClassFixture<SuiteMult
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"type\": [\"integer\", \"string\"]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "MultipleTypesCanBeSpecifiedInAnArray",
                 validateFormat: false,
@@ -875,9 +875,9 @@ public class SuiteTypeAsArrayWithOneItem : IClassFixture<SuiteTypeAsArrayWithOne
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": [\"string\"]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "TypeAsArrayWithOneItem",
                 validateFormat: false,
@@ -951,9 +951,9 @@ public class SuiteTypeArrayOrObject : IClassFixture<SuiteTypeArrayOrObject.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": [\"array\", \"object\"]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "TypeArrayOrObject",
                 validateFormat: false,
@@ -1027,9 +1027,9 @@ public class SuiteTypeArrayObjectOrNull : IClassFixture<SuiteTypeArrayObjectOrNu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": [\"array\", \"object\", \"null\"]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "type.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft7Type",
                 "TypeArrayObjectOrNull",
                 validateFormat: false,

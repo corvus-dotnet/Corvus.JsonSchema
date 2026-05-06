@@ -51,9 +51,9 @@ public class SuiteByInt : IClassFixture<SuiteByInt.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"multipleOf\": 2\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "multipleOf.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909MultipleOf",
                 "ByInt",
                 validateFormat: false,
@@ -119,9 +119,9 @@ public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"multipleOf\": 1.5\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "multipleOf.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909MultipleOf",
                 "ByNumber",
                 validateFormat: false,
@@ -171,9 +171,9 @@ public class SuiteBySmallNumber : IClassFixture<SuiteBySmallNumber.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"multipleOf\": 0.0001\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "multipleOf.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft201909MultipleOf",
                 "BySmallNumber",
                 validateFormat: false,
@@ -215,9 +215,9 @@ public class SuiteFloatDivisionInf : IClassFixture<SuiteFloatDivisionInf.Fixture
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"integer\", \"multipleOf\": 0.123456789\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "multipleOf.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft201909MultipleOf",
                 "FloatDivisionInf",
                 validateFormat: false,
@@ -259,9 +259,9 @@ public class SuiteSmallMultipleOfLargeInteger : IClassFixture<SuiteSmallMultiple
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"type\": \"integer\", \"multipleOf\": 1e-8\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "multipleOf.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft201909MultipleOf",
                 "SmallMultipleOfLargeInteger",
                 validateFormat: false,

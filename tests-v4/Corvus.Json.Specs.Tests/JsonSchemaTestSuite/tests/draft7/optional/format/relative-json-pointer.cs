@@ -171,9 +171,9 @@ public class SuiteValidationOfRelativeJSONPointersRJP : IClassFixture<SuiteValid
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"relative-json-pointer\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\relative-json-pointer.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalFormatRelativeJsonPointer",
                 "ValidationOfRelativeJSONPointersRJP",
                 validateFormat: true,

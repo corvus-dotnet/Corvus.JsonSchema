@@ -43,9 +43,9 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionFalse : IClas
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"https://schema/using/format-assertion/false\",\r\n            \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-false.json\",\r\n            \"format\": \"ipv4\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format-assertion.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalFormatAssertion",
                 "SchemaThatUsesCustomMetaschemaWithFormatAssertionFalse",
                 validateFormat: true,
@@ -95,9 +95,9 @@ public class SuiteSchemaThatUsesCustomMetaschemaWithFormatAssertionTrue : IClass
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$id\": \"https://schema/using/format-assertion/true\",\r\n            \"$schema\": \"http://localhost:1234/draft2020-12/format-assertion-true.json\",\r\n            \"format\": \"ipv4\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format-assertion.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalFormatAssertion",
                 "SchemaThatUsesCustomMetaschemaWithFormatAssertionTrue",
                 validateFormat: true,

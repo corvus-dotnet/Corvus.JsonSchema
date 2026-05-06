@@ -43,9 +43,9 @@ public class SuiteInteger : IClassFixture<SuiteInteger.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"type\": \"integer\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\bignum.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalBignum",
                 "Integer",
                 validateFormat: false,
@@ -95,9 +95,9 @@ public class SuiteNumber : IClassFixture<SuiteNumber.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"type\": \"number\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\bignum.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7OptionalBignum",
                 "Number",
                 validateFormat: false,
@@ -139,9 +139,9 @@ public class SuiteString : IClassFixture<SuiteString.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"type\": \"string\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\bignum.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft7OptionalBignum",
                 "String",
                 validateFormat: false,
@@ -183,9 +183,9 @@ public class SuiteMaximumIntegerComparison : IClassFixture<SuiteMaximumIntegerCo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"maximum\": 18446744073709551615 }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\bignum.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft7OptionalBignum",
                 "MaximumIntegerComparison",
                 validateFormat: false,
@@ -227,9 +227,9 @@ public class SuiteFloatComparisonWithHighPrecision : IClassFixture<SuiteFloatCom
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"exclusiveMaximum\": 972783798187987123879878123.18878137\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\bignum.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft7OptionalBignum",
                 "FloatComparisonWithHighPrecision",
                 validateFormat: false,
@@ -271,9 +271,9 @@ public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"exclusiveMinimum\": -972783798187987123879878123.18878137\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\bignum.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft7OptionalBignum",
                 "FloatComparisonWithHighPrecisionOnNegativeNumbers",
                 validateFormat: false,

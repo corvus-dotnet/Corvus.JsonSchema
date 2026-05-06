@@ -83,9 +83,9 @@ public class SuiteSingleDependency : IClassFixture<SuiteSingleDependency.Fixture
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependentRequired\": {\"bar\": [\"foo\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentRequired.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909DependentRequired",
                 "SingleDependency",
                 validateFormat: false,
@@ -143,9 +143,9 @@ public class SuiteEmptyDependents : IClassFixture<SuiteEmptyDependents.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependentRequired\": {\"bar\": []}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentRequired.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909DependentRequired",
                 "EmptyDependents",
                 validateFormat: false,
@@ -227,9 +227,9 @@ public class SuiteMultipleDependentsRequired : IClassFixture<SuiteMultipleDepend
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependentRequired\": {\"quux\": [\"foo\", \"bar\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentRequired.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft201909DependentRequired",
                 "MultipleDependentsRequired",
                 validateFormat: false,
@@ -295,9 +295,9 @@ public class SuiteDependenciesWithEscapedCharacters : IClassFixture<SuiteDepende
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependentRequired\": {\r\n                \"foo\\nbar\": [\"foo\\rbar\"],\r\n                \"foo\\\"bar\": [\"foo'bar\"]\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentRequired.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft201909DependentRequired",
                 "DependenciesWithEscapedCharacters",
                 validateFormat: false,

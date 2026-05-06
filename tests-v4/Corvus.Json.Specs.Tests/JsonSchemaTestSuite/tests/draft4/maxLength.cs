@@ -67,9 +67,9 @@ public class SuiteMaxLengthValidation : IClassFixture<SuiteMaxLengthValidation.F
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maxLength\": 2}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxLength.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4MaxLength",
                 "MaxLengthValidation",
                 validateFormat: false,

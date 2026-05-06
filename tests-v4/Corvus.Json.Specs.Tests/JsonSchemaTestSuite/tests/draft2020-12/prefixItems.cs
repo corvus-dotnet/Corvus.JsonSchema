@@ -75,9 +75,9 @@ public class SuiteASchemaGivenForPrefixItems : IClassFixture<SuiteASchemaGivenFo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [\r\n                {\"type\": \"integer\"},\r\n                {\"type\": \"string\"}\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "prefixItems.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012PrefixItems",
                 "ASchemaGivenForPrefixItems",
                 validateFormat: false,
@@ -135,9 +135,9 @@ public class SuitePrefixItemsWithBooleanSchemas : IClassFixture<SuitePrefixItems
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [true, false]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "prefixItems.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012PrefixItems",
                 "PrefixItemsWithBooleanSchemas",
                 validateFormat: false,
@@ -179,9 +179,9 @@ public class SuiteAdditionalItemsAreAllowedByDefault : IClassFixture<SuiteAdditi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [{\"type\": \"integer\"}]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "prefixItems.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012PrefixItems",
                 "AdditionalItemsAreAllowedByDefault",
                 validateFormat: false,
@@ -223,9 +223,9 @@ public class SuitePrefixItemsWithNullInstanceElements : IClassFixture<SuitePrefi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [\r\n                {\r\n                    \"type\": \"null\"\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "prefixItems.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012PrefixItems",
                 "PrefixItemsWithNullInstanceElements",
                 validateFormat: false,

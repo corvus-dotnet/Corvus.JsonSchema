@@ -91,9 +91,9 @@ public class SuitePatternValidation : IClassFixture<SuitePatternValidation.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"pattern\": \"^a*$\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "pattern.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6Pattern",
                 "PatternValidation",
                 validateFormat: false,
@@ -135,9 +135,9 @@ public class SuitePatternIsNotAnchored : IClassFixture<SuitePatternIsNotAnchored
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"pattern\": \"a+\"}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "pattern.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6Pattern",
                 "PatternIsNotAnchored",
                 validateFormat: false,

@@ -251,9 +251,9 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"uniqueItems\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012UniqueItems",
                 "UniqueItemsValidation",
                 validateFormat: false,
@@ -351,9 +351,9 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012UniqueItems",
                 "UniqueItemsWithAnArrayOfItems",
                 validateFormat: false,
@@ -427,9 +427,9 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse : IClassF
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": true,\r\n            \"items\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012UniqueItems",
                 "UniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse",
                 validateFormat: false,
@@ -583,9 +583,9 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"uniqueItems\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012UniqueItems",
                 "UniqueItemsFalseValidation",
                 validateFormat: false,
@@ -683,9 +683,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012UniqueItems",
                 "UniqueItemsFalseWithAnArrayOfItems",
                 validateFormat: false,
@@ -759,9 +759,9 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse : IC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"prefixItems\": [{\"type\": \"boolean\"}, {\"type\": \"boolean\"}],\r\n            \"uniqueItems\": false,\r\n            \"items\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "uniqueItems.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft202012UniqueItems",
                 "UniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse",
                 validateFormat: false,

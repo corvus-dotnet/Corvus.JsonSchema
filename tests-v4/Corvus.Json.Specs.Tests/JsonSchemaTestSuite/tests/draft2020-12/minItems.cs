@@ -59,9 +59,9 @@ public class SuiteMinItemsValidation : IClassFixture<SuiteMinItemsValidation.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"minItems\": 1\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minItems.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012MinItems",
                 "MinItemsValidation",
                 validateFormat: false,
@@ -111,9 +111,9 @@ public class SuiteMinItemsValidationWithADecimal : IClassFixture<SuiteMinItemsVa
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"minItems\": 1.0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minItems.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012MinItems",
                 "MinItemsValidationWithADecimal",
                 validateFormat: false,

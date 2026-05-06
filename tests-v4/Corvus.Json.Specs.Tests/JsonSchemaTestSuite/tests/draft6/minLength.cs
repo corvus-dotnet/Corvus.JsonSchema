@@ -67,9 +67,9 @@ public class SuiteMinLengthValidation : IClassFixture<SuiteMinLengthValidation.F
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minLength\": 2}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minLength.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6MinLength",
                 "MinLengthValidation",
                 validateFormat: false,
@@ -119,9 +119,9 @@ public class SuiteMinLengthValidationWithADecimal : IClassFixture<SuiteMinLength
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minLength\": 2.0}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minLength.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6MinLength",
                 "MinLengthValidationWithADecimal",
                 validateFormat: false,

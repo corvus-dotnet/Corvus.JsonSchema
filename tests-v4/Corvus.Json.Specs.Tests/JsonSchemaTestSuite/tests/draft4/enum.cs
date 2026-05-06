@@ -43,9 +43,9 @@ public class SuiteSimpleEnumValidation : IClassFixture<SuiteSimpleEnumValidation
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [1, 2, 3]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "SimpleEnumValidation",
                 validateFormat: false,
@@ -119,9 +119,9 @@ public class SuiteHeterogeneousEnumValidation : IClassFixture<SuiteHeterogeneous
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [6, \"foo\", [], true, {\"foo\": 12}]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "HeterogeneousEnumValidation",
                 validateFormat: false,
@@ -179,9 +179,9 @@ public class SuiteHeterogeneousEnumWithNullValidation : IClassFixture<SuiteHeter
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"enum\": [6, null] }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "HeterogeneousEnumWithNullValidation",
                 validateFormat: false,
@@ -263,9 +263,9 @@ public class SuiteEnumsInProperties : IClassFixture<SuiteEnumsInProperties.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\":\"object\",\r\n            \"properties\": {\r\n                \"foo\": {\"enum\":[\"foo\"]},\r\n                \"bar\": {\"enum\":[\"bar\"]}\r\n            },\r\n            \"required\": [\"bar\"]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumsInProperties",
                 validateFormat: false,
@@ -323,9 +323,9 @@ public class SuiteEnumWithEscapedCharacters : IClassFixture<SuiteEnumWithEscaped
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"enum\": [\"foo\\nbar\", \"foo\\rbar\"]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumWithEscapedCharacters",
                 validateFormat: false,
@@ -383,9 +383,9 @@ public class SuiteEnumWithFalseDoesNotMatch0 : IClassFixture<SuiteEnumWithFalseD
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [false]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumWithFalseDoesNotMatch0",
                 validateFormat: false,
@@ -443,9 +443,9 @@ public class SuiteEnumWithFalseDoesNotMatch01 : IClassFixture<SuiteEnumWithFalse
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [[false]]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumWithFalseDoesNotMatch01",
                 validateFormat: false,
@@ -503,9 +503,9 @@ public class SuiteEnumWithTrueDoesNotMatch1 : IClassFixture<SuiteEnumWithTrueDoe
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [true]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumWithTrueDoesNotMatch1",
                 validateFormat: false,
@@ -563,9 +563,9 @@ public class SuiteEnumWithTrueDoesNotMatch11 : IClassFixture<SuiteEnumWithTrueDo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [[true]]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumWithTrueDoesNotMatch11",
                 validateFormat: false,
@@ -623,9 +623,9 @@ public class SuiteEnumWith0DoesNotMatchFalse : IClassFixture<SuiteEnumWith0DoesN
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [0]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumWith0DoesNotMatchFalse",
                 validateFormat: false,
@@ -683,9 +683,9 @@ public class SuiteEnumWith0DoesNotMatchFalse1 : IClassFixture<SuiteEnumWith0Does
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [[0]]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumWith0DoesNotMatchFalse1",
                 validateFormat: false,
@@ -743,9 +743,9 @@ public class SuiteEnumWith1DoesNotMatchTrue : IClassFixture<SuiteEnumWith1DoesNo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [1]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/11/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumWith1DoesNotMatchTrue",
                 validateFormat: false,
@@ -803,9 +803,9 @@ public class SuiteEnumWith1DoesNotMatchTrue1 : IClassFixture<SuiteEnumWith1DoesN
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"enum\": [[1]]}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/12/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "EnumWith1DoesNotMatchTrue1",
                 validateFormat: false,
@@ -855,9 +855,9 @@ public class SuiteNulCharactersInStrings : IClassFixture<SuiteNulCharactersInStr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"enum\": [ \"hello\\u0000there\" ] }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/13/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "NulCharactersInStrings",
                 validateFormat: false,
@@ -907,9 +907,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentCodepoint
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"enum\": [\"μ\"],\r\n            \"$comment\": \"U+03BC\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/14/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "CharactersWithTheSameVisualRepresentationButDifferentCodepoint",
                 validateFormat: false,
@@ -959,9 +959,9 @@ public class SuiteCharactersWithTheSameVisualRepresentationButDifferentNumberOfC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"enum\": [\"ä\"],\r\n            \"$comment\": \"U+00E4\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "enum.json",
+                "#/15/schema",
                 "JsonSchemaTestSuiteDraft4Enum",
                 "CharactersWithTheSameVisualRepresentationButDifferentNumberOfCodepoints",
                 validateFormat: false,

@@ -59,9 +59,9 @@ public class SuiteAnchorInsideAnEnumIsNotARealIdentifier : IClassFixture<SuiteAn
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$defs\": {\r\n                \"anchor_in_enum\": {\r\n                    \"enum\": [\r\n                        {\r\n                            \"$anchor\": \"my_anchor\",\r\n                            \"type\": \"null\"\r\n                        }\r\n                    ]\r\n                },\r\n                \"real_identifier_in_schema\": {\r\n                    \"$anchor\": \"my_anchor\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"zzz_anchor_in_const\": {\r\n                    \"const\": {\r\n                        \"$anchor\": \"my_anchor\",\r\n                        \"type\": \"null\"\r\n                    }\r\n                }\r\n            },\r\n            \"anyOf\": [\r\n                { \"$ref\": \"#/$defs/anchor_in_enum\" },\r\n                { \"$ref\": \"#my_anchor\" }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\anchor.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalAnchor",
                 "AnchorInsideAnEnumIsNotARealIdentifier",
                 validateFormat: false,

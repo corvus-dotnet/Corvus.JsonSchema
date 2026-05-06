@@ -51,9 +51,9 @@ public class SuiteIdInsideAnEnumIsNotARealIdentifier : IClassFixture<SuiteIdInsi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"definitions\": {\r\n                \"id_in_enum\": {\r\n                    \"enum\": [\r\n                        {\r\n                          \"$id\": \"https://localhost:1234/id/my_identifier.json\",\r\n                          \"type\": \"null\"\r\n                        }\r\n                    ]\r\n                },\r\n                \"real_id_in_schema\": {\r\n                    \"$id\": \"https://localhost:1234/id/my_identifier.json\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"zzz_id_in_const\": {\r\n                    \"const\": {\r\n                        \"$id\": \"https://localhost:1234/id/my_identifier.json\",\r\n                        \"type\": \"null\"\r\n                    }\r\n                }\r\n            },\r\n            \"anyOf\": [\r\n                { \"$ref\": \"#/definitions/id_in_enum\" },\r\n                { \"$ref\": \"https://localhost:1234/id/my_identifier.json\" }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\id.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6OptionalId",
                 "IdInsideAnEnumIsNotARealIdentifier",
                 validateFormat: false,
@@ -103,9 +103,9 @@ public class SuiteNonSchemaObjectContainingAPlainNameIdProperty : IClassFixture<
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"definitions\": {\r\n                \"const_not_anchor\": {\r\n                    \"const\": {\r\n                        \"$id\": \"#not_a_real_anchor\"\r\n                    }\r\n                }\r\n            },\r\n            \"oneOf\": [\r\n                {\r\n                    \"const\": \"skip not_a_real_anchor\"\r\n                },\r\n                {\r\n                    \"allOf\": [\r\n                        {\r\n                            \"not\": {\r\n                                \"const\": \"skip not_a_real_anchor\"\r\n                            }\r\n                        },\r\n                        {\r\n                            \"$ref\": \"#/definitions/const_not_anchor\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\id.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6OptionalId",
                 "NonSchemaObjectContainingAPlainNameIdProperty",
                 validateFormat: false,
@@ -155,9 +155,9 @@ public class SuiteNonSchemaObjectContainingAnIdProperty : IClassFixture<SuiteNon
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"definitions\": {\r\n                \"const_not_id\": {\r\n                    \"const\": {\r\n                        \"$id\": \"not_a_real_id\"\r\n                    }\r\n                }\r\n            },\r\n            \"oneOf\": [\r\n                {\r\n                    \"const\":\"skip not_a_real_id\"\r\n                },\r\n                {\r\n                    \"allOf\": [\r\n                        {\r\n                            \"not\": {\r\n                                \"const\": \"skip not_a_real_id\"\r\n                            }\r\n                        },\r\n                        {\r\n                            \"$ref\": \"#/definitions/const_not_id\"\r\n                        }\r\n                    ]\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\id.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft6OptionalId",
                 "NonSchemaObjectContainingAnIdProperty",
                 validateFormat: false,

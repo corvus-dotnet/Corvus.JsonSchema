@@ -291,9 +291,9 @@ public class SuiteValidationOfIPAddresses : IClassFixture<SuiteValidationOfIPAdd
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"ipv4\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\ipv4.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6OptionalFormatIpv4",
                 "ValidationOfIPAddresses",
                 validateFormat: true,

@@ -75,9 +75,9 @@ public class SuiteContainsKeywordValidation : IClassFixture<SuiteContainsKeyword
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"contains\": {\"minimum\": 5}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6Contains",
                 "ContainsKeywordValidation",
                 validateFormat: false,
@@ -135,9 +135,9 @@ public class SuiteContainsKeywordWithConstKeyword : IClassFixture<SuiteContainsK
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"contains\": { \"const\": 5 }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6Contains",
                 "ContainsKeywordWithConstKeyword",
                 validateFormat: false,
@@ -187,9 +187,9 @@ public class SuiteContainsKeywordWithBooleanSchemaTrue : IClassFixture<SuiteCont
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"contains\": true}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft6Contains",
                 "ContainsKeywordWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -247,9 +247,9 @@ public class SuiteContainsKeywordWithBooleanSchemaFalse : IClassFixture<SuiteCon
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"contains\": false}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft6Contains",
                 "ContainsKeywordWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -315,9 +315,9 @@ public class SuiteItemsContains : IClassFixture<SuiteItemsContains.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"items\": { \"multipleOf\": 2 },\r\n            \"contains\": { \"multipleOf\": 3 }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft6Contains",
                 "ItemsContains",
                 validateFormat: false,
@@ -359,9 +359,9 @@ public class SuiteContainsWithNullInstanceElements : IClassFixture<SuiteContains
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"contains\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "contains.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft6Contains",
                 "ContainsWithNullInstanceElements",
                 validateFormat: false,

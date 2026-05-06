@@ -91,9 +91,9 @@ public class SuiteValidationOfRegularExpressions : IClassFixture<SuiteValidation
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"regex\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\regex.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalFormatRegex",
                 "ValidationOfRegularExpressions",
                 validateFormat: true,

@@ -43,9 +43,9 @@ public class SuiteMaxContainsWithoutContainsIsIgnored : IClassFixture<SuiteMaxCo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxContains\": 1\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxContains.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012MaxContains",
                 "MaxContainsWithoutContainsIsIgnored",
                 validateFormat: false,
@@ -119,9 +119,9 @@ public class SuiteMaxContainsWithContains : IClassFixture<SuiteMaxContainsWithCo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"maxContains\": 1\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxContains.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012MaxContains",
                 "MaxContainsWithContains",
                 validateFormat: false,
@@ -171,9 +171,9 @@ public class SuiteMaxContainsWithContainsValueWithADecimal : IClassFixture<Suite
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"maxContains\": 1.0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxContains.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012MaxContains",
                 "MaxContainsWithContainsValueWithADecimal",
                 validateFormat: false,
@@ -231,9 +231,9 @@ public class SuiteMinContainsMaxContains : IClassFixture<SuiteMinContainsMaxCont
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 1,\r\n            \"maxContains\": 3\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxContains.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012MaxContains",
                 "MinContainsMaxContains",
                 validateFormat: false,
@@ -283,9 +283,9 @@ public class SuiteMaxContains0WithMinContains0 : IClassFixture<SuiteMaxContains0
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 0,\r\n            \"maxContains\": 0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxContains.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012MaxContains",
                 "MaxContains0WithMinContains0",
                 validateFormat: false,

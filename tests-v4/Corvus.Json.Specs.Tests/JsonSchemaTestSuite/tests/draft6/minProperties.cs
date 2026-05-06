@@ -75,9 +75,9 @@ public class SuiteMinPropertiesValidation : IClassFixture<SuiteMinPropertiesVali
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minProperties\": 1}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minProperties.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6MinProperties",
                 "MinPropertiesValidation",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteMinPropertiesValidationWithADecimal : IClassFixture<SuiteMinPr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minProperties\": 1.0}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minProperties.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6MinProperties",
                 "MinPropertiesValidationWithADecimal",
                 validateFormat: false,

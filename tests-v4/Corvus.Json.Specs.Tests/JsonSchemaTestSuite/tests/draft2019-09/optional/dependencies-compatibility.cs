@@ -83,9 +83,9 @@ public class SuiteSingleDependency : IClassFixture<SuiteSingleDependency.Fixture
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependencies\": {\"bar\": [\"foo\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\dependencies-compatibility.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalDependenciesCompatibility",
                 "SingleDependency",
                 validateFormat: false,
@@ -143,9 +143,9 @@ public class SuiteEmptyDependents : IClassFixture<SuiteEmptyDependents.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependencies\": {\"bar\": []}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\dependencies-compatibility.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalDependenciesCompatibility",
                 "EmptyDependents",
                 validateFormat: false,
@@ -227,9 +227,9 @@ public class SuiteMultipleDependentsRequired : IClassFixture<SuiteMultipleDepend
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependencies\": {\"quux\": [\"foo\", \"bar\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\dependencies-compatibility.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalDependenciesCompatibility",
                 "MultipleDependentsRequired",
                 validateFormat: false,
@@ -295,9 +295,9 @@ public class SuiteDependenciesWithEscapedCharacters : IClassFixture<SuiteDepende
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependencies\": {\r\n                \"foo\\nbar\": [\"foo\\rbar\"],\r\n                \"foo\\\"bar\": [\"foo'bar\"]\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\dependencies-compatibility.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalDependenciesCompatibility",
                 "DependenciesWithEscapedCharacters",
                 validateFormat: false,
@@ -395,9 +395,9 @@ public class SuiteSingleSchemaDependency : IClassFixture<SuiteSingleSchemaDepend
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependencies\": {\r\n                \"bar\": {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"integer\"},\r\n                        \"bar\": {\"type\": \"integer\"}\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\dependencies-compatibility.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalDependenciesCompatibility",
                 "SingleSchemaDependency",
                 validateFormat: false,
@@ -463,9 +463,9 @@ public class SuiteBooleanSubschemas : IClassFixture<SuiteBooleanSubschemas.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependencies\": {\r\n                \"foo\": true,\r\n                \"bar\": false\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\dependencies-compatibility.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalDependenciesCompatibility",
                 "BooleanSubschemas",
                 validateFormat: false,
@@ -531,9 +531,9 @@ public class SuiteSchemaDependenciesWithEscapedCharacters : IClassFixture<SuiteS
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"dependencies\": {\r\n                \"foo\\tbar\": {\"minProperties\": 4},\r\n                \"foo'bar\": {\"required\": [\"foo\\\"bar\"]}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\dependencies-compatibility.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft201909OptionalDependenciesCompatibility",
                 "SchemaDependenciesWithEscapedCharacters",
                 validateFormat: false,

@@ -483,9 +483,9 @@ public class SuiteValidationOfInternationalizedHostNames : IClassFixture<SuiteVa
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"idn-hostname\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\idn-hostname.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalFormatIdnHostname",
                 "ValidationOfInternationalizedHostNames",
                 validateFormat: true,
@@ -679,9 +679,9 @@ public class SuiteValidationOfSeparatorsInInternationalizedHostNames : IClassFix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"format\": \"idn-hostname\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\idn-hostname.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalFormatIdnHostname",
                 "ValidationOfSeparatorsInInternationalizedHostNames",
                 validateFormat: true,

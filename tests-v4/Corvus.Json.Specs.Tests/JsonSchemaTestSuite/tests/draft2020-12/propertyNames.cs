@@ -75,9 +75,9 @@ public class SuitePropertyNamesValidation : IClassFixture<SuitePropertyNamesVali
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": {\"maxLength\": 3}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012PropertyNames",
                 "PropertyNamesValidation",
                 validateFormat: false,
@@ -135,9 +135,9 @@ public class SuitePropertyNamesValidationWithPattern : IClassFixture<SuiteProper
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": { \"pattern\": \"^a+$\" }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012PropertyNames",
                 "PropertyNamesValidationWithPattern",
                 validateFormat: false,
@@ -187,9 +187,9 @@ public class SuitePropertyNamesWithBooleanSchemaTrue : IClassFixture<SuiteProper
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012PropertyNames",
                 "PropertyNamesWithBooleanSchemaTrue",
                 validateFormat: false,
@@ -239,9 +239,9 @@ public class SuitePropertyNamesWithBooleanSchemaFalse : IClassFixture<SuitePrope
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012PropertyNames",
                 "PropertyNamesWithBooleanSchemaFalse",
                 validateFormat: false,
@@ -299,9 +299,9 @@ public class SuitePropertyNamesWithConst : IClassFixture<SuitePropertyNamesWithC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": {\"const\": \"foo\"}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012PropertyNames",
                 "PropertyNamesWithConst",
                 validateFormat: false,
@@ -367,9 +367,9 @@ public class SuitePropertyNamesWithEnum : IClassFixture<SuitePropertyNamesWithEn
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": {\"enum\": [\"foo\", \"bar\"]}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "propertyNames.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft202012PropertyNames",
                 "PropertyNamesWithEnum",
                 validateFormat: false,

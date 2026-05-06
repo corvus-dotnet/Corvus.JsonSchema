@@ -75,9 +75,9 @@ public class SuiteObjectPropertiesValidation : IClassFixture<SuiteObjectProperti
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {\"type\": \"integer\"},\r\n                \"bar\": {\"type\": \"string\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "properties.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4Properties",
                 "ObjectPropertiesValidation",
                 validateFormat: false,
@@ -175,9 +175,9 @@ public class SuitePropertiesPatternPropertiesAdditionalPropertiesInteraction : I
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {\"type\": \"array\", \"maxItems\": 3},\r\n                \"bar\": {\"type\": \"array\"}\r\n            },\r\n            \"patternProperties\": {\"f.o\": {\"minItems\": 2}},\r\n            \"additionalProperties\": {\"type\": \"integer\"}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "properties.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4Properties",
                 "PropertiesPatternPropertiesAdditionalPropertiesInteraction",
                 validateFormat: false,
@@ -227,9 +227,9 @@ public class SuitePropertiesWithEscapedCharacters : IClassFixture<SuitePropertie
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\\nbar\": {\"type\": \"number\"},\r\n                \"foo\\\"bar\": {\"type\": \"number\"},\r\n                \"foo\\\\bar\": {\"type\": \"number\"},\r\n                \"foo\\rbar\": {\"type\": \"number\"},\r\n                \"foo\\tbar\": {\"type\": \"number\"},\r\n                \"foo\\fbar\": {\"type\": \"number\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "properties.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4Properties",
                 "PropertiesWithEscapedCharacters",
                 validateFormat: false,
@@ -271,9 +271,9 @@ public class SuitePropertiesWithNullValuedInstanceProperties : IClassFixture<Sui
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"foo\": {\"type\": \"null\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "properties.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4Properties",
                 "PropertiesWithNullValuedInstanceProperties",
                 validateFormat: false,
@@ -363,9 +363,9 @@ public class SuitePropertiesWhoseNamesAreJavascriptObjectPropertyNames : IClassF
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"properties\": {\r\n                \"__proto__\": {\"type\": \"number\"},\r\n                \"toString\": {\r\n                    \"properties\": { \"length\": { \"type\": \"string\" } }\r\n                },\r\n                \"constructor\": {\"type\": \"number\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "properties.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft4Properties",
                 "PropertiesWhoseNamesAreJavascriptObjectPropertyNames",
                 validateFormat: false,

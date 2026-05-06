@@ -91,9 +91,9 @@ public class SuitePatternValidation : IClassFixture<SuitePatternValidation.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"pattern\": \"^a*$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "pattern.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909Pattern",
                 "PatternValidation",
                 validateFormat: false,
@@ -135,9 +135,9 @@ public class SuitePatternIsNotAnchored : IClassFixture<SuitePatternIsNotAnchored
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"pattern\": \"a+\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "pattern.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909Pattern",
                 "PatternIsNotAnchored",
                 validateFormat: false,

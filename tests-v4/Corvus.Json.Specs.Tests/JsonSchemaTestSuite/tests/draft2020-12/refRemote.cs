@@ -43,9 +43,9 @@ public class SuiteRemoteRef : IClassFixture<SuiteRemoteRef.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/integer.json\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "RemoteRef",
                 validateFormat: false,
@@ -95,9 +95,9 @@ public class SuiteFragmentWithinRemoteRef : IClassFixture<SuiteFragmentWithinRem
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/subSchemas.json#/$defs/integer\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "FragmentWithinRemoteRef",
                 validateFormat: false,
@@ -147,9 +147,9 @@ public class SuiteAnchorWithinRemoteRef : IClassFixture<SuiteAnchorWithinRemoteR
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/locationIndependentIdentifier.json#foo\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "AnchorWithinRemoteRef",
                 validateFormat: false,
@@ -199,9 +199,9 @@ public class SuiteRefWithinRemoteRef : IClassFixture<SuiteRefWithinRemoteRef.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/subSchemas.json#/$defs/refToInteger\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "RefWithinRemoteRef",
                 validateFormat: false,
@@ -251,9 +251,9 @@ public class SuiteBaseURIChange : IClassFixture<SuiteBaseURIChange.Fixture>
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/\",\r\n            \"items\": {\r\n                \"$id\": \"baseUriChange/\",\r\n                \"items\": {\"$ref\": \"folderInteger.json\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "BaseURIChange",
                 validateFormat: false,
@@ -303,9 +303,9 @@ public class SuiteBaseURIChangeChangeFolder : IClassFixture<SuiteBaseURIChangeCh
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/scope_change_defs1.json\",\r\n            \"type\" : \"object\",\r\n            \"properties\": {\"list\": {\"$ref\": \"baseUriChangeFolder/\"}},\r\n            \"$defs\": {\r\n                \"baz\": {\r\n                    \"$id\": \"baseUriChangeFolder/\",\r\n                    \"type\": \"array\",\r\n                    \"items\": {\"$ref\": \"folderInteger.json\"}\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "BaseURIChangeChangeFolder",
                 validateFormat: false,
@@ -355,9 +355,9 @@ public class SuiteBaseURIChangeChangeFolderInSubschema : IClassFixture<SuiteBase
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/scope_change_defs2.json\",\r\n            \"type\" : \"object\",\r\n            \"properties\": {\"list\": {\"$ref\": \"baseUriChangeFolderInSubschema/#/$defs/bar\"}},\r\n            \"$defs\": {\r\n                \"baz\": {\r\n                    \"$id\": \"baseUriChangeFolderInSubschema/\",\r\n                    \"$defs\": {\r\n                        \"bar\": {\r\n                            \"type\": \"array\",\r\n                            \"items\": {\"$ref\": \"folderInteger.json\"}\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "BaseURIChangeChangeFolderInSubschema",
                 validateFormat: false,
@@ -415,9 +415,9 @@ public class SuiteRootRefInRemoteRef : IClassFixture<SuiteRootRefInRemoteRef.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/object\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"name\": {\"$ref\": \"name-defs.json#/$defs/orNull\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "RootRefInRemoteRef",
                 validateFormat: false,
@@ -467,9 +467,9 @@ public class SuiteRemoteRefWithRefToDefs : IClassFixture<SuiteRemoteRefWithRefTo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/schema-remote-ref-ref-defs1.json\",\r\n            \"$ref\": \"ref-and-defs.json\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "RemoteRefWithRefToDefs",
                 validateFormat: false,
@@ -519,9 +519,9 @@ public class SuiteLocationIndependentIdentifierInRemoteRef : IClassFixture<Suite
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/locationIndependentIdentifier.json#/$defs/refToInteger\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "LocationIndependentIdentifierInRemoteRef",
                 validateFormat: false,
@@ -571,9 +571,9 @@ public class SuiteRetrievedNestedRefsResolveRelativeToTheirURINotId : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/some-id\",\r\n            \"properties\": {\r\n                \"name\": {\"$ref\": \"nested/foo-ref-string.json\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "RetrievedNestedRefsResolveRelativeToTheirURINotId",
                 validateFormat: false,
@@ -623,9 +623,9 @@ public class SuiteRemoteHTTPRefWithDifferentId : IClassFixture<SuiteRemoteHTTPRe
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/different-id-ref-string.json\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/11/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "RemoteHTTPRefWithDifferentId",
                 validateFormat: false,
@@ -675,9 +675,9 @@ public class SuiteRemoteHTTPRefWithDifferentURNId : IClassFixture<SuiteRemoteHTT
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/urn-ref-string.json\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/12/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "RemoteHTTPRefWithDifferentURNId",
                 validateFormat: false,
@@ -727,9 +727,9 @@ public class SuiteRemoteHTTPRefWithNestedAbsoluteRef : IClassFixture<SuiteRemote
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/nested-absolute-ref-to-string.json\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/13/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "RemoteHTTPRefWithNestedAbsoluteRef",
                 validateFormat: false,
@@ -779,9 +779,9 @@ public class SuiteRefToRefFindsDetachedAnchor : IClassFixture<SuiteRefToRefFinds
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/detached-ref.json#/$defs/foo\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "refRemote.json",
+                "#/14/schema",
                 "JsonSchemaTestSuiteDraft202012RefRemote",
                 "RefToRefFindsDetachedAnchor",
                 validateFormat: false,

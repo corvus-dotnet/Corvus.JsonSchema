@@ -347,9 +347,9 @@ public class SuiteValidationOfIPv6Addresses : IClassFixture<SuiteValidationOfIPv
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"ipv6\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\ipv6.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalFormatIpv6",
                 "ValidationOfIPv6Addresses",
                 validateFormat: true,

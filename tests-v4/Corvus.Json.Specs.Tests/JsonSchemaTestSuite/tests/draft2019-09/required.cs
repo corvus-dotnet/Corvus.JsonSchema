@@ -83,9 +83,9 @@ public class SuiteRequiredValidation : IClassFixture<SuiteRequiredValidation.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {},\r\n                \"bar\": {}\r\n            },\r\n            \"required\": [\"foo\"]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "required.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909Required",
                 "RequiredValidation",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteRequiredDefaultValidation : IClassFixture<SuiteRequiredDefault
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "required.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909Required",
                 "RequiredDefaultValidation",
                 validateFormat: false,
@@ -171,9 +171,9 @@ public class SuiteRequiredWithEmptyArray : IClassFixture<SuiteRequiredWithEmptyA
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"properties\": {\r\n                \"foo\": {}\r\n            },\r\n            \"required\": []\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "required.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft201909Required",
                 "RequiredWithEmptyArray",
                 validateFormat: false,
@@ -223,9 +223,9 @@ public class SuiteRequiredWithEscapedCharacters : IClassFixture<SuiteRequiredWit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"required\": [\r\n                \"foo\\nbar\",\r\n                \"foo\\\"bar\",\r\n                \"foo\\\\bar\",\r\n                \"foo\\rbar\",\r\n                \"foo\\tbar\",\r\n                \"foo\\fbar\"\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "required.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft201909Required",
                 "RequiredWithEscapedCharacters",
                 validateFormat: false,
@@ -315,9 +315,9 @@ public class SuiteRequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames :
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"required\": [\"__proto__\", \"toString\", \"constructor\"]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "required.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft201909Required",
                 "RequiredPropertiesWhoseNamesAreJavascriptObjectPropertyNames",
                 validateFormat: false,

@@ -43,9 +43,9 @@ public class SuiteUnevaluatedPropertiesTrue : IClassFixture<SuiteUnevaluatedProp
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"unevaluatedProperties\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesTrue",
                 validateFormat: false,
@@ -103,9 +103,9 @@ public class SuiteUnevaluatedPropertiesSchema : IClassFixture<SuiteUnevaluatedPr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"unevaluatedProperties\": {\r\n                \"type\": \"string\",\r\n                \"minLength\": 3\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesSchema",
                 validateFormat: false,
@@ -155,9 +155,9 @@ public class SuiteUnevaluatedPropertiesFalse : IClassFixture<SuiteUnevaluatedPro
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesFalse",
                 validateFormat: false,
@@ -207,9 +207,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentProperties : IClassFixture<Su
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithAdjacentProperties",
                 validateFormat: false,
@@ -259,9 +259,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentPatternProperties : IClassFix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"patternProperties\": {\r\n                \"^foo\": { \"type\": \"string\" }\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithAdjacentPatternProperties",
                 validateFormat: false,
@@ -311,9 +311,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentBoolAdditionalProperties : IC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": true,\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithAdjacentBoolAdditionalProperties",
                 validateFormat: false,
@@ -363,9 +363,9 @@ public class SuiteUnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties :
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"additionalProperties\": {\"type\": \"string\"},\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithAdjacentNonBoolAdditionalProperties",
                 validateFormat: false,
@@ -415,9 +415,9 @@ public class SuiteUnevaluatedPropertiesWithNestedProperties : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"allOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": { \"type\": \"string\" }\r\n                    }\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithNestedProperties",
                 validateFormat: false,
@@ -467,9 +467,9 @@ public class SuiteUnevaluatedPropertiesWithNestedPatternProperties : IClassFixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"allOf\": [\r\n              {\r\n                  \"patternProperties\": {\r\n                      \"^bar\": { \"type\": \"string\" }\r\n                  }\r\n              }\r\n            ],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithNestedPatternProperties",
                 validateFormat: false,
@@ -519,9 +519,9 @@ public class SuiteUnevaluatedPropertiesWithNestedAdditionalProperties : IClassFi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"allOf\": [\r\n                {\r\n                    \"additionalProperties\": true\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithNestedAdditionalProperties",
                 validateFormat: false,
@@ -571,9 +571,9 @@ public class SuiteUnevaluatedPropertiesWithNestedUnevaluatedProperties : IClassF
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"allOf\": [\r\n                {\r\n                    \"unevaluatedProperties\": true\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": {\r\n                \"type\": \"string\",\r\n                \"maxLength\": 2\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithNestedUnevaluatedProperties",
                 validateFormat: false,
@@ -639,9 +639,9 @@ public class SuiteUnevaluatedPropertiesWithAnyOf : IClassFixture<SuiteUnevaluate
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"anyOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": { \"const\": \"bar\" }\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"baz\": { \"const\": \"baz\" }\r\n                    },\r\n                    \"required\": [\"baz\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"quux\": { \"const\": \"quux\" }\r\n                    },\r\n                    \"required\": [\"quux\"]\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/11/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithAnyOf",
                 validateFormat: false,
@@ -691,9 +691,9 @@ public class SuiteUnevaluatedPropertiesWithOneOf : IClassFixture<SuiteUnevaluate
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"oneOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": { \"const\": \"bar\" }\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"baz\": { \"const\": \"baz\" }\r\n                    },\r\n                    \"required\": [\"baz\"]\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/12/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithOneOf",
                 validateFormat: false,
@@ -735,9 +735,9 @@ public class SuiteUnevaluatedPropertiesWithNot : IClassFixture<SuiteUnevaluatedP
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"not\": {\r\n                \"not\": {\r\n                    \"properties\": {\r\n                        \"bar\": { \"const\": \"bar\" }\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                }\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/13/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithNot",
                 validateFormat: false,
@@ -803,9 +803,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenElse : IClassFixture<SuiteUneva
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"if\": {\r\n                \"properties\": {\r\n                    \"foo\": { \"const\": \"then\" }\r\n                },\r\n                \"required\": [\"foo\"]\r\n            },\r\n            \"then\": {\r\n                \"properties\": {\r\n                    \"bar\": { \"type\": \"string\" }\r\n                },\r\n                \"required\": [\"bar\"]\r\n            },\r\n            \"else\": {\r\n                \"properties\": {\r\n                    \"baz\": { \"type\": \"string\" }\r\n                },\r\n                \"required\": [\"baz\"]\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/14/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithIfThenElse",
                 validateFormat: false,
@@ -871,9 +871,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseThenNotDefined : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"if\": {\r\n                \"properties\": {\r\n                    \"foo\": { \"const\": \"then\" }\r\n                },\r\n                \"required\": [\"foo\"]\r\n            },\r\n            \"else\": {\r\n                \"properties\": {\r\n                    \"baz\": { \"type\": \"string\" }\r\n                },\r\n                \"required\": [\"baz\"]\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/15/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithIfThenElseThenNotDefined",
                 validateFormat: false,
@@ -939,9 +939,9 @@ public class SuiteUnevaluatedPropertiesWithIfThenElseElseNotDefined : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"if\": {\r\n                \"properties\": {\r\n                    \"foo\": { \"const\": \"then\" }\r\n                },\r\n                \"required\": [\"foo\"]\r\n            },\r\n            \"then\": {\r\n                \"properties\": {\r\n                    \"bar\": { \"type\": \"string\" }\r\n                },\r\n                \"required\": [\"bar\"]\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/16/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithIfThenElseElseNotDefined",
                 validateFormat: false,
@@ -991,9 +991,9 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"dependentSchemas\": {\r\n                \"foo\": {\r\n                    \"properties\": {\r\n                        \"bar\": { \"const\": \"bar\" }\r\n                    },\r\n                    \"required\": [\"bar\"]\r\n                }\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/17/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithDependentSchemas",
                 validateFormat: false,
@@ -1043,9 +1043,9 @@ public class SuiteUnevaluatedPropertiesWithBooleanSchemas : IClassFixture<SuiteU
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"allOf\": [true],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/18/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithBooleanSchemas",
                 validateFormat: false,
@@ -1095,9 +1095,9 @@ public class SuiteUnevaluatedPropertiesWithRef : IClassFixture<SuiteUnevaluatedP
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"#/$defs/bar\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"unevaluatedProperties\": false,\r\n            \"$defs\": {\r\n                \"bar\": {\r\n                    \"properties\": {\r\n                        \"bar\": { \"type\": \"string\" }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/19/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithRef",
                 validateFormat: false,
@@ -1147,9 +1147,9 @@ public class SuiteUnevaluatedPropertiesBeforeRef : IClassFixture<SuiteUnevaluate
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"unevaluatedProperties\": false,\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"$ref\": \"#/$defs/bar\",\r\n            \"$defs\": {\r\n                \"bar\": {\r\n                    \"properties\": {\r\n                        \"bar\": { \"type\": \"string\" }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/20/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesBeforeRef",
                 validateFormat: false,
@@ -1199,9 +1199,9 @@ public class SuiteUnevaluatedPropertiesWithDynamicRef : IClassFixture<SuiteUneva
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://example.com/unevaluated-properties-with-dynamic-ref/derived\",\r\n\r\n            \"$ref\": \"./baseSchema\",\r\n\r\n            \"$defs\": {\r\n                \"derived\": {\r\n                    \"$dynamicAnchor\": \"addons\",\r\n                    \"properties\": {\r\n                        \"bar\": { \"type\": \"string\" }\r\n                    }\r\n                },\r\n                \"baseSchema\": {\r\n                    \"$id\": \"./baseSchema\",\r\n\r\n                    \"$comment\": \"unevaluatedProperties comes first so it's more likely to catch bugs with implementations that are sensitive to keyword ordering\",\r\n                    \"unevaluatedProperties\": false,\r\n                    \"properties\": {\r\n                        \"foo\": { \"type\": \"string\" }\r\n                    },\r\n                    \"$dynamicRef\": \"#addons\",\r\n\r\n                    \"$defs\": {\r\n                        \"defaultAddons\": {\r\n                            \"$comment\": \"Needed to satisfy the bookending requirement\",\r\n                            \"$dynamicAnchor\": \"addons\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/21/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithDynamicRef",
                 validateFormat: false,
@@ -1243,9 +1243,9 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousins : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": true\r\n                    }\r\n                },\r\n                {\r\n                    \"unevaluatedProperties\": false\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/22/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesCanTSeeInsideCousins",
                 validateFormat: false,
@@ -1287,9 +1287,9 @@ public class SuiteUnevaluatedPropertiesCanTSeeInsideCousinsReverseOrder : IClass
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"unevaluatedProperties\": false\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": true\r\n                    }\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/23/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesCanTSeeInsideCousinsReverseOrder",
                 validateFormat: false,
@@ -1339,9 +1339,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesOutsid
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"allOf\": [\r\n                {\r\n                    \"unevaluatedProperties\": true\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/24/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "NestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesOutside",
                 validateFormat: false,
@@ -1391,9 +1391,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesInside
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": { \"type\": \"string\" }\r\n                    },\r\n                    \"unevaluatedProperties\": true\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/25/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "NestedUnevaluatedPropertiesOuterFalseInnerTruePropertiesInside",
                 validateFormat: false,
@@ -1443,9 +1443,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesOutsid
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": { \"type\": \"string\" }\r\n            },\r\n            \"allOf\": [\r\n                {\r\n                    \"unevaluatedProperties\": false\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/26/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "NestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesOutside",
                 validateFormat: false,
@@ -1495,9 +1495,9 @@ public class SuiteNestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesInside
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": { \"type\": \"string\" }\r\n                    },\r\n                    \"unevaluatedProperties\": false\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/27/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "NestedUnevaluatedPropertiesOuterTrueInnerFalsePropertiesInside",
                 validateFormat: false,
@@ -1547,9 +1547,9 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseTrueWithProperties : IC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": { \"type\": \"string\" }\r\n                    },\r\n                    \"unevaluatedProperties\": true\r\n                },\r\n                {\r\n                    \"unevaluatedProperties\": false\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/28/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "CousinUnevaluatedPropertiesTrueAndFalseTrueWithProperties",
                 validateFormat: false,
@@ -1599,9 +1599,9 @@ public class SuiteCousinUnevaluatedPropertiesTrueAndFalseFalseWithProperties : I
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"unevaluatedProperties\": true\r\n                },\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": { \"type\": \"string\" }\r\n                    },\r\n                    \"unevaluatedProperties\": false\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/29/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "CousinUnevaluatedPropertiesTrueAndFalseFalseWithProperties",
                 validateFormat: false,
@@ -1651,9 +1651,9 @@ public class SuitePropertyIsEvaluatedInAnUncleSchemaToUnevaluatedProperties : IC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"properties\": {\r\n                        \"bar\": {\r\n                            \"type\": \"string\"\r\n                        }\r\n                    },\r\n                    \"unevaluatedProperties\": false\r\n                  }\r\n            },\r\n            \"anyOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": {\r\n                            \"properties\": {\r\n                                \"faz\": {\r\n                                    \"type\": \"string\"\r\n                                }\r\n                            }\r\n                        }\r\n                    }\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/30/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "PropertyIsEvaluatedInAnUncleSchemaToUnevaluatedProperties",
                 validateFormat: false,
@@ -1711,9 +1711,9 @@ public class SuiteInPlaceApplicatorSiblingsAllOfHasUnevaluated : IClassFixture<S
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": true\r\n                    },\r\n                    \"unevaluatedProperties\": false\r\n                }\r\n            ],\r\n            \"anyOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": true\r\n                    }\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/31/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "InPlaceApplicatorSiblingsAllOfHasUnevaluated",
                 validateFormat: false,
@@ -1771,9 +1771,9 @@ public class SuiteInPlaceApplicatorSiblingsAnyOfHasUnevaluated : IClassFixture<S
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"allOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"foo\": true\r\n                    }\r\n                }\r\n            ],\r\n            \"anyOf\": [\r\n                {\r\n                    \"properties\": {\r\n                        \"bar\": true\r\n                    },\r\n                    \"unevaluatedProperties\": false\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/32/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "InPlaceApplicatorSiblingsAnyOfHasUnevaluated",
                 validateFormat: false,
@@ -1863,9 +1863,9 @@ public class SuiteUnevaluatedPropertiesSingleCyclicRef : IClassFixture<SuiteUnev
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"x\": { \"$ref\": \"#\" }\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/33/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesSingleCyclicRef",
                 validateFormat: false,
@@ -1963,9 +1963,9 @@ public class SuiteUnevaluatedPropertiesRefInsideAllOfOneOf : IClassFixture<Suite
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$defs\": {\r\n                \"one\": {\r\n                    \"properties\": { \"a\": true }\r\n                },\r\n                \"two\": {\r\n                    \"required\": [\"x\"],\r\n                    \"properties\": { \"x\": true }\r\n                }\r\n            },\r\n            \"allOf\": [\r\n                { \"$ref\": \"#/$defs/one\" },\r\n                { \"properties\": { \"b\": true } },\r\n                {\r\n                    \"oneOf\": [\r\n                        { \"$ref\": \"#/$defs/two\" },\r\n                        {\r\n                            \"required\": [\"y\"],\r\n                            \"properties\": { \"y\": true }\r\n                        }\r\n                    ]\r\n                }\r\n            ],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/34/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesRefInsideAllOfOneOf",
                 validateFormat: false,
@@ -2167,9 +2167,9 @@ public class SuiteDynamicEvalationInsideNestedRefs : IClassFixture<SuiteDynamicE
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$defs\": {\r\n                \"one\": {\r\n                    \"oneOf\": [\r\n                        { \"$ref\": \"#/$defs/two\" },\r\n                        { \"required\": [\"b\"], \"properties\": { \"b\": true } },\r\n                        { \"required\": [\"xx\"], \"patternProperties\": { \"x\": true } },\r\n                        { \"required\": [\"all\"], \"unevaluatedProperties\": true }\r\n                    ]\r\n                },\r\n                \"two\": {\r\n                    \"oneOf\": [\r\n                        { \"required\": [\"c\"], \"properties\": { \"c\": true } },\r\n                        { \"required\": [\"d\"], \"properties\": { \"d\": true } }\r\n                    ]\r\n                }\r\n            },\r\n            \"oneOf\": [\r\n                { \"$ref\": \"#/$defs/one\" },\r\n                { \"required\": [\"a\"], \"properties\": { \"a\": true } }\r\n            ],\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/35/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "DynamicEvalationInsideNestedRefs",
                 validateFormat: false,
@@ -2251,9 +2251,9 @@ public class SuiteNonObjectInstancesAreValid : IClassFixture<SuiteNonObjectInsta
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/36/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "NonObjectInstancesAreValid",
                 validateFormat: false,
@@ -2295,9 +2295,9 @@ public class SuiteUnevaluatedPropertiesWithNullValuedInstanceProperties : IClass
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"unevaluatedProperties\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/37/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesWithNullValuedInstanceProperties",
                 validateFormat: false,
@@ -2347,9 +2347,9 @@ public class SuiteUnevaluatedPropertiesNotAffectedByPropertyNames : IClassFixtur
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"propertyNames\": {\"maxLength\": 1},\r\n            \"unevaluatedProperties\": {\r\n                \"type\": \"number\"\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/38/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesNotAffectedByPropertyNames",
                 validateFormat: false,
@@ -2399,9 +2399,9 @@ public class SuiteUnevaluatedPropertiesCanSeeAnnotationsFromIfWithoutThenAndElse
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"if\": {\r\n                \"patternProperties\": {\r\n                    \"foo\": {\r\n                        \"type\": \"string\"\r\n                    }\r\n                }\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/39/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "UnevaluatedPropertiesCanSeeAnnotationsFromIfWithoutThenAndElse",
                 validateFormat: false,
@@ -2459,9 +2459,9 @@ public class SuiteDependentSchemasWithUnevaluatedProperties : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\"foo2\": {}},\r\n            \"dependentSchemas\": {\r\n                \"foo\" : {},\r\n                \"foo2\": {\r\n                    \"properties\": {\r\n                        \"bar\":{}\r\n                    }\r\n                }\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/40/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "DependentSchemasWithUnevaluatedProperties",
                 validateFormat: false,
@@ -2503,9 +2503,9 @@ public class SuiteEvaluatedPropertiesCollectionNeedsToConsiderInstanceLocation :
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": {\r\n                    \"properties\": {\r\n                        \"bar\": { \"type\": \"string\" }\r\n                    }\r\n                }\r\n            },\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "unevaluatedProperties.json",
+                "#/41/schema",
                 "JsonSchemaTestSuiteDraft202012UnevaluatedProperties",
                 "EvaluatedPropertiesCollectionNeedsToConsiderInstanceLocation",
                 validateFormat: false,

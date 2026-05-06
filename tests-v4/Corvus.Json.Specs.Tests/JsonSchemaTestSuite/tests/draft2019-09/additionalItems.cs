@@ -43,9 +43,9 @@ public class SuiteAdditionalItemsAsSchema : IClassFixture<SuiteAdditionalItemsAs
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": [{}],\r\n            \"additionalItems\": {\"type\": \"integer\"}\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "AdditionalItemsAsSchema",
                 validateFormat: false,
@@ -95,9 +95,9 @@ public class SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing : IClassFixture<Su
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\":\"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": {\r\n                \"type\": \"integer\"\r\n            },\r\n            \"additionalItems\": {\r\n                \"type\": \"string\"\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "WhenItemsIsSchemaAdditionalItemsDoesNothing",
                 validateFormat: false,
@@ -139,9 +139,9 @@ public class SuiteWhenItemsIsSchemaBooleanAdditionalItemsDoesNothing : IClassFix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": {},\r\n            \"additionalItems\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "WhenItemsIsSchemaBooleanAdditionalItemsDoesNothing",
                 validateFormat: false,
@@ -215,9 +215,9 @@ public class SuiteArrayOfItemsWithNoAdditionalItemsPermitted : IClassFixture<Sui
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": [{}, {}, {}],\r\n            \"additionalItems\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "ArrayOfItemsWithNoAdditionalItemsPermitted",
                 validateFormat: false,
@@ -267,9 +267,9 @@ public class SuiteAdditionalItemsAsFalseWithoutItems : IClassFixture<SuiteAdditi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"additionalItems\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "AdditionalItemsAsFalseWithoutItems",
                 validateFormat: false,
@@ -311,9 +311,9 @@ public class SuiteAdditionalItemsAreAllowedByDefault : IClassFixture<SuiteAdditi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": [{\"type\": \"integer\"}]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "AdditionalItemsAreAllowedByDefault",
                 validateFormat: false,
@@ -355,9 +355,9 @@ public class SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase : IClassFix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"allOf\": [\r\n                { \"items\": [ { \"type\": \"integer\" }, { \"type\": \"string\" } ] }\r\n            ],\r\n            \"items\": [ {\"type\": \"integer\" } ],\r\n            \"additionalItems\": { \"type\": \"boolean\" }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "AdditionalItemsDoesNotLookInApplicatorsInvalidCase",
                 validateFormat: false,
@@ -407,9 +407,9 @@ public class SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems : ICl
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": [ { \"type\": \"string\" } ],\r\n            \"additionalItems\": { \"type\": \"integer\" }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "ItemsValidationAdjustsTheStartingIndexForAdditionalItems",
                 validateFormat: false,
@@ -459,9 +459,9 @@ public class SuiteAdditionalItemsWithHeterogeneousArray : IClassFixture<SuiteAdd
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"items\": [{}],\r\n            \"additionalItems\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "AdditionalItemsWithHeterogeneousArray",
                 validateFormat: false,
@@ -503,9 +503,9 @@ public class SuiteAdditionalItemsWithNullInstanceElements : IClassFixture<SuiteA
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"additionalItems\": {\r\n                \"type\": \"null\"\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "additionalItems.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft201909AdditionalItems",
                 "AdditionalItemsWithNullInstanceElements",
                 validateFormat: false,

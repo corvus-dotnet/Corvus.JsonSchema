@@ -59,9 +59,9 @@ public class SuiteMaximumValidation : IClassFixture<SuiteMaximumValidation.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maximum\": 3.0}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7Maximum",
                 "MaximumValidation",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteMaximumValidationWithUnsignedInteger : IClassFixture<SuiteMaxi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"maximum\": 300}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maximum.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft7Maximum",
                 "MaximumValidationWithUnsignedInteger",
                 validateFormat: false,

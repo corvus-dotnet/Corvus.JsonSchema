@@ -59,9 +59,9 @@ public class SuiteMinItemsValidation : IClassFixture<SuiteMinItemsValidation.Fix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minItems\": 1}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minItems.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6MinItems",
                 "MinItemsValidation",
                 validateFormat: false,
@@ -111,9 +111,9 @@ public class SuiteMinItemsValidationWithADecimal : IClassFixture<SuiteMinItemsVa
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minItems\": 1.0}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minItems.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft6MinItems",
                 "MinItemsValidationWithADecimal",
                 validateFormat: false,

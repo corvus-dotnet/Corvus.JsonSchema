@@ -347,9 +347,9 @@ public class SuiteValidationOfJSONPointersJSONStringRepresentation : IClassFixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"json-pointer\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\json-pointer.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6OptionalFormatJsonPointer",
                 "ValidationOfJSONPointersJSONStringRepresentation",
                 validateFormat: true,

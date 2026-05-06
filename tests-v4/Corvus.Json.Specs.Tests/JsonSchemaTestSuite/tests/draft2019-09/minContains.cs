@@ -43,9 +43,9 @@ public class SuiteMinContainsWithoutContainsIsIgnored : IClassFixture<SuiteMinCo
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"minContains\": 1\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minContains.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909MinContains",
                 "MinContainsWithoutContainsIsIgnored",
                 validateFormat: false,
@@ -119,9 +119,9 @@ public class SuiteMinContains1WithContains : IClassFixture<SuiteMinContains1With
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 1\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minContains.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909MinContains",
                 "MinContains1WithContains",
                 validateFormat: false,
@@ -203,9 +203,9 @@ public class SuiteMinContains2WithContains : IClassFixture<SuiteMinContains2With
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 2\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minContains.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft201909MinContains",
                 "MinContains2WithContains",
                 validateFormat: false,
@@ -255,9 +255,9 @@ public class SuiteMinContains2WithContainsWithADecimalValue : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 2.0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minContains.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft201909MinContains",
                 "MinContains2WithContainsWithADecimalValue",
                 validateFormat: false,
@@ -323,9 +323,9 @@ public class SuiteMaxContainsMinContains : IClassFixture<SuiteMaxContainsMinCont
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"maxContains\": 2,\r\n            \"minContains\": 2\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minContains.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft201909MinContains",
                 "MaxContainsMinContains",
                 validateFormat: false,
@@ -391,9 +391,9 @@ public class SuiteMaxContainsMinContains1 : IClassFixture<SuiteMaxContainsMinCon
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"maxContains\": 1,\r\n            \"minContains\": 3\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minContains.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft201909MinContains",
                 "MaxContainsMinContains1",
                 validateFormat: false,
@@ -443,9 +443,9 @@ public class SuiteMinContains0WithNoMaxContains : IClassFixture<SuiteMinContains
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minContains.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft201909MinContains",
                 "MinContains0WithNoMaxContains",
                 validateFormat: false,
@@ -503,9 +503,9 @@ public class SuiteMinContains0WithMaxContains : IClassFixture<SuiteMinContains0W
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"contains\": {\"const\": 1},\r\n            \"minContains\": 0,\r\n            \"maxContains\": 1\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minContains.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft201909MinContains",
                 "MinContains0WithMaxContains",
                 validateFormat: false,

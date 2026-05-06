@@ -251,9 +251,9 @@ public class SuiteValidationOfHostNames : IClassFixture<SuiteValidationOfHostNam
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft6Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"hostname\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\hostname.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft6OptionalFormatHostname",
                 "ValidationOfHostNames",
                 validateFormat: true,

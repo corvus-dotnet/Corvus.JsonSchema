@@ -75,9 +75,9 @@ public class SuiteMaxPropertiesValidation : IClassFixture<SuiteMaxPropertiesVali
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxProperties\": 2\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxProperties.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012MaxProperties",
                 "MaxPropertiesValidation",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteMaxPropertiesValidationWithADecimal : IClassFixture<SuiteMaxPr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxProperties\": 2.0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxProperties.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012MaxProperties",
                 "MaxPropertiesValidationWithADecimal",
                 validateFormat: false,
@@ -179,9 +179,9 @@ public class SuiteMaxProperties0MeansTheObjectIsEmpty : IClassFixture<SuiteMaxPr
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"maxProperties\": 0\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "maxProperties.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012MaxProperties",
                 "MaxProperties0MeansTheObjectIsEmpty",
                 validateFormat: false,

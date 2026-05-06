@@ -43,9 +43,9 @@ public class SuiteADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeA
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamicRef-dynamicAnchor-same-schema/root\",\r\n            \"type\": \"array\",\r\n            \"items\": { \"$dynamicRef\": \"#items\" },\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ADynamicRefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor",
                 validateFormat: false,
@@ -95,9 +95,9 @@ public class SuiteADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormal
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamicRef-anchor-same-schema/root\",\r\n            \"type\": \"array\",\r\n            \"items\": { \"$dynamicRef\": \"#items\" },\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$anchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ADynamicRefToAnAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor",
                 validateFormat: false,
@@ -147,9 +147,9 @@ public class SuiteARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalR
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/ref-dynamicAnchor-same-schema/root\",\r\n            \"type\": \"array\",\r\n            \"items\": { \"$ref\": \"#items\" },\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ARefToADynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnAnchor",
                 validateFormat: false,
@@ -199,9 +199,9 @@ public class SuiteADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEn
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/typical-dynamic-resolution/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                      \"items\": {\r\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\r\n                          \"$dynamicAnchor\": \"items\"\r\n                      }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ADynamicRefResolvesToTheFirstDynamicAnchorStillInScopeThatIsEncounteredWhenTheSchemaIsEvaluated",
                 validateFormat: false,
@@ -251,9 +251,9 @@ public class SuiteADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef : ICla
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamicRef-without-anchor/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#/$defs/items\" },\r\n                    \"$defs\": {\r\n                      \"items\": {\r\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\r\n                          \"$dynamicAnchor\": \"items\",\r\n                          \"type\": \"number\"\r\n                      }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ADynamicRefWithoutAnchorInFragmentBehavesIdenticalToRef",
                 validateFormat: false,
@@ -303,9 +303,9 @@ public class SuiteADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynam
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-resolution-with-intermediate-scopes/root\",\r\n            \"$ref\": \"intermediate-scope\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"intermediate-scope\": {\r\n                    \"$id\": \"intermediate-scope\",\r\n                    \"$ref\": \"list\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                      \"items\": {\r\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\r\n                          \"$dynamicAnchor\": \"items\"\r\n                      }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ADynamicRefWithIntermediateScopesThatDonTIncludeAMatchingDynamicAnchorDoesNotAffectDynamicScopeResolution",
                 validateFormat: false,
@@ -347,9 +347,9 @@ public class SuiteAnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScop
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-resolution-ignores-anchors/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$anchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                      \"items\": {\r\n                          \"$comment\": \"This is only needed to satisfy the bookending requirement\",\r\n                          \"$dynamicAnchor\": \"items\"\r\n                      }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "AnAnchorWithTheSameNameAsADynamicAnchorIsNotUsedForDynamicScopeResolution",
                 validateFormat: false,
@@ -391,9 +391,9 @@ public class SuiteADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourc
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-resolution-without-bookend/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                        \"items\": {\r\n                            \"$comment\": \"This is only needed to give the reference somewhere to resolve to when it behaves like $ref\",\r\n                            \"$anchor\": \"items\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ADynamicRefWithoutAMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor",
                 validateFormat: false,
@@ -435,9 +435,9 @@ public class SuiteADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourc
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/unmatched-dynamic-anchor/root\",\r\n            \"$ref\": \"list\",\r\n            \"$defs\": {\r\n                \"foo\": {\r\n                    \"$dynamicAnchor\": \"items\",\r\n                    \"type\": \"string\"\r\n                },\r\n                \"list\": {\r\n                    \"$id\": \"list\",\r\n                    \"type\": \"array\",\r\n                    \"items\": { \"$dynamicRef\": \"#items\" },\r\n                    \"$defs\": {\r\n                        \"items\": {\r\n                            \"$comment\": \"This is only needed to give the reference somewhere to resolve to when it behaves like $ref\",\r\n                            \"$anchor\": \"items\",\r\n                            \"$dynamicAnchor\": \"foo\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ADynamicRefWithANonMatchingDynamicAnchorInTheSameSchemaResourceBehavesLikeANormalRefToAnchor",
                 validateFormat: false,
@@ -487,9 +487,9 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicA
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/relative-dynamic-reference/root\",\r\n            \"$dynamicAnchor\": \"meta\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"const\": \"pass\" }\r\n            },\r\n            \"$ref\": \"extended\",\r\n            \"$defs\": {\r\n                \"extended\": {\r\n                    \"$id\": \"extended\",\r\n                    \"$dynamicAnchor\": \"meta\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"bar\": { \"$ref\": \"bar\" }\r\n                    }\r\n                },\r\n                \"bar\": {\r\n                    \"$id\": \"bar\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"baz\": { \"$dynamicRef\": \"extended#meta\" }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ADynamicRefThatInitiallyResolvesToASchemaWithAMatchingDynamicAnchorResolvesToTheFirstDynamicAnchorInTheDynamicScope",
                 validateFormat: false,
@@ -531,9 +531,9 @@ public class SuiteADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynam
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/relative-dynamic-reference-without-bookend/root\",\r\n            \"$dynamicAnchor\": \"meta\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"foo\": { \"const\": \"pass\" }\r\n            },\r\n            \"$ref\": \"extended\",\r\n            \"$defs\": {\r\n                \"extended\": {\r\n                    \"$id\": \"extended\",\r\n                    \"$anchor\": \"meta\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"bar\": { \"$ref\": \"bar\" }\r\n                    }\r\n                },\r\n                \"bar\": {\r\n                    \"$id\": \"bar\",\r\n                    \"type\": \"object\",\r\n                    \"properties\": {\r\n                        \"baz\": { \"$dynamicRef\": \"extended#meta\" }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "ADynamicRefThatInitiallyResolvesToASchemaWithoutAMatchingDynamicAnchorBehavesLikeANormalRefToAnchor",
                 validateFormat: false,
@@ -599,9 +599,9 @@ public class SuiteMultipleDynamicPathsToTheDynamicRefKeyword : IClassFixture<Sui
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-with-multiple-paths/main\",\r\n            \"if\": {\r\n                \"properties\": {\r\n                    \"kindOfList\": { \"const\": \"numbers\" }\r\n                },\r\n                \"required\": [\"kindOfList\"]\r\n            },\r\n            \"then\": { \"$ref\": \"numberList\" },\r\n            \"else\": { \"$ref\": \"stringList\" },\r\n\r\n            \"$defs\": {\r\n                \"genericList\": {\r\n                    \"$id\": \"genericList\",\r\n                    \"properties\": {\r\n                        \"list\": {\r\n                            \"items\": { \"$dynamicRef\": \"#itemType\" }\r\n                        }\r\n                    },\r\n                    \"$defs\": {\r\n                        \"defaultItemType\": {\r\n                            \"$comment\": \"Only needed to satisfy bookending requirement\",\r\n                            \"$dynamicAnchor\": \"itemType\"\r\n                        }\r\n                    }\r\n                },\r\n                \"numberList\": {\r\n                    \"$id\": \"numberList\",\r\n                    \"$defs\": {\r\n                        \"itemType\": {\r\n                            \"$dynamicAnchor\": \"itemType\",\r\n                            \"type\": \"number\"\r\n                        }\r\n                    },\r\n                    \"$ref\": \"genericList\"\r\n                },\r\n                \"stringList\": {\r\n                    \"$id\": \"stringList\",\r\n                    \"$defs\": {\r\n                        \"itemType\": {\r\n                            \"$dynamicAnchor\": \"itemType\",\r\n                            \"type\": \"string\"\r\n                        }\r\n                    },\r\n                    \"$ref\": \"genericList\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/11/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "MultipleDynamicPathsToTheDynamicRefKeyword",
                 validateFormat: false,
@@ -659,9 +659,9 @@ public class SuiteAfterLeavingADynamicScopeItIsNotUsedByADynamicRef : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-leaving-dynamic-scope/main\",\r\n            \"if\": {\r\n                \"$id\": \"first_scope\",\r\n                \"$defs\": {\r\n                    \"thingy\": {\r\n                        \"$comment\": \"this is first_scope#thingy\",\r\n                        \"$dynamicAnchor\": \"thingy\",\r\n                        \"type\": \"number\"\r\n                    }\r\n                }\r\n            },\r\n            \"then\": {\r\n                \"$id\": \"second_scope\",\r\n                \"$ref\": \"start\",\r\n                \"$defs\": {\r\n                    \"thingy\": {\r\n                        \"$comment\": \"this is second_scope#thingy, the final destination of the $dynamicRef\",\r\n                        \"$dynamicAnchor\": \"thingy\",\r\n                        \"type\": \"null\"\r\n                    }\r\n                }\r\n            },\r\n            \"$defs\": {\r\n                \"start\": {\r\n                    \"$comment\": \"this is the landing spot from $ref\",\r\n                    \"$id\": \"start\",\r\n                    \"$dynamicRef\": \"inner_scope#thingy\"\r\n                },\r\n                \"thingy\": {\r\n                    \"$comment\": \"this is the first stop for the $dynamicRef\",\r\n                    \"$id\": \"inner_scope\",\r\n                    \"$dynamicAnchor\": \"thingy\",\r\n                    \"type\": \"string\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/12/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "AfterLeavingADynamicScopeItIsNotUsedByADynamicRef",
                 validateFormat: false,
@@ -711,9 +711,9 @@ public class SuiteStrictTreeSchemaGuardsAgainstMisspelledProperties : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-tree.json\",\r\n            \"$dynamicAnchor\": \"node\",\r\n\r\n            \"$ref\": \"tree.json\",\r\n            \"unevaluatedProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/13/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "StrictTreeSchemaGuardsAgainstMisspelledProperties",
                 validateFormat: false,
@@ -771,9 +771,9 @@ public class SuiteTestsForImplementationDynamicAnchorAndReferenceLink : IClassFi
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-extendible.json\",\r\n            \"$ref\": \"extendible-dynamic-ref.json\",\r\n            \"$defs\": {\r\n                \"elements\": {\r\n                    \"$dynamicAnchor\": \"elements\",\r\n                    \"properties\": {\r\n                        \"a\": true\r\n                    },\r\n                    \"required\": [\"a\"],\r\n                    \"additionalProperties\": false\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/14/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "TestsForImplementationDynamicAnchorAndReferenceLink",
                 validateFormat: false,
@@ -831,9 +831,9 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderDefsFirst : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-extendible-allof-defs-first.json\",\r\n            \"allOf\": [\r\n                {\r\n                    \"$ref\": \"extendible-dynamic-ref.json\"\r\n                },\r\n                {\r\n                    \"$defs\": {\r\n                        \"elements\": {\r\n                            \"$dynamicAnchor\": \"elements\",\r\n                            \"properties\": {\r\n                                \"a\": true\r\n                            },\r\n                            \"required\": [\"a\"],\r\n                            \"additionalProperties\": false\r\n                        }\r\n                    }\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/15/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "RefAndDynamicAnchorAreIndependentOfOrderDefsFirst",
                 validateFormat: false,
@@ -891,9 +891,9 @@ public class SuiteRefAndDynamicAnchorAreIndependentOfOrderRefFirst : IClassFixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2020-12/strict-extendible-allof-ref-first.json\",\r\n            \"allOf\": [\r\n                {\r\n                    \"$defs\": {\r\n                        \"elements\": {\r\n                            \"$dynamicAnchor\": \"elements\",\r\n                            \"properties\": {\r\n                                \"a\": true\r\n                            },\r\n                            \"required\": [\"a\"],\r\n                            \"additionalProperties\": false\r\n                        }\r\n                    }\r\n                },\r\n                {\r\n                    \"$ref\": \"extendible-dynamic-ref.json\"\r\n                }\r\n            ]\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/16/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "RefAndDynamicAnchorAreIndependentOfOrderRefFirst",
                 validateFormat: false,
@@ -943,9 +943,9 @@ public class SuiteRefToDynamicRefFindsDetachedDynamicAnchor : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$ref\": \"http://localhost:1234/draft2020-12/detached-dynamicref.json#/$defs/foo\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/17/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "RefToDynamicRefFindsDetachedDynamicAnchor",
                 validateFormat: false,
@@ -995,9 +995,9 @@ public class SuiteDynamicRefPointsToABooleanSchema : IClassFixture<SuiteDynamicR
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$defs\": {\r\n                \"true\": true,\r\n                \"false\": false\r\n            },\r\n            \"properties\": {\r\n                \"true\": {\r\n                    \"$dynamicRef\": \"#/$defs/true\"\r\n                },\r\n                \"false\": {\r\n                    \"$dynamicRef\": \"#/$defs/false\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/18/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "DynamicRefPointsToABooleanSchema",
                 validateFormat: false,
@@ -1047,9 +1047,9 @@ public class SuiteDynamicRefSkipsOverIntermediateResourcesDirectReference : ICla
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-skips-intermediate-resource/main\",\r\n            \"type\": \"object\",\r\n            \"properties\": {\r\n                \"bar-item\": {\r\n                    \"$ref\": \"item\"\r\n                }\r\n            },\r\n            \"$defs\": {\r\n                \"bar\": {\r\n                    \"$id\": \"bar\",\r\n                    \"type\": \"array\",\r\n                    \"items\": {\r\n                        \"$ref\": \"item\"\r\n                    },\r\n                    \"$defs\": {\r\n                        \"item\": {\r\n                            \"$id\": \"item\",\r\n                            \"type\": \"object\",\r\n                            \"properties\": {\r\n                                \"content\": {\r\n                                    \"$dynamicRef\": \"#content\"\r\n                                }\r\n                            },\r\n                            \"$defs\": {\r\n                                \"defaultContent\": {\r\n                                    \"$dynamicAnchor\": \"content\",\r\n                                    \"type\": \"integer\"\r\n                                }\r\n                            }\r\n                        },\r\n                        \"content\": {\r\n                            \"$dynamicAnchor\": \"content\",\r\n                            \"type\": \"string\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/19/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "DynamicRefSkipsOverIntermediateResourcesDirectReference",
                 validateFormat: false,
@@ -1099,9 +1099,9 @@ public class SuiteDynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$id\": \"https://test.json-schema.org/dynamic-ref-avoids-root-of-each-schema/base\",\r\n            \"$ref\": \"first#/$defs/stuff\",\r\n            \"$defs\": {\r\n                \"first\": {\r\n                    \"$id\": \"first\",\r\n                    \"$defs\": {\r\n                        \"stuff\": {\r\n                            \"$ref\": \"second#/$defs/stuff\"\r\n                        },\r\n                        \"length\": {\r\n                            \"$comment\": \"unused, because there is no $dynamicAnchor here\",\r\n                            \"maxLength\": 1\r\n                        }\r\n                    }\r\n                },\r\n                \"second\": {\r\n                    \"$id\": \"second\",\r\n                    \"$defs\": {\r\n                        \"stuff\": {\r\n                            \"$ref\": \"third#/$defs/stuff\"\r\n                        },\r\n                        \"length\": {\r\n                            \"$dynamicAnchor\": \"length\",\r\n                            \"maxLength\": 2\r\n                        }\r\n                    }\r\n                },\r\n                \"third\": {\r\n                    \"$id\": \"third\",\r\n                    \"$defs\": {\r\n                        \"stuff\": {\r\n                            \"$dynamicRef\": \"#length\"\r\n                        },\r\n                        \"length\": {\r\n                            \"$dynamicAnchor\": \"length\",\r\n                            \"maxLength\": 3\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dynamicRef.json",
+                "#/20/schema",
                 "JsonSchemaTestSuiteDraft202012DynamicRef",
                 "DynamicRefAvoidsTheRootOfEachSchemaButScopesAreStillRegistered",
                 validateFormat: false,

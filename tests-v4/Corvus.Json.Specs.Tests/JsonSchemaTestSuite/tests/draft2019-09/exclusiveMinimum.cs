@@ -59,9 +59,9 @@ public class SuiteExclusiveMinimumValidation : IClassFixture<SuiteExclusiveMinim
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"exclusiveMinimum\": 1.1\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "exclusiveMinimum.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909ExclusiveMinimum",
                 "ExclusiveMinimumValidation",
                 validateFormat: false,

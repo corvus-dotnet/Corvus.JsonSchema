@@ -83,9 +83,9 @@ public class SuiteProperUTF16SurrogatePairHandlingPattern : IClassFixture<SuiteP
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"pattern\": \"^🐲*$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\non-bmp-regex.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalNonBmpRegex",
                 "ProperUTF16SurrogatePairHandlingPattern",
                 validateFormat: false,
@@ -159,9 +159,9 @@ public class SuiteProperUTF16SurrogatePairHandlingPatternProperties : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"patternProperties\": {\r\n                \"^🐲*$\": {\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\non-bmp-regex.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalNonBmpRegex",
                 "ProperUTF16SurrogatePairHandlingPatternProperties",
                 validateFormat: false,

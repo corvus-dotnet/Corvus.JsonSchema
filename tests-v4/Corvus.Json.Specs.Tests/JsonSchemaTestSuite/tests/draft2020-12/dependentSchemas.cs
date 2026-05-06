@@ -91,9 +91,9 @@ public class SuiteSingleDependency : IClassFixture<SuiteSingleDependency.Fixture
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"dependentSchemas\": {\r\n                \"bar\": {\r\n                    \"properties\": {\r\n                        \"foo\": {\"type\": \"integer\"},\r\n                        \"bar\": {\"type\": \"integer\"}\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentSchemas.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012DependentSchemas",
                 "SingleDependency",
                 validateFormat: false,
@@ -159,9 +159,9 @@ public class SuiteBooleanSubschemas : IClassFixture<SuiteBooleanSubschemas.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"dependentSchemas\": {\r\n                \"foo\": true,\r\n                \"bar\": false\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentSchemas.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012DependentSchemas",
                 "BooleanSubschemas",
                 validateFormat: false,
@@ -227,9 +227,9 @@ public class SuiteDependenciesWithEscapedCharacters : IClassFixture<SuiteDepende
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"dependentSchemas\": {\r\n                \"foo\\tbar\": {\"minProperties\": 4},\r\n                \"foo'bar\": {\"required\": [\"foo\\\"bar\"]}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentSchemas.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012DependentSchemas",
                 "DependenciesWithEscapedCharacters",
                 validateFormat: false,
@@ -295,9 +295,9 @@ public class SuiteDependentSubschemaIncompatibleWithRoot : IClassFixture<SuiteDe
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"properties\": {\r\n                \"foo\": {}\r\n            },\r\n            \"dependentSchemas\": {\r\n                \"foo\": {\r\n                    \"properties\": {\r\n                        \"bar\": {}\r\n                    },\r\n                    \"additionalProperties\": false\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "dependentSchemas.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012DependentSchemas",
                 "DependentSubschemaIncompatibleWithRoot",
                 validateFormat: false,

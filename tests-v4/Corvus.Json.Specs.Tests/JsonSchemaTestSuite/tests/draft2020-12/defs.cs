@@ -43,9 +43,9 @@ public class SuiteValidateDefinitionAgainstMetaschema : IClassFixture<SuiteValid
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"$ref\": \"https://json-schema.org/draft/2020-12/schema\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "defs.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012Defs",
                 "ValidateDefinitionAgainstMetaschema",
                 validateFormat: false,

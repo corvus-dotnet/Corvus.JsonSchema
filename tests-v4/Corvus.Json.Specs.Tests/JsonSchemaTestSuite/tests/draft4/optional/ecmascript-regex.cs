@@ -43,9 +43,9 @@ public class SuiteECMA262RegexDoesNotMatchTrailingNewline : IClassFixture<SuiteE
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^abc$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262RegexDoesNotMatchTrailingNewline",
                 validateFormat: false,
@@ -95,9 +95,9 @@ public class SuiteECMA262RegexConvertsTToHorizontalTab : IClassFixture<SuiteECMA
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\t$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262RegexConvertsTToHorizontalTab",
                 validateFormat: false,
@@ -147,9 +147,9 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter : IClassFix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\cC$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262RegexEscapesControlCodesWithCAndUpperLetter",
                 validateFormat: false,
@@ -199,9 +199,9 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter : IClassFix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\cc$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262RegexEscapesControlCodesWithCAndLowerLetter",
                 validateFormat: false,
@@ -259,9 +259,9 @@ public class SuiteECMA262DMatchesAsciiDigitsOnly : IClassFixture<SuiteECMA262DMa
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\d$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262DMatchesAsciiDigitsOnly",
                 validateFormat: false,
@@ -319,9 +319,9 @@ public class SuiteECMA262DMatchesEverythingButAsciiDigits : IClassFixture<SuiteE
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\D$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262DMatchesEverythingButAsciiDigits",
                 validateFormat: false,
@@ -371,9 +371,9 @@ public class SuiteECMA262WMatchesAsciiLettersOnly : IClassFixture<SuiteECMA262WM
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\w$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/6/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262WMatchesAsciiLettersOnly",
                 validateFormat: false,
@@ -423,9 +423,9 @@ public class SuiteECMA262WMatchesEverythingButAsciiLetters : IClassFixture<Suite
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\W$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/7/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262WMatchesEverythingButAsciiLetters",
                 validateFormat: false,
@@ -547,9 +547,9 @@ public class SuiteECMA262SMatchesWhitespace : IClassFixture<SuiteECMA262SMatches
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\s$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/8/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262SMatchesWhitespace",
                 validateFormat: false,
@@ -671,9 +671,9 @@ public class SuiteECMA262SMatchesEverythingButWhitespace : IClassFixture<SuiteEC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"string\",\r\n            \"pattern\": \"^\\\\S$\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/9/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "ECMA262SMatchesEverythingButWhitespace",
                 validateFormat: false,
@@ -739,9 +739,9 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern : IClassFixture<S
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"pattern\": \"\\\\p{Letter}cole\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/10/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "PatternsAlwaysUseUnicodeSemanticsWithPattern",
                 validateFormat: false,
@@ -807,9 +807,9 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"pattern\": \"\\\\wcole\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/11/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "WInPatternsMatchesAZaZ09NotUnicodeLetters",
                 validateFormat: false,
@@ -867,9 +867,9 @@ public class SuitePatternWithASCIIRanges : IClassFixture<SuitePatternWithASCIIRa
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"pattern\": \"[a-z]cole\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/12/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "PatternWithASCIIRanges",
                 validateFormat: false,
@@ -927,9 +927,9 @@ public class SuiteDInPatternMatches09NotUnicodeDigits : IClassFixture<SuiteDInPa
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"pattern\": \"^\\\\d+$\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/13/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "DInPatternMatches09NotUnicodeDigits",
                 validateFormat: false,
@@ -987,9 +987,9 @@ public class SuitePatternWithNonASCIIDigits : IClassFixture<SuitePatternWithNonA
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"pattern\": \"^\\\\p{digit}+$\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/14/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "PatternWithNonASCIIDigits",
                 validateFormat: false,
@@ -1055,9 +1055,9 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties : IClas
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"\\\\p{Letter}cole\": {}\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/15/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "PatternsAlwaysUseUnicodeSemanticsWithPatternProperties",
                 validateFormat: false,
@@ -1123,9 +1123,9 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters : IClassFix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"\\\\wcole\": {}\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/16/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "WInPatternPropertiesMatchesAZaZ09NotUnicodeLetters",
                 validateFormat: false,
@@ -1183,9 +1183,9 @@ public class SuitePatternPropertiesWithASCIIRanges : IClassFixture<SuitePatternP
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"[a-z]cole\": {}\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/17/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "PatternPropertiesWithASCIIRanges",
                 validateFormat: false,
@@ -1243,9 +1243,9 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits : IClassFixture<
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"^\\\\d+$\": {}\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/18/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "DInPatternPropertiesMatches09NotUnicodeDigits",
                 validateFormat: false,
@@ -1303,9 +1303,9 @@ public class SuitePatternPropertiesWithNonASCIIDigits : IClassFixture<SuitePatte
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"^\\\\p{digit}+$\": {}\r\n            },\r\n            \"additionalProperties\": false\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\ecmascript-regex.json",
+                "#/19/schema",
                 "JsonSchemaTestSuiteDraft4OptionalEcmascriptRegex",
                 "PatternPropertiesWithNonASCIIDigits",
                 validateFormat: false,

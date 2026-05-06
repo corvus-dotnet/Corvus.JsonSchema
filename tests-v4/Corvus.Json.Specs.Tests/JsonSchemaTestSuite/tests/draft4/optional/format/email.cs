@@ -187,9 +187,9 @@ public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEM
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"email\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\email.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4OptionalFormatEmail",
                 "ValidationOfEMailAddresses",
                 validateFormat: true,

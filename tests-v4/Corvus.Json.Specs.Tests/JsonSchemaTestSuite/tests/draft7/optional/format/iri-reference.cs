@@ -131,9 +131,9 @@ public class SuiteValidationOfIRIReferences : IClassFixture<SuiteValidationOfIRI
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft7Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{ \"format\": \"iri-reference\" }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\format\\iri-reference.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft7OptionalFormatIriReference",
                 "ValidationOfIRIReferences",
                 validateFormat: true,

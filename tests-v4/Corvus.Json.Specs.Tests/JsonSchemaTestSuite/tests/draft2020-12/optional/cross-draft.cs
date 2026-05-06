@@ -35,9 +35,9 @@ public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts : IClassFixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"array\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/ignore-prefixItems.json\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "optional\\cross-draft.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012OptionalCrossDraft",
                 "RefsToHistoricDraftsAreProcessedAsHistoricDrafts",
                 validateFormat: false,

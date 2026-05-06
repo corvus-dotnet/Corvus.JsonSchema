@@ -83,9 +83,9 @@ public class SuitePatternPropertiesValidatesPropertiesMatchingARegex : IClassFix
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"patternProperties\": {\r\n                \"f.*o\": {\"type\": \"integer\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft202012PatternProperties",
                 "PatternPropertiesValidatesPropertiesMatchingARegex",
                 validateFormat: false,
@@ -167,9 +167,9 @@ public class SuiteMultipleSimultaneousPatternPropertiesAreValidated : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"patternProperties\": {\r\n                \"a*\": {\"type\": \"integer\"},\r\n                \"aaa*\": {\"maximum\": 20}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft202012PatternProperties",
                 "MultipleSimultaneousPatternPropertiesAreValidated",
                 validateFormat: false,
@@ -235,9 +235,9 @@ public class SuiteRegexesAreNotAnchoredByDefaultAndAreCaseSensitive : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"patternProperties\": {\r\n                \"[0-9]{2,}\": { \"type\": \"boolean\" },\r\n                \"X_\": { \"type\": \"string\" }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft202012PatternProperties",
                 "RegexesAreNotAnchoredByDefaultAndAreCaseSensitive",
                 validateFormat: false,
@@ -311,9 +311,9 @@ public class SuitePatternPropertiesWithBooleanSchemas : IClassFixture<SuitePatte
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"patternProperties\": {\r\n                \"f.*\": true,\r\n                \"b.*\": false\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft202012PatternProperties",
                 "PatternPropertiesWithBooleanSchemas",
                 validateFormat: false,
@@ -355,9 +355,9 @@ public class SuitePatternPropertiesWithNullValuedInstanceProperties : IClassFixt
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"patternProperties\": {\r\n                \"^.*bar$\": {\"type\": \"null\"}\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/4/schema",
                 "JsonSchemaTestSuiteDraft202012PatternProperties",
                 "PatternPropertiesWithNullValuedInstanceProperties",
                 validateFormat: false,
@@ -407,9 +407,9 @@ public class SuitePatternPropertiesWithUnicodePropertyEscape : IClassFixture<Sui
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft202012Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2020-12/schema\",\r\n            \"type\": \"object\",\r\n            \"patternProperties\": {\r\n                \"^\\\\p{Letter}+$\": {\r\n                    \"type\": \"number\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "patternProperties.json",
+                "#/5/schema",
                 "JsonSchemaTestSuiteDraft202012PatternProperties",
                 "PatternPropertiesWithUnicodePropertyEscape",
                 validateFormat: false,

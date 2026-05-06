@@ -59,9 +59,9 @@ public class SuiteMinimumValidation : IClassFixture<SuiteMinimumValidation.Fixtu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minimum\": 1.1}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minimum.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft4Minimum",
                 "MinimumValidation",
                 validateFormat: false,
@@ -127,9 +127,9 @@ public class SuiteMinimumValidationExplicitFalseExclusivity : IClassFixture<Suit
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minimum\": 1.1, \"exclusiveMinimum\": false}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minimum.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft4Minimum",
                 "MinimumValidationExplicitFalseExclusivity",
                 validateFormat: false,
@@ -179,9 +179,9 @@ public class SuiteExclusiveMinimumValidation : IClassFixture<SuiteExclusiveMinim
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"minimum\": 1.1,\r\n            \"exclusiveMinimum\": true\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minimum.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft4Minimum",
                 "ExclusiveMinimumValidation",
                 validateFormat: false,
@@ -271,9 +271,9 @@ public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimu
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft4Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\"minimum\": -2}",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "minimum.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft4Minimum",
                 "MinimumValidationWithSignedInteger",
                 validateFormat: false,

@@ -43,9 +43,9 @@ public class SuiteLocationIndependentIdentifier : IClassFixture<SuiteLocationInd
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"#foo\",\r\n            \"$defs\": {\r\n                \"A\": {\r\n                    \"$anchor\": \"foo\",\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anchor.json",
+                "#/0/schema",
                 "JsonSchemaTestSuiteDraft201909Anchor",
                 "LocationIndependentIdentifier",
                 validateFormat: false,
@@ -95,9 +95,9 @@ public class SuiteLocationIndependentIdentifierWithAbsoluteURI : IClassFixture<S
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/bar#foo\",\r\n            \"$defs\": {\r\n                \"A\": {\r\n                    \"$id\": \"http://localhost:1234/draft2019-09/bar\",\r\n                    \"$anchor\": \"foo\",\r\n                    \"type\": \"integer\"\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anchor.json",
+                "#/1/schema",
                 "JsonSchemaTestSuiteDraft201909Anchor",
                 "LocationIndependentIdentifierWithAbsoluteURI",
                 validateFormat: false,
@@ -147,9 +147,9 @@ public class SuiteLocationIndependentIdentifierWithBaseURIChangeInSubschema : IC
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/root\",\r\n            \"$ref\": \"http://localhost:1234/draft2019-09/nested.json#foo\",\r\n            \"$defs\": {\r\n                \"A\": {\r\n                    \"$id\": \"nested.json\",\r\n                    \"$defs\": {\r\n                        \"B\": {\r\n                            \"$anchor\": \"foo\",\r\n                            \"type\": \"integer\"\r\n                        }\r\n                    }\r\n                }\r\n            }\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anchor.json",
+                "#/2/schema",
                 "JsonSchemaTestSuiteDraft201909Anchor",
                 "LocationIndependentIdentifierWithBaseURIChangeInSubschema",
                 validateFormat: false,
@@ -199,9 +199,9 @@ public class SuiteSameAnchorWithDifferentBaseUri : IClassFixture<SuiteSameAnchor
         public async Task InitializeAsync()
         {
             _driver = DriverFactory.CreateDraft201909Driver();
-            GeneratedType = await _driver.GenerateTypeForVirtualFile(
-                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"$id\": \"http://localhost:1234/draft2019-09/foobar\",\r\n            \"$defs\": {\r\n                \"A\": {\r\n                    \"$id\": \"child1\",\r\n                    \"allOf\": [\r\n                        {\r\n                            \"$id\": \"child2\",\r\n                            \"$anchor\": \"my_anchor\",\r\n                            \"type\": \"number\"\r\n                        },\r\n                        {\r\n                            \"$anchor\": \"my_anchor\",\r\n                            \"type\": \"string\"\r\n                        }\r\n                    ]\r\n                }\r\n            },\r\n            \"$ref\": \"child1#my_anchor\"\r\n        }",
+            GeneratedType = await _driver.GenerateTypeForJsonSchemaTestSuite(
                 "anchor.json",
+                "#/3/schema",
                 "JsonSchemaTestSuiteDraft201909Anchor",
                 "SameAnchorWithDifferentBaseUri",
                 validateFormat: false,
