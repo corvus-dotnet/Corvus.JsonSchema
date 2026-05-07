@@ -1,12 +1,6 @@
 <Solution>
 
-  <Folder Name="/v4/.Specs/">
-    <Project Path="src-v4/Corvus.Json.Specs/Corvus.Json.Specs.csproj" />
-  </Folder>
-  <Folder Name="/v4/.Specs/Generators/">
-    <Project Path="src-v4/Corvus.Json.Patch.SpecGenerator/Corvus.Json.Patch.SpecGenerator.csproj" />
-    <Project Path="src-v4/Corvus.JsonSchema.SpecGenerator/Corvus.JsonSchema.SpecGenerator.csproj" />
-  </Folder>
+
   <Folder Name="/v4/CodeGeneration/" />
   <Folder Name="/v4/CodeGeneration/CSharp/">
     <Project Path="src-v4/Corvus.Json.CodeGeneration.CSharp.QuickStart/Corvus.Json.CodeGeneration.CSharp.QuickStart.csproj" />

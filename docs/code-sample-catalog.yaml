@@ -990,10 +990,9 @@ main-docs:
       - {index: 21, language: powershell, lines: [250, 280]}
       - {index: 22, language: powershell, lines: [284, 287]}
       - {index: 23, language: powershell, lines: [297, 299]}
-      - {index: 24, language: powershell, lines: [310, 312]}
-      - {index: 25, language: powershell, lines: [316, 319]}
-      - {index: 26, language: powershell, lines: [337, 343]}
-      - {index: 27, language: powershell, lines: [372, 383]}
+      - {index: 24, language: powershell, lines: [309, 311]}
+      - {index: 25, language: powershell, lines: [315, 318]}
+      - {index: 26, language: powershell, lines: [336, 342]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 25]}
@@ -1402,9 +1401,7 @@ skills:
   - path: ".github/skills/corvus-test-suite-regeneration/SKILL.md"
     blocks:
       - {index: 0, language: powershell, lines: [18, 20]}
-      - {index: 1, language: powershell, lines: [42, 50]}
-      - {index: 2, language: powershell, lines: [59, 62]}
-      - {index: 3, language: powershell, lines: [65, 68]}
+      - {index: 1, language: powershell, lines: [41, 49]}
   - path: ".github/skills/corvus-v4-migration/SKILL.md"
     blocks:
       - {index: 0, language: xml, lines: [29, 31]}

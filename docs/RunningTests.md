@@ -303,7 +303,6 @@ This script:
 1. Fetches and checks out the latest commit on the submodule's `main` branch
 2. Deletes old generated test files (the generators only create files — they never delete stale ones)
 3. Regenerates V5 test classes (type-based, standalone evaluator, and annotation)
-4. Regenerates V4 spec feature files using **both** selectors (JsonSchema from `JSON-Schema-Test-Suite/` and OpenApi30 from `OpenApi-Test-Suite/`)
 
 To update to a different branch:
 
@@ -357,48 +356,6 @@ cd ..\..\..\..\..\
 
 Each generated test class uses `TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(...)` at runtime to dynamically compile a V5 type from the schema, then validates test instances against it.
 
-#### V4 specs generator
+#### V4 tests
 
-The `Corvus.JsonSchema.SpecGenerator` project (in `src-v4/`) generates SpecFlow `.feature` files into `src-v4/Corvus.Json.Specs/Features/JsonSchema/`.
-
-> **Important:** Delete existing `.feature` files from the output directory before regenerating.
-
-> **Important:** The V4 generator requires **two separate runs** with different selectors and input directories:
-> - `JsonSchemaOrgTestSuiteSelector.jsonc` — reads from the `JSON-Schema-Test-Suite/` submodule (drafts 4, 6, 7, 2019-09, 2020-12)
-> - `OpenApiTestSuiteSelector.jsonc` — reads from the `OpenApi-Test-Suite/` directory (OpenApi30)
->
-> Missing either run will silently drop features.
-
-```powershell
-dotnet build src-v4\Corvus.JsonSchema.SpecGenerator -c Release -v q
-
-$exe = "src-v4\Corvus.JsonSchema.SpecGenerator\bin\Release\net8.0\Corvus.JsonSchema.SpecGenerator.exe"
-$outputDir = "src-v4\Corvus.Json.Specs\Features\JsonSchema"
-
-# Run with JsonSchema selector
-& $exe JSON-Schema-Test-Suite $outputDir JsonSchemaOrgTestSuiteSelector.jsonc
-
-# Run with OpenApi selector
-& $exe OpenApi-Test-Suite $outputDir OpenApiTestSuiteSelector.jsonc
-```
-
-The three positional arguments are:
-
-| Argument | Purpose |
-|----------|---------|
-| `inputDir` | Path to the test suite directory (`JSON-Schema-Test-Suite/` or `OpenApi-Test-Suite/`) |
-| `outputDir` | Path to the generated `.feature` file output directory |
-| `testselector` | Path to a JSONC selector file controlling which drafts, files, and individual tests to include/exclude |
-
-**Configuration:** `src-v4/Corvus.JsonSchema.SpecGenerator/JsonSchemaOrgTestSuiteSelector.jsonc`
-
-The selector file uses a recursive directory-matching structure:
-
-| Key | Purpose |
-|-----|---------|
-| `subdirectories.<name>` | Matches a directory in the test suite (e.g. `draft2020-12`) |
-| `.testSet` | Names the test set — used as the Gherkin scenario tag |
-| `.outputFolder` | Subfolder within the output directory (e.g. `Draft2020212`) |
-| `.assertFormat` | Whether format validation is enforced for this draft |
-| `.excludeFromThisDirectory[]` | Regex patterns for files to skip (e.g. `"bignum\\.json"`) |
-| `.testExclusions.<file>.<scenario>.testsToIgnoreIndices[]` | Individual test indices to skip within a scenario (e.g. leap-second tests) |
+V4 schema validation tests live in `tests-v4/Corvus.Json.Specs.Tests/` as xUnit test classes. These test V4 types (`Corvus.Json.ExtendedTypes`, `Corvus.Json.CodeGeneration.CSharp`) using runtime Roslyn compilation via `JsonSchemaBuilderDriver`. The tests cover all drafts (4, 6, 7, 2019-09, 2020-12) plus OpenAPI 3.0 and are run as part of the main solution test pass.

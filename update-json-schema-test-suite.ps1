@@ -7,7 +7,6 @@
     1. Fetches and checks out the latest commit on the submodule's default branch
     2. Deletes old generated test files (generators only create, never delete)
     3. Regenerates V5 test classes (type, evaluator, annotation)
-    4. Regenerates V4 spec feature files (JsonSchema + OpenApi30)
 
 .PARAMETER Branch
     The branch to update the submodule to. Defaults to 'main'.
@@ -87,47 +86,6 @@ foreach ($dir in $v5OutputDirs) {
     $count = (Get-ChildItem $dir -Filter "*.cs" -Recurse | Measure-Object).Count
     Write-Host "  $([System.IO.Path]::GetFileName($dir)): $count files" -ForegroundColor Green
 }
-
-# 3. Regenerate V4 spec feature files
-Write-Host ""
-Write-Host "=== Regenerating V4 spec feature files ===" -ForegroundColor Cyan
-
-$v4OutputDir = "$repoRoot\src-v4\Corvus.Json.Specs\Features\JsonSchema"
-
-# Delete old feature files
-if (Test-Path $v4OutputDir) {
-    Get-ChildItem $v4OutputDir -Filter "*.feature" -Recurse | Remove-Item -Force
-    Write-Host "  Cleaned $v4OutputDir"
-}
-
-# Build V4 generator
-Push-Location "$repoRoot\src-v4\Corvus.JsonSchema.SpecGenerator"
-try {
-    Write-Host "  Building V4 generator..."
-    dotnet build -c Release -v q --no-restore
-    if ($LASTEXITCODE -ne 0) { throw "V4 generator build failed" }
-}
-finally {
-    Pop-Location
-}
-
-$v4GeneratorExe = "$repoRoot\src-v4\Corvus.JsonSchema.SpecGenerator\bin\Release\net8.0\Corvus.JsonSchema.SpecGenerator.exe"
-$v4GeneratorDir = "$repoRoot\src-v4\Corvus.JsonSchema.SpecGenerator"
-
-# Run with JsonSchema selector (uses JSON-Schema-Test-Suite)
-Write-Host "  Running V4 generator (JsonSchema)..."
-& $v4GeneratorExe "$repoRoot\JSON-Schema-Test-Suite" $v4OutputDir "$v4GeneratorDir\JsonSchemaOrgTestSuiteSelector.jsonc" > $null
-if ($LASTEXITCODE -ne 0) { throw "V4 JsonSchema generator failed" }
-
-# Run with OpenApi selector (uses OpenApi-Test-Suite)
-Write-Host "  Running V4 generator (OpenApi30)..."
-& $v4GeneratorExe "$repoRoot\OpenApi-Test-Suite" $v4OutputDir "$v4GeneratorDir\OpenApiTestSuiteSelector.jsonc" > $null
-if ($LASTEXITCODE -ne 0) { throw "V4 OpenApi generator failed" }
-
-$jsonSchemaCount = (Get-ChildItem $v4OutputDir -Filter "*.feature" -Recurse -Exclude "OpenApi30" |
-    Where-Object { $_.DirectoryName -notlike "*OpenApi30*" } | Measure-Object).Count
-$openApiCount = (Get-ChildItem "$v4OutputDir\OpenApi30" -Filter "*.feature" | Measure-Object).Count
-Write-Host "  JsonSchema: $jsonSchemaCount features, OpenApi30: $openApiCount features" -ForegroundColor Green
 
 # Summary
 Write-Host ""
