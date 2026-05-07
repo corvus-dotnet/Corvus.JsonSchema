@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- dotnet-coverage settings: filter coverage to V4 library assemblies only.
+     Used for comparing ReqnRoll vs xUnit coverage parity. -->
+<Configuration>
+  <CodeCoverage>
+    <ModulePaths>
+      <Include>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.CSharp\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.201909\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.202012\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.4\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.6\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.7\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.CodeGeneration\.OpenApi30\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.ExtendedTypes\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.JsonReference\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Json\.Patch\.dll$</ModulePath>
+      </Include>
+    </ModulePaths>
+    <Sources>
+      <Exclude>
+        <!-- V4 generated core types inflate the denominator without meaningful coverage value -->
+        <Source>.*\\src-v4\\Corvus\.Json\.ExtendedTypes\\Corvus\.Json\\GeneratedCoreTypes\\.*</Source>
+        <!-- Auto-generated resource strings -->
+        <Source>.*\\SR\.cs$</Source>
+        <Source>.*\.Designer\.cs$</Source>
+      </Exclude>
+    </Sources>
+  </CodeCoverage>
+</Configuration>
