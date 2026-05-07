@@ -316,9 +316,9 @@ public class ValidationContextTests
 
     private static Corvus.Json.ValidationContext EvaluateProperties(Corvus.Json.ValidationContext context, string propertyIndexArray)
     {
-        foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string propertyIndex in propertyIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            context = context.WithLocalProperty(int.Parse(propertyIndex));
+            context = context.WithLocalProperty(int.Parse(propertyIndex.Trim()));
         }
 
         return context;
@@ -326,9 +326,9 @@ public class ValidationContextTests
 
     private static Corvus.Json.ValidationContext EvaluateItems(Corvus.Json.ValidationContext context, string itemIndexArray)
     {
-        foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string itemIndex in itemIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            context = context.WithLocalItemIndex(int.Parse(itemIndex));
+            context = context.WithLocalItemIndex(int.Parse(itemIndex.Trim()));
         }
 
         return context;
@@ -341,9 +341,9 @@ public class ValidationContextTests
             return;
         }
 
-        foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string propertyIndex in propertyIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.False(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex)));
+            Assert.False(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex.Trim())));
         }
     }
 
@@ -354,9 +354,9 @@ public class ValidationContextTests
             return;
         }
 
-        foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string propertyIndex in propertyIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.True(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex)));
+            Assert.True(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex.Trim())));
         }
     }
 
@@ -367,9 +367,9 @@ public class ValidationContextTests
             return;
         }
 
-        foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string propertyIndex in propertyIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.False(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex)));
+            Assert.False(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex.Trim())));
         }
     }
 
@@ -380,9 +380,9 @@ public class ValidationContextTests
             return;
         }
 
-        foreach (string propertyIndex in propertyIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string propertyIndex in propertyIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.True(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex)));
+            Assert.True(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex.Trim())));
         }
     }
 
@@ -393,9 +393,9 @@ public class ValidationContextTests
             return;
         }
 
-        foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string itemIndex in itemIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.False(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex)));
+            Assert.False(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex.Trim())));
         }
     }
 
@@ -406,9 +406,9 @@ public class ValidationContextTests
             return;
         }
 
-        foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string itemIndex in itemIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.True(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex)));
+            Assert.True(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex.Trim())));
         }
     }
 
@@ -419,9 +419,9 @@ public class ValidationContextTests
             return;
         }
 
-        foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string itemIndex in itemIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.False(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex)));
+            Assert.False(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex.Trim())));
         }
     }
 
@@ -432,9 +432,9 @@ public class ValidationContextTests
             return;
         }
 
-        foreach (string itemIndex in itemIndexArray.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries))
+        foreach (string itemIndex in itemIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.True(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex)));
+            Assert.True(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex.Trim())));
         }
     }
 }

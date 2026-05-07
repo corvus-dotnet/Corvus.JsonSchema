@@ -22,7 +22,7 @@ public class DecodeBase64StringTests
         byte[] decodeBuffer = new byte[1024];
         bool decodeSuccess = sut.TryGetDecodedBase64Bytes(decodeBuffer.AsSpan(), out int decodedByteCount);
         Assert.True(decodeSuccess);
-        Assert.Equal(System.Text.Encoding.UTF8.GetBytes("I have encoded this string"), decodeBuffer[..decodedByteCount]);
+        Assert.Equal(System.Text.Encoding.UTF8.GetBytes("I have encoded this string"), decodeBuffer.AsSpan(0, decodedByteCount).ToArray());
     }
 
     [Fact]
@@ -32,7 +32,7 @@ public class DecodeBase64StringTests
         byte[] decodeBuffer = new byte[1024];
         bool decodeSuccess = sut.TryGetDecodedBase64Bytes(decodeBuffer.AsSpan(), out int decodedByteCount);
         Assert.True(decodeSuccess);
-        Assert.Equal(System.Text.Encoding.UTF8.GetBytes("I have encoded this string"), decodeBuffer[..decodedByteCount]);
+        Assert.Equal(System.Text.Encoding.UTF8.GetBytes("I have encoded this string"), decodeBuffer.AsSpan(0, decodedByteCount).ToArray());
     }
 
     [Fact]

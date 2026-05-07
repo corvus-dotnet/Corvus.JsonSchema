@@ -25,7 +25,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonString.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -39,7 +39,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonNumber.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -53,7 +53,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInteger.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -67,7 +67,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBoolean.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -81,7 +81,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBoolean.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -95,7 +95,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonArray.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -109,7 +109,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonArray.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -123,7 +123,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonObject.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -137,7 +137,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonObject.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -151,7 +151,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDate.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -165,7 +165,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDateTime.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -179,7 +179,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDuration.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -193,7 +193,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonEmail.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -207,7 +207,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonHostname.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -221,7 +221,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIdnEmail.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -235,7 +235,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIdnHostname.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -249,7 +249,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIpV4.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -263,7 +263,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIpV6.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -277,7 +277,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIri.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -291,7 +291,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIriReference.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -305,7 +305,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonPointer.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -319,7 +319,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonRegex.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -333,7 +333,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonRelativePointer.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -347,7 +347,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonTime.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -361,7 +361,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUri.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -375,7 +375,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUriReference.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -389,7 +389,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUuid.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -403,7 +403,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonContent.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -417,7 +417,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonContentPre201909.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -431,7 +431,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBase64Content.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -445,7 +445,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBase64ContentPre201909.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -459,7 +459,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBase64String.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -473,7 +473,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBase64StringPre201909.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -487,7 +487,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUInt128.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -501,7 +501,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInt128.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -515,7 +515,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonHalf.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -529,7 +529,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInt64.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -543,7 +543,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInt32.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -557,7 +557,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInt16.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -571,7 +571,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonSByte.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -585,7 +585,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUInt64.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -599,7 +599,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUInt32.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -613,7 +613,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUInt16.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -627,7 +627,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonByte.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -641,7 +641,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonSingle.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -655,7 +655,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDouble.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -669,7 +669,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDecimal.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -683,7 +683,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonString.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -697,7 +697,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonNumber.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -711,7 +711,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInteger.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -725,7 +725,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBoolean.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -739,7 +739,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBoolean.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -753,7 +753,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonArray.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -767,7 +767,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonArray.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -781,7 +781,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonObject.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -795,7 +795,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonObject.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -809,7 +809,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDate.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -823,7 +823,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDateTime.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -837,7 +837,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDuration.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -851,7 +851,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonEmail.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -865,7 +865,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonHostname.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -879,7 +879,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIdnEmail.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -893,7 +893,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIdnHostname.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -907,7 +907,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIpV4.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -921,7 +921,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIpV6.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -935,7 +935,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIri.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -949,7 +949,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonIriReference.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -963,7 +963,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonPointer.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -977,7 +977,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonRegex.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -991,7 +991,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonRelativePointer.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1005,7 +1005,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonTime.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1019,7 +1019,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUri.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1033,7 +1033,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUriReference.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1047,7 +1047,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUuid.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1061,7 +1061,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonContent.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1075,7 +1075,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonContentPre201909.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1089,7 +1089,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBase64Content.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1103,7 +1103,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBase64ContentPre201909.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1117,7 +1117,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBase64String.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1131,7 +1131,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonBase64StringPre201909.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1145,7 +1145,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInt64.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1159,7 +1159,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInt32.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1173,7 +1173,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInt16.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1187,7 +1187,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonSByte.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1201,7 +1201,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUInt64.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1215,7 +1215,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUInt32.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1229,7 +1229,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonUInt16.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1243,7 +1243,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonByte.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1257,7 +1257,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonInt128.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1271,7 +1271,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonHalf.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1285,7 +1285,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonSingle.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1299,7 +1299,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDouble.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
@@ -1313,7 +1313,7 @@ public class WriteToUtf8JsonTests
         using var writer = new Utf8JsonWriter(abw);
         ((IJsonValue)sut).WriteTo(writer);
         writer.Flush();
-        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan);
+        string serializedResult = Encoding.UTF8.GetString(abw.WrittenSpan.ToArray());
         var parsed = JsonDecimal.Parse(serializedResult);
         Assert.True(parsed.IsValid());
         Assert.Equal(parsed, sut);
