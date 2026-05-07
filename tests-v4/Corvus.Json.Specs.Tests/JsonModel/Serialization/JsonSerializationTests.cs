@@ -121,8 +121,8 @@ public class JsonSerializationTests
     {
         JsonObject sut = JsonObject.Parse("""{"foo": 3, "bar": "hello", "baz": null}""");
         string result = sut.AsAny.Serialize(new JsonSerializerOptions { WriteIndented = true });
-        string expected = "{\r\n  \"foo\": 3,\r\n  \"bar\": \"hello\",\r\n  \"baz\": null\r\n}".Replace("\\r\\n", Environment.NewLine);
-        Assert.Equal(expected, result);
+        string expected = "{\n  \"foo\": 3,\n  \"bar\": \"hello\",\n  \"baz\": null\n}";
+        Assert.Equal(expected, result.Replace("\r\n", "\n"));
     }
 
     [Fact]
@@ -130,8 +130,8 @@ public class JsonSerializationTests
     {
         JsonObject sut = JsonObject.Parse("""{"foo": 3, "bar": "hello", "baz": null}""").AsDotnetBackedValue();
         string result = sut.AsAny.Serialize(new JsonSerializerOptions { WriteIndented = true });
-        string expected = "{\r\n  \"foo\": 3,\r\n  \"bar\": \"hello\",\r\n  \"baz\": null\r\n}".Replace("\\r\\n", Environment.NewLine);
-        Assert.Equal(expected, result);
+        string expected = "{\n  \"foo\": 3,\n  \"bar\": \"hello\",\n  \"baz\": null\n}";
+        Assert.Equal(expected, result.Replace("\r\n", "\n"));
     }
 
     [Fact]
