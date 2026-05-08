@@ -189,6 +189,12 @@ internal readonly struct FormatNumberPicture
                 ? sub.Substring(prefixEnd, suffixStart - prefixEnd)
                 : string.Empty;
 
+            // If the sub-picture contains no active characters at all, it is invalid.
+            if (active.Length == 0 && sub.Length > 0)
+            {
+                throw new JsonataException("D3086", SR.D3086_PassiveCharacterBetweenActive, 0);
+            }
+
             // Find exponent separator.
             int expPos = sub.IndexOf(expSep, prefixEnd);
             string mantissa;

@@ -1243,11 +1243,14 @@ internal ref struct Parser
     {
         var processedExpr = this.ProcessAst(unary.Expression);
 
-        // Fold unary minus into numeric literals
+        // Fold unary minus into numeric literals.
+        // Create a new NumberNode rather than mutating the original — the same
+        // NumberNode may be reachable from multiple places in the AST (e.g., the
+        // elvis operator ?:  shares the Condition and Then references, so ProcessAst
+        // is called twice on the same subtree).
         if (unary.Operator == "-" && processedExpr is NumberNode num)
         {
-            num.Value = -num.Value;
-            return num;
+            return new NumberNode { Value = -num.Value, Position = num.Position };
         }
 
         var result = new UnaryNode
