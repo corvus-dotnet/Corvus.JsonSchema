@@ -1,13 +1,9 @@
 <Project Sdk="MSTest.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net10.0;net481</TargetFrameworks>
-    <LangVersion>preview</LangVersion>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
-    <NoWarn>$(NoWarn);JSON001;MSB3243</NoWarn>
+    <NoWarn>$(NoWarn);MSB3243</NoWarn>
     <!-- Allow generated files to write to obj for inspection -->
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>

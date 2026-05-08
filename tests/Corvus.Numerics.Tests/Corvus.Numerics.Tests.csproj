@@ -1,8 +1,6 @@
 <Project Sdk="MSTest.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net10.0;net481</TargetFrameworks>
-    <LangVersion>latest</LangVersion>
-    <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
