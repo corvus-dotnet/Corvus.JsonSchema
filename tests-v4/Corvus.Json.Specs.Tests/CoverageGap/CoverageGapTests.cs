@@ -356,22 +356,24 @@ public class CoverageGapTests
     [TestMethod]
     public async Task FileSystemDocumentResolver_Reset_ClearsDocuments()
     {
-        var resolver = new FileSystemDocumentResolver();
-
         string testSchemaPath = Path.GetFullPath(
             Path.Combine(
                 AppContext.BaseDirectory,
                 "..", "..", "..", "..", "..", "JSON-Schema-Test-Suite", "remotes", "integer.json"));
 
-        if (File.Exists(testSchemaPath))
+        if (!File.Exists(testSchemaPath))
         {
-            string uri = new Uri(testSchemaPath).AbsoluteUri;
-            JsonElement? resolved = await resolver.TryResolve(new JsonReference(uri));
-            Assert.IsNotNull(resolved);
-
-            resolver.Reset();
+            Assert.Inconclusive("JSON-Schema-Test-Suite submodule not available at expected path.");
+            return;
         }
 
+        // The resolver combines its baseDirectory with the reference URI as a file path,
+        // so pass the absolute file path directly (not a file:// URI).
+        var resolver = new FileSystemDocumentResolver();
+        JsonElement? resolved = await resolver.TryResolve(new JsonReference(testSchemaPath));
+        Assert.IsNotNull(resolved);
+
+        resolver.Reset();
         resolver.Dispose();
     }
 

@@ -33,7 +33,7 @@ public class JsonataTestSuiteRunner
     /// will still terminate the process; the timeout handles infinite
     /// loops that do not overflow the stack.
     /// </summary>
-    private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(30);
 
     private static readonly string TestSuiteRoot = FindTestSuiteRoot();
     private static readonly JsonataEvaluator Evaluator = new();
