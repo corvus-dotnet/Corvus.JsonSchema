@@ -42,6 +42,7 @@ public static class StandardBase64
         var abw = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(abw);
         document.WriteTo(writer);
+        writer.Flush();
         return Convert.ToBase64String(abw.WrittenArray, 0, abw.WrittenCount);
 #endif
     }
@@ -60,7 +61,7 @@ public static class StandardBase64
         try
         {
             value.CopyTo(bytes);
-            return Encoding.UTF8.GetString(bytes);
+            return Encoding.UTF8.GetString(bytes, 0, value.Length);
         }
         finally
         {

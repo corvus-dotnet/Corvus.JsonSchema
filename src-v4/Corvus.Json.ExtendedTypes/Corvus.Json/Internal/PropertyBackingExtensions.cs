@@ -305,7 +305,7 @@ public static class PropertyBackingExtensions
     {
         foreach (JsonObjectProperty property in properties)
         {
-            if (property.Equals(name))
+            if (property.NameEquals(name))
             {
                 return true;
             }
