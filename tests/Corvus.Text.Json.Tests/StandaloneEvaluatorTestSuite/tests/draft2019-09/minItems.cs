@@ -2,52 +2,60 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft201909.MinItems;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMinItemsValidation : IClassFixture<SuiteMinItemsValidation.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMinItemsValidation
 {
-    private readonly Fixture _fixture;
-    public SuiteMinItemsValidation(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestLongerIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestExactLengthIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTooShortIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonArrays()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -63,34 +71,42 @@ public class SuiteMinItemsValidation : IClassFixture<SuiteMinItemsValidation.Fix
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMinItemsValidationWithADecimal : IClassFixture<SuiteMinItemsValidationWithADecimal.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMinItemsValidationWithADecimal
 {
-    private readonly Fixture _fixture;
-    public SuiteMinItemsValidationWithADecimal(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestLongerIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTooShortIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

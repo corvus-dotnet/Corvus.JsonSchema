@@ -3,7 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace TestUtilities;
 

@@ -7,7 +7,7 @@ using System.IO.Tests;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -15,12 +15,13 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage tests for core library gaps in ParsedJsonDocument, JsonDocumentBuilder,
 /// and ComplexValueBuilder.
 /// </summary>
-public static class CoreLibraryCoverageTests
+[TestClass]
+public class CoreLibraryCoverageTests
 {
     #region Stream parsing — buffer resize (JsonDocumentBuilder.Parse.cs lines 609-617)
 
-    [Fact]
-    public static void ParseFromStream_NonSeekableStream_LargeDocument_TriggersResize()
+    [TestMethod]
+    public void ParseFromStream_NonSeekableStream_LargeDocument_TriggersResize()
     {
         // Non-seekable stream gets initial buffer of 4096 bytes (UnseekableStreamInitialRentSize).
         // JSON > 4096 bytes triggers the buffer resize logic at Parse.cs lines 608-617.
@@ -39,18 +40,18 @@ public static class CoreLibraryCoverageTests
         sb.Append(']');
 
         byte[] data = Encoding.UTF8.GetBytes(sb.ToString());
-        Assert.True(data.Length > 4096, "JSON must exceed 4096 bytes for buffer resize");
+        Assert.IsTrue(data.Length > 4096, "JSON must exceed 4096 bytes for buffer resize");
 
         using var stream = new WrappedMemoryStream(canRead: true, canWrite: false, canSeek: false, data: data);
         using var doc = ParsedJsonDocument<JsonElement>.Parse(stream);
         JsonElement root = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(400, root.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(400, root.GetArrayLength());
     }
 
-    [Fact]
-    public static void ParseBuilderFromStream_NonSeekable_LargeDocument_TriggersResize()
+    [TestMethod]
+    public void ParseBuilderFromStream_NonSeekable_LargeDocument_TriggersResize()
     {
         // Same test but via JsonDocumentBuilder.Parse to cover that parallel path
         var sb = new StringBuilder();
@@ -68,22 +69,22 @@ public static class CoreLibraryCoverageTests
         sb.Append(']');
 
         byte[] data = Encoding.UTF8.GetBytes(sb.ToString());
-        Assert.True(data.Length > 4096, "JSON must exceed 4096 bytes");
+        Assert.IsTrue(data.Length > 4096, "JSON must exceed 4096 bytes");
 
         using var workspace = JsonWorkspace.Create();
         using var stream = new WrappedMemoryStream(canRead: true, canWrite: false, canSeek: false, data: data);
         using var builder = JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, stream);
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, root.ValueKind);
     }
 
     #endregion
 
     #region ComplexValueBuilder.RemoveProperty via ObjectBuilder (lines 3286-3354)
 
-    [Fact]
-    public static void ObjectBuilder_RemoveProperty_LongCharName_TriggersArrayPool()
+    [TestMethod]
+    public void ObjectBuilder_RemoveProperty_LongCharName_TriggersArrayPool()
     {
         // ObjectBuilder.RemoveProperty(string) calls ComplexValueBuilder.RemoveProperty(ReadOnlySpan<char>)
         // which rents from ArrayPool for names where MaxByteCount > 256
@@ -109,8 +110,8 @@ public static class CoreLibraryCoverageTests
         Assert.DoesNotContain(longName, result);
     }
 
-    [Fact]
-    public static void ObjectBuilder_TryApply_WithExistingProperty_TriggersRemove()
+    [TestMethod]
+    public void ObjectBuilder_TryApply_WithExistingProperty_TriggersRemove()
     {
         // TryApply iterates source object properties, calling RemoveProperty + AddProperty for each.
         // When existing properties conflict, this triggers ComplexValueBuilder.RemoveProperty(byte[], false, nameIsEscaped)
@@ -136,11 +137,11 @@ public static class CoreLibraryCoverageTests
             });
 
         string result = root.ToString();
-        Assert.Contains("\"new\"", result);
+        StringAssert.Contains(result, "\"new\"");
     }
 
-    [Fact]
-    public static void ObjectBuilder_TryApply_WithEscapedPropertyName_TriggersUnescape()
+    [TestMethod]
+    public void ObjectBuilder_TryApply_WithEscapedPropertyName_TriggersUnescape()
     {
         // An escaped property name in the source document triggers the unescaping path
         // at ComplexValueBuilder.RemoveProperty lines 3331-3354
@@ -166,15 +167,15 @@ public static class CoreLibraryCoverageTests
             });
 
         string result = root.ToString();
-        Assert.Contains("\"new\"", result);
+        StringAssert.Contains(result, "\"new\"");
     }
 
     #endregion
 
     #region Mutable.RemoveProperty — empty/long name via JsonElementHelpers
 
-    [Fact]
-    public static void MutableRemoveProperty_EmptyObject_ReturnsFalse()
+    [TestMethod]
+    public void MutableRemoveProperty_EmptyObject_ReturnsFalse()
     {
         byte[] json = """{}"""u8.ToArray();
         using var workspace = JsonWorkspace.Create();
@@ -183,11 +184,11 @@ public static class CoreLibraryCoverageTests
 
         JsonElement.Mutable root = builder.RootElement;
         bool removed = root.RemoveProperty("anything"u8);
-        Assert.False(removed);
+        Assert.IsFalse(removed);
     }
 
-    [Fact]
-    public static void MutableRemoveProperty_LongStringName_TriggersArrayPool()
+    [TestMethod]
+    public void MutableRemoveProperty_LongStringName_TriggersArrayPool()
     {
         // This exercises JsonElementHelpers.RemovePropertyUnsafe with a long char name
         string longName = new string('x', 300);
@@ -199,19 +200,19 @@ public static class CoreLibraryCoverageTests
 
         JsonElement.Mutable root = builder.RootElement;
         bool removed = root.RemoveProperty(longName);
-        Assert.True(removed);
+        Assert.IsTrue(removed);
 
         string result = root.ToString();
         Assert.DoesNotContain(longName, result);
-        Assert.Contains("\"other\"", result);
+        StringAssert.Contains(result, "\"other\"");
     }
 
     #endregion
 
     #region Numeric formatting — large numbers trigger ArrayPool rental (lines 1002-1005)
 
-    [Fact]
-    public static void TryFormatNumber_LargeDecimalPrecision_TriggersArrayPool()
+    [TestMethod]
+    public void TryFormatNumber_LargeDecimalPrecision_TriggersArrayPool()
     {
         // A number with many decimal places (>256 chars total) triggers ArrayPool rental
         var sb = new StringBuilder();
@@ -242,12 +243,12 @@ public static class CoreLibraryCoverageTests
             fractional,
             exponent);
 
-        Assert.True(success);
-        Assert.True(charsWritten > 256);
+        Assert.IsTrue(success);
+        Assert.IsTrue(charsWritten > 256);
     }
 
-    [Fact]
-    public static void TryFormatNumber_BufferTooSmall_ReturnsFalse()
+    [TestMethod]
+    public void TryFormatNumber_BufferTooSmall_ReturnsFalse()
     {
         byte[] utf8Number = "1234.5678"u8.ToArray();
         JsonElementHelpers.ParseNumber(
@@ -269,16 +270,16 @@ public static class CoreLibraryCoverageTests
             fractional,
             exponent);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
     #endregion
 
     #region Numeric UTF-8 formatting — buffer too small
 
-    [Fact]
-    public static void TryFormatNumberUtf8_BufferTooSmall_ReturnsFalse()
+    [TestMethod]
+    public void TryFormatNumberUtf8_BufferTooSmall_ReturnsFalse()
     {
         byte[] utf8Number = "1234.5678"u8.ToArray();
         JsonElementHelpers.ParseNumber(
@@ -300,12 +301,12 @@ public static class CoreLibraryCoverageTests
             fractional,
             exponent);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Fact]
-    public static void TryFormatPercentUtf8_BufferTooSmall_ReturnsFalse()
+    [TestMethod]
+    public void TryFormatPercentUtf8_BufferTooSmall_ReturnsFalse()
     {
         byte[] utf8Number = "0.1234"u8.ToArray();
         JsonElementHelpers.ParseNumber(
@@ -326,12 +327,12 @@ public static class CoreLibraryCoverageTests
             2,
             NumberFormatInfo.InvariantInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Fact]
-    public static void TryFormatCurrencyUtf8_BufferTooSmall_ReturnsFalse()
+    [TestMethod]
+    public void TryFormatCurrencyUtf8_BufferTooSmall_ReturnsFalse()
     {
         byte[] utf8Number = "1234.56"u8.ToArray();
         JsonElementHelpers.ParseNumber(
@@ -352,12 +353,12 @@ public static class CoreLibraryCoverageTests
             2,
             NumberFormatInfo.InvariantInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Fact]
-    public static void TryFormatGeneral_BufferTooSmall_ReturnsFalse()
+    [TestMethod]
+    public void TryFormatGeneral_BufferTooSmall_ReturnsFalse()
     {
         byte[] utf8Number = "1234.5678"u8.ToArray();
         JsonElementHelpers.ParseNumber(
@@ -379,12 +380,12 @@ public static class CoreLibraryCoverageTests
             'E',
             NumberFormatInfo.InvariantInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Fact]
-    public static void TryFormatFixedPointWithSeparator_BufferTooSmall_ReturnsFalse()
+    [TestMethod]
+    public void TryFormatFixedPointWithSeparator_BufferTooSmall_ReturnsFalse()
     {
         byte[] utf8Number = "1234567.89"u8.ToArray();
         JsonElementHelpers.ParseNumber(
@@ -406,8 +407,8 @@ public static class CoreLibraryCoverageTests
             NumberFormatInfo.InvariantInfo.NumberDecimalSeparator,
             NumberFormatInfo.InvariantInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
     #endregion

@@ -5,10 +5,11 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
-public static class JsonSchemaCodeGeneratorTests
+[TestClass]
+public class JsonSchemaCodeGeneratorTests
 {
     private const string ArrayType =
         """
@@ -402,23 +403,23 @@ public static class JsonSchemaCodeGeneratorTests
         }}
         """;
 
-    [Theory]
-    [InlineData("[\"object\", \"array\"]")]
-    [InlineData("[\"object\", \"string\"]")]
-    [InlineData("[\"object\", \"number\"]")]
-    [InlineData("[\"object\", \"boolean\"]")]
-    [InlineData("[\"object\", \"null\"]")]
-    [InlineData("[\"array\", \"string\"]")]
-    [InlineData("[\"array\", \"number\"]")]
-    [InlineData("[\"array\", \"boolean\"]")]
-    [InlineData("[\"array\", \"null\"]")]
-    [InlineData("[\"string\", \"boolean\"]")]
-    [InlineData("[\"string\", \"number\"]")]
-    [InlineData("[\"string\", \"null\"]")]
-    [InlineData("[\"number\", \"boolean\"]")]
-    [InlineData("[\"number\", \"null\"]")]
-    [InlineData("[\"boolean\", \"null\"]")]
-    public static async Task GenerateCode_Emits_ArrayTypes(string type)
+    [TestMethod]
+    [DataRow("[\"object\", \"array\"]")]
+    [DataRow("[\"object\", \"string\"]")]
+    [DataRow("[\"object\", \"number\"]")]
+    [DataRow("[\"object\", \"boolean\"]")]
+    [DataRow("[\"object\", \"null\"]")]
+    [DataRow("[\"array\", \"string\"]")]
+    [DataRow("[\"array\", \"number\"]")]
+    [DataRow("[\"array\", \"boolean\"]")]
+    [DataRow("[\"array\", \"null\"]")]
+    [DataRow("[\"string\", \"boolean\"]")]
+    [DataRow("[\"string\", \"number\"]")]
+    [DataRow("[\"string\", \"null\"]")]
+    [DataRow("[\"number\", \"boolean\"]")]
+    [DataRow("[\"number\", \"null\"]")]
+    [DataRow("[\"boolean\", \"null\"]")]
+    public async Task GenerateCode_Emits_ArrayTypes(string type)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"types_{GetNameFor(type)}.json",
@@ -445,8 +446,8 @@ public static class JsonSchemaCodeGeneratorTests
         }
     }
 
-    [Fact]
-    public static async Task GenerateCode_Emits_TupleType ()
+    [TestMethod]
+    public async Task GenerateCode_Emits_TupleType ()
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"types_tupletype.json",
@@ -462,8 +463,8 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Fact]
-    public static async Task GenerateCode_Emits_TupleWithAdditionalItemsType()
+    [TestMethod]
+    public async Task GenerateCode_Emits_TupleWithAdditionalItemsType()
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"types_tuplewithadditionalitemstype.json",
@@ -479,8 +480,8 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Fact]
-    public static async Task GenerateCode_Emits_AllOfInlineTupleWithUnevaluated()
+    [TestMethod]
+    public async Task GenerateCode_Emits_AllOfInlineTupleWithUnevaluated()
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"types_allofinlinetuplewithunevaluated.json",
@@ -496,58 +497,58 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("items", "number", "int128")]
-    [InlineData("items", "number", "int64")]
-    [InlineData("items", "number", "int32")]
-    [InlineData("items", "number", "int16")]
-    [InlineData("items", "number", "sbyte")]
-    [InlineData("items", "number", "uint128")]
-    [InlineData("items", "number", "uint64")]
-    [InlineData("items", "number", "uint32")]
-    [InlineData("items", "number", "uint16")]
-    [InlineData("items", "number", "byte")]
-    [InlineData("items", "number", "double")]
-    [InlineData("items", "number", "single")]
-    [InlineData("items", "number", "decimal")]
-    [InlineData("items", "string", "date")]
-    [InlineData("items", "string", "date-time")]
-    [InlineData("items", "string", "time")]
-    [InlineData("items", "string", "duration")]
-    [InlineData("items", "string", "ipv4")]
-    [InlineData("items", "string", "ipv6")]
-    [InlineData("items", "string", "uuid")]
-    [InlineData("items", "string", "uri")]
-    [InlineData("items", "string", "uri-reference")]
-    [InlineData("items", "string", "iri")]
-    [InlineData("items", "string", "iri-reference")]
-    [InlineData("items", "string", "regex")]
-    [InlineData("unevaluatedItems", "number", "int128")]
-    [InlineData("unevaluatedItems", "number", "int64")]
-    [InlineData("unevaluatedItems", "number", "int32")]
-    [InlineData("unevaluatedItems", "number", "int16")]
-    [InlineData("unevaluatedItems", "number", "sbyte")]
-    [InlineData("unevaluatedItems", "number", "uint128")]
-    [InlineData("unevaluatedItems", "number", "uint64")]
-    [InlineData("unevaluatedItems", "number", "uint32")]
-    [InlineData("unevaluatedItems", "number", "uint16")]
-    [InlineData("unevaluatedItems", "number", "byte")]
-    [InlineData("unevaluatedItems", "number", "double")]
-    [InlineData("unevaluatedItems", "number", "single")]
-    [InlineData("unevaluatedItems", "number", "decimal")]
-    [InlineData("unevaluatedItems", "string", "date")]
-    [InlineData("unevaluatedItems", "string", "date-time")]
-    [InlineData("unevaluatedItems", "string", "time")]
-    [InlineData("unevaluatedItems", "string", "duration")]
-    [InlineData("unevaluatedItems", "string", "ipv4")]
-    [InlineData("unevaluatedItems", "string", "ipv6")]
-    [InlineData("unevaluatedItems", "string", "uuid")]
-    [InlineData("unevaluatedItems", "string", "uri")]
-    [InlineData("unevaluatedItems", "string", "uri-reference")]
-    [InlineData("unevaluatedItems", "string", "iri")]
-    [InlineData("unevaluatedItems", "string", "iri-reference")]
-    [InlineData("unevaluatedItems", "string", "regex")]
-    public static async Task GenerateCode_Emits_ArrayTypeWithItemsConstraintAndFormat(string keyword, string type, string format)
+    [TestMethod]
+    [DataRow("items", "number", "int128")]
+    [DataRow("items", "number", "int64")]
+    [DataRow("items", "number", "int32")]
+    [DataRow("items", "number", "int16")]
+    [DataRow("items", "number", "sbyte")]
+    [DataRow("items", "number", "uint128")]
+    [DataRow("items", "number", "uint64")]
+    [DataRow("items", "number", "uint32")]
+    [DataRow("items", "number", "uint16")]
+    [DataRow("items", "number", "byte")]
+    [DataRow("items", "number", "double")]
+    [DataRow("items", "number", "single")]
+    [DataRow("items", "number", "decimal")]
+    [DataRow("items", "string", "date")]
+    [DataRow("items", "string", "date-time")]
+    [DataRow("items", "string", "time")]
+    [DataRow("items", "string", "duration")]
+    [DataRow("items", "string", "ipv4")]
+    [DataRow("items", "string", "ipv6")]
+    [DataRow("items", "string", "uuid")]
+    [DataRow("items", "string", "uri")]
+    [DataRow("items", "string", "uri-reference")]
+    [DataRow("items", "string", "iri")]
+    [DataRow("items", "string", "iri-reference")]
+    [DataRow("items", "string", "regex")]
+    [DataRow("unevaluatedItems", "number", "int128")]
+    [DataRow("unevaluatedItems", "number", "int64")]
+    [DataRow("unevaluatedItems", "number", "int32")]
+    [DataRow("unevaluatedItems", "number", "int16")]
+    [DataRow("unevaluatedItems", "number", "sbyte")]
+    [DataRow("unevaluatedItems", "number", "uint128")]
+    [DataRow("unevaluatedItems", "number", "uint64")]
+    [DataRow("unevaluatedItems", "number", "uint32")]
+    [DataRow("unevaluatedItems", "number", "uint16")]
+    [DataRow("unevaluatedItems", "number", "byte")]
+    [DataRow("unevaluatedItems", "number", "double")]
+    [DataRow("unevaluatedItems", "number", "single")]
+    [DataRow("unevaluatedItems", "number", "decimal")]
+    [DataRow("unevaluatedItems", "string", "date")]
+    [DataRow("unevaluatedItems", "string", "date-time")]
+    [DataRow("unevaluatedItems", "string", "time")]
+    [DataRow("unevaluatedItems", "string", "duration")]
+    [DataRow("unevaluatedItems", "string", "ipv4")]
+    [DataRow("unevaluatedItems", "string", "ipv6")]
+    [DataRow("unevaluatedItems", "string", "uuid")]
+    [DataRow("unevaluatedItems", "string", "uri")]
+    [DataRow("unevaluatedItems", "string", "uri-reference")]
+    [DataRow("unevaluatedItems", "string", "iri")]
+    [DataRow("unevaluatedItems", "string", "iri-reference")]
+    [DataRow("unevaluatedItems", "string", "regex")]
+    public async Task GenerateCode_Emits_ArrayTypeWithItemsConstraintAndFormat(string keyword, string type, string format)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"arrayTypeWithItemsAndFormat_{keyword}_{type}_{format}.json",
@@ -563,8 +564,8 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Fact]
-    public static async Task GenerateCode_Emits_ComplexComposedObjectWithProperties()
+    [TestMethod]
+    public async Task GenerateCode_Emits_ComplexComposedObjectWithProperties()
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             "complexComposedObjectWithProperties.json",
@@ -580,8 +581,8 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Fact]
-    public static async Task GenerateCode_Emits_ComposedArrayMultiItemType()
+    [TestMethod]
+    public async Task GenerateCode_Emits_ComposedArrayMultiItemType()
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             "composedArrayMultiItemType.json",
@@ -597,13 +598,13 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("string", "date", "string", "date-time")]
-    [InlineData("string", "date", "string", "date")]
-    [InlineData("string", "date", "number", "int32")]
-    [InlineData("string", "uuid", "string", "iri")]
-    [InlineData("number", "int64", "number", "int128")]
-    public static async Task GenerateCode_Emits_ComposedFormatTypes(string type1, string format1, string type2, string format2)
+    [TestMethod]
+    [DataRow("string", "date", "string", "date-time")]
+    [DataRow("string", "date", "string", "date")]
+    [DataRow("string", "date", "number", "int32")]
+    [DataRow("string", "uuid", "string", "iri")]
+    [DataRow("number", "int64", "number", "int128")]
+    public async Task GenerateCode_Emits_ComposedFormatTypes(string type1, string format1, string type2, string format2)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"composedFormat_{type1}_{format1}_{type2}_{format2}.json",
@@ -619,10 +620,10 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("number", "int64", "number", "int128")]
-    [InlineData("number", "int64", "string", "date")]
-    public static async Task GenerateCode_Emits_ComposedMultiFormatNumericWithAdditionalConstraint(string type1, string format1, string type2, string format2)
+    [TestMethod]
+    [DataRow("number", "int64", "number", "int128")]
+    [DataRow("number", "int64", "string", "date")]
+    public async Task GenerateCode_Emits_ComposedMultiFormatNumericWithAdditionalConstraint(string type1, string format1, string type2, string format2)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"composedNumericFormatWithConstraint_{type1}_{format1}_{type2}_{format2}.json",
@@ -638,8 +639,8 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Fact]
-    public static async Task GenerateCode_Emits_ComposedObjectWithProperties()
+    [TestMethod]
+    public async Task GenerateCode_Emits_ComposedObjectWithProperties()
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             "composedObjectWithProperties.json",
@@ -655,8 +656,8 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Fact]
-    public static async Task GenerateCode_Emits_ComposedObjectWithRequiredProperties()
+    [TestMethod]
+    public async Task GenerateCode_Emits_ComposedObjectWithRequiredProperties()
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             "composedObjectWithRequiredProperties.json",
@@ -672,22 +673,22 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("sbyte")]
-    [InlineData("int16")]
-    [InlineData("int32")]
-    [InlineData("int64")]
-    [InlineData("int128")]
-    [InlineData("byte")]
-    [InlineData("uint16")]
-    [InlineData("uint32")]
-    [InlineData("uint64")]
-    [InlineData("uint128")]
-    [InlineData("decimal")]
-    [InlineData("double")]
-    [InlineData("single")]
-    [InlineData("half")]
-    public static async Task GenerateCode_Emits_FixedSizeNumericArrayTypes(string format)
+    [TestMethod]
+    [DataRow("sbyte")]
+    [DataRow("int16")]
+    [DataRow("int32")]
+    [DataRow("int64")]
+    [DataRow("int128")]
+    [DataRow("byte")]
+    [DataRow("uint16")]
+    [DataRow("uint32")]
+    [DataRow("uint64")]
+    [DataRow("uint128")]
+    [DataRow("decimal")]
+    [DataRow("double")]
+    [DataRow("single")]
+    [DataRow("half")]
+    public async Task GenerateCode_Emits_FixedSizeNumericArrayTypes(string format)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"fixedSizeNumericArray_{format}.json",
@@ -703,22 +704,22 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("sbyte")]
-    [InlineData("int16")]
-    [InlineData("int32")]
-    [InlineData("int64")]
-    [InlineData("int128")]
-    [InlineData("byte")]
-    [InlineData("uint16")]
-    [InlineData("uint32")]
-    [InlineData("uint64")]
-    [InlineData("uint128")]
-    [InlineData("decimal")]
-    [InlineData("double")]
-    [InlineData("single")]
-    [InlineData("half")]
-    public static async Task GenerateCode_Emits_MultiDimensionFixedSizeNumericArrayTypes(string format)
+    [TestMethod]
+    [DataRow("sbyte")]
+    [DataRow("int16")]
+    [DataRow("int32")]
+    [DataRow("int64")]
+    [DataRow("int128")]
+    [DataRow("byte")]
+    [DataRow("uint16")]
+    [DataRow("uint32")]
+    [DataRow("uint64")]
+    [DataRow("uint128")]
+    [DataRow("decimal")]
+    [DataRow("double")]
+    [DataRow("single")]
+    [DataRow("half")]
+    public async Task GenerateCode_Emits_MultiDimensionFixedSizeNumericArrayTypes(string format)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"multiDimensionFixedSizeNumericArray_{format}.json",
@@ -734,22 +735,22 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("sbyte")]
-    [InlineData("int16")]
-    [InlineData("int32")]
-    [InlineData("int64")]
-    [InlineData("int128")]
-    [InlineData("byte")]
-    [InlineData("uint16")]
-    [InlineData("uint32")]
-    [InlineData("uint64")]
-    [InlineData("uint128")]
-    [InlineData("decimal")]
-    [InlineData("double")]
-    [InlineData("single")]
-    [InlineData("half")]
-    public static async Task GenerateCode_Emits_MultiDimensionHigherRankFixedSizeNumericArrayTypes(string format)
+    [TestMethod]
+    [DataRow("sbyte")]
+    [DataRow("int16")]
+    [DataRow("int32")]
+    [DataRow("int64")]
+    [DataRow("int128")]
+    [DataRow("byte")]
+    [DataRow("uint16")]
+    [DataRow("uint32")]
+    [DataRow("uint64")]
+    [DataRow("uint128")]
+    [DataRow("decimal")]
+    [DataRow("double")]
+    [DataRow("single")]
+    [DataRow("half")]
+    public async Task GenerateCode_Emits_MultiDimensionHigherRankFixedSizeNumericArrayTypes(string format)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"multiDimensionHigherRankFixedSizeNumericArray_{format}.json",
@@ -765,22 +766,22 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("sbyte")]
-    [InlineData("int16")]
-    [InlineData("int32")]
-    [InlineData("int64")]
-    [InlineData("int128")]
-    [InlineData("byte")]
-    [InlineData("uint16")]
-    [InlineData("uint32")]
-    [InlineData("uint64")]
-    [InlineData("uint128")]
-    [InlineData("decimal")]
-    [InlineData("double")]
-    [InlineData("single")]
-    [InlineData("half")]
-    public static async Task GenerateCode_Emits_NumericArrayTypes(string format)
+    [TestMethod]
+    [DataRow("sbyte")]
+    [DataRow("int16")]
+    [DataRow("int32")]
+    [DataRow("int64")]
+    [DataRow("int128")]
+    [DataRow("byte")]
+    [DataRow("uint16")]
+    [DataRow("uint32")]
+    [DataRow("uint64")]
+    [DataRow("uint128")]
+    [DataRow("decimal")]
+    [DataRow("double")]
+    [DataRow("single")]
+    [DataRow("half")]
+    public async Task GenerateCode_Emits_NumericArrayTypes(string format)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"numericArray_{format}.json",
@@ -796,22 +797,22 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("sbyte")]
-    [InlineData("int16")]
-    [InlineData("int32")]
-    [InlineData("int64")]
-    [InlineData("int128")]
-    [InlineData("byte")]
-    [InlineData("uint16")]
-    [InlineData("uint32")]
-    [InlineData("uint64")]
-    [InlineData("uint128")]
-    [InlineData("decimal")]
-    [InlineData("double")]
-    [InlineData("single")]
-    [InlineData("half")]
-    public static async Task GenerateCode_Emits_NumericFormatTypes(string format)
+    [TestMethod]
+    [DataRow("sbyte")]
+    [DataRow("int16")]
+    [DataRow("int32")]
+    [DataRow("int64")]
+    [DataRow("int128")]
+    [DataRow("byte")]
+    [DataRow("uint16")]
+    [DataRow("uint32")]
+    [DataRow("uint64")]
+    [DataRow("uint128")]
+    [DataRow("decimal")]
+    [DataRow("double")]
+    [DataRow("single")]
+    [DataRow("half")]
+    public async Task GenerateCode_Emits_NumericFormatTypes(string format)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"numericFormat_{format}.json",
@@ -827,8 +828,8 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Fact]
-    public static async Task GenerateCode_Emits_Person()
+    [TestMethod]
+    public async Task GenerateCode_Emits_Person()
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             "person.json",
@@ -844,8 +845,8 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Fact]
-    public static async Task GenerateCode_Emits_SimpleObjectWithProperties()
+    [TestMethod]
+    public async Task GenerateCode_Emits_SimpleObjectWithProperties()
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             "simpleObjectWithProperties.json",
@@ -861,14 +862,14 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("object")]
-    [InlineData("array")]
-    [InlineData("string")]
-    [InlineData("number")]
-    [InlineData("boolean")]
-    [InlineData("null")]
-    public static async Task GenerateCode_Emits_SimpleTypes(string type)
+    [TestMethod]
+    [DataRow("object")]
+    [DataRow("array")]
+    [DataRow("string")]
+    [DataRow("number")]
+    [DataRow("boolean")]
+    [DataRow("null")]
+    public async Task GenerateCode_Emits_SimpleTypes(string type)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"type_{type}.json",
@@ -884,20 +885,20 @@ public static class JsonSchemaCodeGeneratorTests
             );
     }
 
-    [Theory]
-    [InlineData("date")]
-    [InlineData("date-time")]
-    [InlineData("time")]
-    [InlineData("duration")]
-    [InlineData("ipv4")]
-    [InlineData("ipv6")]
-    [InlineData("uuid")]
-    [InlineData("uri")]
-    [InlineData("uri-reference")]
-    [InlineData("iri")]
-    [InlineData("iri-reference")]
-    [InlineData("regex")]
-    public static async Task GenerateCode_Emits_StringFormatTypes(string format)
+    [TestMethod]
+    [DataRow("date")]
+    [DataRow("date-time")]
+    [DataRow("time")]
+    [DataRow("duration")]
+    [DataRow("ipv4")]
+    [DataRow("ipv6")]
+    [DataRow("uuid")]
+    [DataRow("uri")]
+    [DataRow("uri-reference")]
+    [DataRow("iri")]
+    [DataRow("iri-reference")]
+    [DataRow("regex")]
+    public async Task GenerateCode_Emits_StringFormatTypes(string format)
     {
         _ = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
             $"stringFormat_{format}.json",

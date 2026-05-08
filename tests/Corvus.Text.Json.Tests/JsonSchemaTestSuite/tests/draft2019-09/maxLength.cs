@@ -2,59 +2,67 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft201909.MaxLength;
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteMaxLengthValidation : IClassFixture<SuiteMaxLengthValidation.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMaxLengthValidation
 {
-    private readonly Fixture _fixture;
-    public SuiteMaxLengthValidation(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestShorterIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"f\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"f\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestExactLengthIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"fo\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"fo\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTooLongIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"foo\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"foo\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonStrings()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("100");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("100");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoGraphemesIsLongEnough()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\uD83D\\uDCA9\\uD83D\\uDCA9\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\uD83D\\uDCA9\\uD83D\\uDCA9\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -73,34 +81,42 @@ public class SuiteMaxLengthValidation : IClassFixture<SuiteMaxLengthValidation.F
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteMaxLengthValidationWithADecimal : IClassFixture<SuiteMaxLengthValidationWithADecimal.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMaxLengthValidationWithADecimal
 {
-    private readonly Fixture _fixture;
-    public SuiteMaxLengthValidationWithADecimal(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestShorterIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"f\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"f\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTooLongIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"foo\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"foo\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

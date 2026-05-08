@@ -3,21 +3,22 @@
 
 using System.Numerics;
 using Corvus.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for BigNumber conversion operators.
 /// </summary>
+[TestClass]
 public class BigNumberConversionTests
 {
-    [Theory]
-    [InlineData(0L)]
-    [InlineData(123L)]
-    [InlineData(-456L)]
-    [InlineData(long.MaxValue)]
-    [InlineData(long.MinValue)]
+    [TestMethod]
+    [DataRow(0L)]
+    [DataRow(123L)]
+    [DataRow(-456L)]
+    [DataRow(long.MaxValue)]
+    [DataRow(long.MinValue)]
     public void LongToBigNumber_ShouldConvertCorrectly(long value)
     {
         // Act
@@ -25,14 +26,14 @@ public class BigNumberConversionTests
         BigNumber normalized = bigNumber.Normalize();
 
         // Assert
-        Assert.Equal(new BigInteger(value), normalized.Significand);
-        Assert.Equal(0, normalized.Exponent);
+        Assert.AreEqual(new BigInteger(value), normalized.Significand);
+        Assert.AreEqual(0, normalized.Exponent);
     }
 
-    [Theory]
-    [InlineData(0UL)]
-    [InlineData(123UL)]
-    [InlineData(ulong.MaxValue)]
+    [TestMethod]
+    [DataRow(0UL)]
+    [DataRow(123UL)]
+    [DataRow(ulong.MaxValue)]
     public void ULongToBigNumber_ShouldConvertCorrectly(ulong value)
     {
         // Act
@@ -40,23 +41,23 @@ public class BigNumberConversionTests
         BigNumber normalized = bigNumber.Normalize();
 
         // Assert
-        Assert.Equal(new BigInteger(value), normalized.Significand);
-        Assert.Equal(0, normalized.Exponent);
+        Assert.AreEqual(new BigInteger(value), normalized.Significand);
+        Assert.AreEqual(0, normalized.Exponent);
     }
 
-    [Theory]
-    [InlineData(0.0)]
-    [InlineData(1.0)]
-    [InlineData(-1.0)]
-    [InlineData(1.2345)]
-    [InlineData(-9.8765)]
-    [InlineData(1.2345e20)]
-    [InlineData(-9.8765e-10)]
+    [TestMethod]
+    [DataRow(0.0)]
+    [DataRow(1.0)]
+    [DataRow(-1.0)]
+    [DataRow(1.2345)]
+    [DataRow(-9.8765)]
+    [DataRow(1.2345e20)]
+    [DataRow(-9.8765e-10)]
 #if NET
-    [InlineData(double.MaxValue)]
-    [InlineData(double.MinValue)]
+    [DataRow(double.MaxValue)]
+    [DataRow(double.MinValue)]
 #endif
-    [InlineData(double.Epsilon)]
+    [DataRow(double.Epsilon)]
     public void DoubleToBigNumber_ShouldConvertCorrectly(double value)
     {
         // Act
@@ -68,22 +69,22 @@ public class BigNumberConversionTests
         string formatted = normalized.ToString();
         double roundTripped = double.Parse(formatted);
 
-        Assert.Equal(value, roundTripped, 15); // Check for approximate equality
+        Assert.AreEqual(value, roundTripped, 15); // Check for approximate equality
     }
 
-    [Theory]
-    [InlineData(0.0f)]
-    [InlineData(1.0f)]
-    [InlineData(-1.0f)]
-    [InlineData(1.2345f)]
-    [InlineData(-9.8765f)]
-    [InlineData(1.2345e20f)]
-    [InlineData(-9.8765e-10f)]
+    [TestMethod]
+    [DataRow(0.0f)]
+    [DataRow(1.0f)]
+    [DataRow(-1.0f)]
+    [DataRow(1.2345f)]
+    [DataRow(-9.8765f)]
+    [DataRow(1.2345e20f)]
+    [DataRow(-9.8765e-10f)]
 #if NET
-    [InlineData(float.MaxValue)]
-    [InlineData(float.MinValue)]
+    [DataRow(float.MaxValue)]
+    [DataRow(float.MinValue)]
 #endif
-    [InlineData(float.Epsilon)]
+    [DataRow(float.Epsilon)]
     public void FloatToBigNumber_ShouldConvertCorrectly(float value)
     {
         // Act
@@ -95,13 +96,13 @@ public class BigNumberConversionTests
         string formatted = normalized.ToString();
         float roundTripped = float.Parse(formatted);
 
-        Assert.Equal(value, roundTripped, 7); // Check for approximate equality
+        Assert.AreEqual(value, roundTripped, 7); // Check for approximate equality
     }
 
-    [Theory]
-    [InlineData(123, 0, 123.0)]
-    [InlineData(123, -2, 1.23)]
-    [InlineData(-456, 3, -456000.0)]
+    [TestMethod]
+    [DataRow(123L, 0, 123.0)]
+    [DataRow(123L, -2, 1.23)]
+    [DataRow(-456L, 3, -456000.0)]
     public void BigNumberToDouble_ShouldConvertCorrectly(long significand, int exponent, double expected)
     {
         // Arrange
@@ -111,13 +112,13 @@ public class BigNumberConversionTests
         double result = (double)bigNumber;
 
         // Assert
-        Assert.Equal(expected, result, 15);
+        Assert.AreEqual(expected, result, 15);
     }
 
-    [Theory]
-    [InlineData(123, 0, 123.0f)]
-    [InlineData(123, -2, 1.23f)]
-    [InlineData(-456, 3, -456000.0f)]
+    [TestMethod]
+    [DataRow(123L, 0, 123.0f)]
+    [DataRow(123L, -2, 1.23f)]
+    [DataRow(-456L, 3, -456000.0f)]
     public void BigNumberToFloat_ShouldConvertCorrectly(long significand, int exponent, float expected)
     {
         // Arrange
@@ -127,13 +128,13 @@ public class BigNumberConversionTests
         float result = (float)bigNumber;
 
         // Assert
-        Assert.Equal(expected, result, 7);
+        Assert.AreEqual(expected, result, 7);
     }
 
-    [Theory]
-    [InlineData(123, 0, 123L)]
-    [InlineData(123, 2, 12300L)]
-    [InlineData(12345, -2, 123L)]
+    [TestMethod]
+    [DataRow(123L, 0, 123L)]
+    [DataRow(123L, 2, 12300L)]
+    [DataRow(12345L, -2, 123L)]
     public void BigNumberToLong_ShouldConvertCorrectly(long significand, int exponent, long expected)
     {
         // Arrange
@@ -143,13 +144,13 @@ public class BigNumberConversionTests
         long result = (long)bigNumber;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData(123, 0, 123UL)]
-    [InlineData(123, 2, 12300UL)]
-    [InlineData(12345, -2, 123UL)]
+    [TestMethod]
+    [DataRow(123UL, 0, 123UL)]
+    [DataRow(123UL, 2, 12300UL)]
+    [DataRow(12345UL, -2, 123UL)]
     public void BigNumberToULong_ShouldConvertCorrectly(ulong significand, int exponent, ulong expected)
     {
         // Arrange
@@ -159,13 +160,13 @@ public class BigNumberConversionTests
         ulong result = (ulong)bigNumber;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData(123, 0, "123")]
-    [InlineData(123, -2, "1.23")]
-    [InlineData(-456, 3, "-456000")]
+    [TestMethod]
+    [DataRow(123L, 0, "123")]
+    [DataRow(123L, -2, "1.23")]
+    [DataRow(-456L, 3, "-456000")]
     public void BigNumberToDecimal_ShouldConvertCorrectly(long significand, int exponent, string expected)
     {
         // Arrange
@@ -176,10 +177,10 @@ public class BigNumberConversionTests
         decimal result = (decimal)bigNumber;
 
         // Assert
-        Assert.Equal(expectedDecimal, result);
+        Assert.AreEqual(expectedDecimal, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void BigNumberToDouble_WithLostPrecision_ShouldApproximate()
     {
         // Arrange
@@ -192,10 +193,10 @@ public class BigNumberConversionTests
         double expected = double.Parse("1.2345678901234568E+29");
 
         // Assert
-        Assert.Equal(expected, result, 15);
+        Assert.AreEqual(expected, result, 15);
     }
 
-    [Fact]
+    [TestMethod]
     public void BigNumberToFloat_WithLostPrecision_ShouldApproximate()
     {
         // Arrange
@@ -208,10 +209,10 @@ public class BigNumberConversionTests
         float expected = float.Parse("1.2345678E+16");
 
         // Assert
-        Assert.Equal(expected, result, 7);
+        Assert.AreEqual(expected, result, 7);
     }
 
-    [Fact]
+    [TestMethod]
     public void BigNumberToLong_WithTruncation_ShouldTruncate()
     {
         // Arrange
@@ -221,10 +222,10 @@ public class BigNumberConversionTests
         long result = (long)bigNumber;
 
         // Assert
-        Assert.Equal(123L, result);
+        Assert.AreEqual(123L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void BigNumberToULong_WithTruncation_ShouldTruncate()
     {
         // Arrange
@@ -234,10 +235,10 @@ public class BigNumberConversionTests
         ulong result = (ulong)bigNumber;
 
         // Assert
-        Assert.Equal(123UL, result);
+        Assert.AreEqual(123UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void BigNumberToDecimal_WithLostPrecision_ShouldTruncate()
     {
         // Arrange
@@ -250,46 +251,46 @@ public class BigNumberConversionTests
         decimal expected = 0.1234567890123456789012345678M;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void BigNumberToLong_Overflow_ShouldThrow()
     {
         // Arrange
         var bigNumber = new Corvus.Numerics.BigNumber(BigInteger.Parse(long.MaxValue.ToString() + "0"), 0);
 
         // Act & Assert
-        Assert.Throws<OverflowException>(() => (long)bigNumber);
+        Assert.ThrowsExactly<OverflowException>(() => (long)bigNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public void BigNumberToULong_Overflow_ShouldThrow()
     {
         // Arrange
         var bigNumber = new Corvus.Numerics.BigNumber(BigInteger.Parse(ulong.MaxValue.ToString() + "0"), 0);
 
         // Act & Assert
-        Assert.Throws<OverflowException>(() => (ulong)bigNumber);
+        Assert.ThrowsExactly<OverflowException>(() => (ulong)bigNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public void BigNumberToULong_Negative_ShouldThrow()
     {
         // Arrange
         var bigNumber = new Corvus.Numerics.BigNumber(-1, 0);
 
         // Act & Assert
-        Assert.Throws<OverflowException>(() => (ulong)bigNumber);
+        Assert.ThrowsExactly<OverflowException>(() => (ulong)bigNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public void BigNumberToDecimal_Overflow_ShouldThrow()
     {
         // Arrange
         var bigNumber = new Corvus.Numerics.BigNumber(BigInteger.Parse(decimal.MaxValue.ToString() + "0"), 0);
 
         // Act & Assert
-        Assert.Throws<OverflowException>(() => (decimal)bigNumber);
+        Assert.ThrowsExactly<OverflowException>(() => (decimal)bigNumber);
     }
 }

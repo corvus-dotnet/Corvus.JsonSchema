@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.Extensions.Configuration;
 using TestUtilities;
 using TestUtilities.JsonSchemaTestSuite;
-using Xunit.Sdk;
 
 #pragma warning disable CS8618
 
@@ -77,7 +76,7 @@ internal static class TestCaseGenerator
                     .AppendLine("using System.Threading.Tasks;")
                     .AppendLine("using Corvus.Text.Json.Validator;")
                     .AppendLine("using TestUtilities;")
-                    .AppendLine("using Xunit;")
+                    .AppendLine("using Microsoft.VisualStudio.TestTools.UnitTesting;")
                     .AppendLine()
                     .AppendLine($"namespace {namespaceValue};");
 
@@ -89,13 +88,23 @@ internal static class TestCaseGenerator
                     string pascalSuiteName = GetUniqueName(TestJsonSchemaCodeGenerator.ToPascalCase(testSuite.SuiteName), suiteNames);
                     builder
                         .AppendLine()
-                        .AppendLine($"[Trait(\"JsonSchemaTestSuite\", \"{namespaceGroup}\")]")
-                        .AppendLine($"public class Suite{pascalSuiteName} : IClassFixture<Suite{pascalSuiteName}.Fixture>")
+                        .AppendLine($"[TestCategory(\"{namespaceGroup}\")]")
+                        .AppendLine("[TestClass]")
+                        .AppendLine($"public class Suite{pascalSuiteName}")
                         .AppendLine("{")
-                        .AppendLine("    private readonly Fixture _fixture;")
-                        .AppendLine($"    public Suite{pascalSuiteName}(Fixture fixture)")
+                        .AppendLine($"    private static Fixture? s_fixture;")
+                        .AppendLine()
+                        .AppendLine("    [ClassInitialize]")
+                        .AppendLine($"    public static async Task ClassInit(TestContext _)")
                         .AppendLine("    {")
-                        .AppendLine("        _fixture = fixture;")
+                        .AppendLine("        s_fixture = new Fixture();")
+                        .AppendLine("        await s_fixture.InitializeAsync();")
+                        .AppendLine("    }")
+                        .AppendLine()
+                        .AppendLine("    [ClassCleanup]")
+                        .AppendLine("    public static void ClassCleanupMethod()")
+                        .AppendLine("    {")
+                        .AppendLine("        s_fixture = null;")
                         .AppendLine("    }");
 
                     HashSet<string> testNames = [];
@@ -106,21 +115,19 @@ internal static class TestCaseGenerator
 
                         builder
                             .AppendLine()
-                            .AppendLine("    [Fact]")
+                            .AppendLine("    [TestMethod]")
                             .AppendLine($"    public void Test{testName}()")
                             .AppendLine("    {")
-                            .AppendLine($"        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance({SymbolDisplay.FormatLiteral(test.Instance.ToString(), true)});")
-                            .AppendLine($"        Assert.{(test.Expectation ? "True" : "False")}(dynamicInstance.EvaluateSchema());")
+                            .AppendLine($"        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance({SymbolDisplay.FormatLiteral(test.Instance.ToString(), true)});")
+                            .AppendLine($"        Assert.{(test.Expectation ? "IsTrue" : "IsFalse")}(dynamicInstance.EvaluateSchema());")
                             .AppendLine("    }");
                     }
 
                     builder
                         .AppendLine()
-                        .AppendLine("    public class Fixture : IAsyncLifetime")
+                        .AppendLine("    public class Fixture")
                         .AppendLine("    {")
                         .AppendLine("        public DynamicJsonType DynamicJsonType { get; private set; }")
-                        .AppendLine()
-                        .AppendLine("        public Task DisposeAsync() => Task.CompletedTask;")
                         .AppendLine()
                         .AppendLine("        public async Task InitializeAsync()")
                         .AppendLine("        {")

@@ -2,38 +2,46 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft201909.Optional.RefOfUnknownKeyword;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteReferenceOfARootArbitraryKeyword : IClassFixture<SuiteReferenceOfARootArbitraryKeyword.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteReferenceOfARootArbitraryKeyword
 {
-    private readonly Fixture _fixture;
-    public SuiteReferenceOfARootArbitraryKeyword(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 3}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMismatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": true}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -49,34 +57,42 @@ public class SuiteReferenceOfARootArbitraryKeyword : IClassFixture<SuiteReferenc
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef : IClassFixture<SuiteReferenceOfARootArbitraryKeywordWithEncodedRef.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef
 {
-    private readonly Fixture _fixture;
-    public SuiteReferenceOfARootArbitraryKeywordWithEncodedRef(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 3}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMismatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": true}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -92,34 +108,42 @@ public class SuiteReferenceOfARootArbitraryKeywordWithEncodedRef : IClassFixture
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema : IClassFixture<SuiteReferenceOfAnArbitraryKeywordOfASubSchema.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema
 {
-    private readonly Fixture _fixture;
-    public SuiteReferenceOfAnArbitraryKeywordOfASubSchema(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 3}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMismatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": true}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -135,34 +159,42 @@ public class SuiteReferenceOfAnArbitraryKeywordOfASubSchema : IClassFixture<Suit
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteReferenceInternalsOfKnownNonApplicator : IClassFixture<SuiteReferenceInternalsOfKnownNonApplicator.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteReferenceInternalsOfKnownNonApplicator
 {
-    private readonly Fixture _fixture;
-    public SuiteReferenceInternalsOfKnownNonApplicator(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a string\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMismatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("42");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -178,34 +210,42 @@ public class SuiteReferenceInternalsOfKnownNonApplicator : IClassFixture<SuiteRe
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef : IClassFixture<SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef
 {
-    private readonly Fixture _fixture;
-    public SuiteReferenceOfAnArbitraryKeywordOfASubSchemaWithEncodedRef(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 3}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMismatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": true}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

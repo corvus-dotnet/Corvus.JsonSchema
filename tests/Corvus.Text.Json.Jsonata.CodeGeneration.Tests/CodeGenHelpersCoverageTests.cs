@@ -8,8 +8,7 @@ using System.Text;
 using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 
@@ -19,15 +18,22 @@ namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 /// Every test runs the same expression through BOTH the code generator (CG)
 /// and the runtime compiler (RT), asserting identical results.
 /// </summary>
-public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixture>
+[TestClass]
+public class CodeGenHelpersCoverageTests
 {
-    private readonly CodeGenConformanceFixture fixture;
-    private readonly ITestOutputHelper output;
+    private static CodeGenConformanceFixture? s_fixture;
 
-    public CodeGenHelpersCoverageTests(CodeGenConformanceFixture fixture, ITestOutputHelper output)
+    [ClassInitialize]
+    public static void ClassInit(TestContext _)
     {
-        this.fixture = fixture;
-        this.output = output;
+        s_fixture = new CodeGenConformanceFixture();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
     }
 
     // ═══════════════════════════════════════════════════════════════
@@ -35,24 +41,24 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // MaxOverChainDouble, MinOverChainDouble, AverageOverChainDouble
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$max(items.price)",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$max(items.price)",
         "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
         "30")]
-    [InlineData("$min(items.price)",
+    [DataRow("$min(items.price)",
         "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
         "10")]
-    [InlineData("$average(items.price)",
+    [DataRow("$average(items.price)",
         "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":30}]}",
         "20")]
-    [InlineData("$sum(items.price)",
+    [DataRow("$sum(items.price)",
         "{\"items\":[{\"price\":5},{\"price\":15}]}",
         "20")]
-    [InlineData("$max(data.nested.values)",
+    [DataRow("$max(data.nested.values)",
         "{\"data\":[{\"nested\":{\"values\":3}},{\"nested\":{\"values\":7}},{\"nested\":{\"values\":1}}]}",
         "7")]
-    [InlineData("$min(data.nested.values)",
+    [DataRow("$min(data.nested.values)",
         "{\"data\":[{\"nested\":{\"values\":3}},{\"nested\":{\"values\":7}},{\"nested\":{\"values\":1}}]}",
         "1")]
     public void AggregateOverChain(string expression, string data, string expected)
@@ -64,21 +70,21 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $each and $sift (lines 9236-9501)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "$each({\"a\":1,\"b\":2}, function($v, $k) { $k & \"=\" & $string($v) })",
         "null",
         "[\"a=1\",\"b=2\"]")]
-    [InlineData(
+    [DataRow(
         "$sift({\"a\":1,\"b\":2,\"c\":3}, function($v) { $v > 1 })",
         "null",
         "{\"b\":2,\"c\":3}")]
-    [InlineData(
+    [DataRow(
         "$sift({\"x\":10,\"y\":0,\"z\":5}, function($v, $k) { $v > 0 })",
         "null",
         "{\"x\":10,\"z\":5}")]
-    [InlineData(
+    [DataRow(
         "$each({\"name\":\"Alice\",\"age\":30}, function($v) { $v })",
         "null",
         "[\"Alice\",30]")]
@@ -93,24 +99,24 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // NavigatePropertyChain, CollectChainFlat, ContinueChainFlat
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items.details.value",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items.details.value",
         "{\"items\":[{\"details\":{\"value\":1}},{\"details\":{\"value\":2}}]}",
         "[1,2]")]
-    [InlineData("data.items.tags",
+    [DataRow("data.items.tags",
         "{\"data\":[{\"items\":[{\"tags\":\"a\"},{\"tags\":\"b\"}]},{\"items\":[{\"tags\":\"c\"}]}]}",
         "[\"a\",\"b\",\"c\"]")]
-    [InlineData("a.b.c",
+    [DataRow("a.b.c",
         "{\"a\":[{\"b\":{\"c\":1}},{\"b\":{\"c\":2}},{\"b\":{\"c\":3}}]}",
         "[1,2,3]")]
-    [InlineData("orders.items.name",
+    [DataRow("orders.items.name",
         "{\"orders\":[{\"items\":[{\"name\":\"x\"},{\"name\":\"y\"}]},{\"items\":[{\"name\":\"z\"}]}]}",
         "[\"x\",\"y\",\"z\"]")]
-    [InlineData("a.b",
+    [DataRow("a.b",
         "{\"a\":{\"b\":42}}",
         "42")]
-    [InlineData("a.b",
+    [DataRow("a.b",
         "{\"a\":[{\"b\":1},{\"b\":2},{\"b\":3}]}",
         "[1,2,3]")]
     public void NavigatePropertyChains(string expression, string data, string expected)
@@ -123,12 +129,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Zip3Arrays, ZipNAry, ZipElementAndBuffer, ZipBufferAndElement
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$zip([1,2,3],[4,5,6],[7,8,9])", "null", "[[1,4,7],[2,5,8],[3,6,9]]")]
-    [InlineData("$zip([1,2],[3,4],[5,6],[7,8])", "null", "[[1,3,5,7],[2,4,6,8]]")]
-    [InlineData("$zip([1,2,3],[4,5])", "null", "[[1,4],[2,5]]")]
-    [InlineData("$zip(items.a, items.b)",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$zip([1,2,3],[4,5,6],[7,8,9])", "null", "[[1,4,7],[2,5,8],[3,6,9]]")]
+    [DataRow("$zip([1,2],[3,4],[5,6],[7,8])", "null", "[[1,3,5,7],[2,4,6,8]]")]
+    [DataRow("$zip([1,2,3],[4,5])", "null", "[[1,4],[2,5]]")]
+    [DataRow("$zip(items.a, items.b)",
         "{\"items\":[{\"a\":1,\"b\":10},{\"a\":2,\"b\":20}]}",
         "[[1,10],[2,20]]")]
     public void ZipOperations(string expression, string data, string expected)
@@ -140,12 +146,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // URL encoding/decoding (lines 5782-5864)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$encodeUrlComponent(\"hello world\")", "null", "\"hello%20world\"")]
-    [InlineData("$decodeUrlComponent(\"hello%20world\")", "null", "\"hello world\"")]
-    [InlineData("$encodeUrl(\"https://example.com/path\")", "null", "\"https://example.com/path\"")]
-    [InlineData("$decodeUrl(\"https%3A%2F%2Fexample.com\")", "null", "\"https://example.com\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$encodeUrlComponent(\"hello world\")", "null", "\"hello%20world\"")]
+    [DataRow("$decodeUrlComponent(\"hello%20world\")", "null", "\"hello world\"")]
+    [DataRow("$encodeUrl(\"https://example.com/path\")", "null", "\"https://example.com/path\"")]
+    [DataRow("$decodeUrl(\"https%3A%2F%2Fexample.com\")", "null", "\"https://example.com\"")]
     public void UrlEncoding(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -156,15 +162,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // MapChainElements, FilterChainElements
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$map(items.price, function($v) { $v * 2 })",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$map(items.price, function($v) { $v * 2 })",
         "{\"items\":[{\"price\":5},{\"price\":10}]}",
         "[10,20]")]
-    [InlineData("$filter(items.price, function($v) { $v > 7 })",
+    [DataRow("$filter(items.price, function($v) { $v > 7 })",
         "{\"items\":[{\"price\":5},{\"price\":10},{\"price\":3}]}",
         "10")]
-    [InlineData("$map(items, function($v) { $v.name })",
+    [DataRow("$map(items, function($v) { $v.name })",
         "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]}",
         "[\"a\",\"b\"]")]
     public void MapFilterOverChains(string expression, string data, string expected)
@@ -177,15 +183,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // StringConcat3, StringConcat4, StringConcat5, StringConcatMany
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("\"a\" & \"b\" & \"c\"", "null", "\"abc\"")]
-    [InlineData("\"a\" & \"b\" & \"c\" & \"d\"", "null", "\"abcd\"")]
-    [InlineData("\"a\" & \"b\" & \"c\" & \"d\" & \"e\"", "null", "\"abcde\"")]
-    [InlineData("\"x=\" & $string(val) & \"!\"",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("\"a\" & \"b\" & \"c\"", "null", "\"abc\"")]
+    [DataRow("\"a\" & \"b\" & \"c\" & \"d\"", "null", "\"abcd\"")]
+    [DataRow("\"a\" & \"b\" & \"c\" & \"d\" & \"e\"", "null", "\"abcde\"")]
+    [DataRow("\"x=\" & $string(val) & \"!\"",
         "{\"val\":42}",
         "\"x=42!\"")]
-    [InlineData("name & \" is \" & $string(age) & \" years old\"",
+    [DataRow("name & \" is \" & $string(age) & \" years old\"",
         "{\"name\":\"Alice\",\"age\":30}",
         "\"Alice is 30 years old\"")]
     public void StringConcatMultiOperand(string expression, string data, string expected)
@@ -198,15 +204,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // NavigatePropertyChainWithPredicates
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items[status=\"active\"].name",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items[status=\"active\"].name",
         "{\"items\":[{\"status\":\"active\",\"name\":\"a\"},{\"status\":\"inactive\",\"name\":\"b\"},{\"status\":\"active\",\"name\":\"c\"}]}",
         "[\"a\",\"c\"]")]
-    [InlineData("items[type=\"x\"][0]",
+    [DataRow("items[type=\"x\"][0]",
         "{\"items\":[{\"type\":\"y\",\"v\":1},{\"type\":\"x\",\"v\":2},{\"type\":\"x\",\"v\":3}]}",
         "{\"type\":\"x\",\"v\":2}")]
-    [InlineData("data[category=\"A\"].value",
+    [DataRow("data[category=\"A\"].value",
         "{\"data\":[{\"category\":\"A\",\"value\":10},{\"category\":\"B\",\"value\":20},{\"category\":\"A\",\"value\":30}]}",
         "[10,30]")]
     public void FusedEqualityPredicates(string expression, string data, string expected)
@@ -225,12 +231,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Merge/spread/distinct (lines 5162-5256, 5468-5610)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$merge([{\"a\":1},{\"b\":2},{\"a\":3}])", "null", "{\"a\":3,\"b\":2}")]
-    [InlineData("$merge([{\"x\":1},{\"y\":2}])", "null", "{\"x\":1,\"y\":2}")]
-    [InlineData("$distinct([1,2,2,3,3,3,1])", "null", "[1,2,3]")]
-    [InlineData("$spread({\"a\":1,\"b\":2})", "null", "[{\"a\":1},{\"b\":2}]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$merge([{\"a\":1},{\"b\":2},{\"a\":3}])", "null", "{\"a\":3,\"b\":2}")]
+    [DataRow("$merge([{\"x\":1},{\"y\":2}])", "null", "{\"x\":1,\"y\":2}")]
+    [DataRow("$distinct([1,2,2,3,3,3,1])", "null", "[1,2,3]")]
+    [DataRow("$spread({\"a\":1,\"b\":2})", "null", "[{\"a\":1},{\"b\":2}]")]
     public void MergeSpreadDistinct(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -240,11 +246,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Reduce operations (lines 8103-8247)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$reduce([1,2,3,4], function($prev, $curr) { $prev + $curr })", "null", "10")]
-    [InlineData("$reduce([1,2,3], function($prev, $curr) { $prev + $curr }, 100)", "null", "106")]
-    [InlineData("$reduce([\"a\",\"b\",\"c\"], function($prev, $curr) { $prev & $curr }, \"start:\")",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$reduce([1,2,3,4], function($prev, $curr) { $prev + $curr })", "null", "10")]
+    [DataRow("$reduce([1,2,3], function($prev, $curr) { $prev + $curr }, 100)", "null", "106")]
+    [DataRow("$reduce([\"a\",\"b\",\"c\"], function($prev, $curr) { $prev & $curr }, \"start:\")",
         "null", "\"start:abc\"")]
     public void ReduceOperations(string expression, string data, string expected)
     {
@@ -255,13 +261,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Sort with custom comparator (lines 7653-7680)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$sort([3,1,4,1,5,9])", "null", "[1,1,3,4,5,9]")]
-    [InlineData("$sort(items, function($a, $b) { $a.name > $b.name })",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$sort([3,1,4,1,5,9])", "null", "[1,1,3,4,5,9]")]
+    [DataRow("$sort(items, function($a, $b) { $a.name > $b.name })",
         "{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]}",
         "[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]")]
-    [InlineData("$sort(items, function($a, $b) { $a.v < $b.v })",
+    [DataRow("$sort(items, function($a, $b) { $a.v < $b.v })",
         "{\"items\":[{\"v\":3},{\"v\":1},{\"v\":2}]}",
         "[{\"v\":3},{\"v\":2},{\"v\":1}]")]
     public void SortOperations(string expression, string data, string expected)
@@ -273,11 +279,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Date/time functions (lines 7287-7342)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$toMillis(\"2024-01-15T12:00:00.000Z\")", "null", "1705320000000")]
-    [InlineData("$fromMillis(1705320000000, \"[Y]-[M01]-[D01]\")", "null", "\"2024-01-15\"")]
-    [InlineData("$fromMillis(0)", "null", "\"1970-01-01T00:00:00.000Z\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$toMillis(\"2024-01-15T12:00:00.000Z\")", "null", "1705320000000")]
+    [DataRow("$fromMillis(1705320000000, \"[Y]-[M01]-[D01]\")", "null", "\"2024-01-15\"")]
+    [DataRow("$fromMillis(0)", "null", "\"1970-01-01T00:00:00.000Z\"")]
     public void DateTimeFunctions(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -287,11 +293,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Range generation (lines 1877-1881)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("[1..5]", "null", "[1,2,3,4,5]")]
-    [InlineData("[0..0]", "null", "[0]")]
-    [InlineData("[3..7]", "null", "[3,4,5,6,7]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("[1..5]", "null", "[1,2,3,4,5]")]
+    [DataRow("[0..0]", "null", "[0]")]
+    [DataRow("[3..7]", "null", "[3,4,5,6,7]")]
     public void RangeGeneration(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -301,11 +307,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Flatten (lines 7060-7082)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$flatten([[1,2],[3,[4,5]]])", "null", "[1,2,3,4,5]")]
-    [InlineData("$flatten([1,[2,[3,[4]]]])", "null", "[1,2,3,4]")]
-    [InlineData("$flatten(items.tags)",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$flatten([[1,2],[3,[4,5]]])", "null", "[1,2,3,4,5]")]
+    [DataRow("$flatten([1,[2,[3,[4]]]])", "null", "[1,2,3,4]")]
+    [DataRow("$flatten(items.tags)",
         "{\"items\":[{\"tags\":[\"a\",\"b\"]},{\"tags\":[\"c\"]}]}",
         "[\"a\",\"b\",\"c\"]")]
     public void FlattenOperations(string expression, string data, string expected)
@@ -317,14 +323,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Regex match (lines 6370-6409)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$match(\"hello world\", /wo/)", "null",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$match(\"hello world\", /wo/)", "null",
         "{\"match\":\"wo\",\"index\":6,\"groups\":[]}")]
-    [InlineData("$match(\"abc123\", /([a-z]+)(\\d+)/)", "null",
+    [DataRow("$match(\"abc123\", /([a-z]+)(\\d+)/)", "null",
         "{\"match\":\"abc123\",\"index\":0,\"groups\":[\"abc\",\"123\"]}")]
-    [InlineData("$contains(\"test123\", /\\d+/)", "null", "true")]
-    [InlineData("$replace(\"hello\", /l/, \"r\")", "null", "\"herro\"")]
+    [DataRow("$contains(\"test123\", /\\d+/)", "null", "true")]
+    [DataRow("$replace(\"hello\", /l/, \"r\")", "null", "\"herro\"")]
     public void RegexOperations(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -335,11 +341,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // EnumerateWildcard, EnumerateDescendant
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("*", "{\"a\":1,\"b\":2,\"c\":3}", "[1,2,3]")]
-    [InlineData("**.v", "{\"a\":{\"v\":1},\"b\":{\"c\":{\"v\":2}}}", "[1,2]")]
-    [InlineData("items.*",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("*", "{\"a\":1,\"b\":2,\"c\":3}", "[1,2,3]")]
+    [DataRow("**.v", "{\"a\":{\"v\":1},\"b\":{\"c\":{\"v\":2}}}", "[1,2]")]
+    [DataRow("items.*",
         "{\"items\":{\"x\":1,\"y\":2,\"z\":3}}",
         "[1,2,3]")]
     public void WildcardAndDescendant(string expression, string data, string expected)
@@ -351,10 +357,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Encoding: base64 (lines 5782+ adjacent)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$base64encode(\"hello\")", "null", "\"aGVsbG8=\"")]
-    [InlineData("$base64decode(\"aGVsbG8=\")", "null", "\"hello\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$base64encode(\"hello\")", "null", "\"aGVsbG8=\"")]
+    [DataRow("$base64decode(\"aGVsbG8=\")", "null", "\"hello\"")]
     public void Base64Operations(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -364,15 +370,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Count/exists over chains (lines 2287-2306)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$count(items.name)",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$count(items.name)",
         "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]}",
         "3")]
-    [InlineData("$exists(items.name)",
+    [DataRow("$exists(items.name)",
         "{\"items\":[{\"name\":\"a\"}]}",
         "true")]
-    [InlineData("$exists(items.missing)",
+    [DataRow("$exists(items.missing)",
         "{\"items\":[{\"name\":\"a\"}]}",
         "false")]
     public void CountExistsOverChains(string expression, string data, string expected)
@@ -384,12 +390,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $string on complex objects (lines 9236-9260)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$string({\"a\":1,\"b\":[2,3]})", "null", "\"{\\\"a\\\":1,\\\"b\\\":[2,3]}\"")]
-    [InlineData("$string([1,2,3])", "null", "\"[1,2,3]\"")]
-    [InlineData("$string(null)", "null", "\"null\"")]
-    [InlineData("$string(true)", "null", "\"true\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$string({\"a\":1,\"b\":[2,3]})", "null", "\"{\\\"a\\\":1,\\\"b\\\":[2,3]}\"")]
+    [DataRow("$string([1,2,3])", "null", "\"[1,2,3]\"")]
+    [DataRow("$string(null)", "null", "\"null\"")]
+    [DataRow("$string(true)", "null", "\"true\"")]
     public void StringifyComplex(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -399,11 +405,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $split with empty separator (lines 4026-4044)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$split(\"abc\", \"\")", "null", "[\"a\",\"b\",\"c\"]")]
-    [InlineData("$split(\"hello\", \"l\")", "null", "[\"he\",\"\",\"o\"]")]
-    [InlineData("$split(\"a.b.c\", \".\")", "null", "[\"a\",\"b\",\"c\"]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$split(\"abc\", \"\")", "null", "[\"a\",\"b\",\"c\"]")]
+    [DataRow("$split(\"hello\", \"l\")", "null", "[\"he\",\"\",\"o\"]")]
+    [DataRow("$split(\"a.b.c\", \".\")", "null", "[\"a\",\"b\",\"c\"]")]
     public void SplitOperations(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -413,14 +419,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Arithmetic via CG
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("a + b", "{\"a\":10,\"b\":20}", "30")]
-    [InlineData("a - b", "{\"a\":20,\"b\":7}", "13")]
-    [InlineData("a * b", "{\"a\":3,\"b\":4}", "12")]
-    [InlineData("a / b", "{\"a\":10,\"b\":4}", "2.5")]
-    [InlineData("a % b", "{\"a\":10,\"b\":3}", "1")]
-    [InlineData("-val", "{\"val\":42}", "-42")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("a + b", "{\"a\":10,\"b\":20}", "30")]
+    [DataRow("a - b", "{\"a\":20,\"b\":7}", "13")]
+    [DataRow("a * b", "{\"a\":3,\"b\":4}", "12")]
+    [DataRow("a / b", "{\"a\":10,\"b\":4}", "2.5")]
+    [DataRow("a % b", "{\"a\":10,\"b\":3}", "1")]
+    [DataRow("-val", "{\"val\":42}", "-42")]
     public void ArithmeticWithData(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -430,11 +436,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $formatBase / $formatNumber (lines 7287+)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$formatBase(255, 16)", "null", "\"ff\"")]
-    [InlineData("$formatBase(10, 2)", "null", "\"1010\"")]
-    [InlineData("$formatBase(255, 8)", "null", "\"377\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$formatBase(255, 16)", "null", "\"ff\"")]
+    [DataRow("$formatBase(10, 2)", "null", "\"1010\"")]
+    [DataRow("$formatBase(255, 8)", "null", "\"377\"")]
     public void FormatBase(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -444,18 +450,18 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $lookup / $keys / $values (lines 4713-4766)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$keys({\"a\":1,\"b\":2,\"c\":3})", "null", "[\"a\",\"b\",\"c\"]")]
-    [InlineData("$values({\"a\":1,\"b\":2,\"c\":3})", "null", "[1,2,3]")]
-    [InlineData("$lookup({\"a\":1,\"b\":2}, \"b\")", "null", "2")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$keys({\"a\":1,\"b\":2,\"c\":3})", "null", "[\"a\",\"b\",\"c\"]")]
+    [DataRow("$values({\"a\":1,\"b\":2,\"c\":3})", "null", "[1,2,3]")]
+    [DataRow("$lookup({\"a\":1,\"b\":2}, \"b\")", "null", "2")]
     public void KeysValuesLookup(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
-    [Fact]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     public void LookupMissing_ReturnsUndefined()
     {
         this.AssertCgAndRtBothUndefined("$lookup({\"a\":1,\"b\":2}, \"missing\")", "null");
@@ -465,11 +471,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $pad (string padding)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$pad(\"hello\", 10)", "null", "\"hello     \"")]
-    [InlineData("$pad(\"hello\", -10)", "null", "\"     hello\"")]
-    [InlineData("$pad(\"hello\", 10, \"#\")", "null", "\"hello#####\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$pad(\"hello\", 10)", "null", "\"hello     \"")]
+    [DataRow("$pad(\"hello\", -10)", "null", "\"     hello\"")]
+    [DataRow("$pad(\"hello\", 10, \"#\")", "null", "\"hello#####\"")]
     public void PadOperations(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -479,41 +485,41 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $shuffle (lines 5162-5185)
     // ═══════════════════════════════════════════════════════════════
 
-    [Fact]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     public void Shuffle_ProducesSameLengthArray()
     {
         string expression = "$shuffle([1,2,3,4,5])";
         string data = "null";
 
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
         JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal(JsonValueKind.Array, cgResult.ValueKind);
-        Assert.Equal(5, cgResult.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, cgResult.ValueKind);
+        Assert.AreEqual(5, cgResult.GetArrayLength());
 
         string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
-        Assert.NotNull(rtResult);
+        Assert.IsNotNull(rtResult);
     }
 
     // ═══════════════════════════════════════════════════════════════
     // Comparison operators via CG (lines 1030-1035)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("a < b", "{\"a\":1,\"b\":2}", "true")]
-    [InlineData("a > b", "{\"a\":3,\"b\":2}", "true")]
-    [InlineData("a <= b", "{\"a\":2,\"b\":2}", "true")]
-    [InlineData("a >= b", "{\"a\":1,\"b\":2}", "false")]
-    [InlineData("a = b", "{\"a\":1,\"b\":1}", "true")]
-    [InlineData("a != b", "{\"a\":1,\"b\":2}", "true")]
-    [InlineData("a in [\"x\",\"y\",\"z\"]", "{\"a\":\"y\"}", "true")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("a < b", "{\"a\":1,\"b\":2}", "true")]
+    [DataRow("a > b", "{\"a\":3,\"b\":2}", "true")]
+    [DataRow("a <= b", "{\"a\":2,\"b\":2}", "true")]
+    [DataRow("a >= b", "{\"a\":1,\"b\":2}", "false")]
+    [DataRow("a = b", "{\"a\":1,\"b\":1}", "true")]
+    [DataRow("a != b", "{\"a\":1,\"b\":2}", "true")]
+    [DataRow("a in [\"x\",\"y\",\"z\"]", "{\"a\":\"y\"}", "true")]
     public void ComparisonOperators(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -523,13 +529,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $append / $reverse (lines 5252-5256)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$append([1,2], [3,4])", "null", "[1,2,3,4]")]
-    [InlineData("$append(1, [2,3])", "null", "[1,2,3]")]
-    [InlineData("$append([1,2], 3)", "null", "[1,2,3]")]
-    [InlineData("$reverse([1,2,3])", "null", "[3,2,1]")]
-    [InlineData("$reverse(items)", "{\"items\":[10,20,30]}", "[30,20,10]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$append([1,2], [3,4])", "null", "[1,2,3,4]")]
+    [DataRow("$append(1, [2,3])", "null", "[1,2,3]")]
+    [DataRow("$append([1,2], 3)", "null", "[1,2,3]")]
+    [DataRow("$reverse([1,2,3])", "null", "[3,2,1]")]
+    [DataRow("$reverse(items)", "{\"items\":[10,20,30]}", "[30,20,10]")]
     public void AppendReverse(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -539,16 +545,16 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $type / $length (lines 7780-7830)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$type(42)", "null", "\"number\"")]
-    [InlineData("$type(\"hello\")", "null", "\"string\"")]
-    [InlineData("$type(true)", "null", "\"boolean\"")]
-    [InlineData("$type(null)", "null", "\"null\"")]
-    [InlineData("$type({\"a\":1})", "null", "\"object\"")]
-    [InlineData("$type([1,2])", "null", "\"array\"")]
-    [InlineData("$length(\"hello\")", "null", "5")]
-    [InlineData("$count([1,2,3])", "null", "3")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$type(42)", "null", "\"number\"")]
+    [DataRow("$type(\"hello\")", "null", "\"string\"")]
+    [DataRow("$type(true)", "null", "\"boolean\"")]
+    [DataRow("$type(null)", "null", "\"null\"")]
+    [DataRow("$type({\"a\":1})", "null", "\"object\"")]
+    [DataRow("$type([1,2])", "null", "\"array\"")]
+    [DataRow("$length(\"hello\")", "null", "5")]
+    [DataRow("$count([1,2,3])", "null", "3")]
     public void TypeAndLength(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -558,12 +564,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Chain with keep-array and wildcard (lines 601-622)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items.name[]",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items.name[]",
         "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]}",
         "[\"a\",\"b\"]")]
-    [InlineData("data.*[]",
+    [DataRow("data.*[]",
         "{\"data\":{\"x\":[1,2],\"y\":[3,4]}}",
         "[1,2,3,4]")]
     public void ChainWithKeepArray(string expression, string data, string expected)
@@ -575,12 +581,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Substring operations
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$substringBefore(\"hello world\", \" \")", "null", "\"hello\"")]
-    [InlineData("$substringAfter(\"hello world\", \" \")", "null", "\"world\"")]
-    [InlineData("$substring(\"hello world\", 3, 5)", "null", "\"lo wo\"")]
-    [InlineData("$substring(\"hello\", -3)", "null", "\"llo\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$substringBefore(\"hello world\", \" \")", "null", "\"hello\"")]
+    [DataRow("$substringAfter(\"hello world\", \" \")", "null", "\"world\"")]
+    [DataRow("$substring(\"hello world\", 3, 5)", "null", "\"lo wo\"")]
+    [DataRow("$substring(\"hello\", -3)", "null", "\"llo\"")]
     public void SubstringOperations(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -590,12 +596,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $join with separator (lines 2498-2505)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$join(items.name, \", \")",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$join(items.name, \", \")",
         "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]}",
         "\"a, b, c\"")]
-    [InlineData("$join([\"x\",\"y\",\"z\"])", "null", "\"xyz\"")]
+    [DataRow("$join([\"x\",\"y\",\"z\"])", "null", "\"xyz\"")]
     public void JoinOverChains(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -605,9 +611,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $single with predicate (lines 5243-5256)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$single([1,2,3], function($v) { $v = 2 })", "null", "2")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$single([1,2,3], function($v) { $v = 2 })", "null", "2")]
     public void SingleWithPredicate(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -617,15 +623,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Conditional / ternary
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("active ? name : \"none\"",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("active ? name : \"none\"",
         "{\"active\":true,\"name\":\"Alice\"}",
         "\"Alice\"")]
-    [InlineData("active ? name : \"none\"",
+    [DataRow("active ? name : \"none\"",
         "{\"active\":false,\"name\":\"Alice\"}",
         "\"none\"")]
-    [InlineData("$count(items) > 0 ? items[0] : null",
+    [DataRow("$count(items) > 0 ? items[0] : null",
         "{\"items\":[42]}",
         "42")]
     public void ConditionalExpressions(string expression, string data, string expected)
@@ -638,15 +644,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // SumOverChain, SumOverChainCore, AggregateBuffer
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$sum(data.nested.v)",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$sum(data.nested.v)",
         "{\"data\":[{\"nested\":{\"v\":1}},{\"nested\":{\"v\":2}},{\"nested\":{\"v\":3}}]}",
         "6")]
-    [InlineData("$count(data.items)",
+    [DataRow("$count(data.items)",
         "{\"data\":[{\"items\":\"a\"},{\"items\":\"b\"},{\"items\":\"c\"},{\"items\":\"d\"}]}",
         "4")]
-    [InlineData("$average(scores.val)",
+    [DataRow("$average(scores.val)",
         "{\"scores\":[{\"val\":10},{\"val\":20},{\"val\":30}]}",
         "20")]
     public void AggregateOverDeepChains(string expression, string data, string expected)
@@ -659,9 +665,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ChainDistinct
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$distinct(items.cat)",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$distinct(items.cat)",
         "{\"items\":[{\"cat\":\"A\"},{\"cat\":\"B\"},{\"cat\":\"A\"},{\"cat\":\"C\"}]}",
         "[\"A\",\"B\",\"C\"]")]
     public void DistinctOverChain(string expression, string data, string expected)
@@ -673,10 +679,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $map with index parameter via CG
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$map([10,20,30], function($v, $i) { $i })", "null", "[0,1,2]")]
-    [InlineData("$map([10,20,30], function($v, $i) { $v + $i })", "null", "[10,21,32]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$map([10,20,30], function($v, $i) { $i })", "null", "[0,1,2]")]
+    [DataRow("$map([10,20,30], function($v, $i) { $v + $i })", "null", "[10,21,32]")]
     public void MapWithIndex(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -686,10 +692,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Object construction via CG
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("{\"sum\": a + b}", "{\"a\":3,\"b\":4}", "{\"sum\":7}")]
-    [InlineData("{\"x\": $count(items)}", "{\"items\":[1,2,3]}", "{\"x\":3}")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("{\"sum\": a + b}", "{\"a\":3,\"b\":4}", "{\"sum\":7}")]
+    [DataRow("{\"x\": $count(items)}", "{\"items\":[1,2,3]}", "{\"x\":3}")]
     public void ObjectConstruction(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -700,18 +706,18 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (lines 2312-2360: else branches in nested TryGetProperty)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // Root is array → i==0 fallback (line 2328)
-    [InlineData("a.b.c",
+    [DataRow("a.b.c",
         "[{\"a\":{\"b\":{\"c\":1}}},{\"a\":{\"b\":{\"c\":2}}}]",
         "[1,2]")]
     // 4-step chain where 2nd step yields array → middle fallback (line 2356)
-    [InlineData("a.b.c.d",
+    [DataRow("a.b.c.d",
         "{\"a\":[{\"b\":{\"c\":{\"d\":10}}},{\"b\":{\"c\":{\"d\":20}}}]}",
         "[10,20]")]
     // 5-step chain with array at step 2
-    [InlineData("a.b.c.d.e",
+    [DataRow("a.b.c.d.e",
         "{\"a\":{\"b\":[{\"c\":{\"d\":{\"e\":99}}}]}}",
         "99")]
     public void NavigatePropertyChainFallback(string expression, string data, string expected)
@@ -726,12 +732,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     //       items.{...} = path step (SimpleGroupByPerElement)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items.{category: value}",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items.{category: value}",
         "{\"items\":[{\"category\":\"A\",\"value\":1},{\"category\":\"B\",\"value\":2},{\"category\":\"A\",\"value\":3}]}",
         "[{\"A\":1},{\"B\":2},{\"A\":3}]")]
-    [InlineData("items.{type: name}",
+    [DataRow("items.{type: name}",
         "{\"items\":[{\"type\":\"x\",\"name\":\"foo\"},{\"type\":\"y\",\"name\":\"bar\"},{\"type\":\"x\",\"name\":\"baz\"}]}",
         "[{\"x\":\"foo\"},{\"y\":\"bar\"},{\"x\":\"baz\"}]")]
     public void SimpleGroupByPerElement(string expression, string data, string expected)
@@ -744,12 +750,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (line 2762: 2+ NameNode chain + single-pair NameNode groupby)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("data.items{category: value}",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("data.items{category: value}",
         "{\"data\":{\"items\":[{\"category\":\"A\",\"value\":1},{\"category\":\"B\",\"value\":2},{\"category\":\"A\",\"value\":3}]}}",
         "{\"A\":[1,3],\"B\":2}")]
-    [InlineData("store.products{brand: price}",
+    [DataRow("store.products{brand: price}",
         "{\"store\":{\"products\":[{\"brand\":\"X\",\"price\":10},{\"brand\":\"Y\",\"price\":20},{\"brand\":\"X\",\"price\":30}]}}",
         "{\"X\":[10,30],\"Y\":20}")]
     public void FusedChainGroupByPerElement(string expression, string data, string expected)
@@ -762,14 +768,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (line 6835: 2-arg, line 6839: 3-arg)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // 2-arg: both are 2-step chains
-    [InlineData("$zip(data.prices, data.quantities)",
+    [DataRow("$zip(data.prices, data.quantities)",
         "{\"data\":{\"prices\":[10,20,30],\"quantities\":[2,3,4]}}",
         "[[10,2],[20,3],[30,4]]")]
     // 3-arg: all three are chains
-    [InlineData("$zip(data.a, data.b, data.c)",
+    [DataRow("$zip(data.a, data.b, data.c)",
         "{\"data\":{\"a\":[1,2],\"b\":[3,4],\"c\":[5,6]}}",
         "[[1,3,5],[2,4,6]]")]
     public void ZipFromBuffers(string expression, string data, string expected)
@@ -782,18 +788,18 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (line 6847: chain first, line 6851: literal first)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // chain + literal → ZipBufferAndElement
-    [InlineData("$zip(data.items, [10,20,30])",
+    [DataRow("$zip(data.items, [10,20,30])",
         "{\"data\":{\"items\":[1,2,3]}}",
         "[[1,10],[2,20],[3,30]]")]
     // literal + chain → ZipElementAndBuffer
-    [InlineData("$zip([10,20,30], data.items)",
+    [DataRow("$zip([10,20,30], data.items)",
         "{\"data\":{\"items\":[1,2,3]}}",
         "[[10,1],[20,2],[30,3]]")]
     // chain + computed expression → ZipBufferAndElement
-    [InlineData("$zip(data.values, $reverse([7,8,9]))",
+    [DataRow("$zip(data.values, $reverse([7,8,9]))",
         "{\"data\":{\"values\":[1,2,3]}}",
         "[[1,9],[2,8],[3,7]]")]
     public void ZipMixedBufferAndElement(string expression, string data, string expected)
@@ -806,18 +812,18 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (line 5640: MapElementsDouble specialization)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$map([1,2,3,4,5], function($v){$v * 2})",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$map([1,2,3,4,5], function($v){$v * 2})",
         "null",
         "[2,4,6,8,10]")]
-    [InlineData("$map([10,20,30], function($v){$v + 5})",
+    [DataRow("$map([10,20,30], function($v){$v + 5})",
         "null",
         "[15,25,35]")]
-    [InlineData("$map([100,200], function($v){$v / 4})",
+    [DataRow("$map([100,200], function($v){$v / 4})",
         "null",
         "[25,50]")]
-    [InlineData("$map(items, function($v){$v - 1})",
+    [DataRow("$map(items, function($v){$v - 1})",
         "{\"items\":[5,10,15]}",
         "[4,9,14]")]
     public void MapElementsDouble(string expression, string data, string expected)
@@ -830,15 +836,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (line 2741: data.items.($ * 2))
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("data.items.($ * 2)",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("data.items.($ * 2)",
         "{\"data\":{\"items\":[1,2,3,4]}}",
         "[2,4,6,8]")]
-    [InlineData("data.values.($ + 10)",
+    [DataRow("data.values.($ + 10)",
         "{\"data\":{\"values\":[5,15,25]}}",
         "[15,25,35]")]
-    [InlineData("data.prices.($ / 100)",
+    [DataRow("data.prices.($ / 100)",
         "{\"data\":{\"prices\":[150,250,350]}}",
         "[1.5,2.5,3.5]")]
     public void MapChainDouble(string expression, string data, string expected)
@@ -851,12 +857,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (line 4725: prefix is simple chain + last step arithmetic)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$sum(data.items.(price * quantity))",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$sum(data.items.(price * quantity))",
         "{\"data\":{\"items\":[{\"price\":10,\"quantity\":2},{\"price\":20,\"quantity\":3}]}}",
         "80")]
-    [InlineData("$sum(data.values.($ + 1))",
+    [DataRow("$sum(data.values.($ + 1))",
         "{\"data\":{\"values\":[1,2,3]}}",
         "9")]
     public void SumOverChainDoubleRaw(string expression, string data, string expected)
@@ -869,12 +875,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (line 4740: prefix is NOT simple chain → fallback path)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$sum(items[type=\"A\"].(price * qty))",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$sum(items[type=\"A\"].(price * qty))",
         "{\"items\":[{\"type\":\"A\",\"price\":10,\"qty\":2},{\"type\":\"B\",\"price\":5,\"qty\":1},{\"type\":\"A\",\"price\":7,\"qty\":3}]}",
         "41")]
-    [InlineData("$sum(items[active=true].(value + bonus))",
+    [DataRow("$sum(items[active=true].(value + bonus))",
         "{\"items\":[{\"active\":true,\"value\":10,\"bonus\":5},{\"active\":false,\"value\":100,\"bonus\":50},{\"active\":true,\"value\":20,\"bonus\":3}]}",
         "38")]
     public void SumOverElementsDoubleRaw(string expression, string data, string expected)
@@ -887,14 +893,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (line 6305: 3-param, line 6309: 2-param)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // 2-param on data property
-    [InlineData("$each(obj, function($v, $k){ $k & \":\" & $string($v) })",
+    [DataRow("$each(obj, function($v, $k){ $k & \":\" & $string($v) })",
         "{\"obj\":{\"x\":1,\"y\":2,\"z\":3}}",
         "[\"x:1\",\"y:2\",\"z:3\"]")]
     // 1-param $each — just values
-    [InlineData("$each(obj, function($v){ $v * 2 })",
+    [DataRow("$each(obj, function($v){ $v * 2 })",
         "{\"obj\":{\"a\":1,\"b\":2,\"c\":3}}",
         "[2,4,6]")]
     public void EachPropertyOnData(string expression, string data, string expected)
@@ -909,12 +915,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     //   where last step is ObjectConstructor with all StringNode keys
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("[data.items.profiles.{\"fullName\": name, \"years\": age}]",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("[data.items.profiles.{\"fullName\": name, \"years\": age}]",
         "{\"data\":{\"items\":[{\"profiles\":[{\"name\":\"Alice\",\"age\":30},{\"name\":\"Bob\",\"age\":25}]}]}}",
         "[{\"fullName\":\"Alice\",\"years\":30},{\"fullName\":\"Bob\",\"years\":25}]")]
-    [InlineData("[store.dept.employees.{\"id\": empId, \"title\": role}]",
+    [DataRow("[store.dept.employees.{\"id\": empId, \"title\": role}]",
         "{\"store\":{\"dept\":[{\"employees\":[{\"empId\":1,\"role\":\"dev\"},{\"empId\":2,\"role\":\"qa\"}]}]}}",
         "[{\"id\":1,\"title\":\"dev\"},{\"id\":2,\"title\":\"qa\"}]")]
     public void FusedChainBuildArray(string expression, string data, string expected)
@@ -928,21 +934,21 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // These use EmitApply → TryGetFusedChainAggregateHelper
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("data.scores ~> $average",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("data.scores ~> $average",
         "{\"data\":{\"scores\":[10,20,30]}}",
         "20")]
-    [InlineData("data.values ~> $sum",
+    [DataRow("data.values ~> $sum",
         "{\"data\":{\"values\":[1,2,3,4]}}",
         "10")]
-    [InlineData("data.items ~> $count",
+    [DataRow("data.items ~> $count",
         "{\"data\":{\"items\":[\"a\",\"b\",\"c\"]}}",
         "3")]
-    [InlineData("data.nums ~> $max",
+    [DataRow("data.nums ~> $max",
         "{\"data\":{\"nums\":[3,7,1,9,2]}}",
         "9")]
-    [InlineData("data.nums ~> $min",
+    [DataRow("data.nums ~> $min",
         "{\"data\":{\"nums\":[3,7,1,9,2]}}",
         "1")]
     public void AggregateOverChainViaPipe(string expression, string data, string expected)
@@ -955,18 +961,18 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $sort(chain, comparator) where first arg is 2+ step chain
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // Chain-fused sort with comparator
-    [InlineData("$sort(data.items, function($a, $b) { $a > $b })",
+    [DataRow("$sort(data.items, function($a, $b) { $a > $b })",
         "{\"data\":{\"items\":[3,1,4,1,5]}}",
         "[1,1,3,4,5]")]
     // Chain-fused sort by property
-    [InlineData("$sort(data.records, function($a, $b) { $a.score > $b.score })",
+    [DataRow("$sort(data.records, function($a, $b) { $a.score > $b.score })",
         "{\"data\":{\"records\":[{\"score\":30},{\"score\":10},{\"score\":20}]}}",
         "[{\"score\":10},{\"score\":20},{\"score\":30}]")]
     // Chain-fused default sort (no comparator)
-    [InlineData("$sort(data.values)",
+    [DataRow("$sort(data.values)",
         "{\"data\":{\"values\":[5,2,8,1,9]}}",
         "[1,2,5,8,9]")]
     public void SortChainFused(string expression, string data, string expected)
@@ -979,9 +985,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Uses TryEmitAggregationChainFusion with "AverageOverChainDouble"
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$average(data.items.(price * quantity))",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$average(data.items.(price * quantity))",
         "{\"data\":{\"items\":[{\"price\":10,\"quantity\":2},{\"price\":20,\"quantity\":3}]}}",
         "40")]
     public void AverageOverChainDouble(string expression, string data, string expected)
@@ -994,17 +1000,17 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (lines 4595-4622: ConcatBuilder with AppendAutoMap)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // Single element from chain in concat
-    [InlineData("\"Prefix: \" & data.name",
+    [DataRow("\"Prefix: \" & data.name",
         "{\"data\":{\"name\":\"Alice\"}}",
         "\"Prefix: Alice\"")]
-    [InlineData("data.label & \" suffix\"",
+    [DataRow("data.label & \" suffix\"",
         "{\"data\":{\"label\":\"hello\"}}",
         "\"hello suffix\"")]
     // Multi-step chain concat
-    [InlineData("\"v=\" & $string(data.info.value)",
+    [DataRow("\"v=\" & $string(data.info.value)",
         "{\"data\":{\"info\":{\"value\":42}}}",
         "\"v=42\"")]
     public void ConcatWithChainProperty(string expression, string data, string expected)
@@ -1017,12 +1023,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Path step annotation with ^(>key) or ^(<key) syntax
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items^(price)",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items^(price)",
         "{\"items\":[{\"name\":\"c\",\"price\":30},{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":20}]}",
         "[{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":20},{\"name\":\"c\",\"price\":30}]")]
-    [InlineData("items^(>price)",
+    [DataRow("items^(>price)",
         "{\"items\":[{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":20},{\"name\":\"c\",\"price\":30}]}",
         "[{\"name\":\"c\",\"price\":30},{\"name\":\"b\",\"price\":20},{\"name\":\"a\",\"price\":10}]")]
     public void SortByKeys(string expression, string data, string expected)
@@ -1034,10 +1040,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // String concatenation with 6+ operands (StringConcatMany)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("\"a\" & \"b\" & \"c\" & \"d\" & \"e\" & \"f\"", "null", "\"abcdef\"")]
-    [InlineData("\"1\" & \"2\" & \"3\" & \"4\" & \"5\" & \"6\" & \"7\"", "null", "\"1234567\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("\"a\" & \"b\" & \"c\" & \"d\" & \"e\" & \"f\"", "null", "\"abcdef\"")]
+    [DataRow("\"1\" & \"2\" & \"3\" & \"4\" & \"5\" & \"6\" & \"7\"", "null", "\"1234567\"")]
     public void StringConcatMany(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1047,12 +1053,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // String concat with auto-mapped chain (BeginConcatRented + CoerceToStringElement)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("\"prefix:\" & name",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("\"prefix:\" & name",
         "{\"name\":\"hello\"}",
         "\"prefix:hello\"")]
-    [InlineData("\"val=\" & $string(num)",
+    [DataRow("\"val=\" & $string(num)",
         "{\"num\":42}",
         "\"val=42\"")]
     public void StringConcatWithChain(string expression, string data, string expected)
@@ -1064,9 +1070,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $each with 2-parameter and 3-parameter functions
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$each({\"a\":1,\"b\":2}, function($v,$k){$k & \"=\" & $string($v)})",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$each({\"a\":1,\"b\":2}, function($v,$k){$k & \"=\" & $string($v)})",
         "null",
         "[\"a=1\",\"b=2\"]")]
     public void EachPropertyThreeParam(string expression, string data, string expected)
@@ -1078,9 +1084,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Chain operations: ChainDistinct, ChainKeepSingletonArray, ChainMerge
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items.category",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items.category",
         "{\"items\":[{\"category\":\"a\"},{\"category\":\"b\"},{\"category\":\"a\"},{\"category\":\"c\"}]}",
         "[\"a\",\"b\",\"a\",\"c\"]")]
     public void ChainPropertyOverArray(string expression, string data, string expected)
@@ -1092,12 +1098,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $formatNumber via CG path (CreateFormatNumberPicture)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$formatNumber(num, \"#,##0.00\")",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$formatNumber(num, \"#,##0.00\")",
         "{\"num\":12345.6}",
         "\"12,345.60\"")]
-    [InlineData("$formatNumber(val, \"000\")",
+    [DataRow("$formatNumber(val, \"000\")",
         "{\"val\":7}",
         "\"007\"")]
     public void FormatNumberViaCg(string expression, string data, string expected)
@@ -1109,42 +1115,42 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $now and $millis (nullary builtins)
     // ═══════════════════════════════════════════════════════════════
 
-    [Fact]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     public void NowReturnsTimestamp()
     {
         // $now() and $millis() are time-sensitive — can't compare CG vs RT
-        CompiledExpression compiled = this.fixture.GetOrCompile("$now()");
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        CompiledExpression compiled = s_fixture!.GetOrCompile("$now()");
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse("null"u8.ToArray());
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal(JsonValueKind.String, cgResult.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, cgResult.ValueKind);
     }
 
-    [Fact]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     public void MillisReturnsNumber()
     {
-        CompiledExpression compiled = this.fixture.GetOrCompile("$millis()");
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        CompiledExpression compiled = s_fixture!.GetOrCompile("$millis()");
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse("null"u8.ToArray());
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal(JsonValueKind.Number, cgResult.ValueKind);
-        Assert.True(cgResult.GetDouble() > 0);
+        Assert.AreEqual(JsonValueKind.Number, cgResult.ValueKind);
+        Assert.IsTrue(cgResult.GetDouble() > 0);
     }
 
     // ═══════════════════════════════════════════════════════════════
     // $exists over chain (ExistsOverChain)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$exists(data.name)", "{\"data\":{\"name\":\"hello\"}}", "true")]
-    [InlineData("$exists(data.missing)", "{\"data\":{\"name\":\"hello\"}}", "false")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$exists(data.name)", "{\"data\":{\"name\":\"hello\"}}", "true")]
+    [DataRow("$exists(data.missing)", "{\"data\":{\"name\":\"hello\"}}", "false")]
     public void ExistsOverChain(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1154,14 +1160,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Comparison operators (CompareNumberGTE/LTE)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("a >= b", "{\"a\":5,\"b\":3}", "true")]
-    [InlineData("a >= b", "{\"a\":3,\"b\":3}", "true")]
-    [InlineData("a >= b", "{\"a\":2,\"b\":3}", "false")]
-    [InlineData("a <= b", "{\"a\":2,\"b\":3}", "true")]
-    [InlineData("a <= b", "{\"a\":3,\"b\":3}", "true")]
-    [InlineData("a <= b", "{\"a\":5,\"b\":3}", "false")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("a >= b", "{\"a\":5,\"b\":3}", "true")]
+    [DataRow("a >= b", "{\"a\":3,\"b\":3}", "true")]
+    [DataRow("a >= b", "{\"a\":2,\"b\":3}", "false")]
+    [DataRow("a <= b", "{\"a\":2,\"b\":3}", "true")]
+    [DataRow("a <= b", "{\"a\":3,\"b\":3}", "true")]
+    [DataRow("a <= b", "{\"a\":5,\"b\":3}", "false")]
     public void CompareNumberGteLte(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1171,13 +1177,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Arithmetic operators (BinaryArithmetic)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("a + b", "{\"a\":10,\"b\":3}", "13")]
-    [InlineData("a - b", "{\"a\":10,\"b\":3}", "7")]
-    [InlineData("a * b", "{\"a\":10,\"b\":3}", "30")]
-    [InlineData("a / b", "{\"a\":10,\"b\":2}", "5")]
-    [InlineData("a % b", "{\"a\":10,\"b\":3}", "1")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("a + b", "{\"a\":10,\"b\":3}", "13")]
+    [DataRow("a - b", "{\"a\":10,\"b\":3}", "7")]
+    [DataRow("a * b", "{\"a\":10,\"b\":3}", "30")]
+    [DataRow("a / b", "{\"a\":10,\"b\":2}", "5")]
+    [DataRow("a % b", "{\"a\":10,\"b\":3}", "1")]
     public void BinaryArithmetic(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1187,8 +1193,8 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $shuffle via CG (ShuffleFromBuffer)
     // ═══════════════════════════════════════════════════════════════
 
-    [Fact]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     public void ShuffleFromBufferViaCg()
     {
         // $shuffle randomizes order, but $count is deterministic
@@ -1199,9 +1205,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $replace with regex backreference via CG
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$replace(text, /(\\w+)\\s(\\w+)/, \"$2 $1\")",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$replace(text, /(\\w+)\\s(\\w+)/, \"$2 $1\")",
         "{\"text\":\"John Smith\"}",
         "\"Smith John\"")]
     public void ReplaceBackreferenceViaCg(string expression, string data, string expected)
@@ -1213,10 +1219,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $parseInteger with XPath picture via CG
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$parseInteger(val, \"#0\")", "{\"val\":\"42\"}", "42")]
-    [InlineData("$parseInteger(val, \"#,##0\")", "{\"val\":\"1,234\"}", "1234")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$parseInteger(val, \"#0\")", "{\"val\":\"42\"}", "42")]
+    [DataRow("$parseInteger(val, \"#,##0\")", "{\"val\":\"1,234\"}", "1234")]
     public void ParseIntegerViaCg(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1226,9 +1232,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Wildcard and descendant enumeration (EnumerateWildcard)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("data.*",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("data.*",
         "{\"data\":{\"a\":1,\"b\":2,\"c\":3}}",
         "[1,2,3]")]
     public void WildcardEnumeration(string expression, string data, string expected)
@@ -1236,8 +1242,8 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
-    [Fact]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     public void DescendantEnumeration()
     {
         this.AssertCgAndRtMatch("data.**", "{\"data\":{\"a\":{\"x\":1},\"b\":2}}", "[{\"a\":{\"x\":1},\"b\":2},{\"x\":1},1,2]");
@@ -1247,12 +1253,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // FusedCollectAndContinue — chain with predicate filter
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items[price > 20].name",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items[price > 20].name",
         "{\"items\":[{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":30},{\"name\":\"c\",\"price\":25}]}",
         "[\"b\",\"c\"]")]
-    [InlineData("items[type=\"fruit\"].name",
+    [DataRow("items[type=\"fruit\"].name",
         "{\"items\":[{\"name\":\"apple\",\"type\":\"fruit\"},{\"name\":\"carrot\",\"type\":\"veg\"},{\"name\":\"banana\",\"type\":\"fruit\"}]}",
         "[\"apple\",\"banana\"]")]
     public void FusedCollectAndContinue(string expression, string data, string expected)
@@ -1264,9 +1270,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // FusedEvalFromStep — chain with computed step
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items.(name & \":\" & $string(price))",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items.(name & \":\" & $string(price))",
         "{\"items\":[{\"name\":\"a\",\"price\":10},{\"name\":\"b\",\"price\":20}]}",
         "[\"a:10\",\"b:20\"]")]
     public void FusedEvalFromStep(string expression, string data, string expected)
@@ -1278,9 +1284,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // GroupBy annotation (SimpleGroupByAnnotation)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items{category: name}",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items{category: name}",
         "{\"items\":[{\"name\":\"a\",\"category\":\"x\"},{\"name\":\"b\",\"category\":\"y\"},{\"name\":\"c\",\"category\":\"x\"}]}",
         "{\"x\":[\"a\",\"c\"],\"y\":\"b\"}")]
     public void SimpleGroupByAnnotation(string expression, string data, string expected)
@@ -1293,12 +1299,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Uses dot before { to make it a path step rather than annotation
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items.{category: name}",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items.{category: name}",
         "{\"items\":[{\"name\":\"a\",\"category\":\"x\"},{\"name\":\"b\",\"category\":\"y\"},{\"name\":\"c\",\"category\":\"x\"}]}",
         "[{\"x\":\"a\"},{\"y\":\"b\"},{\"x\":\"c\"}]")]
-    [InlineData("data.items.{category: name}",
+    [DataRow("data.items.{category: name}",
         "{\"data\":{\"items\":[{\"name\":\"a\",\"category\":\"x\"},{\"name\":\"b\",\"category\":\"y\"}]}}",
         "[{\"x\":\"a\"},{\"y\":\"b\"}]")]
     public void GroupByPerElement(string expression, string data, string expected)
@@ -1311,11 +1317,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Lines 6654-6705 in JsonataCodeGenHelpers.cs (52 uncovered lines)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$zip([1,2],[3,4],[5,6],[7,8],[9,10])", "null",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$zip([1,2],[3,4],[5,6],[7,8],[9,10])", "null",
         "[[1,3,5,7,9],[2,4,6,8,10]]")]
-    [InlineData("$zip([\"a\"],[\"b\"],[\"c\"],[\"d\"])", "null",
+    [DataRow("$zip([\"a\"],[\"b\"],[\"c\"],[\"d\"])", "null",
         "[[\"a\",\"b\",\"c\",\"d\"]]")]
     public void ZipVariadic(string expression, string data, string expected)
     {
@@ -1327,10 +1333,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Lines 6529-6556 in JsonataCodeGenHelpers.cs (28 uncovered lines)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$zip([1,2,3])", "null", "[[1],[2],[3]]")]
-    [InlineData("$zip([\"a\",\"b\"])", "null", "[[\"a\"],[\"b\"]]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$zip([1,2,3])", "null", "[[1],[2],[3]]")]
+    [DataRow("$zip([\"a\",\"b\"])", "null", "[[\"a\"],[\"b\"]]")]
     public void ZipSingleArg(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1341,11 +1347,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Lines 4024-4046 in JsonataCodeGenHelpers.cs (23 uncovered lines)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$split(\"hello\", \"\")", "null",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$split(\"hello\", \"\")", "null",
         "[\"h\",\"e\",\"l\",\"l\",\"o\"]")]
-    [InlineData("$split(\"hello\", \"\", 3)", "null",
+    [DataRow("$split(\"hello\", \"\", 3)", "null",
         "[\"h\",\"e\",\"l\"]")]
     public void SplitEmptySeparator(string expression, string data, string expected)
     {
@@ -1357,10 +1363,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Lines 4811-4853 in BuiltInFunctions.cs (ComputeRegularGrouping, 32 uncovered)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$formatNumber(1234567, \"#,##0\")", "null", "\"1,234,567\"")]
-    [InlineData("$formatNumber(1234567.89, \"#,##0.00\")", "null", "\"1,234,567.89\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$formatNumber(1234567, \"#,##0\")", "null", "\"1,234,567\"")]
+    [DataRow("$formatNumber(1234567.89, \"#,##0.00\")", "null", "\"1,234,567.89\"")]
     public void FormatNumberGrouping(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1372,12 +1378,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Note: reference jsonata 1.8.7 hangs on exponent patterns
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$formatNumber(12345, \"0.00e0\")", "null")]
-    [InlineData("$formatNumber(0.00123, \"0.00e0\")", "null")]
-    [InlineData("$formatNumber(-42.5, \"0.0e0\")", "null")]
-    [InlineData("$formatNumber(999, \"0.0e0\")", "null")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$formatNumber(12345, \"0.00e0\")", "null")]
+    [DataRow("$formatNumber(0.00123, \"0.00e0\")", "null")]
+    [DataRow("$formatNumber(-42.5, \"0.0e0\")", "null")]
+    [DataRow("$formatNumber(999, \"0.0e0\")", "null")]
     public void FormatNumberExponent(string expression, string data)
     {
         // Reference jsonata 1.8.7 hangs on exponent patterns — verify CG == RT
@@ -1389,16 +1395,16 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Lines 1655-1673 (Unicode digit + grouping), 533-540 (ordinal modifier)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$formatInteger(42, \"w\")", "null", "\"forty-two\"")]
-    [InlineData("$formatInteger(42, \"W\")", "null", "\"FORTY-TWO\"")]
-    [InlineData("$formatInteger(42, \"Ww\")", "null", "\"Forty-Two\"")]
-    [InlineData("$formatInteger(5, \"I\")", "null", "\"V\"")]
-    [InlineData("$formatInteger(1999, \"I\")", "null", "\"MCMXCIX\"")]
-    [InlineData("$formatInteger(100, \"w\")", "null", "\"one hundred\"")]
-    [InlineData("$formatInteger(0, \"w\")", "null", "\"zero\"")]
-    [InlineData("$formatInteger(1234, \"#,##0\")", "null")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$formatInteger(42, \"w\")", "null", "\"forty-two\"")]
+    [DataRow("$formatInteger(42, \"W\")", "null", "\"FORTY-TWO\"")]
+    [DataRow("$formatInteger(42, \"Ww\")", "null", "\"Forty-Two\"")]
+    [DataRow("$formatInteger(5, \"I\")", "null", "\"V\"")]
+    [DataRow("$formatInteger(1999, \"I\")", "null", "\"MCMXCIX\"")]
+    [DataRow("$formatInteger(100, \"w\")", "null", "\"one hundred\"")]
+    [DataRow("$formatInteger(0, \"w\")", "null", "\"zero\"")]
+    [DataRow("$formatInteger(1234, \"#,##0\")", "null")]
     public void FormatIntegerViaCg(string expression, string data, string? expected = null)
     {
         if (expected != null)
@@ -1417,15 +1423,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // 2444-2452 (scale words)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$parseInteger(\"42\", \"0\")", "null", "42")]
-    [InlineData("$parseInteger(\"1,234\", \"#,##0\")", "null", "1234")]
-    [InlineData("$parseInteger(\"forty-two\", \"w\")", "null", "42")]
-    [InlineData("$parseInteger(\"XLII\", \"I\")", "null", "42")]
-    [InlineData("$parseInteger(\"one hundred\", \"w\")", "null", "100")]
-    [InlineData("$parseInteger(\"one thousand\", \"w\")", "null", "1000")]
-    [InlineData("$parseInteger(\"five thousand two hundred\", \"w\")", "null", "5200")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$parseInteger(\"42\", \"0\")", "null", "42")]
+    [DataRow("$parseInteger(\"1,234\", \"#,##0\")", "null", "1234")]
+    [DataRow("$parseInteger(\"forty-two\", \"w\")", "null", "42")]
+    [DataRow("$parseInteger(\"XLII\", \"I\")", "null", "42")]
+    [DataRow("$parseInteger(\"one hundred\", \"w\")", "null", "100")]
+    [DataRow("$parseInteger(\"one thousand\", \"w\")", "null", "1000")]
+    [DataRow("$parseInteger(\"five thousand two hundred\", \"w\")", "null", "5200")]
     public void ParseIntegerCoverage(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1437,17 +1443,17 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // 3015-3026 (literal bracket), 3540-3553 (skip word)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$fromMillis(1704067200000, \"[Y0001]-[M01]-[D01]\")", "null", "\"2024-01-01\"")]
-    [InlineData("$fromMillis(1704067200000, \"[H01]:[m01]:[s01]\")", "null", "\"00:00:00\"")]
-    [InlineData("$toMillis(\"2024-01-01\", \"[Y]-[M01]-[D01]\")", "null", "1704067200000")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$fromMillis(1704067200000, \"[Y0001]-[M01]-[D01]\")", "null", "\"2024-01-01\"")]
+    [DataRow("$fromMillis(1704067200000, \"[H01]:[m01]:[s01]\")", "null", "\"00:00:00\"")]
+    [DataRow("$toMillis(\"2024-01-01\", \"[Y]-[M01]-[D01]\")", "null", "1704067200000")]
     // Day-of-week name, ordinal day, month name — exercises FormatComponent branches
-    [InlineData("$fromMillis(1704067200000, \"[FNn], [D1o] [MNn] [Y]\")", "null")]
+    [DataRow("$fromMillis(1704067200000, \"[FNn], [D1o] [MNn] [Y]\")", "null")]
     // AM/PM marker — exercises [P] component
-    [InlineData("$fromMillis(1704067200000, \"[Y]-[M]-[D] [P]\")", "null")]
+    [DataRow("$fromMillis(1704067200000, \"[Y]-[M]-[D] [P]\")", "null")]
     // Timezone with colon — exercises timezone formatting
-    [InlineData("$fromMillis(1704067200000, \"[Y]-[M]-[D]T[H]:[m]:[s][Z01:01]\")", "null")]
+    [DataRow("$fromMillis(1704067200000, \"[Y]-[M]-[D]T[H]:[m]:[s][Z01:01]\")", "null")]
     public void FromToMillisPictures(string expression, string data, string? expected = null)
     {
         if (expected != null)
@@ -1465,9 +1471,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Lines 1017-1037 in JsonataCodeGenHelpers.cs (21 uncovered lines)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("[{\"a\":1},{\"b\":2}].*", "null", "[1,2]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("[{\"a\":1},{\"b\":2}].*", "null", "[1,2]")]
     public void WildcardOnArrays(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1479,13 +1485,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // The CG path calls this when $string() is applied to non-strings
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$string(42)", "null", "\"42\"")]
-    [InlineData("$string(true)", "null", "\"true\"")]
-    [InlineData("$string(null)", "null", "\"null\"")]
-    [InlineData("$string({\"a\":1})", "null", "\"{\\\"a\\\":1}\"")]
-    [InlineData("$string([1,2])", "null", "\"[1,2]\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$string(42)", "null", "\"42\"")]
+    [DataRow("$string(true)", "null", "\"true\"")]
+    [DataRow("$string(null)", "null", "\"null\"")]
+    [DataRow("$string({\"a\":1})", "null", "\"{\\\"a\\\":1}\"")]
+    [DataRow("$string([1,2])", "null", "\"[1,2]\"")]
     public void CoerceToString(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1497,15 +1503,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises EvalChainOverArrayIntoStatic — recursive array descent
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("store.departments.employees.name",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("store.departments.employees.name",
         "{\"store\":{\"departments\":[{\"employees\":[{\"name\":\"Alice\"},{\"name\":\"Bob\"}]},{\"employees\":[{\"name\":\"Carol\"}]}]}}",
         "[\"Alice\",\"Bob\",\"Carol\"]")]
-    [InlineData("org.teams.members.skills",
+    [DataRow("org.teams.members.skills",
         "{\"org\":{\"teams\":[{\"members\":[{\"skills\":[\"js\",\"py\"]},{\"skills\":[\"go\"]}]},{\"members\":[{\"skills\":[\"rust\"]}]}]}}",
         "[\"js\",\"py\",\"go\",\"rust\"]")]
-    [InlineData("Account.Order.Product.Price",
+    [DataRow("Account.Order.Product.Price",
         "{\"Account\":{\"Order\":[{\"Product\":[{\"Price\":10},{\"Price\":20}]},{\"Product\":[{\"Price\":30}]}]}}",
         "[10,20,30]")]
     public void DeepChainThroughNestedArrays(string expression, string data, string expected)
@@ -1518,10 +1524,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Lines 4315-4343 in BuiltInFunctions.cs (29 uncovered lines)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$encodeUrlComponent(\"a=1&b=2\")", "null", "\"a%3D1%26b%3D2\"")]
-    [InlineData("$encodeUrlComponent(\"hello world!\")", "null", "\"hello%20world%21\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$encodeUrlComponent(\"a=1&b=2\")", "null", "\"a%3D1%26b%3D2\"")]
+    [DataRow("$encodeUrlComponent(\"hello world!\")", "null", "\"hello%20world%21\"")]
     public void EncodeUrlSpecialChars(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1533,9 +1539,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises ApplySimpleNamePairGroupBy — singleton vs array merging
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "items{category: value}",
         "{\"items\":[{\"category\":\"fruit\",\"value\":\"apple\"},{\"category\":\"veg\",\"value\":\"carrot\"},{\"category\":\"fruit\",\"value\":\"banana\"}]}",
         "{\"fruit\":[\"apple\",\"banana\"],\"veg\":\"carrot\"}")]
@@ -1551,13 +1557,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises CollectAndContinue / FusedFilterAndContinue
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "orders[status=\"shipped\"].items.name",
         "{\"orders\":[{\"status\":\"shipped\",\"items\":[{\"name\":\"Widget\"},{\"name\":\"Gadget\"}]},{\"status\":\"pending\",\"items\":[{\"name\":\"Thing\"}]}]}",
         "[\"Widget\",\"Gadget\"]")]
-    [InlineData(
+    [DataRow(
         "data[status=\"approved\"].value",
         "{\"data\":[{\"status\":\"approved\",\"value\":10},{\"status\":\"pending\",\"value\":20},{\"status\":\"approved\",\"value\":30}]}",
         "[10,30]")]
@@ -1572,13 +1578,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises FusedEvalFromStep with constant index + array value
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "data[0].tags",
         "{\"data\":[{\"tags\":[\"a\",\"b\"]},{\"tags\":[\"c\"]}]}",
         "[\"a\",\"b\"]")]
-    [InlineData(
+    [DataRow(
         "data[-1].tags",
         "{\"data\":[{\"tags\":[\"a\",\"b\"]},{\"tags\":[\"c\"]}]}",
         "[\"c\"]")]
@@ -1593,9 +1599,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises CompileFocusSortStage — sort with focus variable
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "$sort(items, function($l,$r){$l.priority > $r.priority})",
         "{\"items\":[{\"name\":\"c\",\"priority\":3},{\"name\":\"a\",\"priority\":1},{\"name\":\"b\",\"priority\":2}]}",
         "[{\"name\":\"a\",\"priority\":1},{\"name\":\"b\",\"priority\":2},{\"name\":\"c\",\"priority\":3}]")]
@@ -1610,9 +1616,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises CompileFilterFunc — multi-valued sequence flattening with arrays
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "$filter([1,2,3,4,5], function($v){$v > 3})",
         "null",
         "[4,5]")]
@@ -1627,9 +1633,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises CompileSpread multi-element array path
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "$spread({\"a\":1,\"b\":2})",
         "null",
         "[{\"a\":1},{\"b\":2}]")]
@@ -1644,10 +1650,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises CountCodePoints / CodePointToCharIndex
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$length(\"abc\\uD83D\\uDE00def\")", "null", "7")]
-    [InlineData("$substring(\"abc\\uD83D\\uDE00def\", 4, 3)", "null", "\"def\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$length(\"abc\\uD83D\\uDE00def\")", "null", "7")]
+    [DataRow("$substring(\"abc\\uD83D\\uDE00def\", 4, 3)", "null", "\"def\"")]
     public void UnicodeSurrogateHandling(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1659,9 +1665,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises the string coercion fallback in CompileEncodeUrl
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$encodeUrl(\"hello world/path\")", "null", "\"hello%20world/path\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$encodeUrl(\"hello world/path\")", "null", "\"hello%20world/path\"")]
     public void EncodeUrlStringPath(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1673,16 +1679,16 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises TryParseInteger ordinal format picture
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$formatInteger(1, \"1;o\")", "null", "\"1st\"")]
-    [InlineData("$formatInteger(2, \"1;o\")", "null", "\"2nd\"")]
-    [InlineData("$formatInteger(3, \"1;o\")", "null", "\"3rd\"")]
-    [InlineData("$formatInteger(11, \"1;o\")", "null", "\"11th\"")]
-    [InlineData("$formatInteger(12, \"1;o\")", "null", "\"12th\"")]
-    [InlineData("$formatInteger(13, \"1;o\")", "null", "\"13th\"")]
-    [InlineData("$formatInteger(21, \"1;o\")", "null", "\"21st\"")]
-    [InlineData("$formatInteger(101, \"1;o\")", "null", "\"101st\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$formatInteger(1, \"1;o\")", "null", "\"1st\"")]
+    [DataRow("$formatInteger(2, \"1;o\")", "null", "\"2nd\"")]
+    [DataRow("$formatInteger(3, \"1;o\")", "null", "\"3rd\"")]
+    [DataRow("$formatInteger(11, \"1;o\")", "null", "\"11th\"")]
+    [DataRow("$formatInteger(12, \"1;o\")", "null", "\"12th\"")]
+    [DataRow("$formatInteger(13, \"1;o\")", "null", "\"13th\"")]
+    [DataRow("$formatInteger(21, \"1;o\")", "null", "\"21st\"")]
+    [DataRow("$formatInteger(101, \"1;o\")", "null", "\"101st\"")]
     public void FormatIntegerOrdinal(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1694,10 +1700,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises plus/minus sign parsing in ASCII integer
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$parseInteger(\"+42\", \"0\")", "null", "42")]
-    [InlineData("$parseInteger(\"-99\", \"0\")", "null", "-99")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$parseInteger(\"+42\", \"0\")", "null", "42")]
+    [DataRow("$parseInteger(\"-99\", \"0\")", "null", "-99")]
     public void ParseIntegerWithSign(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1709,9 +1715,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises single-byte grouping separator handling
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$parseInteger(\"1,234,567\", \"#,##0\")", "null", "1234567")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$parseInteger(\"1,234,567\", \"#,##0\")", "null", "1234567")]
     public void ParseIntegerGrouping(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -1724,8 +1730,8 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // per reference jsonata. Test CG against expected, RT separately.
     // ═══════════════════════════════════════════════════════════════
 
-    [Fact]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     public void EachThreeParamCallback()
     {
         // Reference jsonata returns ["object","object"]
@@ -1735,9 +1741,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         string data = "null";
         string expectedJson = "[\"object\",\"object\"]";
 
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
         using var expectedDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(expectedJson));
@@ -1745,7 +1751,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
         JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
         string cgJson = cgResult.ValueKind == JsonValueKind.Undefined ? "undefined" : cgResult.GetRawText();
-        this.output.WriteLine($"CG: {cgJson}");
+        Console.WriteLine($"CG: {cgJson}");
         AssertJsonEqual(expectedDoc.RootElement, cgResult);
     }
 
@@ -1754,9 +1760,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Lines 2674-2716 in JsonataCodeGenHelpers.cs (43 uncovered lines)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "$map(items, function($v){$v.nested.value})",
         "{\"items\":[{\"nested\":{\"value\":10}},{\"nested\":{\"value\":20}}]}",
         "[10,20]")]
@@ -1771,13 +1777,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Exercises ContinueChainFlatInto — when chain encounters arrays mid-path
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "data.items.name",
         "{\"data\":[{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"c\"}]}]}",
         "[\"a\",\"b\",\"c\"]")]
-    [InlineData(
+    [DataRow(
         "data.items.values",
         "{\"data\":{\"items\":[{\"values\":[1,2]},{\"values\":[3,4]}]}}",
         "[1,2,3,4]")]
@@ -1792,17 +1798,17 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Also targets CollectChainFlatInto (lines 560-591)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "orders.items.tags.name",
         "{\"orders\":{\"items\":[{\"tags\":[{\"name\":\"foo\"},{\"name\":\"bar\"}]},{\"tags\":[{\"name\":\"baz\"}]}]}}",
         "[\"foo\",\"bar\",\"baz\"]")]
-    [InlineData(
+    [DataRow(
         "data.nested.items.name",
         "{\"data\":{\"nested\":[{\"items\":[{\"name\":\"a\"}]},{\"items\":[{\"name\":\"b\"},{\"name\":\"c\"}]}]}}",
         "[\"a\",\"b\",\"c\"]")]
-    [InlineData(
+    [DataRow(
         "company.departments.teams.members.name",
         "{\"company\":{\"departments\":[{\"teams\":[{\"members\":[{\"name\":\"Alice\"}]},{\"members\":[{\"name\":\"Bob\"}]}]},{\"teams\":[{\"members\":[{\"name\":\"Carol\"}]}]}]}}",
         "[\"Alice\",\"Bob\",\"Carol\"]")]
@@ -1817,9 +1823,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Data must be array of objects with string predicate then continuation
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "data[type=\"order\"].items.name",
         "{\"data\":[{\"type\":\"order\",\"items\":[{\"name\":\"x\"},{\"name\":\"y\"}]},{\"type\":\"invoice\",\"items\":[{\"name\":\"z\"}]}]}",
         "[\"x\",\"y\"]")]
@@ -1834,9 +1840,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // The index must be on a non-first step of the chain
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "data.items[0].name",
         "{\"data\":{\"items\":[{\"name\":\"first\"},{\"name\":\"second\"}]}}",
         "\"first\"")]
@@ -1850,9 +1856,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Targets EnumerateWildcard when source is data-bound array
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "data.*",
         "{\"data\":[{\"a\":1},{\"b\":2},{\"c\":3}]}",
         "[1,2,3]")]
@@ -1866,9 +1872,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Targets CompileSpread multi-element array (BI lines 2644-2660)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "$spread([{\"a\":1,\"b\":2},{\"c\":3}])",
         "null",
         "[{\"a\":1},{\"b\":2},{\"c\":3}]")]
@@ -1883,9 +1889,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Key requirement: multiple items MUST share the same key value
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         "items{cat: val}",
         "{\"items\":[{\"cat\":\"A\",\"val\":1},{\"cat\":\"A\",\"val\":2},{\"cat\":\"B\",\"val\":3}]}",
         "{\"A\":[1,2],\"B\":3}")]
@@ -1899,25 +1905,25 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // 5545-5643; JsonataCodeGenHelpers index emitter paths
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // Basic index binding with object constructor
-    [InlineData(
+    [DataRow(
         """["a","b","c"]#$i.{"value": $, "index": $i}""",
         "null",
         """[{"value":"a","index":0},{"value":"b","index":1},{"value":"c","index":2}]""")]
     // Index binding on data property
-    [InlineData(
+    [DataRow(
         """items#$i.{"item": $, "pos": $i}""",
         """{"items":["x","y","z"]}""",
         """[{"item":"x","pos":0},{"item":"y","pos":1},{"item":"z","pos":2}]""")]
     // Index binding with filter (keeps original indices)
-    [InlineData(
+    [DataRow(
         """[10,20,30,40,50]#$i[$i < 3]""",
         "null",
         "[10,20,30]")]
     // Index binding on object array with property access
-    [InlineData(
+    [DataRow(
         """items#$i.{"name": name, "idx": $i}""",
         """{"items":[{"name":"a"},{"name":"b"},{"name":"c"}]}""",
         """[{"name":"a","idx":0},{"name":"b","idx":1},{"name":"c","idx":2}]""")]
@@ -1931,15 +1937,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // 2975-3079, 3291-3409; JsonataCodeGenHelpers focus emitter
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // Cross-join: correlate loans with books by isbn
-    [InlineData(
+    [DataRow(
         """library.loans@$l.books[isbn=$l.isbn].title""",
         """{"library":{"loans":[{"isbn":"123"},{"isbn":"456"}],"books":[{"isbn":"123","title":"A"},{"isbn":"456","title":"B"}]}}""",
         """["A","B"]""")]
     // Cross-join: correlate data with related records
-    [InlineData(
+    [DataRow(
         """data@$d.other[id=$d.ref].name""",
         """{"data":[{"ref":1},{"ref":2}],"other":[{"id":1,"name":"one"},{"id":2,"name":"two"}]}""",
         """["one","two"]""")]
@@ -1953,25 +1959,25 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // lines 4857-5063 (CollectUniqueKeys, LookupCollect)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // $keys deduplicates across array of objects
-    [InlineData(
+    [DataRow(
         """$keys([{"a":1},{"b":2},{"a":3}])""",
         "null",
         """["a","b"]""")]
     // $keys on array with multiple keys per object
-    [InlineData(
+    [DataRow(
         """$keys([{"x":1,"y":2},{"y":3,"z":4}])""",
         "null",
         """["x","y","z"]""")]
     // $lookup collects all matching values across array
-    [InlineData(
+    [DataRow(
         """$lookup([{"a":1},{"a":2},{"b":3}], "a")""",
         "null",
         "[1,2]")]
     // $lookup with single match
-    [InlineData(
+    [DataRow(
         """$lookup([{"a":1},{"b":2}], "b")""",
         "null",
         "2")]
@@ -1985,20 +1991,20 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (SplitByConstantString limit handling)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // Limit truncates to at most N parts
-    [InlineData(
+    [DataRow(
         """$split("a,b,c,d", ",", 2)""",
         "null",
         """["a","b"]""")]
     // Limit of 1 returns first part only
-    [InlineData(
+    [DataRow(
         """$split("x-y-z", "-", 1)""",
         "null",
         """["x"]""")]
     // Limit greater than parts returns all
-    [InlineData(
+    [DataRow(
         """$split("a.b", ".", 10)""",
         "null",
         """["a","b"]""")]
@@ -2012,15 +2018,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ApplyJsonataBackreferences (JsonataCodeGenHelpers lines 5997-6195)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // Backreference $1 with limit
-    [InlineData(
+    [DataRow(
         """$replace("aaa", /(.)/, "[$1]", 2)""",
         "null",
         "\"[a][a]a\"")]
     // Swap two capture groups with limit
-    [InlineData(
+    [DataRow(
         """$replace("ab-cd", /([a-z])([a-z])/, "$2$1", 1)""",
         "null",
         "\"ba-cd\"")]
@@ -2034,15 +2040,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (D3138 multiple matches, D3139 no matches)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // $single with exactly one match (success)
-    [InlineData(
+    [DataRow(
         """$single([1,2,3,4,5], function($v){$v = 3})""",
         "null",
         "3")]
     // $single on single-element array without predicate
-    [InlineData(
+    [DataRow(
         """$single([42])""",
         "null",
         "42")]
@@ -2056,15 +2062,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (JsonataCodeGenHelpers lines 6904-6994, FusedArrayOfObjects)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // Object constructor with renamed keys
-    [InlineData(
+    [DataRow(
         """items.{"nm": name, "pr": cost}""",
         """{"items":[{"name":"a","cost":10},{"name":"b","cost":20}]}""",
         """[{"nm":"a","pr":10},{"nm":"b","pr":20}]""")]
     // Three-key object constructor
-    [InlineData(
+    [DataRow(
         """items.{"id": sku, "label": name, "amount": price}""",
         """{"items":[{"sku":"S1","name":"Widget","price":9.99},{"sku":"S2","name":"Gadget","price":19.99}]}""",
         """[{"id":"S1","label":"Widget","amount":9.99},{"id":"S2","label":"Gadget","amount":19.99}]""")]
@@ -2078,25 +2084,25 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (picture parsing with grouping separator patterns)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     // Large number with grouping
-    [InlineData(
+    [DataRow(
         """$formatNumber(1234567, "#,###")""",
         "null",
         "\"1,234,567\"")]
     // Grouping with decimal
-    [InlineData(
+    [DataRow(
         """$formatNumber(1234567.89, "#,##0.00")""",
         "null",
         "\"1,234,567.89\"")]
     // Negative with sub-picture (parentheses)
-    [InlineData(
+    [DataRow(
         """$formatNumber(-42.5, "#0.00;(#0.00)")""",
         "null",
         "\"(42.50)\"")]
     // Percent format
-    [InlineData(
+    [DataRow(
         """$formatNumber(0.75, "0%")""",
         "null",
         "\"75%\"")]
@@ -2110,13 +2116,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (FunctionalCompiler lines 657-709, JsonataCodeGenHelpers fused path)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$zip(a,b)""",
         """{"a":[1,2,3],"b":[4,5,6]}""",
         "[[1,4],[2,5],[3,6]]")]
-    [InlineData(
+    [DataRow(
         """$zip(a,b,c)""",
         """{"a":[1,2],"b":[3,4],"c":[5,6]}""",
         "[[1,3,5],[2,4,6]]")]
@@ -2130,9 +2136,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (FunctionalCompiler lines 5463-5498, 5959-5981)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$[type="a"]^(val)""",
         """[{"type":"a","val":3},{"type":"b","val":1},{"type":"a","val":1},{"type":"a","val":2}]""",
         """[{"type":"a","val":1},{"type":"a","val":2},{"type":"a","val":3}]""")]
@@ -2146,9 +2152,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (FunctionalCompiler lines 5545-5643, 7877-7944)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """nums[$>2]""",
         """{"nums":[1,2,3,4,5]}""",
         "[3,4,5]")]
@@ -2162,9 +2168,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (FunctionalCompiler lines 6798-6833)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """[a, b, c]""",
         """{"a":1,"b":[2,3],"c":4}""",
         "[1,2,3,4]")]
@@ -2178,9 +2184,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (FunctionalCompiler lines 1645-1663)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$[type="x"]""",
         """{"type":"x","val":1}""",
         """{"type":"x","val":1}""")]
@@ -2194,9 +2200,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (FunctionalCompiler/CGH lines 1015-1074, 1567-1581)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """**.name""",
         """{"a":{"name":"x","b":[{"name":"y"},{"name":"z"}]}}""",
         """["x","y","z"]""")]
@@ -2210,9 +2216,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (JsonataCodeGenHelpers lines 1015-1074)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """*""",
         """{"a":1,"b":[2,3],"c":"x"}""",
         """[1,2,3,"x"]""")]
@@ -2226,8 +2232,8 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (FunctionalCompiler lines 1694-1713)
     // ═══════════════════════════════════════════════════════════════
 
-    [Fact]
-    [Trait("category", "codegen-coverage")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
     public void PropertyMapPreBuildingLargeArray()
     {
         // arrayLen * remainingSteps > 10 triggers property map pre-building
@@ -2240,9 +2246,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (JsonataCodeGenHelpers lines 6351-6450)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$match("abc", /([a-z])([a-z])([a-z])/)""",
         "null",
         """{"match":"abc","index":0,"groups":["a","b","c"]}""")]
@@ -2256,9 +2262,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (BuiltInFunctions lines 3130-3138)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$match("abc123def456", /[0-9]+/, 1)""",
         "null",
         """{"match":"123","index":3,"groups":[]}""")]
@@ -2272,13 +2278,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (JsonataCodeGenHelpers lines 4354-4432)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$pad("test", 8, "\uD83C\uDF81")""",
         "null",
         "\"test\uD83C\uDF81\uD83C\uDF81\uD83C\uDF81\uD83C\uDF81\"")]
-    [InlineData(
+    [DataRow(
         """$pad("test", -8, "\uD83C\uDF81")""",
         "null",
         "\"\uD83C\uDF81\uD83C\uDF81\uD83C\uDF81\uD83C\uDF81test\"")]
@@ -2292,9 +2298,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (JsonataCodeGenHelpers lines 5997-6075)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$replace("hello world hello", "hello", "hi", 1)""",
         "null",
         "\"hi world hello\"")]
@@ -2308,13 +2314,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (BuiltInFunctions lines 2659-2675, 2696-2708)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$spread([{"a":1},{"b":2}])""",
         "null",
         """[{"a":1},{"b":2}]""")]
-    [InlineData(
+    [DataRow(
         """$spread({"a":1,"b":2})""",
         "null",
         """[{"a":1},{"b":2}]""")]
@@ -2328,17 +2334,17 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (BuiltInFunctions lines 5062-5087, 5193-5202)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$formatNumber(1234.5, "0.0e0")""",
         "null",
         "\"1.2e3\"")]
-    [InlineData(
+    [DataRow(
         """$formatNumber(0.00123, "0.00e0")""",
         "null",
         "\"1.23e-3\"")]
-    [InlineData(
+    [DataRow(
         """$formatNumber(1234567, "0.0e00")""",
         "null",
         "\"1.2e06\"")]
@@ -2352,13 +2358,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (BuiltInFunctions lines 4983-4995, 5025-5037)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$formatNumber(-42, "0;0-")""",
         "null",
         "\"42-\"")]
-    [InlineData(
+    [DataRow(
         """$formatNumber(-123, "0;(0)")""",
         "null",
         "\"(123)\"")]
@@ -2373,9 +2379,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (BuiltInFunctions lines 4826-4841, 4853-4868)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$formatNumber(12345678, "#,##,##0")""",
         "null",
         "\"123,45,678\"")]
@@ -2389,9 +2395,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (JsonataCodeGenHelpers lines 3070-3135)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$exists(items.tags)""",
         """{"items":[{"tags":["a"]},{"tags":["b"]}]}""",
         "true")]
@@ -2405,10 +2411,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (JsonataCodeGenHelpers lines 1832-1889)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("""[1..5]""", "null", "[1,2,3,4,5]")]
-    [InlineData("""[0..0]""", "null", "[0]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("""[1..5]""", "null", "[1,2,3,4,5]")]
+    [DataRow("""[0..0]""", "null", "[0]")]
     public void RangeOperator(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -2418,9 +2424,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $each on multi-property object
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$each({"a":1,"b":2,"c":3}, function($v,$k){$k & "=" & $string($v)})""",
         "null",
         """["a=1","b=2","c=3"]""")]
@@ -2433,9 +2439,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $merge with overlapping keys
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$merge([{"a":1},{"b":2},{"a":3}])""",
         "null",
         """{"a":3,"b":2}""")]
@@ -2448,9 +2454,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $flatten with nested arrays
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$flatten([[1,[2]],[[3],4]])""",
         "null",
         "[1,2,3,4]")]
@@ -2464,13 +2470,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (BuiltInFunctions lines 6251-6266, JsonataCodeGenHelpers lines 7561-7624)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$length("\uD83D\uDE00test")""",
         "null",
         "5")]
-    [InlineData(
+    [DataRow(
         """$substring("\uD83D\uDE00test", 0, 1)""",
         "null",
         "\"\uD83D\uDE00\"")]
@@ -2484,9 +2490,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (BuiltInFunctions lines 5986-5998)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """$parseInteger("123,456", "#,##0")""",
         "null",
         "123456")]
@@ -2500,9 +2506,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (FunctionalCompiler lines 6904-6994)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData(
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow(
         """items.{"n": name, "v": val}""",
         """{"items":[{"name":"a","val":1},{"name":"b","val":2}]}""",
         """[{"n":"a","v":1},{"n":"b","v":2}]""")]
@@ -2518,17 +2524,17 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     private void AssertCgAndRtMatch(string expression, string data, string expectedJson)
     {
         // === CG path ===
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Inlined:    {compiled.IsInlined}");
 
         if (compiled.Error is not null)
         {
             Assert.Fail($"CG compilation failed: {compiled.Error}");
         }
 
-        Assert.NotNull(compiled.Method);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
         using var expectedDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(expectedJson));
@@ -2541,9 +2547,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
         string rtJson = rtResult ?? "undefined";
 
-        this.output.WriteLine($"Expected: {expectedJson}");
-        this.output.WriteLine($"CG:       {cgJson}");
-        this.output.WriteLine($"RT:       {rtJson}");
+        Console.WriteLine($"Expected: {expectedJson}");
+        Console.WriteLine($"CG:       {cgJson}");
+        Console.WriteLine($"RT:       {rtJson}");
 
         // Assert CG matches expected
         AssertJsonEqual(expectedDoc.RootElement, cgResult);
@@ -2556,24 +2562,24 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         }
         else
         {
-            Assert.Equal("undefined", expectedJson);
+            Assert.AreEqual("undefined", expectedJson);
         }
     }
 
     private void AssertCgAndRtBothUndefined(string expression, string data)
     {
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
         JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal(JsonValueKind.Undefined, cgResult.ValueKind);
+        Assert.AreEqual(JsonValueKind.Undefined, cgResult.ValueKind);
 
         string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
-        Assert.Null(rtResult);
+        Assert.IsNull(rtResult);
     }
 
     /// <summary>
@@ -2583,17 +2589,17 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     /// </summary>
     private void AssertCgAndRtMatchCorvusExtension(string expression, string data)
     {
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Inlined:    {compiled.IsInlined}");
 
         if (compiled.Error is not null)
         {
             Assert.Fail($"CG compilation failed: {compiled.Error}");
         }
 
-        Assert.NotNull(compiled.Method);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -2604,11 +2610,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
         string rtJson = rtResult ?? "undefined";
 
-        this.output.WriteLine($"CG: {cgJson}");
-        this.output.WriteLine($"RT: {rtJson}");
+        Console.WriteLine($"CG: {cgJson}");
+        Console.WriteLine($"RT: {rtJson}");
 
-        Assert.NotEqual("undefined", cgJson);
-        Assert.NotEqual("undefined", rtJson);
+        Assert.AreNotEqual("undefined", cgJson);
+        Assert.AreNotEqual("undefined", rtJson);
 
         using var cgDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(cgJson));
         using var rtDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(rtJson));
@@ -2621,17 +2627,17 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     /// </summary>
     private void AssertCgAndRtMatchCorvusExtension(string expression, string data, string expectedJson)
     {
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Inlined:    {compiled.IsInlined}");
 
         if (compiled.Error is not null)
         {
             Assert.Fail($"CG compilation failed: {compiled.Error}");
         }
 
-        Assert.NotNull(compiled.Method);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
         using var expectedDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(expectedJson));
@@ -2643,9 +2649,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
         string rtJson = rtResult ?? "undefined";
 
-        this.output.WriteLine($"Expected: {expectedJson}");
-        this.output.WriteLine($"CG:       {cgJson}");
-        this.output.WriteLine($"RT:       {rtJson}");
+        Console.WriteLine($"Expected: {expectedJson}");
+        Console.WriteLine($"CG:       {cgJson}");
+        Console.WriteLine($"RT:       {rtJson}");
 
         // Assert CG matches expected
         AssertJsonEqual(expectedDoc.RootElement, cgResult);
@@ -2658,7 +2664,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         }
         else
         {
-            Assert.Equal("undefined", expectedJson);
+            Assert.AreEqual("undefined", expectedJson);
         }
     }
 
@@ -2673,7 +2679,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     {
         if (expected.ValueKind == JsonValueKind.Number && actual.ValueKind == JsonValueKind.Number)
         {
-            Assert.Equal(expected.GetDouble(), actual.GetDouble(), 10);
+            Assert.AreEqual(expected.GetDouble(), actual.GetDouble(), 10);
             return;
         }
 
@@ -2686,7 +2692,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         {
             int expectedLen = expected.GetArrayLength();
             int actualLen = actual.GetArrayLength();
-            Assert.Equal(expectedLen, actualLen);
+            Assert.AreEqual(expectedLen, actualLen);
             for (int i = 0; i < expectedLen; i++)
             {
                 AssertJsonEqual(expected[i], actual[i]);
@@ -2709,10 +2715,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
                 actualProps[prop.Name] = prop.Value;
             }
 
-            Assert.Equal(expectedProps.Count, actualProps.Count);
+            Assert.AreEqual(expectedProps.Count, actualProps.Count);
             foreach (var kvp in expectedProps)
             {
-                Assert.True(actualProps.ContainsKey(kvp.Key), $"Missing property: {kvp.Key}");
+                Assert.IsTrue(actualProps.ContainsKey(kvp.Key), $"Missing property: {kvp.Key}");
                 AssertJsonEqual(kvp.Value, actualProps[kvp.Key]);
             }
 
@@ -2721,47 +2727,47 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
         if (expected.ValueKind == JsonValueKind.String)
         {
-            Assert.Equal(expected.GetString(), actual.GetString());
+            Assert.AreEqual(expected.GetString(), actual.GetString());
             return;
         }
 
-        Assert.Equal(expected.GetRawText(), actual.GetRawText());
+        Assert.AreEqual(expected.GetRawText(), actual.GetRawText());
     }
 
     private void AssertCgAndRtThrow(string expression, string data, string expectedCode)
     {
         // CG path
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Inlined:    {compiled.IsInlined}");
 
         if (compiled.Error is not null)
         {
             Assert.Fail($"CG compilation failed: {compiled.Error}");
         }
 
-        Assert.NotNull(compiled.Method);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
-        var cgEx = Assert.Throws<TargetInvocationException>(() => InvokeCg(compiled.Method, inputDoc.RootElement, workspace));
-        var cgJsonataEx = Assert.IsType<JsonataException>(cgEx.InnerException);
-        Assert.Equal(expectedCode, cgJsonataEx.Code);
+        var cgEx = Assert.ThrowsExactly<TargetInvocationException>(() => InvokeCg(compiled.Method, inputDoc.RootElement, workspace));
+        var cgJsonataEx = Assert.IsInstanceOfType<JsonataException>(cgEx.InnerException);
+        Assert.AreEqual(expectedCode, cgJsonataEx.Code);
 
         // RT path
-        var rtEx = Assert.Throws<JsonataException>(() => JsonataEvaluator.Default.EvaluateToString(expression, data));
-        Assert.Equal(expectedCode, rtEx.Code);
+        var rtEx = Assert.ThrowsExactly<JsonataException>(() => JsonataEvaluator.Default.EvaluateToString(expression, data));
+        Assert.AreEqual(expectedCode, rtEx.Code);
 
-        this.output.WriteLine($"Both CG and RT threw {expectedCode}");
+        Console.WriteLine($"Both CG and RT threw {expectedCode}");
     }
 
     // ═══════════════════════════════════════════════════════════════════
     // $zip — multiple overloads (JsonataCodeGenHelpers lines 6528-6888)
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void Zip_SingleArg()
     {
         AssertCgAndRtMatch(
@@ -2770,7 +2776,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[[1],[2],[3]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void Zip_TwoLiteralArrays()
     {
         AssertCgAndRtMatch(
@@ -2779,7 +2785,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[[1,4],[2,5],[3,6]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void Zip_ThreeArrays()
     {
         AssertCgAndRtMatch(
@@ -2788,7 +2794,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[[1,3,5],[2,4,6]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void Zip_FourArrays_Variadic()
     {
         AssertCgAndRtMatch(
@@ -2797,7 +2803,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[[1,3,5,7],[2,4,6,8]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void Zip_MismatchedLengths()
     {
         // Shorter arrays truncate to shortest
@@ -2807,7 +2813,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[[1,4],[2,5]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void Zip_TwoChains_FromBuffers()
     {
         AssertCgAndRtMatch(
@@ -2816,7 +2822,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[[10,2],[20,3],[30,4]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void Zip_ThreeChains_FromBuffers()
     {
         AssertCgAndRtMatch(
@@ -2825,7 +2831,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[[1,3,5],[2,4,6]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void Zip_ChainAndLiteral_Mixed()
     {
         // Chain first, literal second → ZipBufferAndElement
@@ -2835,7 +2841,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[[1,10],[2,20],[3,30]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void Zip_LiteralAndChain_Mixed()
     {
         // Literal first, chain second → ZipElementAndBuffer
@@ -2849,7 +2855,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ChainDistinct (JsonataCodeGenHelpers lines 4567-4601)
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void ChainDistinct_DuplicateStrings()
     {
         AssertCgAndRtMatch(
@@ -2858,7 +2864,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """["A","B","C"]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ChainDistinct_DuplicateNumbers()
     {
         AssertCgAndRtMatch(
@@ -2867,7 +2873,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[1,2,3]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ChainDistinct_DeepChain()
     {
         AssertCgAndRtMatch(
@@ -2880,7 +2886,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ChainKeepSingletonArray (JsonataCodeGenHelpers lines 4612-4646)
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void ChainKeepSingletonArray_MultipleItems()
     {
         AssertCgAndRtMatch(
@@ -2889,7 +2895,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[1,2,3]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ChainKeepSingletonArray_SingleValues()
     {
         AssertCgAndRtMatch(
@@ -2902,7 +2908,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ChainMerge (JsonataCodeGenHelpers lines 4657-4691)
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void ChainMerge_OverlappingKeys()
     {
         AssertCgAndRtMatch(
@@ -2911,7 +2917,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """{"a":1,"b":3,"c":4}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ChainMerge_NoOverlap()
     {
         AssertCgAndRtMatch(
@@ -2924,7 +2930,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // FusedChainGroupByPerElement (JsonataCodeGenHelpers lines 304-365)
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void FusedChainGroupByPerElement_Basic()
     {
         AssertCgAndRtMatch(
@@ -2933,7 +2939,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[{"A":1},{"B":2},{"A":3}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FusedChainGroupByPerElement_AllUnique()
     {
         AssertCgAndRtMatch(
@@ -2946,7 +2952,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $formatNumber via CG (exponent, percent, per-mille, grouping)
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_Percent()
     {
         AssertCgAndRtMatch(
@@ -2955,7 +2961,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"12.34%\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_PerMille()
     {
         AssertCgAndRtMatch(
@@ -2964,7 +2970,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"123.4‰\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_NegativeSubpicture()
     {
         AssertCgAndRtMatch(
@@ -2977,7 +2983,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $fromMillis/$toMillis via CG with custom pictures
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FromMillis_CustomPicture()
     {
         AssertCgAndRtMatch(
@@ -2986,7 +2992,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"2021-01-01\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FromMillis_WithTimezone()
     {
         AssertCgAndRtMatch(
@@ -2995,7 +3001,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"2021-01-01T05:30:00\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_ToMillis_CustomPicture()
     {
         AssertCgAndRtMatch(
@@ -3004,7 +3010,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "1609459200000");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FromMillis_MonthName()
     {
         AssertCgAndRtMatch(
@@ -3013,7 +3019,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"January\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FromMillis_DayOfWeek()
     {
         AssertCgAndRtMatch(
@@ -3026,7 +3032,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $formatInteger via CG (word, ordinal, roman)
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatInteger_Words()
     {
         AssertCgAndRtMatch(
@@ -3035,7 +3041,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"forty-two\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatInteger_Ordinal()
     {
         AssertCgAndRtMatch(
@@ -3044,7 +3050,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"first\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatInteger_RomanUpper()
     {
         AssertCgAndRtMatch(
@@ -3057,7 +3063,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Focus sort via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FocusSort_ByVariable()
     {
         // Focus on root array ($@$e) without continuation returns parent context per element.
@@ -3073,7 +3079,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $match via CG with capture groups
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Match_WithGroups()
     {
         AssertCgAndRtMatch(
@@ -3082,7 +3088,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """{"match":"2026-04-19","index":0,"groups":["2026","04","19"]}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Match_NoMatch()
     {
         AssertCgAndRtBothUndefined(
@@ -3094,7 +3100,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Coalesce operator via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Coalesce_MissingFallback()
     {
         AssertCgAndRtMatch(
@@ -3103,7 +3109,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"default\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Coalesce_ExistingValue()
     {
         AssertCgAndRtMatch(
@@ -3116,7 +3122,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $spread via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Spread_ArrayOfObjects()
     {
         AssertCgAndRtMatch(
@@ -3125,7 +3131,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """[{"a":1},{"b":2}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Spread_SingleObjectMultipleKeys()
     {
         AssertCgAndRtMatch(
@@ -3138,7 +3144,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $replace with function via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Replace_WithFunction()
     {
         AssertCgAndRtMatch(
@@ -3151,7 +3157,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $string coercion of small exponent numbers
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_String_SmallExponent()
     {
         AssertCgAndRtMatch(
@@ -3164,7 +3170,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Deep path chain over nested arrays via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_DeepPathChain_NestedArrays()
     {
         AssertCgAndRtMatch(
@@ -3177,7 +3183,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Equality predicate filtering via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_EqualityPredicate_FilterArray()
     {
         AssertCgAndRtMatch(
@@ -3190,7 +3196,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $number hex/binary/octal via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Number_Hex()
     {
         AssertCgAndRtMatch(
@@ -3199,7 +3205,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "255");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Number_Binary()
     {
         AssertCgAndRtMatch(
@@ -3208,7 +3214,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "5");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Number_Octal()
     {
         AssertCgAndRtMatch(
@@ -3222,7 +3228,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Property chain through nested arrays at multiple levels
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_DeepChain_ThreeLevelArray()
     {
         AssertCgAndRtMatch(
@@ -3231,7 +3237,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """["x","y","z","w"]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_NestedArrayChain_AccountOrder()
     {
         AssertCgAndRtMatch(
@@ -3245,7 +3251,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Equality predicate filter then property continuation
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedFilter_EqualityPredicate()
     {
         AssertCgAndRtMatch(
@@ -3259,7 +3265,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Property chain with constant index at a step
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedEval_IndexInChain()
     {
         AssertCgAndRtMatch(
@@ -3268,7 +3274,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"first\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedEval_LastIndex()
     {
         AssertCgAndRtMatch(
@@ -3282,7 +3288,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Equality predicate in middle of chain
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedEval_EqualityInChain()
     {
         AssertCgAndRtMatch(
@@ -3296,7 +3302,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Equality predicate on nested array property
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedEval_NestedArrayFilter()
     {
         AssertCgAndRtMatch(
@@ -3310,7 +3316,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // String functions on surrogate-pair strings via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Length_WithSurrogates()
     {
         AssertCgAndRtMatch(
@@ -3319,7 +3325,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "11");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Substring_SurrogatePair()
     {
         AssertCgAndRtMatch(
@@ -3328,7 +3334,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"\ud83d\ude0a\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Substring_AfterSurrogate()
     {
         AssertCgAndRtMatch(
@@ -3341,7 +3347,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // BIF lines 5047-5072 via CG: FormatNumber exponent
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_Exponent()
     {
         AssertCgAndRtMatch(
@@ -3350,7 +3356,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"1.23e4\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_SmallExponent()
     {
         AssertCgAndRtMatch(
@@ -3359,7 +3365,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"1.23e-3\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_ExpZero()
     {
         AssertCgAndRtMatch(
@@ -3372,7 +3378,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // BIF lines 4811-4853 via CG: FormatNumber grouping
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_Grouping()
     {
         AssertCgAndRtMatch(
@@ -3381,7 +3387,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"1,234,567\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_GroupingWithDecimals()
     {
         AssertCgAndRtMatch(
@@ -3394,7 +3400,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // BIF lines 4315-4343 via CG: $encodeUrl non-string (Corvus extension)
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_EncodeUrl_NumberInput()
     {
         // Corvus extension: coerces non-string to string before URL encoding
@@ -3408,7 +3414,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // FC lines 5641-5739
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Filter_ArrayOfIndices()
     {
         AssertCgAndRtMatch(
@@ -3422,7 +3428,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // FC lines 5016-5082: ApplySimpleNamePairGroupBy
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_GroupBy_DuplicateKeys()
     {
         AssertCgAndRtMatch(
@@ -3436,7 +3442,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // FC lines 6866-6901: Tuple array constructor
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_ArrayConstructor_MultiValuedItems()
     {
         AssertCgAndRtMatch(
@@ -3449,7 +3455,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $each with 3 parameters via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Each_ThreeParam()
     {
         AssertCgAndRtMatch(
@@ -3463,7 +3469,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // BIF lines 2644-2660: CompileSpread property counting
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Spread_MultiKeyObject()
     {
         AssertCgAndRtMatch(
@@ -3477,7 +3483,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // FC lines 3155-3180 and 5559-5594
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_Sort_ThenPropertyAccess()
     {
         AssertCgAndRtMatch(
@@ -3490,7 +3496,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $formatNumber percent via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_PercentPicture()
     {
         AssertCgAndRtMatch(
@@ -3503,7 +3509,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // $formatInteger via CG
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatInteger_Words_Large()
     {
         AssertCgAndRtMatch(
@@ -3512,7 +3518,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"one thousand and one\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatInteger_Grouping()
     {
         AssertCgAndRtMatch(
@@ -3524,7 +3530,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ─── JsonataCodeGenHelpers: Zip variadic (lines 6654-6705) ────────
     // $zip with 4+ args triggers the variadic overload
 
-    [Fact]
+    [TestMethod]
     public void CG_Zip_FourArgs()
     {
         AssertCgAndRtMatch(
@@ -3533,7 +3539,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "[[1,3,5,7],[2,4,6,8]]");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Zip_FiveArgs()
     {
         AssertCgAndRtMatch(
@@ -3544,7 +3550,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── JsonataCodeGenHelpers: Zip single arg (lines 6529-6556) ─────
 
-    [Fact]
+    [TestMethod]
     public void CG_Zip_SingleArg()
     {
         AssertCgAndRtMatch(
@@ -3555,7 +3561,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── JsonataCodeGenHelpers: ContinueChainFlatInto (lines 598-622) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Chain_NestedArraysAtIntermediate()
     {
         AssertCgAndRtMatch(
@@ -3564,7 +3570,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """["a","b","c"]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Chain_ThreeLevelArray()
     {
         AssertCgAndRtMatch(
@@ -3575,7 +3581,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── JsonataCodeGenHelpers: FusedFilterAndContinue (lines 765-791) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedFilter_EqualityWithContinuation()
     {
         AssertCgAndRtMatch(
@@ -3586,7 +3592,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── JsonataCodeGenHelpers: FusedCollectAndContinue index (lines 818-845) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedIndex_WithContinuation()
     {
         AssertCgAndRtMatch(
@@ -3595,7 +3601,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"b\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedIndex_OutOfRange()
     {
         AssertCgAndRtBothUndefined(
@@ -3605,7 +3611,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── JsonataCodeGenHelpers: EnumerateWildcard array (lines 1017-1037) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Wildcard_OnObject()
     {
         AssertCgAndRtMatch(
@@ -3614,7 +3620,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "[1,2,3]");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Wildcard_ChainedOnObject()
     {
         AssertCgAndRtMatch(
@@ -3625,7 +3631,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── JsonataCodeGenHelpers: CountCodePoints (lines 7561-7591) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Length_Emoji()
     {
         // Emoji is a surrogate pair, counts as 1 code point
@@ -3635,7 +3641,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "7");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Substring_SurrogatePairIndexing()
     {
         // $substring at code-point index 4, length 3 = "def" (skipping emoji)
@@ -3647,7 +3653,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── JsonataCodeGenHelpers: CoerceToStringElement (lines 2087-2108) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_String_CoerceNumber()
     {
         AssertCgAndRtMatch(
@@ -3656,7 +3662,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"42\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_String_CoerceBoolean()
     {
         AssertCgAndRtMatch(
@@ -3667,7 +3673,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── JsonataCodeGenHelpers: BinaryArithmetic (lines 8799-8822) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Arithmetic_Add()
     {
         AssertCgAndRtMatch(
@@ -3676,7 +3682,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "13");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Arithmetic_Multiply()
     {
         AssertCgAndRtMatch(
@@ -3687,7 +3693,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── JsonataCodeGenHelpers: MapChainElements (lines 2674-2716) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Map_WithIndex()
     {
         AssertCgAndRtMatch(
@@ -3698,7 +3704,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── CollectAndContinue: equality predicate singleton (FC 1619-1638 via CGH) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_EqualityPredicate_SingletonObject()
     {
         AssertCgAndRtMatch(
@@ -3709,7 +3715,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── GroupBy annotation (FC 5016-5082 via CGH) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_GroupBy_Annotation_DuplicateKeys()
     {
         AssertCgAndRtMatch(
@@ -3720,7 +3726,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Sort then chain access (FC 3155-3180 via CGH) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Sort_ThenChainAccess()
     {
         AssertCgAndRtMatch(
@@ -3731,7 +3737,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Transform operator ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Transform_AddProperty()
     {
         AssertCgAndRtMatch(
@@ -3742,7 +3748,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $sift (BuiltInFunctions) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Sift_FilterProperties()
     {
         AssertCgAndRtMatch(
@@ -3753,7 +3759,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $reduce with initial value ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Reduce_WithInit()
     {
         AssertCgAndRtMatch(
@@ -3764,7 +3770,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $sort ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Sort_Default()
     {
         AssertCgAndRtMatch(
@@ -3775,7 +3781,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatNumber exponent (BIF 5062-5087) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_Scientific()
     {
         AssertCgAndRtMatch(
@@ -3786,10 +3792,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatBase ──
 
-    [Theory]
-    [InlineData(255, 16, "ff")]
-    [InlineData(255, 2, "11111111")]
-    [InlineData(255, 8, "377")]
+    [TestMethod]
+    [DataRow(255, 16, "ff")]
+    [DataRow(255, 2, "11111111")]
+    [DataRow(255, 8, "377")]
     public void CG_FormatBase_Various(int value, int radix, string expected)
     {
         AssertCgAndRtMatch(
@@ -3800,7 +3806,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Descendant operator ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Descendant_Search()
     {
         AssertCgAndRtMatch(
@@ -3811,9 +3817,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatInteger Unicode digits (XPath 1298-1312, 1619-1637) ──
 
-    [Theory]
-    [InlineData(2025, "\u0661", "\u0662\u0660\u0662\u0665")]
-    [InlineData(99, "\u0967", "\u096F\u096F")]
+    [TestMethod]
+    [DataRow(2025, "\u0661", "\u0662\u0660\u0662\u0665")]
+    [DataRow(99, "\u0967", "\u096F\u096F")]
     public void CG_FormatInteger_UnicodeDigits(int value, string presentation, string expected)
     {
         AssertCgAndRtMatch(
@@ -3824,7 +3830,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Closure / higher-order functions ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Lambda_Closure()
     {
         AssertCgAndRtMatch(
@@ -3835,7 +3841,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $string on array (verifies bug #2 fix via CG path) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_String_Array()
     {
         AssertCgAndRtMatch(
@@ -3846,7 +3852,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $filter on multi-valued path ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Filter_MultiValuedPath()
     {
         AssertCgAndRtMatch(
@@ -3857,7 +3863,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $count/$sum/$average/$min/$max on multi-value paths ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Count_MultiValued()
     {
         AssertCgAndRtMatch(
@@ -3866,7 +3872,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "3");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Sum_MultiValued()
     {
         AssertCgAndRtMatch(
@@ -3875,7 +3881,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "60");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Average_MultiValued()
     {
         AssertCgAndRtMatch(
@@ -3886,7 +3892,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Coalesce (??) — Corvus extension ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Coalesce_SimpleChain_Found()
     {
         AssertCgAndRtMatchCorvusExtension(
@@ -3895,7 +3901,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "42");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Coalesce_SimpleChain_Fallback()
     {
         AssertCgAndRtMatchCorvusExtension(
@@ -3904,7 +3910,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"default\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Coalesce_DeepChain_Found()
     {
         AssertCgAndRtMatchCorvusExtension(
@@ -3913,7 +3919,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"found\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Coalesce_DeepChain_Fallback()
     {
         AssertCgAndRtMatchCorvusExtension(
@@ -3922,7 +3928,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"fallback\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Coalesce_ArrayMidChain()
     {
         AssertCgAndRtMatchCorvusExtension(
@@ -3931,7 +3937,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             """["A","B","C"]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Coalesce_ArrayMidChain_Fallback()
     {
         AssertCgAndRtMatchCorvusExtension(
@@ -3940,7 +3946,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "[]");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Coalesce_NonObject_Fallback()
     {
         AssertCgAndRtMatchCorvusExtension(
@@ -3951,7 +3957,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatNumber patterns ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_ScientificLarge()
     {
         AssertCgAndRtMatch(
@@ -3960,7 +3966,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"1.23e4\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_ScientificSmall()
     {
         AssertCgAndRtMatch(
@@ -3969,7 +3975,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"5.00e-2\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_PerMille_Small()
     {
         AssertCgAndRtMatch(
@@ -3978,7 +3984,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"25\u2030\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_GroupingSeparator_Large()
     {
         AssertCgAndRtMatch(
@@ -3987,7 +3993,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"1,234,567\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_NegativeSubPicture()
     {
         AssertCgAndRtMatch(
@@ -3998,7 +4004,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatInteger / $parseInteger word output ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatInteger_WordLower()
     {
         AssertCgAndRtMatch(
@@ -4007,7 +4013,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"forty-two\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_ParseInteger_Word()
     {
         AssertCgAndRtMatch(
@@ -4018,13 +4024,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $number boolean coercion (FC 8625-8632) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Number_BoolTrue()
     {
         AssertCgAndRtMatch("""$number(true)""", "{}", "1");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Number_BoolFalse()
     {
         AssertCgAndRtMatch("""$number(false)""", "{}", "0");
@@ -4032,14 +4038,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatNumber minInt==0 (BF 4914-4934) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_MinIntZero()
     {
         // Picture "#" → minInt=0, maxFrac=0 → hits BF 4914-4924
         AssertCgAndRtMatch("""$formatNumber(42, "#")""", "{}", "\"42\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_MinIntZero_WithExp()
     {
         // Picture "#e0" → minInt=0, maxFrac=0, expPresent → hits BF 4915-4919
@@ -4048,7 +4054,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatNumber exponent padding (BF 4938-4946) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_ExpPadding()
     {
         AssertCgAndRtMatch("""$formatNumber(0.00123, "0.00e0000")""", "{}", "\"1.23e-0003\"");
@@ -4056,7 +4062,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatNumber percent scaling (BF 5042-5048) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_PercentScaling()
     {
         AssertCgAndRtMatch("""$formatNumber(0.75, "#0%")""", "{}", "\"75%\"");
@@ -4064,7 +4070,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatNumber zero-digit padding (BF 5146-5153) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_ZeroDigitPad()
     {
         AssertCgAndRtMatch("""$formatNumber(1, "#00.000")""", "{}", "\"01.000\"");
@@ -4072,7 +4078,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatNumber exponent append (BF 5193-5202) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_ExponentAppend()
     {
         AssertCgAndRtMatch("""$formatNumber(123000, "0.00e0")""", "{}", "\"1.23e5\"");
@@ -4080,7 +4086,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $formatNumber custom exponent separator (BF 4583-4589) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_CustomExpSep()
     {
         AssertCgAndRtMatch(
@@ -4091,7 +4097,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Per-element boolean filter (FC 5545-5643) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_PerElementFilter_NumericIndex()
     {
         // Per-element filter: data is array, .items[0] triggers stepIdx > 0
@@ -4103,7 +4109,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Per-element sort flatten nested (FC 5463-5498) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_PerElementSort_FlattenNested()
     {
         AssertCgAndRtMatch(
@@ -4114,7 +4120,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Fused array-of-objects (FC 6904-6943) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedArrayOfObjects_PathPrefix()
     {
         AssertCgAndRtMatch(
@@ -4125,7 +4131,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Property map large objects (FC 1694-1713) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_PropertyMap_LargeObjects()
     {
         AssertCgAndRtMatch(
@@ -4136,7 +4142,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Equality predicate array recursion (FC 1645-1663) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_EqualityPredicate_ArrayRecursion()
     {
         AssertCgAndRtMatch(
@@ -4147,7 +4153,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Sort then filter (FC 5959-5981) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Sort_ThenFilter()
     {
         AssertCgAndRtMatch(
@@ -4158,7 +4164,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Nested path through arrays (FC 1966-1980) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_NestedPath_ThroughArrays()
     {
         AssertCgAndRtMatch(
@@ -4169,19 +4175,19 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Hex/binary/octal parsing (FC 8740-8796) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Number_HexCoerce()
     {
         AssertCgAndRtMatch("""$number("0xFF")""", "{}", "255");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Number_BinaryCoerce()
     {
         AssertCgAndRtMatch("""$number("0b1010")""", "{}", "10");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Number_OctalCoerce()
     {
         AssertCgAndRtMatch("""$number("0o77")""", "{}", "63");
@@ -4189,7 +4195,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── Object with negative constant (FC 429-434) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_ObjectConstructor_NegativeConst()
     {
         AssertCgAndRtMatch("""{"x":-42}""", "{}", """{"x":-42}""");
@@ -4197,7 +4203,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $match context binding (BF 3119-3123) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Match_ContextBinding()
     {
         AssertCgAndRtMatch(
@@ -4208,7 +4214,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ─── $replace with function callback (FC 8287-8296) ──
 
-    [Fact]
+    [TestMethod]
     public void CG_Replace_FunctionCallback()
     {
         AssertCgAndRtMatch(
@@ -4226,10 +4232,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Our implementation previously coerced hex/binary/octal strings to numbers as an extension.
     // We now align with the reference: strings are not valid as the first arg.
 
-    [Theory]
-    [InlineData("$formatNumber(\"0xFF\", \"#\")")]
-    [InlineData("$formatNumber(\"0b1010\", \"#\")")]
-    [InlineData("$formatNumber(\"0o77\", \"#\")")]
+    [TestMethod]
+    [DataRow("$formatNumber(\"0xFF\", \"#\")")]
+    [DataRow("$formatNumber(\"0b1010\", \"#\")")]
+    [DataRow("$formatNumber(\"0o77\", \"#\")")]
     public void CG_FormatNumber_HexBinaryOctalStringCoercion_ThrowsT0410(string expression)
     {
         AssertCgAndRtThrow(expression, "{}", "T0410");
@@ -4237,9 +4243,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC ApplyFocusStages: string predicates are boolean (truthy/falsy) ---
 
-    [Theory]
-    [InlineData("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]}]")]
-    [InlineData("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]}]")]
+    [TestMethod]
+    [DataRow("items@$v[\"0x01\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]}]")]
+    [DataRow("items@$v[\"1\"]", "{\"items\":[\"a\",\"b\",\"c\"]}", "[{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]},{\"items\":[\"a\",\"b\",\"c\"]}]")]
     public void CG_FocusStages_StringPredicateCoercedToNumericIndex(string expression, string data, string expected)
     {
         // Reference: strings in predicates are truthy/falsy, not numeric indices.
@@ -4252,12 +4258,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- BF FormatNumber runtime path (non-constant picture) ---
 
-    [Theory]
-    [InlineData("$formatNumber(42, prefix & \"#\")", "\"42\"")]
-    [InlineData("$formatNumber(0.5, prefix & \".###\")", "\".5\"")]
-    [InlineData("$formatNumber(12345, prefix & \"#,###\")", "\"12,345\"")]
-    [InlineData("$formatNumber(0.5, prefix & \"#%\")", "\"50%\"")]
-    [InlineData("$formatNumber(0.5, prefix & \"0.00\")", "\"0.50\"")]
+    [TestMethod]
+    [DataRow("$formatNumber(42, prefix & \"#\")", "\"42\"")]
+    [DataRow("$formatNumber(0.5, prefix & \".###\")", "\".5\"")]
+    [DataRow("$formatNumber(12345, prefix & \"#,###\")", "\"12,345\"")]
+    [DataRow("$formatNumber(0.5, prefix & \"#%\")", "\"50%\"")]
+    [DataRow("$formatNumber(0.5, prefix & \"0.00\")", "\"0.50\"")]
     public void CG_FormatNumber_RuntimePath_NonConstantPicture(string expression, string expected)
     {
         AssertCgAndRtMatch(expression, "{\"prefix\":\"\"}", expected);
@@ -4265,9 +4271,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- Per-element filter with numeric index on nested arrays ---
 
-    [Theory]
-    [InlineData("data.items[0]", "[\"A\",\"C\"]")]
-    [InlineData("data.items[-1]", "[\"B\",\"D\"]")]
+    [TestMethod]
+    [DataRow("data.items[0]", "[\"A\",\"C\"]")]
+    [DataRow("data.items[-1]", "[\"B\",\"D\"]")]
     public void CG_PerElementFilter_ConstantIntIndex_NestedArrays(string expression, string expected)
     {
         AssertCgAndRtMatch(expression, "{\"data\":[{\"items\":[\"A\",\"B\"]},{\"items\":[\"C\",\"D\"]}]}", expected);
@@ -4275,7 +4281,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- Per-element sort on nested arrays ---
 
-    [Fact]
+    [TestMethod]
     public void CG_PerElementSort_NestedArrays()
     {
         AssertCgAndRtMatch(
@@ -4290,7 +4296,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC ApplyFocusStages array-of-indices predicate ---
 
-    [Fact]
+    [TestMethod]
     public void CG_FocusStages_ArrayOfIndicesPredicate()
     {
         // Focus without continuation returns parent context per surviving element.
@@ -4305,7 +4311,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC CompileFusedArrayOfObjects ---
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedArrayOfObjects_WithPrefixPathInArrayCtor()
     {
         AssertCgAndRtMatch(
@@ -4316,9 +4322,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- BF FormatNumber negative sub-picture ---
 
-    [Theory]
-    [InlineData("$formatNumber(-42, prefix & \"#;(#)\")", "\"(42)\"")]
-    [InlineData("$formatNumber(-3.14, prefix & \"0.00;neg 0.00\")", "\"neg 3.14\"")]
+    [TestMethod]
+    [DataRow("$formatNumber(-42, prefix & \"#;(#)\")", "\"(42)\"")]
+    [DataRow("$formatNumber(-3.14, prefix & \"0.00;neg 0.00\")", "\"neg 3.14\"")]
     public void CG_FormatNumber_RuntimePath_NegativeSubPicture(string expression, string expected)
     {
         AssertCgAndRtMatch(expression, "{\"prefix\":\"\"}", expected);
@@ -4326,7 +4332,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC equality predicate in fused path ---
 
-    [Fact]
+    [TestMethod]
     public void CG_EqualityPredicate_InFusedPath()
     {
         AssertCgAndRtMatch(
@@ -4337,7 +4343,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC sort in focus context ---
 
-    [Fact]
+    [TestMethod]
     public void CG_FocusSort_OrdersByField()
     {
         // Focus without continuation returns parent context per element (sorted order).
@@ -4349,7 +4355,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC sort + filter combined ---
 
-    [Fact]
+    [TestMethod]
     public void CG_SortThenFilter_CombinedStages()
     {
         AssertCgAndRtMatch(
@@ -4360,7 +4366,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC ApplySortStagesOnly: sort at step > 0 ---
 
-    [Fact]
+    [TestMethod]
     public void CG_ApplySortStagesOnly_SortAtStep1()
     {
         AssertCgAndRtMatch(
@@ -4371,7 +4377,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC EvalFromStepInto with equality predicate (deep nesting) ---
 
-    [Fact]
+    [TestMethod]
     public void CG_EvalFromStepInto_EqualityPredicateDeepNesting()
     {
         // outer is array → CollectAndContinueInto → EvalFromStepInto at step 2 with eq pred
@@ -4383,7 +4389,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC ApplyFocusStages sort with projection ---
 
-    [Fact]
+    [TestMethod]
     public void CG_FocusSort_WithProjection()
     {
         AssertCgAndRtMatch(
@@ -4398,7 +4404,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 657-680 / 686-709: Buffer-fused zip ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Zip_ConstantAndChain()
     {
         AssertCgAndRtMatch(
@@ -4407,7 +4413,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "[[1,\"a\"],[2,\"b\"],[3,\"c\"]]");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Zip_ChainAndConstant()
     {
         AssertCgAndRtMatch(
@@ -4416,7 +4422,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "[[\"a\",1],[\"b\",2],[\"c\",3]]");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Zip_ThreeChains()
     {
         AssertCgAndRtMatch(
@@ -4427,7 +4433,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 8023-8085: Focus sort stage ---
 
-    [Fact]
+    [TestMethod]
     public void CG_FocusSort_KeyReferencesFocusVar()
     {
         // Focus without continuation returns parent context per element (sorted order).
@@ -4437,7 +4443,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "[{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]},{\"items\":[{\"name\":\"c\"},{\"name\":\"a\"},{\"name\":\"b\"}]}]");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FocusSort_SingleElement()
     {
         // Focus without continuation returns parent context per element (sorted order).
@@ -4449,7 +4455,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 7877-7944: Standalone filter ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Filter_Standalone_NumericIndex()
     {
         AssertCgAndRtMatch(
@@ -4458,7 +4464,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "10");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Filter_Standalone_BooleanTrue()
     {
         AssertCgAndRtMatch(
@@ -4467,7 +4473,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "42");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Filter_Standalone_MultiValueIndex()
     {
         AssertCgAndRtMatch(
@@ -4478,7 +4484,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- BF 6251-6266: CodePointsToString ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Substring_SupplementaryPlane()
     {
         string data = "{\"s\":\"\\uD83D\\uDE00AB\"}";
@@ -4487,13 +4493,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- BF 4429-4444: decode non-string input ---
 
-    [Fact]
+    [TestMethod]
     public void CG_DecodeUrlComponent_NonStringInput()
     {
         AssertCgAndRtMatch("$decodeUrlComponent(42)", "{}", "\"42\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_DecodeUrl_NonStringInput()
     {
         AssertCgAndRtMatch("$decodeUrl(42)", "{}", "\"42\"");
@@ -4504,7 +4510,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- BF 5279-5281: formatBase zero ---
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatBase_Zero()
     {
         AssertCgAndRtMatch("$formatBase(0, 2)", "{}", "\"0\"");
@@ -4512,7 +4518,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 1015-1028: LookupField array ---
 
-    [Fact]
+    [TestMethod]
     public void CG_LookupField_ArrayInput()
     {
         AssertCgAndRtMatch(
@@ -4523,7 +4529,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 1567-1581: nested array descent ---
 
-    [Fact]
+    [TestMethod]
     public void CG_PropertyChain_NestedArrayDescent()
     {
         AssertCgAndRtMatch(
@@ -4534,7 +4540,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 2975-2999: Multi-parent focus ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Focus_MultiParentContext()
     {
         AssertCgAndRtMatch(
@@ -4545,7 +4551,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 5344-5359: Multi-result predicate ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Filter_MultiResultNumericPredicate()
     {
         AssertCgAndRtMatch(
@@ -4556,7 +4562,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 5092-5105: Index binding expansion ---
 
-    [Fact]
+    [TestMethod]
     public void CG_IndexBinding_SingletonArrayExpansion()
     {
         AssertCgAndRtMatch(
@@ -4567,7 +4573,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 6798-6833: Array constructor tuple ---
 
-    [Fact]
+    [TestMethod]
     public void CG_ArrayConstructor_TupleSingleton()
     {
         AssertCgAndRtMatch(
@@ -4582,7 +4588,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 7561-7591: CountCodePoints, CodePointToCharIndex (surrogate-aware) ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Substring_WithSurrogates()
     {
         // 🎉 is U+1F389 (surrogate pair). $substring should count code points, not chars.
@@ -4592,7 +4598,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"\\uD83C\\uDF89\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Substring_SurrogateBoundary()
     {
         // Start from code point 2 (past the surrogate pair)
@@ -4604,7 +4610,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 2087-2108: CoerceToStringElement ---
 
-    [Fact]
+    [TestMethod]
     public void CG_CoerceToString_NumberBool()
     {
         AssertCgAndRtMatch(
@@ -4613,7 +4619,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"42true\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_CoerceToString_ArrayConcat()
     {
         AssertCgAndRtMatch(
@@ -4624,7 +4630,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 1869-1888: Range operator ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Range_Simple()
     {
         AssertCgAndRtMatch(
@@ -4633,7 +4639,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "[1,2,3,4,5]");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Range_SingleElement()
     {
         AssertCgAndRtMatch(
@@ -4644,7 +4650,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 6654-6680: $zip CG helper ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Zip_TwoArrays()
     {
         AssertCgAndRtMatch(
@@ -4653,7 +4659,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "[[1,\"x\"],[2,\"y\"],[3,\"z\"]]");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Zip_UnevenArrays()
     {
         AssertCgAndRtMatch(
@@ -4664,7 +4670,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 598-622: ContinueChainFlatInto (deep path chains) ---
 
-    [Fact]
+    [TestMethod]
     public void CG_DeepPathChain_WithArrayFlattening()
     {
         AssertCgAndRtMatch(
@@ -4673,7 +4679,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "[1,2]");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_DeepPathChain_TripleNesting()
     {
         AssertCgAndRtMatch(
@@ -4684,7 +4690,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 818-845: FusedEvalFromStep with constant indices ---
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedPath_ConstantIndex()
     {
         AssertCgAndRtMatch(
@@ -4693,7 +4699,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "\"first\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedPath_NegativeIndex()
     {
         AssertCgAndRtMatch(
@@ -4704,7 +4710,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 850-866: FusedEvalFromStep with equality predicate ---
 
-    [Fact]
+    [TestMethod]
     public void CG_FusedPath_EqualityPredicate()
     {
         AssertCgAndRtMatch(
@@ -4715,7 +4721,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 8357-8387: BuildSingleEntryObject ---
 
-    [Fact]
+    [TestMethod]
     public void CG_SingleEntryObject_DynamicKey()
     {
         AssertCgAndRtMatch(
@@ -4726,7 +4732,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 1660-1675: Variadic string concatenation (6+ args) ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Concat_SixStrings()
     {
         AssertCgAndRtMatch(
@@ -4737,7 +4743,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 4699-4721: Array assembly from buffer ---
 
-    [Fact]
+    [TestMethod]
     public void CG_ArrayAssembly_MultiValue()
     {
         AssertCgAndRtMatch(
@@ -4748,7 +4754,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 1015-1028: LookupField array (via CG path) ---
 
-    [Fact]
+    [TestMethod]
     public void CG_LookupField_ArrayInput_MixedPresence()
     {
         AssertCgAndRtMatch(
@@ -4759,7 +4765,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 488-499: EscapeJsonStringContent (constant array with escape chars) ---
 
-    [Fact]
+    [TestMethod]
     public void CG_ConstantArray_WithEscapeChars()
     {
         AssertCgAndRtMatch(
@@ -4770,7 +4776,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FC 9052+: Null/Bool/Number helpers ---
 
-    [Fact]
+    [TestMethod]
     public void CG_NullLiteral()
     {
         AssertCgAndRtMatch(
@@ -4781,25 +4787,25 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FormatNumber error branches (CG path) ---
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_MultipleDecimalSeparators_Throws()
     {
         // CG may throw JsonReaderException or JsonataException depending on compilation path
-        Assert.ThrowsAny<Exception>(() =>
+        Assert.Throws<Exception>(() =>
             AssertCgAndRtMatch("$formatNumber(val, \"0.0.0\")", "{\"val\":42}", ""));
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_FormatNumber_ExponentNoDigit_Throws()
     {
         // CG may throw JsonReaderException or JsonataException depending on compilation path
-        Assert.ThrowsAny<Exception>(() =>
+        Assert.Throws<Exception>(() =>
             AssertCgAndRtMatch("$formatNumber(val, \"0E\")", "{\"val\":42}", ""));
     }
 
     // --- CGH 8799-8822: BinaryArithmetic error (NaN/Infinity) ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Arithmetic_Overflow()
     {
         // Very large number multiplication may produce Infinity
@@ -4811,7 +4817,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 3422-3440: TraceMinMaxAggregates ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Max_NumericArray()
     {
         AssertCgAndRtMatch(
@@ -4820,7 +4826,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "5");
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_Min_NumericArray()
     {
         AssertCgAndRtMatch(
@@ -4831,7 +4837,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH 3485-3498: TraceAverageAggregates ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Average_NumericArray()
     {
         AssertCgAndRtMatch(
@@ -4842,7 +4848,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- CGH ConcatBuilder closure: growth beyond initial buffer ---
 
-    [Fact]
+    [TestMethod]
     public void CG_Concat_LargeResult_TriggersBufferGrowth()
     {
         // Build a long string to exceed initial concat buffer
@@ -4857,12 +4863,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Round 10: $zip (CGH lines 6654-6680)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$zip([1,2,3],[4,5,6])", "null", "[[1,4],[2,5],[3,6]]")]
-    [InlineData("$zip([1,2],[3,4,5],[6,7])", "null", "[[1,3,6],[2,4,7]]")]
-    [InlineData("$zip([],[])", "null", "[]")]
-    [InlineData("$zip([1],[2],[3])", "null", "[[1,2,3]]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$zip([1,2,3],[4,5,6])", "null", "[[1,4],[2,5],[3,6]]")]
+    [DataRow("$zip([1,2],[3,4,5],[6,7])", "null", "[[1,3,6],[2,4,7]]")]
+    [DataRow("$zip([],[])", "null", "[]")]
+    [DataRow("$zip([1],[2],[3])", "null", "[[1,2,3]]")]
     public void Zip(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -4873,12 +4879,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // CountCodePoints, CodePointToCharIndex
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$substring('A\uD83D\uDE00B', 1, 1)", "null", "\"\uD83D\uDE00\"")]
-    [InlineData("$length('A\uD83D\uDE00B')", "null", "3")]
-    [InlineData("$substring('\uD83D\uDE00\uD83D\uDE01\uD83D\uDE02', 1, 2)", "null", "\"\uD83D\uDE01\uD83D\uDE02\"")]
-    [InlineData("$substring('\uD83D\uDE00ABC', 0, 2)", "null", "\"\uD83D\uDE00A\"")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$substring('A\uD83D\uDE00B', 1, 1)", "null", "\"\uD83D\uDE00\"")]
+    [DataRow("$length('A\uD83D\uDE00B')", "null", "3")]
+    [DataRow("$substring('\uD83D\uDE00\uD83D\uDE01\uD83D\uDE02', 1, 2)", "null", "\"\uD83D\uDE01\uD83D\uDE02\"")]
+    [DataRow("$substring('\uD83D\uDE00ABC', 0, 2)", "null", "\"\uD83D\uDE00A\"")]
     public void SurrogatePairStringOps(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -4889,18 +4895,18 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // FusedEvalFromStep with perElementIndex
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("items[0].name",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("items[0].name",
         "{\"items\":[{\"name\":\"first\"},{\"name\":\"second\"}]}",
         "\"first\"")]
-    [InlineData("data.items[1].value",
+    [DataRow("data.items[1].value",
         "{\"data\":{\"items\":[{\"value\":10},{\"value\":20}]}}",
         "20")]
-    [InlineData("items[0]",
+    [DataRow("items[0]",
         "{\"items\":[\"a\",\"b\",\"c\"]}",
         "\"a\"")]
-    [InlineData("data.list[-1]",
+    [DataRow("data.list[-1]",
         "{\"data\":{\"list\":[1,2,3]}}",
         "3")]
     public void IndexedPathAccess(string expression, string data, string expected)
@@ -4913,15 +4919,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // (CGH lines 2674-2716 NavigatePropertyChainTransform)
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$map(items.price, function($v){$v*2})",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$map(items.price, function($v){$v*2})",
         "{\"items\":[{\"price\":5},{\"price\":10}]}",
         "[10,20]")]
-    [InlineData("items.price ~> $map(function($v){$v*2})",
+    [DataRow("items.price ~> $map(function($v){$v*2})",
         "{\"items\":[{\"price\":5},{\"price\":10}]}",
         "[10,20]")]
-    [InlineData("$map(data.x.y, function($v){$v+1})",
+    [DataRow("$map(data.x.y, function($v){$v+1})",
         "{\"data\":[{\"x\":{\"y\":1}},{\"x\":{\"y\":2}}]}",
         "[2,3]")]
     public void MapTransformOverChain(string expression, string data, string expected)
@@ -4933,11 +4939,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Round 10: Higher-order built-in functions
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("$map([1,2,3], $string)", "null", "[\"1\",\"2\",\"3\"]")]
-    [InlineData("$map([1,'a',true], $type)", "null", "[\"number\",\"string\",\"boolean\"]")]
-    [InlineData("$filter([0, 1, '', 'a', false, true], $boolean)", "null", "[1,\"a\",true]")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("$map([1,2,3], $string)", "null", "[\"1\",\"2\",\"3\"]")]
+    [DataRow("$map([1,'a',true], $type)", "null", "[\"number\",\"string\",\"boolean\"]")]
+    [DataRow("$filter([0, 1, '', 'a', false, true], $boolean)", "null", "[1,\"a\",true]")]
     public void HigherOrderBuiltIns(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -4947,12 +4953,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Round 10: Context binding / $split / $replace pipe
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("'hello world' ~> $contains('world')", "null", "true")]
-    [InlineData("'abc' ~> $split(',')", "null", "[\"abc\"]")]
-    [InlineData("'abc' ~> $replace('b', 'X')", "null", "\"aXc\"")]
-    [InlineData("'hello' ~> $match(/l+/)", "null", "{\"match\":\"ll\",\"index\":2,\"groups\":[]}")]
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("'hello world' ~> $contains('world')", "null", "true")]
+    [DataRow("'abc' ~> $split(',')", "null", "[\"abc\"]")]
+    [DataRow("'abc' ~> $replace('b', 'X')", "null", "\"aXc\"")]
+    [DataRow("'hello' ~> $match(/l+/)", "null", "{\"match\":\"ll\",\"index\":2,\"groups\":[]}")]
     public void ContextBindingPipe(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -4962,15 +4968,15 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // Round 10: Deep nested array path traversal
     // ═══════════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-coverage")]
-    [InlineData("Account.Order.Product.Price",
+    [TestMethod]
+    [TestCategory("codegen-coverage")]
+    [DataRow("Account.Order.Product.Price",
         "{\"Account\":{\"Order\":[{\"Product\":[{\"Price\":10},{\"Price\":20}]},{\"Product\":[{\"Price\":30}]}]}}",
         "[10,20,30]")]
-    [InlineData("a.b.c",
+    [DataRow("a.b.c",
         "{\"a\":[{\"b\":{\"c\":1}},{\"b\":{\"c\":2}},{\"b\":{\"c\":3}}]}",
         "[1,2,3]")]
-    [InlineData("x.y.z",
+    [DataRow("x.y.z",
         "{\"x\":[{\"y\":[{\"z\":1},{\"z\":2}]},{\"y\":[{\"z\":3}]}]}",
         "[1,2,3]")]
     public void DeepNestedArrayPath(string expression, string data, string expected)
@@ -4981,24 +4987,24 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ──────── Round 11: StringConcat3/4/5 (lines 1596-1654) ────────
     // CG only calls these for DYNAMIC (non-literal) operands.
 
-    [Theory]
-    [InlineData("a & b & c", "{\"a\":\"x\",\"b\":\"y\",\"c\":\"z\"}", "\"xyz\"")]
-    [InlineData("x & y & z", "{\"x\":\"hello\",\"y\":\" \",\"z\":\"world\"}", "\"hello world\"")]
+    [TestMethod]
+    [DataRow("a & b & c", "{\"a\":\"x\",\"b\":\"y\",\"c\":\"z\"}", "\"xyz\"")]
+    [DataRow("x & y & z", "{\"x\":\"hello\",\"y\":\" \",\"z\":\"world\"}", "\"hello world\"")]
     public void StringConcat3(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
-    [Theory]
-    [InlineData("a & b & c & d", "{\"a\":\"1\",\"b\":\"2\",\"c\":\"3\",\"d\":\"4\"}", "\"1234\"")]
-    [InlineData("w & x & y & z", "{\"w\":\"a\",\"x\":\"b\",\"y\":\"c\",\"z\":\"d\"}", "\"abcd\"")]
+    [TestMethod]
+    [DataRow("a & b & c & d", "{\"a\":\"1\",\"b\":\"2\",\"c\":\"3\",\"d\":\"4\"}", "\"1234\"")]
+    [DataRow("w & x & y & z", "{\"w\":\"a\",\"x\":\"b\",\"y\":\"c\",\"z\":\"d\"}", "\"abcd\"")]
     public void StringConcat4(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
-    [Theory]
-    [InlineData("a & b & c & d & e", "{\"a\":\"1\",\"b\":\"2\",\"c\":\"3\",\"d\":\"4\",\"e\":\"5\"}", "\"12345\"")]
+    [TestMethod]
+    [DataRow("a & b & c & d & e", "{\"a\":\"1\",\"b\":\"2\",\"c\":\"3\",\"d\":\"4\",\"e\":\"5\"}", "\"12345\"")]
     public void StringConcat5(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -5006,13 +5012,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: CoerceToStringElement (lines 2087-2108) ────────
 
-    [Theory]
-    [InlineData("$string(42)", "0", "\"42\"")]
-    [InlineData("$string(true)", "0", "\"true\"")]
-    [InlineData("$string(false)", "0", "\"false\"")]
-    [InlineData("$string(null)", "0", "\"null\"")]
-    [InlineData("$string({\"x\":1})", "0", "\"{\\\"x\\\":1}\"")]
-    [InlineData("$string([1,2,3])", "0", "\"[1,2,3]\"")]
+    [TestMethod]
+    [DataRow("$string(42)", "0", "\"42\"")]
+    [DataRow("$string(true)", "0", "\"true\"")]
+    [DataRow("$string(false)", "0", "\"false\"")]
+    [DataRow("$string(null)", "0", "\"null\"")]
+    [DataRow("$string({\"x\":1})", "0", "\"{\\\"x\\\":1}\"")]
+    [DataRow("$string([1,2,3])", "0", "\"[1,2,3]\"")]
     public void CoerceToStringElement(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -5020,12 +5026,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: EnumerateWildcard (lines 1017-1037) ────────
 
-    [Theory]
-    [InlineData("$.*", "{\"a\":1,\"b\":2,\"c\":3}", "[1,2,3]")]
-    [InlineData("data.*", "{\"data\":{\"x\":10,\"y\":20}}", "[10,20]")]
-    [InlineData("$.*", "{\"only\":42}", "42")]
-    [InlineData("$.*", "{}", "undefined")]
-    [InlineData("$.*", "0", "undefined")]
+    [TestMethod]
+    [DataRow("$.*", "{\"a\":1,\"b\":2,\"c\":3}", "[1,2,3]")]
+    [DataRow("data.*", "{\"data\":{\"x\":10,\"y\":20}}", "[10,20]")]
+    [DataRow("$.*", "{\"only\":42}", "42")]
+    [DataRow("$.*", "{}", "undefined")]
+    [DataRow("$.*", "0", "undefined")]
     public void EnumerateWildcard(string expression, string data, string expected)
     {
         if (expected == "undefined")
@@ -5040,13 +5046,13 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: NumericBinaryOp (lines 8799-8822) ────────
 
-    [Theory]
-    [InlineData("a + b", "{\"a\":10,\"b\":20}", "30")]
-    [InlineData("a - b", "{\"a\":100,\"b\":42}", "58")]
-    [InlineData("a * b", "{\"a\":3,\"b\":7}", "21")]
-    [InlineData("a % b", "{\"a\":17,\"b\":5}", "2")]
-    [InlineData("a + b", "{\"a\":10}", "undefined")]
-    [InlineData("a + b", "{\"b\":20}", "undefined")]
+    [TestMethod]
+    [DataRow("a + b", "{\"a\":10,\"b\":20}", "30")]
+    [DataRow("a - b", "{\"a\":100,\"b\":42}", "58")]
+    [DataRow("a * b", "{\"a\":3,\"b\":7}", "21")]
+    [DataRow("a % b", "{\"a\":17,\"b\":5}", "2")]
+    [DataRow("a + b", "{\"a\":10}", "undefined")]
+    [DataRow("a + b", "{\"b\":20}", "undefined")]
     public void NumericBinaryOp(string expression, string data, string expected)
     {
         if (expected == "undefined")
@@ -5061,14 +5067,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: NavigatePropertyChainTransform (lines 2674-2716) ────────
 
-    [Theory]
-    [InlineData("Account.Order.Product.Price.$string()",
+    [TestMethod]
+    [DataRow("Account.Order.Product.Price.$string()",
         "{\"Account\":{\"Order\":[{\"Product\":{\"Price\":9.99}},{\"Product\":{\"Price\":21.99}}]}}",
         "[\"9.99\",\"21.99\"]")]
-    [InlineData("items.name.$uppercase()",
+    [DataRow("items.name.$uppercase()",
         "{\"items\":[{\"name\":\"hello\"},{\"name\":\"world\"}]}",
         "[\"HELLO\",\"WORLD\"]")]
-    [InlineData("items.name.$length()",
+    [DataRow("items.name.$length()",
         "{\"items\":[{\"name\":\"ab\"},{\"name\":\"cdef\"}]}",
         "[2,4]")]
     public void NavigatePropertyChainTransform(string expression, string data, string expected)
@@ -5078,17 +5084,17 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: ContinueChainFlatInto (lines 598-622) ────────
 
-    [Theory]
-    [InlineData("a.b.c",
+    [TestMethod]
+    [DataRow("a.b.c",
         "{\"a\":{\"b\":[{\"c\":1},{\"c\":2}]}}",
         "[1,2]")]
-    [InlineData("a.b.c.d",
+    [DataRow("a.b.c.d",
         "{\"a\":[{\"b\":{\"c\":{\"d\":1}}},{\"b\":{\"c\":{\"d\":2}}}]}",
         "[1,2]")]
-    [InlineData("a.b.c",
+    [DataRow("a.b.c",
         "{\"a\":{\"b\":{\"c\":\"leaf\"}}}",
         "\"leaf\"")]
-    [InlineData("a.b.c",
+    [DataRow("a.b.c",
         "{\"a\":{\"b\":{\"c\":[10,20]}}}",
         "[10,20]")]
     public void ContinueChainFlatInto(string expression, string data, string expected)
@@ -5098,20 +5104,20 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: Aggregate min/max via path (lines 3422-3440) ────────
 
-    [Theory]
-    [InlineData("$max(items.price)",
+    [TestMethod]
+    [DataRow("$max(items.price)",
         "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
         "30")]
-    [InlineData("$min(items.price)",
+    [DataRow("$min(items.price)",
         "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
         "10")]
-    [InlineData("$sum(items.price)",
+    [DataRow("$sum(items.price)",
         "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
         "60")]
-    [InlineData("$average(items.price)",
+    [DataRow("$average(items.price)",
         "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
         "20")]
-    [InlineData("$count(items.price)",
+    [DataRow("$count(items.price)",
         "{\"items\":[{\"price\":10},{\"price\":30},{\"price\":20}]}",
         "3")]
     public void AggregateViaPath(string expression, string data, string expected)
@@ -5121,14 +5127,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: ArrayFromBuffer (lines 4699-4721) ────────
 
-    [Theory]
-    [InlineData("items[price > 15]",
+    [TestMethod]
+    [DataRow("items[price > 15]",
         "{\"items\":[{\"price\":10,\"name\":\"a\"},{\"price\":30,\"name\":\"b\"},{\"price\":20,\"name\":\"c\"}]}",
         "[{\"price\":30,\"name\":\"b\"},{\"price\":20,\"name\":\"c\"}]")]
-    [InlineData("items[price > 100]",
+    [DataRow("items[price > 100]",
         "{\"items\":[{\"price\":10},{\"price\":20}]}",
         "undefined")]
-    [InlineData("items[price > 15].name",
+    [DataRow("items[price > 15].name",
         "{\"items\":[{\"price\":10,\"name\":\"a\"},{\"price\":30,\"name\":\"b\"},{\"price\":20,\"name\":\"c\"}]}",
         "[\"b\",\"c\"]")]
     public void ArrayFromBuffer(string expression, string data, string expected)
@@ -5145,10 +5151,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: StringifyElement (lines 8990-9005) ────────
 
-    [Theory]
-    [InlineData("$string({\"x\":1})", "0", "\"{\\\"x\\\":1}\"")]
-    [InlineData("$string([1,2,3])", "0", "\"[1,2,3]\"")]
-    [InlineData("$string({\"a\":{\"b\":2}})", "0", "\"{\\\"a\\\":{\\\"b\\\":2}}\"")]
+    [TestMethod]
+    [DataRow("$string({\"x\":1})", "0", "\"{\\\"x\\\":1}\"")]
+    [DataRow("$string([1,2,3])", "0", "\"[1,2,3]\"")]
+    [DataRow("$string({\"a\":{\"b\":2}})", "0", "\"{\\\"a\\\":{\\\"b\\\":2}}\"")]
     public void StringifyElement(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -5156,11 +5162,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: BuildSingleEntryObject (lines 8357-8387) ────────
 
-    [Theory]
-    [InlineData("Account.Order.Product{`Product Name`:Price}",
+    [TestMethod]
+    [DataRow("Account.Order.Product{`Product Name`:Price}",
         "{\"Account\":{\"Order\":[{\"Product\":{\"Product Name\":\"Hat\",\"Price\":9.99}},{\"Product\":{\"Product Name\":\"Shoes\",\"Price\":21.99}}]}}",
         "{\"Hat\":9.99,\"Shoes\":21.99}")]
-    [InlineData("items{name:value}",
+    [DataRow("items{name:value}",
         "{\"items\":[{\"name\":\"x\",\"value\":1},{\"name\":\"y\",\"value\":2}]}",
         "{\"x\":1,\"y\":2}")]
     public void BuildSingleEntryObject(string expression, string data, string expected)
@@ -5170,14 +5176,14 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // ──────── Round 11: Fused predicate on singleton object (lines 700-712) ────────
 
-    [Theory]
-    [InlineData("items[type=\"book\"].name",
+    [TestMethod]
+    [DataRow("items[type=\"book\"].name",
         "{\"items\":{\"type\":\"book\",\"name\":\"Title\"}}",
         "\"Title\"")]
-    [InlineData("items[type=\"dvd\"].name",
+    [DataRow("items[type=\"dvd\"].name",
         "{\"items\":{\"type\":\"book\",\"name\":\"Title\"}}",
         "undefined")]
-    [InlineData("data[active=true].id",
+    [DataRow("data[active=true].id",
         "{\"data\":{\"active\":true,\"id\":42}}",
         "42")]
     public void FusedPredicateSingletonObject(string expression, string data, string expected)
@@ -5195,11 +5201,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ──────── Round 11: Zip multi-arg overload (lines 6654-6705) ────────
     // CG constant-folds literal arrays; use dynamic refs to hit runtime Zip helpers.
 
-    [Theory]
-    [InlineData("$zip(a, b, c, d)", "{\"a\":[1,2],\"b\":[3,4],\"c\":[5,6],\"d\":[7,8]}", "[[1,3,5,7],[2,4,6,8]]")]
-    [InlineData("$zip(a, b, c, d, e)", "{\"a\":[1],\"b\":[2],\"c\":[3],\"d\":[4],\"e\":[5]}", "[[1,2,3,4,5]]")]
-    [InlineData("$zip(a)", "{\"a\":[1,2,3]}", "[[1],[2],[3]]")]
-    [InlineData("$zip(a, b)", "{\"a\":[1,2],\"b\":[3,4]}", "[[1,3],[2,4]]")]
+    [TestMethod]
+    [DataRow("$zip(a, b, c, d)", "{\"a\":[1,2],\"b\":[3,4],\"c\":[5,6],\"d\":[7,8]}", "[[1,3,5,7],[2,4,6,8]]")]
+    [DataRow("$zip(a, b, c, d, e)", "{\"a\":[1],\"b\":[2],\"c\":[3],\"d\":[4],\"e\":[5]}", "[[1,2,3,4,5]]")]
+    [DataRow("$zip(a)", "{\"a\":[1,2,3]}", "[[1],[2],[3]]")]
+    [DataRow("$zip(a, b)", "{\"a\":[1,2],\"b\":[3,4]}", "[[1,3],[2,4]]")]
     public void ZipMultiArg(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -5209,46 +5215,46 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // All tests use data references to bypass CG constant folding.
 
     // --- AggregateMinMaxChain: $max/$min on nested array (lines 3422-3440) ---
-    [Theory]
-    [InlineData("$max(items.price)", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "20")]
-    [InlineData("$min(items.price)", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "5")]
-    [InlineData("items.price ~> $max", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "20")]
-    [InlineData("items.price ~> $min", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "5")]
+    [TestMethod]
+    [DataRow("$max(items.price)", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "20")]
+    [DataRow("$min(items.price)", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "5")]
+    [DataRow("items.price ~> $max", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "20")]
+    [DataRow("items.price ~> $min", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":5}]}", "5")]
     public void AggregateMinMaxChain(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- AverageChain: $average on nested path (lines 3485-3498) ---
-    [Theory]
-    [InlineData("$average(items.price)", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":30}]}", "20")]
-    [InlineData("items.price ~> $average", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":30}]}", "20")]
+    [TestMethod]
+    [DataRow("$average(items.price)", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":30}]}", "20")]
+    [DataRow("items.price ~> $average", "{\"items\":[{\"price\":10},{\"price\":20},{\"price\":30}]}", "20")]
     public void AverageOverChain(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- ContinueChainFlatInto: array mid-chain (lines 598-613) ---
-    [Theory]
-    [InlineData("a.b.c", "{\"a\":[{\"b\":{\"c\":1}},{\"b\":{\"c\":2}}]}", "[1,2]")]
-    [InlineData("a.b.c.d", "{\"a\":[{\"b\":{\"c\":{\"d\":\"x\"}}},{\"b\":{\"c\":{\"d\":\"y\"}}}]}", "[\"x\",\"y\"]")]
+    [TestMethod]
+    [DataRow("a.b.c", "{\"a\":[{\"b\":{\"c\":1}},{\"b\":{\"c\":2}}]}", "[1,2]")]
+    [DataRow("a.b.c.d", "{\"a\":[{\"b\":{\"c\":{\"d\":\"x\"}}},{\"b\":{\"c\":{\"d\":\"y\"}}}]}", "[\"x\",\"y\"]")]
     public void ContinueChainFlatIntoDynamic(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- FusedEval with equality predicate on array (lines 850-866) ---
-    [Theory]
-    [InlineData("items[type=\"A\"].name", "{\"items\":[{\"type\":\"A\",\"name\":\"foo\"},{\"type\":\"B\",\"name\":\"bar\"},{\"type\":\"A\",\"name\":\"baz\"}]}", "[\"foo\",\"baz\"]")]
+    [TestMethod]
+    [DataRow("items[type=\"A\"].name", "{\"items\":[{\"type\":\"A\",\"name\":\"foo\"},{\"type\":\"B\",\"name\":\"bar\"},{\"type\":\"A\",\"name\":\"baz\"}]}", "[\"foo\",\"baz\"]")]
     public void FusedEvalEqualityPredicateArray(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- FusedEval with equality predicate on singleton object (lines 700-712) ---
-    [Theory]
-    [InlineData("item[type=\"A\"].name", "{\"item\":{\"type\":\"A\",\"name\":\"foo\"}}", "\"foo\"")]
-    [InlineData("item[type=\"B\"].name", "{\"item\":{\"type\":\"A\",\"name\":\"foo\"}}", "undefined")]
+    [TestMethod]
+    [DataRow("item[type=\"A\"].name", "{\"item\":{\"type\":\"A\",\"name\":\"foo\"}}", "\"foo\"")]
+    [DataRow("item[type=\"B\"].name", "{\"item\":{\"type\":\"A\",\"name\":\"foo\"}}", "undefined")]
     public void FusedEvalEqualityPredicateSingleton(string expression, string data, string expected)
     {
         if (expected == "undefined")
@@ -5262,53 +5268,53 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEval with constant index on array (lines 818-833) ---
-    [Theory]
-    [InlineData("items.values[0]", "{\"items\":[{\"values\":[10,20]},{\"values\":[30,40]}]}", "[10,30]")]
-    [InlineData("items.values[1]", "{\"items\":[{\"values\":[10,20]},{\"values\":[30,40]}]}", "[20,40]")]
+    [TestMethod]
+    [DataRow("items.values[0]", "{\"items\":[{\"values\":[10,20]},{\"values\":[30,40]}]}", "[10,30]")]
+    [DataRow("items.values[1]", "{\"items\":[{\"values\":[10,20]},{\"values\":[30,40]}]}", "[20,40]")]
     public void FusedEvalConstantIndex(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- FusedEval const-index + more steps (lines 836-845) ---
-    [Theory]
-    [InlineData("items.values[0].name", "{\"items\":[{\"values\":[{\"name\":\"a\"},{\"name\":\"b\"}]},{\"values\":[{\"name\":\"c\"},{\"name\":\"d\"}]}]}", "[\"a\",\"c\"]")]
+    [TestMethod]
+    [DataRow("items.values[0].name", "{\"items\":[{\"values\":[{\"name\":\"a\"},{\"name\":\"b\"}]},{\"values\":[{\"name\":\"c\"},{\"name\":\"d\"}]}]}", "[\"a\",\"c\"]")]
     public void FusedEvalConstantIndexMoreSteps(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- EnumerateWildcard on array with len >= 2 (lines 1030-1037) ---
-    [Theory]
-    [InlineData("data.*", "{\"data\":{\"a\":1,\"b\":2,\"c\":3}}", "[1,2,3]")]
-    [InlineData("x.*", "{\"x\":[{\"a\":1},{\"b\":2},{\"c\":3}]}", "[1,2,3]")]
+    [TestMethod]
+    [DataRow("data.*", "{\"data\":{\"a\":1,\"b\":2,\"c\":3}}", "[1,2,3]")]
+    [DataRow("x.*", "{\"x\":[{\"a\":1},{\"b\":2},{\"c\":3}]}", "[1,2,3]")]
     public void EnumerateWildcardDynamic(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- MapChainElements: path with transform (lines 2674-2710) ---
-    [Theory]
-    [InlineData("items.name.$uppercase()", "{\"items\":[{\"name\":\"hello\"},{\"name\":\"world\"}]}", "[\"HELLO\",\"WORLD\"]")]
-    [InlineData("items.$string()", "{\"items\":[1,2,3]}", "[\"1\",\"2\",\"3\"]")]
+    [TestMethod]
+    [DataRow("items.name.$uppercase()", "{\"items\":[{\"name\":\"hello\"},{\"name\":\"world\"}]}", "[\"HELLO\",\"WORLD\"]")]
+    [DataRow("items.$string()", "{\"items\":[1,2,3]}", "[\"1\",\"2\",\"3\"]")]
     public void MapChainElementsDynamic(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- StringifyElement: $string on objects/arrays (lines 8990-9005) ---
-    [Theory]
-    [InlineData("$string(x)", "{\"x\":{\"a\":1,\"b\":2}}", "\"{\\\"a\\\":1,\\\"b\\\":2}\"")]
-    [InlineData("$string(x)", "{\"x\":[1,2,3]}", "\"[1,2,3]\"")]
-    [InlineData("$string(x)", "{\"x\":42}", "\"42\"")]
-    [InlineData("$string(x)", "{\"x\":true}", "\"true\"")]
+    [TestMethod]
+    [DataRow("$string(x)", "{\"x\":{\"a\":1,\"b\":2}}", "\"{\\\"a\\\":1,\\\"b\\\":2}\"")]
+    [DataRow("$string(x)", "{\"x\":[1,2,3]}", "\"[1,2,3]\"")]
+    [DataRow("$string(x)", "{\"x\":42}", "\"42\"")]
+    [DataRow("$string(x)", "{\"x\":true}", "\"true\"")]
     public void StringifyDynamic(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- Shuffle: $shuffle on dynamic array (lines 5602-5613) ---
-    [Fact]
+    [TestMethod]
     public void ShuffleDynamic()
     {
         // $shuffle returns a random permutation; just verify it's an array of the same elements
@@ -5317,11 +5323,11 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
         // RT path
         string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
-        Assert.NotNull(rtResult);
+        Assert.IsNotNull(rtResult);
 
         // CG path
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
-        Assert.NotNull(compiled.Method);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
+        Assert.IsNotNull(compiled.Method);
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement cgResult = InvokeCg(compiled.Method, inputDoc.RootElement, workspace);
@@ -5331,58 +5337,58 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         using var cgDoc = JsonDocument.Parse(cgResult.GetRawText());
         int[] rtArr = rtDoc.RootElement.EnumerateArray().Select(e => e.GetInt32()).OrderBy(x => x).ToArray();
         int[] cgArr = cgDoc.RootElement.EnumerateArray().Select(e => e.GetInt32()).OrderBy(x => x).ToArray();
-        Assert.Equal(new[] { 1, 2, 3, 4, 5 }, rtArr);
-        Assert.Equal(new[] { 1, 2, 3, 4, 5 }, cgArr);
+        CollectionAssert.AreEqual(new[] { 1, 2, 3, 4, 5 }, rtArr);
+        CollectionAssert.AreEqual(new[] { 1, 2, 3, 4, 5 }, cgArr);
     }
 
     // --- CodePointToCharIndex/CountCodePoints: surrogate strings (lines 7561-7591) ---
-    [Theory]
-    [InlineData("$substring(x,2)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "\"B\"")]
-    [InlineData("$substring(x,1)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "\"AB\"")]
-    [InlineData("$substring(x,0,1)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "\"\\uD83D\\uDE00\"")]
-    [InlineData("$length(x)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "3")]
+    [TestMethod]
+    [DataRow("$substring(x,2)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "\"B\"")]
+    [DataRow("$substring(x,1)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "\"AB\"")]
+    [DataRow("$substring(x,0,1)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "\"\\uD83D\\uDE00\"")]
+    [DataRow("$length(x)", "{\"x\":\"\\uD83D\\uDE00AB\"}", "3")]
     public void SurrogateStringOperations(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- ParseInteger with dynamic picture (lines 7544-7556) ---
-    [Theory]
-    [InlineData("$parseInteger(x,y)", "{\"x\":\"255\",\"y\":\"#0\"}", "255")]
+    [TestMethod]
+    [DataRow("$parseInteger(x,y)", "{\"x\":\"255\",\"y\":\"#0\"}", "255")]
     public void ParseIntegerDynamic(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- ToMillis with dynamic picture (lines 7336-7344) ---
-    [Theory]
-    [InlineData("$toMillis(x,y)", "{\"x\":\"2018-02-12\",\"y\":\"[Y]-[M01]-[D01]\"}", "1518393600000")]
+    [TestMethod]
+    [DataRow("$toMillis(x,y)", "{\"x\":\"2018-02-12\",\"y\":\"[Y]-[M01]-[D01]\"}", "1518393600000")]
     public void ToMillisDynamic(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- Flatten with nested arrays (lines 7060-7073) ---
-    [Theory]
-    [InlineData("$flatten(x)", "{\"x\":[[1,2],[3,4],[5,6]]}", "[1,2,3,4,5,6]")]
-    [InlineData("$flatten(x)", "{\"x\":[[1,[2,3]],[4,[5,6]]]}", "[1,2,3,4,5,6]")]
+    [TestMethod]
+    [DataRow("$flatten(x)", "{\"x\":[[1,2],[3,4],[5,6]]}", "[1,2,3,4,5,6]")]
+    [DataRow("$flatten(x)", "{\"x\":[[1,[2,3]],[4,[5,6]]]}", "[1,2,3,4,5,6]")]
     public void FlattenDynamic(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- MapChainDouble: single-element arithmetic map (lines 7759-7768) ---
-    [Theory]
-    [InlineData("items.price + 1", "{\"items\":{\"price\":10}}", "11")]
-    [InlineData("items.price * 2", "{\"items\":{\"price\":5}}", "10")]
+    [TestMethod]
+    [DataRow("items.price + 1", "{\"items\":{\"price\":10}}", "11")]
+    [DataRow("items.price * 2", "{\"items\":{\"price\":5}}", "10")]
     public void MapChainDoubleSingle(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- ArrayFromBuffer: multi-result navigation (lines 4713-4721) ---
-    [Theory]
-    [InlineData("items.name", "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]}", "[\"a\",\"b\",\"c\"]")]
+    [TestMethod]
+    [DataRow("items.name", "{\"items\":[{\"name\":\"a\"},{\"name\":\"b\"},{\"name\":\"c\"}]}", "[\"a\",\"b\",\"c\"]")]
     public void ArrayFromBufferMulti(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
@@ -5394,12 +5400,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // mixed equality + index, array inputs to predicate chains).
 
     // --- NavigatePropertyChainWithPredicates: multiple equality predicates (lines 640-712) ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items[type=\"A\"][status=\"active\"].name",
         "{\"items\":[{\"type\":\"A\",\"status\":\"active\",\"name\":\"x\"},{\"type\":\"A\",\"status\":\"inactive\",\"name\":\"y\"},{\"type\":\"B\",\"status\":\"active\",\"name\":\"z\"}]}",
         "\"x\"")]
-    [InlineData(
+    [DataRow(
         "items[type=\"A\"][status=\"active\"].name",
         "{\"items\":[{\"type\":\"A\",\"status\":\"active\",\"name\":\"x\"},{\"type\":\"A\",\"status\":\"active\",\"name\":\"w\"}]}",
         "[\"x\",\"w\"]")]
@@ -5409,12 +5415,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- NavigatePropertyChainWithPredicates: mixed equality predicate + constant index ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items[type=\"A\"].values[0]",
         "{\"items\":[{\"type\":\"A\",\"values\":[10,20]},{\"type\":\"B\",\"values\":[30,40]}]}",
         "10")]
-    [InlineData(
+    [DataRow(
         "items[type=\"A\"].values[0]",
         "{\"items\":[{\"type\":\"A\",\"values\":[10,20]},{\"type\":\"A\",\"values\":[30,40]},{\"type\":\"B\",\"values\":[50,60]}]}",
         "[10,30]")]
@@ -5426,16 +5432,16 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // --- ChainKeepSingletonArray: keepArray fallback (lines 4613-4646) ---
     // a.b.c[] with array at 'a' triggers the startIndex overload;
     // a.b.c[] with top-level array data triggers the no-startIndex overload.
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "a.b.c[]",
         "{\"a\":[{\"b\":{\"c\":1}},{\"b\":{\"c\":2}}]}",
         "[1,2]")]
-    [InlineData(
+    [DataRow(
         "a.b.c[]",
         "{\"a\":{\"b\":{\"c\":42}}}",
         "[42]")]
-    [InlineData(
+    [DataRow(
         "a.b.c[]",
         "[{\"a\":{\"b\":{\"c\":1}}},{\"a\":{\"b\":{\"c\":2}}}]",
         "[1,2]")]
@@ -5445,12 +5451,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- ChainMerge: $merge over chain (lines 4680-4691) ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "$merge(items.objs)",
         "{\"items\":[{\"objs\":{\"a\":1}},{\"objs\":{\"b\":2}}]}",
         "{\"a\":1,\"b\":2}")]
-    [InlineData(
+    [DataRow(
         "$merge(items.objs)",
         "{\"items\":[{\"objs\":{\"x\":10}},{\"objs\":{\"y\":20}},{\"objs\":{\"z\":30}}]}",
         "{\"x\":10,\"y\":20,\"z\":30}")]
@@ -5460,12 +5466,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- ShuffleFromBuffer: $shuffle over chain (lines 5586-5613) ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "$count($shuffle(items.vals))",
         "{\"items\":[{\"vals\":[1]},{\"vals\":[2]},{\"vals\":[3]}]}",
         "3")]
-    [InlineData(
+    [DataRow(
         "$count($shuffle(items.vals))",
         "{\"items\":[{\"vals\":[10,20]},{\"vals\":[30,40]}]}",
         "4")]
@@ -5475,12 +5481,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- MapChainElements: $map over chain (lines 2674-2716) ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "$map(items.name, function($v){$uppercase($v)})",
         "{\"items\":[{\"name\":\"alice\"},{\"name\":\"bob\"}]}",
         "[\"ALICE\",\"BOB\"]")]
-    [InlineData(
+    [DataRow(
         "$map(items.val, function($v){$v * 10})",
         "{\"items\":[{\"val\":1},{\"val\":2},{\"val\":3}]}",
         "[10,20,30]")]
@@ -5490,8 +5496,8 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- MapChainElements via ~> apply operator ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items.name ~> $map(function($v){$uppercase($v)})",
         "{\"items\":[{\"name\":\"alice\"},{\"name\":\"bob\"}]}",
         "[\"ALICE\",\"BOB\"]")]
@@ -5501,12 +5507,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- AverageOverChain via apply (lines 2290-2306) ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items.values ~> $average",
         "{\"items\":[{\"values\":[2,4]},{\"values\":[6,8]}]}",
         "5")]
-    [InlineData(
+    [DataRow(
         "items.values ~> $average",
         "{\"items\":[{\"values\":[10]}]}",
         "10")]
@@ -5516,8 +5522,8 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- SumOverChain via apply ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items.values ~> $sum",
         "{\"items\":[{\"values\":[3,7]},{\"values\":[1,9]}]}",
         "20")]
@@ -5527,12 +5533,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- MaxOverChain / MinOverChain via apply ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items.values ~> $max",
         "{\"items\":[{\"values\":[3,7]},{\"values\":[1,9]}]}",
         "9")]
-    [InlineData(
+    [DataRow(
         "items.values ~> $min",
         "{\"items\":[{\"values\":[3,7]},{\"values\":[1,9]}]}",
         "1")]
@@ -5542,12 +5548,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- MapChainDouble: arithmetic computed step over chain (lines 2590-2597) ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items.(price * 2)",
         "{\"items\":[{\"price\":10},{\"price\":20}]}",
         "[20,40]")]
-    [InlineData(
+    [DataRow(
         "items.(price + tax)",
         "{\"items\":[{\"price\":10,\"tax\":1},{\"price\":20,\"tax\":2}]}",
         "[11,22]")]
@@ -5559,16 +5565,16 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // --- NavigatePropertyChain: 3+ step chain with array at first position (lines 208-238) ---
     // First two cases: array at property 'a'; third case: top-level array data triggers
     // NavigatePropertyChain(data, chain, workspace) overload (no startIndex).
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "a.b.c.d",
         "{\"a\":[{\"b\":{\"c\":{\"d\":\"x\"}}},{\"b\":{\"c\":{\"d\":\"y\"}}}]}",
         "[\"x\",\"y\"]")]
-    [InlineData(
+    [DataRow(
         "a.b.c.d[]",
         "{\"a\":[{\"b\":{\"c\":{\"d\":\"x\"}}},{\"b\":{\"c\":{\"d\":\"y\"}}}]}",
         "[\"x\",\"y\"]")]
-    [InlineData(
+    [DataRow(
         "a.b.c.d",
         "[{\"a\":{\"b\":{\"c\":{\"d\":\"x\"}}}},{\"a\":{\"b\":{\"c\":{\"d\":\"y\"}}}}]",
         "[\"x\",\"y\"]")]
@@ -5579,8 +5585,8 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- FusedCollectAndContinue: predicate chain with array input ---
     // When the data is an array, the inline predicate path falls through to the helper
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items[type=\"A\"].name",
         "[{\"items\":[{\"type\":\"A\",\"name\":\"x\"}]},{\"items\":[{\"type\":\"A\",\"name\":\"y\"}]}]",
         "[\"x\",\"y\"]")]
@@ -5594,9 +5600,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // the "return default" and "buffer.Count == 0/1" branches.
 
     // --- NavigatePropertyChain: missing property mid-chain (lines 260-262) ---
-    [Theory]
-    [InlineData("a.b.c.d", "{\"a\":{\"x\":1}}", "undefined")]
-    [InlineData("a.b.c.d", "{\"a\":{\"b\":5}}", "undefined")]
+    [TestMethod]
+    [DataRow("a.b.c.d", "{\"a\":{\"x\":1}}", "undefined")]
+    [DataRow("a.b.c.d", "{\"a\":{\"b\":5}}", "undefined")]
     public void NavigatePropertyChainMissing(string expression, string data, string expected)
     {
         if (expected == "undefined")
@@ -5610,7 +5616,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- NavigatePropertyChain: single-element array in chain ---
-    [Fact]
+    [TestMethod]
     public void NavigatePropertyChainSingleArrayResult()
     {
         this.AssertCgAndRtMatch(
@@ -5620,10 +5626,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- AverageOverChain: empty / single element (lines 3485-3506) ---
-    [Theory]
-    [InlineData("items.values ~> $average", "{\"items\":[]}", "undefined")]
-    [InlineData("items.values ~> $average", "{\"items\":[{\"values\":[]}]}", "undefined")]
-    [InlineData("items.values ~> $average", "{\"items\":[{\"values\":[42]}]}", "42")]
+    [TestMethod]
+    [DataRow("items.values ~> $average", "{\"items\":[]}", "undefined")]
+    [DataRow("items.values ~> $average", "{\"items\":[{\"values\":[]}]}", "undefined")]
+    [DataRow("items.values ~> $average", "{\"items\":[{\"values\":[42]}]}", "42")]
     public void AverageOverChainEdgeCases(string expression, string data, string expected)
     {
         if (expected == "undefined")
@@ -5637,9 +5643,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- SumOverChainCore: empty chain (lines 2498-2505) ---
-    [Theory]
-    [InlineData("items.values ~> $sum", "{\"items\":[]}", "undefined")]
-    [InlineData("items.values ~> $sum", "{\"items\":[{\"values\":[]}]}", "0")]
+    [TestMethod]
+    [DataRow("items.values ~> $sum", "{\"items\":[]}", "undefined")]
+    [DataRow("items.values ~> $sum", "{\"items\":[{\"values\":[]}]}", "0")]
     public void SumOverChainEdgeCases(string expression, string data, string expected)
     {
         if (expected == "undefined")
@@ -5653,7 +5659,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- MapChainElements: empty / single element (lines 2681-2695) ---
-    [Fact]
+    [TestMethod]
     public void MapChainElementsEmpty()
     {
         this.AssertCgAndRtBothUndefined(
@@ -5661,7 +5667,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "{\"items\":[]}");
     }
 
-    [Fact]
+    [TestMethod]
     public void MapChainElementsSingle()
     {
         // Reference JSONata unwraps single-element chain results to scalar "ALICE";
@@ -5670,9 +5676,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         string data = "{\"items\":[{\"name\":\"alice\"}]}";
 
         // CG path
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(data));
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -5683,19 +5689,19 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
         // RT path
         string? rtResult = JsonataEvaluator.Default.EvaluateToString(expression, data);
 
-        this.output.WriteLine($"CG: {cgJson}");
-        this.output.WriteLine($"RT: {rtResult}");
+        Console.WriteLine($"CG: {cgJson}");
+        Console.WriteLine($"RT: {rtResult}");
 
         // RT matches reference (scalar)
-        Assert.Equal("\"ALICE\"", rtResult);
+        Assert.AreEqual("\"ALICE\"", rtResult);
         // CG wraps in array — both forms acceptable
-        Assert.True(
+        Assert.IsTrue(
             cgJson == "\"ALICE\"" || cgJson == "[\"ALICE\"]",
             $"Expected \"ALICE\" or [\"ALICE\"], got: {cgJson}");
     }
 
     // --- ShuffleFromBuffer: empty / single (lines 5568-5569) ---
-    [Fact]
+    [TestMethod]
     public void ShuffleFromBufferEmpty()
     {
         this.AssertCgAndRtBothUndefined(
@@ -5703,7 +5709,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "{\"items\":[]}");
     }
 
-    [Fact]
+    [TestMethod]
     public void ShuffleFromBufferSingle()
     {
         // Single element array — shuffle returns the same array
@@ -5714,7 +5720,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- ArrayFromBuffer: empty / single (lines 4679-4688) ---
-    [Fact]
+    [TestMethod]
     public void ArrayFromBufferEmpty()
     {
         this.AssertCgAndRtBothUndefined(
@@ -5722,7 +5728,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
             "{\"a\":[]}");
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayFromBufferSingle()
     {
         this.AssertCgAndRtMatch(
@@ -5732,9 +5738,9 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- MapChainDouble: single element (lines 2590-2597) ---
-    [Theory]
-    [InlineData("items.(price * 2)", "{\"items\":[{\"price\":5}]}", "10")]
-    [InlineData("items.(price * 2)", "{\"items\":[]}", "undefined")]
+    [TestMethod]
+    [DataRow("items.(price * 2)", "{\"items\":[{\"price\":5}]}", "10")]
+    [DataRow("items.(price * 2)", "{\"items\":[]}", "undefined")]
     public void MapChainDoubleEdgeCases(string expression, string data, string expected)
     {
         if (expected == "undefined")
@@ -5748,8 +5754,8 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: no matching predicates (lines 660-661, 700-712, 720-721) ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items[type=\"A\"].values[0]",
         "{\"items\":[{\"type\":\"B\",\"values\":[99]}]}",
         "undefined")]
@@ -5766,12 +5772,12 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedCollectAndContinue: various predicate chain edge cases ---
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         "items[type=\"A\"].name",
         "{\"items\":[{\"type\":\"B\",\"name\":\"y\"}]}",
         "undefined")]
-    [InlineData(
+    [DataRow(
         "items[type=\"A\"].name",
         "{\"items\":[{\"type\":\"A\",\"name\":\"x\"}]}",
         "\"x\"")]
@@ -5790,10 +5796,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // ==================== Round 13c: Deeper edge cases for remaining partial coverage ====================
 
     // --- NavigatePropertyChain overload 1: primitive data (lines 233-234) ---
-    [Theory]
-    [InlineData("a.b.c.d", "42", "undefined")]
-    [InlineData("a.b.c.d", "true", "undefined")]
-    [InlineData("a.b.c.d", "\"hello\"", "undefined")]
+    [TestMethod]
+    [DataRow("a.b.c.d", "42", "undefined")]
+    [DataRow("a.b.c.d", "true", "undefined")]
+    [DataRow("a.b.c.d", "\"hello\"", "undefined")]
     public void NavigatePropertyChainPrimitiveData(string expression, string data, string expected)
     {
         if (expected == "undefined")
@@ -5807,10 +5813,10 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- MapChainDouble: 2-step chain (data.items) to trigger MapChainDouble not MapOverElementsDouble ---
-    [Theory]
-    [InlineData("data.items.(price * 2)", "{\"data\":{\"items\":[{\"price\":3},{\"price\":7}]}}", "[6,14]")]
-    [InlineData("data.items.(price * 2)", "{\"data\":{\"items\":[{\"price\":5}]}}", "10")]
-    [InlineData("data.items.(price * 2)", "{\"data\":{\"items\":[]}}", "undefined")]
+    [TestMethod]
+    [DataRow("data.items.(price * 2)", "{\"data\":{\"items\":[{\"price\":3},{\"price\":7}]}}", "[6,14]")]
+    [DataRow("data.items.(price * 2)", "{\"data\":{\"items\":[{\"price\":5}]}}", "10")]
+    [DataRow("data.items.(price * 2)", "{\"data\":{\"items\":[]}}", "undefined")]
     public void MapChainDoubleTwoStepChain(string expression, string data, string expected)
     {
         if (expected == "undefined")
@@ -5824,16 +5830,16 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- AverageOverChainCore: array at end of chain (lines 3485-3497) ---
-    [Theory]
-    [InlineData("items.values ~> $average", "{\"items\":[{\"values\":[1,2,3]}]}", "2")]
-    [InlineData("items.values ~> $average", "{\"items\":[{\"values\":3}]}", "3")]
+    [TestMethod]
+    [DataRow("items.values ~> $average", "{\"items\":[{\"values\":[1,2,3]}]}", "2")]
+    [DataRow("items.values ~> $average", "{\"items\":[{\"values\":3}]}", "3")]
     public void AverageOverChainCoreBranches(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- AverageOverChainCore: non-number value → error (lines 3504-3506) ---
-    [Fact]
+    [TestMethod]
     public void AverageOverChainCoreNonNumberThrows()
     {
         this.AssertCgAndRtThrow(
@@ -5843,16 +5849,16 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- SumOverChainCore: array at end of chain (lines 2498-2505) ---
-    [Theory]
-    [InlineData("items.values ~> $sum", "{\"items\":[{\"values\":[1,2,3]}]}", "6")]
-    [InlineData("items.values ~> $sum", "{\"items\":[{\"values\":3}]}", "3")]
+    [TestMethod]
+    [DataRow("items.values ~> $sum", "{\"items\":[{\"values\":[1,2,3]}]}", "6")]
+    [DataRow("items.values ~> $sum", "{\"items\":[{\"values\":3}]}", "3")]
     public void SumOverChainCoreBranches(string expression, string data, string expected)
     {
         this.AssertCgAndRtMatch(expression, data, expected);
     }
 
     // --- SumOverChainCore: non-number value → error ---
-    [Fact]
+    [TestMethod]
     public void SumOverChainCoreNonNumberThrows()
     {
         this.AssertCgAndRtThrow(
@@ -5862,7 +5868,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: multiple matches → array result (lines 700-712) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepMultipleMatches()
     {
         this.AssertCgAndRtMatch(
@@ -5872,7 +5878,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: single match → scalar result (line 720-721) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepSingleMatch()
     {
         this.AssertCgAndRtMatch(
@@ -5882,7 +5888,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedCollectAndContinue: multiple matches (lines 861-890) ---
-    [Fact]
+    [TestMethod]
     public void FusedCollectAndContinueMultipleMatches()
     {
         this.AssertCgAndRtMatch(
@@ -5892,7 +5898,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- NavigatePropertyChainInto: mixed types in array (lines 423-424, 433-434) ---
-    [Fact]
+    [TestMethod]
     public void NavigatePropertyChainIntoMixedTypes()
     {
         this.AssertCgAndRtMatch(
@@ -5907,7 +5913,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // The ~> operator uses AverageOverChain (non-Core), so function-call is needed.
 
     // --- AverageOverChainCore: array at end of chain (lines 3484-3497) ---
-    [Fact]
+    [TestMethod]
     public void AverageOverChainCoreArrayEndOfChain()
     {
         this.AssertCgAndRtMatch(
@@ -5917,7 +5923,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- AverageOverChainCore: single number at end of chain (lines 3499-3502) ---
-    [Fact]
+    [TestMethod]
     public void AverageOverChainCoreSingleNumberEndOfChain()
     {
         this.AssertCgAndRtMatch(
@@ -5927,7 +5933,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- AverageOverChainCore: non-number → T0412 error (lines 3504-3506) ---
-    [Fact]
+    [TestMethod]
     public void AverageOverChainCoreNonNumberThrowsViaFunctionCall()
     {
         this.AssertCgAndRtThrow(
@@ -5937,7 +5943,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- AverageOverChainCore: empty chain (returns undefined) ---
-    [Fact]
+    [TestMethod]
     public void AverageOverChainCoreEmptyViaFunctionCall()
     {
         this.AssertCgAndRtBothUndefined(
@@ -5946,7 +5952,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- AverageOverChainCore: multiple items with scalar values ---
-    [Fact]
+    [TestMethod]
     public void AverageOverChainCoreMultipleScalars()
     {
         this.AssertCgAndRtMatch(
@@ -5956,7 +5962,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- SumOverChainCore: array at end of chain ---
-    [Fact]
+    [TestMethod]
     public void SumOverChainCoreArrayEndOfChain()
     {
         this.AssertCgAndRtMatch(
@@ -5966,7 +5972,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- SumOverChainCore: single number at end of chain ---
-    [Fact]
+    [TestMethod]
     public void SumOverChainCoreSingleNumberEndOfChain()
     {
         this.AssertCgAndRtMatch(
@@ -5976,7 +5982,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- SumOverChainCore: non-number → T0412 error ---
-    [Fact]
+    [TestMethod]
     public void SumOverChainCoreNonNumberThrowsViaFunctionCall()
     {
         this.AssertCgAndRtThrow(
@@ -5986,7 +5992,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- SumOverChainCore: empty chain ---
-    [Fact]
+    [TestMethod]
     public void SumOverChainCoreEmptyViaFunctionCall()
     {
         this.AssertCgAndRtBothUndefined(
@@ -5998,7 +6004,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // These use multi-predicate chains to bypass CG inlining and reach FusedEvalFromStep.
 
     // --- FusedEvalFromStep: missing property at step 0 (line 660-661) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepMissingProperty()
     {
         this.AssertCgAndRtBothUndefined(
@@ -6007,7 +6013,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: array index out of bounds (line 675-676) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepIndexOutOfBounds()
     {
         this.AssertCgAndRtBothUndefined(
@@ -6016,7 +6022,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: singleton object matching multi-predicate (line 700-705) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepSingletonObjectMatch()
     {
         this.AssertCgAndRtMatch(
@@ -6026,7 +6032,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: singleton object NOT matching multi-predicate (line 700-705) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepSingletonObjectNoMatch()
     {
         this.AssertCgAndRtBothUndefined(
@@ -6035,7 +6041,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: primitive with multi-predicate (line 708-710) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepPrimitiveWithPredicate()
     {
         this.AssertCgAndRtBothUndefined(
@@ -6044,7 +6050,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: deep multi-predicate, non-object at step (line 720-721) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepNonObjectAtStep()
     {
         this.AssertCgAndRtBothUndefined(
@@ -6053,7 +6059,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: non-array singleton with index 0 (line 680-682) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepSingletonIndex0()
     {
         this.AssertCgAndRtMatch(
@@ -6063,7 +6069,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: non-array singleton with index != 0 (line 682-684) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepSingletonIndexNon0()
     {
         this.AssertCgAndRtBothUndefined(
@@ -6072,7 +6078,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- FusedEvalFromStep: successful multi-predicate through objects (line 725) ---
-    [Fact]
+    [TestMethod]
     public void FusedEvalFromStepMultiPredicateSuccess()
     {
         this.AssertCgAndRtMatch(
@@ -6089,7 +6095,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     // --- perElementIndex: propValue is Array, valid index (lines 819-824, 836-839) ---
     // a.b[0].c[type="X"] where a resolves to array of objects with b as array
     // At step 1 inside FusedCollectAndContinue: perElementIndex=true, propValue=item.b (array), idx=0
-    [Fact]
+    [TestMethod]
     public void FccPerElementIndexArrayValid()
     {
         this.AssertCgAndRtMatch(
@@ -6099,7 +6105,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- perElementIndex: propValue is Array, index OOB (lines 822, 826-828) ---
-    [Fact]
+    [TestMethod]
     public void FccPerElementIndexArrayOOB()
     {
         this.AssertCgAndRtBothUndefined(
@@ -6108,7 +6114,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- perElementIndex: propValue is singleton, index 0 (line 831 false branch) ---
-    [Fact]
+    [TestMethod]
     public void FccPerElementIndexSingleton0()
     {
         this.AssertCgAndRtMatch(
@@ -6118,7 +6124,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- perElementIndex: propValue is singleton, index != 0 → skip (lines 831-833) ---
-    [Fact]
+    [TestMethod]
     public void FccPerElementIndexSingletonSkip()
     {
         this.AssertCgAndRtBothUndefined(
@@ -6127,7 +6133,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- perElementIndex + more steps (lines 836-839 with FusedEvalFromStep continuation) ---
-    [Fact]
+    [TestMethod]
     public void FccPerElementIndexWithMoreSteps()
     {
         this.AssertCgAndRtMatch(
@@ -6138,7 +6144,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- hasEqPredThisStep: propValue is Array of objects, filter sub-items (lines 849-863) ---
     // a.items.c[type="X"] where items.c resolves to array of objects, predicate at last step
-    [Fact]
+    [TestMethod]
     public void FccEqPredicateArraySubItems()
     {
         this.AssertCgAndRtMatch(
@@ -6148,7 +6154,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- hasEqPredThisStep: propValue is single Object match at last step (lines 867-877) ---
-    [Fact]
+    [TestMethod]
     public void FccEqPredicateSingletonMatch()
     {
         this.AssertCgAndRtMatch(
@@ -6159,7 +6165,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- nested arrays: array element is itself an Array (lines 886-890) ---
     // a value is [[objects...], [objects...]] so FusedCollectAndContinue recurses
-    [Fact]
+    [TestMethod]
     public void FccNestedArrays()
     {
         this.AssertCgAndRtMatch(
@@ -6170,7 +6176,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
 
     // --- globalIndex success: root data is Array, step 0 has constant index (lines 894-909) ---
     // items[0].name[type="X"] with root data = array of objects
-    [Fact]
+    [TestMethod]
     public void FccGlobalIndexSuccess()
     {
         this.AssertCgAndRtMatch(
@@ -6180,7 +6186,7 @@ public class CodeGenHelpersCoverageTests : IClassFixture<CodeGenConformanceFixtu
     }
 
     // --- globalIndex OOB: index exceeds buffer.Count (lines 897-899) ---
-    [Fact]
+    [TestMethod]
     public void FccGlobalIndexOOB()
     {
         this.AssertCgAndRtBothUndefined(

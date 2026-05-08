@@ -7,7 +7,7 @@ using System.Globalization;
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
@@ -16,6 +16,7 @@ namespace Corvus.Numerics.Tests;
 /// INumberBase explicit interface implementations, TryParse overloads, FormatZero,
 /// arithmetic corners, conversions, and OptimizedFormatting edge cases.
 /// </summary>
+[TestClass]
 public class BigNumberInterfaceAndEdgeCoverageTests
 {
 #if NET
@@ -47,129 +48,129 @@ public class BigNumberInterfaceAndEdgeCoverageTests
     private static T MinViaInterface<T>(T x, T y) where T : INumber<T> => T.Min(x, y);
     private static T ClampViaInterface<T>(T value, T min, T max) where T : INumber<T> => T.Clamp(value, min, max);
 
-    [Theory]
-    [InlineData(0, true)]
-    [InlineData(42, true)]
-    [InlineData(-7, true)]
+    [TestMethod]
+    [DataRow(0, true)]
+    [DataRow(42, true)]
+    [DataRow(-7, true)]
     public void IsCanonical_AlwaysReturnsTrue(int sig, bool expected)
     {
         IsCanonical(new BigNumber(sig, 0)).ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void IsComplexNumber_ReturnsFalse()
     {
         IsComplexNumber(new BigNumber(42, 0)).ShouldBeFalse();
     }
 
-    [Theory]
-    [InlineData(4, 0, true)]   // 4 is even integer
-    [InlineData(3, 0, false)]  // 3 is odd integer
-    [InlineData(5, -1, false)] // 0.5 is not integer
+    [TestMethod]
+    [DataRow(4, 0, true)]   // 4 is even integer
+    [DataRow(3, 0, false)]  // 3 is odd integer
+    [DataRow(5, -1, false)] // 0.5 is not integer
     public void IsEvenInteger_ReturnsCorrectResult(int sig, int exp, bool expected)
     {
         IsEvenInteger(new BigNumber(sig, exp)).ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void IsFinite_ReturnsTrue()
     {
         IsFinite(new BigNumber(42, 0)).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void IsImaginaryNumber_ReturnsFalse()
     {
         IsImaginaryNumber(new BigNumber(42, 0)).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void IsInfinity_ReturnsFalse()
     {
         IsInfinity(new BigNumber(42, 0)).ShouldBeFalse();
     }
 
-    [Theory]
-    [InlineData(42, 0, true)]
-    [InlineData(5, -1, false)]
+    [TestMethod]
+    [DataRow(42, 0, true)]
+    [DataRow(5, -1, false)]
     public void IsInteger_ReturnsCorrectResult(int sig, int exp, bool expected)
     {
         IsInteger(new BigNumber(sig, exp)).ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void IsNaN_ReturnsFalse()
     {
         IsNaN(new BigNumber(42, 0)).ShouldBeFalse();
     }
 
-    [Theory]
-    [InlineData(-1, 0, true)]
-    [InlineData(1, 0, false)]
-    [InlineData(0, 0, false)]
+    [TestMethod]
+    [DataRow(-1, 0, true)]
+    [DataRow(1, 0, false)]
+    [DataRow(0, 0, false)]
     public void IsNegative_ReturnsCorrectResult(int sig, int exp, bool expected)
     {
         IsNegative(new BigNumber(sig, exp)).ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void IsNegativeInfinity_ReturnsFalse()
     {
         IsNegativeInfinity(new BigNumber(-42, 0)).ShouldBeFalse();
     }
 
-    [Theory]
-    [InlineData(42, 0, true)]
-    [InlineData(0, 0, false)]
+    [TestMethod]
+    [DataRow(42, 0, true)]
+    [DataRow(0, 0, false)]
     public void IsNormal_ReturnsCorrectResult(int sig, int exp, bool expected)
     {
         IsNormal(new BigNumber(sig, exp)).ShouldBe(expected);
     }
 
-    [Theory]
-    [InlineData(3, 0, true)]
-    [InlineData(4, 0, false)]
-    [InlineData(5, -1, false)]
+    [TestMethod]
+    [DataRow(3, 0, true)]
+    [DataRow(4, 0, false)]
+    [DataRow(5, -1, false)]
     public void IsOddInteger_ReturnsCorrectResult(int sig, int exp, bool expected)
     {
         IsOddInteger(new BigNumber(sig, exp)).ShouldBe(expected);
     }
 
-    [Theory]
-    [InlineData(1, 0, true)]
-    [InlineData(-1, 0, false)]
+    [TestMethod]
+    [DataRow(1, 0, true)]
+    [DataRow(-1, 0, false)]
     public void IsPositive_ReturnsCorrectResult(int sig, int exp, bool expected)
     {
         IsPositive(new BigNumber(sig, exp)).ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void IsPositiveInfinity_ReturnsFalse()
     {
         IsPositiveInfinity(new BigNumber(42, 0)).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void IsRealNumber_ReturnsTrue()
     {
         IsRealNumber(new BigNumber(42, 0)).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void IsSubnormal_ReturnsFalse()
     {
         IsSubnormal(new BigNumber(42, 0)).ShouldBeFalse();
     }
 
-    [Theory]
-    [InlineData(0, 0, true)]
-    [InlineData(1, 0, false)]
+    [TestMethod]
+    [DataRow(0, 0, true)]
+    [DataRow(1, 0, false)]
     public void IsZero_ReturnsCorrectResult(int sig, int exp, bool expected)
     {
         IsZero(new BigNumber(sig, exp)).ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void MaxMagnitude_ReturnsLargerMagnitude()
     {
         BigNumber a = new(100, 0);
@@ -178,7 +179,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         MaxMagnitudeNumberViaInterface(a, b).ShouldBe(b);
     }
 
-    [Fact]
+    [TestMethod]
     public void MinMagnitude_ReturnsSmallerMagnitude()
     {
         BigNumber a = new(100, 0);
@@ -187,7 +188,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         MinMagnitudeNumberViaInterface(a, b).ShouldBe(a);
     }
 
-    [Fact]
+    [TestMethod]
     public void Max_ReturnsLarger()
     {
         BigNumber a = new(100, 0);
@@ -195,7 +196,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         MaxViaInterface(a, b).ShouldBe(b);
     }
 
-    [Fact]
+    [TestMethod]
     public void Min_ReturnsSmaller()
     {
         BigNumber a = new(100, 0);
@@ -203,7 +204,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         MinViaInterface(a, b).ShouldBe(a);
     }
 
-    [Fact]
+    [TestMethod]
     public void Clamp_ClampsWithinRange()
     {
         BigNumber value = new(500, 0);
@@ -234,56 +235,56 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         where TTo : INumberBase<TTo>
         => TTo.CreateTruncating(value);
 
-    [Fact]
+    [TestMethod]
     public void CreateChecked_FromInt_Succeeds()
     {
         BigNumber result = CreateCheckedHelper<int, BigNumber>(42);
         result.ShouldBe(new BigNumber(42, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateSaturating_FromLong_Succeeds()
     {
         BigNumber result = CreateSaturatingHelper<long, BigNumber>(123456789L);
         result.ShouldBe(new BigNumber(123456789, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateTruncating_FromDecimal_Succeeds()
     {
         BigNumber result = CreateTruncatingHelper<decimal, BigNumber>(1.5m);
         ((decimal)result).ShouldBe(1.5m);
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateChecked_FromDouble_Succeeds()
     {
         BigNumber result = CreateCheckedHelper<double, BigNumber>(3.14);
         ((double)result).ShouldBe(3.14, 0.001);
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateChecked_FromBigInteger_Succeeds()
     {
         BigNumber result = CreateCheckedHelper<BigInteger, BigNumber>(new BigInteger(999));
         result.ShouldBe(new BigNumber(999, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateChecked_ToDecimal_Succeeds()
     {
         decimal result = CreateCheckedHelper<BigNumber, decimal>(new BigNumber(15, -1));
         result.ShouldBe(1.5m);
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateSaturating_ToDouble_Succeeds()
     {
         double result = CreateSaturatingHelper<BigNumber, double>(new BigNumber(314, -2));
         result.ShouldBe(3.14, 0.001);
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateTruncating_ToLong_Succeeds()
     {
         long result = CreateTruncatingHelper<BigNumber, long>(new BigNumber(42, 0));
@@ -312,48 +313,48 @@ public class BigNumberInterfaceAndEdgeCoverageTests
     private static bool TryParseViaINumberBase<T>(string? s, NumberStyles style, IFormatProvider? provider, [MaybeNullWhen(false)] out T result) where T : INumberBase<T>
         => T.TryParse(s, style, provider, out result);
 
-    [Theory]
-    [InlineData("42")]
-    [InlineData("3.14")]
-    [InlineData("-100")]
+    [TestMethod]
+    [DataRow("42")]
+    [DataRow("3.14")]
+    [DataRow("-100")]
     public void IParsable_Parse_Succeeds(string input)
     {
         BigNumber result = ParseViaIParsable<BigNumber>(input, CultureInfo.InvariantCulture);
         result.ToString("G", CultureInfo.InvariantCulture).ShouldNotBeNullOrEmpty();
     }
 
-    [Theory]
-    [InlineData("42", true)]
-    [InlineData(null, false)]
+    [TestMethod]
+    [DataRow("42", true)]
+    [DataRow(null, false)]
     public void IParsable_TryParse_HandlesNullAndValid(string? input, bool expected)
     {
         TryParseViaIParsable<BigNumber>(input, CultureInfo.InvariantCulture, out _).ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ISpanParsable_Parse_Succeeds()
     {
         BigNumber result = ParseViaISpanParsable<BigNumber>("42".AsSpan(), CultureInfo.InvariantCulture);
         result.ShouldBe(new BigNumber(42, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void ISpanParsable_TryParse_Succeeds()
     {
         TryParseViaISpanParsable<BigNumber>("42".AsSpan(), CultureInfo.InvariantCulture, out BigNumber result).ShouldBeTrue();
         result.ShouldBe(new BigNumber(42, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void INumberBase_Parse_String_Succeeds()
     {
         BigNumber result = ParseViaINumberBase<BigNumber>("42", NumberStyles.Integer, CultureInfo.InvariantCulture);
         result.ShouldBe(new BigNumber(42, 0));
     }
 
-    [Theory]
-    [InlineData("42", true)]
-    [InlineData(null, false)]
+    [TestMethod]
+    [DataRow("42", true)]
+    [DataRow(null, false)]
     public void INumberBase_TryParse_String_HandlesNullAndValid(string? input, bool expected)
     {
         TryParseViaINumberBase<BigNumber>(input, NumberStyles.Float, CultureInfo.InvariantCulture, out _).ShouldBe(expected);
@@ -364,27 +365,27 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region TryParse overloads (lines 1083-1127)
 
-    [Fact]
+    [TestMethod]
     public void TryParse_NullString_WithProvider_ReturnsFalse()
     {
         BigNumber.TryParse((string?)null, CultureInfo.InvariantCulture, out _).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_ReadOnlySpanChar_WithProvider_Succeeds()
     {
         BigNumber.TryParse("42".AsSpan(), CultureInfo.InvariantCulture, out BigNumber result).ShouldBeTrue();
         result.ShouldBe(new BigNumber(42, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_ReadOnlySpanChar_NoProvider_Succeeds()
     {
         BigNumber.TryParse("3.14".AsSpan(), out BigNumber result).ShouldBeTrue();
         ((double)result).ShouldBe(3.14, 0.001);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_ReadOnlySpanByte_WithProvider_Succeeds()
     {
         BigNumber.TryParse("42"u8, CultureInfo.InvariantCulture, out BigNumber result).ShouldBeTrue();
@@ -395,7 +396,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region Parse failure for UTF-8 (line 1489)
 
-    [Fact]
+    [TestMethod]
     public void Parse_InvalidUtf8_ThrowsFormatException()
     {
         Should.Throw<FormatException>(() => BigNumber.Parse("abc"u8));
@@ -405,28 +406,28 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region TryParse parsing branches (lines 1232-1330)
 
-    [Fact]
+    [TestMethod]
     public void TryParse_TrailingWhitespaceNotAllowed_ReturnsFalse()
     {
         // NumberStyles.None does not allow trailing whitespace
         BigNumber.TryParse("123 ".AsSpan(), NumberStyles.None, CultureInfo.InvariantCulture, out _).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_EmptyAfterStripping_ReturnsFalse()
     {
         // After trimming leading whitespace, input is empty
         BigNumber.TryParse("   ".AsSpan(), NumberStyles.AllowLeadingWhite, CultureInfo.InvariantCulture, out _).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_Parentheses_Negative()
     {
         BigNumber.TryParse("(123)".AsSpan(), NumberStyles.AllowParentheses | NumberStyles.Integer, CultureInfo.InvariantCulture, out BigNumber result).ShouldBeTrue();
         result.ShouldBe(new BigNumber(-123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_LeadingCurrencySymbol()
     {
         var nfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
@@ -436,7 +437,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_TrailingCurrencySymbol()
     {
         var nfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
@@ -446,7 +447,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_LeadingCurrencyWithWhitespace()
     {
         var nfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
@@ -456,7 +457,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_TrailingCurrencyWithWhitespace()
     {
         var nfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
@@ -466,21 +467,21 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_TrailingPositiveSign()
     {
         BigNumber.TryParse("123+".AsSpan(), NumberStyles.AllowTrailingSign | NumberStyles.Integer, CultureInfo.InvariantCulture, out BigNumber result).ShouldBeTrue();
         result.ShouldBe(new BigNumber(123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_TrailingNegativeSign()
     {
         BigNumber.TryParse("123-".AsSpan(), NumberStyles.AllowTrailingSign | NumberStyles.Integer, CultureInfo.InvariantCulture, out BigNumber result).ShouldBeTrue();
         result.ShouldBe(new BigNumber(-123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_SignPresentButNotAllowed_ReturnsFalse()
     {
         // Leading sign without AllowLeadingSign
@@ -488,7 +489,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         BigNumber.TryParse("-123".AsSpan(), NumberStyles.None, CultureInfo.InvariantCulture, out _).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_TrailingSignPresentButNotAllowed_ReturnsFalse()
     {
         // Trailing sign without AllowTrailingSign
@@ -496,7 +497,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         BigNumber.TryParse("123-".AsSpan(), NumberStyles.Integer, CultureInfo.InvariantCulture, out _).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_SignWithWhitespaceAfter_ReturnsFalse()
     {
         // Whitespace after sign is not allowed
@@ -504,7 +505,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         BigNumber.TryParse("+ 123".AsSpan(), NumberStyles.AllowLeadingSign | NumberStyles.Integer, CultureInfo.InvariantCulture, out _).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_EmptyAfterCurrencyAndSign_ReturnsFalse()
     {
         var nfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
@@ -517,14 +518,14 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region FormatZero paths (lines 449-450, 488, 503)
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_EmptyFormat_ReturnsZero()
     {
         // FormatZero with empty format string
         BigNumber.Zero.ToString("", CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_PercentPattern3()
     {
         var nfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
@@ -533,7 +534,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         BigNumber.Zero.ToString("P0", nfi).ShouldBe("% 0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_CurrencyPattern3()
     {
         var nfi = (NumberFormatInfo)CultureInfo.InvariantCulture.NumberFormat.Clone();
@@ -547,14 +548,14 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region FormatExponential edge cases (lines 694-696, 746-748)
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_ZeroSignificand()
     {
         // Triggers zero significand branch in FormatExponential
         BigNumber.Zero.ToString("E2", CultureInfo.InvariantCulture).ShouldBe("0.00E+000");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_PaddingNeeded()
     {
         // Number with fewer digits than precision — needs padding
@@ -578,7 +579,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region Arithmetic corners (lines 1718-1720, 1769-1771, 1800-1815, 1836-1838)
 
-    [Fact]
+    [TestMethod]
     public void Multiply_RightSideCommonSmallValue_NonZeroExponent()
     {
         // To bypass the smallInt fast path (exponent must be != 0), significand must be 2/5/10
@@ -593,7 +594,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         (left * right10).ShouldBe(new BigNumber(12345678901234 * 10, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiply_LeftSideCommonSmallValue_NonZeroExponent()
     {
         // Left.Significand == 2/5/10 with non-zero exponent (bypasses smallInt)
@@ -603,7 +604,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         (left2 * right).ShouldBe(new BigNumber(12345678901234 * 2, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void Divide_ByNegativeOne()
     {
         BigNumber dividend = new(100, 0);
@@ -613,7 +614,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(-100, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Divide_SameExponent()
     {
         BigNumber dividend = new(100, 2);
@@ -623,7 +624,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         ((double)result).ShouldBe(100.0 / 3.0, 0.001);
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_ZeroDividend()
     {
         // Lines 1836-1838: left is zero → returns Zero
@@ -635,14 +636,14 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region Conversion operators (lines 1948-1951, 1984-1985, 1995-2002, 2027-2034)
 
-    [Fact]
+    [TestMethod]
     public void ExplicitDecimal_LargePositiveExponent_ClampsAndOverflows()
     {
         BigNumber num = new(1, 29);
         Should.Throw<OverflowException>(() => { decimal _ = (decimal)num; });
     }
 
-    [Fact]
+    [TestMethod]
     public void ExplicitDecimal_LargeNegativeExponent_Clamps()
     {
         // Exponent < -28 triggers lower clamping (lines 1952-1956)
@@ -652,7 +653,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBeLessThan(0.001m);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExplicitFloat_Conversion()
     {
         // Lines 1984-1985: explicit float conversion
@@ -661,7 +662,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(3.14f, 0.01f);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExplicitLong_PositiveExponent()
     {
         // Lines 1995-2002: positive exponent path for long conversion
@@ -670,7 +671,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(5000L);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExplicitLong_NegativeExponent()
     {
         // Lines 2004-2013: negative exponent path truncating fractional part
@@ -679,7 +680,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(123L);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExplicitUlong_PositiveExponent()
     {
         // Lines 2027-2034: positive exponent path for ulong
@@ -688,7 +689,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(700UL);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExplicitUlong_NegativeExponent()
     {
         // Lines 2036-2046: negative exponent path for ulong
@@ -701,7 +702,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region Sqrt with odd exponent (lines 2127-2129)
 
-    [Fact]
+    [TestMethod]
     public void Sqrt_OddExponent_AdjustsSignificand()
     {
         // Value with odd exponent: significand * 10, exponent - 1 (lines 2126-2129)
@@ -715,7 +716,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region GetPowerOf10 large exponent cache (lines 114-115)
 
-    [Fact]
+    [TestMethod]
     public void Floor_LargeNegativeExponent_HitsSecondaryCache()
     {
         // Floor with absExponent in 256-1023 range → hits secondary cache (lines 113-115)
@@ -724,7 +725,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Ceiling_LargeNegativeExponent_HitsVeryLargeExponent()
     {
         // Ceiling with absExponent >= 1024 → hits compute-on-demand (lines 118-119)
@@ -737,9 +738,9 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region OptimizedFormatting: TryFormat with small destinations (lines 62-64, 92-94, 110-119, 200-202, 225-227)
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
+    [TestMethod]
+    [DataRow(0)]
+    [DataRow(1)]
     public void TryFormat_TooSmallCharDestination_ReturnsFalse(int destSize)
     {
         BigNumber num = new(12345, 2); // "1234500" — needs > 1 char
@@ -748,9 +749,9 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         charsWritten.ShouldBe(0);
     }
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
+    [TestMethod]
+    [DataRow(0)]
+    [DataRow(1)]
     public void TryFormat_TooSmallByteDestination_ReturnsFalse(int destSize)
     {
         BigNumber num = new(12345, 2); // "1234500"
@@ -759,7 +760,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         bytesWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatRaw_InsufficientSpaceForE_ReturnsFalse()
     {
         // Number with exponent that needs "significandEexponent" format
@@ -771,7 +772,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         charsWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatRawUtf8_InsufficientSpaceForE_ReturnsFalse()
     {
         BigNumber num = new(12345, 3);
@@ -780,7 +781,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         bytesWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatRaw_ZeroSignificand_TooSmallDest_ReturnsFalse()
     {
         BigNumber num = BigNumber.Zero;
@@ -789,7 +790,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         charsWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatRawUtf8_ZeroSignificand_TooSmallDest_ReturnsFalse()
     {
         BigNumber num = BigNumber.Zero;
@@ -802,7 +803,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region OptimizedFormatting: TryFormat with format specifier and small destination (lines 62-64, 170-172)
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_WithFormatSpecifier_TooSmallCharDest_ReturnsFalse()
     {
         BigNumber num = new(12345, 0);
@@ -811,7 +812,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         charsWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_WithFormatSpecifier_TooSmallByteDest_ReturnsFalse()
     {
         BigNumber num = new(12345, 0);
@@ -824,21 +825,21 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region TryParseJsonUtf8 edge cases (lines 431-498 in OptimizedFormatting.cs)
 
-    [Theory]
-    [InlineData(new byte[] { (byte)' ', (byte)'\t' }, false)]  // only whitespace
-    [InlineData(new byte[] { (byte)'-' }, false)]               // sign only
-    [InlineData(new byte[] { (byte)'1', (byte)'E' }, false)]   // E with no digits
-    [InlineData(new byte[] { (byte)'1', (byte)'e', (byte)'-' }, false)] // E-sign with no digits
-    [InlineData(new byte[] { (byte)'1', (byte)'E', (byte)'+' }, false)] // E+sign with no digits
+    [TestMethod]
+    [DataRow(new byte[] { (byte)' ', (byte)'\t' }, false)]  // only whitespace
+    [DataRow(new byte[] { (byte)'-' }, false)]               // sign only
+    [DataRow(new byte[] { (byte)'1', (byte)'E' }, false)]   // E with no digits
+    [DataRow(new byte[] { (byte)'1', (byte)'e', (byte)'-' }, false)] // E-sign with no digits
+    [DataRow(new byte[] { (byte)'1', (byte)'E', (byte)'+' }, false)] // E+sign with no digits
     public void TryParseJsonUtf8_InvalidInputs_ReturnFalse(byte[] input, bool expected)
     {
         BigNumber.TryParseJsonUtf8(input, out _).ShouldBe(expected);
     }
 
-    [Theory]
-    [InlineData(new byte[] { (byte)'1', (byte)'e', (byte)'-', (byte)'3' }, true, 1, -3)] // negative exponent
-    [InlineData(new byte[] { (byte)'1', (byte)'E', (byte)'+', (byte)'2' }, true, 1, 2)]  // positive exponent
-    [InlineData(new byte[] { (byte)' ', (byte)'5', (byte)' ' }, true, 5, 0)]             // leading+trailing whitespace
+    [TestMethod]
+    [DataRow(new byte[] { (byte)'1', (byte)'e', (byte)'-', (byte)'3' }, true, 1, -3)] // negative exponent
+    [DataRow(new byte[] { (byte)'1', (byte)'E', (byte)'+', (byte)'2' }, true, 1, 2)]  // positive exponent
+    [DataRow(new byte[] { (byte)' ', (byte)'5', (byte)' ' }, true, 5, 0)]             // leading+trailing whitespace
     public void TryParseJsonUtf8_ValidInputs_Succeed(byte[] input, bool expected, int expectedSig, int expectedExp)
     {
         BigNumber.TryParseJsonUtf8(input, out BigNumber result).ShouldBe(expected);
@@ -848,14 +849,14 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParseJsonUtf8_UnconsumedInput_ReturnsFalse()
     {
         // "1abc" — has non-digit chars after valid number
         BigNumber.TryParseJsonUtf8("1abc"u8, out _).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParseJsonUtf8_PlusSign_Succeeds()
     {
         // "+5" — leading plus sign
@@ -863,7 +864,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(5, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParseJsonUtf8_DecimalPart()
     {
         BigNumber.TryParseJsonUtf8("3.14"u8, out BigNumber result).ShouldBeTrue();
@@ -875,7 +876,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 #if NET
     #region TryGetMinimumFormatBufferLength (lines 942-966)
 
-    [Fact]
+    [TestMethod]
     public void TryGetMinimumFormatBufferLength_PositiveInteger()
     {
         BigNumber num = new(12345, 0);
@@ -883,7 +884,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         len.ShouldBeGreaterThanOrEqualTo(5);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetMinimumFormatBufferLength_NegativeSignAddsOne()
     {
         // Lines 946-950: negative significand → adds 1 for sign
@@ -895,7 +896,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         len.ShouldBeGreaterThanOrEqualTo(2); // At minimum sign + 1
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetMinimumFormatBufferLength_NonZeroExponent()
     {
         // Lines 952-956: exponent != 0 → adds 1 for 'E' + digits of exponent
@@ -912,14 +913,14 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region Additional coverage: FormatZero, FormatExponential, TryParse overloads, Floor/Ceiling/Truncate normalize
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_NullFormat_ReturnsZero()
     {
         // Lines 449-450: FormatZero with null format
         BigNumber.Zero.ToString(null, CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_Zero()
     {
         // Lines 694-696: FormatExponential with zero significand
@@ -927,7 +928,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         BigNumber.Zero.ToString("E0", CultureInfo.InvariantCulture).ShouldContain("E");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_PadDecimals()
     {
         // Lines 746-748: precision exceeds available decimal digits → pad with zeros
@@ -937,7 +938,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldContain("E");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_ReadOnlySpanByte()
     {
         // Lines 1136-1138: TryParse(ReadOnlySpan<byte>) overload
@@ -945,7 +946,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(42, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_SingleCharDigit2Through9()
     {
         // Lines 1170-1172: single char digit 2-9 fast path
@@ -953,14 +954,14 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(3, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_EmptySpan_ReturnsFalse()
     {
         // Lines 1232-1234: empty span returns false
         BigNumber.TryParse(ReadOnlySpan<char>.Empty, NumberStyles.Float, null, out _).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_BadExponent_ReturnsFalse()
     {
         // Lines 1455-1457: exponent part fails to parse
@@ -968,7 +969,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         BigNumber.TryParse("1eXYZ".AsSpan(), NumberStyles.Float, null, out _).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_ReadOnlySpanByte_WithStyleAndProvider()
     {
         // Lines 1517-1519: exercises the UTF-8 → char[] transcoding path with ArrayPool
@@ -976,7 +977,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         ((double)result).ShouldBe(12345.67, 0.001);
     }
 
-    [Fact]
+    [TestMethod]
     public void Floor_NormalizesToNonNegativeExponent()
     {
         // Lines 2186-2187: Floor where normalized exponent >= 0
@@ -986,7 +987,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(15, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Ceiling_NormalizesToNonNegativeExponent()
     {
         // Lines 2222-2223: Ceiling where normalized exponent >= 0
@@ -995,7 +996,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         result.ShouldBe(new BigNumber(20, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Truncate_NormalizesToNonNegativeExponent()
     {
         // Lines 2258-2259: Truncate where normalized exponent >= 0
@@ -1005,14 +1006,14 @@ public class BigNumberInterfaceAndEdgeCoverageTests
     }
 
 #if NET
-    [Fact]
+    [TestMethod]
     public void CreateChecked_FromUnsupportedType_Throws()
     {
         // Lines 2417-2418: TryConvertFrom fallback (float not supported)
         Should.Throw<NotSupportedException>(() => CreateCheckedHelper<float, BigNumber>(1.0f));
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateChecked_ToUnsupportedType_Throws()
     {
         // Lines 2441-2442: TryConvertTo fallback (int not supported)
@@ -1038,7 +1039,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
 
     #region Division precision validation (lines 1799-1801, 1813-1815)
 
-    [Fact]
+    [TestMethod]
     public void Divide_SameExponent_InvalidPrecision_Throws()
     {
         // Lines 1799-1801: same-exponent path, precision > 255
@@ -1047,7 +1048,7 @@ public class BigNumberInterfaceAndEdgeCoverageTests
         Should.Throw<ArgumentOutOfRangeException>(() => BigNumber.Divide(a, b, 300));
     }
 
-    [Fact]
+    [TestMethod]
     public void Divide_DifferentExponent_InvalidPrecision_Throws()
     {
         // Lines 1813-1815: different-exponent path, precision > 255

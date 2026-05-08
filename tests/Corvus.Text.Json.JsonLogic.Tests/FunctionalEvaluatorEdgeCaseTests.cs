@@ -4,7 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.JsonLogic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.Tests;
 
@@ -12,27 +12,28 @@ namespace Corvus.Text.Json.JsonLogic.Tests;
 /// Edge-case tests that exercise code paths not covered by the official JsonLogic test suite.
 /// Each test runs against both VM and functional evaluator to verify behavioral equivalence.
 /// </summary>
+[TestClass]
 public class FunctionalEvaluatorEdgeCaseTests
 {
     // ─── REDUCE OPTIMIZATION PATHS ──────────────────────────────────
 
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         """{"reduce":[{"var":"items"},{"+":[{"var":"current"},{"var":"accumulator"}]},0]}""",
         """{"items":[1,2,3,4,5]}""",
         "15",
         "Optimized reduce (body uses only current/accumulator)")]
-    [InlineData(
+    [DataRow(
         """{"reduce":[{"map":[{"var":"items"},{"*":[{"var":""},2]}]},{"+":[{"var":"current"},{"var":"accumulator"}]},0]}""",
         """{"items":[1,2,3]}""",
         "12",
         "Fused map-reduce")]
-    [InlineData(
+    [DataRow(
         """{"reduce":[{"map":[{"var":"items"},{"+":[{"var":""},10]}]},{"+":[{"var":"current"},{"var":"accumulator"}]},0]}""",
         """{"items":[1,2,3,4,5]}""",
         "65",
         "Fused map-reduce with addition map body")]
-    [InlineData(
+    [DataRow(
         """{"reduce":[[1,2,3],{"+":[{"var":"current"},{"var":"accumulator"}]},100]}""",
         "null",
         "106",
@@ -43,13 +44,13 @@ public class FunctionalEvaluatorEdgeCaseTests
         AssertBothPaths(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         """{"reduce":[{"var":"items"},{"+":[{"var":"current.a"},{"var":"accumulator"}]},0]}""",
         """{"items":[{"a":1},{"a":2},{"a":3}]}""",
         "6",
         "Reduce with dotted path current.a (fallback path)")]
-    [InlineData(
+    [DataRow(
         """{"reduce":[[1,2,3],{"+":[{"var":"current"},{"var":"accumulator"}]},0]}""",
         "null",
         "6",
@@ -60,8 +61,8 @@ public class FunctionalEvaluatorEdgeCaseTests
         AssertBothPaths(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData(
+    [TestMethod]
+    [DataRow(
         """{"reduce":[{"var":"outer"},{"+":[{"reduce":[{"var":"current"},{"+":[{"var":"current"},{"var":"accumulator"}]},0]},{"var":"accumulator"}]},0]}""",
         """{"outer":[[1,2],[3,4]]}""",
         "10",
@@ -74,7 +75,7 @@ public class FunctionalEvaluatorEdgeCaseTests
         AssertFunctionalOnly(rule, data, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReduceEmptyArray()
     {
         AssertBothPaths(
@@ -85,37 +86,37 @@ public class FunctionalEvaluatorEdgeCaseTests
 
     // ─── CORVUS EXTENSION OPERATORS ─────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"asDouble":"42.5"}""", "null", "42.5")]
-    [InlineData("""{"asDouble":true}""", "null", "1")]
-    [InlineData("""{"asDouble":false}""", "null", "0")]
-    [InlineData("""{"asDouble":null}""", "null", "0")]
-    [InlineData("""{"asDouble":{"var":"x"}}""", """{"x":"3.14"}""", "3.14")]
+    [TestMethod]
+    [DataRow("""{"asDouble":"42.5"}""", "null", "42.5")]
+    [DataRow("""{"asDouble":true}""", "null", "1")]
+    [DataRow("""{"asDouble":false}""", "null", "0")]
+    [DataRow("""{"asDouble":null}""", "null", "0")]
+    [DataRow("""{"asDouble":{"var":"x"}}""", """{"x":"3.14"}""", "3.14")]
     public void AsDouble(string rule, string data, string expected)
     {
         AssertFunctionalOnly(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData("""{"asLong":42.9}""", "null", "42")]
-    [InlineData("""{"asLong":"100"}""", "null", "100")]
-    [InlineData("""{"asLong":true}""", "null", "1")]
+    [TestMethod]
+    [DataRow("""{"asLong":42.9}""", "null", "42")]
+    [DataRow("""{"asLong":"100"}""", "null", "100")]
+    [DataRow("""{"asLong":true}""", "null", "1")]
     public void AsLong(string rule, string data, string expected)
     {
         AssertFunctionalOnly(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData("""{"asBigNumber":"12345678901234567890"}""", "null", "1234567890123456789E1")]
-    [InlineData("""{"asBigNumber":42}""", "null", "42")]
+    [TestMethod]
+    [DataRow("""{"asBigNumber":"12345678901234567890"}""", "null", "1234567890123456789E1")]
+    [DataRow("""{"asBigNumber":42}""", "null", "42")]
     public void AsBigNumber(string rule, string data, string expected)
     {
         AssertFunctionalOnly(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData("""{"asBigInteger":"12345678901234567890"}""", "null", "1234567890123456789E1")]
-    [InlineData("""{"asBigInteger":42.9}""", "null", "42")]
+    [TestMethod]
+    [DataRow("""{"asBigInteger":"12345678901234567890"}""", "null", "1234567890123456789E1")]
+    [DataRow("""{"asBigInteger":42.9}""", "null", "42")]
     public void AsBigInteger(string rule, string data, string expected)
     {
         AssertFunctionalOnly(rule, data, expected);
@@ -123,24 +124,24 @@ public class FunctionalEvaluatorEdgeCaseTests
 
     // ─── ARITHMETIC SLOW PATHS (MIXED TYPE COERCION) ────────────────
 
-    [Theory]
-    [InlineData("""{"+":[1,"2",3]}""", "null", "6", "Add with string coercion")]
-    [InlineData("""{"+":[1,true,false]}""", "null", "2", "Add with boolean coercion")]
-    [InlineData("""{"+":[10,null]}""", "null", "10", "Add with null coercion")]
-    [InlineData("""{"*":[2,"3"]}""", "null", "6", "Multiply with string coercion")]
-    [InlineData("""{"*":[5,true]}""", "null", "5", "Multiply with boolean")]
-    [InlineData("""{"-":["10",3]}""", "null", "7", "Subtract with string coercion")]
-    [InlineData("""{"/":[10,"2"]}""", "null", "5", "Divide with string coercion")]
-    [InlineData("""{"%":[10,"3"]}""", "null", "1", "Modulo with string coercion")]
+    [TestMethod]
+    [DataRow("""{"+":[1,"2",3]}""", "null", "6", "Add with string coercion")]
+    [DataRow("""{"+":[1,true,false]}""", "null", "2", "Add with boolean coercion")]
+    [DataRow("""{"+":[10,null]}""", "null", "10", "Add with null coercion")]
+    [DataRow("""{"*":[2,"3"]}""", "null", "6", "Multiply with string coercion")]
+    [DataRow("""{"*":[5,true]}""", "null", "5", "Multiply with boolean")]
+    [DataRow("""{"-":["10",3]}""", "null", "7", "Subtract with string coercion")]
+    [DataRow("""{"/":[10,"2"]}""", "null", "5", "Divide with string coercion")]
+    [DataRow("""{"%":[10,"3"]}""", "null", "1", "Modulo with string coercion")]
     public void ArithmeticWithCoercion(string rule, string data, string expected, string description)
     {
         _ = description;
         AssertBothPaths(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData("""{"/":[10,0]}""", "null", "null", "Division by zero")]
-    [InlineData("""{"%":[10,0]}""", "null", "null", "Modulo by zero")]
+    [TestMethod]
+    [DataRow("""{"/":[10,0]}""", "null", "null", "Division by zero")]
+    [DataRow("""{"%":[10,0]}""", "null", "null", "Modulo by zero")]
     public void ArithmeticDivisionByZero(string rule, string data, string expected, string description)
     {
         _ = description;
@@ -149,13 +150,13 @@ public class FunctionalEvaluatorEdgeCaseTests
 
     // ─── COMPARISON COERCION EDGE CASES ─────────────────────────────
 
-    [Theory]
-    [InlineData("""{"<":["2",10]}""", "null", "true", "String-number comparison")]
-    [InlineData("""{">":[10,"2"]}""", "null", "true", "Number-string comparison")]
-    [InlineData("""{">=":[true,1]}""", "null", "true", "Boolean-number comparison")]
-    [InlineData("""{"<":[false,1]}""", "null", "true", "False < 1")]
-    [InlineData("""{"<":[null,1]}""", "null", "true", "Null coerces to 0: 0 < 1")]
-    [InlineData("""{"<":[1,2,3,4,5]}""", "null", "true", "Between chain (ascending)")]
+    [TestMethod]
+    [DataRow("""{"<":["2",10]}""", "null", "true", "String-number comparison")]
+    [DataRow("""{">":[10,"2"]}""", "null", "true", "Number-string comparison")]
+    [DataRow("""{">=":[true,1]}""", "null", "true", "Boolean-number comparison")]
+    [DataRow("""{"<":[false,1]}""", "null", "true", "False < 1")]
+    [DataRow("""{"<":[null,1]}""", "null", "true", "Null coerces to 0: 0 < 1")]
+    [DataRow("""{"<":[1,2,3,4,5]}""", "null", "true", "Between chain (ascending)")]
     public void ComparisonCoercion(string rule, string data, string expected, string description)
     {
         _ = description;
@@ -164,15 +165,15 @@ public class FunctionalEvaluatorEdgeCaseTests
 
     // ─── EQUALITY COERCION EDGE CASES ───────────────────────────────
 
-    [Theory]
-    [InlineData("""{"==":[1,"1"]}""", "null", "true", "Number == string")]
-    [InlineData("""{"==":[0,false]}""", "null", "true", "0 == false")]
-    [InlineData("""{"==":[1,true]}""", "null", "true", "1 == true")]
-    [InlineData("""{"==":[null,false]}""", "null", "false", "null != false")]
-    [InlineData("""{"===":[1,"1"]}""", "null", "false", "Strict: 1 !== '1'")]
-    [InlineData("""{"===":[1,1]}""", "null", "true", "Strict: 1 === 1")]
-    [InlineData("""{"!=":[1,2]}""", "null", "true", "1 != 2")]
-    [InlineData("""{"!==":[1,"1"]}""", "null", "true", "Strict: 1 !== '1'")]
+    [TestMethod]
+    [DataRow("""{"==":[1,"1"]}""", "null", "true", "Number == string")]
+    [DataRow("""{"==":[0,false]}""", "null", "true", "0 == false")]
+    [DataRow("""{"==":[1,true]}""", "null", "true", "1 == true")]
+    [DataRow("""{"==":[null,false]}""", "null", "false", "null != false")]
+    [DataRow("""{"===":[1,"1"]}""", "null", "false", "Strict: 1 !== '1'")]
+    [DataRow("""{"===":[1,1]}""", "null", "true", "Strict: 1 === 1")]
+    [DataRow("""{"!=":[1,2]}""", "null", "true", "1 != 2")]
+    [DataRow("""{"!==":[1,"1"]}""", "null", "true", "Strict: 1 !== '1'")]
     public void EqualityCoercion(string rule, string data, string expected, string description)
     {
         _ = description;
@@ -181,14 +182,14 @@ public class FunctionalEvaluatorEdgeCaseTests
 
     // ─── HETEROGENEOUS ARRAYS AND MIXED TYPES ───────────────────────
 
-    [Theory]
-    [InlineData("""[1,"hello",true,null]""", """{}""", """[1,"hello",true,null]""", "Mixed-type array literal")]
-    [InlineData(
+    [TestMethod]
+    [DataRow("""[1,"hello",true,null]""", """{}""", """[1,"hello",true,null]""", "Mixed-type array literal")]
+    [DataRow(
         """{"map":[[1,2,3],{"if":[{">":[{"var":""},1]},{"cat":["big:",{"var":""}]},{"var":""}]}]}""",
         "null",
         """[1,"big:2","big:3"]""",
         "Map returning mixed types")]
-    [InlineData(
+    [DataRow(
         """{"cat":[1,true,null,"hello"]}""",
         "null",
         "\"1truenullhello\"",
@@ -201,12 +202,12 @@ public class FunctionalEvaluatorEdgeCaseTests
 
     // ─── VARIABLE RESOLUTION EDGE CASES ─────────────────────────────
 
-    [Theory]
-    [InlineData("""{"var":"a.b.c"}""", """{"a":{"b":{"c":42}}}""", "42", "Deep nested path")]
-    [InlineData("""{"var":"a.b.c"}""", """{"a":{"b":{}}}""", "null", "Missing deep path")]
-    [InlineData("""{"var":"items.1"}""", """{"items":[10,20,30]}""", "20", "Array index in path")]
-    [InlineData("""{"var":["missing","default"]}""", """{}""", "\"default\"", "Var with default value")]
-    [InlineData("""{"var":["missing",42]}""", """{}""", "42", "Var with numeric default")]
+    [TestMethod]
+    [DataRow("""{"var":"a.b.c"}""", """{"a":{"b":{"c":42}}}""", "42", "Deep nested path")]
+    [DataRow("""{"var":"a.b.c"}""", """{"a":{"b":{}}}""", "null", "Missing deep path")]
+    [DataRow("""{"var":"items.1"}""", """{"items":[10,20,30]}""", "20", "Array index in path")]
+    [DataRow("""{"var":["missing","default"]}""", """{}""", "\"default\"", "Var with default value")]
+    [DataRow("""{"var":["missing",42]}""", """{}""", "42", "Var with numeric default")]
     public void VariableResolution(string rule, string data, string expected, string description)
     {
         _ = description;
@@ -215,13 +216,13 @@ public class FunctionalEvaluatorEdgeCaseTests
 
     // ─── QUANTIFIER EDGE CASES ──────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"all":[[1,2,3],{">":[{"var":""},0]}]}""", "null", "true")]
-    [InlineData("""{"all":[[1,2,-1],{">":[{"var":""},0]}]}""", "null", "false")]
-    [InlineData("""{"none":[[1,2,3],{"<":[{"var":""},0]}]}""", "null", "true")]
-    [InlineData("""{"none":[[1,-2,3],{"<":[{"var":""},0]}]}""", "null", "false")]
-    [InlineData("""{"some":[[1,2,3],{">":[{"var":""},2]}]}""", "null", "true")]
-    [InlineData("""{"some":[[1,2,3],{">":[{"var":""},5]}]}""", "null", "false")]
+    [TestMethod]
+    [DataRow("""{"all":[[1,2,3],{">":[{"var":""},0]}]}""", "null", "true")]
+    [DataRow("""{"all":[[1,2,-1],{">":[{"var":""},0]}]}""", "null", "false")]
+    [DataRow("""{"none":[[1,2,3],{"<":[{"var":""},0]}]}""", "null", "true")]
+    [DataRow("""{"none":[[1,-2,3],{"<":[{"var":""},0]}]}""", "null", "false")]
+    [DataRow("""{"some":[[1,2,3],{">":[{"var":""},2]}]}""", "null", "true")]
+    [DataRow("""{"some":[[1,2,3],{">":[{"var":""},5]}]}""", "null", "false")]
     public void Quantifiers(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -229,15 +230,15 @@ public class FunctionalEvaluatorEdgeCaseTests
 
     // ─── LITERAL DOUBLE EXTRACTION ──────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"+":[0.1,0.2]}""", "null", "Add small floats")]
-    [InlineData("""{"*":[1000000,1000000]}""", "null", "Large multiplication")]
+    [TestMethod]
+    [DataRow("""{"+":[0.1,0.2]}""", "null", "Add small floats")]
+    [DataRow("""{"*":[1000000,1000000]}""", "null", "Large multiplication")]
     public void LiteralDoubleExtraction(string rule, string data, string description)
     {
         _ = description;
         // Verify the evaluator produces a valid result
         string result = Evaluate(rule, data);
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
     // ─── HELPERS ────────────────────────────────────────────────────
@@ -246,14 +247,14 @@ public class FunctionalEvaluatorEdgeCaseTests
     {
         string result = Evaluate(rule, data);
         string expectedNormalized = NormalizeJson(expected);
-        Assert.Equal(expectedNormalized, result);
+        Assert.AreEqual(expectedNormalized, result);
     }
 
     private static void AssertFunctionalOnly(string rule, string data, string expected)
     {
         string result = Evaluate(rule, data);
         string expectedNormalized = NormalizeJson(expected);
-        Assert.Equal(expectedNormalized, result);
+        Assert.AreEqual(expectedNormalized, result);
     }
 
     private static string Evaluate(string rule, string data)

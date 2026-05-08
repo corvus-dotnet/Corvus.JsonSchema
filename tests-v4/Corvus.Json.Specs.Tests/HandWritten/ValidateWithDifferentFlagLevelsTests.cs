@@ -6,7 +6,7 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.HandWritten;
 
@@ -16,8 +16,7 @@ namespace Corvus.Json.Specs.Tests.HandWritten;
 /// Each draft is tested as a separate class with a shared fixture that compiles the schema once.
 /// </summary>
 public abstract class ValidateWithDifferentFlagLevelsBase<TFixture>
-    : IClassFixture<TFixture>
-    where TFixture : ValidateWithDifferentFlagLevelsBase<TFixture>.FixtureBase
+    where TFixture : ValidateWithDifferentFlagLevelsBase<TFixture>.FixtureBase, new()
 {
     private static readonly string DataDir = Path.Combine(
         DriverFactory.RepoRoot,
@@ -26,48 +25,59 @@ public abstract class ValidateWithDifferentFlagLevelsBase<TFixture>
         "HandWritten",
         "ValidateWithDifferentFlagLevels");
 
-    private readonly TFixture _fixture;
-
-    protected ValidateWithDifferentFlagLevelsBase(TFixture fixture)
-    {
-        _fixture = fixture;
-    }
+    private static TFixture? s_fixture;
 
     protected abstract string DraftName { get; }
 
-    public static TheoryData<string, bool, string, int> TestData => LoadTestData();
+    public static IEnumerable<object[]> TestData => LoadTestData();
 
-    [Theory]
-    [MemberData(nameof(TestData))]
+    [ClassInitialize(InheritanceBehavior.BeforeEachDerivedClass)]
+    public static async Task ClassInit(TestContext context)
+    {
+        s_fixture = new TFixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup(InheritanceBehavior.BeforeEachDerivedClass)]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
+    [DynamicData(nameof(TestData))]
     public void ValidateWithLevel(string inputData, bool expectedValid, string level, int expectedCount)
     {
         using var doc = JsonDocument.Parse(inputData);
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
 
         ValidationLevel validationLevel = (ValidationLevel)Enum.Parse(typeof(ValidationLevel), level);
         ValidationContext result = instance.Validate(ValidationContext.ValidContext, validationLevel);
 
-        Assert.Equal(expectedValid, result.IsValid);
+        Assert.AreEqual(expectedValid, result.IsValid);
 
         if (validationLevel == ValidationLevel.Flag)
         {
             // Flag level must always produce exactly 0 results.
-            Assert.Empty(result.Results);
+            Assert.AreEqual(0, (result.Results).Count());
         }
         else if (validationLevel == ValidationLevel.Verbose)
         {
             // Verbose counts depend on internal codegen structure and may change
             // as the engine evolves. We verify results are collected (count > 0).
-            Assert.True(result.Results.Count > 0, $"Expected Verbose to produce results but got count=0 for input: {inputData}");
+            Assert.IsTrue(result.Results.Count > 0, $"Expected Verbose to produce results but got count=0 for input: {inputData}");
         }
         else
         {
             // Basic and Detailed levels have stable structural counts.
-            Assert.Equal(expectedCount, result.Results.Count);
+            Assert.AreEqual(expectedCount, result.Results.Count);
         }
     }
 
-    private static TheoryData<string, bool, string, int> LoadTestData()
+    private static IEnumerable<object[]> LoadTestData()
     {
         // We need the draft name from a concrete instance, but since this is static,
         // we infer it from the generic type parameter name convention.
@@ -75,7 +85,7 @@ public abstract class ValidateWithDifferentFlagLevelsBase<TFixture>
         string testDataPath = Path.Combine(DataDir, $"{draftName}.testdata.json");
         string json = File.ReadAllText(testDataPath);
         using JsonDocument doc = JsonDocument.Parse(json);
-        var data = new TheoryData<string, bool, string, int>();
+        var data = new List<object[]>();
 
         foreach (JsonElement item in doc.RootElement.EnumerateArray())
         {
@@ -83,13 +93,13 @@ public abstract class ValidateWithDifferentFlagLevelsBase<TFixture>
             bool valid = item.GetProperty("valid").GetBoolean();
             string levelValue = item.GetProperty("level").GetString()!;
             int count = item.GetProperty("count").GetInt32();
-            data.Add(inputDataValue, valid, levelValue, count);
+            data.Add([inputDataValue, valid, levelValue, count]);
         }
 
         return data;
     }
 
-    public abstract class FixtureBase : IAsyncLifetime
+    public abstract class FixtureBase
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -123,14 +133,10 @@ public abstract class ValidateWithDifferentFlagLevelsBase<TFixture>
     }
 }
 
+[TestClass]
 public class ValidateWithDifferentFlagLevelsDraft4Tests
     : ValidateWithDifferentFlagLevelsBase<ValidateWithDifferentFlagLevelsDraft4Tests.Draft4Fixture>
 {
-    public ValidateWithDifferentFlagLevelsDraft4Tests(Draft4Fixture fixture)
-        : base(fixture)
-    {
-    }
-
     protected override string DraftName => "Draft4";
 
     public class Draft4Fixture : FixtureBase
@@ -141,14 +147,10 @@ public class ValidateWithDifferentFlagLevelsDraft4Tests
     }
 }
 
+[TestClass]
 public class ValidateWithDifferentFlagLevelsDraft6Tests
     : ValidateWithDifferentFlagLevelsBase<ValidateWithDifferentFlagLevelsDraft6Tests.Draft6Fixture>
 {
-    public ValidateWithDifferentFlagLevelsDraft6Tests(Draft6Fixture fixture)
-        : base(fixture)
-    {
-    }
-
     protected override string DraftName => "Draft6";
 
     public class Draft6Fixture : FixtureBase
@@ -159,14 +161,10 @@ public class ValidateWithDifferentFlagLevelsDraft6Tests
     }
 }
 
+[TestClass]
 public class ValidateWithDifferentFlagLevelsDraft7Tests
     : ValidateWithDifferentFlagLevelsBase<ValidateWithDifferentFlagLevelsDraft7Tests.Draft7Fixture>
 {
-    public ValidateWithDifferentFlagLevelsDraft7Tests(Draft7Fixture fixture)
-        : base(fixture)
-    {
-    }
-
     protected override string DraftName => "Draft7";
 
     public class Draft7Fixture : FixtureBase
@@ -177,14 +175,10 @@ public class ValidateWithDifferentFlagLevelsDraft7Tests
     }
 }
 
+[TestClass]
 public class ValidateWithDifferentFlagLevelsDraft201909Tests
     : ValidateWithDifferentFlagLevelsBase<ValidateWithDifferentFlagLevelsDraft201909Tests.Draft201909Fixture>
 {
-    public ValidateWithDifferentFlagLevelsDraft201909Tests(Draft201909Fixture fixture)
-        : base(fixture)
-    {
-    }
-
     protected override string DraftName => "Draft201909";
 
     public class Draft201909Fixture : FixtureBase
@@ -195,14 +189,10 @@ public class ValidateWithDifferentFlagLevelsDraft201909Tests
     }
 }
 
+[TestClass]
 public class ValidateWithDifferentFlagLevelsDraft202012Tests
     : ValidateWithDifferentFlagLevelsBase<ValidateWithDifferentFlagLevelsDraft202012Tests.Draft202012Fixture>
 {
-    public ValidateWithDifferentFlagLevelsDraft202012Tests(Draft202012Fixture fixture)
-        : base(fixture)
-    {
-    }
-
     protected override string DraftName => "Draft202012";
 
     public class Draft202012Fixture : FixtureBase
@@ -213,14 +203,10 @@ public class ValidateWithDifferentFlagLevelsDraft202012Tests
     }
 }
 
+[TestClass]
 public class ValidateWithDifferentFlagLevelsOpenApi30Tests
     : ValidateWithDifferentFlagLevelsBase<ValidateWithDifferentFlagLevelsOpenApi30Tests.OpenApi30Fixture>
 {
-    public ValidateWithDifferentFlagLevelsOpenApi30Tests(OpenApi30Fixture fixture)
-        : base(fixture)
-    {
-    }
-
     protected override string DraftName => "OpenApi30";
 
     public class OpenApi30Fixture : FixtureBase

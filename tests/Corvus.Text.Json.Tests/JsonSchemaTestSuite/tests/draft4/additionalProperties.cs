@@ -2,66 +2,74 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft4.AdditionalProperties;
 
-[Trait("JsonSchemaTestSuite", "Draft4")]
-public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties : IClassFixture<SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestNoAdditionalPropertiesIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\": 1}");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnAdditionalPropertyIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\" : 1, \"bar\" : 2, \"quux\" : \"boom\"}");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : 1, \"bar\" : 2, \"quux\" : \"boom\"}");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresArrays()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, 2, 3]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2, 3]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresStrings()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"foobarbaz\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"foobarbaz\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresOtherNonObjects()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("12");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestPatternPropertiesAreNotAdditionalProperties()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\":1, \"vroom\": 2}");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\":1, \"vroom\": 2}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -80,34 +88,42 @@ public class SuiteAdditionalPropertiesBeingFalseDoesNotAllowOtherProperties : IC
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft4")]
-public class SuiteNonAsciiPatternWithAdditionalProperties : IClassFixture<SuiteNonAsciiPatternWithAdditionalProperties.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteNonAsciiPatternWithAdditionalProperties
 {
-    private readonly Fixture _fixture;
-    public SuiteNonAsciiPatternWithAdditionalProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatchingThePatternIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"ármányos\": 2}");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"ármányos\": 2}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNotMatchingThePatternIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"élmény\": 2}");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"élmény\": 2}");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -126,41 +142,49 @@ public class SuiteNonAsciiPatternWithAdditionalProperties : IClassFixture<SuiteN
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft4")]
-public class SuiteAdditionalPropertiesWithSchema : IClassFixture<SuiteAdditionalPropertiesWithSchema.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalPropertiesWithSchema
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalPropertiesWithSchema(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestNoAdditionalPropertiesIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\": 1}");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnAdditionalValidPropertyIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\" : 1, \"bar\" : 2, \"quux\" : true}");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : 1, \"bar\" : 2, \"quux\" : true}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnAdditionalInvalidPropertyIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\" : 1, \"bar\" : 2, \"quux\" : 12}");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : 1, \"bar\" : 2, \"quux\" : 12}");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -179,34 +203,42 @@ public class SuiteAdditionalPropertiesWithSchema : IClassFixture<SuiteAdditional
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft4")]
-public class SuiteAdditionalPropertiesCanExistByItself : IClassFixture<SuiteAdditionalPropertiesCanExistByItself.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalPropertiesCanExistByItself
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalPropertiesCanExistByItself(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAnAdditionalValidPropertyIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\" : true}");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : true}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnAdditionalInvalidPropertyIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\" : 1}");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\" : 1}");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -225,27 +257,35 @@ public class SuiteAdditionalPropertiesCanExistByItself : IClassFixture<SuiteAddi
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft4")]
-public class SuiteAdditionalPropertiesAreAllowedByDefault : IClassFixture<SuiteAdditionalPropertiesAreAllowedByDefault.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalPropertiesAreAllowedByDefault
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalPropertiesAreAllowedByDefault(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAdditionalPropertiesAreAllowed()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2, \"quux\": true}");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": 2, \"quux\": true}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -264,27 +304,35 @@ public class SuiteAdditionalPropertiesAreAllowedByDefault : IClassFixture<SuiteA
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft4")]
-public class SuiteAdditionalPropertiesDoesNotLookInApplicators : IClassFixture<SuiteAdditionalPropertiesDoesNotLookInApplicators.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalPropertiesDoesNotLookInApplicators
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalPropertiesDoesNotLookInApplicators(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestPropertiesDefinedInAllOfAreNotExamined()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": true}");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": 1, \"bar\": true}");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -303,27 +351,35 @@ public class SuiteAdditionalPropertiesDoesNotLookInApplicators : IClassFixture<S
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft4")]
-public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties : IClassFixture<SuiteAdditionalPropertiesWithNullValuedInstanceProperties.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalPropertiesWithNullValuedInstanceProperties
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalPropertiesWithNullValuedInstanceProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAllowsNullValues()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\"foo\": null}");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\"foo\": null}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

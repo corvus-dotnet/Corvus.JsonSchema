@@ -1,7 +1,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -9,7 +9,8 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage batch 12: DateOnly TryGetValue failure, TryUnescapeAndEncodePointer large buffer,
 /// and JsonWorkspace edge cases.
 /// </summary>
-public static class CoverageBatch12Tests
+[TestClass]
+public class CoverageBatch12Tests
 {
     #region DateOnly TryGetValue failure (JsonReaderHelper.cs line 344-345)
 
@@ -18,14 +19,14 @@ public static class CoverageBatch12Tests
     /// TryGetValue(DateOnly) with an invalid date segment returns false.
     /// Target: JsonReaderHelper.cs lines 344-345.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void TryGetValue_DateOnly_InvalidDate_ReturnsFalse()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void TryGetValue_DateOnly_InvalidDate_ReturnsFalse()
     {
         // "not-a-date" is not a valid ISO 8601 date
         byte[] segment = "not-a-date"u8.ToArray();
         bool result = JsonReaderHelper.TryGetValue(segment, hasComplexChildren: false, out DateOnly _);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 #endif
 
@@ -38,9 +39,9 @@ public static class CoverageBatch12Tests
     /// triggers the ArrayPool rent path and finally cleanup.
     /// Target: JsonReaderHelper.cs lines 410, 412-414.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void TryUnescapeAndEncodePointer_LargeBuffer_TriggersRentPath()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void TryUnescapeAndEncodePointer_LargeBuffer_TriggersRentPath()
     {
         // Build input: 1 byte prefix, then \n, then 300 'a' bytes
         // The backslash at index 1 means length - idx = 302 > 256 → ArrayPool path
@@ -58,8 +59,8 @@ public static class CoverageBatch12Tests
         bool result = JsonReaderHelper.TryUnescapeAndEncodePointer(input, destination, out int written);
 
         // The method should succeed: "x" encoded + unescape("\naaa...") = LF + 300 'a's
-        Assert.True(result);
-        Assert.True(written > 0);
+        Assert.IsTrue(result);
+        Assert.IsTrue(written > 0);
     }
 
     #endregion
@@ -70,24 +71,24 @@ public static class CoverageBatch12Tests
     /// GetDocument with negative index throws ArgumentOutOfRangeException.
     /// Target: JsonWorkspace.cs lines 236-237.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonWorkspace_GetDocument_NegativeIndex_Throws()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonWorkspace_GetDocument_NegativeIndex_Throws()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        Assert.Throws<ArgumentOutOfRangeException>(() => workspace.GetDocument(-1));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => workspace.GetDocument(-1));
     }
 
     /// <summary>
     /// GetDocument with index beyond length throws ArgumentOutOfRangeException.
     /// Target: JsonWorkspace.cs lines 236-237.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonWorkspace_GetDocument_IndexBeyondLength_Throws()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonWorkspace_GetDocument_IndexBeyondLength_Throws()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        Assert.Throws<ArgumentOutOfRangeException>(() => workspace.GetDocument(999));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => workspace.GetDocument(999));
     }
 
     #endregion
@@ -98,9 +99,9 @@ public static class CoverageBatch12Tests
     /// Reset workspace with a larger initial document capacity triggers re-rent.
     /// Target: JsonWorkspace.cs lines 323-326.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonWorkspace_Reset_WithLargerCapacity_ReRents()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonWorkspace_Reset_WithLargerCapacity_ReRents()
     {
         // CreateUnrented so we have explicit control over lifetime
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
@@ -126,9 +127,9 @@ public static class CoverageBatch12Tests
     /// Reset workspace that has documents uses Array.Clear path.
     /// Target: JsonWorkspace.cs lines 330-332.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonWorkspace_Reset_WithDocuments_ClearsArray()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonWorkspace_Reset_WithDocuments_ClearsArray()
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         try
@@ -153,9 +154,9 @@ public static class CoverageBatch12Tests
     /// ResetAllStateForCacheReuse on an already-disposed workspace throws.
     /// Target: JsonWorkspace.cs line 356.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonWorkspace_ResetAllStateForCacheReuse_AfterDispose_Throws()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonWorkspace_ResetAllStateForCacheReuse_AfterDispose_Throws()
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
 
@@ -163,7 +164,7 @@ public static class CoverageBatch12Tests
         using var builder = JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, """{"x":1}"""u8.ToArray());
         builder.Dispose();
         workspace.Dispose();
-        Assert.Throws<ObjectDisposedException>(() => workspace.ResetAllStateForCacheReuse());
+        Assert.ThrowsExactly<ObjectDisposedException>(() => workspace.ResetAllStateForCacheReuse());
     }
 
     #endregion

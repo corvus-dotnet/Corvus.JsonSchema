@@ -3,16 +3,17 @@
 
 using System.Numerics;
 using Corvus.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for the BigNumber.Normalize() method.
 /// </summary>
+[TestClass]
 public class BigNumberNormalizeTests
 {
-    [Fact]
+    [TestMethod]
     public void Normalize_WithZeroSignificand_ShouldReturnSameInstance()
     {
         // Arrange
@@ -25,7 +26,7 @@ public class BigNumberNormalizeTests
         BigNumberTestData.AssertBigNumberEqual(bigNumber, normalized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithSignificandWithoutTrailingZeros_ShouldReturnSameInstance()
     {
         // Arrange
@@ -38,7 +39,7 @@ public class BigNumberNormalizeTests
         BigNumberTestData.AssertBigNumberEqual(bigNumber, normalized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithSignificandHavingOneTrailingZero_ShouldNormalize()
     {
         // Arrange
@@ -52,7 +53,7 @@ public class BigNumberNormalizeTests
         BigNumberTestData.AssertBigNumberEqual(expected, normalized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithSignificandHavingMultipleTrailingZeros_ShouldNormalize()
     {
         // Arrange
@@ -66,7 +67,7 @@ public class BigNumberNormalizeTests
         BigNumberTestData.AssertBigNumberEqual(expected, normalized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithNegativeSignificandHavingTrailingZeros_ShouldNormalize()
     {
         // Arrange
@@ -80,7 +81,7 @@ public class BigNumberNormalizeTests
         BigNumberTestData.AssertBigNumberEqual(expected, normalized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithLargeSignificandHavingManyTrailingZeros_ShouldNormalize()
     {
         // Arrange
@@ -94,7 +95,7 @@ public class BigNumberNormalizeTests
         BigNumberTestData.AssertBigNumberEqual(expected, normalized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_AlreadyNormalizedNumber_ShouldReturnSameValues()
     {
         // Arrange
@@ -107,7 +108,7 @@ public class BigNumberNormalizeTests
         BigNumberTestData.AssertBigNumberEqual(bigNumber, normalized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithAllZerosSignificand_ShouldNormalizeToSingleZero()
     {
         // Arrange
@@ -121,8 +122,8 @@ public class BigNumberNormalizeTests
         BigNumberTestData.AssertBigNumberEqual(expected, normalized);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.NormalizeData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.NormalizeData), typeof(BigNumberTestData))]
     public void Normalize_WithVariousInputs_ShouldProduceExpectedResults(
         BigInteger inputSignificand, int inputExponent,
         BigInteger expectedSignificand, int expectedExponent)
@@ -139,7 +140,7 @@ public class BigNumberNormalizeTests
             $"Normalizing {inputSignificand}E{inputExponent}");
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_MultipleCallsOnSameInstance_ShouldBeIdempotent()
     {
         // Arrange
@@ -155,7 +156,7 @@ public class BigNumberNormalizeTests
         BigNumberTestData.AssertBigNumberEqual(normalized2, normalized3);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithVeryLargeNumberHavingTrailingZeros_ShouldNormalize()
     {
         // Arrange

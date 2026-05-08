@@ -2,7 +2,7 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Text.Json.CodeGeneration;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
@@ -11,11 +11,12 @@ namespace Corvus.Text.Json.CodeGenerator.Tests;
 /// format handlers, and validation handlers within the test process
 /// so coverage is captured by instrumentation.
 /// </summary>
+[TestClass]
 public class InProcessGenerationTests
 {
     private static readonly string SchemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_ConstProperties_ExercisesConstNameHeuristic()
     {
         // Schema with oneOf variants distinguished by a single const property
@@ -47,7 +48,7 @@ public class InProcessGenerationTests
             """;
 
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string[] typeNames = files
             .Select(f => CSharpLanguageProvider.GetDotnetTypeName(f))
@@ -56,19 +57,19 @@ public class InProcessGenerationTests
 
         // The ConstPropertyNameHeuristic should produce "WithKindAlpha" and "WithKindBeta"
         // since these have 1 const property each (within the 3 limit) and no required array
-        Assert.True(
+        Assert.IsTrue(
             typeNames.Any(n => n!.Contains("Kind", StringComparison.OrdinalIgnoreCase) &&
                               n!.Contains("Alpha", StringComparison.OrdinalIgnoreCase)),
             $"Expected const-named type for 'kind: alpha'. Got: {string.Join(", ", typeNames)}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_NestedPaths_ExercisesPathNameHeuristic()
     {
         string schemaPath = Path.Combine(SchemasDir, "nested-path-names.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string[] typeNames = files
             .Select(f => CSharpLanguageProvider.GetDotnetTypeName(f))
@@ -76,21 +77,21 @@ public class InProcessGenerationTests
             .ToArray()!;
 
         // PathNameHeuristic should produce types named from nested property paths
-        Assert.True(
+        Assert.IsTrue(
             typeNames.Any(n => n!.Contains("Database", StringComparison.OrdinalIgnoreCase)),
             $"Expected 'Database' from path heuristic. Got: {string.Join(", ", typeNames)}");
-        Assert.True(
+        Assert.IsTrue(
             typeNames.Any(n => n!.Contains("Connection", StringComparison.OrdinalIgnoreCase)),
             $"Expected 'Connection' from path heuristic. Got: {string.Join(", ", typeNames)}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_NameCollisions_ExercisesCollisionResolver()
     {
         string schemaPath = Path.Combine(SchemasDir, "name-collisions.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string[] typeNames = files
             .Select(f => CSharpLanguageProvider.GetDotnetTypeName(f))
@@ -98,26 +99,26 @@ public class InProcessGenerationTests
             .ToArray()!;
 
         // Should have at least one Address type
-        Assert.True(
+        Assert.IsTrue(
             typeNames.Any(n => n!.Contains("Address", StringComparison.OrdinalIgnoreCase)),
             $"Expected 'Address' type. Got: {string.Join(", ", typeNames)}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_NumericFormats_ExercisesFormatHandlers()
     {
         string schemaPath = Path.Combine(SchemasDir, "numeric-and-format.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         // The schema has format: email, date-time, uri, ipv4, ipv6, duration
         // plus multipleOf and min/max — all should produce generated code
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
-        Assert.True(allCode.Length > 0, "Expected non-empty generated code");
+        Assert.IsTrue(allCode.Length > 0, "Expected non-empty generated code");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_BigMultipleOf_ExercisesBigIntegerPath()
     {
         // A multipleOf value exceeding UInt64.MaxValue triggers the BigInteger code path
@@ -135,15 +136,15 @@ public class InProcessGenerationTests
 
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
 
         // Should generate BigInteger validation code
-        Assert.Contains("BigInteger", allCode);
+        StringAssert.Contains(allCode, "BigInteger");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_ManyConstProperties_BailsOutOfConstHeuristic()
     {
         // More than 3 const properties causes ConstPropertyNameHeuristic to bail out
@@ -174,7 +175,7 @@ public class InProcessGenerationTests
             """;
 
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         // With 4 const properties, the heuristic should NOT produce a "WithA..." name
         string[] typeNames = files
@@ -182,12 +183,12 @@ public class InProcessGenerationTests
             .Where(n => n is not null)
             .ToArray()!;
 
-        Assert.True(
+        Assert.IsTrue(
             !typeNames.Any(n => n!.StartsWith("WithA", StringComparison.Ordinal)),
             $"Expected const heuristic to bail out with 4+ properties. Got: {string.Join(", ", typeNames)}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_SpecialCharPropertyNames_ExercisesEmptyNameFallback()
     {
         // Property names with only special characters (no letters or digits)
@@ -207,7 +208,7 @@ public class InProcessGenerationTests
             """;
 
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         // The fallback should produce a type name with the Entity suffix
         string[] typeNames = files
@@ -216,12 +217,12 @@ public class InProcessGenerationTests
             .ToArray()!;
 
         // At least one type should have the "Entity" suffix from the empty name fallback
-        Assert.True(
+        Assert.IsTrue(
             typeNames.Any(n => n!.Contains("Entity", StringComparison.OrdinalIgnoreCase)),
             $"Expected 'Entity' suffix from empty name fallback. Got: {string.Join(", ", typeNames)}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_VeryLongPropertyName_ThrowsIdentifierTooLong()
     {
         // A property name longer than 512 characters should trigger ThrowIdentifierTooLongException
@@ -240,11 +241,11 @@ public class InProcessGenerationTests
             }
             """;
 
-        await Assert.ThrowsAsync<InvalidOperationException>(
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(
             () => GenerateInProcessFromContent(schemaContent));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_GetFullyQualifiedDotnetTypeName_ReturnsQualifiedName()
     {
         string schemaContent = """
@@ -257,15 +258,15 @@ public class InProcessGenerationTests
             """;
 
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcessFromContent(schemaContent);
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         // GetFullyQualifiedDotnetTypeName should return namespace-qualified names
         string fqn = CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(files.First());
-        Assert.NotNull(fqn);
-        Assert.Contains("TestGenerated", fqn);
+        Assert.IsNotNull(fqn);
+        StringAssert.Contains(fqn, "TestGenerated");
     }
 
-    [Fact]
+    [TestMethod]
     public void GetNameHeuristicNames_ReturnsOrderedHeuristics()
     {
         var options = new CSharpLanguageProvider.Options(defaultNamespace: "Test");
@@ -274,17 +275,17 @@ public class InProcessGenerationTests
         IEnumerable<(string Name, bool IsOptional)> heuristics = languageProvider.GetNameHeuristicNames();
 
         var list = heuristics.ToList();
-        Assert.NotEmpty(list);
+        Assert.IsTrue((list).Any());
 
         // Required heuristics should come before optional ones
         int firstOptionalIndex = list.FindIndex(h => h.IsOptional);
         if (firstOptionalIndex > 0)
         {
-            Assert.True(list.Take(firstOptionalIndex).All(h => !h.IsOptional));
+            Assert.IsTrue(list.Take(firstOptionalIndex).All(h => !h.IsOptional));
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_EncodedUriDefs_ExercisesBaseSchemaNameHeuristic()
     {
         // $defs keys that are JSON-Pointer-encoded URIs trigger TryGetNameFromEncodedUri
@@ -292,7 +293,7 @@ public class InProcessGenerationTests
         string schemaPath = Path.Combine(SchemasDir, "encoded-uri-defs.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string[] typeNames = files
             .Select(f => CSharpLanguageProvider.GetDotnetTypeName(f))
@@ -300,17 +301,17 @@ public class InProcessGenerationTests
             .ToArray()!;
 
         // BaseSchemaNameHeuristic should extract "AsyncAgent" from the encoded URI key
-        Assert.True(
+        Assert.IsTrue(
             typeNames.Any(n => n!.Contains("AsyncAgent", StringComparison.OrdinalIgnoreCase)),
             $"Expected 'AsyncAgent' from encoded URI def. Got: {string.Join(", ", typeNames)}");
 
         // And "ServiceConfig" from the second encoded URI key
-        Assert.True(
+        Assert.IsTrue(
             typeNames.Any(n => n!.Contains("ServiceConfig", StringComparison.OrdinalIgnoreCase)),
             $"Expected 'ServiceConfig' from encoded URI def. Got: {string.Join(", ", typeNames)}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_CollidingUriDefs_DisambiguatesWithParentSegment()
     {
         // Two $defs with the same filename stem ("agent.json") but different paths
@@ -319,7 +320,7 @@ public class InProcessGenerationTests
         string schemaPath = Path.Combine(SchemasDir, "colliding-uri-defs.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string[] typeNames = files
             .Select(f => CSharpLanguageProvider.GetDotnetTypeName(f))
@@ -328,12 +329,12 @@ public class InProcessGenerationTests
 
         // Both should be named differently — at least one should include the parent dir
         int agentCount = typeNames.Count(n => n!.Contains("Agent", StringComparison.OrdinalIgnoreCase));
-        Assert.True(
+        Assert.IsTrue(
             agentCount >= 2,
             $"Expected at least 2 Agent types (disambiguated). Got: {string.Join(", ", typeNames)}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_BothMode_ProducesMoreOrEqualFiles()
     {
         string schemaPath = Path.Combine(SchemasDir, "numeric-and-format.json");
@@ -346,12 +347,12 @@ public class InProcessGenerationTests
             CodeGenerationMode.Both);
 
         // Both mode should produce at least as many files as type-only
-        Assert.True(
+        Assert.IsTrue(
             filesBoth.Count >= filesTypeOnly.Count,
             $"Expected Both ({filesBoth.Count}) >= TypeGeneration ({filesTypeOnly.Count})");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_ComplexValidation_ExercisesOneOfAnyOfIfThenElse()
     {
         // Schema with oneOf, anyOf, if/then/else, array constraints, additionalProperties,
@@ -362,15 +363,15 @@ public class InProcessGenerationTests
             schemaPath,
             CodeGenerationMode.Both);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
 
         // Should generate oneOf-related discriminator code
-        Assert.True(allCode.Length > 1000, "Expected substantial generated code for complex schema");
+        Assert.IsTrue(allCode.Length > 1000, "Expected substantial generated code for complex schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_EvaluatorOnly_ComplexSchema_ProducesEvaluatorCode()
     {
         // Complex schema with multiple validation keywords should generate evaluator code
@@ -405,10 +406,10 @@ public class InProcessGenerationTests
             CancellationToken.None);
 
         // Evaluator-only mode with complex schema should produce at least one file
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_EvaluatorOnly_AnyOfConst_ExercisesConstValidationHandler()
     {
         // Schema with anyOf branches using const values for strings, numbers, booleans, nulls.
@@ -441,17 +442,17 @@ public class InProcessGenerationTests
             [rootType],
             CancellationToken.None);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
 
         // Should contain const string comparison code (anyOf with string consts)
-        Assert.Contains("active", allCode);
+        StringAssert.Contains(allCode, "active");
         // Should contain validation method calls for the anyOf structure
-        Assert.Contains("AnyOf", allCode);
+        StringAssert.Contains(allCode, "AnyOf");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_BothMode_AnyOfConst_ExercisesDualPaths()
     {
         // Same schema in Both mode — exercises both type generation and evaluator paths
@@ -460,15 +461,15 @@ public class InProcessGenerationTests
             schemaPath,
             CodeGenerationMode.Both);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
 
         // Both mode should produce evaluator and type code
-        Assert.True(allCode.Length > 5000, "Expected substantial code from both-mode generation");
+        Assert.IsTrue(allCode.Length > 5000, "Expected substantial code from both-mode generation");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_EvaluatorOnly_AdvancedPatterns_ExercisesEnumSwitchAndRegex()
     {
         // Schema exercises: numeric enum switch (int64), regex pattern categories
@@ -502,17 +503,17 @@ public class InProcessGenerationTests
             [rootType],
             CancellationToken.None);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
 
         // Verify enum switch is generated (numeric enum with 10 values)
-        Assert.Contains("switch", allCode);
+        StringAssert.Contains(allCode, "switch");
         // Verify format validation code is generated
-        Assert.Contains("MatchInt32", allCode);
+        StringAssert.Contains(allCode, "MatchInt32");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_ComposedWithArray_ExercisesArrayBuilderPath()
     {
         // A oneOf with an array branch triggers the ComposedBuilder.ArrayInstanceName path
@@ -520,15 +521,15 @@ public class InProcessGenerationTests
         string schemaPath = Path.Combine(SchemasDir, "composed-with-array.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
 
         // The array branch should produce builder code with array kind handling
-        Assert.Contains("Builder", allCode);
+        StringAssert.Contains(allCode, "Builder");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_ComposedWithArray_InBothMode_ProducesEvaluatorAndBuilder()
     {
         // Both mode exercises more builder paths (property-level composed builders)
@@ -537,13 +538,13 @@ public class InProcessGenerationTests
             schemaPath,
             CodeGenerationMode.Both);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string allCode = string.Join("\n", files.Select(f => f.FileContent));
-        Assert.Contains("Kind", allCode);
+        StringAssert.Contains(allCode, "Kind");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_NestedNameCollision_ExercisesCollisionResolver()
     {
         // Nested properties with the same name create name collisions
@@ -551,7 +552,7 @@ public class InProcessGenerationTests
         string schemaPath = Path.Combine(SchemasDir, "nested-name-collision.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         string[] typeNames = files
             .Select(f => CSharpLanguageProvider.GetDotnetTypeName(f))
@@ -561,12 +562,12 @@ public class InProcessGenerationTests
         // Should have types with disambiguation — both "Config" properties can't produce
         // the same type name, so the collision resolver should intervene
         int configCount = typeNames.Count(n => n!.Contains("Config", StringComparison.OrdinalIgnoreCase));
-        Assert.True(
+        Assert.IsTrue(
             configCount >= 2,
             $"Expected at least 2 Config-related types (disambiguated). Got: {string.Join(", ", typeNames)}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_PureOneOf_CanReduceToOneOf()
     {
         // A pure oneOf schema (no other constraints) should exercise CanReduceToOneOf
@@ -595,10 +596,10 @@ public class InProcessGenerationTests
 
         // Now test CanReduceToOneOf — should be true for a pure oneOf schema
         bool canReduce = rootType.CanReduceToOneOf();
-        Assert.True(canReduce, "A pure oneOf schema should be reducible to oneOf");
+        Assert.IsTrue(canReduce, "A pure oneOf schema should be reducible to oneOf");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_PureAnyOf_CanReduceToAnyOf()
     {
         // A pure anyOf schema (no other constraints) should exercise CanReduceToAnyOf
@@ -627,10 +628,10 @@ public class InProcessGenerationTests
 
         // Now test CanReduceToAnyOf — should be true for a pure anyOf schema
         bool canReduce = rootType.CanReduceToAnyOf();
-        Assert.True(canReduce, "A pure anyOf schema should be reducible to anyOf");
+        Assert.IsTrue(canReduce, "A pure anyOf schema should be reducible to anyOf");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_MatchesExistingPropertyNameInParent_DetectsCollision()
     {
         // Create a type hierarchy where a child's name matches a property in its parent
@@ -676,7 +677,7 @@ public class InProcessGenerationTests
             IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(
                 languageProvider, [rootType], CancellationToken.None);
 
-            Assert.NotEmpty(files);
+            Assert.IsTrue((files).Any());
 
             // Find the nested child type (named "Nested" from the property)
             TypeDeclaration nestedType = rootType.Children()
@@ -686,7 +687,7 @@ public class InProcessGenerationTests
             {
                 // "Items" is a property on the parent, so matching against it should return true
                 bool matchesProperty = nestedType.MatchesExistingPropertyNameInParent("Items".AsSpan());
-                Assert.True(matchesProperty, "Expected 'Items' to match a property name in the parent");
+                Assert.IsTrue(matchesProperty, "Expected 'Items' to match a property name in the parent");
             }
         }
         finally
@@ -698,7 +699,7 @@ public class InProcessGenerationTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_MatchesExistingTypeInParent_DetectsTypeCollision()
     {
         // Create a type hierarchy with multiple children where names collide
@@ -745,11 +746,11 @@ public class InProcessGenerationTests
             IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(
                 languageProvider, [rootType], CancellationToken.None);
 
-            Assert.NotEmpty(files);
+            Assert.IsTrue((files).Any());
 
             // Get children of root
             var children = rootType.Children().ToList();
-            Assert.True(children.Count >= 2, $"Expected at least 2 children. Got: {children.Count}");
+            Assert.IsTrue(children.Count >= 2, $"Expected at least 2 children. Got: {children.Count}");
 
             // Pick a child and check if its name matches another child in the parent
             TypeDeclaration firstChild = children[0];
@@ -757,7 +758,7 @@ public class InProcessGenerationTests
             {
                 // MatchesExistingTypeInParent should find the same type (it checks ALL children)
                 bool matchesType = firstChild.MatchesExistingTypeInParent(firstName.AsSpan());
-                Assert.True(matchesType, $"Expected '{firstName}' to match an existing type in the parent");
+                Assert.IsTrue(matchesType, $"Expected '{firstName}' to match an existing type in the parent");
             }
         }
         finally
@@ -769,7 +770,7 @@ public class InProcessGenerationTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_RequiresNumberValueValidation_TrueForNumericConstraints()
     {
         // Schema with numeric constraints exercises RequiresNumberValueValidation
@@ -810,7 +811,7 @@ public class InProcessGenerationTests
 
             // Should require number value validation due to minimum/maximum/multipleOf
             bool requiresNumericValidation = rootType.RequiresNumberValueValidation();
-            Assert.True(requiresNumericValidation, "Expected RequiresNumberValueValidation to be true for schema with numeric constraints");
+            Assert.IsTrue(requiresNumericValidation, "Expected RequiresNumberValueValidation to be true for schema with numeric constraints");
         }
         finally
         {
@@ -821,7 +822,7 @@ public class InProcessGenerationTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_CancelledToken_ReturnsEmpty()
     {
         string schemaPath = Path.Combine(SchemasDir, "numeric-and-format.json");
@@ -855,10 +856,10 @@ public class InProcessGenerationTests
             [rootType],
             cts.Token);
 
-        Assert.Empty(files);
+        Assert.AreEqual(0, (files).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_ContentMediaTypePre201909_ExercisesAllFormatPaths()
     {
         // Exercises ContentMediaTypePre201909Keyword.TryGetFormat:
@@ -870,20 +871,20 @@ public class InProcessGenerationTests
         string schemaPath = Path.Combine(SchemasDir, "content-media-pre201909.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_ContentMediaType202012_ExercisesAllFormatPaths()
     {
         // Exercises ContentMediaTypeKeyword.TryGetFormat paths (same structure, different keyword)
         string schemaPath = Path.Combine(SchemasDir, "content-media-202012.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_RefHidesSiblings_Draft7_ExercisesDollarRefHidesSiblingsKeyword()
     {
         // Exercises DollarRefHidesSiblingsKeyword: in Draft 7, $ref hides sibling keywords
@@ -911,21 +912,21 @@ public class InProcessGenerationTests
         IReadOnlyCollection<GeneratedCodeFile> files = typeBuilder.GenerateCodeUsing(
             languageProvider, [rootType], CancellationToken.None);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
 
         // Verify that has-siblings-hiding-keyword is detected
-        Assert.True(rootType.HasSiblingHidingKeyword() || rootType.Children().Any(c => c.HasSiblingHidingKeyword()),
+        Assert.IsTrue(rootType.HasSiblingHidingKeyword() || rootType.Children().Any(c => c.HasSiblingHidingKeyword()),
             "Expected DollarRefHidesSiblingsKeyword to be detected in Draft 7 schema with $ref");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenerateCode_AnchorsAndDynamicRef_ExercisesAnchorResolution()
     {
         // Exercises Anchors.cs: AddAnchors, GetLocationAndPointerForAnchor, ApplyScopeToNewType
         string schemaPath = Path.Combine(SchemasDir, "anchors-and-dynamic-ref.json");
         IReadOnlyCollection<GeneratedCodeFile> files = await GenerateInProcess(schemaPath);
 
-        Assert.NotEmpty(files);
+        Assert.IsTrue((files).Any());
     }
 
     private static async Task<IReadOnlyCollection<GeneratedCodeFile>> GenerateInProcess(
@@ -962,7 +963,7 @@ public class InProcessGenerationTests
             CancellationToken.None);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Validation_TryGetValidationConstantForKeyword_ReturnsMinimumValue()
     {
         // Exercises Validation.TryGetValidationConstantForKeyword (lines 25-38)
@@ -1002,8 +1003,8 @@ public class InProcessGenerationTests
 
             bool found = rootType.TryGetValidationConstantForKeyword(minimumKeyword, null, out System.Text.Json.JsonElement value);
 
-            Assert.True(found, "Expected to find validation constant for minimum keyword");
-            Assert.Equal(42, value.GetInt32());
+            Assert.IsTrue(found, "Expected to find validation constant for minimum keyword");
+            Assert.AreEqual(42, value.GetInt32());
         }
         finally
         {
@@ -1014,7 +1015,7 @@ public class InProcessGenerationTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Validation_GetValidationConstantCountForKeyword_ReturnsCorrectCount()
     {
         // Exercises Validation.GetValidationConstantCountForKeyword (lines 47-56)
@@ -1055,7 +1056,7 @@ public class InProcessGenerationTests
             int count = rootType.GetValidationConstantCountForKeyword(enumKeyword);
 
             // enum with 3 values should yield 3 validation constants
-            Assert.Equal(3, count);
+            Assert.AreEqual(3, count);
         }
         finally
         {
@@ -1066,7 +1067,7 @@ public class InProcessGenerationTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Validation_TryGetValidationConstant_NotFound_ReturnsFalse()
     {
         // Exercises the false-return path (lines 36-37 of Validation.cs)
@@ -1105,11 +1106,11 @@ public class InProcessGenerationTests
 
             bool found = rootType.TryGetValidationConstantForKeyword(minimumKeyword, null, out System.Text.Json.JsonElement value);
 
-            Assert.False(found);
-            Assert.Equal(default, value);
+            Assert.IsFalse(found);
+            Assert.AreEqual(default, value);
 
             int count = rootType.GetValidationConstantCountForKeyword(minimumKeyword);
-            Assert.Equal(0, count);
+            Assert.AreEqual(0, count);
         }
         finally
         {
@@ -1120,7 +1121,7 @@ public class InProcessGenerationTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Validation_TryGetValidationConstant_WithIndex_ReturnsCorrectElement()
     {
         // Exercises the index path (line 26: int i = index ?? 0)
@@ -1159,12 +1160,12 @@ public class InProcessGenerationTests
 
             // Get the second element (index 1)
             bool found = rootType.TryGetValidationConstantForKeyword(enumKeyword, 1, out System.Text.Json.JsonElement value);
-            Assert.True(found);
-            Assert.Equal("second", value.GetString());
+            Assert.IsTrue(found);
+            Assert.AreEqual("second", value.GetString());
 
             // Out-of-range index returns false
             bool outOfRange = rootType.TryGetValidationConstantForKeyword(enumKeyword, 99, out _);
-            Assert.False(outOfRange);
+            Assert.IsFalse(outOfRange);
         }
         finally
         {

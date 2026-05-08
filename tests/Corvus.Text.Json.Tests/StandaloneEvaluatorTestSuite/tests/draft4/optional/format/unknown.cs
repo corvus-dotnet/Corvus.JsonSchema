@@ -2,73 +2,81 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft4.Optional.Format.Unknown;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteUnknownFormat : IClassFixture<SuiteUnknownFormat.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteUnknownFormat
 {
-    private readonly Fixture _fixture;
-    public SuiteUnknownFormat(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestUnknownFormatsIgnoreIntegers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("12");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnknownFormatsIgnoreFloats()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("13.7");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnknownFormatsIgnoreObjects()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnknownFormatsIgnoreArrays()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnknownFormatsIgnoreBooleans()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("false");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnknownFormatsIgnoreNulls()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("null");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnknownFormatsIgnoreStrings()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"string\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

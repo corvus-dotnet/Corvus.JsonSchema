@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Verify = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerVerifier<
     Corvus.Text.Json.Analyzers.IgnoredValidationResultAnalyzer,
@@ -23,6 +23,7 @@ namespace Corvus.Text.Json.Analyzers.Tests;
 /// <summary>
 /// Tests for CTJ007: Ignored schema validation result.
 /// </summary>
+[TestClass]
 public class IgnoredValidationResultAnalyzerTests
 {
     private const string Stubs = @"
@@ -46,7 +47,7 @@ namespace Corvus.Text.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task EvaluateSchema_ResultDiscarded_FiresCTJ007()
     {
         const string testCode = Stubs + @"
@@ -73,7 +74,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EvaluateSchema_ResultUsedInIf_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -97,7 +98,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EvaluateSchema_ResultAssigned_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -119,7 +120,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EvaluateSchema_ResultReturned_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -141,7 +142,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EvaluateSchema_OnGeneratedType_FiresCTJ007()
     {
         const string stubs = @"
@@ -188,7 +189,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonCorvusEvaluateSchema_NoDiagnostic()
     {
         const string testCode = @"
@@ -218,7 +219,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EvaluateSchema_ResultUsedInNegation_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -240,7 +241,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task EvaluateSchema_WithCollectorResultDiscarded_NoDiagnostic()
     {
         const string testCode = Stubs + @"

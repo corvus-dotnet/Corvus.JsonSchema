@@ -5,28 +5,40 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AdditionalSchemaTests.AdditionalDraft7.Repro479;
 
-[Trait("JsonSchemaTestSuite", "AdditionalDraft7")]
-public class SuiteGenerationErrorWithRegularExpressions : IClassFixture<SuiteGenerationErrorWithRegularExpressions.Fixture>
+[TestCategory("AdditionalDraft7")]
+[TestClass]
+public class SuiteGenerationErrorWithRegularExpressions
 {
-    private readonly Fixture _fixture;
-    public SuiteGenerationErrorWithRegularExpressions(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestDataSchemaHttpsWwwKrakendIoSchemaV23KrakendJs()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"$schema\": \"https://www.krakend.io/schema/v2.3/krakend.json\",\r\n          \"endpoints\": [\r\n            {\r\n              \"backend\": [\r\n                {\r\n                  \"extra_config\": {\r\n                    \"modifier/lua-backend\": {\r\n                      \"allow_open_libs\": true,\r\n                      \"live\": true,\r\n                      \"post\": \"filter(request.load(), response.load())\",\r\n                      \"sources\": [\r\n                        \"./filter.lua\"\r\n                      ]\r\n                    }\r\n                  },\r\n                  \"mapping\": {\r\n                    \"expandedBom\": \"collection\"\r\n                  },\r\n                  \"url_pattern\": \"/bom.json\"\r\n                }\r\n              ],\r\n              \"endpoint\": \"/using-lua\",\r\n              \"output_encoding\": \"json-collection\"\r\n            },\r\n            {\r\n              \"backend\": [\r\n                {\r\n                  \"url_pattern\": \"/bom.json\"\r\n                }\r\n              ],\r\n              \"endpoint\": \"/using-jmespath\",\r\n              \"extra_config\": {\r\n                \"modifier/jmespath\": {\r\n                  \"expr\": \"expandedBom[*]\"\r\n                }\r\n              },\r\n              \"output_encoding\": \"json-collection\"\r\n            },\r\n            {\r\n              \"backend\": [\r\n                {\r\n                  \"allow\": [\r\n                    \"expandedBom\"\r\n                  ],\r\n                  \"mapping\": {\r\n                    \"expandedBom\": \"collection\"\r\n                  },\r\n                  \"url_pattern\": \"/bom.json\"\r\n                }\r\n              ],\r\n              \"endpoint\": \"/using-allow\",\r\n              \"output_encoding\": \"json-collection\"\r\n            }\r\n          ],\r\n          \"host\": [\r\n            \"http://my_service:8080\"\r\n          ],\r\n          \"name\": \"My KrakenD API Gateway\",\r\n          \"plugin\": {\r\n            \"folder\": \"/opt/krakend/plugins/\",\r\n            \"pattern\": \".so\"\r\n          },\r\n          \"port\": 8080,\r\n          \"version\": 3\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 

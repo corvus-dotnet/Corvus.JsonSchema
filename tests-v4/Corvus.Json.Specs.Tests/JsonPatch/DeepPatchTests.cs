@@ -5,16 +5,17 @@
 using Corvus.Json;
 using Corvus.Json.Patch;
 using Corvus.Json.Patch.Model;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonPatch
 {
     /// <summary>
     /// Tests for deep patching and setting deep properties on JSON documents.
     /// </summary>
+    [TestClass]
     public class DeepPatchTests
     {
-        [Fact]
+        [TestMethod]
         public void DeepPatch_Row1()
         {
             string documentJson = "{}";
@@ -26,10 +27,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonAny document = JsonAny.Parse(documentJson);
             PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path.AsSpan());
 
-            Assert.Equal(JsonAny.Parse(expected), builder.Value);
+            Assert.AreEqual(JsonAny.Parse(expected), builder.Value);
         }
 
-        [Fact]
+        [TestMethod]
         public void DeepPatch_Row2()
         {
             string documentJson = """{"foo": 2}""";
@@ -41,10 +42,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonAny document = JsonAny.Parse(documentJson);
             PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path.AsSpan());
 
-            Assert.Equal(JsonAny.Parse(expected), builder.Value);
+            Assert.AreEqual(JsonAny.Parse(expected), builder.Value);
         }
 
-        [Fact]
+        [TestMethod]
         public void DeepPatch_Row3()
         {
             string documentJson = """{"foo": 2}""";
@@ -56,10 +57,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonAny document = JsonAny.Parse(documentJson);
             PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path.AsSpan());
 
-            Assert.Equal(JsonAny.Parse(expected), builder.Value);
+            Assert.AreEqual(JsonAny.Parse(expected), builder.Value);
         }
 
-        [Fact]
+        [TestMethod]
         public void DeepPatch_Row4()
         {
             string documentJson = """{"foo": 2}""";
@@ -71,10 +72,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonAny document = JsonAny.Parse(documentJson);
             PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path.AsSpan());
 
-            Assert.Equal(JsonAny.Parse(expected), builder.Value);
+            Assert.AreEqual(JsonAny.Parse(expected), builder.Value);
         }
 
-        [Fact]
+        [TestMethod]
         public void DeepPatch_Row5()
         {
             string documentJson = """{"foo": 2}""";
@@ -86,10 +87,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonAny document = JsonAny.Parse(documentJson);
             PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path.AsSpan());
 
-            Assert.Equal(JsonAny.Parse(expected), builder.Value);
+            Assert.AreEqual(JsonAny.Parse(expected), builder.Value);
         }
 
-        [Fact]
+        [TestMethod]
         public void DeepPatch_Row6()
         {
             string documentJson = """{"foo": [{}] }""";
@@ -101,10 +102,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonAny document = JsonAny.Parse(documentJson);
             PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path.AsSpan());
 
-            Assert.Equal(JsonAny.Parse(expected), builder.Value);
+            Assert.AreEqual(JsonAny.Parse(expected), builder.Value);
         }
 
-        [Fact]
+        [TestMethod]
         public void DeepPatch_Row7()
         {
             string documentJson = """{"foo": [] }""";
@@ -116,10 +117,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonAny document = JsonAny.Parse(documentJson);
             PatchBuilder builder = document.BeginPatch().DeepAddOrReplaceObjectProperties(value, path.AsSpan());
 
-            Assert.Equal(JsonAny.Parse(expected), builder.Value);
+            Assert.AreEqual(JsonAny.Parse(expected), builder.Value);
         }
 
-        [Fact]
+        [TestMethod]
         public void SetDeepProperty_Row1()
         {
             string documentJson = "{}";
@@ -131,10 +132,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonObject document = JsonAny.Parse(documentJson).AsObject;
             document.TrySetDeepProperty(path.AsSpan(), value, out JsonObject result);
 
-            Assert.Equal(JsonAny.Parse(expected), result.AsAny);
+            Assert.AreEqual(JsonAny.Parse(expected), result.AsAny);
         }
 
-        [Fact]
+        [TestMethod]
         public void SetDeepProperty_Row2()
         {
             string documentJson = """{"foo": 2}""";
@@ -146,10 +147,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonObject document = JsonAny.Parse(documentJson).AsObject;
             document.TrySetDeepProperty(path.AsSpan(), value, out JsonObject result);
 
-            Assert.Equal(JsonAny.Parse(expected), result.AsAny);
+            Assert.AreEqual(JsonAny.Parse(expected), result.AsAny);
         }
 
-        [Fact]
+        [TestMethod]
         public void SetDeepProperty_Row3()
         {
             string documentJson = """{"foo": 2}""";
@@ -161,10 +162,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonObject document = JsonAny.Parse(documentJson).AsObject;
             document.TrySetDeepProperty(path.AsSpan(), value, out JsonObject result);
 
-            Assert.Equal(JsonAny.Parse(expected), result.AsAny);
+            Assert.AreEqual(JsonAny.Parse(expected), result.AsAny);
         }
 
-        [Fact]
+        [TestMethod]
         public void SetDeepProperty_Row4()
         {
             string documentJson = """{"foo": 2}""";
@@ -176,10 +177,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonObject document = JsonAny.Parse(documentJson).AsObject;
             document.TrySetDeepProperty(path.AsSpan(), value, out JsonObject result);
 
-            Assert.Equal(JsonAny.Parse(expected), result.AsAny);
+            Assert.AreEqual(JsonAny.Parse(expected), result.AsAny);
         }
 
-        [Fact]
+        [TestMethod]
         public void SetDeepProperty_Row5()
         {
             string documentJson = """{"foo": 2}""";
@@ -191,10 +192,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonObject document = JsonAny.Parse(documentJson).AsObject;
             document.TrySetDeepProperty(path.AsSpan(), value, out JsonObject result);
 
-            Assert.Equal(JsonAny.Parse(expected), result.AsAny);
+            Assert.AreEqual(JsonAny.Parse(expected), result.AsAny);
         }
 
-        [Fact]
+        [TestMethod]
         public void SetDeepProperty_Row6()
         {
             string documentJson = """{"foo": [{}] }""";
@@ -206,10 +207,10 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonObject document = JsonAny.Parse(documentJson).AsObject;
             document.TrySetDeepProperty(path.AsSpan(), value, out JsonObject result);
 
-            Assert.Equal(JsonAny.Parse(expected), result.AsAny);
+            Assert.AreEqual(JsonAny.Parse(expected), result.AsAny);
         }
 
-        [Fact]
+        [TestMethod]
         public void SetDeepProperty_Row7()
         {
             string documentJson = """{"foo": [] }""";
@@ -221,7 +222,7 @@ namespace Corvus.Json.Specs.Tests.JsonPatch
             JsonObject document = JsonAny.Parse(documentJson).AsObject;
             document.TrySetDeepProperty(path.AsSpan(), value, out JsonObject result);
 
-            Assert.Equal(JsonAny.Parse(expected), result.AsAny);
+            Assert.AreEqual(JsonAny.Parse(expected), result.AsAny);
         }
     }
 }

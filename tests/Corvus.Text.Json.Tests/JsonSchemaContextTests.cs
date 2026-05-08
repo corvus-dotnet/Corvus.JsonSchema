@@ -1,24 +1,25 @@
-﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
+// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
-using System.Linq;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using System.Linq;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
-public static class JsonSchemaContextTests
+[TestClass]
+public class JsonSchemaContextTests
 {
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedItems(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedItems(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeArrayDocument() : CreateSmallArrayDocument();
@@ -31,22 +32,22 @@ public static class JsonSchemaContextTests
             context.AddLocalEvaluatedItem(item);
         }
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalEvaluatedItem(i)));
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(i)));
     }
 
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedItemsAfterUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedItemsAfterUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeArrayDocument() : CreateSmallArrayDocument();
@@ -64,22 +65,22 @@ public static class JsonSchemaContextTests
             context.AddLocalEvaluatedItem(item);
         }
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalEvaluatedItem(i)));
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(i)));
     }
 
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedItemsFromChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedItemsFromChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeArrayDocument() : CreateSmallArrayDocument();
@@ -97,22 +98,22 @@ public static class JsonSchemaContextTests
         context.CommitChildContext(true, ref childContext);
         context.ApplyEvaluated(ref childContext);
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedItem(i)));
-        Assert.All(evaluatedIndices, i => Assert.False(context.HasLocalEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedItem(i)));
     }
 
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedItemsWithBeforeUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedItemsWithBeforeUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeArrayDocument() : CreateSmallArrayDocument();
@@ -130,22 +131,22 @@ public static class JsonSchemaContextTests
         context.CommitChildContext(true, ref childContext);
         context.ApplyEvaluated(ref childContext);
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalEvaluatedItem(i)));
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(i)));
     }
 
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedItemsWithChangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(false, true, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(false, true, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(false, true, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(false, true, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedItemsWithChangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeArrayDocument() : CreateSmallArrayDocument();
@@ -166,22 +167,22 @@ public static class JsonSchemaContextTests
         context.CommitChildContext(true, ref childContext);
         context.ApplyEvaluated(ref childContext);
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalEvaluatedItem(i)));
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedItem(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedItem(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(i)));
     }
 
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedProperties(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedProperties(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeObjectDocument() : CreateSmallObjectDocument();
@@ -194,22 +195,22 @@ public static class JsonSchemaContextTests
             context.AddLocalEvaluatedProperty(item);
         }
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedProperty(i)));
     }
 
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedPropertiesAfterUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedPropertiesAfterUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeObjectDocument() : CreateSmallObjectDocument();
@@ -227,22 +228,22 @@ public static class JsonSchemaContextTests
             context.AddLocalEvaluatedProperty(item);
         }
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedProperty(i)));
     }
 
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedPropertiesBeforeUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedPropertiesBeforeUnchangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeObjectDocument() : CreateSmallObjectDocument();
@@ -259,22 +260,22 @@ public static class JsonSchemaContextTests
         context.CommitChildContext(true, ref childContext);
         context.ApplyEvaluated(ref childContext);
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedProperty(i)));
     }
 
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedPropertiesFromChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedPropertiesFromChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeObjectDocument() : CreateSmallObjectDocument();
@@ -292,22 +293,22 @@ public static class JsonSchemaContextTests
         context.CommitChildContext(true, ref childContext);
         context.ApplyEvaluated(ref childContext);
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(evaluatedIndices, i => Assert.False(context.HasLocalEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedProperty(i)));
     }
 
-    [Theory]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
-    [InlineData(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
-    [InlineData(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
-    [InlineData(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
-    [InlineData(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    [InlineData(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
-    public static void EvaluatedPropertiesWithChangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
+    [TestMethod]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, true)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, true)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, true)]
+    [DataRow(true, false, new int[] { 65536 }, new int[] { 65536 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130, 65535 }, true)]
+    [DataRow(false, false, new int[] { 1, 2, 3 }, new int[0], new int[] { 0, 1, 2, 3, 4 }, false)]
+    [DataRow(true, false, new int[] { 1, 2, 3 }, new int[] { 1, 2, 3 }, new int[] { 0, 4 }, false)]
+    [DataRow(true, false, new int[] { 66, 129 }, new int[] { 66, 129 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    [DataRow(true, false, new int[] { 255 }, new int[] { 255 }, new int[] { 0, 1, 2, 3, 4, 63, 64, 65, 67, 68, 126, 127, 128, 130 }, false)]
+    public void EvaluatedPropertiesWithChangedChildContext(bool usingEvaluatedProperties, bool usingEvaluatedItems, int[] evaluateIndices, int[] evaluatedIndices, int[] notEvaluatedIndices, bool useLargeDocument)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useLargeDocument ? CreateLargeObjectDocument() : CreateSmallObjectDocument();
@@ -330,16 +331,16 @@ public static class JsonSchemaContextTests
         context.CommitChildContext(true, ref childContext);
         context.ApplyEvaluated(ref childContext);
 
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(evaluatedIndices, i => Assert.True(context.HasLocalEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalOrAppliedEvaluatedProperty(i)));
-        Assert.All(notEvaluatedIndices, i => Assert.False(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(evaluatedIndices, i => Assert.IsTrue(context.HasLocalEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalOrAppliedEvaluatedProperty(i)));
+        AssertEx.All(notEvaluatedIndices, i => Assert.IsFalse(context.HasLocalEvaluatedProperty(i)));
     }
 
     #region Phase 1: Core Lifecycle and Boundary Tests
 
-    [Fact]
-    public static void BeginContext_WithResultsCollector_SetsHasCollectorTrue()
+    [TestMethod]
+    public void BeginContext_WithResultsCollector_SetsHasCollectorTrue()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -355,12 +356,12 @@ public static class JsonSchemaContextTests
             resultsCollector: mockCollector);
 
         // Assert
-        Assert.True(context.HasCollector);
-        Assert.True(context.IsMatch); // Should start as match
+        Assert.IsTrue(context.HasCollector);
+        Assert.IsTrue(context.IsMatch); // Should start as match
     }
 
-    [Fact]
-    public static void BeginContext_WithoutResultsCollector_SetsHasCollectorFalse()
+    [TestMethod]
+    public void BeginContext_WithoutResultsCollector_SetsHasCollectorFalse()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -374,12 +375,12 @@ public static class JsonSchemaContextTests
             usingEvaluatedProperties: false);
 
         // Assert
-        Assert.False(context.HasCollector);
-        Assert.True(context.IsMatch); // Should start as match
+        Assert.IsFalse(context.HasCollector);
+        Assert.IsTrue(context.IsMatch); // Should start as match
     }
 
-    [Fact]
-    public static void BeginContext_WithArrayDocument_UsingEvaluatedItems_InitializesCorrectly()
+    [TestMethod]
+    public void BeginContext_WithArrayDocument_UsingEvaluatedItems_InitializesCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -393,13 +394,13 @@ public static class JsonSchemaContextTests
             usingEvaluatedProperties: false);
 
         // Assert - Should not have any evaluated items initially
-        Assert.False(context.HasLocalEvaluatedItem(0));
-        Assert.False(context.HasLocalOrAppliedEvaluatedItem(0));
-        Assert.True(context.IsMatch);
+        Assert.IsFalse(context.HasLocalEvaluatedItem(0));
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(0));
+        Assert.IsTrue(context.IsMatch);
     }
 
-    [Fact]
-    public static void BeginContext_WithObjectDocument_UsingEvaluatedProperties_InitializesCorrectly()
+    [TestMethod]
+    public void BeginContext_WithObjectDocument_UsingEvaluatedProperties_InitializesCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -413,13 +414,13 @@ public static class JsonSchemaContextTests
             usingEvaluatedProperties: true);
 
         // Assert - Should not have any evaluated properties initially
-        Assert.False(context.HasLocalEvaluatedProperty(0));
-        Assert.False(context.HasLocalOrAppliedEvaluatedProperty(0));
-        Assert.True(context.IsMatch);
+        Assert.IsFalse(context.HasLocalEvaluatedProperty(0));
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedProperty(0));
+        Assert.IsTrue(context.IsMatch);
     }
 
-    [Fact]
-    public static void BeginContext_WithPrimitiveDocument_InitializesCorrectly()
+    [TestMethod]
+    public void BeginContext_WithPrimitiveDocument_InitializesCorrectly()
     {
         // Arrange
         using var document = ParsedJsonDocument<JsonElement>.Parse("42");
@@ -433,12 +434,12 @@ public static class JsonSchemaContextTests
             usingEvaluatedProperties: true);
 
         // Assert - Primitive documents don't support evaluated items/properties
-        Assert.True(context.IsMatch);
-        Assert.False(context.HasCollector);
+        Assert.IsTrue(context.IsMatch);
+        Assert.IsFalse(context.HasCollector);
     }
 
-    [Fact]
-    public static void Dispose_MultipleCalls_DoesNotThrow()
+    [TestMethod]
+    public void Dispose_MultipleCalls_DoesNotThrow()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -454,8 +455,8 @@ public static class JsonSchemaContextTests
         context.Dispose(); // Second call should be safe
     }
 
-    [Fact]
-    public static void HasLocalEvaluatedItem_WhenEvaluatedItemsDisabled_ReturnsFalse()
+    [TestMethod]
+    public void HasLocalEvaluatedItem_WhenEvaluatedItemsDisabled_ReturnsFalse()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -470,12 +471,12 @@ public static class JsonSchemaContextTests
         context.AddLocalEvaluatedItem(1); // This should be ignored
 
         // Assert
-        Assert.False(context.HasLocalEvaluatedItem(1));
-        Assert.False(context.HasLocalOrAppliedEvaluatedItem(1));
+        Assert.IsFalse(context.HasLocalEvaluatedItem(1));
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(1));
     }
 
-    [Fact]
-    public static void HasLocalEvaluatedProperty_WhenEvaluatedPropertiesDisabled_ReturnsFalse()
+    [TestMethod]
+    public void HasLocalEvaluatedProperty_WhenEvaluatedPropertiesDisabled_ReturnsFalse()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -490,16 +491,16 @@ public static class JsonSchemaContextTests
         context.AddLocalEvaluatedProperty(1); // This should be ignored
 
         // Assert
-        Assert.False(context.HasLocalEvaluatedProperty(1));
-        Assert.False(context.HasLocalOrAppliedEvaluatedProperty(1));
+        Assert.IsFalse(context.HasLocalEvaluatedProperty(1));
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedProperty(1));
     }
 
     #endregion
 
     #region Phase 2: Child Context Management and Evaluation Tests
 
-    [Fact]
-    public static void PushChildContext_CreatesNewContext()
+    [TestMethod]
+    public void PushChildContext_CreatesNewContext()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -518,12 +519,12 @@ public static class JsonSchemaContextTests
             true); // useEvaluatedProperties
 
         // Assert
-        Assert.True(childContext.IsMatch); // Child should start as match
-        Assert.False(childContext.HasCollector); // Should inherit from parent (false in this case)
+        Assert.IsTrue(childContext.IsMatch); // Child should start as match
+        Assert.IsFalse(childContext.HasCollector); // Should inherit from parent (false in this case)
     }
 
-    [Fact]
-    public static void PushChildContext_WithResultsCollector_PropagatesCollector()
+    [TestMethod]
+    public void PushChildContext_WithResultsCollector_PropagatesCollector()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -544,12 +545,12 @@ public static class JsonSchemaContextTests
             true); // useEvaluatedProperties
 
         // Assert
-        Assert.True(context.HasCollector);
-        Assert.True(childContext.HasCollector); // Should inherit collector
+        Assert.IsTrue(context.HasCollector);
+        Assert.IsTrue(childContext.HasCollector); // Should inherit collector
     }
 
-    [Fact]
-    public static void CommitChildContext_WithMatchingChild_PreservesParentMatch()
+    [TestMethod]
+    public void CommitChildContext_WithMatchingChild_PreservesParentMatch()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -570,11 +571,11 @@ public static class JsonSchemaContextTests
         context.CommitChildContext(true, ref childContext); // Child matches
 
         // Assert
-        Assert.True(context.IsMatch); // Parent should remain match
+        Assert.IsTrue(context.IsMatch); // Parent should remain match
     }
 
-    [Fact]
-    public static void CommitChildContext_WithNonMatchingChild_SetsParentToNonMatch()
+    [TestMethod]
+    public void CommitChildContext_WithNonMatchingChild_SetsParentToNonMatch()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -595,11 +596,11 @@ public static class JsonSchemaContextTests
         context.CommitChildContext(false, ref childContext); // Child doesn't match
 
         // Assert
-        Assert.False(context.IsMatch); // Parent should become non-match
+        Assert.IsFalse(context.IsMatch); // Parent should become non-match
     }
 
-    [Fact]
-    public static void ApplyEvaluated_TransfersEvaluatedItemsFromChild()
+    [TestMethod]
+    public void ApplyEvaluated_TransfersEvaluatedItemsFromChild()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -625,14 +626,14 @@ public static class JsonSchemaContextTests
         context.ApplyEvaluated(ref childContext);
 
         // Assert
-        Assert.False(context.HasLocalEvaluatedItem(1)); // Not local to parent
-        Assert.False(context.HasLocalEvaluatedItem(3)); // Not local to parent
-        Assert.True(context.HasLocalOrAppliedEvaluatedItem(1)); // Applied from child
-        Assert.True(context.HasLocalOrAppliedEvaluatedItem(3)); // Applied from child
+        Assert.IsFalse(context.HasLocalEvaluatedItem(1)); // Not local to parent
+        Assert.IsFalse(context.HasLocalEvaluatedItem(3)); // Not local to parent
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(1)); // Applied from child
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(3)); // Applied from child
     }
 
-    [Fact]
-    public static void ApplyEvaluated_TransfersEvaluatedPropertiesFromChild()
+    [TestMethod]
+    public void ApplyEvaluated_TransfersEvaluatedPropertiesFromChild()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -658,14 +659,14 @@ public static class JsonSchemaContextTests
         context.ApplyEvaluated(ref childContext);
 
         // Assert
-        Assert.False(context.HasLocalEvaluatedProperty(2)); // Not local to parent
-        Assert.False(context.HasLocalEvaluatedProperty(5)); // Not local to parent
-        Assert.True(context.HasLocalOrAppliedEvaluatedProperty(2)); // Applied from child
-        Assert.True(context.HasLocalOrAppliedEvaluatedProperty(5)); // Applied from child
+        Assert.IsFalse(context.HasLocalEvaluatedProperty(2)); // Not local to parent
+        Assert.IsFalse(context.HasLocalEvaluatedProperty(5)); // Not local to parent
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(2)); // Applied from child
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(5)); // Applied from child
     }
 
-    [Fact]
-    public static void ChildContext_DoesNotAffectParentUntilCommit()
+    [TestMethod]
+    public void ChildContext_DoesNotAffectParentUntilCommit()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -687,19 +688,19 @@ public static class JsonSchemaContextTests
         childContext.AddLocalEvaluatedItem(2);
 
         // Assert - Parent should not be affected
-        Assert.False(context.HasLocalEvaluatedItem(1));
-        Assert.False(context.HasLocalEvaluatedItem(2));
-        Assert.False(context.HasLocalOrAppliedEvaluatedItem(1));
-        Assert.False(context.HasLocalOrAppliedEvaluatedItem(2));
-        Assert.True(context.IsMatch); // Should still be match
+        Assert.IsFalse(context.HasLocalEvaluatedItem(1));
+        Assert.IsFalse(context.HasLocalEvaluatedItem(2));
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(1));
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(2));
+        Assert.IsTrue(context.IsMatch); // Should still be match
     }
 
     #endregion
 
     #region Phase 3: Evaluation Recording Tests
 
-    [Fact]
-    public static void EvaluatedBooleanSchema_WithMatch_PreservesMatchStatus()
+    [TestMethod]
+    public void EvaluatedBooleanSchema_WithMatch_PreservesMatchStatus()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -714,11 +715,11 @@ public static class JsonSchemaContextTests
         context.EvaluatedBooleanSchema(true);
 
         // Assert
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedBooleanSchema_WithNoMatch_SetsMatchToFalse()
+    [TestMethod]
+    public void EvaluatedBooleanSchema_WithNoMatch_SetsMatchToFalse()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -733,11 +734,11 @@ public static class JsonSchemaContextTests
         context.EvaluatedBooleanSchema(false);
 
         // Assert
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedKeyword_WithMatch_PreservesMatchStatus()
+    [TestMethod]
+    public void EvaluatedKeyword_WithMatch_PreservesMatchStatus()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -753,11 +754,11 @@ public static class JsonSchemaContextTests
         context.EvaluatedKeyword(true, null, keyword);
 
         // Assert
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedKeyword_WithNoMatch_SetsMatchToFalse()
+    [TestMethod]
+    public void EvaluatedKeyword_WithNoMatch_SetsMatchToFalse()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -773,15 +774,15 @@ public static class JsonSchemaContextTests
         context.EvaluatedKeyword(false, null, keyword);
 
         // Assert
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
     }
 
     #endregion
 
     #region Phase 4: Integration and Performance Tests
 
-    [Fact]
-    public static void LargeDocumentWithManyEvaluatedItems_HandlesCorrectly()
+    [TestMethod]
+    public void LargeDocumentWithManyEvaluatedItems_HandlesCorrectly()
     {
         // Arrange - Use large document to test buffer allocation
         using ParsedJsonDocument<JsonElement> document = CreateLargeArrayDocument();
@@ -801,17 +802,17 @@ public static class JsonSchemaContextTests
         // Assert - Verify they're all tracked correctly
         for (int i = 0; i < 1000; i++)
         {
-            Assert.True(context.HasLocalEvaluatedItem(i), $"Item {i} should be evaluated");
-            Assert.True(context.HasLocalOrAppliedEvaluatedItem(i), $"Item {i} should be evaluated (local or applied)");
+            Assert.IsTrue(context.HasLocalEvaluatedItem(i), $"Item {i} should be evaluated");
+            Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(i), $"Item {i} should be evaluated (local or applied)");
         }
 
         // Verify items beyond the added range are not evaluated
-        Assert.False(context.HasLocalEvaluatedItem(1000));
-        Assert.False(context.HasLocalOrAppliedEvaluatedItem(1000));
+        Assert.IsFalse(context.HasLocalEvaluatedItem(1000));
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(1000));
     }
 
-    [Fact]
-    public static void LargeDocumentWithManyEvaluatedProperties_HandlesCorrectly()
+    [TestMethod]
+    public void LargeDocumentWithManyEvaluatedProperties_HandlesCorrectly()
     {
         // Arrange - Use large document to test buffer allocation
         using ParsedJsonDocument<JsonElement> document = CreateLargeObjectDocument();
@@ -831,17 +832,17 @@ public static class JsonSchemaContextTests
         // Assert - Verify they're all tracked correctly
         for (int i = 0; i < 1000; i++)
         {
-            Assert.True(context.HasLocalEvaluatedProperty(i), $"Property {i} should be evaluated");
-            Assert.True(context.HasLocalOrAppliedEvaluatedProperty(i), $"Property {i} should be evaluated (local or applied)");
+            Assert.IsTrue(context.HasLocalEvaluatedProperty(i), $"Property {i} should be evaluated");
+            Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(i), $"Property {i} should be evaluated (local or applied)");
         }
 
         // Verify properties beyond the added range are not evaluated
-        Assert.False(context.HasLocalEvaluatedProperty(1000));
-        Assert.False(context.HasLocalOrAppliedEvaluatedProperty(1000));
+        Assert.IsFalse(context.HasLocalEvaluatedProperty(1000));
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedProperty(1000));
     }
 
-    [Fact]
-    public static void MultipleNestedChildContexts_HandleCorrectly()
+    [TestMethod]
+    public void MultipleNestedChildContexts_HandleCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -872,13 +873,13 @@ public static class JsonSchemaContextTests
         context.ApplyEvaluated(ref child1);
 
         // Assert - Parent should have applied evaluation from all levels
-        Assert.True(context.HasLocalEvaluatedItem(0)); // Local to parent
-        Assert.True(context.HasLocalOrAppliedEvaluatedItem(1)); // Applied from child1
-        Assert.True(context.HasLocalOrAppliedEvaluatedItem(2)); // Applied from child2 via child1
+        Assert.IsTrue(context.HasLocalEvaluatedItem(0)); // Local to parent
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(1)); // Applied from child1
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(2)); // Applied from child2 via child1
     }
 
-    [Fact]
-    public static void ChildContextWithFailedValidation_DoesNotPropagateEvaluated()
+    [TestMethod]
+    public void ChildContextWithFailedValidation_DoesNotPropagateEvaluated()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -901,13 +902,13 @@ public static class JsonSchemaContextTests
         // Note: We don't call ApplyEvaluated for failed validation
 
         // Assert - Parent should not have applied evaluation from failed child
-        Assert.False(context.HasLocalOrAppliedEvaluatedItem(1));
-        Assert.False(context.HasLocalOrAppliedEvaluatedItem(2));
-        Assert.False(context.IsMatch); // Parent should also be non-match
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(1));
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(2));
+        Assert.IsFalse(context.IsMatch); // Parent should also be non-match
     }
 
-    [Fact]
-    public static void EvaluationWithResultsCollector_CallsCorrectMethods()
+    [TestMethod]
+    public void EvaluationWithResultsCollector_CallsCorrectMethods()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -930,12 +931,12 @@ public static class JsonSchemaContextTests
         context.EvaluatedKeywordForProperty(true, null, propertyName, keyword);
 
         // Assert - Verify collector received calls
-        Assert.True(context.HasCollector);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.HasCollector);
+        Assert.IsTrue(context.IsMatch);
     }
 
-    [Fact]
-    public static void ChildContextCreationWithDifferentPathProviders_WorksCorrectly()
+    [TestMethod]
+    public void ChildContextCreationWithDifferentPathProviders_WorksCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -958,22 +959,22 @@ public static class JsonSchemaContextTests
             parentDocument, parentIndex, true, false);
 
         // Assert - All child contexts should be valid
-        Assert.True(child1.IsMatch);
-        Assert.True(child2.IsMatch);
-        Assert.True(child1.HasCollector);
-        Assert.True(child2.HasCollector);
+        Assert.IsTrue(child1.IsMatch);
+        Assert.IsTrue(child2.IsMatch);
+        Assert.IsTrue(child1.HasCollector);
+        Assert.IsTrue(child2.HasCollector);
 
         // Cleanup
         context.CommitChildContext(true, ref child1);
         context.CommitChildContext(true, ref child2);
     }
 
-    [Theory]
-    [InlineData(true, true)]   // Both enabled
-    [InlineData(true, false)]  // Only items
-    [InlineData(false, true)]  // Only properties
-    [InlineData(false, false)] // Neither enabled
-    public static void FeatureFlags_ConfigureEvaluationCorrectly(bool useItems, bool useProperties)
+    [TestMethod]
+    [DataRow(true, true)]   // Both enabled
+    [DataRow(true, false)]  // Only items
+    [DataRow(false, true)]  // Only properties
+    [DataRow(false, false)] // Neither enabled
+    public void FeatureFlags_ConfigureEvaluationCorrectly(bool useItems, bool useProperties)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = useProperties ?
@@ -990,28 +991,28 @@ public static class JsonSchemaContextTests
         if (useItems)
         {
             context.AddLocalEvaluatedItem(0);
-            Assert.True(context.HasLocalEvaluatedItem(0));
-            Assert.True(context.HasLocalOrAppliedEvaluatedItem(0));
+            Assert.IsTrue(context.HasLocalEvaluatedItem(0));
+            Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(0));
         }
         else
         {
             context.AddLocalEvaluatedItem(0); // Should be ignored
-            Assert.False(context.HasLocalEvaluatedItem(0));
-            Assert.False(context.HasLocalOrAppliedEvaluatedItem(0));
+            Assert.IsFalse(context.HasLocalEvaluatedItem(0));
+            Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(0));
         }
 
         // Test property evaluation behavior
         if (useProperties)
         {
             context.AddLocalEvaluatedProperty(0);
-            Assert.True(context.HasLocalEvaluatedProperty(0));
-            Assert.True(context.HasLocalOrAppliedEvaluatedProperty(0));
+            Assert.IsTrue(context.HasLocalEvaluatedProperty(0));
+            Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(0));
         }
         else
         {
             context.AddLocalEvaluatedProperty(0); // Should be ignored
-            Assert.False(context.HasLocalEvaluatedProperty(0));
-            Assert.False(context.HasLocalOrAppliedEvaluatedProperty(0));
+            Assert.IsFalse(context.HasLocalEvaluatedProperty(0));
+            Assert.IsFalse(context.HasLocalOrAppliedEvaluatedProperty(0));
         }
     }
 
@@ -1019,8 +1020,8 @@ public static class JsonSchemaContextTests
 
     #region Phase 5: Edge Cases and Error Handling Tests
 
-    [Fact]
-    public static void AddLocalEvaluatedItem_OnBoundaryIndices_WorksCorrectly()
+    [TestMethod]
+    public void AddLocalEvaluatedItem_OnBoundaryIndices_WorksCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument(); // Has 255 items (0-254)
@@ -1033,10 +1034,10 @@ public static class JsonSchemaContextTests
 
         // Act & Assert - Test boundary cases
         context.AddLocalEvaluatedItem(0); // First valid index
-        Assert.True(context.HasLocalEvaluatedItem(0));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(0));
 
         context.AddLocalEvaluatedItem(254); // Last valid index for small array
-        Assert.True(context.HasLocalEvaluatedItem(254));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(254));
 
         // Test bit boundary cases (multiples of 32)
         context.AddLocalEvaluatedItem(31);
@@ -1044,14 +1045,14 @@ public static class JsonSchemaContextTests
         context.AddLocalEvaluatedItem(63);
         context.AddLocalEvaluatedItem(64);
 
-        Assert.True(context.HasLocalEvaluatedItem(31));
-        Assert.True(context.HasLocalEvaluatedItem(32));
-        Assert.True(context.HasLocalEvaluatedItem(63));
-        Assert.True(context.HasLocalEvaluatedItem(64));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(31));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(32));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(63));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(64));
     }
 
-    [Fact]
-    public static void AddLocalEvaluatedProperty_OnBoundaryIndices_WorksCorrectly()
+    [TestMethod]
+    public void AddLocalEvaluatedProperty_OnBoundaryIndices_WorksCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument(); // Has 255 properties (0-254)
@@ -1064,10 +1065,10 @@ public static class JsonSchemaContextTests
 
         // Act & Assert - Test boundary cases
         context.AddLocalEvaluatedProperty(0); // First valid index
-        Assert.True(context.HasLocalEvaluatedProperty(0));
+        Assert.IsTrue(context.HasLocalEvaluatedProperty(0));
 
         context.AddLocalEvaluatedProperty(254); // Last valid index for small object
-        Assert.True(context.HasLocalEvaluatedProperty(254));
+        Assert.IsTrue(context.HasLocalEvaluatedProperty(254));
 
         // Test bit boundary cases (multiples of 32)
         context.AddLocalEvaluatedProperty(31);
@@ -1075,14 +1076,14 @@ public static class JsonSchemaContextTests
         context.AddLocalEvaluatedProperty(63);
         context.AddLocalEvaluatedProperty(64);
 
-        Assert.True(context.HasLocalEvaluatedProperty(31));
-        Assert.True(context.HasLocalEvaluatedProperty(32));
-        Assert.True(context.HasLocalEvaluatedProperty(63));
-        Assert.True(context.HasLocalEvaluatedProperty(64));
+        Assert.IsTrue(context.HasLocalEvaluatedProperty(31));
+        Assert.IsTrue(context.HasLocalEvaluatedProperty(32));
+        Assert.IsTrue(context.HasLocalEvaluatedProperty(63));
+        Assert.IsTrue(context.HasLocalEvaluatedProperty(64));
     }
 
-    [Fact]
-    public static void ContextDisposal_WithSharedBuffer_HandlesCorrectly()
+    [TestMethod]
+    public void ContextDisposal_WithSharedBuffer_HandlesCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateLargeArrayDocument();
@@ -1101,11 +1102,11 @@ public static class JsonSchemaContextTests
 
         // Child should still be valid since it shares buffer ownership
         childContext.AddLocalEvaluatedItem(0);
-        Assert.True(childContext.HasLocalEvaluatedItem(0));
+        Assert.IsTrue(childContext.HasLocalEvaluatedItem(0));
     }
 
-    [Fact]
-    public static void EvaluationMethods_WithNullMessageProvider_WorkCorrectly()
+    [TestMethod]
+    public void EvaluationMethods_WithNullMessageProvider_WorkCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1118,22 +1119,22 @@ public static class JsonSchemaContextTests
 
         // Act & Assert - All should work with null message providers
         context.EvaluatedBooleanSchema(true);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         ReadOnlySpan<byte> keyword = "maxItems"u8;
         context.EvaluatedKeyword(true, null, keyword);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         ReadOnlySpan<byte> propertyName = "length"u8;
         context.EvaluatedKeywordForProperty(true, null, propertyName, keyword);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         context.IgnoredKeyword(null, keyword);
-        Assert.True(context.IsMatch); // Should not affect match status
+        Assert.IsTrue(context.IsMatch); // Should not affect match status
     }
 
-    [Fact]
-    public static void PopChildContext_WithoutCommit_CleansUpCorrectly()
+    [TestMethod]
+    public void PopChildContext_WithoutCommit_CleansUpCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1157,12 +1158,12 @@ public static class JsonSchemaContextTests
         context.PopChildContext(ref childContext);
 
         // Assert - Parent should not be affected by child's state
-        Assert.True(context.IsMatch); // Should remain match
-        Assert.False(context.HasLocalOrAppliedEvaluatedItem(1)); // No evaluation applied
+        Assert.IsTrue(context.IsMatch); // Should remain match
+        Assert.IsFalse(context.HasLocalOrAppliedEvaluatedItem(1)); // No evaluation applied
     }
 
-    [Fact]
-    public static void ZeroSizeDocument_HandlesCorrectly()
+    [TestMethod]
+    public void ZeroSizeDocument_HandlesCorrectly()
     {
         // Arrange - Empty array/object
         using var arrayDoc = ParsedJsonDocument<JsonElement>.Parse("[]");
@@ -1185,15 +1186,15 @@ public static class JsonSchemaContextTests
             usingEvaluatedProperties: true);
 
         // Act & Assert - Should handle empty documents gracefully
-        Assert.True(arrayContext.IsMatch);
-        Assert.True(objectContext.IsMatch);
+        Assert.IsTrue(arrayContext.IsMatch);
+        Assert.IsTrue(objectContext.IsMatch);
 
         // Note: Accessing indices on empty documents has undefined behavior,
         // so we don't test out-of-bounds access here
     }
 
-    [Fact]
-    public static void ConcurrentEvaluationOperations_DoNotInterfere()
+    [TestMethod]
+    public void ConcurrentEvaluationOperations_DoNotInterfere()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1213,13 +1214,13 @@ public static class JsonSchemaContextTests
         context.EvaluatedKeyword(true, null, keyword);
 
         // Assert - All operations should be correctly tracked
-        Assert.True(context.HasLocalEvaluatedItem(1));
-        Assert.True(context.HasLocalEvaluatedProperty(2));
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.HasLocalEvaluatedItem(1));
+        Assert.IsTrue(context.HasLocalEvaluatedProperty(2));
+        Assert.IsTrue(context.IsMatch);
     }
 
-    [Fact]
-    public static void LargeIndexEvaluation_WithLargeDocument_WorksCorrectly()
+    [TestMethod]
+    public void LargeIndexEvaluation_WithLargeDocument_WorksCorrectly()
     {
         // Arrange - Use large document to test high indices
         using ParsedJsonDocument<JsonElement> document = CreateLargeArrayDocument();
@@ -1241,16 +1242,16 @@ public static class JsonSchemaContextTests
         // Assert
         foreach (int index in largeIndices)
         {
-            Assert.True(context.HasLocalEvaluatedItem(index), $"Index {index} should be evaluated");
-            Assert.True(context.HasLocalOrAppliedEvaluatedItem(index), $"Index {index} should be evaluated (local or applied)");
+            Assert.IsTrue(context.HasLocalEvaluatedItem(index), $"Index {index} should be evaluated");
+            Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(index), $"Index {index} should be evaluated (local or applied)");
         }
 
         // Note: Accessing indices beyond document range has undefined behavior,
         // so we don't test out-of-bounds access here
     }
 
-    [Fact]
-    public static void ChildContextInheritance_PreservesCorrectState()
+    [TestMethod]
+    public void ChildContextInheritance_PreservesCorrectState()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1266,27 +1267,27 @@ public static class JsonSchemaContextTests
 
         // Make parent non-match
         context.EvaluatedBooleanSchema(false);
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
 
         // Act - Create child context
         JsonSchemaContext childContext = context.PushChildContext(
             parentDocument, parentIndex, true, true);
 
         // Assert - Child should start as match regardless of parent state
-        Assert.True(childContext.IsMatch);
-        Assert.True(childContext.HasCollector); // Should inherit collector
+        Assert.IsTrue(childContext.IsMatch);
+        Assert.IsTrue(childContext.HasCollector); // Should inherit collector
 
         // Committing successful child to failed parent should keep parent failed
         context.CommitChildContext(true, ref childContext);
-        Assert.False(context.IsMatch); // Parent remains failed
+        Assert.IsFalse(context.IsMatch); // Parent remains failed
     }
 
     #endregion
 
     #region Phase 6: Advanced Feature Tests
 
-    [Fact]
-    public static void MixedEvaluationOperations_MaintainCorrectState()
+    [TestMethod]
+    public void MixedEvaluationOperations_MaintainCorrectState()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1301,27 +1302,27 @@ public static class JsonSchemaContextTests
 
         // Act - Mix successful and failed evaluations
         context.EvaluatedBooleanSchema(true); // Should remain match
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         ReadOnlySpan<byte> keyword1 = "maxItems"u8;
         context.EvaluatedKeyword(true, null, keyword1); // Should remain match
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         ReadOnlySpan<byte> keyword2 = "minItems"u8;
         context.EvaluatedKeyword(false, null, keyword2); // Should become non-match
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
 
         // Further evaluations should not restore match status
         context.EvaluatedBooleanSchema(true);
-        Assert.False(context.IsMatch); // Once false, stays false
+        Assert.IsFalse(context.IsMatch); // Once false, stays false
 
         ReadOnlySpan<byte> keyword3 = "uniqueItems"u8;
         context.EvaluatedKeyword(true, null, keyword3);
-        Assert.False(context.IsMatch); // Still false
+        Assert.IsFalse(context.IsMatch); // Still false
     }
 
-    [Fact]
-    public static void IgnoredKeyword_DoesNotAffectMatchStatus()
+    [TestMethod]
+    public void IgnoredKeyword_DoesNotAffectMatchStatus()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1334,14 +1335,14 @@ public static class JsonSchemaContextTests
 
         // First make context non-match
         context.EvaluatedBooleanSchema(false);
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
 
         // Act - Ignore keywords with different providers
         ReadOnlySpan<byte> keyword = "unknownKeyword"u8;
         context.IgnoredKeyword(null, keyword);
 
         // Assert - Match status should not change
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
 
         // Test with initially matching context
         using var context2 = JsonSchemaContext.BeginContext(
@@ -1351,11 +1352,11 @@ public static class JsonSchemaContextTests
             usingEvaluatedProperties: false);
 
         context2.IgnoredKeyword(null, keyword);
-        Assert.True(context2.IsMatch); // Should remain true
+        Assert.IsTrue(context2.IsMatch); // Should remain true
     }
 
-    [Fact]
-    public static void EvaluatedKeywordForProperty_WorksWithDifferentPropertyNames()
+    [TestMethod]
+    public void EvaluatedKeywordForProperty_WorksWithDifferentPropertyNames()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1373,21 +1374,21 @@ public static class JsonSchemaContextTests
         ReadOnlySpan<byte> emptyProp = ""u8;
 
         context.EvaluatedKeywordForProperty(true, null, prop1, keyword);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         context.EvaluatedKeywordForProperty(true, null, prop2, keyword);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         context.EvaluatedKeywordForProperty(true, null, emptyProp, keyword);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         // Test failure case
         context.EvaluatedKeywordForProperty(false, null, prop1, keyword);
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
     }
 
-    [Fact]
-    public static void ComplexChildContextWorkflow_HandlesAllOperations()
+    [TestMethod]
+    public void ComplexChildContextWorkflow_HandlesAllOperations()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1424,17 +1425,17 @@ public static class JsonSchemaContextTests
         context.ApplyEvaluated(ref childContext);
 
         // Assert - Verify all evaluations are correctly applied
-        Assert.True(context.HasLocalEvaluatedItem(0)); // Parent's local
-        Assert.True(context.HasLocalEvaluatedProperty(0)); // Parent's local
-        Assert.True(context.HasLocalOrAppliedEvaluatedItem(1)); // From child
-        Assert.True(context.HasLocalOrAppliedEvaluatedProperty(1)); // From child
-        Assert.False(context.HasLocalEvaluatedItem(1)); // Not local to parent
-        Assert.False(context.HasLocalEvaluatedProperty(1)); // Not local to parent
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.HasLocalEvaluatedItem(0)); // Parent's local
+        Assert.IsTrue(context.HasLocalEvaluatedProperty(0)); // Parent's local
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(1)); // From child
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(1)); // From child
+        Assert.IsFalse(context.HasLocalEvaluatedItem(1)); // Not local to parent
+        Assert.IsFalse(context.HasLocalEvaluatedProperty(1)); // Not local to parent
+        Assert.IsTrue(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedKeywordPath_WorksCorrectly()
+    [TestMethod]
+    public void EvaluatedKeywordPath_WorksCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1452,20 +1453,20 @@ public static class JsonSchemaContextTests
         // The actual path functionality would require more complex setup with real path providers
 
         // Act & Assert - Test that successful evaluation preserves match
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         // Test that failed evaluation sets match to false
         // We can't easily test the actual path providers without more complex setup,
         // but we can verify the core functionality
     }
 
-    [Theory]
-    [InlineData(true, true, true)]   // All successful
-    [InlineData(true, true, false)]  // Last fails
-    [InlineData(true, false, true)]  // Middle fails
-    [InlineData(false, true, true)]  // First fails
-    [InlineData(false, false, false)] // All fail
-    public static void SequentialEvaluations_MaintainCorrectMatchState(bool eval1, bool eval2, bool eval3)
+    [TestMethod]
+    [DataRow(true, true, true)]   // All successful
+    [DataRow(true, true, false)]  // Last fails
+    [DataRow(true, false, true)]  // Middle fails
+    [DataRow(false, true, true)]  // First fails
+    [DataRow(false, false, false)] // All fail
+    public void SequentialEvaluations_MaintainCorrectMatchState(bool eval1, bool eval2, bool eval3)
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1479,21 +1480,21 @@ public static class JsonSchemaContextTests
         // Act - Perform sequential evaluations
         context.EvaluatedBooleanSchema(eval1);
         bool expectedAfterFirst = eval1;
-        Assert.Equal(expectedAfterFirst, context.IsMatch);
+        Assert.AreEqual(expectedAfterFirst, context.IsMatch);
 
         ReadOnlySpan<byte> keyword1 = "maxItems"u8;
         context.EvaluatedKeyword(eval2, null, keyword1);
         bool expectedAfterSecond = expectedAfterFirst && eval2;
-        Assert.Equal(expectedAfterSecond, context.IsMatch);
+        Assert.AreEqual(expectedAfterSecond, context.IsMatch);
 
         ReadOnlySpan<byte> keyword2 = "minItems"u8;
         context.EvaluatedKeyword(eval3, null, keyword2);
         bool expectedFinal = expectedAfterSecond && eval3;
-        Assert.Equal(expectedFinal, context.IsMatch);
+        Assert.AreEqual(expectedFinal, context.IsMatch);
     }
 
-    [Fact]
-    public static void BufferAllocation_WithVeryLargeDocuments_HandlesGracefully()
+    [TestMethod]
+    public void BufferAllocation_WithVeryLargeDocuments_HandlesGracefully()
     {
         // Arrange - Test with large document that requires buffer allocation
         using ParsedJsonDocument<JsonElement> document = CreateLargeArrayDocument();
@@ -1506,7 +1507,7 @@ public static class JsonSchemaContextTests
             usingEvaluatedItems: true,
             usingEvaluatedProperties: false);
 
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         // Should handle adding evaluations across buffer boundaries
         context.AddLocalEvaluatedItem(0);     // First int boundary
@@ -1515,19 +1516,19 @@ public static class JsonSchemaContextTests
         context.AddLocalEvaluatedItem(1023);  // End of first buffer segment
         context.AddLocalEvaluatedItem(1024);  // Start of second buffer segment
 
-        Assert.True(context.HasLocalEvaluatedItem(0));
-        Assert.True(context.HasLocalEvaluatedItem(31));
-        Assert.True(context.HasLocalEvaluatedItem(32));
-        Assert.True(context.HasLocalEvaluatedItem(1023));
-        Assert.True(context.HasLocalEvaluatedItem(1024));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(0));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(31));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(32));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(1023));
+        Assert.IsTrue(context.HasLocalEvaluatedItem(1024));
     }
 
     #endregion
 
     #region Phase 7: Missing Method Overloads Coverage
 
-    [Fact]
-    public static void PushChildContextUnescaped_CreatesValidContext()
+    [TestMethod]
+    public void PushChildContextUnescaped_CreatesValidContext()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1550,15 +1551,15 @@ public static class JsonSchemaContextTests
             unescapedPropertyName);
 
         // Assert
-        Assert.True(childContext.IsMatch);
-        Assert.True(childContext.HasCollector);
+        Assert.IsTrue(childContext.IsMatch);
+        Assert.IsTrue(childContext.HasCollector);
 
         // Cleanup
         context.CommitChildContext(true, ref childContext);
     }
 
-    [Fact]
-    public static void PushChildContextUnescaped_WithPathProviders_WorksCorrectly()
+    [TestMethod]
+    public void PushChildContextUnescaped_WithPathProviders_WorksCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -1583,15 +1584,15 @@ public static class JsonSchemaContextTests
             schemaEvaluationPath: null);
 
         // Assert
-        Assert.True(childContext.IsMatch);
-        Assert.True(childContext.HasCollector);
+        Assert.IsTrue(childContext.IsMatch);
+        Assert.IsTrue(childContext.HasCollector);
 
         // Cleanup
         context.CommitChildContext(true, ref childContext);
     }
 
-    [Fact]
-    public static void PushChildContextGeneric_WithProviderContext_WorksCorrectly()
+    [TestMethod]
+    public void PushChildContextGeneric_WithProviderContext_WorksCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1614,15 +1615,15 @@ public static class JsonSchemaContextTests
             providerContext);
 
         // Assert
-        Assert.True(childContext.IsMatch);
-        Assert.True(childContext.HasCollector);
+        Assert.IsTrue(childContext.IsMatch);
+        Assert.IsTrue(childContext.HasCollector);
 
         // Cleanup
         context.CommitChildContext(true, ref childContext);
     }
 
-    [Fact]
-    public static void PushChildContextGeneric_WithAllPathProviders_WorksCorrectly()
+    [TestMethod]
+    public void PushChildContextGeneric_WithAllPathProviders_WorksCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -1648,15 +1649,15 @@ public static class JsonSchemaContextTests
             documentEvaluationPath: null);
 
         // Assert
-        Assert.True(childContext.IsMatch);
-        Assert.True(childContext.HasCollector);
+        Assert.IsTrue(childContext.IsMatch);
+        Assert.IsTrue(childContext.HasCollector);
 
         // Cleanup
         context.CommitChildContext(true, ref childContext);
     }
 
-    [Fact]
-    public static void CommitChildContextGeneric_WithProviderContext_HandlesCorrectly()
+    [TestMethod]
+    public void CommitChildContextGeneric_WithProviderContext_HandlesCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1686,13 +1687,13 @@ public static class JsonSchemaContextTests
         context.ApplyEvaluated(ref childContext);
 
         // Assert
-        Assert.True(context.IsMatch);
-        Assert.True(context.HasLocalOrAppliedEvaluatedItem(1));
-        Assert.True(context.HasLocalOrAppliedEvaluatedItem(2));
+        Assert.IsTrue(context.IsMatch);
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(1));
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedItem(2));
     }
 
-    [Fact]
-    public static void CommitChildContextGeneric_WithFailure_UpdatesParentCorrectly()
+    [TestMethod]
+    public void CommitChildContextGeneric_WithFailure_UpdatesParentCorrectly()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1720,11 +1721,11 @@ public static class JsonSchemaContextTests
         context.CommitChildContext(false, ref childContext, providerContext, messageProvider: null);
 
         // Assert
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedKeywordGeneric_WithProviderContext_UpdatesMatchStatus()
+    [TestMethod]
+    public void EvaluatedKeywordGeneric_WithProviderContext_UpdatesMatchStatus()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1741,16 +1742,16 @@ public static class JsonSchemaContextTests
         string providerContext = "keyword-test";
         ReadOnlySpan<byte> keyword = "maxItems"u8;
         context.EvaluatedKeyword(true, providerContext, null, keyword);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         // Act & Assert - Failure case
         ReadOnlySpan<byte> keyword2 = "minItems"u8;
         context.EvaluatedKeyword(false, providerContext, null, keyword2);
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedKeywordForPropertyGeneric_WithProviderContext_UpdatesMatchStatus()
+    [TestMethod]
+    public void EvaluatedKeywordForPropertyGeneric_WithProviderContext_UpdatesMatchStatus()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -1768,16 +1769,16 @@ public static class JsonSchemaContextTests
         ReadOnlySpan<byte> keyword = "pattern"u8;
         ReadOnlySpan<byte> propertyName = "name"u8;
         context.EvaluatedKeywordForProperty(true, providerContext, null, propertyName, keyword);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
 
         // Act & Assert - Failure case
         ReadOnlySpan<byte> propertyName2 = "email"u8;
         context.EvaluatedKeywordForProperty(false, providerContext, null, propertyName2, keyword);
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedKeywordPath_WithSuccessfulEvaluation_UpdatesMatchStatus()
+    [TestMethod]
+    public void EvaluatedKeywordPath_WithSuccessfulEvaluation_UpdatesMatchStatus()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1810,11 +1811,11 @@ public static class JsonSchemaContextTests
 
         // Act & Assert - Successful evaluation
         context.EvaluatedKeywordPath(true, messageProvider, keywordPath);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedKeywordPath_WithFailedEvaluation_SetsMatchToFalse()
+    [TestMethod]
+    public void EvaluatedKeywordPath_WithFailedEvaluation_SetsMatchToFalse()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1847,11 +1848,11 @@ public static class JsonSchemaContextTests
 
         // Act & Assert - Failed evaluation
         context.EvaluatedKeywordPath(false, messageProvider, keywordPath);
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedKeywordPathGeneric_WithProviderContext_UpdatesMatchStatus()
+    [TestMethod]
+    public void EvaluatedKeywordPathGeneric_WithProviderContext_UpdatesMatchStatus()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -1886,11 +1887,11 @@ public static class JsonSchemaContextTests
         };
 
         context.EvaluatedKeywordPath(true, providerContext, messageProvider, keywordPath);
-        Assert.True(context.IsMatch);
+        Assert.IsTrue(context.IsMatch);
     }
 
-    [Fact]
-    public static void EvaluatedKeywordPathGeneric_WithFailure_SetsMatchToFalse()
+    [TestMethod]
+    public void EvaluatedKeywordPathGeneric_WithFailure_SetsMatchToFalse()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -1925,11 +1926,11 @@ public static class JsonSchemaContextTests
         };
 
         context.EvaluatedKeywordPath(false, providerContext, messageProvider, keywordPath);
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
     }
 
-    [Fact]
-    public static void IgnoredKeywordGeneric_WithProviderContext_DoesNotAffectMatchStatus()
+    [TestMethod]
+    public void IgnoredKeywordGeneric_WithProviderContext_DoesNotAffectMatchStatus()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallArrayDocument();
@@ -1946,20 +1947,20 @@ public static class JsonSchemaContextTests
         string providerContext = "ignore-test";
         ReadOnlySpan<byte> keyword = "unknownKeyword"u8;
         context.IgnoredKeyword(providerContext, null, keyword);
-        Assert.True(context.IsMatch); // Should remain true
+        Assert.IsTrue(context.IsMatch); // Should remain true
 
         // Make context non-match first
         context.EvaluatedBooleanSchema(false);
-        Assert.False(context.IsMatch);
+        Assert.IsFalse(context.IsMatch);
 
         // Act - Test ignored keyword doesn't change non-match status
         ReadOnlySpan<byte> keyword2 = "anotherUnknown"u8;
         context.IgnoredKeyword(providerContext, null, keyword2);
-        Assert.False(context.IsMatch); // Should remain false
+        Assert.IsFalse(context.IsMatch); // Should remain false
     }
 
-    [Fact]
-    public static void GenericOverloads_IntegrationTest_WorkTogether()
+    [TestMethod]
+    public void GenericOverloads_IntegrationTest_WorkTogether()
     {
         // Arrange
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -2002,20 +2003,20 @@ public static class JsonSchemaContextTests
         context.ApplyEvaluated(ref childContext);
 
         // Assert
-        Assert.True(context.IsMatch);
-        Assert.True(childContext.IsMatch);
-        Assert.True(context.HasLocalOrAppliedEvaluatedProperty(1));
-        Assert.True(context.HasLocalOrAppliedEvaluatedProperty(3));
-        Assert.False(context.HasLocalEvaluatedProperty(1)); // Not local to parent
-        Assert.False(context.HasLocalEvaluatedProperty(3)); // Not local to parent
+        Assert.IsTrue(context.IsMatch);
+        Assert.IsTrue(childContext.IsMatch);
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(1));
+        Assert.IsTrue(context.HasLocalOrAppliedEvaluatedProperty(3));
+        Assert.IsFalse(context.HasLocalEvaluatedProperty(1)); // Not local to parent
+        Assert.IsFalse(context.HasLocalEvaluatedProperty(3)); // Not local to parent
     }
 
     #endregion
 
     #region Final Coverage Validation
 
-    [Fact]
-    public static void AllMethodOverloads_ComprehensiveCoverageTest()
+    [TestMethod]
+    public void AllMethodOverloads_ComprehensiveCoverageTest()
     {
         // This test validates that all major overloads are exercisable
         using ParsedJsonDocument<JsonElement> document = CreateSmallObjectDocument();
@@ -2045,9 +2046,9 @@ public static class JsonSchemaContextTests
         context.AddLocalEvaluatedItem(1);
         context.AddLocalEvaluatedProperty(1);
 
-        Assert.True(context.IsMatch);
-        Assert.True(context.HasLocalEvaluatedItem(1));
-        Assert.True(context.HasLocalEvaluatedProperty(1));
+        Assert.IsTrue(context.IsMatch);
+        Assert.IsTrue(context.HasLocalEvaluatedItem(1));
+        Assert.IsTrue(context.HasLocalEvaluatedProperty(1));
     }
 
     #endregion

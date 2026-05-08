@@ -6,15 +6,16 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.OneOfNumericDiscriminatorValidation;
 
 /// <summary>
 /// Tests for oneOf discriminator with integer const values (CmakePresets version pattern).
 /// </summary>
-[Trait("Optimization", "OneOfDiscriminator")]
-public class OneOfNumericDiscriminatorBasic : IClassFixture<OneOfNumericDiscriminatorBasic.Fixture>
+[TestCategory("OneOfDiscriminator")]
+[TestClass]
+public class OneOfNumericDiscriminatorBasic
 {
     private const string Schema = """
         {
@@ -39,41 +40,47 @@ public class OneOfNumericDiscriminatorBasic : IClassFixture<OneOfNumericDiscrimi
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public OneOfNumericDiscriminatorBasic(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"version": 1, "name": "hello"}""")]
-    [InlineData("""{"version": 2, "name": "world"}""")]
-    [InlineData("""{"version": 2, "name": "world", "extra": "data"}""")]
-    [InlineData("""{"version": 3}""")]
-    [InlineData("""{"version": 3, "data": {}}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"version": 1, "name": "hello"}""")]
+    [DataRow("""{"version": 2, "name": "world"}""")]
+    [DataRow("""{"version": 2, "name": "world", "extra": "data"}""")]
+    [DataRow("""{"version": 3}""")]
+    [DataRow("""{"version": 3, "data": {}}""")]
     public void ValidInstanceIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"version": 4, "name": "invalid"}""")]
-    [InlineData("""{"version": 1}""")]
-    [InlineData("""{"name": "no version"}""")]
-    [InlineData("""{"version": "1", "name": "string version"}""")]
+    [TestMethod]
+    [DataRow("""{"version": 4, "name": "invalid"}""")]
+    [DataRow("""{"version": 1}""")]
+    [DataRow("""{"name": "no version"}""")]
+    [DataRow("""{"version": "1", "name": "string version"}""")]
     public void InvalidInstanceIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -95,8 +102,9 @@ public class OneOfNumericDiscriminatorBasic : IClassFixture<OneOfNumericDiscrimi
 /// <summary>
 /// Tests for anyOf discriminator with integer const values.
 /// </summary>
-[Trait("Optimization", "AnyOfDiscriminator")]
-public class AnyOfNumericDiscriminatorBasic : IClassFixture<AnyOfNumericDiscriminatorBasic.Fixture>
+[TestCategory("AnyOfDiscriminator")]
+[TestClass]
+public class AnyOfNumericDiscriminatorBasic
 {
     private const string Schema = """
         {
@@ -121,39 +129,45 @@ public class AnyOfNumericDiscriminatorBasic : IClassFixture<AnyOfNumericDiscrimi
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public AnyOfNumericDiscriminatorBasic(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"level": 1, "name": "hello"}""")]
-    [InlineData("""{"level": 2}""")]
-    [InlineData("""{"level": 2, "items": []}""")]
-    [InlineData("""{"level": 3}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"level": 1, "name": "hello"}""")]
+    [DataRow("""{"level": 2}""")]
+    [DataRow("""{"level": 2, "items": []}""")]
+    [DataRow("""{"level": 3}""")]
     public void ValidInstanceIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"level": 4}""")]
-    [InlineData("""{"level": 1}""")]
-    [InlineData("""{"name": "no level"}""")]
+    [TestMethod]
+    [DataRow("""{"level": 4}""")]
+    [DataRow("""{"level": 1}""")]
+    [DataRow("""{"name": "no level"}""")]
     public void InvalidInstanceIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -175,8 +189,9 @@ public class AnyOfNumericDiscriminatorBasic : IClassFixture<AnyOfNumericDiscrimi
 /// <summary>
 /// Tests for oneOf discriminator with negative and large number const values.
 /// </summary>
-[Trait("Optimization", "OneOfDiscriminator")]
-public class OneOfNumericDiscriminatorWithNonTrivialNumbers : IClassFixture<OneOfNumericDiscriminatorWithNonTrivialNumbers.Fixture>
+[TestCategory("OneOfDiscriminator")]
+[TestClass]
+public class OneOfNumericDiscriminatorWithNonTrivialNumbers
 {
     private const string Schema = """
         {
@@ -201,39 +216,45 @@ public class OneOfNumericDiscriminatorWithNonTrivialNumbers : IClassFixture<OneO
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public OneOfNumericDiscriminatorWithNonTrivialNumbers(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"id": -1}""")]
-    [InlineData("""{"id": -1, "desc": "sentinel"}""")]
-    [InlineData("""{"id": 0}""")]
-    [InlineData("""{"id": 100, "desc": "big"}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"id": -1}""")]
+    [DataRow("""{"id": -1, "desc": "sentinel"}""")]
+    [DataRow("""{"id": 0}""")]
+    [DataRow("""{"id": 100, "desc": "big"}""")]
     public void ValidInstanceIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"id": 1}""")]
-    [InlineData("""{"id": -2}""")]
-    [InlineData("""{"id": "string"}""")]
+    [TestMethod]
+    [DataRow("""{"id": 1}""")]
+    [DataRow("""{"id": -2}""")]
+    [DataRow("""{"id": "string"}""")]
     public void InvalidInstanceIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -255,8 +276,9 @@ public class OneOfNumericDiscriminatorWithNonTrivialNumbers : IClassFixture<OneO
 /// <summary>
 /// Tests for anyOf partial discriminator combining numeric const with a non-object branch.
 /// </summary>
-[Trait("Optimization", "AnyOfDiscriminator")]
-public class AnyOfPartialNumericDiscriminator : IClassFixture<AnyOfPartialNumericDiscriminator.Fixture>
+[TestCategory("AnyOfDiscriminator")]
+[TestClass]
+public class AnyOfPartialNumericDiscriminator
 {
     private const string Schema = """
         {
@@ -279,39 +301,45 @@ public class AnyOfPartialNumericDiscriminator : IClassFixture<AnyOfPartialNumeri
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public AnyOfPartialNumericDiscriminator(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("null")]
-    [InlineData("""{"version": 1, "name": "hello"}""")]
-    [InlineData("""{"version": 2}""")]
-    [InlineData("""{"version": 2, "data": {}}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("null")]
+    [DataRow("""{"version": 1, "name": "hello"}""")]
+    [DataRow("""{"version": 2}""")]
+    [DataRow("""{"version": 2, "data": {}}""")]
     public void ValidInstanceIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"version": 3}""")]
-    [InlineData("""{"version": 1}""")]
-    [InlineData("42")]
+    [TestMethod]
+    [DataRow("""{"version": 3}""")]
+    [DataRow("""{"version": 1}""")]
+    [DataRow("42")]
     public void InvalidInstanceIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

@@ -5,13 +5,14 @@
 using System.Reflection;
 using System.Text;
 using Corvus.Text.Json.JsonLogic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.Tests;
 
 /// <summary>
 /// Tests for <see cref="JsonLogicEvaluator"/> using the official tests.json suite.
 /// </summary>
+[TestClass]
 public class JsonLogicEvaluatorTests
 {
     /// <summary>
@@ -21,9 +22,9 @@ public class JsonLogicEvaluatorTests
     /// <param name="rule">The JsonLogic rule as a JSON string.</param>
     /// <param name="data">The data as a JSON string.</param>
     /// <param name="expected">The expected result as a JSON string.</param>
-    [Theory]
-    [Trait("category", "testsuite")]
-    [MemberData(nameof(GetTestCases))]
+    [TestMethod]
+    [TestCategory("testsuite")]
+    [DynamicData(nameof(GetTestCases))]
     public void OfficialTestSuite(int index, string rule, string data, string expected)
     {
         _ = index;
@@ -40,7 +41,7 @@ public class JsonLogicEvaluatorTests
 
         string expectedText = NormalizeJson(expected);
         string actualText = NormalizeJson(GetRawText(result));
-        Assert.Equal(expectedText, actualText);
+        Assert.AreEqual(expectedText, actualText);
     }
 
     /// <summary>

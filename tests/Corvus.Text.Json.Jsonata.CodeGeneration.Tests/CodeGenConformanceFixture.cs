@@ -174,7 +174,6 @@ public sealed class CodeGenConformanceFixture : IDisposable
             }
     }
 
-
     private static (IEnumerable<MetadataReference>, CSharpParseOptions) BuildCompilationContext()
     {
         DependencyContext? ctx = DependencyContext.Load(Assembly.GetExecutingAssembly()) ?? DependencyContext.Default;

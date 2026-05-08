@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.StringMaxLengthEnumValidation;
 
@@ -15,54 +15,61 @@ namespace Corvus.Text.Json.Tests.StringMaxLengthEnumValidation;
 /// Regression test for a bug where unescapedUtf8JsonString was declared in the type-check
 /// else clause scope but referenced by the enum handler after that scope closed.
 /// </summary>
-[Trait("category", "CodeGen")]
-public class StringMaxLengthEnumValues : IClassFixture<StringMaxLengthEnumValues.Fixture>
+[TestCategory("CodeGen")]
+[TestClass]
+public class StringMaxLengthEnumValues
 {
-    private readonly Fixture fixture;
-
-    public StringMaxLengthEnumValues(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"foo\"")]
-    [InlineData("\"bar\"")]
-    [InlineData("\"baz\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"foo\"")]
+    [DataRow("\"bar\"")]
+    [DataRow("\"baz\"")]
     public void ValidEnumValueIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"qux\"")]
-    [InlineData("\"quux\"")]
+    [TestMethod]
+    [DataRow("\"qux\"")]
+    [DataRow("\"quux\"")]
     public void InvalidEnumValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TooLongStringIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("\"toolongvalue\"");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("\"toolongvalue\"");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void NonStringIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("42");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("42");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

@@ -2,31 +2,39 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft201909.Optional.FloatOverflow;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled : IClassFixture<SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled
 {
-    private readonly Fixture _fixture;
-    public SuiteAllIntegersAreMultiplesOf05IfOverflowIsHandled(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestValidIfOptionalOverflowHandlingIsImplemented()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1e308");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

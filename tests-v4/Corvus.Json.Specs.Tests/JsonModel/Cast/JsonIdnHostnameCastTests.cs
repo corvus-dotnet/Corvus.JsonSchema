@@ -10,76 +10,77 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 using NodaTime;
 using NodaTime.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonModel.Cast;
 
 /// <summary>
 /// Tests for JsonIdnHostnameCast.
 /// </summary>
+[TestClass]
 public class JsonIdnHostnameCastTests
 {
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_idnIdnHostname()
     {
         var sut = JsonIdnHostname.ParseValue("\"www.example.com\"".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("\"www.example.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("\"www.example.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_idnIdnHostname()
     {
         var sut = JsonIdnHostname.Parse("\"www.example.com\"").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("\"www.example.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("\"www.example.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonString_for_json_element_backed_value_as_a_idnIdnHostname()
     {
         var sut = JsonIdnHostname.ParseValue("\"www.example.com\"".AsSpan());
         var result = (JsonString)sut;
-        Assert.Equal(JsonString.ParseValue("\"www.example.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonString.ParseValue("\"www.example.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonString_for_dotnet_backed_value_as_a_idnIdnHostname()
     {
         var sut = JsonIdnHostname.Parse("\"www.example.com\"").AsDotnetBackedValue();
         var result = (JsonString)sut;
-        Assert.Equal(JsonString.ParseValue("\"www.example.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonString.ParseValue("\"www.example.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_JsonString_for_json_element_backed_value_as_a_idnIdnHostname()
     {
         JsonString sut = JsonString.ParseValue("\"www.example.com\"".AsSpan());
         var result = (JsonIdnHostname)sut;
-        Assert.Equal(JsonIdnHostname.ParseValue("\"www.example.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonIdnHostname.ParseValue("\"www.example.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_string_for_json_element_backed_value_as_a_idnIdnHostname()
     {
         var sut = JsonIdnHostname.ParseValue("\"www.example.com\"".AsSpan());
         var result = (string)sut;
-        Assert.Equal("www.example.com", result);
+        Assert.AreEqual("www.example.com", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_string_for_dotnet_backed_value_as_a_idnIdnHostname()
     {
         var sut = JsonIdnHostname.Parse("\"www.example.com\"").AsDotnetBackedValue();
         var result = (string)sut;
-        Assert.Equal("www.example.com", result);
+        Assert.AreEqual("www.example.com", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_string_for_json_element_backed_value_as_a_idnIdnHostname()
     {
         string sut = "www.example.com";
         var result = (JsonIdnHostname)sut;
-        Assert.Equal(JsonIdnHostname.ParseValue("\"www.example.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonIdnHostname.ParseValue("\"www.example.com\"".AsSpan()), result);
     }
 }

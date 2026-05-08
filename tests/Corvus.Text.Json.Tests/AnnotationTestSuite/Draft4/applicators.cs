@@ -3,90 +3,98 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnnotationTestSuite.Draft4.Applicators;
 
-[Trait("AnnotationTestSuite", "Draft4")]
-public class SuitePropertiesPatternPropertiesAndAdditionalProperties : IClassFixture<SuitePropertiesPatternPropertiesAndAdditionalProperties.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuitePropertiesPatternPropertiesAndAdditionalProperties
 {
-    private readonly Fixture _fixture;
-    public SuitePropertiesPatternPropertiesAndAdditionalProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{}",
             "/foo",
             "title",
             "{}");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleAppleAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{}",
             "/apple",
             "title",
             "{}");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion2()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{}",
             "/bar",
             "title",
             "{}");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{\r\n            \"foo\": {},\r\n            \"apple\": {},\r\n            \"baz\": {}\r\n          }",
             "/foo",
             "title",
             "{\r\n                \"#/properties/foo\": \"Foo\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1TitleAppleAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{\r\n            \"foo\": {},\r\n            \"apple\": {},\r\n            \"baz\": {}\r\n          }",
             "/apple",
             "title",
             "{\r\n                \"#/patternProperties/%5Ea\": \"Bar\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1TitleBazAssertion2()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{\r\n            \"foo\": {},\r\n            \"apple\": {},\r\n            \"baz\": {}\r\n          }",
             "/baz",
             "title",
             "{\r\n                \"#/additionalProperties\": \"Baz\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

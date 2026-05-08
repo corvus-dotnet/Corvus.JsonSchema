@@ -5,13 +5,14 @@
 using System.Collections.Immutable;
 using Corvus.Json;
 using Corvus.Json.UriTemplates;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.UriTemplates;
 
+[TestClass]
 public class UriExtensionsTests
 {
-    [Fact]
+    [TestMethod]
     public void ChangeExistingParameterWithinMultiple()
     {
         Uri targetUri = new("http://example/customer?view=false&foo=bar", UriKind.RelativeOrAbsolute);
@@ -26,10 +27,10 @@ public class UriExtensionsTests
             "http://example/customer?foo=bar&view=true",
         ];
 
-        Assert.Contains(resolved, expected);
+        CollectionAssert.Contains(expected, resolved);
     }
 
-    [Fact]
+    [TestMethod]
     public void ChangeExistingParameter()
     {
         Uri targetUri = new("http://example/customer?view=false&foo=bar", UriKind.RelativeOrAbsolute);
@@ -43,10 +44,10 @@ public class UriExtensionsTests
             "http://example/customer?foo=bar&view=true",
         ];
 
-        Assert.Contains(resolved, expected);
+        CollectionAssert.Contains(expected, resolved);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClearExistingParameter()
     {
         Uri targetUri = new("http://example/customer?view=false&foo=bar", UriKind.RelativeOrAbsolute);
@@ -59,10 +60,10 @@ public class UriExtensionsTests
             "http://example/customer?foo=bar",
         ];
 
-        Assert.Contains(resolved, expected);
+        CollectionAssert.Contains(expected, resolved);
     }
 
-    [Fact]
+    [TestMethod]
     public void AddMultipleParameters()
     {
         Uri targetUri = new("http://example/customer", UriKind.RelativeOrAbsolute);
@@ -78,10 +79,10 @@ public class UriExtensionsTests
             "http://example/customer?view=false&id=99",
         ];
 
-        Assert.Contains(resolved, expected);
+        CollectionAssert.Contains(expected, resolved);
     }
 
-    [Fact]
+    [TestMethod]
     public void AddMultipleParametersAsParams()
     {
         Uri targetUri = new("http://example/customer", UriKind.RelativeOrAbsolute);
@@ -99,10 +100,10 @@ public class UriExtensionsTests
             "http://example/customer?view=false&id=99",
         ];
 
-        Assert.Contains(resolved, expected);
+        CollectionAssert.Contains(expected, resolved);
     }
 
-    [Fact]
+    [TestMethod]
     public void AddParametersToQueryStringWithUriIgnoringPathParameter()
     {
         Uri targetUri = new("http://example/customer/{id}?view=true", UriKind.RelativeOrAbsolute);
@@ -118,6 +119,6 @@ public class UriExtensionsTests
             "http://example/customer/99?context=detail&view=true",
         ];
 
-        Assert.Contains(resolved, expected);
+        CollectionAssert.Contains(expected, resolved);
     }
 }

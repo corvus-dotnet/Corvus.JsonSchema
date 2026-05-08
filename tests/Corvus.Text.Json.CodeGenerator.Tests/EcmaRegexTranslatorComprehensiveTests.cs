@@ -13,26 +13,27 @@ using System.Text.RegularExpressions;
 /// with /u Unicode mode. Every matching assertion is validated against a real
 /// ECMAScript engine (Node.js with /u flag) before inclusion.
 /// </summary>
+[TestClass]
 public class EcmaRegexTranslatorComprehensiveTests
 {
     // ================================================================
     // 1. ALL WHITESPACE CHARACTERS — individual Zs category members
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\s", "\u1680", true)]   // Ogham Space Mark
-    [InlineData(@"\s", "\u2000", true)]   // En Quad
-    [InlineData(@"\s", "\u2001", true)]   // Em Quad
-    [InlineData(@"\s", "\u2002", true)]   // En Space
-    [InlineData(@"\s", "\u2004", true)]   // Three-Per-Em Space
-    [InlineData(@"\s", "\u2005", true)]   // Four-Per-Em Space
-    [InlineData(@"\s", "\u2006", true)]   // Six-Per-Em Space
-    [InlineData(@"\s", "\u2007", true)]   // Figure Space
-    [InlineData(@"\s", "\u2008", true)]   // Punctuation Space
-    [InlineData(@"\s", "\u2009", true)]   // Thin Space
-    [InlineData(@"\s", "\u200A", true)]   // Hair Space
-    [InlineData(@"\s", "\u202F", true)]   // Narrow No-Break Space
-    [InlineData(@"\s", "\u205F", true)]   // Medium Mathematical Space
+    [TestMethod]
+    [DataRow(@"\s", "\u1680", true)]   // Ogham Space Mark
+    [DataRow(@"\s", "\u2000", true)]   // En Quad
+    [DataRow(@"\s", "\u2001", true)]   // Em Quad
+    [DataRow(@"\s", "\u2002", true)]   // En Space
+    [DataRow(@"\s", "\u2004", true)]   // Three-Per-Em Space
+    [DataRow(@"\s", "\u2005", true)]   // Four-Per-Em Space
+    [DataRow(@"\s", "\u2006", true)]   // Six-Per-Em Space
+    [DataRow(@"\s", "\u2007", true)]   // Figure Space
+    [DataRow(@"\s", "\u2008", true)]   // Punctuation Space
+    [DataRow(@"\s", "\u2009", true)]   // Thin Space
+    [DataRow(@"\s", "\u200A", true)]   // Hair Space
+    [DataRow(@"\s", "\u202F", true)]   // Narrow No-Break Space
+    [DataRow(@"\s", "\u205F", true)]   // Medium Mathematical Space
     public void AllZsCategoryMembersMatchWhitespace(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -42,20 +43,20 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 2. WORD BOUNDARY (\b) — edge cases
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\ba", "abc", true)]      // \b at string start before word char
-    [InlineData(@"c\b", "abc", true)]      // \b at string end after word char
-    [InlineData(@"\b", "a", true)]         // \b matches at start of single word char
-    [InlineData(@"\b", " ", false)]        // no word chars → no boundary
-    [InlineData(@"^\b", "abc", true)]      // \b at start of string
-    [InlineData(@"\b$", "abc", true)]      // \b at end of string
+    [TestMethod]
+    [DataRow(@"\ba", "abc", true)]      // \b at string start before word char
+    [DataRow(@"c\b", "abc", true)]      // \b at string end after word char
+    [DataRow(@"\b", "a", true)]         // \b matches at start of single word char
+    [DataRow(@"\b", " ", false)]        // no word chars → no boundary
+    [DataRow(@"^\b", "abc", true)]      // \b at start of string
+    [DataRow(@"\b$", "abc", true)]      // \b at end of string
     public void WordBoundaryEdgeCases(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"\bé", "café", true)]     // \b between 'f'(word) and 'é'(non-word) — JS verified
+    [TestMethod]
+    [DataRow(@"\bé", "café", true)]     // \b between 'f'(word) and 'é'(non-word) — JS verified
     public void WordBoundaryWithUnicodeChars(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -65,9 +66,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 3. NON-WORD BOUNDARY (\B) — edge cases
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\Ba", "ba", true)]       // \B between two word chars
-    [InlineData(@"\B.", " a", true)]       // \B between two non-word chars (space + before a, at pos 0)
+    [TestMethod]
+    [DataRow(@"\Ba", "ba", true)]       // \B between two word chars
+    [DataRow(@"\B.", " a", true)]       // \B between two non-word chars (space + before a, at pos 0)
     public void NonWordBoundaryEdgeCases(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -77,29 +78,29 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 4. CHARACTER CLASSES WITH \S NEGATED SHORTHAND
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\S]", "a", true)]
-    [InlineData(@"[\S]", "0", true)]
-    [InlineData(@"[\S]", " ", false)]
-    [InlineData(@"[\S]", "\t", false)]
+    [TestMethod]
+    [DataRow(@"[\S]", "a", true)]
+    [DataRow(@"[\S]", "0", true)]
+    [DataRow(@"[\S]", " ", false)]
+    [DataRow(@"[\S]", "\t", false)]
     public void CharClassWithNegatedS(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[^\S]", " ", true)]
-    [InlineData(@"[^\S]", "\t", true)]
-    [InlineData(@"[^\S]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[^\S]", " ", true)]
+    [DataRow(@"[^\S]", "\t", true)]
+    [DataRow(@"[^\S]", "a", false)]
     public void NegatedCharClassWithNegatedS(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[a\S]", "a", true)]
-    [InlineData(@"[a\S]", "z", true)]
-    [InlineData(@"[a\S]", " ", false)]
+    [TestMethod]
+    [DataRow(@"[a\S]", "a", true)]
+    [DataRow(@"[a\S]", "z", true)]
+    [DataRow(@"[a\S]", " ", false)]
     public void CharClassWithPositiveAndNegatedS(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -109,59 +110,59 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 5. MIXED NEGATED SHORTHAND COMBINATIONS IN CLASSES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\D\S]", "a", true)]   // \D ∪ \S = everything
-    [InlineData(@"[\D\S]", "0", true)]
-    [InlineData(@"[\D\S]", " ", true)]
-    [InlineData(@"[\D\S]", "\t", true)]
+    [TestMethod]
+    [DataRow(@"[\D\S]", "a", true)]   // \D ∪ \S = everything
+    [DataRow(@"[\D\S]", "0", true)]
+    [DataRow(@"[\D\S]", " ", true)]
+    [DataRow(@"[\D\S]", "\t", true)]
     public void CharClassDSMatchesEverything(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[^\D\S]", "a", false)]   // NOT(\D ∪ \S) = nothing
-    [InlineData(@"[^\D\S]", "0", false)]
-    [InlineData(@"[^\D\S]", " ", false)]
+    [TestMethod]
+    [DataRow(@"[^\D\S]", "a", false)]   // NOT(\D ∪ \S) = nothing
+    [DataRow(@"[^\D\S]", "0", false)]
+    [DataRow(@"[^\D\S]", " ", false)]
     public void NegatedCharClassDSMatchesNothing(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[\W\S]", "a", true)]   // \W ∪ \S = everything
-    [InlineData(@"[\W\S]", " ", true)]
-    [InlineData(@"[\W\S]", "0", true)]
+    [TestMethod]
+    [DataRow(@"[\W\S]", "a", true)]   // \W ∪ \S = everything
+    [DataRow(@"[\W\S]", " ", true)]
+    [DataRow(@"[\W\S]", "0", true)]
     public void CharClassWSMatchesEverything(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[^\W\S]", "a", false)]   // NOT(\W ∪ \S) = nothing
-    [InlineData(@"[^\W\S]", " ", false)]
-    [InlineData(@"[^\W\S]", "0", false)]
+    [TestMethod]
+    [DataRow(@"[^\W\S]", "a", false)]   // NOT(\W ∪ \S) = nothing
+    [DataRow(@"[^\W\S]", " ", false)]
+    [DataRow(@"[^\W\S]", "0", false)]
     public void NegatedCharClassWSMatchesNothing(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[\D\W]", "a", true)]     // letters are non-digits
-    [InlineData(@"[\D\W]", " ", true)]      // space is non-digit and non-word
-    [InlineData(@"[\D\W]", "_", true)]      // underscore is non-digit (in \D)
-    [InlineData(@"[\D\W]", "0", false)]     // digit AND word char → not in \D, not in \W
+    [TestMethod]
+    [DataRow(@"[\D\W]", "a", true)]     // letters are non-digits
+    [DataRow(@"[\D\W]", " ", true)]      // space is non-digit and non-word
+    [DataRow(@"[\D\W]", "_", true)]      // underscore is non-digit (in \D)
+    [DataRow(@"[\D\W]", "0", false)]     // digit AND word char → not in \D, not in \W
     public void CharClassDWMatchesNonDigitsOrNonWord(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[^\D\W]", "0", true)]    // NOT(\D ∪ \W) = digits (because digits are in \w and not in \D)
-    [InlineData(@"[^\D\W]", "5", true)]
-    [InlineData(@"[^\D\W]", "a", false)]   // letter is in \D
-    [InlineData(@"[^\D\W]", " ", false)]
-    [InlineData(@"[^\D\W]", "_", false)]   // underscore is in \D
+    [TestMethod]
+    [DataRow(@"[^\D\W]", "0", true)]    // NOT(\D ∪ \W) = digits (because digits are in \w and not in \D)
+    [DataRow(@"[^\D\W]", "5", true)]
+    [DataRow(@"[^\D\W]", "a", false)]   // letter is in \D
+    [DataRow(@"[^\D\W]", " ", false)]
+    [DataRow(@"[^\D\W]", "_", false)]   // underscore is in \D
     public void NegatedCharClassDWMatchesOnlyDigits(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -171,29 +172,29 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 6. [\d\D], [\s\S], [\w\W] — match-any patterns
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\d\D]", "5", true)]
-    [InlineData(@"[\d\D]", "a", true)]
-    [InlineData(@"[\d\D]", " ", true)]
-    [InlineData(@"[\d\D]", "\n", true)]
+    [TestMethod]
+    [DataRow(@"[\d\D]", "5", true)]
+    [DataRow(@"[\d\D]", "a", true)]
+    [DataRow(@"[\d\D]", " ", true)]
+    [DataRow(@"[\d\D]", "\n", true)]
     public void DigitOrNotDigitMatchesAnything(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[\s\S]", "a", true)]
-    [InlineData(@"[\s\S]", " ", true)]
-    [InlineData(@"[\s\S]", "\n", true)]
+    [TestMethod]
+    [DataRow(@"[\s\S]", "a", true)]
+    [DataRow(@"[\s\S]", " ", true)]
+    [DataRow(@"[\s\S]", "\n", true)]
     public void WhitespaceOrNotWhitespaceMatchesAnything(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[\w\W]", "a", true)]
-    [InlineData(@"[\w\W]", " ", true)]
-    [InlineData(@"[\w\W]", "\n", true)]
+    [TestMethod]
+    [DataRow(@"[\w\W]", "a", true)]
+    [DataRow(@"[\w\W]", " ", true)]
+    [DataRow(@"[\w\W]", "\n", true)]
     public void WordOrNotWordMatchesAnything(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -203,29 +204,29 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 7. CHARACTER CLASS RANGES WITH ESCAPES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\u0041-\u005A]", "A", true)]
-    [InlineData(@"[\u0041-\u005A]", "Z", true)]
-    [InlineData(@"[\u0041-\u005A]", "M", true)]
-    [InlineData(@"[\u0041-\u005A]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[\u0041-\u005A]", "A", true)]
+    [DataRow(@"[\u0041-\u005A]", "Z", true)]
+    [DataRow(@"[\u0041-\u005A]", "M", true)]
+    [DataRow(@"[\u0041-\u005A]", "a", false)]
     public void CharClassRangeWithUnicodeEscapes(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[\u{41}-\u{5A}]", "A", true)]
-    [InlineData(@"[\u{41}-\u{5A}]", "Z", true)]
-    [InlineData(@"[\u{41}-\u{5A}]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[\u{41}-\u{5A}]", "A", true)]
+    [DataRow(@"[\u{41}-\u{5A}]", "Z", true)]
+    [DataRow(@"[\u{41}-\u{5A}]", "a", false)]
     public void CharClassRangeWithBraceUnicodeEscapes(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[\x41-\x5A]", "A", true)]
-    [InlineData(@"[\x41-\x5A]", "Z", true)]
-    [InlineData(@"[\x41-\x5A]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[\x41-\x5A]", "A", true)]
+    [DataRow(@"[\x41-\x5A]", "Z", true)]
+    [DataRow(@"[\x41-\x5A]", "a", false)]
     public void CharClassRangeWithHexEscapes(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -235,15 +236,15 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 8. HYPHEN POSITIONING IN CHARACTER CLASSES
     // ================================================================
 
-    [Theory]
-    [InlineData("[-abc]", "-", true)]
-    [InlineData("[-abc]", "a", true)]
-    [InlineData("[-abc]", "d", false)]
-    [InlineData("[abc-]", "-", true)]
-    [InlineData("[abc-]", "a", true)]
-    [InlineData("[abc-]", "d", false)]
-    [InlineData("[-]", "-", true)]
-    [InlineData("[-]", "a", false)]
+    [TestMethod]
+    [DataRow("[-abc]", "-", true)]
+    [DataRow("[-abc]", "a", true)]
+    [DataRow("[-abc]", "d", false)]
+    [DataRow("[abc-]", "-", true)]
+    [DataRow("[abc-]", "a", true)]
+    [DataRow("[abc-]", "d", false)]
+    [DataRow("[-]", "-", true)]
+    [DataRow("[-]", "a", false)]
     public void HyphenPositioning(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -253,15 +254,15 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 9. ESCAPED CHARACTERS INSIDE CHARACTER CLASSES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\]]", "]", true)]
-    [InlineData(@"[\]]", "a", false)]
-    [InlineData(@"[\[]", "[", true)]
-    [InlineData(@"[\[]", "a", false)]
-    [InlineData(@"[\\]", "\\", true)]
-    [InlineData(@"[\\]", "a", false)]
-    [InlineData(@"[\-]", "-", true)]
-    [InlineData(@"[\-]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[\]]", "]", true)]
+    [DataRow(@"[\]]", "a", false)]
+    [DataRow(@"[\[]", "[", true)]
+    [DataRow(@"[\[]", "a", false)]
+    [DataRow(@"[\\]", "\\", true)]
+    [DataRow(@"[\\]", "a", false)]
+    [DataRow(@"[\-]", "-", true)]
+    [DataRow(@"[\-]", "a", false)]
     public void EscapedCharsInCharClass(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -271,9 +272,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 10. BACKSPACE IN CHARACTER CLASS ([\b])
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\b]", "\u0008", true)]  // backspace character
-    [InlineData(@"[\b]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[\b]", "\u0008", true)]  // backspace character
+    [DataRow(@"[\b]", "a", false)]
     public void BackspaceInCharClass(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -283,36 +284,36 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 11. UNICODE PROPERTY ESCAPES IN CHARACTER CLASSES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\P{L}]", "0", true)]
-    [InlineData(@"[\P{L}]", " ", true)]
-    [InlineData(@"[\P{L}]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[\P{L}]", "0", true)]
+    [DataRow(@"[\P{L}]", " ", true)]
+    [DataRow(@"[\P{L}]", "a", false)]
     public void NegatedPropertyInCharClass(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[\p{L}\d]", "a", true)]
-    [InlineData(@"[\p{L}\d]", "5", true)]
-    [InlineData(@"[\p{L}\d]", " ", false)]
+    [TestMethod]
+    [DataRow(@"[\p{L}\d]", "a", true)]
+    [DataRow(@"[\p{L}\d]", "5", true)]
+    [DataRow(@"[\p{L}\d]", " ", false)]
     public void PropertyAndShorthandInCharClass(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[\p{Lu}a-z]", "A", true)]
-    [InlineData(@"[\p{Lu}a-z]", "a", true)]
-    [InlineData(@"[\p{Lu}a-z]", "5", false)]
+    [TestMethod]
+    [DataRow(@"[\p{Lu}a-z]", "A", true)]
+    [DataRow(@"[\p{Lu}a-z]", "a", true)]
+    [DataRow(@"[\p{Lu}a-z]", "5", false)]
     public void PropertyAndRangeInCharClass(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"[^\p{L}]", "0", true)]
-    [InlineData(@"[^\p{L}]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[^\p{L}]", "0", true)]
+    [DataRow(@"[^\p{L}]", "a", false)]
     public void NegatedClassWithProperty(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -322,12 +323,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 12. MULTIPLE RANGES IN CHARACTER CLASSES
     // ================================================================
 
-    [Theory]
-    [InlineData("[a-zA-Z0-9]", "a", true)]
-    [InlineData("[a-zA-Z0-9]", "Z", true)]
-    [InlineData("[a-zA-Z0-9]", "5", true)]
-    [InlineData("[a-zA-Z0-9]", "_", false)]
-    [InlineData("[a-zA-Z0-9]", " ", false)]
+    [TestMethod]
+    [DataRow("[a-zA-Z0-9]", "a", true)]
+    [DataRow("[a-zA-Z0-9]", "Z", true)]
+    [DataRow("[a-zA-Z0-9]", "5", true)]
+    [DataRow("[a-zA-Z0-9]", "_", false)]
+    [DataRow("[a-zA-Z0-9]", " ", false)]
     public void MultipleRangesInCharClass(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -337,11 +338,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 13. NESTED GROUPS
     // ================================================================
 
-    [Theory]
-    [InlineData("((a)(b))", "ab", true)]
-    [InlineData("((a)(b))", "ac", false)]
-    [InlineData("((?:a)b)", "ab", true)]
-    [InlineData("((?:a)b)", "cb", false)]
+    [TestMethod]
+    [DataRow("((a)(b))", "ab", true)]
+    [DataRow("((a)(b))", "ac", false)]
+    [DataRow("((?:a)b)", "ab", true)]
+    [DataRow("((?:a)b)", "cb", false)]
     public void NestedGroups(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -351,24 +352,24 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 14. ALTERNATION INSIDE GROUPS
     // ================================================================
 
-    [Theory]
-    [InlineData("(a|b|c)", "a", true)]
-    [InlineData("(a|b|c)", "b", true)]
-    [InlineData("(a|b|c)", "c", true)]
-    [InlineData("(a|b|c)", "d", false)]
-    [InlineData("(?:a|b|c)", "a", true)]
-    [InlineData("(a|bb|ccc)", "bb", true)]
-    [InlineData("(a|bb|ccc)", "dd", false)]
+    [TestMethod]
+    [DataRow("(a|b|c)", "a", true)]
+    [DataRow("(a|b|c)", "b", true)]
+    [DataRow("(a|b|c)", "c", true)]
+    [DataRow("(a|b|c)", "d", false)]
+    [DataRow("(?:a|b|c)", "a", true)]
+    [DataRow("(a|bb|ccc)", "bb", true)]
+    [DataRow("(a|bb|ccc)", "dd", false)]
     public void AlternationInsideGroups(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData("(a|(b|c))", "a", true)]
-    [InlineData("(a|(b|c))", "b", true)]
-    [InlineData("(a|(b|c))", "c", true)]
-    [InlineData("(a|(b|c))", "d", false)]
+    [TestMethod]
+    [DataRow("(a|(b|c))", "a", true)]
+    [DataRow("(a|(b|c))", "b", true)]
+    [DataRow("(a|(b|c))", "c", true)]
+    [DataRow("(a|(b|c))", "d", false)]
     public void NestedAlternation(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -378,15 +379,15 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 15. EMPTY ALTERNATION
     // ================================================================
 
-    [Theory]
-    [InlineData("a|", "a", true)]
-    [InlineData("a|", "", true)]       // empty alternative matches empty string
-    [InlineData("a|", "b", true)]      // empty alternative matches at start of 'b'
-    [InlineData("|b", "b", true)]
-    [InlineData("|b", "", true)]
-    [InlineData("a||b", "", true)]
-    [InlineData("a||b", "a", true)]
-    [InlineData("a||b", "b", true)]
+    [TestMethod]
+    [DataRow("a|", "a", true)]
+    [DataRow("a|", "", true)]       // empty alternative matches empty string
+    [DataRow("a|", "b", true)]      // empty alternative matches at start of 'b'
+    [DataRow("|b", "b", true)]
+    [DataRow("|b", "", true)]
+    [DataRow("a||b", "", true)]
+    [DataRow("a||b", "a", true)]
+    [DataRow("a||b", "b", true)]
     public void EmptyAlternation(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -396,11 +397,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 16. ALTERNATION SCOPE (precedence)
     // ================================================================
 
-    [Theory]
-    [InlineData("^a|b$", "a", true)]     // (^a) | (b$) — not ^(a|b)$
-    [InlineData("^a|b$", "b", true)]
-    [InlineData("^a|b$", "xb", true)]    // b$ matches
-    [InlineData("^a|b$", "ax", true)]    // ^a matches
+    [TestMethod]
+    [DataRow("^a|b$", "a", true)]     // (^a) | (b$) — not ^(a|b)$
+    [DataRow("^a|b$", "b", true)]
+    [DataRow("^a|b$", "xb", true)]    // b$ matches
+    [DataRow("^a|b$", "ax", true)]    // ^a matches
     public void AlternationScope(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -410,49 +411,49 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 17. QUANTIFIER EDGE CASES
     // ================================================================
 
-    [Theory]
-    [InlineData("^a{0}$", "", true)]
-    [InlineData("^a{0}$", "a", false)]
-    [InlineData("^a{0,0}$", "", true)]
-    [InlineData("^a{0,0}$", "a", false)]
-    [InlineData("^a{0,1}$", "", true)]
-    [InlineData("^a{0,1}$", "a", true)]
-    [InlineData("^a{0,1}$", "aa", false)]
-    [InlineData("a{0,}", "", true)]
-    [InlineData("^a{3,5}$", "aaaaaa", false)]
+    [TestMethod]
+    [DataRow("^a{0}$", "", true)]
+    [DataRow("^a{0}$", "a", false)]
+    [DataRow("^a{0,0}$", "", true)]
+    [DataRow("^a{0,0}$", "a", false)]
+    [DataRow("^a{0,1}$", "", true)]
+    [DataRow("^a{0,1}$", "a", true)]
+    [DataRow("^a{0,1}$", "aa", false)]
+    [DataRow("a{0,}", "", true)]
+    [DataRow("^a{3,5}$", "aaaaaa", false)]
     public void QuantifierEdgeCases(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData("(ab)+", "ababab", true)]
-    [InlineData("(ab)+", "cd", false)]
-    [InlineData("(?:ab){2}", "abab", true)]
-    [InlineData("(?:ab){2}", "ab", false)]
-    [InlineData("(a|b)+", "aabba", true)]
-    [InlineData("(a|b)+", "cccc", false)]
+    [TestMethod]
+    [DataRow("(ab)+", "ababab", true)]
+    [DataRow("(ab)+", "cd", false)]
+    [DataRow("(?:ab){2}", "abab", true)]
+    [DataRow("(?:ab){2}", "ab", false)]
+    [DataRow("(a|b)+", "aabba", true)]
+    [DataRow("(a|b)+", "cccc", false)]
     public void QuantifierOnGroups(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData("[a-z]+", "abc", true)]
-    [InlineData("[a-z]+", "123", false)]
-    [InlineData("[a-z]{2,4}", "ab", true)]
-    [InlineData("^[a-z]{2,4}$", "abcde", false)]
+    [TestMethod]
+    [DataRow("[a-z]+", "abc", true)]
+    [DataRow("[a-z]+", "123", false)]
+    [DataRow("[a-z]{2,4}", "ab", true)]
+    [DataRow("^[a-z]{2,4}$", "abcde", false)]
     public void QuantifierOnCharClass(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
     // Lazy quantifiers
-    [Theory]
-    [InlineData("a*?", "", true)]
-    [InlineData("a+?", "a", true)]
-    [InlineData("a+?", "", false)]
-    [InlineData("a{3,5}?", "aaa", true)]
+    [TestMethod]
+    [DataRow("a*?", "", true)]
+    [DataRow("a+?", "a", true)]
+    [DataRow("a+?", "", false)]
+    [DataRow("a{3,5}?", "aaa", true)]
     public void LazyQuantifiers(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -462,19 +463,19 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 18. BACKREFERENCE EDGE CASES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a)\1", "aa", true)]
-    [InlineData(@"(a)\1", "ab", false)]
-    [InlineData(@"(a)(b)\1\2", "abab", true)]
-    [InlineData(@"(a)(b)\1\2", "abba", false)]
+    [TestMethod]
+    [DataRow(@"(a)\1", "aa", true)]
+    [DataRow(@"(a)\1", "ab", false)]
+    [DataRow(@"(a)(b)\1\2", "abab", true)]
+    [DataRow(@"(a)(b)\1\2", "abba", false)]
     public void MultipleBackreferences(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", "abcdefghijj", true)]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", "abcdefghijk", false)]
+    [TestMethod]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", "abcdefghijj", true)]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", "abcdefghijk", false)]
     public void MultiDigitBackreferences(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -484,49 +485,49 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 19. ASSERTION EDGE CASES
     // ================================================================
 
-    [Theory]
-    [InlineData("^$", "", true)]
-    [InlineData("^$", "a", false)]
+    [TestMethod]
+    [DataRow("^$", "", true)]
+    [DataRow("^$", "a", false)]
     public void EmptyStringAnchors(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData("q(?!u)", "qi", true)]
-    [InlineData("q(?!u)", "qu", false)]
+    [TestMethod]
+    [DataRow("q(?!u)", "qi", true)]
+    [DataRow("q(?!u)", "qu", false)]
     public void NegativeLookahead(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData("(?<!a)b", "cb", true)]
-    [InlineData("(?<!a)b", "ab", false)]
+    [TestMethod]
+    [DataRow("(?<!a)b", "cb", true)]
+    [DataRow("(?<!a)b", "ab", false)]
     public void NegativeLookbehind(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData("(?=a(?=b))", "ab", true)]
-    [InlineData("(?=a(?=b))", "ac", false)]
+    [TestMethod]
+    [DataRow("(?=a(?=b))", "ab", true)]
+    [DataRow("(?=a(?=b))", "ac", false)]
     public void NestedLookaround(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData("a(?=)b", "ab", true)]     // empty positive lookahead always succeeds
-    [InlineData("a(?!)b", "ab", false)]    // empty negative lookahead always fails
+    [TestMethod]
+    [DataRow("a(?=)b", "ab", true)]     // empty positive lookahead always succeeds
+    [DataRow("a(?!)b", "ab", false)]    // empty negative lookahead always fails
     public void EmptyLookaround(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"(?=.*\d)", "abc1", true)]
-    [InlineData(@"(?=.*\d)", "abcd", false)]
+    [TestMethod]
+    [DataRow(@"(?=.*\d)", "abc1", true)]
+    [DataRow(@"(?=.*\d)", "abcd", false)]
     public void LookaheadWithShorthand(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -536,13 +537,13 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 20. UNICODE ESCAPE EDGE CASES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\u{0}", "\0", true)]
-    [InlineData(@"\u{0}", "A", false)]
-    [InlineData(@"\u{FF}", "\u00FF", true)]
-    [InlineData(@"\u{FFFF}", "\uFFFF", true)]
-    [InlineData(@"\u{10000}", "\U00010000", true)]
-    [InlineData(@"\u{10FFFF}", "\U0010FFFF", true)]
+    [TestMethod]
+    [DataRow(@"\u{0}", "\0", true)]
+    [DataRow(@"\u{0}", "A", false)]
+    [DataRow(@"\u{FF}", "\u00FF", true)]
+    [DataRow(@"\u{FFFF}", "\uFFFF", true)]
+    [DataRow(@"\u{10000}", "\U00010000", true)]
+    [DataRow(@"\u{10FFFF}", "\U0010FFFF", true)]
     public void UnicodeEscapeEdgeCases(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -552,11 +553,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 21. CONTROL ESCAPE EDGE CASES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\cJ", "\n", true)]       // \cJ = LF
-    [InlineData(@"\cI", "\t", true)]       // \cI = TAB
-    [InlineData(@"\cA", "\u0001", true)]   // \cA = SOH
-    [InlineData(@"\cZ", "\u001A", true)]   // \cZ = SUB
+    [TestMethod]
+    [DataRow(@"\cJ", "\n", true)]       // \cJ = LF
+    [DataRow(@"\cI", "\t", true)]       // \cI = TAB
+    [DataRow(@"\cA", "\u0001", true)]   // \cA = SOH
+    [DataRow(@"\cZ", "\u001A", true)]   // \cZ = SUB
     public void ControlEscapeEdgeCases(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -566,10 +567,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 22. HEX ESCAPE EDGE CASES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\x61", "a", true)]
-    [InlineData(@"\x20", " ", true)]
-    [InlineData(@"\x00", "\0", true)]
+    [TestMethod]
+    [DataRow(@"\x61", "a", true)]
+    [DataRow(@"\x20", " ", true)]
+    [DataRow(@"\x00", "\0", true)]
     public void HexEscapeEdgeCases(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -579,12 +580,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 23. DOT WITH QUANTIFIERS
     // ================================================================
 
-    [Theory]
-    [InlineData(".+", "abc", true)]
-    [InlineData(".+", "", false)]
-    [InlineData(".*", "", true)]
-    [InlineData(".{3}", "abc", true)]
-    [InlineData("^.{3}$", "ab", false)]
+    [TestMethod]
+    [DataRow(".+", "abc", true)]
+    [DataRow(".+", "", false)]
+    [DataRow(".*", "", true)]
+    [DataRow(".{3}", "abc", true)]
+    [DataRow("^.{3}$", "ab", false)]
     public void DotWithQuantifiers(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -594,14 +595,14 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 24. ES2025 MODIFIER GROUPS (?i:...)
     // ================================================================
 
-    [Theory]
-    [InlineData("(?i:abc)", "ABC", true)]
-    [InlineData("(?i:abc)", "abc", true)]
-    [InlineData("(?i:abc)", "AbC", true)]
-    [InlineData("(?i:abc)def", "ABCdef", true)]
-    [InlineData("(?i:abc)def", "ABCDEF", false)]  // only group is case-insensitive
-    [InlineData("a(?i:bc)d", "aBCd", true)]
-    [InlineData("a(?i:bc)d", "ABCD", false)]      // 'a' and 'd' must match exactly
+    [TestMethod]
+    [DataRow("(?i:abc)", "ABC", true)]
+    [DataRow("(?i:abc)", "abc", true)]
+    [DataRow("(?i:abc)", "AbC", true)]
+    [DataRow("(?i:abc)def", "ABCdef", true)]
+    [DataRow("(?i:abc)def", "ABCDEF", false)]  // only group is case-insensitive
+    [DataRow("a(?i:bc)d", "aBCd", true)]
+    [DataRow("a(?i:bc)d", "ABCD", false)]      // 'a' and 'd' must match exactly
     public void ModifierGroups(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -611,9 +612,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 25. CONSECUTIVE CHARACTER CLASSES
     // ================================================================
 
-    [Theory]
-    [InlineData("[a-z][0-9]", "a5", true)]
-    [InlineData("[a-z][0-9]", "5a", false)]
+    [TestMethod]
+    [DataRow("[a-z][0-9]", "a5", true)]
+    [DataRow("[a-z][0-9]", "5a", false)]
     public void ConsecutiveCharClasses(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -623,9 +624,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 26. MULTIPLE ESCAPES IN SEQUENCE
     // ================================================================
 
-    [Theory]
-    [InlineData(@"^\d\w\s$", "1a ", true)]
-    [InlineData(@"^\d\w\s$", "aaa", false)]
+    [TestMethod]
+    [DataRow(@"^\d\w\s$", "1a ", true)]
+    [DataRow(@"^\d\w\s$", "aaa", false)]
     public void MultipleEscapesInSequence(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -635,9 +636,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 27. COMBINED FEATURES — word boundary + shorthands
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\b\w+\b\s+\w+", "hello world", true)]
-    [InlineData(@"\b\w+\b\s+\w+", "hello", false)]
+    [TestMethod]
+    [DataRow(@"\b\w+\b\s+\w+", "hello world", true)]
+    [DataRow(@"\b\w+\b\s+\w+", "hello", false)]
     public void CombinedBoundaryAndShorthands(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -650,11 +651,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // .NET block names (e.g., IsGreek, IsCyrillic) but not all (e.g., IsLatin).
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{sc=Greek}", "\u03B1", true)]         // α (alpha) — IsGreek block
-    [InlineData(@"\p{sc=Greek}", "a", false)]
-    [InlineData(@"\p{Script_Extensions=Cyrillic}", "\u0410", true)]  // IsCyrillic block
-    [InlineData(@"\p{Script_Extensions=Cyrillic}", "a", false)]
+    [TestMethod]
+    [DataRow(@"\p{sc=Greek}", "\u03B1", true)]         // α (alpha) — IsGreek block
+    [DataRow(@"\p{sc=Greek}", "a", false)]
+    [DataRow(@"\p{Script_Extensions=Cyrillic}", "\u0410", true)]  // IsCyrillic block
+    [DataRow(@"\p{Script_Extensions=Cyrillic}", "a", false)]
     public void PropertyScriptVariantsWithBlockNames(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -664,9 +665,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 29. UNICODE PROPERTY — gc= variants
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{gc=Nd}", "3", true)]
-    [InlineData(@"\p{gc=Nd}", "a", false)]
+    [TestMethod]
+    [DataRow(@"\p{gc=Nd}", "3", true)]
+    [DataRow(@"\p{gc=Nd}", "a", false)]
     public void PropertyGcVariants(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -676,273 +677,273 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 30. TRANSLATION TESTS — new patterns
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\S]", @"[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]")]
-    [InlineData(@"[^\S]", @"[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]")]
+    [TestMethod]
+    [DataRow(@"[\S]", @"[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]")]
+    [DataRow(@"[^\S]", @"[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]")]
     public void NegatedSShorthandInCharClassTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"[a\S]", @"(?:[a]|[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])")]
+    [TestMethod]
+    [DataRow(@"[a\S]", @"(?:[a]|[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])")]
     public void MixedPositiveAndNegatedSTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"[\D\S]", @"(?:[^0-9]|[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])")]
-    [InlineData(@"[\D\W]", "(?:[^0-9]|[^a-zA-Z0-9_])")]
-    [InlineData(@"[\W\S]", @"(?:[^a-zA-Z0-9_]|[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])")]
+    [TestMethod]
+    [DataRow(@"[\D\S]", @"(?:[^0-9]|[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])")]
+    [DataRow(@"[\D\W]", "(?:[^0-9]|[^a-zA-Z0-9_])")]
+    [DataRow(@"[\W\S]", @"(?:[^a-zA-Z0-9_]|[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])")]
     public void MultipleNegatedShorthandsNonNegatedClassTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"[^\D\S]", @"[^\s\S]")]       // empty: D+S in negated
-    [InlineData(@"[^\W\S]", @"[^\s\S]")]       // empty: W+S in negated
-    [InlineData(@"[^\D\W]", "[0-9]")]           // intersection of [0-9] and [a-zA-Z0-9_]
+    [TestMethod]
+    [DataRow(@"[^\D\S]", @"[^\s\S]")]       // empty: D+S in negated
+    [DataRow(@"[^\W\S]", @"[^\s\S]")]       // empty: W+S in negated
+    [DataRow(@"[^\D\W]", "[0-9]")]           // intersection of [0-9] and [a-zA-Z0-9_]
     public void MultipleNegatedShorthandsNegatedClassTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"[\d\D]", "(?:[0-9]|[^0-9])")]
-    [InlineData(@"[\s\S]", @"(?:[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]|[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])")]
-    [InlineData(@"[\w\W]", "(?:[a-zA-Z0-9_]|[^a-zA-Z0-9_])")]
+    [TestMethod]
+    [DataRow(@"[\d\D]", "(?:[0-9]|[^0-9])")]
+    [DataRow(@"[\s\S]", @"(?:[\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]|[^\t\n\v\f\r \u00A0\uFEFF\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000])")]
+    [DataRow(@"[\w\W]", "(?:[a-zA-Z0-9_]|[^a-zA-Z0-9_])")]
     public void ComplementPairsInClassTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"[\P{L}]", @"[\P{L}]")]
-    [InlineData(@"[\p{L}\d]", @"[\p{L}0-9]")]
-    [InlineData(@"[\p{Lu}a-z]", @"[\p{Lu}a-z]")]
-    [InlineData(@"[^\p{L}]", @"[^\p{L}]")]
+    [TestMethod]
+    [DataRow(@"[\P{L}]", @"[\P{L}]")]
+    [DataRow(@"[\p{L}\d]", @"[\p{L}0-9]")]
+    [DataRow(@"[\p{Lu}a-z]", @"[\p{Lu}a-z]")]
+    [DataRow(@"[^\p{L}]", @"[^\p{L}]")]
     public void PropertyEscapesInCharClassTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"\u{0}", @"\u0000")]
-    [InlineData(@"\u{A}", @"\u000A")]
-    [InlineData(@"\u{FF}", @"\u00FF")]
-    [InlineData(@"\u{100}", @"\u0100")]
-    [InlineData(@"\u{10000}", @"(?:\uD800\uDC00)")]
+    [TestMethod]
+    [DataRow(@"\u{0}", @"\u0000")]
+    [DataRow(@"\u{A}", @"\u000A")]
+    [DataRow(@"\u{FF}", @"\u00FF")]
+    [DataRow(@"\u{100}", @"\u0100")]
+    [DataRow(@"\u{10000}", @"(?:\uD800\uDC00)")]
     public void UnicodeEscapeEdgeCasesTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData("(?i:abc)", "(?i:abc)")]
-    [InlineData("a(?i:bc)d", "a(?i:bc)d")]
-    [InlineData("(?i:abc)def", "(?i:abc)def")]
+    [TestMethod]
+    [DataRow("(?i:abc)", "(?i:abc)")]
+    [DataRow("a(?i:bc)d", "a(?i:bc)d")]
+    [DataRow("(?i:abc)def", "(?i:abc)def")]
     public void ModifierGroupsPassThroughTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData("a|", "a|")]
-    [InlineData("|b", "|b")]
-    [InlineData("a||b", "a||b")]
+    [TestMethod]
+    [DataRow("a|", "a|")]
+    [DataRow("|b", "|b")]
+    [DataRow("a||b", "a||b")]
     public void EmptyAlternationPassThroughTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"(a)(b)\1\2", @"(a)(b)(?(1)\1)(?(2)\2)")]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", @"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(?(10)\10)")]
+    [TestMethod]
+    [DataRow(@"(a)(b)\1\2", @"(a)(b)(?(1)\1)(?(2)\2)")]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", @"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(?(10)\10)")]
     public void MultiDigitBackrefTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData("((a)(b))", "((a)(b))")]
-    [InlineData("((?:a)b)", "((?:a)b)")]
-    [InlineData("(a|(b|c))", "(a|(b|c))")]
+    [TestMethod]
+    [DataRow("((a)(b))", "((a)(b))")]
+    [DataRow("((?:a)b)", "((?:a)b)")]
+    [DataRow("(a|(b|c))", "(a|(b|c))")]
     public void NestedGroupsPassThroughTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData("a{0}", "a{0}")]
-    [InlineData("a{0,0}", "a{0,0}")]
-    [InlineData("a{0,1}", "a{0,1}")]
-    [InlineData("a{0,}", "a{0,}")]
+    [TestMethod]
+    [DataRow("a{0}", "a{0}")]
+    [DataRow("a{0,0}", "a{0,0}")]
+    [DataRow("a{0,1}", "a{0,1}")]
+    [DataRow("a{0,}", "a{0,}")]
     public void QuantifierEdgeCasesPassThroughTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData("[-abc]", "[-abc]")]
-    [InlineData("[abc-]", "[abc-]")]
-    [InlineData("[-]", "[-]")]
+    [TestMethod]
+    [DataRow("[-abc]", "[-abc]")]
+    [DataRow("[abc-]", "[abc-]")]
+    [DataRow("[-]", "[-]")]
     public void HyphenPositionPassThroughTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"[\]]", @"[\]]")]
-    [InlineData(@"[\[]", @"[\[]")]
-    [InlineData(@"[\\]", @"[\\]")]
-    [InlineData(@"[\-]", @"[\-]")]
+    [TestMethod]
+    [DataRow(@"[\]]", @"[\]]")]
+    [DataRow(@"[\[]", @"[\[]")]
+    [DataRow(@"[\\]", @"[\\]")]
+    [DataRow(@"[\-]", @"[\-]")]
     public void EscapedCharsInClassPassThroughTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData("(?=a(?=b))", "(?=a(?=b))")]
-    [InlineData("(?=a(?!b))", "(?=a(?!b))")]
-    [InlineData("a(?=)b", "a(?=)b")]
-    [InlineData("a(?!)b", "a(?!)b")]
+    [TestMethod]
+    [DataRow("(?=a(?=b))", "(?=a(?=b))")]
+    [DataRow("(?=a(?!b))", "(?=a(?!b))")]
+    [DataRow("a(?=)b", "a(?=)b")]
+    [DataRow("a(?!)b", "a(?!)b")]
     public void NestedLookaroundPassThroughTranslation(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
     // ================================================================
     // 31. SPAN API — TryTranslate with comprehensive patterns
     // ================================================================
 
-    [Fact]
+    [TestMethod]
     public void TryTranslateCharClassWithNegatedShorthand()
     {
         ReadOnlySpan<char> ecma = @"[\S]";
         Span<char> buffer = stackalloc char[256];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out int written);
 
-        Assert.Equal(OperationStatus.Done, status);
+        Assert.AreEqual(OperationStatus.Done, status);
         string result = new(buffer[..written]);
-        Assert.Contains(@"\t\n\v\f\r", result);
+        StringAssert.Contains(result, @"\t\n\v\f\r");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTranslateModifierGroup()
     {
         ReadOnlySpan<char> ecma = "(?i:abc)";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out int written);
 
-        Assert.Equal(OperationStatus.Done, status);
-        Assert.Equal("(?i:abc)", new string(buffer[..written]));
+        Assert.AreEqual(OperationStatus.Done, status);
+        Assert.AreEqual("(?i:abc)", new string(buffer[..written]));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTranslateMultiDigitBackref()
     {
         ReadOnlySpan<char> ecma = @"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10";
         Span<char> buffer = stackalloc char[256];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out int written);
 
-        Assert.Equal(OperationStatus.Done, status);
-        Assert.Equal(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(?(10)\10)", new string(buffer[..written]));
+        Assert.AreEqual(OperationStatus.Done, status);
+        Assert.AreEqual(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(?(10)\10)", new string(buffer[..written]));
     }
 
-    [Fact]
+    [TestMethod]
     public void GetMaxTranslatedLengthHandlesComplexPattern()
     {
         string ecma = @"[\D\S\w]+\b\p{Letter}\u{1F600}";
         int maxLen = EcmaRegexTranslator.GetMaxTranslatedLength(ecma);
         string result = EcmaRegexTranslator.Translate(ecma);
 
-        Assert.True(maxLen >= result.Length, $"MaxLen {maxLen} < actual {result.Length}");
+        Assert.IsTrue(maxLen >= result.Length, $"MaxLen {maxLen} < actual {result.Length}");
     }
 
     // ================================================================
     // 32. ERROR CASES — invalid input
     // ================================================================
 
-    [Fact]
+    [TestMethod]
     public void InvalidUnicodeEscapeReturnsInvalidData()
     {
         ReadOnlySpan<char> ecma = @"\u{GGGG}";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnclosedUnicodeBraceReturnsInvalidData()
     {
         ReadOnlySpan<char> ecma = @"\u{41";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Fact]
+    [TestMethod]
     public void TruncatedHexEscapeReturnsInvalidData()
     {
         ReadOnlySpan<char> ecma = @"\x4";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Fact]
+    [TestMethod]
     public void TruncatedControlEscapeReturnsInvalidData()
     {
         ReadOnlySpan<char> ecma = @"\c";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnclosedPropertyEscapeReturnsInvalidData()
     {
         ReadOnlySpan<char> ecma = @"\p{L";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnclosedCharacterClassReturnsInvalidData()
     {
         ReadOnlySpan<char> ecma = "[abc";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Fact]
+    [TestMethod]
     public void TruncatedUnicodeEscapeReturnsInvalidData()
     {
         ReadOnlySpan<char> ecma = @"\u00";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Fact]
+    [TestMethod]
     public void CodePointAboveMaxReturnsInvalidData()
     {
         ReadOnlySpan<char> ecma = @"\u{110000}";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
     // ================================================================
@@ -957,21 +958,21 @@ public class EcmaRegexTranslatorComprehensiveTests
 
     // --- \0 valid cases (not followed by digit) ---
 
-    [Theory]
-    [InlineData(@"\0", @"\0")]              // NUL at end of pattern
-    [InlineData(@"\0a", @"\0a")]            // NUL followed by letter
-    [InlineData(@"\0\n", @"\0\n")]          // NUL followed by escape
-    [InlineData(@"x\0y", @"x\0y")]         // NUL in middle of pattern
+    [TestMethod]
+    [DataRow(@"\0", @"\0")]              // NUL at end of pattern
+    [DataRow(@"\0a", @"\0a")]            // NUL followed by letter
+    [DataRow(@"\0\n", @"\0\n")]          // NUL followed by escape
+    [DataRow(@"x\0y", @"x\0y")]         // NUL in middle of pattern
     public void NullEscapeNotFollowedByDigitTranslatesCorrectly(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"\0", "\0", true)]         // NUL matches NUL
-    [InlineData(@"\0", "0", false)]         // NUL does not match '0'
-    [InlineData(@"\0", "a", false)]         // NUL does not match 'a'
-    [InlineData(@"\0a", "\0a", true)]       // NUL then literal 'a'
+    [TestMethod]
+    [DataRow(@"\0", "\0", true)]         // NUL matches NUL
+    [DataRow(@"\0", "0", false)]         // NUL does not match '0'
+    [DataRow(@"\0", "a", false)]         // NUL does not match 'a'
+    [DataRow(@"\0a", "\0a", true)]       // NUL then literal 'a'
     public void NullEscapeMatchesNullCharacter(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -979,46 +980,46 @@ public class EcmaRegexTranslatorComprehensiveTests
 
     // --- \0 followed by digit = INVALID in /u mode (octal forbidden) ---
 
-    [Theory]
-    [InlineData(@"\00")]     // \0 + '0'
-    [InlineData(@"\01")]     // \0 + '1' — would be octal 1 in .NET
-    [InlineData(@"\02")]     // \0 + '2'
-    [InlineData(@"\03")]     // \0 + '3'
-    [InlineData(@"\07")]     // \0 + '7' — highest single-digit octal
-    [InlineData(@"\08")]     // \0 + '8' — not even valid octal, still forbidden
-    [InlineData(@"\09")]     // \0 + '9'
+    [TestMethod]
+    [DataRow(@"\00")]     // \0 + '0'
+    [DataRow(@"\01")]     // \0 + '1' — would be octal 1 in .NET
+    [DataRow(@"\02")]     // \0 + '2'
+    [DataRow(@"\03")]     // \0 + '3'
+    [DataRow(@"\07")]     // \0 + '7' — highest single-digit octal
+    [DataRow(@"\08")]     // \0 + '8' — not even valid octal, still forbidden
+    [DataRow(@"\09")]     // \0 + '9'
     public void NullEscapeFollowedByDigitIsInvalid(string ecma)
     {
         ReadOnlySpan<char> pattern = ecma;
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(pattern, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
     // --- \0 followed by digit inside character class = INVALID ---
 
-    [Theory]
-    [InlineData(@"[\01]")]     // \0 + '1' inside class
-    [InlineData(@"[\07]")]     // \0 + '7' inside class
-    [InlineData(@"[\09]")]     // \0 + '9' inside class
+    [TestMethod]
+    [DataRow(@"[\01]")]     // \0 + '1' inside class
+    [DataRow(@"[\07]")]     // \0 + '7' inside class
+    [DataRow(@"[\09]")]     // \0 + '9' inside class
     public void NullEscapeFollowedByDigitInCharClassIsInvalid(string ecma)
     {
         ReadOnlySpan<char> pattern = ecma;
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(pattern, buffer, out _);
 
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
     // --- \0 in character class without trailing digit = valid ---
 
-    [Theory]
-    [InlineData(@"[\0]", "\0", true)]       // NUL in char class
-    [InlineData(@"[\0]", "a", false)]
-    [InlineData(@"[\0a]", "\0", true)]      // NUL or 'a' class
-    [InlineData(@"[\0a]", "a", true)]
-    [InlineData(@"[\0a]", "b", false)]
+    [TestMethod]
+    [DataRow(@"[\0]", "\0", true)]       // NUL in char class
+    [DataRow(@"[\0]", "a", false)]
+    [DataRow(@"[\0a]", "\0", true)]      // NUL or 'a' class
+    [DataRow(@"[\0a]", "a", true)]
+    [DataRow(@"[\0a]", "b", false)]
     public void NullEscapeInCharClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1026,23 +1027,23 @@ public class EcmaRegexTranslatorComprehensiveTests
 
     // --- Backreferences (NOT octal) in /u mode ---
 
-    [Theory]
-    [InlineData(@"(a)\1", @"(a)(?(1)\1)")]                  // single digit backref
-    [InlineData(@"(a)(b)\2", @"(a)(b)(?(2)\2)")]             // second group
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)\8", @"(a)(b)(c)(d)(e)(f)(g)(h)(?(8)\8)")]   // \8 = backref
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)\9", @"(a)(b)(c)(d)(e)(f)(g)(h)(i)(?(9)\9)")]  // \9 = backref
+    [TestMethod]
+    [DataRow(@"(a)\1", @"(a)(?(1)\1)")]                  // single digit backref
+    [DataRow(@"(a)(b)\2", @"(a)(b)(?(2)\2)")]             // second group
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)\8", @"(a)(b)(c)(d)(e)(f)(g)(h)(?(8)\8)")]   // \8 = backref
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)\9", @"(a)(b)(c)(d)(e)(f)(g)(h)(i)(?(9)\9)")]  // \9 = backref
     public void SingleDigitBackrefsAreNeverOctal(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"(a)\1", "aa", true)]
-    [InlineData(@"(a)\1", "ab", false)]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)\8", "abcdefghh", true)]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)\8", "abcdefghx", false)]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)\9", "abcdefghii", true)]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)\9", "abcdefghix", false)]
+    [TestMethod]
+    [DataRow(@"(a)\1", "aa", true)]
+    [DataRow(@"(a)\1", "ab", false)]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)\8", "abcdefghh", true)]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)\8", "abcdefghx", false)]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)\9", "abcdefghii", true)]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)\9", "abcdefghix", false)]
     public void SingleDigitBackrefsMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1050,11 +1051,11 @@ public class EcmaRegexTranslatorComprehensiveTests
 
     // --- Multi-digit backreferences ---
 
-    [Theory]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", "abcdefghijj", true)]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", "abcdefghijk", false)]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\11", "abcdefghijkk", true)]
-    [InlineData(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\11", "abcdefghijkx", false)]
+    [TestMethod]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", "abcdefghijj", true)]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)\10", "abcdefghijk", false)]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\11", "abcdefghijkk", true)]
+    [DataRow(@"(a)(b)(c)(d)(e)(f)(g)(h)(i)(j)(k)\11", "abcdefghijkx", false)]
     public void MultiDigitBackrefsMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1072,99 +1073,99 @@ public class EcmaRegexTranslatorComprehensiveTests
     // but in ES /u mode \a is a SyntaxError. Passing through
     // would silently match the wrong character.
 
-    [Theory]
-    [InlineData(@"\a")]      // would be BEL in .NET!
-    [InlineData(@"\e")]      // would be ESC in .NET!
-    [InlineData(@"\q")]
-    [InlineData(@"\i")]
-    [InlineData(@"\m")]
-    [InlineData(@"\o")]
-    [InlineData(@"\y")]
-    [InlineData(@"\z")]
-    [InlineData(@"\g")]
-    [InlineData(@"\h")]
-    [InlineData(@"\j")]
-    [InlineData(@"\l")]
-    [InlineData(@"\A")]
-    [InlineData(@"\C")]
-    [InlineData(@"\E")]
-    [InlineData(@"\F")]
-    [InlineData(@"\G")]
-    [InlineData(@"\H")]
-    [InlineData(@"\I")]
-    [InlineData(@"\J")]
-    [InlineData(@"\K")]
-    [InlineData(@"\L")]
-    [InlineData(@"\M")]
-    [InlineData(@"\N")]
-    [InlineData(@"\O")]
-    [InlineData(@"\Q")]
-    [InlineData(@"\R")]
-    [InlineData(@"\T")]
-    [InlineData(@"\U")]
-    [InlineData(@"\V")]
-    [InlineData(@"\X")]
-    [InlineData(@"\Y")]
-    [InlineData(@"\Z")]
+    [TestMethod]
+    [DataRow(@"\a")]      // would be BEL in .NET!
+    [DataRow(@"\e")]      // would be ESC in .NET!
+    [DataRow(@"\q")]
+    [DataRow(@"\i")]
+    [DataRow(@"\m")]
+    [DataRow(@"\o")]
+    [DataRow(@"\y")]
+    [DataRow(@"\z")]
+    [DataRow(@"\g")]
+    [DataRow(@"\h")]
+    [DataRow(@"\j")]
+    [DataRow(@"\l")]
+    [DataRow(@"\A")]
+    [DataRow(@"\C")]
+    [DataRow(@"\E")]
+    [DataRow(@"\F")]
+    [DataRow(@"\G")]
+    [DataRow(@"\H")]
+    [DataRow(@"\I")]
+    [DataRow(@"\J")]
+    [DataRow(@"\K")]
+    [DataRow(@"\L")]
+    [DataRow(@"\M")]
+    [DataRow(@"\N")]
+    [DataRow(@"\O")]
+    [DataRow(@"\Q")]
+    [DataRow(@"\R")]
+    [DataRow(@"\T")]
+    [DataRow(@"\U")]
+    [DataRow(@"\V")]
+    [DataRow(@"\X")]
+    [DataRow(@"\Y")]
+    [DataRow(@"\Z")]
     public void InvalidIdentityEscapeOutsideClassReturnsInvalidData(string ecma)
     {
         ReadOnlySpan<char> pattern = ecma;
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(pattern, buffer, out _);
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Fact]
+    [TestMethod]
     public void EscapedHyphenOutsideClassReturnsInvalidData()
     {
         // \- is only valid inside character classes in /u mode
         ReadOnlySpan<char> pattern = @"\-";
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(pattern, buffer, out _);
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
     // --- Valid identity escapes (SyntaxCharacter + /) ---
-    [Theory]
-    [InlineData(@"\^", @"\^")]
-    [InlineData(@"\$", @"\$")]
-    [InlineData(@"\.", @"\.")]
-    [InlineData(@"\*", @"\*")]
-    [InlineData(@"\+", @"\+")]
-    [InlineData(@"\?", @"\?")]
-    [InlineData(@"\(", @"\(")]
-    [InlineData(@"\)", @"\)")]
-    [InlineData(@"\[", @"\[")]
-    [InlineData(@"\]", @"\]")]
-    [InlineData(@"\{", @"\{")]
-    [InlineData(@"\}", @"\}")]
-    [InlineData(@"\|", @"\|")]
-    [InlineData(@"\\", @"\\")]
-    [InlineData(@"\/", @"\/")]
+    [TestMethod]
+    [DataRow(@"\^", @"\^")]
+    [DataRow(@"\$", @"\$")]
+    [DataRow(@"\.", @"\.")]
+    [DataRow(@"\*", @"\*")]
+    [DataRow(@"\+", @"\+")]
+    [DataRow(@"\?", @"\?")]
+    [DataRow(@"\(", @"\(")]
+    [DataRow(@"\)", @"\)")]
+    [DataRow(@"\[", @"\[")]
+    [DataRow(@"\]", @"\]")]
+    [DataRow(@"\{", @"\{")]
+    [DataRow(@"\}", @"\}")]
+    [DataRow(@"\|", @"\|")]
+    [DataRow(@"\\", @"\\")]
+    [DataRow(@"\/", @"\/")]
     public void ValidIdentityEscapeTranslatesCorrectly(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
     // --- Valid identity escapes match literally ---
-    [Theory]
-    [InlineData(@"\^", "^", true)]
-    [InlineData(@"\^", "a", false)]
-    [InlineData(@"\$", "$", true)]
-    [InlineData(@"\.", ".", true)]
-    [InlineData(@"\.", "a", false)]
-    [InlineData(@"\*", "*", true)]
-    [InlineData(@"\+", "+", true)]
-    [InlineData(@"\?", "?", true)]
-    [InlineData(@"\(", "(", true)]
-    [InlineData(@"\)", ")", true)]
-    [InlineData(@"\[", "[", true)]
-    [InlineData(@"\]", "]", true)]
-    [InlineData(@"\{", "{", true)]
-    [InlineData(@"\}", "}", true)]
-    [InlineData(@"\|", "|", true)]
-    [InlineData(@"\\", "\\", true)]
-    [InlineData(@"\/", "/", true)]
+    [TestMethod]
+    [DataRow(@"\^", "^", true)]
+    [DataRow(@"\^", "a", false)]
+    [DataRow(@"\$", "$", true)]
+    [DataRow(@"\.", ".", true)]
+    [DataRow(@"\.", "a", false)]
+    [DataRow(@"\*", "*", true)]
+    [DataRow(@"\+", "+", true)]
+    [DataRow(@"\?", "?", true)]
+    [DataRow(@"\(", "(", true)]
+    [DataRow(@"\)", ")", true)]
+    [DataRow(@"\[", "[", true)]
+    [DataRow(@"\]", "]", true)]
+    [DataRow(@"\{", "{", true)]
+    [DataRow(@"\}", "}", true)]
+    [DataRow(@"\|", "|", true)]
+    [DataRow(@"\\", "\\", true)]
+    [DataRow(@"\/", "/", true)]
     public void ValidIdentityEscapeMatchesLiteral(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1174,127 +1175,127 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 35. INVALID ESCAPES INSIDE CHARACTER CLASS — /u mode
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\a]")]      // \a invalid in class
-    [InlineData(@"[\e]")]      // \e invalid in class
-    [InlineData(@"[\q]")]      // \q invalid in class
-    [InlineData(@"[\B]")]      // \B invalid in class (only \b = backspace is valid)
-    [InlineData(@"[\A]")]
-    [InlineData(@"[\E]")]
-    [InlineData(@"[\G]")]
-    [InlineData(@"[\i]")]
-    [InlineData(@"[\j]")]
-    [InlineData(@"[\l]")]
-    [InlineData(@"[\m]")]
-    [InlineData(@"[\o]")]
-    [InlineData(@"[\y]")]
-    [InlineData(@"[\z]")]
+    [TestMethod]
+    [DataRow(@"[\a]")]      // \a invalid in class
+    [DataRow(@"[\e]")]      // \e invalid in class
+    [DataRow(@"[\q]")]      // \q invalid in class
+    [DataRow(@"[\B]")]      // \B invalid in class (only \b = backspace is valid)
+    [DataRow(@"[\A]")]
+    [DataRow(@"[\E]")]
+    [DataRow(@"[\G]")]
+    [DataRow(@"[\i]")]
+    [DataRow(@"[\j]")]
+    [DataRow(@"[\l]")]
+    [DataRow(@"[\m]")]
+    [DataRow(@"[\o]")]
+    [DataRow(@"[\y]")]
+    [DataRow(@"[\z]")]
     public void InvalidIdentityEscapeInCharClassReturnsInvalidData(string ecma)
     {
         ReadOnlySpan<char> pattern = ecma;
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(pattern, buffer, out _);
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Theory]
-    [InlineData(@"(a)[\1]")]     // backreference in class (digit escape in class)
-    [InlineData(@"[\9]")]        // digit escape in class (no group exists, but invalid regardless)
+    [TestMethod]
+    [DataRow(@"(a)[\1]")]     // backreference in class (digit escape in class)
+    [DataRow(@"[\9]")]        // digit escape in class (no group exists, but invalid regardless)
     public void BackreferenceInCharClassReturnsInvalidData(string ecma)
     {
         ReadOnlySpan<char> pattern = ecma;
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(pattern, buffer, out _);
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
     // --- Valid escapes in character class ---
-    [Theory]
-    [InlineData(@"[\-]", @"[\-]")]         // \- valid inside class
-    [InlineData(@"[\^]", @"[\^]")]         // \^ valid inside class
-    [InlineData(@"[\]]", @"[\]]")]         // \] valid inside class
-    [InlineData(@"[\\]", @"[\\]")]         // \\ valid inside class
-    [InlineData(@"[\/]", @"[\/]")]         // \/ valid inside class
-    [InlineData(@"[\.]", @"[\.]")]         // \. valid inside class
-    [InlineData(@"[\t]", @"[\t]")]         // \t control escape in class
-    [InlineData(@"[\n]", @"[\n]")]         // \n control escape in class
-    [InlineData(@"[\r]", @"[\r]")]         // \r control escape in class
-    [InlineData(@"[\f]", @"[\f]")]         // \f control escape in class
-    [InlineData(@"[\v]", @"[\v]")]         // \v control escape in class
+    [TestMethod]
+    [DataRow(@"[\-]", @"[\-]")]         // \- valid inside class
+    [DataRow(@"[\^]", @"[\^]")]         // \^ valid inside class
+    [DataRow(@"[\]]", @"[\]]")]         // \] valid inside class
+    [DataRow(@"[\\]", @"[\\]")]         // \\ valid inside class
+    [DataRow(@"[\/]", @"[\/]")]         // \/ valid inside class
+    [DataRow(@"[\.]", @"[\.]")]         // \. valid inside class
+    [DataRow(@"[\t]", @"[\t]")]         // \t control escape in class
+    [DataRow(@"[\n]", @"[\n]")]         // \n control escape in class
+    [DataRow(@"[\r]", @"[\r]")]         // \r control escape in class
+    [DataRow(@"[\f]", @"[\f]")]         // \f control escape in class
+    [DataRow(@"[\v]", @"[\v]")]         // \v control escape in class
     public void ValidEscapeInCharClassTranslatesCorrectly(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
     // ================================================================
     // 36. CONTROL ESCAPE VALIDATION — /u mode
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\c0")]       // digit not valid
-    [InlineData(@"\c!")]       // punctuation not valid
-    [InlineData(@"\c ")]       // space not valid
-    [InlineData(@"\c1")]
-    [InlineData(@"\c9")]
+    [TestMethod]
+    [DataRow(@"\c0")]       // digit not valid
+    [DataRow(@"\c!")]       // punctuation not valid
+    [DataRow(@"\c ")]       // space not valid
+    [DataRow(@"\c1")]
+    [DataRow(@"\c9")]
     public void InvalidControlLetterReturnsInvalidData(string ecma)
     {
         ReadOnlySpan<char> pattern = ecma;
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(pattern, buffer, out _);
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
-    [Theory]
-    [InlineData(@"\cA")]      // valid: uppercase
-    [InlineData(@"\cZ")]      // valid: uppercase
-    [InlineData(@"\ca")]      // valid: lowercase
-    [InlineData(@"\cz")]      // valid: lowercase
-    [InlineData(@"\cJ")]      // Control-J = \n
-    [InlineData(@"\cM")]      // Control-M = \r
-    [InlineData(@"\cI")]      // Control-I = \t
+    [TestMethod]
+    [DataRow(@"\cA")]      // valid: uppercase
+    [DataRow(@"\cZ")]      // valid: uppercase
+    [DataRow(@"\ca")]      // valid: lowercase
+    [DataRow(@"\cz")]      // valid: lowercase
+    [DataRow(@"\cJ")]      // Control-J = \n
+    [DataRow(@"\cM")]      // Control-M = \r
+    [DataRow(@"\cI")]      // Control-I = \t
     public void ValidControlLetterTranslatesCorrectly(string ecma)
     {
-        Assert.Equal(ecma, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(ecma, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"\cA", "\x01", true)]    // Control-A
-    [InlineData(@"\cZ", "\x1A", true)]    // Control-Z
-    [InlineData(@"\ca", "\x01", true)]    // lowercase = same
-    [InlineData(@"\cJ", "\n", true)]      // Control-J = LF
-    [InlineData(@"\cM", "\r", true)]      // Control-M = CR
-    [InlineData(@"\cI", "\t", true)]      // Control-I = TAB
-    [InlineData(@"\cA", "A", false)]
+    [TestMethod]
+    [DataRow(@"\cA", "\x01", true)]    // Control-A
+    [DataRow(@"\cZ", "\x1A", true)]    // Control-Z
+    [DataRow(@"\ca", "\x01", true)]    // lowercase = same
+    [DataRow(@"\cJ", "\n", true)]      // Control-J = LF
+    [DataRow(@"\cM", "\r", true)]      // Control-M = CR
+    [DataRow(@"\cI", "\t", true)]      // Control-I = TAB
+    [DataRow(@"\cA", "A", false)]
     public void ControlEscapeMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
     // Invalid control letter inside character class
-    [Theory]
-    [InlineData(@"[\c0]")]
-    [InlineData(@"[\c!]")]
+    [TestMethod]
+    [DataRow(@"[\c0]")]
+    [DataRow(@"[\c!]")]
     public void InvalidControlLetterInCharClassReturnsInvalidData(string ecma)
     {
         ReadOnlySpan<char> pattern = ecma;
         Span<char> buffer = stackalloc char[64];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(pattern, buffer, out _);
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
     // ================================================================
     // 37. DOT VS LINE TERMINATORS — ES excludes all four
     // ================================================================
 
-    [Theory]
-    [InlineData(".", "\n", false)]         // LF
-    [InlineData(".", "\r", false)]         // CR
-    [InlineData(".", "\u2028", false)]     // Line Separator
-    [InlineData(".", "\u2029", false)]     // Paragraph Separator
-    [InlineData(".", "\t", true)]          // TAB is fine
-    [InlineData(".", "\u00A0", true)]      // NBSP is fine
-    [InlineData(".", "\uFEFF", true)]      // BOM is fine
-    [InlineData(".", "a", true)]
+    [TestMethod]
+    [DataRow(".", "\n", false)]         // LF
+    [DataRow(".", "\r", false)]         // CR
+    [DataRow(".", "\u2028", false)]     // Line Separator
+    [DataRow(".", "\u2029", false)]     // Paragraph Separator
+    [DataRow(".", "\t", true)]          // TAB is fine
+    [DataRow(".", "\u00A0", true)]      // NBSP is fine
+    [DataRow(".", "\uFEFF", true)]      // BOM is fine
+    [DataRow(".", "a", true)]
     public void DotExcludesAllFourLineTerminators(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1304,21 +1305,21 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 38. SUPPLEMENTARY CHARACTER MATCHING
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\u{1F600}", "\U0001F600", true)]     // 😀
-    [InlineData(@"\u{1F600}", "a", false)]
-    [InlineData(@"\u{10000}", "\U00010000", true)]      // first supplementary
-    [InlineData(@"\u{10FFFF}", "\U0010FFFF", true)]     // max codepoint
-    [InlineData(@"\u{FFFF}", "\uFFFF", true)]           // BMP boundary
-    [InlineData(@"\u{0}", "\0", true)]                   // NUL via braced syntax
-    [InlineData(@"\u{41}", "A", true)]                   // simple BMP
+    [TestMethod]
+    [DataRow(@"\u{1F600}", "\U0001F600", true)]     // 😀
+    [DataRow(@"\u{1F600}", "a", false)]
+    [DataRow(@"\u{10000}", "\U00010000", true)]      // first supplementary
+    [DataRow(@"\u{10FFFF}", "\U0010FFFF", true)]     // max codepoint
+    [DataRow(@"\u{FFFF}", "\uFFFF", true)]           // BMP boundary
+    [DataRow(@"\u{0}", "\0", true)]                   // NUL via braced syntax
+    [DataRow(@"\u{41}", "A", true)]                   // simple BMP
     public void SupplementaryCharacterMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
     // Dot matches supplementary character as single grapheme in .NET
-    [Fact]
+    [TestMethod]
     public void DotMatchesSingleSupplementaryCharacter()
     {
         AssertMatch(".", "\U0001F600", true);
@@ -1329,11 +1330,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // [\u{1F600}-\u{1F64F}] translates to surrogate-pair-aware alternation
     // e.g. \uD83D[\uDE00-\uDE4F] for same-high-surrogate ranges.
 
-    [Theory]
-    [InlineData(@"[\u{1F600}-\u{1F64F}]", "\U0001F600", true)]     // 😀 start
-    [InlineData(@"[\u{1F600}-\u{1F64F}]", "\U0001F64F", true)]     // 🙏 end
-    [InlineData(@"[\u{1F600}-\u{1F64F}]", "\U0001F300", false)]    // 🌀 outside
-    [InlineData(@"[\u{1F600}-\u{1F64F}]", "A", false)]
+    [TestMethod]
+    [DataRow(@"[\u{1F600}-\u{1F64F}]", "\U0001F600", true)]     // 😀 start
+    [DataRow(@"[\u{1F600}-\u{1F64F}]", "\U0001F64F", true)]     // 🙏 end
+    [DataRow(@"[\u{1F600}-\u{1F64F}]", "\U0001F300", false)]    // 🌀 outside
+    [DataRow(@"[\u{1F600}-\u{1F64F}]", "A", false)]
     public void SupplementaryCharacterRangeMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1343,39 +1344,39 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 40. CHARACTER CLASS WITH \u{} RANGES (BMP only)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\u{41}", @"\u0041")]                 // simple BMP
-    [InlineData(@"\u{0}", @"\u0000")]                  // zero
-    [InlineData(@"\u{FF}", @"\u00FF")]                 // two hex digits
-    [InlineData(@"\u{FFFF}", @"\uFFFF")]               // BMP max
-    [InlineData(@"\u{10000}", @"(?:\uD800\uDC00)")]        // first supplementary → surrogate pair in group
-    [InlineData(@"\u{10FFFF}", @"(?:\uDBFF\uDFFF)")]       // max → surrogate pair in group
-    [InlineData(@"\u{1F600}", @"(?:\uD83D\uDE00)")]        // emoji → surrogate pair in group
+    [TestMethod]
+    [DataRow(@"\u{41}", @"\u0041")]                 // simple BMP
+    [DataRow(@"\u{0}", @"\u0000")]                  // zero
+    [DataRow(@"\u{FF}", @"\u00FF")]                 // two hex digits
+    [DataRow(@"\u{FFFF}", @"\uFFFF")]               // BMP max
+    [DataRow(@"\u{10000}", @"(?:\uD800\uDC00)")]        // first supplementary → surrogate pair in group
+    [DataRow(@"\u{10FFFF}", @"(?:\uDBFF\uDFFF)")]       // max → surrogate pair in group
+    [DataRow(@"\u{1F600}", @"(?:\uD83D\uDE00)")]        // emoji → surrogate pair in group
     public void UnicodeEscapeBoundaryValuesTranslateCorrectly(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
     // ================================================================
     // 40. CHARACTER CLASS WITH \u{} RANGES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\u{41}-\u{5A}]", "A", true)]     // A-Z
-    [InlineData(@"[\u{41}-\u{5A}]", "Z", true)]
-    [InlineData(@"[\u{41}-\u{5A}]", "a", false)]
-    [InlineData(@"[\u{41}-\u{5A}]", "@", false)]
+    [TestMethod]
+    [DataRow(@"[\u{41}-\u{5A}]", "A", true)]     // A-Z
+    [DataRow(@"[\u{41}-\u{5A}]", "Z", true)]
+    [DataRow(@"[\u{41}-\u{5A}]", "a", false)]
+    [DataRow(@"[\u{41}-\u{5A}]", "@", false)]
     public void UnicodeEscapeInCharClassRangeMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
     // Mixed \u{} and literal in class
-    [Theory]
-    [InlineData(@"[\u{41}bc]", "A", true)]
-    [InlineData(@"[\u{41}bc]", "b", true)]
-    [InlineData(@"[\u{41}bc]", "c", true)]
-    [InlineData(@"[\u{41}bc]", "d", false)]
+    [TestMethod]
+    [DataRow(@"[\u{41}bc]", "A", true)]
+    [DataRow(@"[\u{41}bc]", "b", true)]
+    [DataRow(@"[\u{41}bc]", "c", true)]
+    [DataRow(@"[\u{41}bc]", "d", false)]
     public void MixedUnicodeEscapeAndLiteralInClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1389,16 +1390,16 @@ public class EcmaRegexTranslatorComprehensiveTests
     // This is a fundamental semantic difference between the engines.
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\1(a)", "a", true)]         // forward ref = empty match, then captures
+    [TestMethod]
+    [DataRow(@"\1(a)", "a", true)]         // forward ref = empty match, then captures
     public void ForwardReferenceMatchesEmptyString(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"(?:a|(b))\1", "a", true)]   // group 1 didn't participate → \1 = empty
-    [InlineData(@"(?:a|(b))\1", "bb", true)]  // group 1 = 'b', \1 = 'b'
+    [TestMethod]
+    [DataRow(@"(?:a|(b))\1", "a", true)]   // group 1 didn't participate → \1 = empty
+    [DataRow(@"(?:a|(b))\1", "bb", true)]  // group 1 = 'b', \1 = 'b'
     public void NonParticipatingGroupBackrefMatchesEmpty(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1408,12 +1409,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 42. HEX ESCAPE VALUES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\x41", "A", true)]
-    [InlineData(@"\x61", "a", true)]
-    [InlineData(@"\x00", "\0", true)]
-    [InlineData(@"\xFF", "\xFF", true)]
-    [InlineData(@"\x41", "B", false)]
+    [TestMethod]
+    [DataRow(@"\x41", "A", true)]
+    [DataRow(@"\x61", "a", true)]
+    [DataRow(@"\x00", "\0", true)]
+    [DataRow(@"\xFF", "\xFF", true)]
+    [DataRow(@"\x41", "B", false)]
     public void HexEscapeMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1423,10 +1424,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 43. BACKSPACE IN CHARACTER CLASS
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\b]", "\x08", true)]     // U+0008 backspace
-    [InlineData(@"[\b]", "b", false)]
-    [InlineData(@"[\b]", "\n", false)]
+    [TestMethod]
+    [DataRow(@"[\b]", "\x08", true)]     // U+0008 backspace
+    [DataRow(@"[\b]", "b", false)]
+    [DataRow(@"[\b]", "\n", false)]
     public void BackspaceInCharClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1436,21 +1437,21 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 44. COMPLEX NESTED GROUPS WITH BACKREFERENCES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"((a)(b))\1\2\3", "ababab", true)]
-    [InlineData(@"((a)(b))\1\2\3", "ababba", false)]
+    [TestMethod]
+    [DataRow(@"((a)(b))\1\2\3", "ababab", true)]
+    [DataRow(@"((a)(b))\1\2\3", "ababba", false)]
     public void NestedGroupBackrefsMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
     // Backreference with quantifier
-    [Theory]
-    [InlineData(@"(a)\1+", "aa", true)]
-    [InlineData(@"(a)\1+", "aaa", true)]
-    [InlineData(@"(a)\1+", "a", false)]       // \1 must match once
-    [InlineData(@"(a)\1{2}", "aaa", true)]    // \1 must match twice
-    [InlineData(@"(a)\1{2}", "aa", false)]
+    [TestMethod]
+    [DataRow(@"(a)\1+", "aa", true)]
+    [DataRow(@"(a)\1+", "aaa", true)]
+    [DataRow(@"(a)\1+", "a", false)]       // \1 must match once
+    [DataRow(@"(a)\1{2}", "aaa", true)]    // \1 must match twice
+    [DataRow(@"(a)\1{2}", "aa", false)]
     public void BackreferenceWithQuantifierMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1460,12 +1461,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 45. LOOKAHEAD/LOOKBEHIND WITH SHORTHANDS
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(?=\d)5", "5", true)]
-    [InlineData(@"(?=\d)a", "a", false)]
-    [InlineData(@"(?<=\d)a", "5a", true)]
-    [InlineData(@"(?<=\d)a", "ba", false)]
-    [InlineData(@"(?!\w)!", "!", true)]
+    [TestMethod]
+    [DataRow(@"(?=\d)5", "5", true)]
+    [DataRow(@"(?=\d)a", "a", false)]
+    [DataRow(@"(?<=\d)a", "5a", true)]
+    [DataRow(@"(?<=\d)a", "ba", false)]
+    [DataRow(@"(?!\w)!", "!", true)]
     public void LookAroundWithShorthandsMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1475,13 +1476,13 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 46. PROPERTY ESCAPE INSIDE CHARACTER CLASS
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\p{L}\d]", "a", true)]     // \p{L} matches letter
-    [InlineData(@"[\p{L}\d]", "5", true)]     // \d matches digit
-    [InlineData(@"[\p{L}\d]", "!", false)]
-    [InlineData(@"[\p{Lu}0-9]", "A", true)]   // uppercase letter
-    [InlineData(@"[\p{Lu}0-9]", "5", true)]   // digit range
-    [InlineData(@"[\p{Lu}0-9]", "a", false)]  // lowercase → no match
+    [TestMethod]
+    [DataRow(@"[\p{L}\d]", "a", true)]     // \p{L} matches letter
+    [DataRow(@"[\p{L}\d]", "5", true)]     // \d matches digit
+    [DataRow(@"[\p{L}\d]", "!", false)]
+    [DataRow(@"[\p{Lu}0-9]", "A", true)]   // uppercase letter
+    [DataRow(@"[\p{Lu}0-9]", "5", true)]   // digit range
+    [DataRow(@"[\p{Lu}0-9]", "a", false)]  // lowercase → no match
     public void PropertyEscapeInCharClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1491,12 +1492,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 47. EMPTY PATTERN AND QUANTIFIER EDGE CASES
     // ================================================================
 
-    [Theory]
-    [InlineData("", "", true)]           // empty pattern matches empty
-    [InlineData("", "a", true)]          // empty pattern matches anywhere
-    [InlineData("a{0}", "", true)]       // zero-match quantifier
-    [InlineData("a{0,0}", "", true)]     // explicit zero-zero
-    [InlineData("a{0,0}b", "b", true)]  // zero 'a's then 'b'
+    [TestMethod]
+    [DataRow("", "", true)]           // empty pattern matches empty
+    [DataRow("", "a", true)]          // empty pattern matches anywhere
+    [DataRow("a{0}", "", true)]       // zero-match quantifier
+    [DataRow("a{0,0}", "", true)]     // explicit zero-zero
+    [DataRow("a{0,0}b", "b", true)]  // zero 'a's then 'b'
     public void EmptyAndZeroQuantifierEdgeCases(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1506,13 +1507,13 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 48. ESCAPED SPECIAL CHARS MATCH LITERALLY
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\t", "\t", true)]
-    [InlineData(@"\t", "t", false)]
-    [InlineData(@"\n", "\n", true)]
-    [InlineData(@"\r", "\r", true)]
-    [InlineData(@"\f", "\f", true)]
-    [InlineData(@"\v", "\v", true)]
+    [TestMethod]
+    [DataRow(@"\t", "\t", true)]
+    [DataRow(@"\t", "t", false)]
+    [DataRow(@"\n", "\n", true)]
+    [DataRow(@"\r", "\r", true)]
+    [DataRow(@"\f", "\f", true)]
+    [DataRow(@"\v", "\v", true)]
     public void ControlEscapeCharsMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1522,14 +1523,14 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 49. \p{Nd} vs \d — DIFFERENT CHARACTER SETS
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Nd}", "\u0660", true)]    // Arabic-Indic digit ٠
-    [InlineData(@"\d", "\u0660", false)]        // ES \d = [0-9] only
-    [InlineData(@"\p{Nd}", "5", true)]
-    [InlineData(@"\d", "5", true)]
-    [InlineData(@"\w", "\u00E9", false)]        // é not in ASCII \w
-    [InlineData(@"\w", "\u00F1", false)]        // ñ not in ASCII \w
-    [InlineData(@"\d", "\uFF10", false)]        // fullwidth zero not in ES \d
+    [TestMethod]
+    [DataRow(@"\p{Nd}", "\u0660", true)]    // Arabic-Indic digit ٠
+    [DataRow(@"\d", "\u0660", false)]        // ES \d = [0-9] only
+    [DataRow(@"\p{Nd}", "5", true)]
+    [DataRow(@"\d", "5", true)]
+    [DataRow(@"\w", "\u00E9", false)]        // é not in ASCII \w
+    [DataRow(@"\w", "\u00F1", false)]        // ñ not in ASCII \w
+    [DataRow(@"\d", "\uFF10", false)]        // fullwidth zero not in ES \d
     public void UnicodePropertyVsShorthandDifference(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1539,10 +1540,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 50. ORPHAN BACKREFERENCE — no groups defined
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\1")]       // no group 1
-    [InlineData(@"\2")]       // no group 2
-    [InlineData(@"\9")]       // no group 9
+    [TestMethod]
+    [DataRow(@"\1")]       // no group 1
+    [DataRow(@"\2")]       // no group 2
+    [DataRow(@"\9")]       // no group 9
     public void OrphanBackreferenceIsInvalid(string ecma)
     {
         // In ES /u mode, orphan backreferences (\N with no group N)
@@ -1550,7 +1551,7 @@ public class EcmaRegexTranslatorComprehensiveTests
         // counting groups, but .NET will reject these at compile time.
         // This test documents the expected behavior.
         string dotNetPattern = EcmaRegexTranslator.Translate(ecma);
-        Assert.Throws<System.Text.RegularExpressions.RegexParseException>(
+        Assert.ThrowsExactly<System.Text.RegularExpressions.RegexParseException>(
             () => new Regex(dotNetPattern));
     }
 
@@ -1558,18 +1559,18 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 51. BACKREFERENCES WITH QUANTIFIERS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a)\1+", "aa", true)]       // backref repeated 1+
-    [InlineData(@"(a)\1+", "aaa", true)]      // backref repeated 2+
-    [InlineData(@"(a)\1+", "a", false)]       // needs at least one repetition
-    [InlineData(@"(a)\1?", "a", true)]        // optional backref = empty
-    [InlineData(@"(a)\1?", "aa", true)]       // optional backref = matched
-    [InlineData(@"(a)\1{2}", "aaa", true)]    // exact repeat
-    [InlineData(@"(a)\1{2}", "aa", false)]    // too few
-    [InlineData(@"(a)\1*", "a", true)]        // zero repeats
-    [InlineData(@"(a)\1*", "aaaa", true)]     // many repeats
-    [InlineData(@"(a)\1{1,3}", "aa", true)]   // range min
-    [InlineData(@"(a)\1{1,3}", "aaaa", true)] // range max
+    [TestMethod]
+    [DataRow(@"(a)\1+", "aa", true)]       // backref repeated 1+
+    [DataRow(@"(a)\1+", "aaa", true)]      // backref repeated 2+
+    [DataRow(@"(a)\1+", "a", false)]       // needs at least one repetition
+    [DataRow(@"(a)\1?", "a", true)]        // optional backref = empty
+    [DataRow(@"(a)\1?", "aa", true)]       // optional backref = matched
+    [DataRow(@"(a)\1{2}", "aaa", true)]    // exact repeat
+    [DataRow(@"(a)\1{2}", "aa", false)]    // too few
+    [DataRow(@"(a)\1*", "a", true)]        // zero repeats
+    [DataRow(@"(a)\1*", "aaaa", true)]     // many repeats
+    [DataRow(@"(a)\1{1,3}", "aa", true)]   // range min
+    [DataRow(@"(a)\1{1,3}", "aaaa", true)] // range max
     public void BackrefWithQuantifierMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1579,10 +1580,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 52. MULTIPLE BACKREFS TO SAME GROUP (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a)\1\1", "aaa", true)]
-    [InlineData(@"(a)\1\1", "aa", false)]
-    [InlineData(@"(ab)\1\1", "ababab", true)]
+    [TestMethod]
+    [DataRow(@"(a)\1\1", "aaa", true)]
+    [DataRow(@"(a)\1\1", "aa", false)]
+    [DataRow(@"(ab)\1\1", "ababab", true)]
     public void MultipleBackrefsToSameGroupMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1592,11 +1593,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 53. BACKREFS INSIDE ALTERNATION (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a)(\1|b)", "aa", true)]
-    [InlineData(@"(a)(\1|b)", "ab", true)]
-    [InlineData(@"(a)(b|\1)", "aa", true)]
-    [InlineData(@"(a)(b|\1)", "ab", true)]
+    [TestMethod]
+    [DataRow(@"(a)(\1|b)", "aa", true)]
+    [DataRow(@"(a)(\1|b)", "ab", true)]
+    [DataRow(@"(a)(b|\1)", "aa", true)]
+    [DataRow(@"(a)(b|\1)", "ab", true)]
     public void BackrefInsideAlternationMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1606,11 +1607,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 54. BACKREFS INSIDE LOOKAHEAD/LOOKBEHIND (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a)(?=\1)a", "aa", true)]
-    [InlineData(@"(a)(?=\1)b", "ab", false)]
-    [InlineData(@"(a)(?!\1)b", "ab", true)]
-    [InlineData(@"(a)(?!\1)a", "aa", false)]
+    [TestMethod]
+    [DataRow(@"(a)(?=\1)a", "aa", true)]
+    [DataRow(@"(a)(?=\1)b", "ab", false)]
+    [DataRow(@"(a)(?!\1)b", "ab", true)]
+    [DataRow(@"(a)(?!\1)a", "aa", false)]
     public void BackrefInLookaroundMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1620,10 +1621,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 55. NESTED GROUPS WITH MULTIPLE BACKREFS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"((a))\1\2", "aaa", true)]
-    [InlineData(@"((a))\1\2", "aa", false)]
-    [InlineData(@"((a)(b))\1\2\3", "ababab", true)]
+    [TestMethod]
+    [DataRow(@"((a))\1\2", "aaa", true)]
+    [DataRow(@"((a))\1\2", "aa", false)]
+    [DataRow(@"((a)(b))\1\2\3", "ababab", true)]
     public void NestedGroupMultiBackrefsMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1633,12 +1634,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 56. QUANTIFIED GROUP WITH BACKREF (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a+)\1", "aa", true)]
-    [InlineData(@"(a+)\1", "aaaa", true)]
-    [InlineData(@"(a+)\1", "aaa", true)]
-    [InlineData(@"(a{2})\1", "aaaa", true)]
-    [InlineData(@"(a{2})\1", "aaa", false)]
+    [TestMethod]
+    [DataRow(@"(a+)\1", "aa", true)]
+    [DataRow(@"(a+)\1", "aaaa", true)]
+    [DataRow(@"(a+)\1", "aaa", true)]
+    [DataRow(@"(a{2})\1", "aaaa", true)]
+    [DataRow(@"(a{2})\1", "aaa", false)]
     public void QuantifiedGroupBackrefMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1648,10 +1649,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 57. NAMED BACKREFS WITH VARIOUS NAMES (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(?<name123>a)\k<name123>", "aa", true)]
-    [InlineData(@"(?<n>a)\k<n>", "aa", true)]
-    [InlineData(@"(?<longGroupName>a)\k<longGroupName>", "aa", true)]
+    [TestMethod]
+    [DataRow(@"(?<name123>a)\k<name123>", "aa", true)]
+    [DataRow(@"(?<n>a)\k<n>", "aa", true)]
+    [DataRow(@"(?<longGroupName>a)\k<longGroupName>", "aa", true)]
     public void NamedBackrefVariationsMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1661,12 +1662,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 58. NON-PARTICIPATING / FORWARD BACKREF EDGE CASES (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a)?\1", "", true)]         // optional group didn't capture → empty
-    [InlineData(@"(a)?\1", "aa", true)]       // optional group captured
-    [InlineData(@"\1+(a)", "a", true)]        // forward ref with quantifier
-    [InlineData(@"(?:a|(b))\1c", "ac", true)] // non-participating then literal
-    [InlineData(@"(?:a|(b))\1c", "bbc", true)]// participating then literal
+    [TestMethod]
+    [DataRow(@"(a)?\1", "", true)]         // optional group didn't capture → empty
+    [DataRow(@"(a)?\1", "aa", true)]       // optional group captured
+    [DataRow(@"\1+(a)", "a", true)]        // forward ref with quantifier
+    [DataRow(@"(?:a|(b))\1c", "ac", true)] // non-participating then literal
+    [DataRow(@"(?:a|(b))\1c", "bbc", true)]// participating then literal
     public void NonParticipatingAndForwardBackrefEdgeCases(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1676,10 +1677,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 59. REAL-WORLD NAMED BACKREF PATTERNS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData("(?<quote>[\"']).*?\\k<quote>", "\"hello\"", true)]
-    [InlineData("(?<quote>[\"']).*?\\k<quote>", "'world'", true)]
-    [InlineData("(?<quote>[\"']).*?\\k<quote>", "\"hello'", false)]
+    [TestMethod]
+    [DataRow("(?<quote>[\"']).*?\\k<quote>", "\"hello\"", true)]
+    [DataRow("(?<quote>[\"']).*?\\k<quote>", "'world'", true)]
+    [DataRow("(?<quote>[\"']).*?\\k<quote>", "\"hello'", false)]
     public void QuoteMatchingWithNamedBackrefWorksCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1689,25 +1690,25 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 60. BACKREF TRANSLATION FORMAT (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a)\1+", @"(a)(?(1)\1)+")]
-    [InlineData(@"(a)\1{2}", @"(a)(?(1)\1){2}")]
-    [InlineData(@"(a)\1\1", @"(a)(?(1)\1)(?(1)\1)")]
-    [InlineData(@"((a))\1\2", @"((a))(?(1)\1)(?(2)\2)")]
-    [InlineData(@"(?<name123>a)\k<name123>", @"(?<name123>a)(?(name123)\k<name123>)")]
+    [TestMethod]
+    [DataRow(@"(a)\1+", @"(a)(?(1)\1)+")]
+    [DataRow(@"(a)\1{2}", @"(a)(?(1)\1){2}")]
+    [DataRow(@"(a)\1\1", @"(a)(?(1)\1)(?(1)\1)")]
+    [DataRow(@"((a))\1\2", @"((a))(?(1)\1)(?(2)\2)")]
+    [DataRow(@"(?<name123>a)\k<name123>", @"(?<name123>a)(?(name123)\k<name123>)")]
     public void BackrefTranslationFormatIsCorrect(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
     // ================================================================
     // 61. MULTIPLE SUPPLEMENTARY RANGES IN ONE CLASS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\u{1F600}-\u{1F64F}\u{1F900}-\u{1F9FF}]", "\U0001F600", true)]   // 😀 first range
-    [InlineData(@"[\u{1F600}-\u{1F64F}\u{1F900}-\u{1F9FF}]", "\U0001F923", true)]   // 🤣 second range
-    [InlineData(@"[\u{1F600}-\u{1F64F}\u{1F900}-\u{1F9FF}]", "\U0001F300", false)]  // 🌀 outside both
+    [TestMethod]
+    [DataRow(@"[\u{1F600}-\u{1F64F}\u{1F900}-\u{1F9FF}]", "\U0001F600", true)]   // 😀 first range
+    [DataRow(@"[\u{1F600}-\u{1F64F}\u{1F900}-\u{1F9FF}]", "\U0001F923", true)]   // 🤣 second range
+    [DataRow(@"[\u{1F600}-\u{1F64F}\u{1F900}-\u{1F9FF}]", "\U0001F300", false)]  // 🌀 outside both
     public void MultipleSupplementaryRangesInClassMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1717,10 +1718,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 62. MIXED BMP AND SUPPLEMENTARY IN CLASS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[a-z\u{1F600}-\u{1F64F}]", "a", true)]
-    [InlineData(@"[a-z\u{1F600}-\u{1F64F}]", "\U0001F600", true)]
-    [InlineData(@"[a-z\u{1F600}-\u{1F64F}]", "0", false)]
+    [TestMethod]
+    [DataRow(@"[a-z\u{1F600}-\u{1F64F}]", "a", true)]
+    [DataRow(@"[a-z\u{1F600}-\u{1F64F}]", "\U0001F600", true)]
+    [DataRow(@"[a-z\u{1F600}-\u{1F64F}]", "0", false)]
     public void MixedBmpAndSupplementaryInClassMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1730,10 +1731,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 63. SINGLE SUPPLEMENTARY IN CLASS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\u{1F600}]", "\U0001F600", true)]
-    [InlineData(@"[\u{1F600}]", "\U0001F601", false)]
-    [InlineData(@"[\u{1F600}]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[\u{1F600}]", "\U0001F600", true)]
+    [DataRow(@"[\u{1F600}]", "\U0001F601", false)]
+    [DataRow(@"[\u{1F600}]", "a", false)]
     public void SingleSupplementaryInClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1743,10 +1744,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 64. TWO INDIVIDUAL SUPPLEMENTARY CHARS IN CLASS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\u{1F600}\u{1F601}]", "\U0001F600", true)]
-    [InlineData(@"[\u{1F600}\u{1F601}]", "\U0001F601", true)]
-    [InlineData(@"[\u{1F600}\u{1F601}]", "\U0001F602", false)]
+    [TestMethod]
+    [DataRow(@"[\u{1F600}\u{1F601}]", "\U0001F600", true)]
+    [DataRow(@"[\u{1F600}\u{1F601}]", "\U0001F601", true)]
+    [DataRow(@"[\u{1F600}\u{1F601}]", "\U0001F602", false)]
     public void TwoSupplementaryCharsInClassMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1756,11 +1757,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 65. BMP CONTENT SURROUNDING SUPPLEMENTARY RANGE (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[A\u{1F600}-\u{1F64F}Z]", "A", true)]
-    [InlineData(@"[A\u{1F600}-\u{1F64F}Z]", "\U0001F600", true)]
-    [InlineData(@"[A\u{1F600}-\u{1F64F}Z]", "Z", true)]
-    [InlineData(@"[A\u{1F600}-\u{1F64F}Z]", "B", false)]
+    [TestMethod]
+    [DataRow(@"[A\u{1F600}-\u{1F64F}Z]", "A", true)]
+    [DataRow(@"[A\u{1F600}-\u{1F64F}Z]", "\U0001F600", true)]
+    [DataRow(@"[A\u{1F600}-\u{1F64F}Z]", "Z", true)]
+    [DataRow(@"[A\u{1F600}-\u{1F64F}Z]", "B", false)]
     public void BmpAroundSupplementaryRangeMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1770,9 +1771,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 66. ESCAPED CHARS WITH SUPPLEMENTARY (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\-\u{1F600}-\u{1F64F}]", "-", true)]
-    [InlineData(@"[\-\u{1F600}-\u{1F64F}]", "\U0001F600", true)]
+    [TestMethod]
+    [DataRow(@"[\-\u{1F600}-\u{1F64F}]", "-", true)]
+    [DataRow(@"[\-\u{1F600}-\u{1F64F}]", "\U0001F600", true)]
     public void EscapedCharsWithSupplementaryMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1782,12 +1783,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 67. WIDE SUPPLEMENTARY RANGE (DIFFERENT HIGH SURROGATES) (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\u{1F600}-\u{1F9FF}]", "\U0001F600", true)]   // start
-    [InlineData(@"[\u{1F600}-\u{1F9FF}]", "\U0001F9FF", true)]   // end
-    [InlineData(@"[\u{1F600}-\u{1F9FF}]", "\U0001F700", true)]   // middle
-    [InlineData(@"[\u{1F600}-\u{1F9FF}]", "\U0001F300", false)]  // before
-    [InlineData(@"[\u{1F600}-\u{1F9FF}]", "\U0001FA00", false)]  // after
+    [TestMethod]
+    [DataRow(@"[\u{1F600}-\u{1F9FF}]", "\U0001F600", true)]   // start
+    [DataRow(@"[\u{1F600}-\u{1F9FF}]", "\U0001F9FF", true)]   // end
+    [DataRow(@"[\u{1F600}-\u{1F9FF}]", "\U0001F700", true)]   // middle
+    [DataRow(@"[\u{1F600}-\u{1F9FF}]", "\U0001F300", false)]  // before
+    [DataRow(@"[\u{1F600}-\u{1F9FF}]", "\U0001FA00", false)]  // after
     public void WideSupplementaryRangeMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1797,11 +1798,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 68. FULL SUPPLEMENTARY PLANE RANGE (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\u{10000}-\u{10FFFF}]", "\U00010000", true)]   // first supplementary
-    [InlineData(@"[\u{10000}-\u{10FFFF}]", "\U0010FFFF", true)]   // last valid code point
-    [InlineData(@"[\u{10000}-\u{10FFFF}]", "\U0001F600", true)]   // emoji in range
-    [InlineData(@"[\u{10000}-\u{10FFFF}]", "A", false)]           // BMP
+    [TestMethod]
+    [DataRow(@"[\u{10000}-\u{10FFFF}]", "\U00010000", true)]   // first supplementary
+    [DataRow(@"[\u{10000}-\u{10FFFF}]", "\U0010FFFF", true)]   // last valid code point
+    [DataRow(@"[\u{10000}-\u{10FFFF}]", "\U0001F600", true)]   // emoji in range
+    [DataRow(@"[\u{10000}-\u{10FFFF}]", "A", false)]           // BMP
     public void FullSupplementaryRangeMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1811,9 +1812,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 69. NEGATED SUPPLEMENTARY CLASS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[^\u{1F600}]", "a", true)]
-    [InlineData(@"[^\u{1F600}]", "\U0001F600", false)]
+    [TestMethod]
+    [DataRow(@"[^\u{1F600}]", "a", true)]
+    [DataRow(@"[^\u{1F600}]", "\U0001F600", false)]
     public void NegatedSingleSupplementaryMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1821,10 +1822,10 @@ public class EcmaRegexTranslatorComprehensiveTests
 
     // Negated supplementary ranges use negative lookahead:
     // [^\u{1F600}-\u{1F64F}] → (?!\uD83D[\uDE00-\uDE4F])(?:[\uD800-\uDBFF][\uDC00-\uDFFF]|[^\uD800-\uDFFF])
-    [Theory]
-    [InlineData(@"[^\u{1F600}-\u{1F64F}]", "a", true)]
-    [InlineData(@"[^\u{1F600}-\u{1F64F}]", "\U0001F600", false)]
-    [InlineData(@"[^\u{1F600}-\u{1F64F}]", "\U0001F300", true)]
+    [TestMethod]
+    [DataRow(@"[^\u{1F600}-\u{1F64F}]", "a", true)]
+    [DataRow(@"[^\u{1F600}-\u{1F64F}]", "\U0001F600", false)]
+    [DataRow(@"[^\u{1F600}-\u{1F64F}]", "\U0001F300", true)]
     public void NegatedSupplementaryRangeMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1834,10 +1835,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 70. \p{...} WITH SUPPLEMENTARY IN CLASS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\p{L}\u{1F600}]", "a", true)]
-    [InlineData(@"[\p{L}\u{1F600}]", "\U0001F600", true)]
-    [InlineData(@"[\p{L}\u{1F600}]", "5", false)]
+    [TestMethod]
+    [DataRow(@"[\p{L}\u{1F600}]", "a", true)]
+    [DataRow(@"[\p{L}\u{1F600}]", "\U0001F600", true)]
+    [DataRow(@"[\p{L}\u{1F600}]", "5", false)]
     public void PropertyEscapeWithSupplementaryInClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1847,10 +1848,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 71. SHORTHAND WITH SUPPLEMENTARY IN CLASS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\d\u{1F600}-\u{1F64F}]", "5", true)]
-    [InlineData(@"[\d\u{1F600}-\u{1F64F}]", "\U0001F600", true)]
-    [InlineData(@"[\d\u{1F600}-\u{1F64F}]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[\d\u{1F600}-\u{1F64F}]", "5", true)]
+    [DataRow(@"[\d\u{1F600}-\u{1F64F}]", "\U0001F600", true)]
+    [DataRow(@"[\d\u{1F600}-\u{1F64F}]", "a", false)]
     public void ShorthandWithSupplementaryInClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1860,30 +1861,30 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 72. SUPPLEMENTARY TRANSLATION FORMAT
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[a-z\u{1F600}-\u{1F64F}]", @"(?:[a-z]|\uD83D[\uDE00-\uDE4F])")]
-    [InlineData(@"[A\u{1F600}-\u{1F64F}Z]", @"(?:[AZ]|\uD83D[\uDE00-\uDE4F])")]
+    [TestMethod]
+    [DataRow(@"[a-z\u{1F600}-\u{1F64F}]", @"(?:[a-z]|\uD83D[\uDE00-\uDE4F])")]
+    [DataRow(@"[A\u{1F600}-\u{1F64F}Z]", @"(?:[AZ]|\uD83D[\uDE00-\uDE4F])")]
     public void MixedSupplementaryTranslationFormatIsCorrect(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
     // ================================================================
     // 73. GETMAXTRANSLATEDLENGTH COVERS NEW PATTERNS
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a)\1")]
-    [InlineData(@"(a)(b)\1\2")]
-    [InlineData(@"(?<n>a)\k<n>")]
-    [InlineData(@"[\u{1F600}-\u{1F64F}]")]
-    [InlineData(@"[a-z\u{1F600}-\u{1F64F}\u{1F900}-\u{1F9FF}]")]
-    [InlineData(@"[\u{10000}-\u{10FFFF}]")]
+    [TestMethod]
+    [DataRow(@"(a)\1")]
+    [DataRow(@"(a)(b)\1\2")]
+    [DataRow(@"(?<n>a)\k<n>")]
+    [DataRow(@"[\u{1F600}-\u{1F64F}]")]
+    [DataRow(@"[a-z\u{1F600}-\u{1F64F}\u{1F900}-\u{1F9FF}]")]
+    [DataRow(@"[\u{10000}-\u{10FFFF}]")]
     public void GetMaxTranslatedLengthCoversNewPatterns(string ecma)
     {
         int maxLen = EcmaRegexTranslator.GetMaxTranslatedLength(ecma);
         string translated = EcmaRegexTranslator.Translate(ecma);
-        Assert.True(maxLen >= translated.Length,
+        Assert.IsTrue(maxLen >= translated.Length,
             $"GetMaxTranslatedLength returned {maxLen} but translated pattern is {translated.Length} chars: {translated}");
     }
 
@@ -1891,35 +1892,35 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 74. TRYTRANSLATE BUFFER TOO SMALL
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(a)\1", 5)]
-    [InlineData(@"[\u{1F600}-\u{1F64F}]", 10)]
+    [TestMethod]
+    [DataRow(@"(a)\1", 5)]
+    [DataRow(@"[\u{1F600}-\u{1F64F}]", 10)]
     public void TryTranslateReturnsTooSmallForInsufficientBuffer(string ecma, int bufferSize)
     {
         Span<char> buffer = stackalloc char[bufferSize];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
-        Assert.Equal(OperationStatus.DestinationTooSmall, status);
+        Assert.AreEqual(OperationStatus.DestinationTooSmall, status);
     }
 
     // ================================================================
     // 75. \u{} WITH LEADING ZEROS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\u{00041}", @"\u0041")]
-    [InlineData(@"\u{0001F600}", @"(?:\uD83D\uDE00)")]
-    [InlineData(@"\u{0}", @"\u0000")]
-    [InlineData(@"\u{00}", @"\u0000")]
+    [TestMethod]
+    [DataRow(@"\u{00041}", @"\u0041")]
+    [DataRow(@"\u{0001F600}", @"(?:\uD83D\uDE00)")]
+    [DataRow(@"\u{0}", @"\u0000")]
+    [DataRow(@"\u{00}", @"\u0000")]
     public void LeadingZerosInBraceEscapeTranslateCorrectly(string ecma, string expected)
     {
-        Assert.Equal(expected, EcmaRegexTranslator.Translate(ecma));
+        Assert.AreEqual(expected, EcmaRegexTranslator.Translate(ecma));
     }
 
-    [Theory]
-    [InlineData(@"\u{00041}", "A", true)]
-    [InlineData(@"\u{00041}", "B", false)]
-    [InlineData(@"\u{0001F600}", "\U0001F600", true)]
-    [InlineData(@"\u{0001F600}", "A", false)]
+    [TestMethod]
+    [DataRow(@"\u{00041}", "A", true)]
+    [DataRow(@"\u{00041}", "B", false)]
+    [DataRow(@"\u{0001F600}", "\U0001F600", true)]
+    [DataRow(@"\u{0001F600}", "A", false)]
     public void LeadingZerosInBraceEscapeMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1929,17 +1930,17 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 76. MIXED ESCAPE TYPES IN CHAR CLASS RANGES (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\u0041-Z]", "A", true)]
-    [InlineData(@"[\u0041-Z]", "M", true)]
-    [InlineData(@"[\u0041-Z]", "Z", true)]
-    [InlineData(@"[\u0041-Z]", "a", false)]
-    [InlineData(@"[\x41-Z]", "A", true)]
-    [InlineData(@"[\x41-Z]", "a", false)]
-    [InlineData(@"[A-\u{5A}]", "A", true)]
-    [InlineData(@"[A-\u{5A}]", "Z", true)]
-    [InlineData(@"[A-\u{5A}]", "a", false)]
-    [InlineData(@"[\x41-\u{5A}]", "M", true)]
+    [TestMethod]
+    [DataRow(@"[\u0041-Z]", "A", true)]
+    [DataRow(@"[\u0041-Z]", "M", true)]
+    [DataRow(@"[\u0041-Z]", "Z", true)]
+    [DataRow(@"[\u0041-Z]", "a", false)]
+    [DataRow(@"[\x41-Z]", "A", true)]
+    [DataRow(@"[\x41-Z]", "a", false)]
+    [DataRow(@"[A-\u{5A}]", "A", true)]
+    [DataRow(@"[A-\u{5A}]", "Z", true)]
+    [DataRow(@"[A-\u{5A}]", "a", false)]
+    [DataRow(@"[\x41-\u{5A}]", "M", true)]
     public void MixedEscapeTypesInCharClassRangesMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1949,10 +1950,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 77. SUPPLEMENTARY + LITERAL DASH (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\u{1F600}-]", "\U0001F600", true)]
-    [InlineData(@"[\u{1F600}-]", "-", true)]
-    [InlineData(@"[\u{1F600}-]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[\u{1F600}-]", "\U0001F600", true)]
+    [DataRow(@"[\u{1F600}-]", "-", true)]
+    [DataRow(@"[\u{1F600}-]", "a", false)]
     public void SupplementaryWithLiteralDashMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1962,12 +1963,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 78. NEGATED SHORTHAND + SUPPLEMENTARY INTERACTION (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\D\u{1F600}]", "a", true)]        // \D matches non-digit
-    [InlineData(@"[\D\u{1F600}]", "\U0001F600", true)]// supplementary char
-    [InlineData(@"[\D\u{1F600}]", "5", false)]        // digit excluded by \D
-    [InlineData(@"[^\D\u{1F600}]", "5", true)]        // NOT(\D ∪ {emoji}) = digits
-    [InlineData(@"[^\D\u{1F600}]", "a", false)]       // letter in \D
+    [TestMethod]
+    [DataRow(@"[\D\u{1F600}]", "a", true)]        // \D matches non-digit
+    [DataRow(@"[\D\u{1F600}]", "\U0001F600", true)]// supplementary char
+    [DataRow(@"[\D\u{1F600}]", "5", false)]        // digit excluded by \D
+    [DataRow(@"[^\D\u{1F600}]", "5", true)]        // NOT(\D ∪ {emoji}) = digits
+    [DataRow(@"[^\D\u{1F600}]", "a", false)]       // letter in \D
     public void NegatedShorthandWithSupplementaryMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1977,13 +1978,13 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 79. DASH AT BOUNDARIES IN CHARACTER CLASSES (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[-a]", "-", true)]
-    [InlineData(@"[-a]", "a", true)]
-    [InlineData(@"[-a]", "b", false)]
-    [InlineData(@"[a-]", "-", true)]
-    [InlineData(@"[a-]", "a", true)]
-    [InlineData(@"[a-]", "b", false)]
+    [TestMethod]
+    [DataRow(@"[-a]", "-", true)]
+    [DataRow(@"[-a]", "a", true)]
+    [DataRow(@"[-a]", "b", false)]
+    [DataRow(@"[a-]", "-", true)]
+    [DataRow(@"[a-]", "a", true)]
+    [DataRow(@"[a-]", "b", false)]
     public void DashAtBoundariesInCharClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -1993,12 +1994,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 80. ALTERNATION EDGE CASES (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"|a", "", true)]
-    [InlineData(@"|a", "a", true)]
-    [InlineData(@"a|", "", true)]
-    [InlineData(@"a|", "a", true)]
-    [InlineData(@"||", "", true)]
+    [TestMethod]
+    [DataRow(@"|a", "", true)]
+    [DataRow(@"|a", "a", true)]
+    [DataRow(@"a|", "", true)]
+    [DataRow(@"a|", "a", true)]
+    [DataRow(@"||", "", true)]
     public void AlternationEdgeCasesMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2008,9 +2009,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 81. EMPTY PATTERN (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"", "", true)]
-    [InlineData(@"", "abc", true)]
+    [TestMethod]
+    [DataRow(@"", "", true)]
+    [DataRow(@"", "abc", true)]
     public void EmptyPatternMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2020,10 +2021,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 82. DOT WITH QUANTIFIERS (JS-validated)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"a.*b", "aXb", true)]
-    [InlineData(@"a.+b", "aXb", true)]
-    [InlineData(@"a.{3}b", "aXYZb", true)]
+    [TestMethod]
+    [DataRow(@"a.*b", "aXb", true)]
+    [DataRow(@"a.+b", "aXb", true)]
+    [DataRow(@"a.{3}b", "aXYZb", true)]
     public void DotWithQuantifiersMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2033,13 +2034,13 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 83. BINARY UNICODE PROPERTIES — translated to .NET equivalents
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Emoji}", "\U0001F600", true)]
-    [InlineData(@"\p{Emoji}", "a", false)]
-    [InlineData(@"\p{ASCII}", "A", true)]
-    [InlineData(@"\p{ASCII}", "\U0001F600", false)]
-    [InlineData(@"\p{Alphabetic}", "a", true)]
-    [InlineData(@"\p{White_Space}", " ", true)]
+    [TestMethod]
+    [DataRow(@"\p{Emoji}", "\U0001F600", true)]
+    [DataRow(@"\p{Emoji}", "a", false)]
+    [DataRow(@"\p{ASCII}", "A", true)]
+    [DataRow(@"\p{ASCII}", "\U0001F600", false)]
+    [DataRow(@"\p{Alphabetic}", "a", true)]
+    [DataRow(@"\p{White_Space}", " ", true)]
     public void BinaryPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2049,10 +2050,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 84. SCRIPT MAPPING — Script names mapped to .NET block names
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Script=Latin}", "a", true)]
-    [InlineData(@"\p{Script=Latin}", "\u03B1", false)]
-    [InlineData(@"\p{sc=Latn}", "a", true)]
+    [TestMethod]
+    [DataRow(@"\p{Script=Latin}", "a", true)]
+    [DataRow(@"\p{Script=Latin}", "\u03B1", false)]
+    [DataRow(@"\p{sc=Latn}", "a", true)]
     public void ScriptLatinMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2062,14 +2063,14 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 84b. SCRIPT=LATIN EXTENDED — full Latin script coverage
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Script=Latin}", "\u00E9", true)]  // é — Latin-1 Supplement
-    [InlineData(@"\p{Script=Latin}", "\u0100", true)]  // Ā — Latin Extended-A
-    [InlineData(@"\p{Script=Latin}", "\u0180", true)]  // ƀ — Latin Extended-B
-    [InlineData(@"\p{Script=Latin}", "\u1E00", true)]  // Ḁ — Latin Extended Additional
-    [InlineData(@"\p{Script=Latin}", "!", false)]       // Punctuation — Common script
-    [InlineData(@"\p{Script=Latin}", "0", false)]       // Digit — Common script
-    [InlineData(@"\p{Script=Latin}", " ", false)]       // Space — Common script
+    [TestMethod]
+    [DataRow(@"\p{Script=Latin}", "\u00E9", true)]  // é — Latin-1 Supplement
+    [DataRow(@"\p{Script=Latin}", "\u0100", true)]  // Ā — Latin Extended-A
+    [DataRow(@"\p{Script=Latin}", "\u0180", true)]  // ƀ — Latin Extended-B
+    [DataRow(@"\p{Script=Latin}", "\u1E00", true)]  // Ḁ — Latin Extended Additional
+    [DataRow(@"\p{Script=Latin}", "!", false)]       // Punctuation — Common script
+    [DataRow(@"\p{Script=Latin}", "0", false)]       // Digit — Common script
+    [DataRow(@"\p{Script=Latin}", " ", false)]       // Space — Common script
     public void ScriptLatinExtendedMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2079,14 +2080,14 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 85. WRONG-CASE PROPERTY NAMES — invalid in ES /u mode, rejected
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{letter}")]
-    [InlineData(@"\p{LETTER}")]
+    [TestMethod]
+    [DataRow(@"\p{letter}")]
+    [DataRow(@"\p{LETTER}")]
     public void WrongCasePropertyNameIsRejected(string ecma)
     {
         Span<char> buffer = stackalloc char[256];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
     // ================================================================
@@ -2094,14 +2095,14 @@ public class EcmaRegexTranslatorComprehensiveTests
     // BMP-only binary properties can be inlined; supplementary ones cannot.
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\p{ASCII}]+", "Hello", true)]
-    [InlineData(@"[\p{ASCII}]+", "\u00FF", false)]
-    [InlineData(@"[\p{ASCII}\p{L}]+", "Hélló", true)]
-    [InlineData(@"[\p{White_Space}]+", " \t\n", true)]
-    [InlineData(@"[\p{White_Space}]+", "abc", false)]
-    [InlineData(@"[\p{Alphabetic}0-9]+", "abc123", true)]
-    [InlineData(@"[\p{Alphabetic}0-9]+", "!!!", false)]
+    [TestMethod]
+    [DataRow(@"[\p{ASCII}]+", "Hello", true)]
+    [DataRow(@"[\p{ASCII}]+", "\u00FF", false)]
+    [DataRow(@"[\p{ASCII}\p{L}]+", "Hélló", true)]
+    [DataRow(@"[\p{White_Space}]+", " \t\n", true)]
+    [DataRow(@"[\p{White_Space}]+", "abc", false)]
+    [DataRow(@"[\p{Alphabetic}0-9]+", "abc123", true)]
+    [DataRow(@"[\p{Alphabetic}0-9]+", "!!!", false)]
     public void BinaryPropertyInsideClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2111,15 +2112,15 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 87. NEGATED BINARY PROPERTIES (standalone)
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\P{ASCII}", "\u00FF", true)]
-    [InlineData(@"\P{ASCII}", "A", false)]
-    [InlineData(@"\P{Alphabetic}", "!", true)]
-    [InlineData(@"\P{Alphabetic}", "a", false)]
-    [InlineData(@"\P{White_Space}", "x", true)]
-    [InlineData(@"\P{White_Space}", " ", false)]
-    [InlineData(@"\P{Emoji}", "x", true)]
-    [InlineData(@"\P{Emoji}", "\U0001F600", false)]
+    [TestMethod]
+    [DataRow(@"\P{ASCII}", "\u00FF", true)]
+    [DataRow(@"\P{ASCII}", "A", false)]
+    [DataRow(@"\P{Alphabetic}", "!", true)]
+    [DataRow(@"\P{Alphabetic}", "a", false)]
+    [DataRow(@"\P{White_Space}", "x", true)]
+    [DataRow(@"\P{White_Space}", " ", false)]
+    [DataRow(@"\P{Emoji}", "x", true)]
+    [DataRow(@"\P{Emoji}", "\U0001F600", false)]
     public void NegatedBinaryPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2129,21 +2130,21 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 88. MORE SCRIPT MAPPINGS
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Script=Greek}", "\u03B1", true)]
-    [InlineData(@"\p{Script=Greek}", "a", false)]
-    [InlineData(@"\p{sc=Grek}", "\u03B1", true)]
-    [InlineData(@"\p{Script=Cyrillic}", "\u0414", true)]
-    [InlineData(@"\p{Script=Cyrillic}", "a", false)]
-    [InlineData(@"\p{sc=Cyrl}", "\u0414", true)]
-    [InlineData(@"\p{Script=Arabic}", "\u0627", true)]
-    [InlineData(@"\p{Script=Arabic}", "a", false)]
-    [InlineData(@"\p{Script=Hebrew}", "\u05D0", true)]
-    [InlineData(@"\p{Script=Hebrew}", "a", false)]
-    [InlineData(@"\p{Script=Devanagari}", "\u0905", true)]
-    [InlineData(@"\p{Script=Devanagari}", "a", false)]
-    [InlineData(@"\p{Script=Thai}", "\u0E01", true)]
-    [InlineData(@"\p{Script=Thai}", "a", false)]
+    [TestMethod]
+    [DataRow(@"\p{Script=Greek}", "\u03B1", true)]
+    [DataRow(@"\p{Script=Greek}", "a", false)]
+    [DataRow(@"\p{sc=Grek}", "\u03B1", true)]
+    [DataRow(@"\p{Script=Cyrillic}", "\u0414", true)]
+    [DataRow(@"\p{Script=Cyrillic}", "a", false)]
+    [DataRow(@"\p{sc=Cyrl}", "\u0414", true)]
+    [DataRow(@"\p{Script=Arabic}", "\u0627", true)]
+    [DataRow(@"\p{Script=Arabic}", "a", false)]
+    [DataRow(@"\p{Script=Hebrew}", "\u05D0", true)]
+    [DataRow(@"\p{Script=Hebrew}", "a", false)]
+    [DataRow(@"\p{Script=Devanagari}", "\u0905", true)]
+    [DataRow(@"\p{Script=Devanagari}", "a", false)]
+    [DataRow(@"\p{Script=Thai}", "\u0E01", true)]
+    [DataRow(@"\p{Script=Thai}", "a", false)]
     public void ScriptPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2153,17 +2154,17 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 89. EMOJI EDGE CASES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Emoji}", "\u2764", true)]   // ❤ Heavy black heart
-    [InlineData(@"\p{Emoji}", "\u2600", true)]   // ☀ Sun
-    [InlineData(@"\p{Emoji}", "\u00A9", true)]   // © Copyright
-    [InlineData(@"\p{Emoji}", "\u00AE", true)]   // ® Registered
-    [InlineData(@"\p{Emoji}", "\u0023", true)]   // # (Emoji property includes digits, #, *)
-    [InlineData(@"\p{Emoji}", "\u002A", true)]   // *
-    [InlineData(@"\p{Emoji}", "0", true)]        // digit 0
-    [InlineData(@"\p{Emoji}", "\U0001F601", true)]  // 😁
-    [InlineData(@"\p{Emoji}", "\U0001F9FF", true)]  // last in U+1F900-1FFFF range
-    [InlineData(@"\p{Emoji}", "Z", false)]
+    [TestMethod]
+    [DataRow(@"\p{Emoji}", "\u2764", true)]   // ❤ Heavy black heart
+    [DataRow(@"\p{Emoji}", "\u2600", true)]   // ☀ Sun
+    [DataRow(@"\p{Emoji}", "\u00A9", true)]   // © Copyright
+    [DataRow(@"\p{Emoji}", "\u00AE", true)]   // ® Registered
+    [DataRow(@"\p{Emoji}", "\u0023", true)]   // # (Emoji property includes digits, #, *)
+    [DataRow(@"\p{Emoji}", "\u002A", true)]   // *
+    [DataRow(@"\p{Emoji}", "0", true)]        // digit 0
+    [DataRow(@"\p{Emoji}", "\U0001F601", true)]  // 😁
+    [DataRow(@"\p{Emoji}", "\U0001F9FF", true)]  // last in U+1F900-1FFFF range
+    [DataRow(@"\p{Emoji}", "Z", false)]
     public void EmojiEdgeCasesMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2173,28 +2174,28 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 90. UNKNOWN/INVALID PROPERTY NAMES — rejected in /u mode
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Bogus}")]
-    [InlineData(@"\p{NotAProp}")]
-    [InlineData(@"\p{Script=Klingon}")]
-    [InlineData(@"\p{gc=XX}")]
-    [InlineData(@"\p{foo=bar}")]
+    [TestMethod]
+    [DataRow(@"\p{Bogus}")]
+    [DataRow(@"\p{NotAProp}")]
+    [DataRow(@"\p{Script=Klingon}")]
+    [DataRow(@"\p{gc=XX}")]
+    [DataRow(@"\p{foo=bar}")]
     public void UnknownPropertyNameIsRejected(string ecma)
     {
         Span<char> buffer = stackalloc char[256];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
     // ================================================================
     // 91. BINARY \p{Any} AND \p{Assigned}
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Any}", "a", true)]
-    [InlineData(@"\p{Any}", "\U0001F600", true)]
-    [InlineData(@"\p{Assigned}", "a", true)]
-    [InlineData(@"\P{Assigned}", "a", false)]
+    [TestMethod]
+    [DataRow(@"\p{Any}", "a", true)]
+    [DataRow(@"\p{Any}", "\U0001F600", true)]
+    [DataRow(@"\p{Assigned}", "a", true)]
+    [DataRow(@"\P{Assigned}", "a", false)]
     public void AnyAndAssignedPropertiesMatch(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2204,13 +2205,13 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 92. NEGATED SCRIPT PROPERTIES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\P{Script=Latin}", "\u03B1", true)]   // Greek α — not Latin
-    [InlineData(@"\P{Script=Latin}", "a", false)]        // Latin a
-    [InlineData(@"\P{sc=Greek}", "a", true)]             // a — not Greek
-    [InlineData(@"\P{sc=Greek}", "\u03B1", false)]       // Greek α
-    [InlineData(@"\P{Script=Cyrillic}", "a", true)]
-    [InlineData(@"\P{Script=Cyrillic}", "\u0414", false)]
+    [TestMethod]
+    [DataRow(@"\P{Script=Latin}", "\u03B1", true)]   // Greek α — not Latin
+    [DataRow(@"\P{Script=Latin}", "a", false)]        // Latin a
+    [DataRow(@"\P{sc=Greek}", "a", true)]             // a — not Greek
+    [DataRow(@"\P{sc=Greek}", "\u03B1", false)]       // Greek α
+    [DataRow(@"\P{Script=Cyrillic}", "a", true)]
+    [DataRow(@"\P{Script=Cyrillic}", "\u0414", false)]
     public void NegatedScriptPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2220,17 +2221,17 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 93. ALTERNATION-PATTERN PROPERTIES INSIDE CHARACTER CLASSES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\p{Emoji}]", "\U0001F600", true)]
-    [InlineData(@"[\p{Emoji}]", "Z", false)]
-    [InlineData(@"[\p{Emoji}a-z]", "a", true)]
-    [InlineData(@"[\p{Emoji}a-z]", "\U0001F600", true)]
-    [InlineData(@"[\p{Emoji}a-z]", "Z", false)]
-    [InlineData(@"[\p{Script=Latin}]", "a", true)]
-    [InlineData(@"[\p{Script=Latin}]", "\u00E9", true)]
-    [InlineData(@"[\p{Script=Latin}]", "\u03B1", false)]
-    [InlineData(@"[\p{Script=Latin}0-9]", "5", true)]
-    [InlineData(@"[\p{Script=Latin}0-9]", "\u03B1", false)]
+    [TestMethod]
+    [DataRow(@"[\p{Emoji}]", "\U0001F600", true)]
+    [DataRow(@"[\p{Emoji}]", "Z", false)]
+    [DataRow(@"[\p{Emoji}a-z]", "a", true)]
+    [DataRow(@"[\p{Emoji}a-z]", "\U0001F600", true)]
+    [DataRow(@"[\p{Emoji}a-z]", "Z", false)]
+    [DataRow(@"[\p{Script=Latin}]", "a", true)]
+    [DataRow(@"[\p{Script=Latin}]", "\u00E9", true)]
+    [DataRow(@"[\p{Script=Latin}]", "\u03B1", false)]
+    [DataRow(@"[\p{Script=Latin}0-9]", "5", true)]
+    [DataRow(@"[\p{Script=Latin}0-9]", "\u03B1", false)]
     public void AlternationPropertyInCharClassMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2240,11 +2241,11 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 94. NEGATED CLASS WITH ALTERNATION-PATTERN PROPERTY
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[^\p{Emoji}]", "Z", true)]
-    [InlineData(@"[^\p{Emoji}]", "\U0001F600", false)]
-    [InlineData(@"[^\p{Script=Latin}]", "\u03B1", true)]
-    [InlineData(@"[^\p{Script=Latin}]", "a", false)]
+    [TestMethod]
+    [DataRow(@"[^\p{Emoji}]", "Z", true)]
+    [DataRow(@"[^\p{Emoji}]", "\U0001F600", false)]
+    [DataRow(@"[^\p{Script=Latin}]", "\u03B1", true)]
+    [DataRow(@"[^\p{Script=Latin}]", "a", false)]
     public void NegatedClassWithAlternationPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2254,10 +2255,10 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 95. MULTIPLE ALTERNATION PROPERTIES IN ONE CLASS
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[\p{Emoji}\p{Script=Latin}]", "\U0001F600", true)]
-    [InlineData(@"[\p{Emoji}\p{Script=Latin}]", "a", true)]
-    [InlineData(@"[\p{Emoji}\p{Script=Latin}]", "\u03B1", false)]
+    [TestMethod]
+    [DataRow(@"[\p{Emoji}\p{Script=Latin}]", "\U0001F600", true)]
+    [DataRow(@"[\p{Emoji}\p{Script=Latin}]", "a", true)]
+    [DataRow(@"[\p{Emoji}\p{Script=Latin}]", "\u03B1", false)]
     public void MultipleAlternationPropertiesInClassMatch(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2267,9 +2268,9 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 96. DOUBLE NEGATION — [^\P{L}] = [\p{L}]
     // ================================================================
 
-    [Theory]
-    [InlineData(@"[^\P{L}]", "a", true)]
-    [InlineData(@"[^\P{L}]", "0", false)]
+    [TestMethod]
+    [DataRow(@"[^\P{L}]", "a", true)]
+    [DataRow(@"[^\P{L}]", "0", false)]
     public void DoubleNegationPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2279,110 +2280,110 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 97. MALFORMED PROPERTY NAMES — rejected as InvalidData
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{}")]
-    [InlineData(@"\p{=}")]
-    [InlineData(@"\p{gc=}")]
-    [InlineData(@"\p{=Latin}")]
+    [TestMethod]
+    [DataRow(@"\p{}")]
+    [DataRow(@"\p{=}")]
+    [DataRow(@"\p{gc=}")]
+    [DataRow(@"\p{=Latin}")]
     public void MalformedPropertyNameIsRejected(string ecma)
     {
         Span<char> buffer = stackalloc char[256];
         OperationStatus status = EcmaRegexTranslator.TryTranslate(ecma, buffer, out _);
-        Assert.Equal(OperationStatus.InvalidData, status);
+        Assert.AreEqual(OperationStatus.InvalidData, status);
     }
 
     // ================================================================
     // 98. ADDITIONAL BINARY PROPERTIES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Hex_Digit}", "A", true)]
-    [InlineData(@"\p{Hex_Digit}", "f", true)]
-    [InlineData(@"\p{Hex_Digit}", "9", true)]
-    [InlineData(@"\p{Hex_Digit}", "\uFF21", true)]   // Fullwidth A
-    [InlineData(@"\p{Hex_Digit}", "\uFF46", true)]   // Fullwidth f
-    [InlineData(@"\p{Hex_Digit}", "g", false)]
-    [InlineData(@"\p{Hex_Digit}", "G", false)]
-    [InlineData(@"\P{Hex_Digit}", "g", true)]
-    [InlineData(@"\P{Hex_Digit}", "A", false)]
+    [TestMethod]
+    [DataRow(@"\p{Hex_Digit}", "A", true)]
+    [DataRow(@"\p{Hex_Digit}", "f", true)]
+    [DataRow(@"\p{Hex_Digit}", "9", true)]
+    [DataRow(@"\p{Hex_Digit}", "\uFF21", true)]   // Fullwidth A
+    [DataRow(@"\p{Hex_Digit}", "\uFF46", true)]   // Fullwidth f
+    [DataRow(@"\p{Hex_Digit}", "g", false)]
+    [DataRow(@"\p{Hex_Digit}", "G", false)]
+    [DataRow(@"\P{Hex_Digit}", "g", true)]
+    [DataRow(@"\P{Hex_Digit}", "A", false)]
     public void HexDigitPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"\p{Lowercase}", "a", true)]
-    [InlineData(@"\p{Lowercase}", "z", true)]
-    [InlineData(@"\p{Lowercase}", "\u00AA", true)]    // Feminine ordinal (Other_Lowercase)
-    [InlineData(@"\p{Lowercase}", "\u00BA", true)]    // Masculine ordinal (Other_Lowercase)
-    [InlineData(@"\p{Lowercase}", "\u02B0", true)]    // Modifier letter small h (Other_Lowercase)
-    [InlineData(@"\p{Lowercase}", "\u2170", true)]    // Small Roman numeral I (Other_Lowercase)
-    [InlineData(@"\p{Lowercase}", "A", false)]
-    [InlineData(@"\p{Lowercase}", "Z", false)]
-    [InlineData(@"\p{Lowercase}", "0", false)]
-    [InlineData(@"\P{Lowercase}", "A", true)]
-    [InlineData(@"\P{Lowercase}", "a", false)]
+    [TestMethod]
+    [DataRow(@"\p{Lowercase}", "a", true)]
+    [DataRow(@"\p{Lowercase}", "z", true)]
+    [DataRow(@"\p{Lowercase}", "\u00AA", true)]    // Feminine ordinal (Other_Lowercase)
+    [DataRow(@"\p{Lowercase}", "\u00BA", true)]    // Masculine ordinal (Other_Lowercase)
+    [DataRow(@"\p{Lowercase}", "\u02B0", true)]    // Modifier letter small h (Other_Lowercase)
+    [DataRow(@"\p{Lowercase}", "\u2170", true)]    // Small Roman numeral I (Other_Lowercase)
+    [DataRow(@"\p{Lowercase}", "A", false)]
+    [DataRow(@"\p{Lowercase}", "Z", false)]
+    [DataRow(@"\p{Lowercase}", "0", false)]
+    [DataRow(@"\P{Lowercase}", "A", true)]
+    [DataRow(@"\P{Lowercase}", "a", false)]
     public void LowercasePropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"\p{Uppercase}", "A", true)]
-    [InlineData(@"\p{Uppercase}", "Z", true)]
-    [InlineData(@"\p{Uppercase}", "\u2160", true)]    // Roman numeral I (Other_Uppercase)
-    [InlineData(@"\p{Uppercase}", "\u24B6", true)]    // Circled Latin capital A (Other_Uppercase)
-    [InlineData(@"\p{Uppercase}", "a", false)]
-    [InlineData(@"\p{Uppercase}", "z", false)]
-    [InlineData(@"\p{Uppercase}", "0", false)]
-    [InlineData(@"\P{Uppercase}", "a", true)]
-    [InlineData(@"\P{Uppercase}", "A", false)]
+    [TestMethod]
+    [DataRow(@"\p{Uppercase}", "A", true)]
+    [DataRow(@"\p{Uppercase}", "Z", true)]
+    [DataRow(@"\p{Uppercase}", "\u2160", true)]    // Roman numeral I (Other_Uppercase)
+    [DataRow(@"\p{Uppercase}", "\u24B6", true)]    // Circled Latin capital A (Other_Uppercase)
+    [DataRow(@"\p{Uppercase}", "a", false)]
+    [DataRow(@"\p{Uppercase}", "z", false)]
+    [DataRow(@"\p{Uppercase}", "0", false)]
+    [DataRow(@"\P{Uppercase}", "a", true)]
+    [DataRow(@"\P{Uppercase}", "A", false)]
     public void UppercasePropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"\p{ID_Start}", "a", true)]
-    [InlineData(@"\p{ID_Start}", "Z", true)]
-    [InlineData(@"\p{ID_Start}", "\u00C0", true)]     // Latin capital A with grave (L category)
-    [InlineData(@"\p{ID_Start}", "\u2118", true)]     // Weierstrass P (Other_ID_Start)
-    [InlineData(@"\p{ID_Start}", "\u212E", true)]     // Estimated symbol (Other_ID_Start)
-    [InlineData(@"\p{ID_Start}", "\u1885", true)]     // Mongolian letter Ali Gali (Other_ID_Start)
-    [InlineData(@"\p{ID_Start}", "0", false)]
-    [InlineData(@"\p{ID_Start}", "_", false)]
-    [InlineData(@"\p{ID_Start}", " ", false)]
-    [InlineData(@"\P{ID_Start}", "0", true)]
-    [InlineData(@"\P{ID_Start}", "a", false)]
+    [TestMethod]
+    [DataRow(@"\p{ID_Start}", "a", true)]
+    [DataRow(@"\p{ID_Start}", "Z", true)]
+    [DataRow(@"\p{ID_Start}", "\u00C0", true)]     // Latin capital A with grave (L category)
+    [DataRow(@"\p{ID_Start}", "\u2118", true)]     // Weierstrass P (Other_ID_Start)
+    [DataRow(@"\p{ID_Start}", "\u212E", true)]     // Estimated symbol (Other_ID_Start)
+    [DataRow(@"\p{ID_Start}", "\u1885", true)]     // Mongolian letter Ali Gali (Other_ID_Start)
+    [DataRow(@"\p{ID_Start}", "0", false)]
+    [DataRow(@"\p{ID_Start}", "_", false)]
+    [DataRow(@"\p{ID_Start}", " ", false)]
+    [DataRow(@"\P{ID_Start}", "0", true)]
+    [DataRow(@"\P{ID_Start}", "a", false)]
     public void IdStartPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"\p{Emoji_Presentation}", "\u231A", true)]    // Watch
-    [InlineData(@"\p{Emoji_Presentation}", "\u2614", true)]    // Umbrella with rain
-    [InlineData(@"\p{Emoji_Presentation}", "\U0001F600", true)] // Grinning face
-    [InlineData(@"\p{Emoji_Presentation}", "\U0001F4A9", true)] // Pile of poo
-    [InlineData(@"\p{Emoji_Presentation}", "a", false)]
-    [InlineData(@"\p{Emoji_Presentation}", "0", false)]
-    [InlineData(@"\P{Emoji_Presentation}", "a", true)]
-    [InlineData(@"\P{Emoji_Presentation}", "\u231A", false)]
+    [TestMethod]
+    [DataRow(@"\p{Emoji_Presentation}", "\u231A", true)]    // Watch
+    [DataRow(@"\p{Emoji_Presentation}", "\u2614", true)]    // Umbrella with rain
+    [DataRow(@"\p{Emoji_Presentation}", "\U0001F600", true)] // Grinning face
+    [DataRow(@"\p{Emoji_Presentation}", "\U0001F4A9", true)] // Pile of poo
+    [DataRow(@"\p{Emoji_Presentation}", "a", false)]
+    [DataRow(@"\p{Emoji_Presentation}", "0", false)]
+    [DataRow(@"\P{Emoji_Presentation}", "a", true)]
+    [DataRow(@"\P{Emoji_Presentation}", "\u231A", false)]
     public void EmojiPresentationPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
     }
 
-    [Theory]
-    [InlineData(@"\p{Extended_Pictographic}", "\u00A9", true)]  // Copyright sign
-    [InlineData(@"\p{Extended_Pictographic}", "\u00AE", true)]  // Registered sign
-    [InlineData(@"\p{Extended_Pictographic}", "\u2728", true)]  // Sparkles
-    [InlineData(@"\p{Extended_Pictographic}", "\U0001F600", true)] // Grinning face
-    [InlineData(@"\p{Extended_Pictographic}", "\U0001F9FF", true)] // Nazar amulet
-    [InlineData(@"\p{Extended_Pictographic}", "a", false)]
-    [InlineData(@"\p{Extended_Pictographic}", "0", false)]
-    [InlineData(@"\P{Extended_Pictographic}", "a", true)]
-    [InlineData(@"\P{Extended_Pictographic}", "\u00A9", false)]
+    [TestMethod]
+    [DataRow(@"\p{Extended_Pictographic}", "\u00A9", true)]  // Copyright sign
+    [DataRow(@"\p{Extended_Pictographic}", "\u00AE", true)]  // Registered sign
+    [DataRow(@"\p{Extended_Pictographic}", "\u2728", true)]  // Sparkles
+    [DataRow(@"\p{Extended_Pictographic}", "\U0001F600", true)] // Grinning face
+    [DataRow(@"\p{Extended_Pictographic}", "\U0001F9FF", true)] // Nazar amulet
+    [DataRow(@"\p{Extended_Pictographic}", "a", false)]
+    [DataRow(@"\p{Extended_Pictographic}", "0", false)]
+    [DataRow(@"\P{Extended_Pictographic}", "a", true)]
+    [DataRow(@"\P{Extended_Pictographic}", "\u00A9", false)]
     public void ExtendedPictographicPropertyMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2392,12 +2393,12 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 99. LOOKAROUND WITH PROPERTY ESCAPES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"(?=\p{L}).", "abc", true)]
-    [InlineData(@"(?=\p{L}).", "123", false)]
-    [InlineData(@"(?<=\p{L})\d", "a5", true)]
-    [InlineData(@"(?<=\p{L})\d", " 5", false)]
-    [InlineData(@"(?!\p{Emoji}).", "a", true)]
+    [TestMethod]
+    [DataRow(@"(?=\p{L}).", "abc", true)]
+    [DataRow(@"(?=\p{L}).", "123", false)]
+    [DataRow(@"(?<=\p{L})\d", "a5", true)]
+    [DataRow(@"(?<=\p{L})\d", " 5", false)]
+    [DataRow(@"(?!\p{Emoji}).", "a", true)]
     public void LookaroundWithPropertyEscapeMatchesCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2407,13 +2408,13 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 100. QUANTIFIERS ON EXPANDED PROPERTIES
     // ================================================================
 
-    [Theory]
-    [InlineData(@"\p{Script=Latin}+", "hello", true)]
-    [InlineData(@"\p{Script=Latin}+", "\u03B1", false)]
-    [InlineData(@"\p{Emoji}?x", "x", true)]
-    [InlineData(@"\p{Emoji}?x", "\U0001F600x", true)]
-    [InlineData(@"\p{Emoji}{2}", "\U0001F600\U0001F601", true)]
-    [InlineData(@"\p{Emoji}{2}", "\U0001F600", false)]
+    [TestMethod]
+    [DataRow(@"\p{Script=Latin}+", "hello", true)]
+    [DataRow(@"\p{Script=Latin}+", "\u03B1", false)]
+    [DataRow(@"\p{Emoji}?x", "x", true)]
+    [DataRow(@"\p{Emoji}?x", "\U0001F600x", true)]
+    [DataRow(@"\p{Emoji}{2}", "\U0001F600\U0001F601", true)]
+    [DataRow(@"\p{Emoji}{2}", "\U0001F600", false)]
     public void QuantifiersOnExpandedPropertiesMatchCorrectly(string ecma, string input, bool shouldMatch)
     {
         AssertMatch(ecma, input, shouldMatch);
@@ -2423,13 +2424,13 @@ public class EcmaRegexTranslatorComprehensiveTests
     // 101. GetMaxTranslatedLength COVERS LARGE SCRIPT PATTERNS
     // ================================================================
 
-    [Fact]
+    [TestMethod]
     public void GetMaxTranslatedLengthCoversLatinScript()
     {
         string ecma = @"\p{Script=Latin}";
         int maxLen = EcmaRegexTranslator.GetMaxTranslatedLength(ecma);
         string result = EcmaRegexTranslator.Translate(ecma);
-        Assert.True(maxLen >= result.Length,
+        Assert.IsTrue(maxLen >= result.Length,
             $"MaxLen {maxLen} < actual {result.Length}");
     }
 
@@ -2442,6 +2443,6 @@ public class EcmaRegexTranslatorComprehensiveTests
         string dotNetPattern = EcmaRegexTranslator.Translate(ecmaPattern);
         Regex regex = new(dotNetPattern);
         bool isMatch = regex.IsMatch(input);
-        Assert.Equal(shouldMatch, isMatch);
+        Assert.AreEqual(shouldMatch, isMatch);
     }
 }

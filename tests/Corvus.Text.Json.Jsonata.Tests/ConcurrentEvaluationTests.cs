@@ -3,13 +3,14 @@
 // </copyright>
 
 using System.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
 
+[TestClass]
 public class ConcurrentEvaluationTests
 {
-    [Fact]
+    [TestMethod]
     public void ParallelEvaluationsOfSameExpressionWithSharedEvaluator()
     {
         Parallel.For(0, 100, new ParallelOptions { MaxDegreeOfParallelism = 8 }, i =>
@@ -24,11 +25,11 @@ public class ConcurrentEvaluationTests
                 workspace);
 
             double expected = i * 1.2;
-            Assert.Equal(expected, result.GetDouble(), precision: 10);
+            Assert.AreEqual(expected, result.GetDouble(), Math.Pow(10, -10));
         });
     }
 
-    [Fact]
+    [TestMethod]
     public void ParallelEvaluationsOfDifferentExpressionsWithSharedEvaluator()
     {
         (string Expression, Func<int, int, double> Expected)[] ops =
@@ -53,11 +54,11 @@ public class ConcurrentEvaluationTests
                 doc.RootElement,
                 workspace);
 
-            Assert.Equal(expectedFunc(a, b), result.GetDouble(), precision: 10);
+            Assert.AreEqual(expectedFunc(a, b), result.GetDouble(), Math.Pow(10, -10));
         });
     }
 
-    [Fact]
+    [TestMethod]
     public void ParallelEvaluationsWithBindingsAreIsolated()
     {
         Parallel.For(0, 100, new ParallelOptions { MaxDegreeOfParallelism = 8 }, i =>
@@ -82,11 +83,11 @@ public class ConcurrentEvaluationTests
                 workspace,
                 bindings);
 
-            Assert.Equal(10.0 * i, result.GetDouble(), precision: 10);
+            Assert.AreEqual(10.0 * i, result.GetDouble(), Math.Pow(10, -10));
         });
     }
 
-    [Fact]
+    [TestMethod]
     public void ConcurrentFirstCompilationCacheStampede()
     {
         // Use a fresh evaluator so the expression cache is empty.
@@ -117,7 +118,7 @@ public class ConcurrentEvaluationTests
         for (int t = 0; t < tasks.Length; t++)
         {
             double expected = (t + 1) * 2;
-            Assert.Equal(expected, tasks[t].Result, precision: 10);
+            Assert.AreEqual(expected, tasks[t].Result, Math.Pow(10, -10));
         }
     }
 }

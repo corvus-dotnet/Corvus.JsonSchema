@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.ValidateAnalyzer,
@@ -26,6 +26,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ003: IsValid/Validate migration to EvaluateSchema.
 /// </summary>
+[TestClass]
 public class ValidateAnalyzerTests
 {
     private const string V4InterfaceStubs = @"
@@ -35,7 +36,7 @@ namespace Corvus.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task IsValidCall_TriggersCVJ003_AndCodeFixReplacesWithEvaluateSchema()
     {
         var test = new CodeFixTest
@@ -85,7 +86,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateCall_TriggersCVJ003()
     {
         const string testCode = V4InterfaceStubs + @"
@@ -118,7 +119,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NoIsValidCall_NoDiagnostic()
     {
         const string testCode = """
@@ -144,7 +145,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IsValidCall_OnNonJsonValueType_NoDiagnostic()
     {
         const string testCode = V4InterfaceStubs + @"
@@ -168,7 +169,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateCall_OnNonJsonValueType_NoDiagnostic()
     {
         const string testCode = V4InterfaceStubs + @"
@@ -197,7 +198,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IsValidCall_WithExplicitType_ReplacesTypeWithBool()
     {
         var test = new CodeFixTest
@@ -257,7 +258,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateCall_WithExplicitType_AndCollector_ReplacesTypeWithBool()
     {
         var test = new CodeFixTest
@@ -322,7 +323,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IsValidCall_WithVar_LeavesVarAlone()
     {
         var test = new CodeFixTest

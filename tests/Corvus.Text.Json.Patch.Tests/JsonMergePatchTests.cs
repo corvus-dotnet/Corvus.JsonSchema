@@ -4,7 +4,7 @@
 
 using System.Text.Json;
 using Corvus.Text.Json.Patch;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Patch.Tests;
 
@@ -12,11 +12,12 @@ namespace Corvus.Text.Json.Patch.Tests;
 /// Tests for JSON Merge Patch (RFC 7396) implementation.
 /// Test cases from RFC 7396 Appendix A.
 /// </summary>
+[TestClass]
 public class JsonMergePatchTests
 {
     #region RFC 7396 Appendix A test cases
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_01_AddNewProperty()
     {
         RunMergePatchTest(
@@ -25,7 +26,7 @@ public class JsonMergePatchTests
             expected: """{"a":"c"}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_02_AddSecondProperty()
     {
         RunMergePatchTest(
@@ -34,7 +35,7 @@ public class JsonMergePatchTests
             expected: """{"a":"b","b":"c"}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_03_ReplaceStringWithNumber()
     {
         RunMergePatchTest(
@@ -43,7 +44,7 @@ public class JsonMergePatchTests
             expected: """{}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_04_ReplaceWithScalar()
     {
         RunMergePatchTest(
@@ -52,7 +53,7 @@ public class JsonMergePatchTests
             expected: """{"b":"c"}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_05_ReplaceArrayWholesale()
     {
         RunMergePatchTest(
@@ -61,7 +62,7 @@ public class JsonMergePatchTests
             expected: """{"a":"c"}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_06_ReplaceScalarWithArray()
     {
         RunMergePatchTest(
@@ -70,7 +71,7 @@ public class JsonMergePatchTests
             expected: """{"a":["b"]}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_07_MixedAddAndReplace()
     {
         RunMergePatchTest(
@@ -79,7 +80,7 @@ public class JsonMergePatchTests
             expected: """{"a":{"b":"d"}}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_08_NestedMerge()
     {
         RunMergePatchTest(
@@ -88,7 +89,7 @@ public class JsonMergePatchTests
             expected: """{"a":[1]}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_09_ReplaceArrayWithScalar()
     {
         RunMergePatchTest(
@@ -97,7 +98,7 @@ public class JsonMergePatchTests
             expected: """["c","d"]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_10_MixedNestedMerge()
     {
         RunMergePatchTest(
@@ -106,7 +107,7 @@ public class JsonMergePatchTests
             expected: """["c"]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_11_ScalarPatch()
     {
         RunMergePatchTest(
@@ -115,7 +116,7 @@ public class JsonMergePatchTests
             expected: """null""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_12_ScalarPatchOnScalar()
     {
         RunMergePatchTest(
@@ -124,7 +125,7 @@ public class JsonMergePatchTests
             expected: "\"bar\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_13_NestedObjectMerge()
     {
         RunMergePatchTest(
@@ -133,7 +134,7 @@ public class JsonMergePatchTests
             expected: """{"e":null,"a":1}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_14_PatchWithEmptyArray()
     {
         RunMergePatchTest(
@@ -142,7 +143,7 @@ public class JsonMergePatchTests
             expected: """{"a":"b"}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendixA_15_EmptyObjectMerge()
     {
         RunMergePatchTest(
@@ -155,7 +156,7 @@ public class JsonMergePatchTests
 
     #region Additional edge cases
 
-    [Fact]
+    [TestMethod]
     public void EmptyObjectPatch_NoChange()
     {
         RunMergePatchTest(
@@ -164,7 +165,7 @@ public class JsonMergePatchTests
             expected: """{"a":"b","c":"d"}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void DeeplyNestedMerge()
     {
         RunMergePatchTest(
@@ -173,7 +174,7 @@ public class JsonMergePatchTests
             expected: """{"a":{"b":{"c":{"d":"new","e":"added"}}}}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchNonObjectTargetWithObject_CreatesObject()
     {
         RunMergePatchTest(
@@ -182,7 +183,7 @@ public class JsonMergePatchTests
             expected: """{"a":"b"}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchNumberTargetWithObject()
     {
         RunMergePatchTest(
@@ -191,7 +192,7 @@ public class JsonMergePatchTests
             expected: """{"a":"b"}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void NullPatchValue_RemovesDeepProperty()
     {
         RunMergePatchTest(
@@ -215,7 +216,7 @@ public class JsonMergePatchTests
         JsonMergePatchExtensions.ApplyMergePatch(ref root, in patchElement);
 
         JsonElement expectedElement = JsonElement.ParseValue(expected);
-        Assert.True(
+        Assert.IsTrue(
             root.Equals(expectedElement),
             $"Expected: {expected}\nActual: {root}");
     }

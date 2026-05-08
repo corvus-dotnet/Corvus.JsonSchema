@@ -6,8 +6,7 @@ using System.Reflection;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 
@@ -23,23 +22,30 @@ namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 /// pattern used by the JSON Schema test suite.
 /// </para>
 /// </remarks>
-public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
+[TestClass]
+public class CodeGenConformanceTests
 {
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(30);
     private static readonly string TestSuiteRoot = FindTestSuiteRoot();
 
-    private readonly CodeGenConformanceFixture fixture;
-    private readonly ITestOutputHelper output;
+    private static CodeGenConformanceFixture? s_fixture;
 
-    public CodeGenConformanceTests(CodeGenConformanceFixture fixture, ITestOutputHelper output)
+    [ClassInitialize]
+    public static void ClassInit(TestContext _)
     {
-        this.fixture = fixture;
-        this.output = output;
+        s_fixture = new CodeGenConformanceFixture();
     }
 
-    [Theory]
-    [Trait("category", "codegen-conformance")]
-    [MemberData(nameof(GetTestCases))]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [TestCategory("codegen-conformance")]
+    [DynamicData(nameof(GetTestCases))]
     public void RunTestCase(string group, string caseName)
     {
         // Reconstruct file path: caseName is "filename" or "filename[index]".
@@ -79,26 +85,26 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
             }
             else
             {
-                this.output.WriteLine("SKIP: Test case has neither 'expr' nor 'expr-file'");
+                Console.WriteLine("SKIP: Test case has neither 'expr' nor 'expr-file'");
                 return;
             }
         }
         catch (InvalidOperationException)
         {
             // Malformed UTF-16 (e.g., lone surrogates in encodeUrl tests).
-            this.output.WriteLine("SKIP: Expression contains malformed UTF-16");
+            Console.WriteLine("SKIP: Expression contains malformed UTF-16");
             return;
         }
 
         if (expr is null)
         {
-            this.output.WriteLine("SKIP: Expression is null");
+            Console.WriteLine("SKIP: Expression is null");
             return;
         }
 
-        this.output.WriteLine($"Group:      {group}");
-        this.output.WriteLine($"Case:       {caseName}");
-        this.output.WriteLine($"Expression: {expr}");
+        Console.WriteLine($"Group:      {group}");
+        Console.WriteLine($"Case:       {caseName}");
+        Console.WriteLine($"Expression: {expr}");
 
         // Extract bindings, depth, and timelimit if present.
         bool hasBindings = root.TryGetProperty("bindings", out var bindingsEl) &&
@@ -119,9 +125,9 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         bool needsBindingsOverload = hasBindings || maxDepth != 500 || timeLimitMs != 0;
 
         // Dynamically compile the expression (cached per unique expression string).
-        CompiledExpression compiled = this.fixture.GetOrCompile(expr);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expr);
 
-        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+        Console.WriteLine($"Inlined:    {compiled.IsInlined}");
 
         // Determine expected outcome first — we need this to know how to handle
         // compilation failures.
@@ -146,8 +152,8 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
             if (compiled.ErrorCode is not null && expectedErrorCode is not null)
             {
                 // Parse error with a matching expected error code — validate it.
-                this.output.WriteLine($"Got parse error: {compiled.ErrorCode}");
-                Assert.Equal(expectedErrorCode, compiled.ErrorCode);
+                Console.WriteLine($"Got parse error: {compiled.ErrorCode}");
+                Assert.AreEqual(expectedErrorCode, compiled.ErrorCode);
                 return;
             }
 
@@ -210,12 +216,12 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
             if (expectedErrorCode is not null)
             {
                 RunErrorCase(method, expectedErrorCode, inputData, hasData, needsBindingsOverload, bindings, maxDepth, timeLimitMs);
-                this.output.WriteLine($"Got expected error: {expectedErrorCode}");
+                Console.WriteLine($"Got expected error: {expectedErrorCode}");
             }
             else if (expectsUndefined)
             {
                 RunUndefinedCase(method, inputData, hasData, needsBindingsOverload, bindings, maxDepth, timeLimitMs);
-                this.output.WriteLine("Got expected undefined result");
+                Console.WriteLine("Got expected undefined result");
             }
             else if (expectsResult)
             {
@@ -223,7 +229,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
             }
             else
             {
-                this.output.WriteLine("SKIP: No expected outcome (result, undefinedResult, code, or error)");
+                Console.WriteLine("SKIP: No expected outcome (result, undefinedResult, code, or error)");
             }
         }
         finally
@@ -344,11 +350,11 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
             caught = ex;
         }
 
-        Assert.NotNull(caught);
+        Assert.IsNotNull(caught);
 
         if (caught is JsonataException jex)
         {
-            Assert.Equal(expectedCode, jex.Code);
+            Assert.AreEqual(expectedCode, jex.Code);
         }
     }
 
@@ -365,7 +371,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
             Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");
         }
 
-        Assert.Equal(JsonValueKind.Undefined, task.Result.ValueKind);
+        Assert.AreEqual(JsonValueKind.Undefined, task.Result.ValueKind);
     }
 
     private void RunResultCase(
@@ -386,10 +392,10 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         string expectedJson = expectedResult.GetRawText();
         string actualJson = result.ValueKind == JsonValueKind.Undefined ? "undefined" : result.GetRawText();
 
-        this.output.WriteLine($"Expected: {expectedJson}");
-        this.output.WriteLine($"Actual:   {actualJson}");
+        Console.WriteLine($"Expected: {expectedJson}");
+        Console.WriteLine($"Actual:   {actualJson}");
 
-        Assert.NotEqual(JsonValueKind.Undefined, result.ValueKind);
+        Assert.AreNotEqual(JsonValueKind.Undefined, result.ValueKind);
         AssertJsonEqual(expectedResult, result);
     }
 
@@ -399,7 +405,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         {
             double e = expected.GetDouble();
             double a = actual.GetDouble();
-            Assert.Equal(e, a, 10);
+            Assert.AreEqual(e, a, 10);
             return;
         }
 
@@ -412,7 +418,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         {
             int expectedLen = expected.GetArrayLength();
             int actualLen = actual.GetArrayLength();
-            Assert.Equal(expectedLen, actualLen);
+            Assert.AreEqual(expectedLen, actualLen);
             for (int i = 0; i < expectedLen; i++)
             {
                 AssertJsonEqual(expected[i], actual[i]);
@@ -435,10 +441,10 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
                 actualProps[prop.Name] = prop.Value;
             }
 
-            Assert.Equal(expectedProps.Count, actualProps.Count);
+            Assert.AreEqual(expectedProps.Count, actualProps.Count);
             foreach (var kvp in expectedProps)
             {
-                Assert.True(actualProps.ContainsKey(kvp.Key), $"Missing property: {kvp.Key}");
+                Assert.IsTrue(actualProps.ContainsKey(kvp.Key), $"Missing property: {kvp.Key}");
                 AssertJsonEqual(kvp.Value, actualProps[kvp.Key]);
             }
 
@@ -447,11 +453,11 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
 
         if (expected.ValueKind == JsonValueKind.String && actual.ValueKind == JsonValueKind.String)
         {
-            Assert.Equal(expected.GetString(), actual.GetString());
+            Assert.AreEqual(expected.GetString(), actual.GetString());
             return;
         }
 
-        Assert.Equal(expected.GetRawText(), actual.GetRawText());
+        Assert.AreEqual(expected.GetRawText(), actual.GetRawText());
     }
 
     private static string FindTestSuiteRoot()

@@ -1,31 +1,32 @@
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
 /// <summary>
 /// Tests for error handling when given invalid input.
 /// </summary>
+[TestClass]
 public class ErrorHandlingTests
 {
-    [Fact]
+    [TestMethod]
     public async Task Generate_MissingSchemaFile_ReturnsNonZeroExitCode()
     {
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
             "jsonschema \"nonexistent-schema.json\" --rootNamespace TestGenerated");
 
-        Assert.NotEqual(0, result.ExitCode);
+        Assert.AreNotEqual(0, result.ExitCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_MissingConfigFile_ReturnsNonZeroExitCode()
     {
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
             "config \"nonexistent-config.json\"");
 
-        Assert.NotEqual(0, result.ExitCode);
+        Assert.AreNotEqual(0, result.ExitCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateDocument_MissingSchemaFile_ReturnsNonZeroExitCode()
     {
         string document = CodeGeneratorRunner.GetFixturePath("Documents", "valid-person.json");
@@ -33,10 +34,10 @@ public class ErrorHandlingTests
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
             $"validateDocument \"nonexistent-schema.json\" \"{document}\"");
 
-        Assert.NotEqual(0, result.ExitCode);
+        Assert.AreNotEqual(0, result.ExitCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateDocument_MissingDocumentFile_ReturnsNonZeroExitCode()
     {
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
@@ -44,10 +45,10 @@ public class ErrorHandlingTests
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
             $"validateDocument \"{schema}\" \"nonexistent-document.json\"");
 
-        Assert.NotEqual(0, result.ExitCode);
+        Assert.AreNotEqual(0, result.ExitCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Generate_MissingRequiredNamespace_ReturnsNonZeroExitCode()
     {
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
@@ -56,6 +57,6 @@ public class ErrorHandlingTests
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
             $"jsonschema \"{schema}\"");
 
-        Assert.NotEqual(0, result.ExitCode);
+        Assert.AreNotEqual(0, result.ExitCode);
     }
 }

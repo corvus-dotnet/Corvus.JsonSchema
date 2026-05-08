@@ -5,36 +5,48 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft201909.Optional.EcmascriptRegex;
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262RegexDoesNotMatchTrailingNewline : IClassFixture<SuiteECMA262RegexDoesNotMatchTrailingNewline.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262RegexDoesNotMatchTrailingNewline
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262RegexDoesNotMatchTrailingNewline(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestMatchesInPythonButNotInECMA262()
     {
         using var doc = JsonDocument.Parse("\"abc\\\\n\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatches()
     {
         using var doc = JsonDocument.Parse("\"abc\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -61,32 +73,44 @@ public class SuiteECMA262RegexDoesNotMatchTrailingNewline : IClassFixture<SuiteE
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262RegexConvertsTToHorizontalTab : IClassFixture<SuiteECMA262RegexConvertsTToHorizontalTab.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262RegexConvertsTToHorizontalTab
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262RegexConvertsTToHorizontalTab(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\\\t\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatches()
     {
         using var doc = JsonDocument.Parse("\"\\u0009\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -113,32 +137,44 @@ public class SuiteECMA262RegexConvertsTToHorizontalTab : IClassFixture<SuiteECMA
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter : IClassFixture<SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\\\cC\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatches()
     {
         using var doc = JsonDocument.Parse("\"\\u0003\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -165,32 +201,44 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndUpperLetter : IClassFix
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter : IClassFixture<SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\\\cc\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatches()
     {
         using var doc = JsonDocument.Parse("\"\\u0003\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -217,40 +265,52 @@ public class SuiteECMA262RegexEscapesControlCodesWithCAndLowerLetter : IClassFix
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262DMatchesAsciiDigitsOnly : IClassFixture<SuiteECMA262DMatchesAsciiDigitsOnly.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262DMatchesAsciiDigitsOnly
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262DMatchesAsciiDigitsOnly(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestASCIIZeroMatches()
     {
         using var doc = JsonDocument.Parse("\"0\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNKODIGITZERODoesNotMatchUnlikeEGPython()
     {
         using var doc = JsonDocument.Parse("\"߀\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNKODIGITZEROAsUEscapeDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\u07c0\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -277,40 +337,52 @@ public class SuiteECMA262DMatchesAsciiDigitsOnly : IClassFixture<SuiteECMA262DMa
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262DMatchesEverythingButAsciiDigits : IClassFixture<SuiteECMA262DMatchesEverythingButAsciiDigits.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262DMatchesEverythingButAsciiDigits
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262DMatchesEverythingButAsciiDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestASCIIZeroDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"0\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNKODIGITZEROMatchesUnlikeEGPython()
     {
         using var doc = JsonDocument.Parse("\"߀\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNKODIGITZEROAsUEscapeMatches()
     {
         using var doc = JsonDocument.Parse("\"\\u07c0\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -337,32 +409,44 @@ public class SuiteECMA262DMatchesEverythingButAsciiDigits : IClassFixture<SuiteE
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262WMatchesAsciiLettersOnly : IClassFixture<SuiteECMA262WMatchesAsciiLettersOnly.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262WMatchesAsciiLettersOnly
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262WMatchesAsciiLettersOnly(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestASCIIAMatches()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLatin1EAcuteDoesNotMatchUnlikeEGPython()
     {
         using var doc = JsonDocument.Parse("\"é\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -389,32 +473,44 @@ public class SuiteECMA262WMatchesAsciiLettersOnly : IClassFixture<SuiteECMA262WM
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262WMatchesEverythingButAsciiLetters : IClassFixture<SuiteECMA262WMatchesEverythingButAsciiLetters.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262WMatchesEverythingButAsciiLetters
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262WMatchesEverythingButAsciiLetters(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestASCIIADoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLatin1EAcuteMatchesUnlikeEGPython()
     {
         using var doc = JsonDocument.Parse("\"é\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -441,104 +537,116 @@ public class SuiteECMA262WMatchesEverythingButAsciiLetters : IClassFixture<Suite
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262SMatchesWhitespace : IClassFixture<SuiteECMA262SMatchesWhitespace.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262SMatchesWhitespace
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262SMatchesWhitespace(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestASCIISpaceMatches()
     {
         using var doc = JsonDocument.Parse("\" \"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestCharacterTabulationMatches()
     {
         using var doc = JsonDocument.Parse("\"\\t\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLineTabulationMatches()
     {
         using var doc = JsonDocument.Parse("\"\\u000b\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFormFeedMatches()
     {
         using var doc = JsonDocument.Parse("\"\\u000c\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLatin1NonBreakingSpaceMatches()
     {
         using var doc = JsonDocument.Parse("\"\\u00a0\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroWidthWhitespaceMatches()
     {
         using var doc = JsonDocument.Parse("\"\\ufeff\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLineFeedMatchesLineTerminator()
     {
         using var doc = JsonDocument.Parse("\"\\u000a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestParagraphSeparatorMatchesLineTerminator()
     {
         using var doc = JsonDocument.Parse("\"\\u2029\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEMSPACEMatchesSpaceSeparator()
     {
         using var doc = JsonDocument.Parse("\"\\u2003\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonWhitespaceControlDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\u0001\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonWhitespaceDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\u2013\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -565,104 +673,116 @@ public class SuiteECMA262SMatchesWhitespace : IClassFixture<SuiteECMA262SMatches
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteECMA262SMatchesEverythingButWhitespace : IClassFixture<SuiteECMA262SMatchesEverythingButWhitespace.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteECMA262SMatchesEverythingButWhitespace
 {
-    private readonly Fixture _fixture;
-    public SuiteECMA262SMatchesEverythingButWhitespace(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestASCIISpaceDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\" \"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestCharacterTabulationDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\t\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLineTabulationDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\u000b\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFormFeedDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\u000c\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLatin1NonBreakingSpaceDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\u00a0\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroWidthWhitespaceDoesNotMatch()
     {
         using var doc = JsonDocument.Parse("\"\\ufeff\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLineFeedDoesNotMatchLineTerminator()
     {
         using var doc = JsonDocument.Parse("\"\\u000a\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestParagraphSeparatorDoesNotMatchLineTerminator()
     {
         using var doc = JsonDocument.Parse("\"\\u2029\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEMSPACEDoesNotMatchSpaceSeparator()
     {
         using var doc = JsonDocument.Parse("\"\\u2003\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonWhitespaceControlMatches()
     {
         using var doc = JsonDocument.Parse("\"\\u0001\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonWhitespaceMatches()
     {
         using var doc = JsonDocument.Parse("\"\\u2013\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -689,48 +809,60 @@ public class SuiteECMA262SMatchesEverythingButWhitespace : IClassFixture<SuiteEC
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern : IClassFixture<SuitePatternsAlwaysUseUnicodeSemanticsWithPattern.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
 {
-    private readonly Fixture _fixture;
-    public SuitePatternsAlwaysUseUnicodeSemanticsWithPattern(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestAsciiCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
         using var doc = JsonDocument.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeMatchingIsCaseSensitive()
     {
         using var doc = JsonDocument.Parse("\"LES HIVERS DE MON ENFANCE ÉTAIENT DES SAISONS LONGUES, LONGUES. NOUS VIVIONS EN TROIS LIEUX: L'ÉCOLE, L'ÉGLISE ET LA PATINOIRE; MAIS LA VRAIE VIE ÉTAIT SUR LA PATINOIRE.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -757,48 +889,60 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern : IClassFixture<S
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters : IClassFixture<SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
 {
-    private readonly Fixture _fixture;
-    public SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestAsciiCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
         using var doc = JsonDocument.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeMatchingIsCaseSensitive()
     {
         using var doc = JsonDocument.Parse("\"LES HIVERS DE MON ENFANCE ÉTAIENT DES SAISONS LONGUES, LONGUES. NOUS VIVIONS EN TROIS LIEUX: L'ÉCOLE, L'ÉGLISE ET LA PATINOIRE; MAIS LA VRAIE VIE ÉTAIT SUR LA PATINOIRE.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -825,40 +969,52 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters : IClassFixture<Suit
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuitePatternWithASCIIRanges : IClassFixture<SuitePatternWithASCIIRanges.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuitePatternWithASCIIRanges
 {
-    private readonly Fixture _fixture;
-    public SuitePatternWithASCIIRanges(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
         using var doc = JsonDocument.Parse("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiCharactersMatch()
     {
         using var doc = JsonDocument.Parse("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -885,40 +1041,52 @@ public class SuitePatternWithASCIIRanges : IClassFixture<SuitePatternWithASCIIRa
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteDInPatternMatches09NotUnicodeDigits : IClassFixture<SuiteDInPatternMatches09NotUnicodeDigits.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteDInPatternMatches09NotUnicodeDigits
 {
-    private readonly Fixture _fixture;
-    public SuiteDInPatternMatches09NotUnicodeDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestAsciiDigits()
     {
         using var doc = JsonDocument.Parse("\"42\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiNonDigits()
     {
         using var doc = JsonDocument.Parse("\"-%#\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonAsciiDigitsBENGALIDIGITFOURBENGALIDIGITTWO()
     {
         using var doc = JsonDocument.Parse("\"৪২\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -945,40 +1113,52 @@ public class SuiteDInPatternMatches09NotUnicodeDigits : IClassFixture<SuiteDInPa
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuitePatternWithNonASCIIDigits : IClassFixture<SuitePatternWithNonASCIIDigits.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuitePatternWithNonASCIIDigits
 {
-    private readonly Fixture _fixture;
-    public SuitePatternWithNonASCIIDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestAsciiDigits()
     {
         using var doc = JsonDocument.Parse("\"42\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiNonDigits()
     {
         using var doc = JsonDocument.Parse("\"-%#\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonAsciiDigitsBENGALIDIGITFOURBENGALIDIGITTWO()
     {
         using var doc = JsonDocument.Parse("\"৪২\"");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1005,48 +1185,60 @@ public class SuitePatternWithNonASCIIDigits : IClassFixture<SuitePatternWithNonA
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties : IClassFixture<SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
 {
-    private readonly Fixture _fixture;
-    public SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestAsciiCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("{ \"l'ecole\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("{ \"l'école\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
         using var doc = JsonDocument.Parse("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeMatchingIsCaseSensitive()
     {
         using var doc = JsonDocument.Parse("{ \"L'ÉCOLE\": \"PAS DE VRAIE VIE\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1073,48 +1265,60 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties : IClas
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters : IClassFixture<SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
 {
-    private readonly Fixture _fixture;
-    public SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestAsciiCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("{ \"l'ecole\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("{ \"l'école\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
         using var doc = JsonDocument.Parse("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeMatchingIsCaseSensitive()
     {
         using var doc = JsonDocument.Parse("{ \"L'ÉCOLE\": \"PAS DE VRAIE VIE\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1141,40 +1345,52 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters : IClassFix
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuitePatternPropertiesWithASCIIRanges : IClassFixture<SuitePatternPropertiesWithASCIIRanges.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuitePatternPropertiesWithASCIIRanges
 {
-    private readonly Fixture _fixture;
-    public SuitePatternPropertiesWithASCIIRanges(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
         using var doc = JsonDocument.Parse("{ \"l'école\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
         using var doc = JsonDocument.Parse("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiCharactersMatch()
     {
         using var doc = JsonDocument.Parse("{ \"l'ecole\": \"pas de vraie vie\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1201,40 +1417,52 @@ public class SuitePatternPropertiesWithASCIIRanges : IClassFixture<SuitePatternP
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits : IClassFixture<SuiteDInPatternPropertiesMatches09NotUnicodeDigits.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
 {
-    private readonly Fixture _fixture;
-    public SuiteDInPatternPropertiesMatches09NotUnicodeDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestAsciiDigits()
     {
         using var doc = JsonDocument.Parse("{ \"42\": \"life, the universe, and everything\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiNonDigits()
     {
         using var doc = JsonDocument.Parse("{ \"-%#\": \"spending the year dead for tax reasons\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonAsciiDigitsBENGALIDIGITFOURBENGALIDIGITTWO()
     {
         using var doc = JsonDocument.Parse("{ \"৪২\": \"khajit has wares if you have coin\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -1261,40 +1489,52 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits : IClassFixture<
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuitePatternPropertiesWithNonASCIIDigits : IClassFixture<SuitePatternPropertiesWithNonASCIIDigits.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuitePatternPropertiesWithNonASCIIDigits
 {
-    private readonly Fixture _fixture;
-    public SuitePatternPropertiesWithNonASCIIDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestAsciiDigits()
     {
         using var doc = JsonDocument.Parse("{ \"42\": \"life, the universe, and everything\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiNonDigits()
     {
         using var doc = JsonDocument.Parse("{ \"-%#\": \"spending the year dead for tax reasons\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonAsciiDigitsBENGALIDIGITFOURBENGALIDIGITTWO()
     {
         using var doc = JsonDocument.Parse("{ \"৪২\": \"khajit has wares if you have coin\" }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 

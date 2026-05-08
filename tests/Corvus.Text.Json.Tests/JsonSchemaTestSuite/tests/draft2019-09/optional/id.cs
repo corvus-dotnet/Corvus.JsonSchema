@@ -2,45 +2,53 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft201909.Optional.Id;
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteIdInsideAnEnumIsNotARealIdentifier : IClassFixture<SuiteIdInsideAnEnumIsNotARealIdentifier.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteIdInsideAnEnumIsNotARealIdentifier
 {
-    private readonly Fixture _fixture;
-    public SuiteIdInsideAnEnumIsNotARealIdentifier(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestExactMatchToEnumAndTypeMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{\r\n                    \"$id\": \"https://localhost:1234/draft2019-09/id/my_identifier.json\",\r\n                    \"type\": \"null\"\r\n                }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{\r\n                    \"$id\": \"https://localhost:1234/draft2019-09/id/my_identifier.json\",\r\n                    \"type\": \"null\"\r\n                }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatchRefToId()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"a string to match #/$defs/id_in_enum\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"a string to match #/$defs/id_in_enum\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNoMatchOnEnumOrRefToId()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("1");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

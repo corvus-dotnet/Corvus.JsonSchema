@@ -2,73 +2,81 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft7.Dependencies;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteDependencies : IClassFixture<SuiteDependencies.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteDependencies
 {
-    private readonly Fixture _fixture;
-    public SuiteDependencies(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestNeither()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNondependant()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestWithDependency()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMissingDependency()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresArrays()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"bar\"]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresStrings()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"foobar\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresOtherNonObjects()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("12");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -84,41 +92,49 @@ public class SuiteDependencies : IClassFixture<SuiteDependencies.Fixture>
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteDependenciesWithEmptyArray : IClassFixture<SuiteDependenciesWithEmptyArray.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteDependenciesWithEmptyArray
 {
-    private readonly Fixture _fixture;
-    public SuiteDependenciesWithEmptyArray(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyObject()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestObjectWithOneProperty()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonObjectIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -134,62 +150,70 @@ public class SuiteDependenciesWithEmptyArray : IClassFixture<SuiteDependenciesWi
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteMultipleDependencies : IClassFixture<SuiteMultipleDependencies.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteMultipleDependencies
 {
-    private readonly Fixture _fixture;
-    public SuiteMultipleDependencies(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestNeither()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNondependants()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestWithDependencies()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2, \"quux\": 3}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMissingDependency()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"quux\": 2}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMissingOtherDependency()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 1, \"quux\": 2}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMissingBothDependencies()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"quux\": 1}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -205,55 +229,63 @@ public class SuiteMultipleDependencies : IClassFixture<SuiteMultipleDependencies
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteMultipleDependenciesSubschema : IClassFixture<SuiteMultipleDependenciesSubschema.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteMultipleDependenciesSubschema
 {
-    private readonly Fixture _fixture;
-    public SuiteMultipleDependenciesSubschema(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNoDependency()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"quux\"}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestWrongType()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"quux\", \"bar\": 2}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestWrongTypeOther()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 2, \"bar\": \"quux\"}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestWrongTypeBoth()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"quux\", \"bar\": \"quux\"}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -269,48 +301,56 @@ public class SuiteMultipleDependenciesSubschema : IClassFixture<SuiteMultipleDep
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteDependenciesWithBooleanSubschemas : IClassFixture<SuiteDependenciesWithBooleanSubschemas.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteDependenciesWithBooleanSubschemas
 {
-    private readonly Fixture _fixture;
-    public SuiteDependenciesWithBooleanSubschemas(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestObjectWithPropertyHavingSchemaTrueIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestObjectWithPropertyHavingSchemaFalseIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 2}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestObjectWithBothPropertiesIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEmptyObjectIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -326,69 +366,77 @@ public class SuiteDependenciesWithBooleanSubschemas : IClassFixture<SuiteDepende
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteDependenciesWithEscapedCharacters : IClassFixture<SuiteDependenciesWithEscapedCharacters.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteDependenciesWithEscapedCharacters
 {
-    private readonly Fixture _fixture;
-    public SuiteDependenciesWithEscapedCharacters(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestValidObject1()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\\nbar\": 1,\r\n                    \"foo\\rbar\": 2\r\n                }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestValidObject2()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\\tbar\": 1,\r\n                    \"a\": 2,\r\n                    \"b\": 3,\r\n                    \"c\": 4\r\n                }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestValidObject3()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo'bar\": 1,\r\n                    \"foo\\\"bar\": 2\r\n                }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInvalidObject1()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\\nbar\": 1,\r\n                    \"foo\": 2\r\n                }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInvalidObject2()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\\tbar\": 1,\r\n                    \"a\": 2\r\n                }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInvalidObject3()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo'bar\": 1\r\n                }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInvalidObject4()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\\\"bar\": 2\r\n                }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -404,48 +452,56 @@ public class SuiteDependenciesWithEscapedCharacters : IClassFixture<SuiteDepende
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteDependentSubschemaIncompatibleWithRoot : IClassFixture<SuiteDependentSubschemaIncompatibleWithRoot.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteDependentSubschemaIncompatibleWithRoot
 {
-    private readonly Fixture _fixture;
-    public SuiteDependentSubschemaIncompatibleWithRoot(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatchesRoot()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatchesDependency()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 1}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatchesBoth()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 2}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNoDependency()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"baz\": 1}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

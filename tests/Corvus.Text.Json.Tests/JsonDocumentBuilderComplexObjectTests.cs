@@ -2,9 +2,9 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using Xunit;
+using System.Diagnostics;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -12,7 +12,8 @@ namespace Corvus.Text.Json.Tests;
 /// Tests for JsonDocumentBuilder complex object processing, specifically targeting the ProcessComplexObject method
 /// through its public call tree: CreateBuilder -> BuildRentedMetadataDb -> AppendLocalElement -> ProcessComplexObject.
 /// </summary>
-public static class JsonDocumentBuilderComplexObjectTests
+[TestClass]
+public class JsonDocumentBuilderComplexObjectTests
 {
     /// <summary>
     /// Test cases for nested object structures that will trigger ProcessComplexObject.
@@ -70,9 +71,9 @@ public static class JsonDocumentBuilderComplexObjectTests
             new object[] { "{\"users\": [{\"id\": 1, \"profile\": {\"tags\": [\"admin\", \"user\"]}}, {\"id\": 2, \"profile\": {\"tags\": []}}]}" }
         };
 
-    [Theory]
-    [MemberData(nameof(NestedObjectTestCases))]
-    public static void ProcessComplexObject_NestedObjects_PreservesStructure(string json)
+    [TestMethod]
+    [DynamicData(nameof(NestedObjectTestCases))]
+    public void ProcessComplexObject_NestedObjects_PreservesStructure(string json)
     {
         // Arrange & Act
         using var workspace = JsonWorkspace.Create();
@@ -91,9 +92,9 @@ public static class JsonDocumentBuilderComplexObjectTests
         AssertJsonStructuresEqual(originalParsed.RootElement, roundTrippedParsed.RootElement);
     }
 
-    [Theory]
-    [MemberData(nameof(NestedArrayTestCases))]
-    public static void ProcessComplexObject_NestedArrays_PreservesStructure(string json)
+    [TestMethod]
+    [DynamicData(nameof(NestedArrayTestCases))]
+    public void ProcessComplexObject_NestedArrays_PreservesStructure(string json)
     {
         // Arrange & Act
         using var workspace = JsonWorkspace.Create();
@@ -112,9 +113,9 @@ public static class JsonDocumentBuilderComplexObjectTests
         AssertJsonStructuresEqual(originalParsed.RootElement, roundTrippedParsed.RootElement);
     }
 
-    [Theory]
-    [MemberData(nameof(MixedComplexStructureTestCases))]
-    public static void ProcessComplexObject_MixedComplexStructures_PreservesStructure(string json)
+    [TestMethod]
+    [DynamicData(nameof(MixedComplexStructureTestCases))]
+    public void ProcessComplexObject_MixedComplexStructures_PreservesStructure(string json)
     {
         // Arrange & Act
         using var workspace = JsonWorkspace.Create();
@@ -133,12 +134,12 @@ public static class JsonDocumentBuilderComplexObjectTests
         AssertJsonStructuresEqual(originalParsed.RootElement, roundTrippedParsed.RootElement);
     }
 
-    [Theory]
-    [InlineData(5)]
-    [InlineData(15)]
-    [InlineData(50)]
-    [InlineData(100)]
-    public static void ProcessComplexObject_LargeObjects_HandlesPropertyMaps(int propertyCount)
+    [TestMethod]
+    [DataRow(5)]
+    [DataRow(15)]
+    [DataRow(50)]
+    [DataRow(100)]
+    public void ProcessComplexObject_LargeObjects_HandlesPropertyMaps(int propertyCount)
     {
         // Arrange
         string json = GenerateLargeObjectJson(propertyCount);
@@ -150,25 +151,25 @@ public static class JsonDocumentBuilderComplexObjectTests
 
         // Assert
         JsonElement.Mutable rootElement = builderDoc.RootElement;
-        Assert.Equal(JsonValueKind.Object, rootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, rootElement.ValueKind);
 
         // Verify all properties are preserved
         int actualPropertyCount = 0;
         foreach (JsonProperty<JsonElement.Mutable> prop in rootElement.EnumerateObject())
         {
             actualPropertyCount++;
-            Assert.True(prop.Name.StartsWith("prop"), $"Unexpected property name: {prop.Name}");
-            Assert.True(prop.Value.GetString()?.StartsWith("value") == true, $"Unexpected property value for {prop.Name}");
+            Assert.IsTrue(prop.Name.StartsWith("prop"), $"Unexpected property name: {prop.Name}");
+            Assert.IsTrue(prop.Value.GetString()?.StartsWith("value") == true, $"Unexpected property value for {prop.Name}");
         }
 
-        Assert.Equal(propertyCount, actualPropertyCount);
+        Assert.AreEqual(propertyCount, actualPropertyCount);
     }
 
-    [Theory]
-    [InlineData(10)]
-    [InlineData(25)]
-    [InlineData(50)]
-    public static void ProcessComplexObject_DeepNesting_ProcessesAllLevels(int nestingDepth)
+    [TestMethod]
+    [DataRow(10)]
+    [DataRow(25)]
+    [DataRow(50)]
+    public void ProcessComplexObject_DeepNesting_ProcessesAllLevels(int nestingDepth)
     {
         // Arrange
         string json = GenerateDeepNestedJson(nestingDepth);
@@ -190,13 +191,13 @@ public static class JsonDocumentBuilderComplexObjectTests
         }
 
         // The final level should be a string value
-        Assert.Equal(JsonValueKind.String, current.ValueKind);
-        Assert.Equal("deepest", current.GetString());
-        Assert.Equal(nestingDepth, actualDepth);
+        Assert.AreEqual(JsonValueKind.String, current.ValueKind);
+        Assert.AreEqual("deepest", current.GetString());
+        Assert.AreEqual(nestingDepth, actualDepth);
     }
 
-    [Fact]
-    public static void ProcessComplexObject_MultipleDocumentsInWorkspace_TracksCorrectly()
+    [TestMethod]
+    public void ProcessComplexObject_MultipleDocumentsInWorkspace_TracksCorrectly()
     {
         // Arrange
         using var workspace = JsonWorkspace.Create();
@@ -213,27 +214,27 @@ public static class JsonDocumentBuilderComplexObjectTests
 
         // Assert
         // Verify both documents maintain their structure independently
-        Assert.Equal(JsonValueKind.Object, builder1.RootElement.ValueKind);
-        Assert.Equal(JsonValueKind.Array, builder2.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, builder1.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, builder2.RootElement.ValueKind);
 
         // Verify specific content
-        Assert.True(builder1.RootElement.TryGetProperty("type", out JsonElement.Mutable type1));
-        Assert.Equal("doc1", type1.GetString());
+        Assert.IsTrue(builder1.RootElement.TryGetProperty("type", out JsonElement.Mutable type1));
+        Assert.AreEqual("doc1", type1.GetString());
 
-        Assert.Equal(2, builder2.RootElement.GetArrayLength());
+        Assert.AreEqual(2, builder2.RootElement.GetArrayLength());
         JsonElement.Mutable secondArrayElement = builder2.RootElement[1];
-        Assert.True(secondArrayElement.TryGetProperty("type", out JsonElement.Mutable type2));
-        Assert.Equal("doc2", type2.GetString());
+        Assert.IsTrue(secondArrayElement.TryGetProperty("type", out JsonElement.Mutable type2));
+        Assert.AreEqual("doc2", type2.GetString());
 
         // Verify documents are different
-        Assert.NotEqual(builder1.RootElement.ToString(), builder2.RootElement.ToString());
+        Assert.AreNotEqual(builder1.RootElement.ToString(), builder2.RootElement.ToString());
     }
 
-    [Theory]
-    [InlineData(10, 5)]   // 10 properties, 5 levels deep
-    [InlineData(20, 10)]  // 20 properties, 10 levels deep
-    [InlineData(50, 3)]   // 50 properties, 3 levels deep
-    public static void ProcessComplexObject_LargeComplexStructures_PerformsEfficiently(int propertyCount, int nestingDepth)
+    [TestMethod]
+    [DataRow(10, 5)]   // 10 properties, 5 levels deep
+    [DataRow(20, 10)]  // 20 properties, 10 levels deep
+    [DataRow(50, 3)]   // 50 properties, 3 levels deep
+    public void ProcessComplexObject_LargeComplexStructures_PerformsEfficiently(int propertyCount, int nestingDepth)
     {
         // Arrange
         string json = GenerateComplexNestedJson(propertyCount, nestingDepth);
@@ -248,22 +249,22 @@ public static class JsonDocumentBuilderComplexObjectTests
         stopwatch.Stop();
 
         // Assert
-        Assert.Equal(JsonValueKind.Object, builderDoc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, builderDoc.RootElement.ValueKind);
 
         // Ensure reasonable performance (adjust thresholds as needed)
-        Assert.True(stopwatch.ElapsedMilliseconds < 5000, $"Processing took {stopwatch.ElapsedMilliseconds}ms, which exceeds the 5000ms threshold");
+        Assert.IsTrue(stopwatch.ElapsedMilliseconds < 5000, $"Processing took {stopwatch.ElapsedMilliseconds}ms, which exceeds the 5000ms threshold");
 
         // Verify structure integrity
         int actualPropertyCount = builderDoc.RootElement.EnumerateObject().Count();
-        Assert.True(actualPropertyCount >= propertyCount, $"Expected at least {propertyCount} properties, but found {actualPropertyCount}");
+        Assert.IsTrue(actualPropertyCount >= propertyCount, $"Expected at least {propertyCount} properties, but found {actualPropertyCount}");
     }
 
-    [Theory]
-    [InlineData(JsonValueKind.Object, "{}")]
-    [InlineData(JsonValueKind.Array, "[]")]
-    [InlineData(JsonValueKind.Object, "{\"nested\": {\"deep\": {\"value\": 42}}}")]
-    [InlineData(JsonValueKind.Array, "[1, [2, [3, [4]]]]")]
-    public static void ProcessComplexObject_ComplexTokenTypes_ProcessesCorrectly(JsonValueKind expectedKind, string json)
+    [TestMethod]
+    [DataRow(JsonValueKind.Object, "{}")]
+    [DataRow(JsonValueKind.Array, "[]")]
+    [DataRow(JsonValueKind.Object, "{\"nested\": {\"deep\": {\"value\": 42}}}")]
+    [DataRow(JsonValueKind.Array, "[1, [2, [3, [4]]]]")]
+    public void ProcessComplexObject_ComplexTokenTypes_ProcessesCorrectly(JsonValueKind expectedKind, string json)
     {
         // Arrange & Act
         using var workspace = JsonWorkspace.Create();
@@ -272,16 +273,16 @@ public static class JsonDocumentBuilderComplexObjectTests
 
         // Assert
         JsonElement.Mutable rootElement = builderDoc.RootElement;
-        Assert.Equal(expectedKind, rootElement.ValueKind);
+        Assert.AreEqual(expectedKind, rootElement.ValueKind);
 
         // Verify the structure can be serialized back correctly
         string roundTripped = rootElement.ToString();
         using var roundTrippedDoc = ParsedJsonDocument<JsonElement>.Parse(roundTripped);
-        Assert.Equal(expectedKind, roundTrippedDoc.RootElement.ValueKind);
+        Assert.AreEqual(expectedKind, roundTrippedDoc.RootElement.ValueKind);
     }
 
-    [Fact]
-    public static void ProcessComplexObject_WithPropertyMap_CalculatesCorrectEndTokenLength()
+    [TestMethod]
+    public void ProcessComplexObject_WithPropertyMap_CalculatesCorrectEndTokenLength()
     {
         // Arrange - Create a large object that will likely use a property map
         string json = GenerateLargeObjectJson(50);
@@ -293,7 +294,7 @@ public static class JsonDocumentBuilderComplexObjectTests
 
         // Assert
         JsonElement.Mutable rootElement = builderDoc.RootElement;
-        Assert.Equal(JsonValueKind.Object, rootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, rootElement.ValueKind);
 
         // Verify all properties are accessible (which means the end token length was calculated correctly)
         int propertyCount = 0;
@@ -301,14 +302,14 @@ public static class JsonDocumentBuilderComplexObjectTests
         {
             propertyCount++;
             // Accessing the property value tests that the metadata structure is correct
-            Assert.NotNull(property.Value.GetString());
+            Assert.IsNotNull(property.Value.GetString());
         }
 
-        Assert.Equal(50, propertyCount);
+        Assert.AreEqual(50, propertyCount);
     }
 
-    [Fact]
-    public static void ProcessComplexObject_WithoutPropertyMap_UsesRawLength()
+    [TestMethod]
+    public void ProcessComplexObject_WithoutPropertyMap_UsesRawLength()
     {
         // Arrange - Create a small object that won't use a property map
         string json = "{\"a\": 1, \"b\": 2, \"c\": 3}";
@@ -320,19 +321,19 @@ public static class JsonDocumentBuilderComplexObjectTests
 
         // Assert
         JsonElement.Mutable rootElement = builderDoc.RootElement;
-        Assert.Equal(JsonValueKind.Object, rootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, rootElement.ValueKind);
 
         // Verify all properties are accessible
-        Assert.True(rootElement.TryGetProperty("a", out JsonElement.Mutable a));
-        Assert.Equal(1, a.GetInt32());
-        Assert.True(rootElement.TryGetProperty("b", out JsonElement.Mutable b));
-        Assert.Equal(2, b.GetInt32());
-        Assert.True(rootElement.TryGetProperty("c", out JsonElement.Mutable c));
-        Assert.Equal(3, c.GetInt32());
+        Assert.IsTrue(rootElement.TryGetProperty("a", out JsonElement.Mutable a));
+        Assert.AreEqual(1, a.GetInt32());
+        Assert.IsTrue(rootElement.TryGetProperty("b", out JsonElement.Mutable b));
+        Assert.AreEqual(2, b.GetInt32());
+        Assert.IsTrue(rootElement.TryGetProperty("c", out JsonElement.Mutable c));
+        Assert.AreEqual(3, c.GetInt32());
     }
 
-    [Fact]
-    public static void ProcessComplexObject_ExternalDocumentReferences_DefersCorrectly()
+    [TestMethod]
+    public void ProcessComplexObject_ExternalDocumentReferences_DefersCorrectly()
     {
         // This test verifies the external document reference path in ProcessComplexObject
         // We'll create a scenario where we build from an existing document
@@ -351,21 +352,21 @@ public static class JsonDocumentBuilderComplexObjectTests
         JsonElement.Mutable externalProperty = builder1.RootElement.GetProperty("external");
 
         // Verify the external property is properly structured (this exercises ProcessComplexObject)
-        Assert.Equal(JsonValueKind.Object, externalProperty.ValueKind);
-        Assert.True(externalProperty.TryGetProperty("nested", out JsonElement.Mutable nested));
-        Assert.Equal(JsonValueKind.Array, nested.ValueKind);
-        Assert.Equal(3, nested.GetArrayLength());
-        Assert.Equal(1, nested[0].GetInt32());
-        Assert.Equal(2, nested[1].GetInt32());
-        Assert.Equal(3, nested[2].GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, externalProperty.ValueKind);
+        Assert.IsTrue(externalProperty.TryGetProperty("nested", out JsonElement.Mutable nested));
+        Assert.AreEqual(JsonValueKind.Array, nested.ValueKind);
+        Assert.AreEqual(3, nested.GetArrayLength());
+        Assert.AreEqual(1, nested[0].GetInt32());
+        Assert.AreEqual(2, nested[1].GetInt32());
+        Assert.AreEqual(3, nested[2].GetInt32());
     }
 
-    [Theory]
-    [InlineData("{}")]
-    [InlineData("[]")]
-    [InlineData("{\"a\":{\"b\":{\"c\":[]}}}")]
-    [InlineData("[1,[2,[3,[]]]]")]
-    public static void ProcessComplexObject_EmptyComplexStructures_HandledCorrectly(string json)
+    [TestMethod]
+    [DataRow("{}")]
+    [DataRow("[]")]
+    [DataRow("{\"a\":{\"b\":{\"c\":[]}}}")]
+    [DataRow("[1,[2,[3,[]]]]")]
+    public void ProcessComplexObject_EmptyComplexStructures_HandledCorrectly(string json)
     {
         // Arrange & Act
         using var workspace = JsonWorkspace.Create();
@@ -377,12 +378,12 @@ public static class JsonDocumentBuilderComplexObjectTests
 
         // Verify the document can be serialized and maintains structure
         string serialized = rootElement.ToString();
-        Assert.NotNull(serialized);
-        Assert.NotEmpty(serialized);
+        Assert.IsNotNull(serialized);
+        Assert.IsTrue((serialized).Any());
 
         // Parse the serialized result to ensure it's valid JSON
         using var roundTripped = ParsedJsonDocument<JsonElement>.Parse(serialized);
-        Assert.Equal(rootElement.ValueKind, roundTripped.RootElement.ValueKind);
+        Assert.AreEqual(rootElement.ValueKind, roundTripped.RootElement.ValueKind);
     }
 
     /// <summary>
@@ -454,25 +455,25 @@ public static class JsonDocumentBuilderComplexObjectTests
     /// </summary>
     private static void AssertJsonStructuresEqual(JsonElement expected, JsonElement actual)
     {
-        Assert.Equal(expected.ValueKind, actual.ValueKind);
+        Assert.AreEqual(expected.ValueKind, actual.ValueKind);
 
         switch (expected.ValueKind)
         {
             case JsonValueKind.Object:
                 var expectedProps = expected.EnumerateObject().ToList();
                 var actualProps = actual.EnumerateObject().ToList();
-                Assert.Equal(expectedProps.Count, actualProps.Count);
+                Assert.AreEqual(expectedProps.Count, actualProps.Count);
 
                 foreach (JsonProperty<JsonElement> expectedProp in expectedProps)
                 {
                     JsonProperty<JsonElement> actualProp = actualProps.FirstOrDefault(p => p.Name == expectedProp.Name);
-                    Assert.True(actualProp.Value.ValueKind != JsonValueKind.Undefined, $"Property '{expectedProp.Name}' not found in actual JSON");
+                    Assert.IsTrue(actualProp.Value.ValueKind != JsonValueKind.Undefined, $"Property '{expectedProp.Name}' not found in actual JSON");
                     AssertJsonStructuresEqual(expectedProp.Value, actualProp.Value);
                 }
                 break;
 
             case JsonValueKind.Array:
-                Assert.Equal(expected.GetArrayLength(), actual.GetArrayLength());
+                Assert.AreEqual(expected.GetArrayLength(), actual.GetArrayLength());
                 for (int i = 0; i < expected.GetArrayLength(); i++)
                 {
                     AssertJsonStructuresEqual(expected[i], actual[i]);
@@ -480,16 +481,16 @@ public static class JsonDocumentBuilderComplexObjectTests
                 break;
 
             case JsonValueKind.String:
-                Assert.Equal(expected.GetString(), actual.GetString());
+                Assert.AreEqual(expected.GetString(), actual.GetString());
                 break;
 
             case JsonValueKind.Number:
-                Assert.Equal(expected.GetRawText(), actual.GetRawText());
+                Assert.AreEqual(expected.GetRawText(), actual.GetRawText());
                 break;
 
             case JsonValueKind.True:
             case JsonValueKind.False:
-                Assert.Equal(expected.GetBoolean(), actual.GetBoolean());
+                Assert.AreEqual(expected.GetBoolean(), actual.GetBoolean());
                 break;
 
             case JsonValueKind.Null:

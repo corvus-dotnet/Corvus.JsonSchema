@@ -2,14 +2,15 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Buffers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
-public static partial class JsonReaderStateAndOptionsTests
+[TestClass]
+public partial class JsonReaderStateAndOptionsTests
 {
-    [Fact]
-    public static void DefaultJsonReaderOptions()
+    [TestMethod]
+    public void DefaultJsonReaderOptions()
     {
         JsonReaderOptions options = default;
 
@@ -18,20 +19,20 @@ public static partial class JsonReaderStateAndOptionsTests
             CommentHandling = JsonCommentHandling.Disallow,
             MaxDepth = 0
         };
-        Assert.Equal(expectedOption, options);
+        Assert.AreEqual(expectedOption, options);
 
         options = new JsonReaderOptions { CommentHandling = JsonCommentHandling.Disallow };
-        Assert.Equal(expectedOption, options);
+        Assert.AreEqual(expectedOption, options);
 
         options = new JsonReaderOptions { MaxDepth = 0 };
-        Assert.Equal(expectedOption, options);
+        Assert.AreEqual(expectedOption, options);
 
         options = new JsonReaderOptions { CommentHandling = JsonCommentHandling.Disallow, MaxDepth = 0 };
-        Assert.Equal(expectedOption, options);
+        Assert.AreEqual(expectedOption, options);
     }
 
-    [Fact]
-    public static void DefaultJsonReaderState()
+    [TestMethod]
+    public void DefaultJsonReaderState()
     {
         JsonReaderState state = default;
 
@@ -40,11 +41,11 @@ public static partial class JsonReaderStateAndOptionsTests
             CommentHandling = JsonCommentHandling.Disallow,
             MaxDepth = 0
         };
-        Assert.Equal(expectedOption, state.Options);
+        Assert.AreEqual(expectedOption, state.Options);
     }
 
-    [Fact]
-    public static void JsonReaderStateCtor()
+    [TestMethod]
+    public void JsonReaderStateCtor()
     {
         var state = new JsonReaderState(default);
 
@@ -53,10 +54,10 @@ public static partial class JsonReaderStateAndOptionsTests
             CommentHandling = JsonCommentHandling.Disallow,
             MaxDepth = 0
         };
-        Assert.Equal(expectedOption, state.Options);
+        Assert.AreEqual(expectedOption, state.Options);
 
         state = new JsonReaderState(new JsonReaderOptions { CommentHandling = JsonCommentHandling.Disallow, MaxDepth = 0 });
-        Assert.Equal(expectedOption, state.Options);
+        Assert.AreEqual(expectedOption, state.Options);
 
         expectedOption = new JsonReaderOptions
         {
@@ -64,12 +65,12 @@ public static partial class JsonReaderStateAndOptionsTests
             MaxDepth = 32
         };
         state = new JsonReaderState(new JsonReaderOptions { MaxDepth = 32 });
-        Assert.Equal(32, state.Options.MaxDepth);
-        Assert.Equal(expectedOption, state.Options);
+        Assert.AreEqual(32, state.Options.MaxDepth);
+        Assert.AreEqual(expectedOption, state.Options);
     }
 
-    [Fact]
-    public static void JsonReaderStateDefaultCtor()
+    [TestMethod]
+    public void JsonReaderStateDefaultCtor()
     {
         var state = new JsonReaderState();
 
@@ -78,11 +79,11 @@ public static partial class JsonReaderStateAndOptionsTests
             CommentHandling = JsonCommentHandling.Disallow,
             MaxDepth = 0
         };
-        Assert.Equal(expectedOption, state.Options);
+        Assert.AreEqual(expectedOption, state.Options);
     }
 
-    [Fact]
-    public static void MaxDepthIsHonored()
+    [TestMethod]
+    public void MaxDepthIsHonored()
     {
         byte[] dataUtf8 = "{}"u8.ToArray();
 
@@ -95,47 +96,47 @@ public static partial class JsonReaderStateAndOptionsTests
         var options = new JsonReaderOptions { CommentHandling = JsonCommentHandling.Disallow, MaxDepth = 64 };
         var state = new JsonReaderState(options);
         var reader = new Utf8JsonReader(dataUtf8, isFinalBlock: true, state);
-        Assert.Equal(64, options.MaxDepth);
-        Assert.Equal(64, reader.CurrentState.Options.MaxDepth);
+        Assert.AreEqual(64, options.MaxDepth);
+        Assert.AreEqual(64, reader.CurrentState.Options.MaxDepth);
 
         state = new JsonReaderState(options);
         reader = new Utf8JsonReader(sequence, isFinalBlock: true, state);
-        Assert.Equal(64, options.MaxDepth);
-        Assert.Equal(64, reader.CurrentState.Options.MaxDepth);
+        Assert.AreEqual(64, options.MaxDepth);
+        Assert.AreEqual(64, reader.CurrentState.Options.MaxDepth);
 
         options = new JsonReaderOptions { CommentHandling = JsonCommentHandling.Disallow, MaxDepth = 32 };
         state = new JsonReaderState(options);
         reader = new Utf8JsonReader(dataUtf8, isFinalBlock: true, state);
-        Assert.Equal(32, options.MaxDepth);
-        Assert.Equal(32, reader.CurrentState.Options.MaxDepth);
+        Assert.AreEqual(32, options.MaxDepth);
+        Assert.AreEqual(32, reader.CurrentState.Options.MaxDepth);
 
         state = new JsonReaderState(options);
         reader = new Utf8JsonReader(sequence, isFinalBlock: true, state);
-        Assert.Equal(32, options.MaxDepth);
-        Assert.Equal(32, reader.CurrentState.Options.MaxDepth);
+        Assert.AreEqual(32, options.MaxDepth);
+        Assert.AreEqual(32, reader.CurrentState.Options.MaxDepth);
     }
 
-    [Theory]
-    [InlineData(-1)]
-    [InlineData(3)]
-    [InlineData(byte.MaxValue)]
-    [InlineData(byte.MaxValue + 4)] // Other values, like byte.MaxValue + 1 overflows to 0 (i.e. JsonCommentHandling.Disallow), which is valid.
-    public static void TestCommentHandlingInvalid(int enumValue)
+    [TestMethod]
+    [DataRow(-1)]
+    [DataRow(3)]
+    [DataRow(byte.MaxValue)]
+    [DataRow(byte.MaxValue + 4)] // Other values, like byte.MaxValue + 1 overflows to 0 (i.e. JsonCommentHandling.Disallow), which is valid.
+    public void TestCommentHandlingInvalid(int enumValue)
     {
-        Assert.Throws<ArgumentOutOfRangeException>("value", () => new JsonReaderOptions { CommentHandling = (JsonCommentHandling)enumValue });
-        Assert.Throws<ArgumentOutOfRangeException>("value", () => new JsonReaderState(new JsonReaderOptions { CommentHandling = (JsonCommentHandling)enumValue }));
+        AssertEx.ThrowsExactly<ArgumentOutOfRangeException>("value", () => new JsonReaderOptions { CommentHandling = (JsonCommentHandling)enumValue });
+        AssertEx.ThrowsExactly<ArgumentOutOfRangeException>("value", () => new JsonReaderState(new JsonReaderOptions { CommentHandling = (JsonCommentHandling)enumValue }));
     }
 
-    [Theory]
-    [InlineData(-1)]
-    public static void TestDepthInvalid(int depth)
+    [TestMethod]
+    [DataRow(-1)]
+    public void TestDepthInvalid(int depth)
     {
-        Assert.Throws<ArgumentOutOfRangeException>("value", () => new JsonReaderOptions { MaxDepth = depth });
-        Assert.Throws<ArgumentOutOfRangeException>("value", () => new JsonReaderState(new JsonReaderOptions { MaxDepth = depth }));
+        AssertEx.ThrowsExactly<ArgumentOutOfRangeException>("value", () => new JsonReaderOptions { MaxDepth = depth });
+        AssertEx.ThrowsExactly<ArgumentOutOfRangeException>("value", () => new JsonReaderState(new JsonReaderOptions { MaxDepth = depth }));
     }
 
-    [Fact]
-    public static void ZeroMaxDepthDefaultsTo64()
+    [TestMethod]
+    public void ZeroMaxDepthDefaultsTo64()
     {
         byte[] dataUtf8 = "{}"u8.ToArray();
 
@@ -147,21 +148,21 @@ public static partial class JsonReaderStateAndOptionsTests
 
         var state = new JsonReaderState();
         var reader = new Utf8JsonReader(dataUtf8, isFinalBlock: true, state);
-        Assert.Equal(64, reader.CurrentState.Options.MaxDepth);
+        Assert.AreEqual(64, reader.CurrentState.Options.MaxDepth);
 
         var options = new JsonReaderOptions { CommentHandling = JsonCommentHandling.Disallow, MaxDepth = 0 };
         state = new JsonReaderState(options);
         reader = new Utf8JsonReader(dataUtf8, isFinalBlock: true, state);
-        Assert.Equal(0, options.MaxDepth);
-        Assert.Equal(64, reader.CurrentState.Options.MaxDepth);
+        Assert.AreEqual(0, options.MaxDepth);
+        Assert.AreEqual(64, reader.CurrentState.Options.MaxDepth);
 
         state = new JsonReaderState();
         reader = new Utf8JsonReader(sequence, isFinalBlock: true, state);
-        Assert.Equal(64, reader.CurrentState.Options.MaxDepth);
+        Assert.AreEqual(64, reader.CurrentState.Options.MaxDepth);
 
         state = new JsonReaderState(options);
         reader = new Utf8JsonReader(sequence, isFinalBlock: true, state);
-        Assert.Equal(0, options.MaxDepth);
-        Assert.Equal(64, reader.CurrentState.Options.MaxDepth);
+        Assert.AreEqual(0, options.MaxDepth);
+        Assert.AreEqual(64, reader.CurrentState.Options.MaxDepth);
     }
 }

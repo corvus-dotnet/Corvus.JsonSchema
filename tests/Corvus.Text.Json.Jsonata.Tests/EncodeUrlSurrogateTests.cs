@@ -5,7 +5,7 @@
 namespace Corvus.Text.Json.Jsonata.Tests;
 
 using Corvus.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Tests that <c>$encodeUrl</c> and <c>$encodeUrlComponent</c> correctly throw
@@ -25,6 +25,7 @@ using Xunit;
 /// verify the validation in both the runtime (RT) and code-generation (CG) paths.
 /// </para>
 /// </remarks>
+[TestClass]
 public class EncodeUrlSurrogateTests
 {
     // WTF-8 encoding of lone high surrogate U+D800: ED A0 80
@@ -41,7 +42,7 @@ public class EncodeUrlSurrogateTests
 
     #region RT (runtime evaluator) tests
 
-    [Fact]
+    [TestMethod]
     public void RT_EncodeUrl_HighSurrogate_ThrowsD3140()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -50,12 +51,12 @@ public class EncodeUrlSurrogateTests
         byte[] expression = "$encodeUrl($)"u8.ToArray();
         var evaluator = new JsonataEvaluator();
 
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             evaluator.Evaluate(expression, data, workspace));
-        Assert.Equal("D3140", ex.Code);
+        Assert.AreEqual("D3140", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void RT_EncodeUrl_LowSurrogate_ThrowsD3140()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -64,12 +65,12 @@ public class EncodeUrlSurrogateTests
         byte[] expression = "$encodeUrl($)"u8.ToArray();
         var evaluator = new JsonataEvaluator();
 
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             evaluator.Evaluate(expression, data, workspace));
-        Assert.Equal("D3140", ex.Code);
+        Assert.AreEqual("D3140", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void RT_EncodeUrlComponent_HighSurrogate_ThrowsD3140()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -78,12 +79,12 @@ public class EncodeUrlSurrogateTests
         byte[] expression = "$encodeUrlComponent($)"u8.ToArray();
         var evaluator = new JsonataEvaluator();
 
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             evaluator.Evaluate(expression, data, workspace));
-        Assert.Equal("D3140", ex.Code);
+        Assert.AreEqual("D3140", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void RT_EncodeUrlComponent_LowSurrogate_ThrowsD3140()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -92,12 +93,12 @@ public class EncodeUrlSurrogateTests
         byte[] expression = "$encodeUrlComponent($)"u8.ToArray();
         var evaluator = new JsonataEvaluator();
 
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             evaluator.Evaluate(expression, data, workspace));
-        Assert.Equal("D3140", ex.Code);
+        Assert.AreEqual("D3140", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void RT_EncodeUrl_ValidNearSurrogate_DoesNotThrow()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -108,10 +109,10 @@ public class EncodeUrlSurrogateTests
 
         // U+D7FF is a valid codepoint just below the surrogate range — should encode normally
         JsonElement result = evaluator.Evaluate(expression, data, workspace);
-        Assert.Equal(JsonValueKind.String, result.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, result.ValueKind);
     }
 
-    [Fact]
+    [TestMethod]
     public void RT_EncodeUrl_SupplementaryCharacter_DoesNotThrow()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -122,58 +123,58 @@ public class EncodeUrlSurrogateTests
 
         // U+10000 is a valid supplementary codepoint (4-byte UTF-8) — no false positive
         JsonElement result = evaluator.Evaluate(expression, data, workspace);
-        Assert.Equal(JsonValueKind.String, result.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, result.ValueKind);
     }
 
     #endregion
 
     #region CG (code generation helpers) tests
 
-    [Fact]
+    [TestMethod]
     public void CG_EncodeUrl_HighSurrogate_ThrowsD3140()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement data = JsonataHelpers.StringFromUnescapedUtf8(HighSurrogateWtf8, workspace);
 
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             JsonataCodeGenHelpers.EncodeUrl(data, workspace));
-        Assert.Equal("D3140", ex.Code);
+        Assert.AreEqual("D3140", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_EncodeUrl_LowSurrogate_ThrowsD3140()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement data = JsonataHelpers.StringFromUnescapedUtf8(LowSurrogateWtf8, workspace);
 
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             JsonataCodeGenHelpers.EncodeUrl(data, workspace));
-        Assert.Equal("D3140", ex.Code);
+        Assert.AreEqual("D3140", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_EncodeUrlComponent_HighSurrogate_ThrowsD3140()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement data = JsonataHelpers.StringFromUnescapedUtf8(HighSurrogateWtf8, workspace);
 
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             JsonataCodeGenHelpers.EncodeUrlComponent(data, workspace));
-        Assert.Equal("D3140", ex.Code);
+        Assert.AreEqual("D3140", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_EncodeUrlComponent_LowSurrogate_ThrowsD3140()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement data = JsonataHelpers.StringFromUnescapedUtf8(LowSurrogateWtf8, workspace);
 
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             JsonataCodeGenHelpers.EncodeUrlComponent(data, workspace));
-        Assert.Equal("D3140", ex.Code);
+        Assert.AreEqual("D3140", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_EncodeUrl_ValidNearSurrogate_DoesNotThrow()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -181,10 +182,10 @@ public class EncodeUrlSurrogateTests
 
         // U+D7FF just below surrogate range — should encode normally
         JsonElement result = JsonataCodeGenHelpers.EncodeUrl(data, workspace);
-        Assert.Equal(JsonValueKind.String, result.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, result.ValueKind);
     }
 
-    [Fact]
+    [TestMethod]
     public void CG_EncodeUrlComponent_ValidNearSurrogate_DoesNotThrow()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -192,53 +193,53 @@ public class EncodeUrlSurrogateTests
 
         // U+D7FF just below surrogate range — should encode normally
         JsonElement result = JsonataCodeGenHelpers.EncodeUrlComponent(data, workspace);
-        Assert.Equal(JsonValueKind.String, result.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, result.ValueKind);
     }
 
     #endregion
 
     #region ContainsUtf8Surrogate unit tests
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_HighSurrogate_ReturnsTrue()
     {
-        Assert.True(BuiltInFunctions.ContainsUtf8Surrogate(HighSurrogateWtf8));
+        Assert.IsTrue(BuiltInFunctions.ContainsUtf8Surrogate(HighSurrogateWtf8));
     }
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_LowSurrogate_ReturnsTrue()
     {
-        Assert.True(BuiltInFunctions.ContainsUtf8Surrogate(LowSurrogateWtf8));
+        Assert.IsTrue(BuiltInFunctions.ContainsUtf8Surrogate(LowSurrogateWtf8));
     }
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_ValidNearSurrogate_ReturnsFalse()
     {
         // ED 9F BF = U+D7FF, just below surrogate range
-        Assert.False(BuiltInFunctions.ContainsUtf8Surrogate(ValidNearSurrogate));
+        Assert.IsFalse(BuiltInFunctions.ContainsUtf8Surrogate(ValidNearSurrogate));
     }
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_SupplementaryCharacter_ReturnsFalse()
     {
         // F0 90 80 80 = U+10000, 4-byte UTF-8 — not a 3-byte surrogate pattern
-        Assert.False(BuiltInFunctions.ContainsUtf8Surrogate(ValidSupplementary));
+        Assert.IsFalse(BuiltInFunctions.ContainsUtf8Surrogate(ValidSupplementary));
     }
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_EmptySpan_ReturnsFalse()
     {
-        Assert.False(BuiltInFunctions.ContainsUtf8Surrogate(ReadOnlySpan<byte>.Empty));
+        Assert.IsFalse(BuiltInFunctions.ContainsUtf8Surrogate(ReadOnlySpan<byte>.Empty));
     }
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_TwoBytes_ReturnsFalse()
     {
         // Too short to contain a 3-byte sequence
-        Assert.False(BuiltInFunctions.ContainsUtf8Surrogate(new byte[] { 0xED, 0xA0 }));
+        Assert.IsFalse(BuiltInFunctions.ContainsUtf8Surrogate(new byte[] { 0xED, 0xA0 }));
     }
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_SurrogateMidString_ReturnsTrue()
     {
         // "hello" + U+D800 + "world"
@@ -247,28 +248,28 @@ public class EncodeUrlSurrogateTests
             0xED, 0xA0, 0x80,
             (byte)'w', (byte)'o', (byte)'r', (byte)'l', (byte)'d',
         ];
-        Assert.True(BuiltInFunctions.ContainsUtf8Surrogate(data));
+        Assert.IsTrue(BuiltInFunctions.ContainsUtf8Surrogate(data));
     }
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_HighSurrogateMaxValue_ReturnsTrue()
     {
         // U+DBFF = ED AF BF (highest high surrogate)
-        Assert.True(BuiltInFunctions.ContainsUtf8Surrogate(new byte[] { 0xED, 0xAF, 0xBF }));
+        Assert.IsTrue(BuiltInFunctions.ContainsUtf8Surrogate(new byte[] { 0xED, 0xAF, 0xBF }));
     }
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_LowSurrogateMaxValue_ReturnsTrue()
     {
         // U+DFFF = ED BF BF (highest low surrogate)
-        Assert.True(BuiltInFunctions.ContainsUtf8Surrogate(new byte[] { 0xED, 0xBF, 0xBF }));
+        Assert.IsTrue(BuiltInFunctions.ContainsUtf8Surrogate(new byte[] { 0xED, 0xBF, 0xBF }));
     }
 
-    [Fact]
+    [TestMethod]
     public void ContainsUtf8Surrogate_JustAboveSurrogateRange_ReturnsFalse()
     {
         // U+E000 = EE 80 80 (first codepoint above surrogate range)
-        Assert.False(BuiltInFunctions.ContainsUtf8Surrogate(new byte[] { 0xEE, 0x80, 0x80 }));
+        Assert.IsFalse(BuiltInFunctions.ContainsUtf8Surrogate(new byte[] { 0xEE, 0x80, 0x80 }));
     }
 
     #endregion

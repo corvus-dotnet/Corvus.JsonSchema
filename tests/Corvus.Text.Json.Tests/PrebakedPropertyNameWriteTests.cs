@@ -6,7 +6,7 @@ using System.Buffers;
 using System.Text.Encodings.Web;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -26,12 +26,13 @@ namespace Corvus.Text.Json.Tests;
 /// <item>Non-default encoder → <c>WritePropertyName</c> (re-escapes with configured encoder).</item>
 /// </list>
 /// </remarks>
+[TestClass]
 public class PrebakedPropertyNameWriteTests
 {
     /// <summary>
     /// Default encoder, minimized output → exercises <c>WritePrebakedPropertyName</c> fast path.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteTo_DefaultEncoder_Minimized_ProducesCorrectJson()
     {
         using var workspace = JsonWorkspace.Create();
@@ -47,13 +48,13 @@ public class PrebakedPropertyNameWriteTests
         }
 
         string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
-        Assert.Equal("""{"age":30,"name":"Alice","email":"alice@example.com","isActive":true}""", json);
+        Assert.AreEqual("""{"age":30,"name":"Alice","email":"alice@example.com","isActive":true}""", json);
     }
 
     /// <summary>
     /// Default encoder, indented output → exercises <c>WriteRawPropertyName</c> path.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteTo_DefaultEncoder_Indented_ProducesCorrectJson()
     {
         using var workspace = JsonWorkspace.Create();
@@ -69,7 +70,7 @@ public class PrebakedPropertyNameWriteTests
         }
 
         string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
-        Assert.Equal(
+        Assert.AreEqual(
             """
             {
               "age": 30,
@@ -85,7 +86,7 @@ public class PrebakedPropertyNameWriteTests
     /// Non-default encoder (UnsafeRelaxedJsonEscaping), minimized output → exercises
     /// the re-escape fallback path via <c>WritePropertyName</c>.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteTo_UnsafeRelaxedEncoder_Minimized_ProducesCorrectJson()
     {
         using var workspace = JsonWorkspace.Create();
@@ -105,14 +106,14 @@ public class PrebakedPropertyNameWriteTests
         }
 
         string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
-        Assert.Equal("""{"age":30,"name":"Alice","email":"alice@example.com","isActive":true}""", json);
+        Assert.AreEqual("""{"age":30,"name":"Alice","email":"alice@example.com","isActive":true}""", json);
     }
 
     /// <summary>
     /// Non-default encoder, indented output → exercises the re-escape fallback path
     /// with indentation handling.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteTo_UnsafeRelaxedEncoder_Indented_ProducesCorrectJson()
     {
         using var workspace = JsonWorkspace.Create();
@@ -133,7 +134,7 @@ public class PrebakedPropertyNameWriteTests
         }
 
         string json = JsonReaderHelper.TranscodeHelper(buffer.WrittenSpan);
-        Assert.Equal(
+        Assert.AreEqual(
             """
             {
               "age": 30,
@@ -149,7 +150,7 @@ public class PrebakedPropertyNameWriteTests
     /// Verifies that all encoder/formatting paths produce byte-identical minimized output for
     /// pure ASCII property names (where all encoders agree on escaping).
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteTo_AllEncoders_ProduceIdenticalMinimizedOutput()
     {
         using var workspace1 = JsonWorkspace.Create();
@@ -178,7 +179,7 @@ public class PrebakedPropertyNameWriteTests
             builder2.WriteTo(writer);
         }
 
-        Assert.True(
+        Assert.IsTrue(
             buffer1.WrittenSpan.SequenceEqual(buffer2.WrittenSpan),
             "Default and UnsafeRelaxed encoders should produce identical output for pure ASCII property names.");
     }
@@ -186,7 +187,7 @@ public class PrebakedPropertyNameWriteTests
     /// <summary>
     /// Output from the fast path round-trips correctly: build → write → parse → verify.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteTo_FastPath_RoundTripsCorrectly()
     {
         using var workspace = JsonWorkspace.Create();
@@ -203,9 +204,9 @@ public class PrebakedPropertyNameWriteTests
 
         // Parse the output back and verify all properties are present
         using var parsed = ParsedJsonDocument<ObjectWithMixedProperties>.Parse(json);
-        Assert.True(parsed.RootElement.Name.ValueEquals("Alice"));
-        Assert.Equal("30", parsed.RootElement.Age.ToString());
-        Assert.True(parsed.RootElement.Email.ValueEquals("alice@example.com"));
-        Assert.True((bool)parsed.RootElement.IsActive);
+        Assert.IsTrue(parsed.RootElement.Name.ValueEquals("Alice"));
+        Assert.AreEqual("30", parsed.RootElement.Age.ToString());
+        Assert.IsTrue(parsed.RootElement.Email.ValueEquals("alice@example.com"));
+        Assert.IsTrue((bool)parsed.RootElement.IsActive);
     }
 }

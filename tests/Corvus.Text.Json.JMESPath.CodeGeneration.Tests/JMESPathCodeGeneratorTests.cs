@@ -3,16 +3,17 @@
 // </copyright>
 
 using Corvus.Text.Json.JMESPath.CodeGeneration;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JMESPath.CodeGeneration.Tests;
 
 /// <summary>
 /// Tests for <see cref="JMESPathCodeGenerator"/>.
 /// </summary>
+[TestClass]
 public class JMESPathCodeGeneratorTests
 {
-    [Fact]
+    [TestMethod]
     public void Generate_SimpleProperty_ContainsEvaluateMethod()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -20,12 +21,12 @@ public class JMESPathCodeGeneratorTests
             "SimplePropertyExpr",
             "Test.Generated");
 
-        Assert.Contains("public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)", result);
-        Assert.Contains("namespace Test.Generated;", result);
-        Assert.Contains("class SimplePropertyExpr", result);
+        StringAssert.Contains(result, "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)");
+        StringAssert.Contains(result, "namespace Test.Generated;");
+        StringAssert.Contains(result, "class SimplePropertyExpr");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_ListProjection_ContainsArrayBuilder()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -33,13 +34,13 @@ public class JMESPathCodeGeneratorTests
             "ProjectionExpr",
             "Test.Generated");
 
-        Assert.Contains("class ProjectionExpr", result);
-        Assert.Contains("CreateBuilder", result);
-        Assert.Contains("ArrayBuilder", result);
-        Assert.Contains("EnumerateArray", result);
+        StringAssert.Contains(result, "class ProjectionExpr");
+        StringAssert.Contains(result, "CreateBuilder");
+        StringAssert.Contains(result, "ArrayBuilder");
+        StringAssert.Contains(result, "EnumerateArray");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Literal_ContainsParseValue()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -47,11 +48,11 @@ public class JMESPathCodeGeneratorTests
             "LiteralExpr",
             "Test.Generated");
 
-        Assert.Contains("class LiteralExpr", result);
-        Assert.Contains("ParseValue", result);
+        StringAssert.Contains(result, "class LiteralExpr");
+        StringAssert.Contains(result, "ParseValue");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Function_ContainsHelperCall()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -59,10 +60,10 @@ public class JMESPathCodeGeneratorTests
             "LengthExpr",
             "Test.Generated");
 
-        Assert.Contains("JMESPathCodeGenHelpers.Length", result);
+        StringAssert.Contains(result, "JMESPathCodeGenHelpers.Length");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_SortBy_EmitsExprRefMethod()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -70,11 +71,11 @@ public class JMESPathCodeGeneratorTests
             "SortByExpr",
             "Test.Generated");
 
-        Assert.Contains("ExprRef0", result);
-        Assert.Contains("JMESPathCodeGenHelpers.SortBy", result);
+        StringAssert.Contains(result, "ExprRef0");
+        StringAssert.Contains(result, "JMESPathCodeGenHelpers.SortBy");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Filter_ContainsIsTruthy()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -82,10 +83,10 @@ public class JMESPathCodeGeneratorTests
             "FilterExpr",
             "Test.Generated");
 
-        Assert.Contains("IsTruthy", result);
+        StringAssert.Contains(result, "IsTruthy");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Comparison_ContainsDeepEquals()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -93,10 +94,10 @@ public class JMESPathCodeGeneratorTests
             "CompareExpr",
             "Test.Generated");
 
-        Assert.Contains("DeepEquals", result);
+        StringAssert.Contains(result, "DeepEquals");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_MultiSelectHash_ContainsObjectBuilder()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -104,12 +105,12 @@ public class JMESPathCodeGeneratorTests
             "HashExpr",
             "Test.Generated");
 
-        Assert.Contains("CreateBuilder", result);
-        Assert.Contains("ObjectBuilder", result);
-        Assert.Contains("AddProperty", result);
+        StringAssert.Contains(result, "CreateBuilder");
+        StringAssert.Contains(result, "ObjectBuilder");
+        StringAssert.Contains(result, "AddProperty");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_SumMultiSelect_InlinesSumWithoutArray()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -118,12 +119,12 @@ public class JMESPathCodeGeneratorTests
             "Test.Generated");
 
         // Should inline the sum as double accumulation, not create an array.
-        Assert.Contains("__sum_", result);
-        Assert.Contains("GetDouble", result);
+        StringAssert.Contains(result, "__sum_");
+        StringAssert.Contains(result, "GetDouble");
         Assert.DoesNotContain("CreateBuilder", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_NestedSumMultiSelect_SingleDoubleToElement()
     {
         string result = JMESPathCodeGenerator.Generate(
@@ -140,7 +141,7 @@ public class JMESPathCodeGeneratorTests
             idx += "DoubleToElement".Length;
         }
 
-        Assert.Equal(1, count);
+        Assert.AreEqual(1, count);
         Assert.DoesNotContain("CreateBuilder", result);
     }
 }

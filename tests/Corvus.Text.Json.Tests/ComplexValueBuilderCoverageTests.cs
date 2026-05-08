@@ -7,7 +7,7 @@ using System.Text;
 using Corvus.Numerics;
 using Corvus.Text.Json.Internal;
 using NodaTime;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -17,7 +17,8 @@ namespace Corvus.Text.Json.Tests;
 /// Also covers AddPropertyFormattedNumber and AddPropertyRawString string-name variants,
 /// and AddProperty with char-span property names.
 /// </summary>
-public static class ComplexValueBuilderCoverageTests
+[TestClass]
+public class ComplexValueBuilderCoverageTests
 {
     #region Helpers
 
@@ -35,8 +36,8 @@ public static class ComplexValueBuilderCoverageTests
 
     #region AddProperty — byte
 
-    [Fact]
-    public static void AddProperty_Byte_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Byte_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -44,15 +45,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (byte)255);
             });
 
-        Assert.Equal("""{"val":255}""", json);
+        Assert.AreEqual("""{"val":255}""", json);
     }
 
     #endregion
 
     #region AddProperty — sbyte
 
-    [Fact]
-    public static void AddProperty_Sbyte_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Sbyte_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -60,15 +61,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (sbyte)-42);
             });
 
-        Assert.Equal("""{"val":-42}""", json);
+        Assert.AreEqual("""{"val":-42}""", json);
     }
 
     #endregion
 
     #region AddProperty — short
 
-    [Fact]
-    public static void AddProperty_Short_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Short_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -76,15 +77,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (short)-1000);
             });
 
-        Assert.Equal("""{"val":-1000}""", json);
+        Assert.AreEqual("""{"val":-1000}""", json);
     }
 
     #endregion
 
     #region AddProperty — ushort
 
-    [Fact]
-    public static void AddProperty_Ushort_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Ushort_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -92,15 +93,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (ushort)60000);
             });
 
-        Assert.Equal("""{"val":60000}""", json);
+        Assert.AreEqual("""{"val":60000}""", json);
     }
 
     #endregion
 
     #region AddProperty — uint
 
-    [Fact]
-    public static void AddProperty_Uint_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Uint_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -108,15 +109,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 3000000000U);
             });
 
-        Assert.Equal("""{"val":3000000000}""", json);
+        Assert.AreEqual("""{"val":3000000000}""", json);
     }
 
     #endregion
 
     #region AddProperty — ulong
 
-    [Fact]
-    public static void AddProperty_Ulong_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Ulong_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -124,15 +125,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 9999999999999UL);
             });
 
-        Assert.Equal("""{"val":9999999999999}""", json);
+        Assert.AreEqual("""{"val":9999999999999}""", json);
     }
 
     #endregion
 
     #region AddProperty — float
 
-    [Fact]
-    public static void AddProperty_Float_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Float_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -140,15 +141,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 1.5f);
             });
 
-        Assert.Equal("""{"val":1.5}""", json);
+        Assert.AreEqual("""{"val":1.5}""", json);
     }
 
     #endregion
 
     #region AddProperty — double
 
-    [Fact]
-    public static void AddProperty_Double_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Double_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -156,15 +157,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 3.14);
             });
 
-        Assert.Equal("""{"val":3.14}""", json);
+        Assert.AreEqual("""{"val":3.14}""", json);
     }
 
     #endregion
 
     #region AddProperty — decimal
 
-    [Fact]
-    public static void AddProperty_Decimal_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Decimal_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -172,15 +173,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), 123.456m);
             });
 
-        Assert.Equal("""{"val":123.456}""", json);
+        Assert.AreEqual("""{"val":123.456}""", json);
     }
 
     #endregion
 
     #region AddProperty — BigInteger
 
-    [Fact]
-    public static void AddProperty_BigInteger_Utf8Name()
+    [TestMethod]
+    public void AddProperty_BigInteger_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -188,15 +189,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new BigInteger(999999999999999));
             });
 
-        Assert.Equal("""{"val":999999999999999}""", json);
+        Assert.AreEqual("""{"val":999999999999999}""", json);
     }
 
     #endregion
 
     #region AddProperty — BigNumber
 
-    [Fact]
-    public static void AddProperty_BigNumber_Utf8Name()
+    [TestMethod]
+    public void AddProperty_BigNumber_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -205,15 +206,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), bn);
             });
 
-        Assert.Equal("""{"val":123456789E-4}""", json);
+        Assert.AreEqual("""{"val":123456789E-4}""", json);
     }
 
     #endregion
 
     #region AddProperty — Guid
 
-    [Fact]
-    public static void AddProperty_Guid_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Guid_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -221,15 +222,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new Guid("12345678-1234-1234-1234-123456789abc"));
             });
 
-        Assert.Equal("""{"val":"12345678-1234-1234-1234-123456789abc"}""", json);
+        Assert.AreEqual("""{"val":"12345678-1234-1234-1234-123456789abc"}""", json);
     }
 
     #endregion
 
     #region AddProperty — DateTime
 
-    [Fact]
-    public static void AddProperty_DateTime_Utf8Name()
+    [TestMethod]
+    public void AddProperty_DateTime_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -237,15 +238,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new DateTime(2024, 1, 15, 10, 30, 0, DateTimeKind.Utc));
             });
 
-        Assert.Equal("""{"val":"2024-01-15T10:30:00Z"}""", json);
+        Assert.AreEqual("""{"val":"2024-01-15T10:30:00Z"}""", json);
     }
 
     #endregion
 
     #region AddProperty — DateTimeOffset
 
-    [Fact]
-    public static void AddProperty_DateTimeOffset_Utf8Name()
+    [TestMethod]
+    public void AddProperty_DateTimeOffset_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -253,15 +254,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new DateTimeOffset(2024, 6, 15, 12, 0, 0, TimeSpan.FromHours(5)));
             });
 
-        Assert.Equal("""{"val":"2024-06-15T12:00:00\u002B05:00"}""", json);
+        Assert.AreEqual("""{"val":"2024-06-15T12:00:00\u002B05:00"}""", json);
     }
 
     #endregion
 
     #region AddProperty — bool
 
-    [Fact]
-    public static void AddProperty_Bool_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Bool_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -269,7 +270,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), true);
             });
 
-        Assert.Equal("""{"val":true}""", json);
+        Assert.AreEqual("""{"val":true}""", json);
     }
 
     #endregion
@@ -278,8 +279,8 @@ public static class ComplexValueBuilderCoverageTests
 
     #region AddProperty — Half
 
-    [Fact]
-    public static void AddProperty_Half_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Half_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -287,7 +288,7 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), (Half)2.5);
             });
 
-        Assert.Equal("""{"val":2.5}""", json);
+        Assert.AreEqual("""{"val":2.5}""", json);
     }
 
     #endregion
@@ -296,8 +297,8 @@ public static class ComplexValueBuilderCoverageTests
 
     #region AddProperty — OffsetDateTime (NodaTime)
 
-    [Fact]
-    public static void AddProperty_OffsetDateTime_Utf8Name()
+    [TestMethod]
+    public void AddProperty_OffsetDateTime_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -306,15 +307,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), odt);
             });
 
-        Assert.Equal("""{"val":"2024-01-15T10:30:00.0000000\u002B05:00"}""", json);
+        Assert.AreEqual("""{"val":"2024-01-15T10:30:00.0000000\u002B05:00"}""", json);
     }
 
     #endregion
 
     #region AddProperty — OffsetDate (NodaTime)
 
-    [Fact]
-    public static void AddProperty_OffsetDate_Utf8Name()
+    [TestMethod]
+    public void AddProperty_OffsetDate_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -323,15 +324,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), od);
             });
 
-        Assert.Equal("""{"val":"2024-01-15\u002B05:00"}""", json);
+        Assert.AreEqual("""{"val":"2024-01-15\u002B05:00"}""", json);
     }
 
     #endregion
 
     #region AddProperty — OffsetTime (NodaTime)
 
-    [Fact]
-    public static void AddProperty_OffsetTime_Utf8Name()
+    [TestMethod]
+    public void AddProperty_OffsetTime_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -340,15 +341,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), ot);
             });
 
-        Assert.Equal("""{"val":"10:30:00.0000000\u002B05:00"}""", json);
+        Assert.AreEqual("""{"val":"10:30:00.0000000\u002B05:00"}""", json);
     }
 
     #endregion
 
     #region AddProperty — LocalDate (NodaTime)
 
-    [Fact]
-    public static void AddProperty_LocalDate_Utf8Name()
+    [TestMethod]
+    public void AddProperty_LocalDate_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -356,15 +357,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), new LocalDate(2024, 1, 15));
             });
 
-        Assert.Equal("""{"val":"2024-01-15"}""", json);
+        Assert.AreEqual("""{"val":"2024-01-15"}""", json);
     }
 
     #endregion
 
     #region AddProperty — Period (NodaTime)
 
-    [Fact]
-    public static void AddProperty_Period_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Period_Utf8Name()
     {
         string json = BuildObjectViaObjectBuilder(
             static (ref JsonElement.ObjectBuilder builder) =>
@@ -372,15 +373,15 @@ public static class ComplexValueBuilderCoverageTests
                 builder.AddProperty(Encoding.UTF8.GetBytes("val"), Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(3));
             });
 
-        Assert.Equal("""{"val":"P1Y2M3D"}""", json);
+        Assert.AreEqual("""{"val":"P1Y2M3D"}""", json);
     }
 
     #endregion
 
     #region AddPropertyFormattedNumber — ReadOnlySpan<byte> property name wrapper
 
-    [Fact]
-    public static void AddPropertyFormattedNumber_Utf8Name()
+    [TestMethod]
+    public void AddPropertyFormattedNumber_Utf8Name()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -391,15 +392,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"num":99}""", json);
+        Assert.AreEqual("""{"num":99}""", json);
     }
 
     #endregion
 
     #region AddPropertyFormattedNumber — string property name
 
-    [Fact]
-    public static void AddPropertyFormattedNumber_StringName()
+    [TestMethod]
+    public void AddPropertyFormattedNumber_StringName()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -410,15 +411,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"num":77}""", json);
+        Assert.AreEqual("""{"num":77}""", json);
     }
 
     #endregion
 
     #region AddPropertyRawString — string property name
 
-    [Fact]
-    public static void AddPropertyRawString_StringName()
+    [TestMethod]
+    public void AddPropertyRawString_StringName()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -429,15 +430,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"prop":"raw"}""", json);
+        Assert.AreEqual("""{"prop":"raw"}""", json);
     }
 
     #endregion
 
     #region AddPropertyNull — ReadOnlySpan<byte> property name wrapper
 
-    [Fact]
-    public static void AddPropertyNull_Utf8Name()
+    [TestMethod]
+    public void AddPropertyNull_Utf8Name()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -448,15 +449,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"n":null}""", json);
+        Assert.AreEqual("""{"n":null}""", json);
     }
 
     #endregion
 
     #region AddProperty — ReadOnlySpan<byte> string value wrapper
 
-    [Fact]
-    public static void AddProperty_Utf8StringValue_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Utf8StringValue_Utf8Name()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -467,15 +468,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"s":"hello"}""", json);
+        Assert.AreEqual("""{"s":"hello"}""", json);
     }
 
     #endregion
 
     #region AddProperty with char-span property names (non-UTF8 overloads)
 
-    [Fact]
-    public static void AddProperty_CharSpan_Guid()
+    [TestMethod]
+    public void AddProperty_CharSpan_Guid()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -486,11 +487,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"myGuid":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}""", json);
+        Assert.AreEqual("""{"myGuid":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_DateTime()
+    [TestMethod]
+    public void AddProperty_CharSpan_DateTime()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -501,11 +502,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"dt":"2025-03-20T08:00:00Z"}""", json);
+        Assert.AreEqual("""{"dt":"2025-03-20T08:00:00Z"}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_DateTimeOffset()
+    [TestMethod]
+    public void AddProperty_CharSpan_DateTimeOffset()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -516,11 +517,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"dto":"2025-03-20T08:00:00\u002B02:00"}""", json);
+        Assert.AreEqual("""{"dto":"2025-03-20T08:00:00\u002B02:00"}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Bool()
+    [TestMethod]
+    public void AddProperty_CharSpan_Bool()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -531,11 +532,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"flag":false}""", json);
+        Assert.AreEqual("""{"flag":false}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_OffsetDateTime()
+    [TestMethod]
+    public void AddProperty_CharSpan_OffsetDateTime()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -547,11 +548,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"odt":"2024-06-01T12:00:00.0000000\u002B03:00"}""", json);
+        Assert.AreEqual("""{"odt":"2024-06-01T12:00:00.0000000\u002B03:00"}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_OffsetDate()
+    [TestMethod]
+    public void AddProperty_CharSpan_OffsetDate()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -563,11 +564,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"od":"2024-06-01\u002B03:00"}""", json);
+        Assert.AreEqual("""{"od":"2024-06-01\u002B03:00"}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_OffsetTime()
+    [TestMethod]
+    public void AddProperty_CharSpan_OffsetTime()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -579,11 +580,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"ot":"14:30:00.0000000\u002B03:00"}""", json);
+        Assert.AreEqual("""{"ot":"14:30:00.0000000\u002B03:00"}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_LocalDate()
+    [TestMethod]
+    public void AddProperty_CharSpan_LocalDate()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -594,11 +595,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"ld":"2024-12-25"}""", json);
+        Assert.AreEqual("""{"ld":"2024-12-25"}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Period()
+    [TestMethod]
+    public void AddProperty_CharSpan_Period()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -609,11 +610,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"p":"P0Y0M7D"}""", json);
+        Assert.AreEqual("""{"p":"P0Y0M7D"}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Sbyte()
+    [TestMethod]
+    public void AddProperty_CharSpan_Sbyte()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -624,11 +625,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"sb":-100}""", json);
+        Assert.AreEqual("""{"sb":-100}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Byte()
+    [TestMethod]
+    public void AddProperty_CharSpan_Byte()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -639,11 +640,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"b":200}""", json);
+        Assert.AreEqual("""{"b":200}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Short()
+    [TestMethod]
+    public void AddProperty_CharSpan_Short()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -654,11 +655,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"sh":12345}""", json);
+        Assert.AreEqual("""{"sh":12345}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Ushort()
+    [TestMethod]
+    public void AddProperty_CharSpan_Ushort()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -669,11 +670,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"us":50000}""", json);
+        Assert.AreEqual("""{"us":50000}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Uint()
+    [TestMethod]
+    public void AddProperty_CharSpan_Uint()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -684,11 +685,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"ui":4000000000}""", json);
+        Assert.AreEqual("""{"ui":4000000000}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Long()
+    [TestMethod]
+    public void AddProperty_CharSpan_Long()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -699,11 +700,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"lg":9876543210}""", json);
+        Assert.AreEqual("""{"lg":9876543210}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Ulong()
+    [TestMethod]
+    public void AddProperty_CharSpan_Ulong()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -714,11 +715,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"ul":18000000000000000000}""", json);
+        Assert.AreEqual("""{"ul":18000000000000000000}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Float()
+    [TestMethod]
+    public void AddProperty_CharSpan_Float()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -729,11 +730,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"fl":2.5}""", json);
+        Assert.AreEqual("""{"fl":2.5}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Double()
+    [TestMethod]
+    public void AddProperty_CharSpan_Double()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -744,11 +745,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"db":9.99}""", json);
+        Assert.AreEqual("""{"db":9.99}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_Decimal()
+    [TestMethod]
+    public void AddProperty_CharSpan_Decimal()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -759,11 +760,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"dec":77.77}""", json);
+        Assert.AreEqual("""{"dec":77.77}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_BigInteger()
+    [TestMethod]
+    public void AddProperty_CharSpan_BigInteger()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -774,11 +775,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"bi":1234567890123456789}""", json);
+        Assert.AreEqual("""{"bi":1234567890123456789}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_CharSpan_BigNumber()
+    [TestMethod]
+    public void AddProperty_CharSpan_BigNumber()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -790,15 +791,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"bn":555123E-3}""", json);
+        Assert.AreEqual("""{"bn":555123E-3}""", json);
     }
 
     #endregion
 
     #region AddProperty with char-span property name — string values
 
-    [Fact]
-    public static void AddProperty_CharSpan_CharSpanValue()
+    [TestMethod]
+    public void AddProperty_CharSpan_CharSpanValue()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -809,11 +810,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"key":"value"}""", json);
+        Assert.AreEqual("""{"key":"value"}""", json);
     }
 
-    [Fact]
-    public static void AddPropertyNull_CharSpan()
+    [TestMethod]
+    public void AddPropertyNull_CharSpan()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -824,15 +825,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"nul":null}""", json);
+        Assert.AreEqual("""{"nul":null}""", json);
     }
 
     #endregion
 
     #region AddProperty with ValueBuilderAction delegate (nested object)
 
-    [Fact]
-    public static void AddProperty_ValueBuilderAction_NestedObject()
+    [TestMethod]
+    public void AddProperty_ValueBuilderAction_NestedObject()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -850,11 +851,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"nested":{"inner":42}}""", json);
+        Assert.AreEqual("""{"nested":{"inner":42}}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_ValueBuilderAction_CharSpan_NestedObject()
+    [TestMethod]
+    public void AddProperty_ValueBuilderAction_CharSpan_NestedObject()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -872,15 +873,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"nested":{"x":99}}""", json);
+        Assert.AreEqual("""{"nested":{"x":99}}""", json);
     }
 
     #endregion
 
     #region AddProperty with ValueBuilderAction<TContext> delegate
 
-    [Fact]
-    public static void AddProperty_ValueBuilderActionWithContext_NestedObject()
+    [TestMethod]
+    public void AddProperty_ValueBuilderActionWithContext_NestedObject()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -899,11 +900,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"ctx":{"val":77}}""", json);
+        Assert.AreEqual("""{"ctx":{"val":77}}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_ValueBuilderActionWithContext_CharSpan_NestedObject()
+    [TestMethod]
+    public void AddProperty_ValueBuilderActionWithContext_CharSpan_NestedObject()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -922,15 +923,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"ctx":{"val":88}}""", json);
+        Assert.AreEqual("""{"ctx":{"val":88}}""", json);
     }
 
     #endregion
 
     #region AddPropertyFormattedNumber — char-span property name
 
-    [Fact]
-    public static void AddPropertyFormattedNumber_CharSpanName()
+    [TestMethod]
+    public void AddPropertyFormattedNumber_CharSpanName()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -941,15 +942,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"num":1234}""", json);
+        Assert.AreEqual("""{"num":1234}""", json);
     }
 
     #endregion
 
     #region AddPropertyRawString — char-span property name
 
-    [Fact]
-    public static void AddPropertyRawString_CharSpanName()
+    [TestMethod]
+    public void AddPropertyRawString_CharSpanName()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -960,7 +961,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"raw":"data"}""", json);
+        Assert.AreEqual("""{"raw":"data"}""", json);
     }
 
     #endregion
@@ -969,8 +970,8 @@ public static class ComplexValueBuilderCoverageTests
 
     #region AddProperty — Int128
 
-    [Fact]
-    public static void AddProperty_Int128_Utf8Name()
+    [TestMethod]
+    public void AddProperty_Int128_Utf8Name()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -981,11 +982,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"val":999888777666}""", json);
+        Assert.AreEqual("""{"val":999888777666}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_Int128_CharSpanName()
+    [TestMethod]
+    public void AddProperty_Int128_CharSpanName()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -996,15 +997,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"val":111222333}""", json);
+        Assert.AreEqual("""{"val":111222333}""", json);
     }
 
     #endregion
 
     #region AddProperty — UInt128
 
-    [Fact]
-    public static void AddProperty_UInt128_Utf8Name()
+    [TestMethod]
+    public void AddProperty_UInt128_Utf8Name()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -1015,11 +1016,11 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"val":888777666555}""", json);
+        Assert.AreEqual("""{"val":888777666555}""", json);
     }
 
-    [Fact]
-    public static void AddProperty_UInt128_CharSpanName()
+    [TestMethod]
+    public void AddProperty_UInt128_CharSpanName()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -1030,15 +1031,15 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"val":444555666}""", json);
+        Assert.AreEqual("""{"val":444555666}""", json);
     }
 
     #endregion
 
     #region AddProperty — Half char-span
 
-    [Fact]
-    public static void AddProperty_Half_CharSpanName()
+    [TestMethod]
+    public void AddProperty_Half_CharSpanName()
     {
         using var workspace = JsonWorkspace.Create();
         using var documentBuilder = workspace.CreateBuilder<JsonElement.Mutable>(-1);
@@ -1049,7 +1050,7 @@ public static class ComplexValueBuilderCoverageTests
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
         string json = documentBuilder.RootElement.ToString();
 
-        Assert.Equal("""{"h":1.5}""", json);
+        Assert.AreEqual("""{"h":1.5}""", json);
     }
 
     #endregion

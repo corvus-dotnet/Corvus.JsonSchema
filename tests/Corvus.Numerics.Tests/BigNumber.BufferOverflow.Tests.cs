@@ -6,7 +6,7 @@ using System.Globalization;
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
@@ -14,11 +14,12 @@ namespace Corvus.Numerics.Tests;
 /// Tier 1 Option 5: Buffer overflow scenarios.
 /// Target: +1.2% coverage (35 tests).
 /// </summary>
+[TestClass]
 public class BigNumberBufferOverflowTests
 {
     #region Exact Buffer Sizes (+15 tests)
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ExactSizeFixedPoint_Succeeds()
     {
         BigNumber num = new(12345, -2); // 123.45
@@ -30,7 +31,7 @@ public class BigNumberBufferOverflowTests
         written.ShouldBe(6);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ExactSizeNumber_Succeeds()
     {
         BigNumber num = new(12345, -2); // 123.45
@@ -41,7 +42,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ExactSizeExponential_Succeeds()
     {
         BigNumber num = new(12345, 0); // 12345
@@ -52,7 +53,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ExactSizeCurrency_Succeeds()
     {
         BigNumber num = new(12345, -2);
@@ -63,7 +64,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ExactSizePercent_Succeeds()
     {
         BigNumber num = new(12345, -4); // 1.2345
@@ -74,7 +75,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_SmallNumberExactSize_Succeeds()
     {
         BigNumber num = new(5, 0); // 5
@@ -86,7 +87,7 @@ public class BigNumberBufferOverflowTests
         written.ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ZeroExactSize_Succeeds()
     {
         BigNumber zero = BigNumber.Zero;
@@ -98,7 +99,7 @@ public class BigNumberBufferOverflowTests
         written.ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_NegativeExactSize_Succeeds()
     {
         BigNumber num = new(-12345, -2); // -123.45
@@ -110,7 +111,7 @@ public class BigNumberBufferOverflowTests
         written.ShouldBe(7);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_HighPrecisionExactSize_Succeeds()
     {
         BigNumber num = new(5, 0);
@@ -122,7 +123,7 @@ public class BigNumberBufferOverflowTests
         written.ShouldBe(12);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_VeryLargeNumberMinimumSize_Succeeds()
     {
         BigNumber num = new(123456789, 0);
@@ -133,7 +134,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ExponentialHighPrecision_ExactSize()
     {
         BigNumber num = new(12345, 0);
@@ -144,7 +145,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_NumberWithGrouping_ExactSize()
     {
         BigNumber num = new(1234567, -2); // 12345.67
@@ -155,7 +156,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_CurrencyWithGrouping_ExactSize()
     {
         BigNumber num = new(1234567, -2);
@@ -166,7 +167,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_PercentLargeValue_ExactSize()
     {
         BigNumber num = new(12345, -2); // 123.45
@@ -177,7 +178,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_GeneralFormat_ExactSize()
     {
         BigNumber num = new(12345, 0);
@@ -192,7 +193,7 @@ public class BigNumberBufferOverflowTests
 
     #region One Byte Short Scenarios (+10 tests)
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_OneByteShortFixedPoint_ReturnsFalse()
     {
         BigNumber num = new(12345, -2); // 123.45
@@ -203,7 +204,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_OneByteShortExponential_ReturnsFalse()
     {
         BigNumber num = new(12345, 0);
@@ -214,7 +215,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_OneByteShortCurrency_ReturnsFalse()
     {
         BigNumber num = new(12345, -2);
@@ -225,7 +226,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_OneByteShortPercent_ReturnsFalse()
     {
         BigNumber num = new(12345, -4);
@@ -236,7 +237,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_OneByteShortNumber_ReturnsFalse()
     {
         BigNumber num = new(12345, -2);
@@ -247,7 +248,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_OneByteShortNegative_ReturnsFalse()
     {
         BigNumber num = new(-12345, -2);
@@ -258,7 +259,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_OneByteShortHighPrecision_ReturnsFalse()
     {
         BigNumber num = new(5, 0);
@@ -269,7 +270,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ZeroBufferSize_ReturnsFalse()
     {
         BigNumber num = new(123, 0);
@@ -281,7 +282,7 @@ public class BigNumberBufferOverflowTests
         written.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_OneByte_TooSmallForAny_ReturnsFalse()
     {
         BigNumber num = new(12345, -2);
@@ -292,7 +293,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_TwoByte_TooSmallForMultiDigit_ReturnsFalse()
     {
         BigNumber num = new(12345, -2);
@@ -307,7 +308,7 @@ public class BigNumberBufferOverflowTests
 
     #region Large Precision Requirements (+10 tests)
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_Precision50_RequiresLargeBuffer()
     {
         BigNumber num = new(1, -1); // 0.1
@@ -319,7 +320,7 @@ public class BigNumberBufferOverflowTests
         written.ShouldBeGreaterThan(50);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_Precision99_RequiresVeryLargeBuffer()
     {
         BigNumber num = new(1, 0);
@@ -330,7 +331,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ExponentialPrecision50_RequiresLargeBuffer()
     {
         BigNumber num = new(12345, 10);
@@ -341,7 +342,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_NumberPrecision30_WithGrouping()
     {
         BigNumber num = new(123456789, -2);
@@ -352,7 +353,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_CurrencyPrecision20_RequiresLargeBuffer()
     {
         BigNumber num = new(12345, -2);
@@ -363,7 +364,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_PercentPrecision15_RequiresLargeBuffer()
     {
         BigNumber num = new(12345, -4);
@@ -374,7 +375,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_VeryLargeNumberHighPrecision_RequiresHugeBuffer()
     {
         BigNumber num = BigInteger.Parse(new string('9', 50));
@@ -385,7 +386,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_SmallNumberVeryHighPrecision_AddsZeros()
     {
         BigNumber num = new(1, -2); // 0.01
@@ -397,7 +398,7 @@ public class BigNumberBufferOverflowTests
         // Should be "0.01" followed by 28 zeros
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_BufferExactlyAtLimit_Succeeds()
     {
         // Test exactly at 256 byte threshold (common buffer size)
@@ -409,7 +410,7 @@ public class BigNumberBufferOverflowTests
         success.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_BufferJustOverLimit_HandlesCorrectly()
     {
         BigNumber num = BigInteger.Parse(new string('9', 100));

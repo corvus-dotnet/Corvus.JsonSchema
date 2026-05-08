@@ -2,164 +2,172 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft7.Optional.Format.Email;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteValidationOfEMailAddresses : IClassFixture<SuiteValidationOfEMailAddresses.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteValidationOfEMailAddresses
 {
-    private readonly Fixture _fixture;
-    public SuiteValidationOfEMailAddresses(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAllStringFormatsIgnoreIntegers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("12");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreFloats()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("13.7");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreObjects()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreArrays()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreBooleans()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("false");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreNulls()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("null");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAValidEMailAddress()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"joe.bloggs@example.com\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnInvalidEMailAddress()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"2962\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTildeInLocalPartIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"te~st@example.com\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTildeBeforeLocalPartIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"~test@example.com\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTildeAfterLocalPartIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"test~@example.com\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDotBeforeLocalPartIsNotValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\".test@example.com\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDotAfterLocalPartIsNotValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"test.@example.com\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoSeparatedDotsInsideLocalPartAreValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"te.s.t@example.com\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoSubsequentDotsInsideLocalPartAreNotValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"te..st@example.com\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoEmailAddressesIsNotValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"user1@oceania.org, user2@oceania.org\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFullFromHeaderIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\\"Winston Smith\\\" <winston.smith@recdep.minitrue> (Records Department)\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLocalPartIsRequired()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"@example.com\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDomainIsRequired()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"joe.bloggs@\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnquotedSpaceInLocalPartIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"joe bloggs@example.com\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

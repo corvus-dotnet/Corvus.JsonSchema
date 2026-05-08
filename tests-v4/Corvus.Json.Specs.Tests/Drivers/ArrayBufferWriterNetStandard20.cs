@@ -1,4 +1,4 @@
-﻿// <copyright file="ArrayBufferWriterNetStandard20.cs" company="Endjin Limited">
+// <copyright file="ArrayBufferWriterNetStandard20.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 // <licensing>
@@ -12,7 +12,6 @@
 
 using System.Buffers;
 using System.Diagnostics;
-
 
 namespace Drivers
 {
@@ -34,7 +33,6 @@ namespace Drivers
 
         private T[] _buffer;
         private int _index;
-
 
         /// <summary>
         /// Creates an instance of an <see cref="ArrayBufferWriter{T}"/>, in which data can be written to,

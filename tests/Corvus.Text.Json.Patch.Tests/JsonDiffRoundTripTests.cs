@@ -8,7 +8,7 @@ using Corvus.Text.Json.Patch;
 
 using StjJsonDocument = System.Text.Json.JsonDocument;
 using StjJsonElement = System.Text.Json.JsonElement;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Patch.Tests;
 
@@ -19,6 +19,7 @@ namespace Corvus.Text.Json.Patch.Tests;
 /// Each test: generates a diff (source → target), applies the patch to source,
 /// and verifies the result equals target.
 /// </summary>
+[TestClass]
 public class JsonDiffRoundTripTests
 {
     private static readonly Lazy<DiffTestCase[]> LazyTestCases = new(LoadTestCases);
@@ -32,8 +33,8 @@ public class JsonDiffRoundTripTests
         }
     }
 
-    [Theory]
-    [MemberData(nameof(TestData))]
+    [TestMethod]
+    [DynamicData(nameof(TestData))]
     public void DiffRoundTrip(DiffTestCase testCase)
     {
         using ParsedJsonDocument<JsonElement> sourceDoc =
@@ -51,10 +52,10 @@ public class JsonDiffRoundTripTests
 
         JsonElement.Mutable mutable = builder.RootElement;
         bool applied = mutable.TryApplyPatch(patch);
-        Assert.True(applied, $"Patch application should succeed for: {testCase.Comment}");
+        Assert.IsTrue(applied, $"Patch application should succeed for: {testCase.Comment}");
 
         JsonElement patchedElement = mutable.Clone();
-        Assert.Equal(targetDoc.RootElement, patchedElement);
+        Assert.AreEqual(targetDoc.RootElement, patchedElement);
     }
 
     private static DiffTestCase[] LoadTestCases()

@@ -4,7 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.JsonLogic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.Tests;
 
@@ -12,11 +12,12 @@ namespace Corvus.Text.Json.JsonLogic.Tests;
 /// Scale and deep-nesting tests for the JsonLogic evaluator.
 /// These exercise large data sets and deeply recursive rule structures.
 /// </summary>
+[TestClass]
 public class ScaleTests
 {
     // ─── DEEPLY NESTED RULES ────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void DeeplyNestedIfElse_100Depth()
     {
         // Build: {"if": [{"==":[{"var":""},100]}, 100, {"if": [{"==":[{"var":""},99]}, 99, ... {"if":[{"==":[{"var":""},1]}, 1, 0]}]}]}
@@ -43,10 +44,10 @@ public class ScaleTests
         string data = "50";
 
         string result = Evaluate(rule, data, maxDepth: 512);
-        Assert.Equal("50", result);
+        Assert.AreEqual("50", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void DeeplyNestedAndRules_100Depth()
     {
         const int depth = 100;
@@ -64,10 +65,10 @@ public class ScaleTests
         string data = "null";
 
         string result = Evaluate(rule, data, maxDepth: 512);
-        Assert.Equal("true", result);
+        Assert.AreEqual("true", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void DeeplyNestedVarNavigation_50Depth()
     {
         const int depth = 50;
@@ -91,12 +92,12 @@ public class ScaleTests
         string rule = $$"""{"var":"{{varPath}}"}""";
 
         string result = Evaluate(rule, dataSb.ToString());
-        Assert.Equal("42", result);
+        Assert.AreEqual("42", result);
     }
 
     // ─── LARGE ARRAY OPERATIONS ─────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void MapOver10KItems()
     {
         const int count = 10_000;
@@ -108,15 +109,15 @@ public class ScaleTests
         // Parse result to verify
         using var doc = System.Text.Json.JsonDocument.Parse(result);
         System.Text.Json.JsonElement root = doc.RootElement;
-        Assert.Equal(System.Text.Json.JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(count, root.GetArrayLength());
+        Assert.AreEqual(System.Text.Json.JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(count, root.GetArrayLength());
 
         // First element: 1*2=2, last element: 10000*2=20000
-        Assert.Equal(2, root[0].GetInt32());
-        Assert.Equal(20000, root[count - 1].GetInt32());
+        Assert.AreEqual(2, root[0].GetInt32());
+        Assert.AreEqual(20000, root[count - 1].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterOver10KItems()
     {
         const int count = 10_000;
@@ -127,11 +128,11 @@ public class ScaleTests
 
         using var doc = System.Text.Json.JsonDocument.Parse(result);
         System.Text.Json.JsonElement root = doc.RootElement;
-        Assert.Equal(System.Text.Json.JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(5000, root.GetArrayLength());
+        Assert.AreEqual(System.Text.Json.JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(5000, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void ReduceOver10KItems()
     {
         const int count = 10_000;
@@ -141,7 +142,7 @@ public class ScaleTests
         string result = Evaluate(rule, data);
 
         // Sum of 1..10000 = 10000 * 10001 / 2 = 50005000
-        Assert.Equal("50005000", result);
+        Assert.AreEqual("50005000", result);
     }
 
     // ─── HELPERS ────────────────────────────────────────────────────

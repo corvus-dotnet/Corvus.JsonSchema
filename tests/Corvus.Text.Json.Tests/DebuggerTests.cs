@@ -3,13 +3,14 @@
 
 using System.IO;
 using System.Reflection;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
+[TestClass]
 public class DebuggerTests
 {
-    [Fact]
+    [TestMethod]
     public void DefaultJsonElement()
     {
         // Validating that we don't throw on default
@@ -17,7 +18,7 @@ public class DebuggerTests
         GetDebuggerDisplayProperty(element);
     }
 
-    [Fact]
+    [TestMethod]
     public void DefaultJsonProperty()
     {
         // Validating that we don't throw on default
@@ -25,7 +26,7 @@ public class DebuggerTests
         GetDebuggerDisplayProperty(property);
     }
 
-    [Fact]
+    [TestMethod]
     public void DefaultUtf8JsonWriter()
     {
         // Validating that we don't throw on new object

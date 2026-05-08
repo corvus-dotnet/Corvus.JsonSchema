@@ -6,52 +6,53 @@ using System.Globalization;
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
 /// <summary>
 /// Tests to achieve near 100% branch coverage for BigNumber.
 /// </summary>
+[TestClass]
 public class BigNumberCoverageGapsTests
 {
 #if NET
-    [Fact]
+    [TestMethod]
     public void InterfaceProperties_AdditiveIdentity_ReturnsZero()
     {
         BigNumber identity = GetAdditiveIdentity<BigNumber>();
         identity.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void InterfaceProperties_MultiplicativeIdentity_ReturnsOne()
     {
         BigNumber identity = GetMultiplicativeIdentity<BigNumber>();
         identity.ShouldBe(BigNumber.One);
     }
 
-    [Fact]
+    [TestMethod]
     public void InterfaceProperties_NumberBaseOne_ReturnsOne()
     {
         BigNumber one = GetNumberBaseOne<BigNumber>();
         one.ShouldBe(BigNumber.One);
     }
 
-    [Fact]
+    [TestMethod]
     public void InterfaceProperties_NumberBaseZero_ReturnsZero()
     {
         BigNumber zero = GetNumberBaseZero<BigNumber>();
         zero.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void InterfaceProperties_NumberBaseRadix_ReturnsTen()
     {
         int radix = GetNumberBaseRadix<BigNumber>();
         radix.ShouldBe(10);
     }
 
-    [Fact]
+    [TestMethod]
     public void InterfaceProperties_SignedNumberNegativeOne_ReturnsMinusOne()
     {
         BigNumber negOne = GetSignedNumberNegativeOne<BigNumber>();
@@ -66,14 +67,14 @@ public class BigNumberCoverageGapsTests
     private static T GetSignedNumberNegativeOne<T>() where T : ISignedNumber<T> => T.NegativeOne;
 #endif
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithNull_ReturnsFalse()
     {
         BigNumber num = new(123, 0);
         num.Equals(null).ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithDifferentType_ReturnsFalse()
     {
         BigNumber num = new(123, 0);
@@ -81,7 +82,7 @@ public class BigNumberCoverageGapsTests
         num.Equals(123.5).ShouldBeFalse(); // Use a value that won't match
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithSameBigNumber_ReturnsTrue()
     {
         BigNumber num1 = new(123, 0);
@@ -89,21 +90,21 @@ public class BigNumberCoverageGapsTests
         num1.Equals((object)num2).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_WithNull_ReturnsPositive()
     {
         BigNumber num = new(123, 0);
         num.CompareTo(null).ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_WithNonBigNumber_ThrowsArgumentException()
     {
         BigNumber num = new(123, 0);
         Should.Throw<ArgumentException>(() => num.CompareTo("123"));
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_WithBigNumberObject_ReturnsCorrectValue()
     {
         BigNumber num1 = new(123, 0);
@@ -113,7 +114,7 @@ public class BigNumberCoverageGapsTests
         num1.CompareTo((object)num1).ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_ProducesConsistentHash()
     {
         BigNumber num1 = new(123, 0);
@@ -124,7 +125,7 @@ public class BigNumberCoverageGapsTests
         num1.GetHashCode().ShouldBe(num3.GetHashCode()); // Normalized to same value
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_WithInvalidPrecision_ReturnsZero()
     {
         BigNumber zero = BigNumber.Zero;
@@ -135,7 +136,7 @@ public class BigNumberCoverageGapsTests
         zero.ToString("Ginvalid", CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_WithUnknownFormat_ReturnsZero()
     {
         BigNumber zero = BigNumber.Zero;
@@ -143,7 +144,7 @@ public class BigNumberCoverageGapsTests
         zero.ToString("Q", CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_WithInvalidPrecision_ThrowsFormatException()
     {
         BigNumber num = new(123, 0);
@@ -151,7 +152,7 @@ public class BigNumberCoverageGapsTests
         Should.Throw<FormatException>(() => num.ToString("Nxyz", CultureInfo.InvariantCulture));
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_WithUnsupportedFormatSpecifier_ThrowsFormatException()
     {
         BigNumber num = new(123, 0);
@@ -159,7 +160,7 @@ public class BigNumberCoverageGapsTests
         Should.Throw<FormatException>(() => num.ToString("Q", CultureInfo.InvariantCulture));
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatPercent_WithDifferentPatterns_FormatsCorrectly()
     {
         BigNumber zero = BigNumber.Zero;
@@ -186,7 +187,7 @@ public class BigNumberCoverageGapsTests
         zero.ToString("P2", culture3).ShouldBe("% 0.00");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_WithDifferentPatterns_FormatsCorrectly()
     {
         BigNumber zero = BigNumber.Zero;
@@ -212,7 +213,7 @@ public class BigNumberCoverageGapsTests
         zero.ToString("C2", culture3).ShouldBe("0.00 $");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatPercent_WithUnknownPattern_UsesDefault()
     {
         BigNumber zero = BigNumber.Zero;
@@ -228,7 +229,7 @@ public class BigNumberCoverageGapsTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_WithUnknownPattern_UsesDefault()
     {
         BigNumber zero = BigNumber.Zero;
@@ -244,7 +245,7 @@ public class BigNumberCoverageGapsTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void LargePowerOf10_Between256And1023_UsesSecondaryCache()
     {
         // This will trigger the secondary cache path (256-1023)
@@ -257,7 +258,7 @@ public class BigNumberCoverageGapsTests
         result.Exponent.ShouldBe(600);
     }
 
-    [Fact]
+    [TestMethod]
     public void VeryLargePowerOf10_Above1023_ComputesOnDemand()
     {
         // This will trigger the on-demand computation path (>1023)
@@ -269,7 +270,7 @@ public class BigNumberCoverageGapsTests
         result.Exponent.ShouldBe(1500);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_WithVeryLargePrecision_WorksCorrectly()
     {
         // Test division that might trigger large power of 10 calculations
@@ -283,7 +284,7 @@ public class BigNumberCoverageGapsTests
         resultStr.ShouldStartWith("0.3333333333");
     }
 
-    [Fact]
+    [TestMethod]
     public void Addition_WithExtremeExponentDifference_ThrowsException()
     {
         // Create numbers with exponent difference > int.MaxValue
@@ -294,7 +295,7 @@ public class BigNumberCoverageGapsTests
         Should.Throw<Exception>(() => small + large);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_WithExtremeExponentDifference_ThrowsException()
     {
         BigNumber small = new(1, int.MinValue + 1000);
@@ -304,7 +305,7 @@ public class BigNumberCoverageGapsTests
         Should.Throw<Exception>(() => small - large);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_WithExtremeExponents_WorksCorrectly()
     {
         // Test that multiplication with extreme exponents works
@@ -316,7 +317,7 @@ public class BigNumberCoverageGapsTests
         result.Exponent.ShouldBe(1500);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_WithExtremeExponents_WorksCorrectly()
     {
         BigNumber dividend = new(10, 1000);
@@ -327,7 +328,7 @@ public class BigNumberCoverageGapsTests
         result.Exponent.ShouldBe(500);
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_WithNullFormat_UsesDefault()
     {
         BigNumber num = new(12345, -2);
@@ -335,7 +336,7 @@ public class BigNumberCoverageGapsTests
         result.ShouldBe("12345E-2");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_WithEmptyFormat_UsesDefault()
     {
         BigNumber num = new(12345, -2);
@@ -343,21 +344,21 @@ public class BigNumberCoverageGapsTests
         result.ShouldBe("12345E-2");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_WithNullFormat_ReturnsZero()
     {
         BigNumber zero = BigNumber.Zero;
         zero.ToString(null, CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_WithEmptyFormat_ReturnsZero()
     {
         BigNumber zero = BigNumber.Zero;
         zero.ToString("", CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void ExponentialFormat_LowerCase_UsesLowerCaseE()
     {
         BigNumber num = new(12345, -2);
@@ -365,7 +366,7 @@ public class BigNumberCoverageGapsTests
         result.ShouldContain("e+");
     }
 
-    [Fact]
+    [TestMethod]
     public void ExponentialFormat_UpperCase_UsesUpperCaseE()
     {
         BigNumber num = new(12345, -2);
@@ -373,7 +374,7 @@ public class BigNumberCoverageGapsTests
         result.ShouldContain("E+");
     }
 
-    [Fact]
+    [TestMethod]
     public void GeneralFormat_LowerCase_UsesLowerCaseE()
     {
         BigNumber num = new(12345, 10);
@@ -381,7 +382,7 @@ public class BigNumberCoverageGapsTests
         result.ShouldContain("e");
     }
 
-    [Fact]
+    [TestMethod]
     public void GeneralFormat_UpperCase_UsesUpperCaseE()
     {
         BigNumber num = new(12345, 10);
@@ -389,7 +390,7 @@ public class BigNumberCoverageGapsTests
         result.ShouldContain("E");
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_WithExtremelyLargeExponent_WorksCorrectly()
     {
         string input = "1E+1000";
@@ -398,7 +399,7 @@ public class BigNumberCoverageGapsTests
         result.Exponent.ShouldBe(1000);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_WithExtremelySmallExponent_WorksCorrectly()
     {
         string input = "1E-1000";
@@ -407,7 +408,7 @@ public class BigNumberCoverageGapsTests
         result.Exponent.ShouldBe(-1000);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithMultipleTrailingZeros_RemovesAll()
     {
         BigNumber num = new(1230000, -3);
@@ -418,7 +419,7 @@ public class BigNumberCoverageGapsTests
         normalized.Exponent.ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithZeroSignificand_ReturnsZero()
     {
         BigNumber num = new(0, 100);
@@ -428,7 +429,7 @@ public class BigNumberCoverageGapsTests
         normalized.Exponent.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedPointFormat_WithZeroPrecision_NoDecimalPoint()
     {
         BigNumber num = new(123, 0);
@@ -437,7 +438,7 @@ public class BigNumberCoverageGapsTests
         result.ShouldNotContain(".");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_WithZeroPrecision_NoDecimalPoint()
     {
         BigNumber num = new(1234, 0);
@@ -446,7 +447,7 @@ public class BigNumberCoverageGapsTests
         result.ShouldNotContain(".");
     }
 
-    [Fact]
+    [TestMethod]
     public void CurrencyFormat_WithZeroPrecision_NoDecimalPoint()
     {
         BigNumber num = new(123, 0);
@@ -456,7 +457,7 @@ public class BigNumberCoverageGapsTests
         result.ShouldNotContain(".");
     }
 
-    [Fact]
+    [TestMethod]
     public void PercentFormat_WithZeroPrecision_NoDecimalPoint()
     {
         BigNumber num = new(1, 0); // 100%

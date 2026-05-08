@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -11,11 +11,12 @@ namespace Corvus.Text.Json.Tests;
 /// Covers inline allOf, $ref-based allOf, and existing non-composed types
 /// to verify that builder creation works correctly for all composition patterns.
 /// </summary>
+[TestClass]
 public class GeneratedComposedCreationTests
 {
     #region CompositionAllOf — inline allOf object (existing) — Build + Create
 
-    [Fact]
+    [TestMethod]
     public void AllOfObject_Build_Create_AllProperties()
     {
         using var workspace = JsonWorkspace.Create();
@@ -30,11 +31,11 @@ public class GeneratedComposedCreationTests
             CompositionAllOf.CreateBuilder(workspace, source);
         CompositionAllOf.Mutable root = doc.RootElement;
 
-        Assert.Equal("Alice", root.FirstName.ToString());
-        Assert.Equal("Smith", root.LastName.ToString());
+        Assert.AreEqual("Alice", root.FirstName.ToString());
+        Assert.AreEqual("Smith", root.LastName.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfObject_Build_Create_RequiredOnly()
     {
         using var workspace = JsonWorkspace.Create();
@@ -50,10 +51,10 @@ public class GeneratedComposedCreationTests
             CompositionAllOf.CreateBuilder(workspace, source);
         CompositionAllOf.Mutable root = doc.RootElement;
 
-        Assert.Equal("Alice", root.FirstName.ToString());
+        Assert.AreEqual("Alice", root.FirstName.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfObject_Build_Create_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -71,15 +72,15 @@ public class GeneratedComposedCreationTests
 
         using var reparsed =
             ParsedJsonDocument<CompositionAllOf>.Parse(json);
-        Assert.Equal("Alice", reparsed.RootElement.FirstName.ToString());
-        Assert.Equal("Smith", reparsed.RootElement.LastName.ToString());
+        Assert.AreEqual("Alice", reparsed.RootElement.FirstName.ToString());
+        Assert.AreEqual("Smith", reparsed.RootElement.LastName.ToString());
     }
 
     #endregion
 
     #region AllOfObjectWithProperties — inline allOf object with local properties — Build + Create
 
-    [Fact]
+    [TestMethod]
     public void InlineAllOfObject_Build_Create_AllProperties()
     {
         using var workspace = JsonWorkspace.Create();
@@ -94,12 +95,12 @@ public class GeneratedComposedCreationTests
             AllOfObjectWithProperties.CreateBuilder(workspace, source);
         AllOfObjectWithProperties.Mutable root = doc.RootElement;
 
-        Assert.Equal("Bob", root.Name.ToString());
-        Assert.Equal("30", root.Age.ToString());
-        Assert.Equal("bob@test.com", root.Email.ToString());
+        Assert.AreEqual("Bob", root.Name.ToString());
+        Assert.AreEqual("30", root.Age.ToString());
+        Assert.AreEqual("bob@test.com", root.Email.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void InlineAllOfObject_Build_Create_RequiredOnly()
     {
         using var workspace = JsonWorkspace.Create();
@@ -114,10 +115,10 @@ public class GeneratedComposedCreationTests
             AllOfObjectWithProperties.CreateBuilder(workspace, source);
         AllOfObjectWithProperties.Mutable root = doc.RootElement;
 
-        Assert.Equal("Bob", root.Name.ToString());
+        Assert.AreEqual("Bob", root.Name.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void InlineAllOfObject_Build_Create_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -135,12 +136,12 @@ public class GeneratedComposedCreationTests
 
         using var reparsed =
             ParsedJsonDocument<AllOfObjectWithProperties>.Parse(json);
-        Assert.Equal("Bob", reparsed.RootElement.Name.ToString());
-        Assert.Equal("30", reparsed.RootElement.Age.ToString());
-        Assert.Equal("bob@test.com", reparsed.RootElement.Email.ToString());
+        Assert.AreEqual("Bob", reparsed.RootElement.Name.ToString());
+        Assert.AreEqual("30", reparsed.RootElement.Age.ToString());
+        Assert.AreEqual("bob@test.com", reparsed.RootElement.Email.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void InlineAllOfObject_Mutable_SetComposedAndLocalProperties()
     {
         using var doc =
@@ -153,16 +154,16 @@ public class GeneratedComposedCreationTests
         root.SetAge(25);
         root.SetEmail("bob@test.com");
 
-        Assert.Equal("Bob", root.Name.ToString());
-        Assert.Equal("25", root.Age.ToString());
-        Assert.Equal("bob@test.com", root.Email.ToString());
+        Assert.AreEqual("Bob", root.Name.ToString());
+        Assert.AreEqual("25", root.Age.ToString());
+        Assert.AreEqual("bob@test.com", root.Email.ToString());
     }
 
     #endregion
 
     #region RefObjectWithProperties — $ref-based allOf object with local properties — Build + Create
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfObject_Build_Create_AllProperties()
     {
         using var workspace = JsonWorkspace.Create();
@@ -177,12 +178,12 @@ public class GeneratedComposedCreationTests
             RefObjectWithProperties.CreateBuilder(workspace, source);
         RefObjectWithProperties.Mutable root = doc.RootElement;
 
-        Assert.Equal("Carol", root.Name.ToString());
-        Assert.Equal("45", root.Age.ToString());
-        Assert.Equal("carol@test.com", root.Email.ToString());
+        Assert.AreEqual("Carol", root.Name.ToString());
+        Assert.AreEqual("45", root.Age.ToString());
+        Assert.AreEqual("carol@test.com", root.Email.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfObject_Build_Create_RequiredOnly()
     {
         using var workspace = JsonWorkspace.Create();
@@ -197,10 +198,10 @@ public class GeneratedComposedCreationTests
             RefObjectWithProperties.CreateBuilder(workspace, source);
         RefObjectWithProperties.Mutable root = doc.RootElement;
 
-        Assert.Equal("Carol", root.Name.ToString());
+        Assert.AreEqual("Carol", root.Name.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfObject_Build_Create_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -218,23 +219,23 @@ public class GeneratedComposedCreationTests
 
         using var reparsed =
             ParsedJsonDocument<RefObjectWithProperties>.Parse(json);
-        Assert.Equal("Carol", reparsed.RootElement.Name.ToString());
-        Assert.Equal("45", reparsed.RootElement.Age.ToString());
-        Assert.Equal("carol@test.com", reparsed.RootElement.Email.ToString());
+        Assert.AreEqual("Carol", reparsed.RootElement.Name.ToString());
+        Assert.AreEqual("45", reparsed.RootElement.Age.ToString());
+        Assert.AreEqual("carol@test.com", reparsed.RootElement.Email.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfObject_TryGetAsBasePerson_AccessesComposedProperties()
     {
         using var doc =
             ParsedJsonDocument<RefObjectWithProperties>.Parse("""{"name":"Carol","age":45,"email":"carol@test.com"}""");
 
-        Assert.True(doc.RootElement.TryGetAsBasePerson(out RefObjectWithProperties.BasePerson basePerson));
-        Assert.Equal("Carol", basePerson.Name.ToString());
-        Assert.Equal("45", basePerson.Age.ToString());
+        Assert.IsTrue(doc.RootElement.TryGetAsBasePerson(out RefObjectWithProperties.BasePerson basePerson));
+        Assert.AreEqual("Carol", basePerson.Name.ToString());
+        Assert.AreEqual("45", basePerson.Age.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfObject_Mutable_SetComposedAndLocalProperties()
     {
         using var doc =
@@ -247,12 +248,12 @@ public class GeneratedComposedCreationTests
         root.SetAge(50);
         root.SetEmail("carol@new.com");
 
-        Assert.Equal("Carol", root.Name.ToString());
-        Assert.Equal("50", root.Age.ToString());
-        Assert.Equal("carol@new.com", root.Email.ToString());
+        Assert.AreEqual("Carol", root.Name.ToString());
+        Assert.AreEqual("50", root.Age.ToString());
+        Assert.AreEqual("carol@new.com", root.Email.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfObject_Mutable_RemoveComposedOptionalProperty()
     {
         using var doc =
@@ -262,15 +263,15 @@ public class GeneratedComposedCreationTests
             doc.RootElement.CreateBuilder(workspace);
 
         RefObjectWithProperties.Mutable root = builderDoc.RootElement;
-        Assert.True(root.RemoveAge());
+        Assert.IsTrue(root.RemoveAge());
 
         string json = root.ToString();
-        Assert.Contains("Carol", json);
+        StringAssert.Contains(json, "Carol");
         Assert.DoesNotContain("age", json);
-        Assert.Contains("email", json);
+        StringAssert.Contains(json, "email");
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfObject_Mutable_RemoveLocalOptionalProperty()
     {
         using var doc =
@@ -280,15 +281,15 @@ public class GeneratedComposedCreationTests
             doc.RootElement.CreateBuilder(workspace);
 
         RefObjectWithProperties.Mutable root = builderDoc.RootElement;
-        Assert.True(root.RemoveEmail());
+        Assert.IsTrue(root.RemoveEmail());
 
         string json = root.ToString();
-        Assert.Contains("Carol", json);
-        Assert.Contains("age", json);
+        StringAssert.Contains(json, "Carol");
+        StringAssert.Contains(json, "age");
         Assert.DoesNotContain("email", json);
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfObject_Mutable_ChainedRemoves()
     {
         using var doc =
@@ -298,11 +299,11 @@ public class GeneratedComposedCreationTests
             doc.RootElement.CreateBuilder(workspace);
 
         RefObjectWithProperties.Mutable root = builderDoc.RootElement;
-        Assert.True(root.RemoveAge());
-        Assert.True(root.RemoveEmail());
+        Assert.IsTrue(root.RemoveAge());
+        Assert.IsTrue(root.RemoveEmail());
 
         string json = root.ToString();
-        Assert.Contains("Carol", json);
+        StringAssert.Contains(json, "Carol");
         Assert.DoesNotContain("age", json);
         Assert.DoesNotContain("email", json);
     }
@@ -311,7 +312,7 @@ public class GeneratedComposedCreationTests
 
     #region ArrayOfItems — non-composed array (existing) — Build + Add
 
-    [Fact]
+    [TestMethod]
     public void Array_Build_Add_CreatesItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -335,10 +336,10 @@ public class GeneratedComposedCreationTests
             ArrayOfItems.CreateBuilder(workspace, source);
         ArrayOfItems.Mutable root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
+        Assert.AreEqual(2, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void Array_Build_Add_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -360,16 +361,16 @@ public class GeneratedComposedCreationTests
 
         using var reparsed =
             ParsedJsonDocument<ArrayOfItems>.Parse(json);
-        Assert.Equal(1, reparsed.RootElement.GetArrayLength());
-        Assert.Equal("1", reparsed.RootElement[0].Id.ToString());
-        Assert.Equal("first", reparsed.RootElement[0].Label.ToString());
+        Assert.AreEqual(1, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual("1", reparsed.RootElement[0].Id.ToString());
+        Assert.AreEqual("first", reparsed.RootElement[0].Label.ToString());
     }
 
     #endregion
 
     #region AllOfArrayWithItems — inline allOf array — Build + Add
 
-    [Fact]
+    [TestMethod]
     public void InlineAllOfArray_Build_Add_CreatesItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -385,12 +386,12 @@ public class GeneratedComposedCreationTests
             AllOfArrayWithItems.CreateBuilder(workspace, source);
         AllOfArrayWithItems.Mutable root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("world", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("world", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void InlineAllOfArray_Build_Add_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -409,12 +410,12 @@ public class GeneratedComposedCreationTests
 
         using var reparsed =
             ParsedJsonDocument<AllOfArrayWithItems>.Parse(json);
-        Assert.Equal(2, reparsed.RootElement.GetArrayLength());
-        Assert.Equal("hello", reparsed.RootElement[0].ToString());
-        Assert.Equal("world", reparsed.RootElement[1].ToString());
+        Assert.AreEqual(2, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", reparsed.RootElement[0].ToString());
+        Assert.AreEqual("world", reparsed.RootElement[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void InlineAllOfArray_Mutable_SetItem()
     {
         using var doc =
@@ -426,11 +427,11 @@ public class GeneratedComposedCreationTests
         AllOfArrayWithItems.Mutable root = builderDoc.RootElement;
         root.SetItem(0, "replaced");
 
-        Assert.Equal("replaced", root[0].ToString());
-        Assert.Equal("world", root[1].ToString());
+        Assert.AreEqual("replaced", root[0].ToString());
+        Assert.AreEqual("world", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void InlineAllOfArray_Mutable_InsertItem()
     {
         using var doc =
@@ -442,13 +443,13 @@ public class GeneratedComposedCreationTests
         AllOfArrayWithItems.Mutable root = builderDoc.RootElement;
         root.InsertItem(1, "middle");
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("middle", root[1].ToString());
-        Assert.Equal("world", root[2].ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("middle", root[1].ToString());
+        Assert.AreEqual("world", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void InlineAllOfArray_Mutable_Remove()
     {
         using var doc =
@@ -460,16 +461,16 @@ public class GeneratedComposedCreationTests
         AllOfArrayWithItems.Mutable root = builderDoc.RootElement;
         root.RemoveAt(1);
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("extra", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("extra", root[1].ToString());
     }
 
     #endregion
 
     #region RefArrayWithItems — $ref-based allOf array — Build + Add
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfArray_Build_Add_CreatesItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -485,12 +486,12 @@ public class GeneratedComposedCreationTests
             RefArrayWithItems.CreateBuilder(workspace, source);
         RefArrayWithItems.Mutable root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("world", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("world", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfArray_Build_Add_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -509,23 +510,23 @@ public class GeneratedComposedCreationTests
 
         using var reparsed =
             ParsedJsonDocument<RefArrayWithItems>.Parse(json);
-        Assert.Equal(2, reparsed.RootElement.GetArrayLength());
-        Assert.Equal("hello", reparsed.RootElement[0].ToString());
-        Assert.Equal("world", reparsed.RootElement[1].ToString());
+        Assert.AreEqual(2, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", reparsed.RootElement[0].ToString());
+        Assert.AreEqual("world", reparsed.RootElement[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfArray_TryGetAsBaseArray_AccessesItems()
     {
         using var doc =
             ParsedJsonDocument<RefArrayWithItems>.Parse("""["hello","world"]""");
 
-        Assert.True(doc.RootElement.TryGetAsBaseArray(out RefArrayWithItems.BaseArray baseArray));
-        Assert.Equal(2, baseArray.GetArrayLength());
-        Assert.Equal("hello", baseArray[0].ToString());
+        Assert.IsTrue(doc.RootElement.TryGetAsBaseArray(out RefArrayWithItems.BaseArray baseArray));
+        Assert.AreEqual(2, baseArray.GetArrayLength());
+        Assert.AreEqual("hello", baseArray[0].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfArray_Mutable_SetItem()
     {
         using var doc =
@@ -537,11 +538,11 @@ public class GeneratedComposedCreationTests
         RefArrayWithItems.Mutable root = builderDoc.RootElement;
         root.SetItem(0, "replaced");
 
-        Assert.Equal("replaced", root[0].ToString());
-        Assert.Equal("world", root[1].ToString());
+        Assert.AreEqual("replaced", root[0].ToString());
+        Assert.AreEqual("world", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfArray_Mutable_InsertItem()
     {
         using var doc =
@@ -553,13 +554,13 @@ public class GeneratedComposedCreationTests
         RefArrayWithItems.Mutable root = builderDoc.RootElement;
         root.InsertItem(1, "middle");
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("middle", root[1].ToString());
-        Assert.Equal("world", root[2].ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("middle", root[1].ToString());
+        Assert.AreEqual("world", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfArray_Mutable_Remove()
     {
         using var doc =
@@ -571,12 +572,12 @@ public class GeneratedComposedCreationTests
         RefArrayWithItems.Mutable root = builderDoc.RootElement;
         root.RemoveAt(1);
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("extra", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("extra", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefAllOfArray_Mutable_RemoveWhere()
     {
         using var doc =
@@ -590,16 +591,16 @@ public class GeneratedComposedCreationTests
             static (in item) =>
                 item.ToString() == "world");
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("extra", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("extra", root[1].ToString());
     }
 
     #endregion
 
     #region ObjectWithArrayProperty — Build + Create with nested array sources
 
-    [Fact]
+    [TestMethod]
     public void ObjectWithArray_Build_Create_WithArrayProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -620,8 +621,8 @@ public class GeneratedComposedCreationTests
             ObjectWithArrayProperty.CreateBuilder(workspace, source);
 
         string json = doc.RootElement.ToString();
-        Assert.Contains("tag1", json);
-        Assert.Contains("tag2", json);
+        StringAssert.Contains(json, "tag1");
+        StringAssert.Contains(json, "tag2");
     }
 
     #endregion

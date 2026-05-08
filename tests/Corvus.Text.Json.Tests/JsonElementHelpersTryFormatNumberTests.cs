@@ -1,17 +1,18 @@
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
+[TestClass]
 public class JsonElementHelpersTryFormatNumberTests
 {
-    [Theory]
-    [InlineData("1234.56", 2, "1,234.56")]
-    [InlineData("1234.56", 1, "1,234.6")]
-    [InlineData("1234567.89", 2, "1,234,567.89")]
-    [InlineData("123.456", 3, "123.456")]
-    [InlineData("0.123", 3, "0.123")]
+    [TestMethod]
+    [DataRow("1234.56", 2, "1,234.56")]
+    [DataRow("1234.56", 1, "1,234.6")]
+    [DataRow("1234567.89", 2, "1,234,567.89")]
+    [DataRow("123.456", 3, "123.456")]
+    [DataRow("0.123", 3, "0.123")]
     public void TryFormatNumber_WithGroupSeparators_FormatsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -35,15 +36,15 @@ public class JsonElementHelpersTryFormatNumberTests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("-1234.56", 2, "-1,234.56")]
-    [InlineData("-123456.78", 2, "-123,456.78")]
-    [InlineData("-0.123", 3, "-0.123")]
+    [TestMethod]
+    [DataRow("-1234.56", 2, "-1,234.56")]
+    [DataRow("-123456.78", 2, "-123,456.78")]
+    [DataRow("-0.123", 3, "-0.123")]
     public void TryFormatNumber_WithNegativeNumbers_FormatsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -67,17 +68,17 @@ public class JsonElementHelpersTryFormatNumberTests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("123.456", 2, "123.46")]
-    [InlineData("123.454", 2, "123.45")]
-    [InlineData("123.455", 2, "123.46")]
-    [InlineData("0.999", 2, "1.00")]
-    [InlineData("999.999", 2, "1,000.00")]
+    [TestMethod]
+    [DataRow("123.456", 2, "123.46")]
+    [DataRow("123.454", 2, "123.45")]
+    [DataRow("123.455", 2, "123.46")]
+    [DataRow("0.999", 2, "1.00")]
+    [DataRow("999.999", 2, "1,000.00")]
     public void TryFormatNumber_RoundsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -101,15 +102,15 @@ public class JsonElementHelpersTryFormatNumberTests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("1234567", 2, "1,234,567.00")]
-    [InlineData("1234567", 0, "1,234,567")]
-    [InlineData("1e6", 2, "1,000,000.00")]
+    [TestMethod]
+    [DataRow("1234567", 2, "1,234,567.00")]
+    [DataRow("1234567", 0, "1,234,567")]
+    [DataRow("1e6", 2, "1,000,000.00")]
     public void TryFormatNumber_WithLargeIntegers_FormatsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -133,15 +134,15 @@ public class JsonElementHelpersTryFormatNumberTests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("0.000123", 6, "0.000123")]
-    [InlineData("0.000123", 5, "0.00012")]
-    [InlineData("0.000123", 3, "0.000")]
+    [TestMethod]
+    [DataRow("0.000123", 6, "0.000123")]
+    [DataRow("0.000123", 5, "0.00012")]
+    [DataRow("0.000123", 3, "0.000")]
     public void TryFormatNumber_WithSmallNumbers_FormatsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -165,14 +166,14 @@ public class JsonElementHelpersTryFormatNumberTests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("0", 0, "0")]
-    [InlineData("0", 2, "0.00")]
+    [TestMethod]
+    [DataRow("0", 0, "0")]
+    [DataRow("0", 2, "0.00")]
     public void TryFormatNumber_WithZero_FormatsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -196,12 +197,12 @@ public class JsonElementHelpersTryFormatNumberTests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_UsesCustomGroupSeparator()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
@@ -229,12 +230,12 @@ public class JsonElementHelpersTryFormatNumberTests
             2,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal("1 234,56", result);
+        Assert.AreEqual("1 234,56", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_UsesCustomNegativeSign()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -258,12 +259,12 @@ public class JsonElementHelpersTryFormatNumberTests
             2,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal("~1,234.56", result);
+        Assert.AreEqual("~1,234.56", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_ReturnsFalseWhenBufferTooSmall()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
@@ -287,13 +288,13 @@ public class JsonElementHelpersTryFormatNumberTests
             2,
             formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Theory]
-    [InlineData("999999.99", 2, "999,999.99")]
-    [InlineData("9999.995", 2, "10,000.00")]
+    [TestMethod]
+    [DataRow("999999.99", 2, "999,999.99")]
+    [DataRow("9999.995", 2, "10,000.00")]
     public void TryFormatNumber_RoundingWithCarryIntoGroupSeparator(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -317,14 +318,14 @@ public class JsonElementHelpersTryFormatNumberTests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("9999.995", 2, "10 000.00")]
-    [InlineData("999.995", 2, "1 000.00")]
+    [TestMethod]
+    [DataRow("9999.995", 2, "10 000.00")]
+    [DataRow("999.995", 2, "1 000.00")]
     public void TryFormatNumber_RoundingWithCarryIntoMultiCharGroupSeparator(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -353,8 +354,8 @@ public class JsonElementHelpersTryFormatNumberTests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 }

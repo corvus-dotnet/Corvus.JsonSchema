@@ -4,7 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.JsonLogic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.Tests;
 
@@ -12,87 +12,88 @@ namespace Corvus.Text.Json.JsonLogic.Tests;
 /// Tests for JsonLogic type coercion in arithmetic, comparison, equality,
 /// truthiness, and string operators.
 /// </summary>
+[TestClass]
 public class TypeCoercionTests
 {
     // ─── Arithmetic coercion ─────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"+":[1,"2"]}""", "3")]
-    [InlineData("""{"+":[1,true]}""", "2")]
-    [InlineData("""{"+":[1,false]}""", "1")]
-    [InlineData("""{"+":[1,null]}""", "1")]
-    [InlineData("""{"*":["3","4"]}""", "12")]
-    [InlineData("""{"-":["10","3"]}""", "7")]
-    [InlineData("""{"%":[10,3]}""", "1")]
+    [TestMethod]
+    [DataRow("""{"+":[1,"2"]}""", "3")]
+    [DataRow("""{"+":[1,true]}""", "2")]
+    [DataRow("""{"+":[1,false]}""", "1")]
+    [DataRow("""{"+":[1,null]}""", "1")]
+    [DataRow("""{"*":["3","4"]}""", "12")]
+    [DataRow("""{"-":["10","3"]}""", "7")]
+    [DataRow("""{"%":[10,3]}""", "1")]
     public void Arithmetic_CoercesTypes(string rule, string expected)
     {
         string result = Evaluate(rule, "{}");
-        Assert.Equal(NormalizeJson(expected), result);
+        Assert.AreEqual(NormalizeJson(expected), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_ProducesDouble()
     {
         string result = Evaluate("""{"/":[10,3]}""", "{}");
 
         // 10/3 ≈ 3.333… — the exact representation depends on serializer rounding.
         double actual = double.Parse(result, System.Globalization.CultureInfo.InvariantCulture);
-        Assert.True(actual > 3.33 && actual < 3.34, $"Expected ~3.333 but got {actual}");
+        Assert.IsTrue(actual > 3.33 && actual < 3.34, $"Expected ~3.333 but got {actual}");
     }
 
     // ─── Comparison coercion ─────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void LessThan_StringVsNumber_ComparesNumerically()
     {
         string result = Evaluate("""{"<":["2",11]}""", "{}");
-        Assert.Equal("true", result);
+        Assert.AreEqual("true", result);
     }
 
     // ─── Equality ────────────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"==":["1",1]}""", "true")]
-    [InlineData("""{"===":["1",1]}""", "false")]
+    [TestMethod]
+    [DataRow("""{"==":["1",1]}""", "true")]
+    [DataRow("""{"===":["1",1]}""", "false")]
     public void Equality_LooseVsStrict(string rule, string expected)
     {
         string result = Evaluate(rule, "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     // ─── Truthiness (!! and !) ───────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"!!":[0]}""", "false")]
-    [InlineData("""{"!!":[""]}""", "false")]
-    [InlineData("""{"!!":[1]}""", "true")]
-    [InlineData("""{"!":[[1,2,3]]}""", "false")]
-    [InlineData("""{"!":[[]]}""", "true")]
+    [TestMethod]
+    [DataRow("""{"!!":[0]}""", "false")]
+    [DataRow("""{"!!":[""]}""", "false")]
+    [DataRow("""{"!!":[1]}""", "true")]
+    [DataRow("""{"!":[[1,2,3]]}""", "false")]
+    [DataRow("""{"!":[[]]}""", "true")]
     public void Truthiness_CoercesCorrectly(string rule, string expected)
     {
         string result = Evaluate(rule, "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     // ─── String operators ────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"cat":["hello"," ","world"]}""", "\"hello world\"")]
-    [InlineData("""{"cat":[1,2]}""", "\"12\"")]
+    [TestMethod]
+    [DataRow("""{"cat":["hello"," ","world"]}""", "\"hello world\"")]
+    [DataRow("""{"cat":[1,2]}""", "\"12\"")]
     public void Cat_CoercesAndConcatenates(string rule, string expected)
     {
         string result = Evaluate(rule, "{}");
-        Assert.Equal(NormalizeJson(expected), result);
+        Assert.AreEqual(NormalizeJson(expected), result);
     }
 
-    [Theory]
-    [InlineData("""{"substr":["hello world",6]}""", "\"world\"")]
-    [InlineData("""{"substr":["hello world",0,5]}""", "\"hello\"")]
-    [InlineData("""{"substr":["hello",-3]}""", "\"llo\"")]
+    [TestMethod]
+    [DataRow("""{"substr":["hello world",6]}""", "\"world\"")]
+    [DataRow("""{"substr":["hello world",0,5]}""", "\"hello\"")]
+    [DataRow("""{"substr":["hello",-3]}""", "\"llo\"")]
     public void Substr_SlicesCorrectly(string rule, string expected)
     {
         string result = Evaluate(rule, "{}");
-        Assert.Equal(NormalizeJson(expected), result);
+        Assert.AreEqual(NormalizeJson(expected), result);
     }
 
     // ─── Helpers ─────────────────────────────────────────────────────

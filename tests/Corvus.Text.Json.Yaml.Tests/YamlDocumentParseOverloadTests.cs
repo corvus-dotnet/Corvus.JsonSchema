@@ -11,7 +11,7 @@ using Corvus.Yaml;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Yaml;
 #endif
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 #if STJ
 namespace Corvus.Yaml.SystemTextJson.Tests;
@@ -22,6 +22,7 @@ namespace Corvus.Text.Json.Yaml.Tests;
 /// <summary>
 /// Tests for the Parse overloads: ReadOnlySequence, ReadOnlyMemory&lt;char&gt;, Stream, and ParseAsync.
 /// </summary>
+[TestClass]
 public class YamlDocumentParseOverloadTests
 {
     private const string SimpleYaml = "name: hello\nvalue: 42\n";
@@ -57,7 +58,7 @@ public class YamlDocumentParseOverloadTests
 
     #region ReadOnlySequence<byte> overload
 
-    [Fact]
+    [TestMethod]
     public void Parse_ReadOnlySequence_SingleSegment()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(SimpleYaml);
@@ -66,43 +67,43 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(sequence);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name").GetString());
-        Assert.Equal(42, root.GetProperty("value").GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name").GetString());
+        Assert.AreEqual(42, root.GetProperty("value").GetInt32());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(sequence);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name"u8).GetString());
-        Assert.Equal(42, root.GetProperty("value"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(42, root.GetProperty("value"u8).GetInt32());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ReadOnlySequence_MultiSegment()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(SimpleYaml);
         ReadOnlySequence<byte> sequence = CreateMultiSegmentSequence(yaml, 5);
 
         // Verify it's actually multi-segment
-        Assert.False(sequence.IsSingleSegment);
+        Assert.IsFalse(sequence.IsSingleSegment);
 
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(sequence);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name").GetString());
-        Assert.Equal(42, root.GetProperty("value").GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name").GetString());
+        Assert.AreEqual(42, root.GetProperty("value").GetInt32());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(sequence);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name"u8).GetString());
-        Assert.Equal(42, root.GetProperty("value"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(42, root.GetProperty("value"u8).GetInt32());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ReadOnlySequence_NestedStructure()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(NestedYaml);
@@ -111,17 +112,17 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(sequence);
         JsonElement root = doc.RootElement;
-        Assert.Equal("value", root.GetProperty("root").GetProperty("child").GetProperty("key").GetString());
-        Assert.Equal(3, root.GetProperty("root").GetProperty("list").GetArrayLength());
+        Assert.AreEqual("value", root.GetProperty("root").GetProperty("child").GetProperty("key").GetString());
+        Assert.AreEqual(3, root.GetProperty("root").GetProperty("list").GetArrayLength());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(sequence);
         JsonElement root = doc.RootElement;
-        Assert.Equal("value", root.GetProperty("root"u8).GetProperty("child"u8).GetProperty("key"u8).GetString());
-        Assert.Equal(3, root.GetProperty("root"u8).GetProperty("list"u8).GetArrayLength());
+        Assert.AreEqual("value", root.GetProperty("root"u8).GetProperty("child"u8).GetProperty("key"u8).GetString());
+        Assert.AreEqual(3, root.GetProperty("root"u8).GetProperty("list"u8).GetArrayLength());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ReadOnlySequence_LargeContent()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(LargeYaml);
@@ -130,11 +131,11 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(sequence);
         JsonElement root = doc.RootElement;
-        Assert.Equal(5, root.GetProperty("items").GetArrayLength());
+        Assert.AreEqual(5, root.GetProperty("items").GetArrayLength());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(sequence);
         JsonElement root = doc.RootElement;
-        Assert.Equal(5, root.GetProperty("items"u8).GetArrayLength());
+        Assert.AreEqual(5, root.GetProperty("items"u8).GetArrayLength());
 #endif
     }
 
@@ -142,7 +143,7 @@ public class YamlDocumentParseOverloadTests
 
     #region ReadOnlyMemory<char> overload
 
-    [Fact]
+    [TestMethod]
     public void Parse_ReadOnlyMemoryChar_Simple()
     {
         ReadOnlyMemory<char> yaml = SimpleYaml.AsMemory();
@@ -150,19 +151,19 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name").GetString());
-        Assert.Equal(42, root.GetProperty("value").GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name").GetString());
+        Assert.AreEqual(42, root.GetProperty("value").GetInt32());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name"u8).GetString());
-        Assert.Equal(42, root.GetProperty("value"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(42, root.GetProperty("value"u8).GetInt32());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ReadOnlyMemoryChar_NestedStructure()
     {
         ReadOnlyMemory<char> yaml = NestedYaml.AsMemory();
@@ -170,15 +171,15 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal("value", root.GetProperty("root").GetProperty("child").GetProperty("key").GetString());
+        Assert.AreEqual("value", root.GetProperty("root").GetProperty("child").GetProperty("key").GetString());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal("value", root.GetProperty("root"u8).GetProperty("child"u8).GetProperty("key"u8).GetString());
+        Assert.AreEqual("value", root.GetProperty("root"u8).GetProperty("child"u8).GetProperty("key"u8).GetString());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ReadOnlyMemoryChar_UnicodeContent()
     {
         ReadOnlyMemory<char> yaml = "greeting: héllo wörld\nemoji: 🎉\n".AsMemory();
@@ -186,17 +187,17 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal("héllo wörld", root.GetProperty("greeting").GetString());
-        Assert.Equal("🎉", root.GetProperty("emoji").GetString());
+        Assert.AreEqual("héllo wörld", root.GetProperty("greeting").GetString());
+        Assert.AreEqual("🎉", root.GetProperty("emoji").GetString());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal("héllo wörld", root.GetProperty("greeting"u8).GetString());
-        Assert.Equal("🎉", root.GetProperty("emoji"u8).GetString());
+        Assert.AreEqual("héllo wörld", root.GetProperty("greeting"u8).GetString());
+        Assert.AreEqual("🎉", root.GetProperty("emoji"u8).GetString());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ReadOnlyMemoryChar_Substring()
     {
         // Test with a substring memory (not starting from position 0)
@@ -206,15 +207,15 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal("hello", root.GetProperty("name").GetString());
+        Assert.AreEqual("hello", root.GetProperty("name").GetString());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal("hello", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual("hello", root.GetProperty("name"u8).GetString());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ReadOnlyMemoryChar_LargeContent()
     {
         // Generate content larger than StackallocByteThreshold (256 bytes)
@@ -231,11 +232,11 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal(50, root.GetProperty("items").GetArrayLength());
+        Assert.AreEqual(50, root.GetProperty("items").GetArrayLength());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
         JsonElement root = doc.RootElement;
-        Assert.Equal(50, root.GetProperty("items"u8).GetArrayLength());
+        Assert.AreEqual(50, root.GetProperty("items"u8).GetArrayLength());
 #endif
     }
 
@@ -243,7 +244,7 @@ public class YamlDocumentParseOverloadTests
 
     #region Stream overload (sync)
 
-    [Fact]
+    [TestMethod]
     public void Parse_Stream_SeekableStream()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(SimpleYaml);
@@ -252,19 +253,19 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name").GetString());
-        Assert.Equal(42, root.GetProperty("value").GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name").GetString());
+        Assert.AreEqual(42, root.GetProperty("value").GetInt32());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name"u8).GetString());
-        Assert.Equal(42, root.GetProperty("value"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(42, root.GetProperty("value"u8).GetInt32());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_Stream_NonSeekableStream()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(SimpleYaml);
@@ -273,17 +274,17 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("hello", root.GetProperty("name").GetString());
-        Assert.Equal(42, root.GetProperty("value").GetInt32());
+        Assert.AreEqual("hello", root.GetProperty("name").GetString());
+        Assert.AreEqual(42, root.GetProperty("value").GetInt32());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("hello", root.GetProperty("name"u8).GetString());
-        Assert.Equal(42, root.GetProperty("value"u8).GetInt32());
+        Assert.AreEqual("hello", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(42, root.GetProperty("value"u8).GetInt32());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_Stream_NestedStructure()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(NestedYaml);
@@ -292,17 +293,17 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("value", root.GetProperty("root").GetProperty("child").GetProperty("key").GetString());
-        Assert.Equal(3, root.GetProperty("root").GetProperty("list").GetArrayLength());
+        Assert.AreEqual("value", root.GetProperty("root").GetProperty("child").GetProperty("key").GetString());
+        Assert.AreEqual(3, root.GetProperty("root").GetProperty("list").GetArrayLength());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("value", root.GetProperty("root"u8).GetProperty("child"u8).GetProperty("key"u8).GetString());
-        Assert.Equal(3, root.GetProperty("root"u8).GetProperty("list"u8).GetArrayLength());
+        Assert.AreEqual("value", root.GetProperty("root"u8).GetProperty("child"u8).GetProperty("key"u8).GetString());
+        Assert.AreEqual(3, root.GetProperty("root"u8).GetProperty("list"u8).GetArrayLength());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_Stream_LargeNonSeekable()
     {
         // Content larger than the initial 4096-byte buffer to test buffer growth
@@ -319,15 +320,15 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.GetProperty("data").ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, root.GetProperty("data").ValueKind);
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.GetProperty("data"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, root.GetProperty("data"u8).ValueKind);
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_Stream_PartiallyConsumed()
     {
         // Put extra bytes before the YAML and seek past them
@@ -343,21 +344,21 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = YamlDocument.Parse(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("hello", root.GetProperty("name").GetString());
+        Assert.AreEqual("hello", root.GetProperty("name").GetString());
 #else
         using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("hello", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual("hello", root.GetProperty("name"u8).GetString());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_Stream_NullThrowsArgumentNullException()
     {
 #if STJ
-        Assert.Throws<ArgumentNullException>(() => YamlDocument.Parse((Stream)null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => YamlDocument.Parse((Stream)null!));
 #else
-        Assert.Throws<ArgumentNullException>(() => YamlDocument.Parse<JsonElement>((Stream)null!));
+        Assert.ThrowsExactly<ArgumentNullException>(() => YamlDocument.Parse<JsonElement>((Stream)null!));
 #endif
     }
 
@@ -365,7 +366,7 @@ public class YamlDocumentParseOverloadTests
 
     #region ParseAsync overload
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_SeekableStream()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(SimpleYaml);
@@ -374,19 +375,19 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = await YamlDocument.ParseAsync(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name").GetString());
-        Assert.Equal(42, root.GetProperty("value").GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name").GetString());
+        Assert.AreEqual(42, root.GetProperty("value").GetInt32());
 #else
         using ParsedJsonDocument<JsonElement> doc = await YamlDocument.ParseAsync<JsonElement>(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("hello", root.GetProperty("name"u8).GetString());
-        Assert.Equal(42, root.GetProperty("value"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("hello", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(42, root.GetProperty("value"u8).GetInt32());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_NonSeekableStream()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(SimpleYaml);
@@ -395,15 +396,15 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = await YamlDocument.ParseAsync(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("hello", root.GetProperty("name").GetString());
+        Assert.AreEqual("hello", root.GetProperty("name").GetString());
 #else
         using ParsedJsonDocument<JsonElement> doc = await YamlDocument.ParseAsync<JsonElement>(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("hello", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual("hello", root.GetProperty("name"u8).GetString());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_NestedStructure()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(NestedYaml);
@@ -412,15 +413,15 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = await YamlDocument.ParseAsync(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("value", root.GetProperty("root").GetProperty("child").GetProperty("key").GetString());
+        Assert.AreEqual("value", root.GetProperty("root").GetProperty("child").GetProperty("key").GetString());
 #else
         using ParsedJsonDocument<JsonElement> doc = await YamlDocument.ParseAsync<JsonElement>(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal("value", root.GetProperty("root"u8).GetProperty("child"u8).GetProperty("key"u8).GetString());
+        Assert.AreEqual("value", root.GetProperty("root"u8).GetProperty("child"u8).GetProperty("key"u8).GetString());
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_CancellationToken()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(SimpleYaml);
@@ -429,14 +430,14 @@ public class YamlDocumentParseOverloadTests
 
 #if STJ
         using JsonDocument doc = await YamlDocument.ParseAsync(stream, default, cts.Token);
-        Assert.Equal(JsonValueKind.Object, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.ValueKind);
 #else
         using ParsedJsonDocument<JsonElement> doc = await YamlDocument.ParseAsync<JsonElement>(stream, default, cts.Token);
-        Assert.Equal(JsonValueKind.Object, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.ValueKind);
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_CancelledToken_ThrowsOperationCanceled()
     {
         byte[] yaml = Encoding.UTF8.GetBytes(SimpleYaml);
@@ -445,27 +446,27 @@ public class YamlDocumentParseOverloadTests
         cts.Cancel();
 
 #if STJ
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+        await Assert.ThrowsExactlyAsync<OperationCanceledException>(
             () => YamlDocument.ParseAsync(stream, default, cts.Token));
 #else
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+        await Assert.ThrowsExactlyAsync<OperationCanceledException>(
             () => YamlDocument.ParseAsync<JsonElement>(stream, default, cts.Token));
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_NullThrowsArgumentNullException()
     {
 #if STJ
-        await Assert.ThrowsAsync<ArgumentNullException>(
+        await Assert.ThrowsExactlyAsync<ArgumentNullException>(
             () => YamlDocument.ParseAsync((Stream)null!));
 #else
-        await Assert.ThrowsAsync<ArgumentNullException>(
+        await Assert.ThrowsExactlyAsync<ArgumentNullException>(
             () => YamlDocument.ParseAsync<JsonElement>((Stream)null!));
 #endif
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseAsync_LargeNonSeekable()
     {
         StringBuilder sb = new();
@@ -481,11 +482,11 @@ public class YamlDocumentParseOverloadTests
 #if STJ
         using JsonDocument doc = await YamlDocument.ParseAsync(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.GetProperty("data").ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, root.GetProperty("data").ValueKind);
 #else
         using ParsedJsonDocument<JsonElement> doc = await YamlDocument.ParseAsync<JsonElement>(stream);
         JsonElement root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.GetProperty("data"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, root.GetProperty("data"u8).ValueKind);
 #endif
     }
 
@@ -493,7 +494,7 @@ public class YamlDocumentParseOverloadTests
 
     #region Cross-overload consistency
 
-    [Fact]
+    [TestMethod]
     public async Task AllOverloads_ProduceSameResult()
     {
         const string yaml = "items:\n  - a\n  - b\n  - c\n";
@@ -511,11 +512,11 @@ public class YamlDocumentParseOverloadTests
         using JsonDocument fromAsync = await YamlDocument.ParseAsync(ms);
 
         string expected = fromBytes.RootElement.GetRawText();
-        Assert.Equal(expected, fromString.RootElement.GetRawText());
-        Assert.Equal(expected, fromCharMem.RootElement.GetRawText());
-        Assert.Equal(expected, fromSequence.RootElement.GetRawText());
-        Assert.Equal(expected, fromStream.RootElement.GetRawText());
-        Assert.Equal(expected, fromAsync.RootElement.GetRawText());
+        Assert.AreEqual(expected, fromString.RootElement.GetRawText());
+        Assert.AreEqual(expected, fromCharMem.RootElement.GetRawText());
+        Assert.AreEqual(expected, fromSequence.RootElement.GetRawText());
+        Assert.AreEqual(expected, fromStream.RootElement.GetRawText());
+        Assert.AreEqual(expected, fromAsync.RootElement.GetRawText());
 #else
         using ParsedJsonDocument<JsonElement> fromBytes = YamlDocument.Parse<JsonElement>((ReadOnlyMemory<byte>)utf8Yaml);
         using ParsedJsonDocument<JsonElement> fromString = YamlDocument.Parse<JsonElement>(yaml);
@@ -527,11 +528,11 @@ public class YamlDocumentParseOverloadTests
         using ParsedJsonDocument<JsonElement> fromAsync = await YamlDocument.ParseAsync<JsonElement>(ms);
 
         string expected = fromBytes.RootElement.ToString();
-        Assert.Equal(expected, fromString.RootElement.ToString());
-        Assert.Equal(expected, fromCharMem.RootElement.ToString());
-        Assert.Equal(expected, fromSequence.RootElement.ToString());
-        Assert.Equal(expected, fromStream.RootElement.ToString());
-        Assert.Equal(expected, fromAsync.RootElement.ToString());
+        Assert.AreEqual(expected, fromString.RootElement.ToString());
+        Assert.AreEqual(expected, fromCharMem.RootElement.ToString());
+        Assert.AreEqual(expected, fromSequence.RootElement.ToString());
+        Assert.AreEqual(expected, fromStream.RootElement.ToString());
+        Assert.AreEqual(expected, fromAsync.RootElement.ToString());
 #endif
     }
 

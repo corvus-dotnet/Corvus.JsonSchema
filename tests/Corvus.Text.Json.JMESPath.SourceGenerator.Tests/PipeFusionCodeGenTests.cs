@@ -4,7 +4,7 @@
 
 using System.Text.Json;
 using Corvus.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JMESPath.SourceGenerator.Tests;
 
@@ -12,6 +12,7 @@ namespace Corvus.Text.Json.JMESPath.SourceGenerator.Tests;
 /// Tests that verify correctness of source-generated code for fused pipe optimizations.
 /// Each test exercises a specific fusion pattern through the code-generation path.
 /// </summary>
+[TestClass]
 public class PipeFusionCodeGenTests
 {
     // Items: objects with n (name) and v (value) fields
@@ -28,28 +29,28 @@ public class PipeFusionCodeGenTests
 
     // === Two streaming stages ===
 
-    [Fact]
+    [TestMethod]
     public void FilterProject()
     {
         // [?v > `1`] | [*].n → filter v>1 keeps A(3),C(2), then project .n
         AssertCG(FilterProjectCG.Evaluate, ItemsJson, """["A","C"]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FlattenFilter()
     {
         // [] | [?@ > `2`] → flatten to [5,1,3,4,2], filter >2
         AssertCG(FlattenFilterCG.Evaluate, NestedJson, """[5,3,4]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FlattenProject()
     {
         // [] | [*].x → flatten to [{x:1},{x:2},{x:3}], project .x
         AssertCG(FlattenProjectCG.Evaluate, NestedObjectsJson, """[1,2,3]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ProjectFilter()
     {
         // [*].v | [?@ > `1`] → project .v to [3,1,2], filter >1
@@ -58,28 +59,28 @@ public class PipeFusionCodeGenTests
 
     // === Streaming + Barrier ===
 
-    [Fact]
+    [TestMethod]
     public void FilterSortBy()
     {
         // [?v > `1`] | sort_by(@, &v) → filter keeps A(3),C(2), sort by v → C(2),A(3)
         AssertCG(FilterSortByCG.Evaluate, ItemsJson, """[{"n":"C","v":2},{"n":"A","v":3}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ProjectSort()
     {
         // [*].v | sort(@) → [3,1,2] → [1,2,3]
         AssertCG(ProjectSortCG.Evaluate, ItemsJson, """[1,2,3]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ProjectReverse()
     {
         // [*].v | reverse(@) → [3,1,2] → [2,1,3]
         AssertCG(ProjectReverseCG.Evaluate, ItemsJson, """[2,1,3]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FlattenSort()
     {
         // [] | sort(@) → [5,1,3,4,2] → [1,2,3,4,5]
@@ -88,21 +89,21 @@ public class PipeFusionCodeGenTests
 
     // === Barrier + Streaming ===
 
-    [Fact]
+    [TestMethod]
     public void SortByProject()
     {
         // sort_by(@, &v) | [*].n → sort by v: B(1),C(2),A(3), then project .n
         AssertCG(SortByProjectCG.Evaluate, ItemsJson, """["B","C","A"]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SortFilter()
     {
         // sort(@) | [?@ > `2`] → [1,2,3,4,5] → [3,4,5]
         AssertCG(SortFilterCG.Evaluate, NumbersJson, """[3,4,5]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ReverseProject()
     {
         // reverse(@) | [*].n → [C,B,A] → ["C","B","A"]
@@ -111,14 +112,14 @@ public class PipeFusionCodeGenTests
 
     // === Barrier + Barrier ===
 
-    [Fact]
+    [TestMethod]
     public void SortReverse()
     {
         // sort(@) | reverse(@) → [1,2,3,4,5] → [5,4,3,2,1]
         AssertCG(SortReverseCG.Evaluate, NumbersJson, """[5,4,3,2,1]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SortByReverse()
     {
         // sort_by(@, &v) | reverse(@) → B(1),C(2),A(3) → A(3),C(2),B(1)
@@ -127,7 +128,7 @@ public class PipeFusionCodeGenTests
 
     // === Three+ stages ===
 
-    [Fact]
+    [TestMethod]
     public void FilterSortByHashProject()
     {
         // [?v > `1`] | sort_by(@, &v) | [*].{name: n, value: v}
@@ -135,28 +136,28 @@ public class PipeFusionCodeGenTests
         AssertCG(FilterSortByHashProjectCG.Evaluate, ItemsJson, """[{"name":"C","value":2},{"name":"A","value":3}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ProjectSortReverse()
     {
         // [*].v | sort(@) | reverse(@) → [3,1,2] → [1,2,3] → [3,2,1]
         AssertCG(ProjectSortReverseCG.Evaluate, ItemsJson, """[3,2,1]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FlattenFilterSort()
     {
         // [] | [?@ > `2`] | sort(@) → [5,1,3,4,2] → [5,3,4] → [3,4,5]
         AssertCG(FlattenFilterSortCG.Evaluate, NestedJson, """[3,4,5]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterReverseProject()
     {
         // [?v > `1`] | reverse(@) | [*].n → A(3),C(2) → C(2),A(3) → ["C","A"]
         AssertCG(FilterReverseProjectCG.Evaluate, ItemsJson, """["C","A"]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SortByReverseHashProject()
     {
         // sort_by(@, &v) | reverse(@) | [*].{name: n}
@@ -166,7 +167,7 @@ public class PipeFusionCodeGenTests
 
     // === Terminal HashProject ===
 
-    [Fact]
+    [TestMethod]
     public void SortByHashProject()
     {
         // sort_by(@, &v) | [*].{name: n, val: v}
@@ -174,14 +175,14 @@ public class PipeFusionCodeGenTests
         AssertCG(SortByHashProjectCG.Evaluate, ItemsJson, """[{"name":"B","val":1},{"name":"C","val":2},{"name":"A","val":3}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ReverseHashProject()
     {
         // reverse(@) | [*].{name: n} → [C,B,A] → [{name:C},{name:B},{name:A}]
         AssertCG(ReverseHashProjectCG.Evaluate, ItemsJson, """[{"name":"C"},{"name":"B"},{"name":"A"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterHashProject()
     {
         // [?v > `1`] | [*].{name: n, val: v} → A(3),C(2) → [{name:A,val:3},{name:C,val:2}]
@@ -190,7 +191,7 @@ public class PipeFusionCodeGenTests
 
     // === Non-terminal HashProject ===
 
-    [Fact]
+    [TestMethod]
     public void HashProjectReverse()
     {
         // [*].{name: n, val: v} | reverse(@) → [{name:A,val:3},{name:B,val:1},{name:C,val:2}] → reversed
@@ -199,14 +200,14 @@ public class PipeFusionCodeGenTests
 
     // === MapExpr ===
 
-    [Fact]
+    [TestMethod]
     public void MapSort()
     {
         // map(&v, @) | sort(@) → [3,1,2] → [1,2,3]
         AssertCG(MapSortCG.Evaluate, ItemsJson, """[1,2,3]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void MapFilter()
     {
         // map(&v, @) | [?@ > `1`] → [3,1,2] → [3,2]
@@ -215,14 +216,14 @@ public class PipeFusionCodeGenTests
 
     // === Edge cases ===
 
-    [Fact]
+    [TestMethod]
     public void EmptyThroughPipeline()
     {
         // [?v > `100`] | sort_by(@, &v) | [*].n → [] through entire pipeline
         AssertCG(EmptyThroughPipelineCG.Evaluate, ItemsJson, """[]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SingleThroughPipeline()
     {
         // [?v > `2`] | sort_by(@, &v) | [*].n → single element [A(3)] through pipeline
@@ -231,7 +232,7 @@ public class PipeFusionCodeGenTests
 
     // === Bail-out / Recursive fusion ===
 
-    [Fact]
+    [TestMethod]
     public void RecursiveInnerFusion()
     {
         // [*].v | sort(@) | [-1] → outer pipe bails (IndexNode), inner [*].v | sort(@) fuses
@@ -255,7 +256,7 @@ public class PipeFusionCodeGenTests
     {
         using JsonDocument expectedDoc = JsonDocument.Parse(expected);
         using JsonDocument actualDoc = JsonDocument.Parse(actual);
-        Assert.True(
+        Assert.IsTrue(
             JsonElementDeepEquals(expectedDoc.RootElement, actualDoc.RootElement),
             $"Expected: {expected}\nActual: {actual}");
     }

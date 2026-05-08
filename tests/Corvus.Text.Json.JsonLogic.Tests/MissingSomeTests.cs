@@ -4,7 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.JsonLogic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.Tests;
 
@@ -12,109 +12,110 @@ namespace Corvus.Text.Json.JsonLogic.Tests;
 /// Tests for the <c>missing_some</c> JsonLogic operator, which checks that at least N
 /// of the specified data paths are present and returns the missing ones if not.
 /// </summary>
+[TestClass]
 public class MissingSomeTests
 {
     // ----- Basic cases -----
 
-    [Fact]
+    [TestMethod]
     public void AllPresent_ReturnsEmptyArray()
     {
         string result = Evaluate(
             """{"missing_some":[1, ["a","b","c"]]}""",
             """{"a":1, "b":2, "c":3}""");
-        Assert.Equal("[]", result);
+        Assert.AreEqual("[]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void NonePresent_ReturnsMissingPaths()
     {
         string result = Evaluate(
             """{"missing_some":[1, ["a","b","c"]]}""",
             """{}""");
-        Assert.Equal("""["a","b","c"]""", result);
+        Assert.AreEqual("""["a","b","c"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SomePresent_EnoughToMeetThreshold_ReturnsEmpty()
     {
         string result = Evaluate(
             """{"missing_some":[2, ["a","b","c"]]}""",
             """{"a":1, "b":2}""");
-        Assert.Equal("[]", result);
+        Assert.AreEqual("[]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SomePresent_NotEnough_ReturnsMissing()
     {
         string result = Evaluate(
             """{"missing_some":[2, ["a","b","c"]]}""",
             """{"a":1}""");
-        Assert.Equal("""["b","c"]""", result);
+        Assert.AreEqual("""["b","c"]""", result);
     }
 
     // ----- Edge cases -----
 
-    [Fact]
+    [TestMethod]
     public void ThresholdZero_AlwaysReturnsEmpty()
     {
         string result = Evaluate(
             """{"missing_some":[0, ["a","b","c"]]}""",
             """{}""");
-        Assert.Equal("[]", result);
+        Assert.AreEqual("[]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ThresholdGreaterThanTotal_AllPresent_ReturnsEmpty()
     {
         string result = Evaluate(
             """{"missing_some":[10, ["a","b"]]}""",
             """{"a":1, "b":2}""");
-        Assert.Equal("[]", result);
+        Assert.AreEqual("[]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ThresholdGreaterThanTotal_SomeMissing_ReturnsMissing()
     {
         string result = Evaluate(
             """{"missing_some":[10, ["a","b"]]}""",
             """{"a":1}""");
-        Assert.Equal("""["b"]""", result);
+        Assert.AreEqual("""["b"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyPathsArray_ReturnsEmpty()
     {
         string result = Evaluate(
             """{"missing_some":[1, []]}""",
             """{"a":1}""");
-        Assert.Equal("[]", result);
+        Assert.AreEqual("[]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SinglePath_Present_ReturnsEmpty()
     {
         string result = Evaluate(
             """{"missing_some":[1, ["a"]]}""",
             """{"a":1}""");
-        Assert.Equal("[]", result);
+        Assert.AreEqual("[]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SinglePath_Missing_ReturnsThatPath()
     {
         string result = Evaluate(
             """{"missing_some":[1, ["a"]]}""",
             """{}""");
-        Assert.Equal("""["a"]""", result);
+        Assert.AreEqual("""["a"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void NullData_TreatsAllAsMissing()
     {
         string result = Evaluate(
             """{"missing_some":[1, ["a","b"]]}""",
             "null");
-        Assert.Equal("""["a","b"]""", result);
+        Assert.AreEqual("""["a","b"]""", result);
     }
 
     // ----- Helpers -----

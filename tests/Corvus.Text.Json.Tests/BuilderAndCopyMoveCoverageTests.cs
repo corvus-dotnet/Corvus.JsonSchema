@@ -3,7 +3,7 @@
 
 using System.Text.Json;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using JsonTokenType = Corvus.Text.Json.Internal.JsonTokenType;
 
@@ -13,7 +13,8 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage tests targeting uncovered paths in JsonDocumentBuilder, ComplexValueBuilder,
 /// and Source.AddAsProperty/AddAsPrebakedProperty with UTF-8 property names.
 /// </summary>
-public static class BuilderAndCopyMoveCoverageTests
+[TestClass]
+public class BuilderAndCopyMoveCoverageTests
 {
     private static IMutableJsonDocument GetDoc(in JsonElement.Mutable element)
     {
@@ -27,8 +28,8 @@ public static class BuilderAndCopyMoveCoverageTests
 
     #region SetProperty with ReadOnlySpan<byte> property names — fast paths
 
-    [Fact]
-    public static void SetPropertyUtf8_SimpleNull()
+    [TestMethod]
+    public void SetPropertyUtf8_SimpleNull()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -37,11 +38,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("b"u8, JsonElement.Source.Null());
 
-        Assert.Equal(JsonValueKind.Null, root["b"].ValueKind);
+        Assert.AreEqual(JsonValueKind.Null, root["b"].ValueKind);
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_SimpleTrue()
+    [TestMethod]
+    public void SetPropertyUtf8_SimpleTrue()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -50,11 +51,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("flag"u8, true);
 
-        Assert.True(root["flag"].GetBoolean());
+        Assert.IsTrue(root["flag"].GetBoolean());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_SimpleFalse()
+    [TestMethod]
+    public void SetPropertyUtf8_SimpleFalse()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -63,11 +64,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("flag"u8, false);
 
-        Assert.False(root["flag"].GetBoolean());
+        Assert.IsFalse(root["flag"].GetBoolean());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_SimpleInt()
+    [TestMethod]
+    public void SetPropertyUtf8_SimpleInt()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -76,11 +77,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("count"u8, 42);
 
-        Assert.Equal(42, root["count"].GetInt32());
+        Assert.AreEqual(42, root["count"].GetInt32());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_SimpleLong()
+    [TestMethod]
+    public void SetPropertyUtf8_SimpleLong()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -89,11 +90,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("big"u8, 9_000_000_000L);
 
-        Assert.Equal(9_000_000_000L, root["big"].GetInt64());
+        Assert.AreEqual(9_000_000_000L, root["big"].GetInt64());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_SimpleDouble()
+    [TestMethod]
+    public void SetPropertyUtf8_SimpleDouble()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -102,11 +103,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("pi"u8, 3.14);
 
-        Assert.Equal(3.14, root["pi"].GetDouble());
+        Assert.AreEqual(3.14, root["pi"].GetDouble());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_SimpleString()
+    [TestMethod]
+    public void SetPropertyUtf8_SimpleString()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -115,11 +116,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("name"u8, "hello");
 
-        Assert.Equal("hello", root["name"].GetString());
+        Assert.AreEqual("hello", root["name"].GetString());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_FormattedNumber()
+    [TestMethod]
+    public void SetPropertyUtf8_FormattedNumber()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -128,11 +129,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("num"u8, JsonElement.Source.FormattedNumber("1.23e4"u8));
 
-        Assert.Equal(12300.0, root["num"].GetDouble());
+        Assert.AreEqual(12300.0, root["num"].GetDouble());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_RawUtf8String()
+    [TestMethod]
+    public void SetPropertyUtf8_RawUtf8String()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -141,11 +142,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("raw"u8, JsonElement.Source.RawString("raw-value"u8, requiresUnescaping: false));
 
-        Assert.Equal("raw-value", root["raw"].GetString());
+        Assert.AreEqual("raw-value", root["raw"].GetString());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_JsonElement()
+    [TestMethod]
+    public void SetPropertyUtf8_JsonElement()
     {
         using var sourceDoc = ParsedJsonDocument<JsonElement>.Parse("""{"nested": true}""");
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
@@ -155,12 +156,12 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("child"u8, sourceDoc.RootElement);
 
-        Assert.Equal(JsonValueKind.Object, root["child"].ValueKind);
-        Assert.True(root["child"]["nested"].GetBoolean());
+        Assert.AreEqual(JsonValueKind.Object, root["child"].ValueKind);
+        Assert.IsTrue(root["child"]["nested"].GetBoolean());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_ObjectBuilder()
+    [TestMethod]
+    public void SetPropertyUtf8_ObjectBuilder()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -173,12 +174,12 @@ public static class BuilderAndCopyMoveCoverageTests
             ob.AddProperty("y", 20);
         }));
 
-        Assert.Equal(10, root["obj"]["x"].GetInt32());
-        Assert.Equal(20, root["obj"]["y"].GetInt32());
+        Assert.AreEqual(10, root["obj"]["x"].GetInt32());
+        Assert.AreEqual(20, root["obj"]["y"].GetInt32());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_ArrayBuilder()
+    [TestMethod]
+    public void SetPropertyUtf8_ArrayBuilder()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -192,12 +193,12 @@ public static class BuilderAndCopyMoveCoverageTests
             ab.AddItem(3);
         }));
 
-        Assert.Equal(3, root["arr"].GetArrayLength());
-        Assert.Equal(2, root["arr"][1].GetInt32());
+        Assert.AreEqual(3, root["arr"].GetArrayLength());
+        Assert.AreEqual(2, root["arr"][1].GetInt32());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_ReplaceExistingProperty()
+    [TestMethod]
+    public void SetPropertyUtf8_ReplaceExistingProperty()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1, "b": 2}""");
         using var workspace = JsonWorkspace.Create();
@@ -206,12 +207,12 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("a"u8, 99);
 
-        Assert.Equal(99, root["a"].GetInt32());
-        Assert.Equal(2, root["b"].GetInt32());
+        Assert.AreEqual(99, root["a"].GetInt32());
+        Assert.AreEqual(2, root["b"].GetInt32());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_ReplaceWithJsonElement()
+    [TestMethod]
+    public void SetPropertyUtf8_ReplaceWithJsonElement()
     {
         using var sourceDoc = ParsedJsonDocument<JsonElement>.Parse("""[10, 20]""");
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1, "b": 2}""");
@@ -221,12 +222,12 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("a"u8, sourceDoc.RootElement);
 
-        Assert.Equal(JsonValueKind.Array, root["a"].ValueKind);
-        Assert.Equal(10, root["a"][0].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, root["a"].ValueKind);
+        Assert.AreEqual(10, root["a"][0].GetInt32());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_ReplaceWithObjectBuilder()
+    [TestMethod]
+    public void SetPropertyUtf8_ReplaceWithObjectBuilder()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1, "b": 2}""");
         using var workspace = JsonWorkspace.Create();
@@ -238,11 +239,11 @@ public static class BuilderAndCopyMoveCoverageTests
             ob.AddProperty("replaced", true);
         }));
 
-        Assert.True(root["a"]["replaced"].GetBoolean());
+        Assert.IsTrue(root["a"]["replaced"].GetBoolean());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_UndefinedRemovesProperty()
+    [TestMethod]
+    public void SetPropertyUtf8_UndefinedRemovesProperty()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1, "b": 2}""");
         using var workspace = JsonWorkspace.Create();
@@ -251,16 +252,16 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("a"u8, default(JsonElement.Source));
 
-        Assert.Equal(JsonValueKind.Undefined, root["a"].ValueKind);
-        Assert.Equal(2, root["b"].GetInt32());
+        Assert.AreEqual(JsonValueKind.Undefined, root["a"].ValueKind);
+        Assert.AreEqual(2, root["b"].GetInt32());
     }
 
     #endregion
 
     #region CopyValueToProperty — overlap detection
 
-    [Fact]
-    public static void CopyValueToProperty_SelfCopyComplexValue_TriggersOverlap()
+    [TestMethod]
+    public void CopyValueToProperty_SelfCopyComplexValue_TriggersOverlap()
     {
         // Copy a complex property value to replace itself — source and dest are the same region.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": {"x": 1, "y": 2}, "b": 99}""");
@@ -274,13 +275,13 @@ public static class BuilderAndCopyMoveCoverageTests
         GetDoc(in root).CopyValueToProperty(Idx(in aValue), Idx(in root), "a"u8);
 
         // Value should be unchanged (self-copy is idempotent).
-        Assert.Equal(1, root["a"]["x"].GetInt32());
-        Assert.Equal(2, root["a"]["y"].GetInt32());
-        Assert.Equal(99, root["b"].GetInt32());
+        Assert.AreEqual(1, root["a"]["x"].GetInt32());
+        Assert.AreEqual(2, root["a"]["y"].GetInt32());
+        Assert.AreEqual(99, root["b"].GetInt32());
     }
 
-    [Fact]
-    public static void CopyValueToProperty_ParentValueToChildProperty_TriggersOverlap()
+    [TestMethod]
+    public void CopyValueToProperty_ParentValueToChildProperty_TriggersOverlap()
     {
         // Copy the root object (which contains the destination) as a new property of itself.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"data": {"inner": 1}}""");
@@ -295,15 +296,15 @@ public static class BuilderAndCopyMoveCoverageTests
         GetDoc(in root).CopyValueToProperty(Idx(in root), Idx(in data), "inner"u8);
 
         // "inner" should now be a copy of root.
-        Assert.Equal(JsonValueKind.Object, root["data"]["inner"].ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, root["data"]["inner"].ValueKind);
     }
 
     #endregion
 
     #region CopyValueToArrayIndex — overlap detection
 
-    [Fact]
-    public static void CopyValueToArrayIndex_ParentToChild_TriggersOverlap()
+    [TestMethod]
+    public void CopyValueToArrayIndex_ParentToChild_TriggersOverlap()
     {
         // Copy a parent element (whose db range contains the array) to an index within the array.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"arr": [1, 2, 3]}""");
@@ -318,17 +319,17 @@ public static class BuilderAndCopyMoveCoverageTests
         GetDoc(in root).CopyValueToArrayIndex(Idx(in root), Idx(in arr), 1);
 
         // Position 1 should now be a copy of the root object.
-        Assert.Equal(JsonValueKind.Object, root["arr"][1].ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, root["arr"][1].ValueKind);
         // Array should now have 4 elements.
-        Assert.Equal(4, root["arr"].GetArrayLength());
+        Assert.AreEqual(4, root["arr"].GetArrayLength());
     }
 
     #endregion
 
     #region CopyValueToArrayEnd — overlap detection
 
-    [Fact]
-    public static void CopyValueToArrayEnd_ParentToChild_TriggersOverlap()
+    [TestMethod]
+    public void CopyValueToArrayEnd_ParentToChild_TriggersOverlap()
     {
         // Copy a parent element whose db range straddles the array end.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"arr": [1, 2]}""");
@@ -342,16 +343,16 @@ public static class BuilderAndCopyMoveCoverageTests
         GetDoc(in root).CopyValueToArrayEnd(Idx(in root), Idx(in arr));
 
         // The array should now have 3 elements, last being a copy of root.
-        Assert.Equal(3, root["arr"].GetArrayLength());
-        Assert.Equal(JsonValueKind.Object, root["arr"][2].ValueKind);
+        Assert.AreEqual(3, root["arr"].GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Object, root["arr"][2].ValueKind);
     }
 
     #endregion
 
     #region MoveItemToArrayEnd — source before destination adjustment
 
-    [Fact]
-    public static void MoveItemToArrayEnd_SourceBeforeDestination()
+    [TestMethod]
+    public void MoveItemToArrayEnd_SourceBeforeDestination()
     {
         // Move item from a position before the destination array so index adjustment triggers.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""[[10, 20], [30, 40]]""");
@@ -367,20 +368,20 @@ public static class BuilderAndCopyMoveCoverageTests
         GetDoc(in root).MoveItemToArrayEnd(Idx(in firstArr), 0, Idx(in secondArr));
 
         // First array should now be [20].
-        Assert.Equal(1, root[0].GetArrayLength());
-        Assert.Equal(20, root[0][0].GetInt32());
+        Assert.AreEqual(1, root[0].GetArrayLength());
+        Assert.AreEqual(20, root[0][0].GetInt32());
 
         // Second array should now be [30, 40, 10].
-        Assert.Equal(3, root[1].GetArrayLength());
-        Assert.Equal(10, root[1][2].GetInt32());
+        Assert.AreEqual(3, root[1].GetArrayLength());
+        Assert.AreEqual(10, root[1][2].GetInt32());
     }
 
     #endregion
 
     #region MoveItemToProperty — existing destination and source adjustment
 
-    [Fact]
-    public static void MoveItemToProperty_ExistingDestination()
+    [TestMethod]
+    public void MoveItemToProperty_ExistingDestination()
     {
         // Move array item to an object property that already exists — triggers overwrite path.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"items": [100, 200], "result": 0}""");
@@ -394,14 +395,14 @@ public static class BuilderAndCopyMoveCoverageTests
         GetDoc(in root).MoveItemToProperty(Idx(in items), 0, Idx(in root), "result"u8);
 
         // "result" should now be 100.
-        Assert.Equal(100, root["result"].GetInt32());
+        Assert.AreEqual(100, root["result"].GetInt32());
         // "items" should now be [200].
-        Assert.Equal(1, root["items"].GetArrayLength());
-        Assert.Equal(200, root["items"][0].GetInt32());
+        Assert.AreEqual(1, root["items"].GetArrayLength());
+        Assert.AreEqual(200, root["items"][0].GetInt32());
     }
 
-    [Fact]
-    public static void MoveItemToProperty_SourceBeforeDestination_Adjustment()
+    [TestMethod]
+    public void MoveItemToProperty_SourceBeforeDestination_Adjustment()
     {
         // Arrange source BEFORE destination object so the srcValueIndex < dstObjectIndex adjustment triggers.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"src": [1, 2, 3], "dest": {"x": 10}}""");
@@ -417,14 +418,14 @@ public static class BuilderAndCopyMoveCoverageTests
         GetDoc(in root).MoveItemToProperty(Idx(in srcArr), 0, Idx(in destObj), "y"u8);
 
         // dest should now have "x": 10, "y": 1.
-        Assert.Equal(10, root["dest"]["x"].GetInt32());
-        Assert.Equal(1, root["dest"]["y"].GetInt32());
+        Assert.AreEqual(10, root["dest"]["x"].GetInt32());
+        Assert.AreEqual(1, root["dest"]["y"].GetInt32());
         // src should now be [2, 3].
-        Assert.Equal(2, root["src"].GetArrayLength());
+        Assert.AreEqual(2, root["src"].GetArrayLength());
     }
 
-    [Fact]
-    public static void MoveItemToProperty_SourceBeforeDestination_ExistingProperty()
+    [TestMethod]
+    public void MoveItemToProperty_SourceBeforeDestination_ExistingProperty()
     {
         // Move item from array BEFORE dest object, to a property that already EXISTS.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"src": [99, 88], "dest": {"val": 0}}""");
@@ -438,17 +439,17 @@ public static class BuilderAndCopyMoveCoverageTests
         // Move src[0] (99) to dest."val" (which already exists) — triggers both adjustment AND overwrite.
         GetDoc(in root).MoveItemToProperty(Idx(in srcArr), 0, Idx(in destObj), "val"u8);
 
-        Assert.Equal(99, root["dest"]["val"].GetInt32());
-        Assert.Equal(1, root["src"].GetArrayLength());
-        Assert.Equal(88, root["src"][0].GetInt32());
+        Assert.AreEqual(99, root["dest"]["val"].GetInt32());
+        Assert.AreEqual(1, root["src"].GetArrayLength());
+        Assert.AreEqual(88, root["src"][0].GetInt32());
     }
 
     #endregion
 
     #region TryFindNextDescendantPropertyValue
 
-    [Fact]
-    public static void TryFindNextDescendantPropertyValue_FindsNestedProperty()
+    [TestMethod]
+    public void TryFindNextDescendantPropertyValue_FindsNestedProperty()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": {"b": {"target": 42}}}""");
         using var workspace = JsonWorkspace.Create();
@@ -458,12 +459,12 @@ public static class BuilderAndCopyMoveCoverageTests
         int scanIndex = 0;
         bool found = GetDoc(in root).TryFindNextDescendantPropertyValue(Idx(in root), ref scanIndex, "target"u8, out int valueIndex);
 
-        Assert.True(found);
-        Assert.True(valueIndex > 0);
+        Assert.IsTrue(found);
+        Assert.IsTrue(valueIndex > 0);
     }
 
-    [Fact]
-    public static void TryFindNextDescendantPropertyValue_NotFound()
+    [TestMethod]
+    public void TryFindNextDescendantPropertyValue_NotFound()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": {"b": 1}}""");
         using var workspace = JsonWorkspace.Create();
@@ -473,11 +474,11 @@ public static class BuilderAndCopyMoveCoverageTests
         int scanIndex = 0;
         bool found = GetDoc(in root).TryFindNextDescendantPropertyValue(Idx(in root), ref scanIndex, "missing"u8, out _);
 
-        Assert.False(found);
+        Assert.IsFalse(found);
     }
 
-    [Fact]
-    public static void TryFindNextDescendantPropertyValue_MultipleOccurrences()
+    [TestMethod]
+    public void TryFindNextDescendantPropertyValue_MultipleOccurrences()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": {"x": 1}, "b": {"x": 2}}""");
         using var workspace = JsonWorkspace.Create();
@@ -487,19 +488,19 @@ public static class BuilderAndCopyMoveCoverageTests
         int scanIndex = 0;
 
         bool found1 = GetDoc(in root).TryFindNextDescendantPropertyValue(Idx(in root), ref scanIndex, "x"u8, out int idx1);
-        Assert.True(found1);
+        Assert.IsTrue(found1);
 
         bool found2 = GetDoc(in root).TryFindNextDescendantPropertyValue(Idx(in root), ref scanIndex, "x"u8, out int idx2);
-        Assert.True(found2);
-        Assert.NotEqual(idx1, idx2);
+        Assert.IsTrue(found2);
+        Assert.AreNotEqual(idx1, idx2);
     }
 
     #endregion
 
     #region Builder with escaped string values
 
-    [Fact]
-    public static void Builder_EscapedPropertyName_RoundTrips()
+    [TestMethod]
+    public void Builder_EscapedPropertyName_RoundTrips()
     {
         // Build a document with an escaped property name and verify it round-trips correctly.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"normal": 1}""");
@@ -510,11 +511,11 @@ public static class BuilderAndCopyMoveCoverageTests
         root.SetProperty("key\twith\ttabs"u8, "value");
 
         string result = root.ToString();
-        Assert.Equal("""{"normal":1,"key\twith\ttabs":"value"}""", result);
+        Assert.AreEqual("""{"normal":1,"key\twith\ttabs":"value"}""", result);
     }
 
-    [Fact]
-    public static void Builder_EscapedStringValue_GetString()
+    [TestMethod]
+    public void Builder_EscapedStringValue_GetString()
     {
         // Parse JSON with an escaped string value (JSON \n = newline), build mutable, verify GetString.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"msg": "hello\nworld"}""");
@@ -523,11 +524,11 @@ public static class BuilderAndCopyMoveCoverageTests
 
         JsonElement.Mutable root = builder.RootElement;
         string? value = root["msg"].GetString();
-        Assert.Equal("hello\nworld", value);
+        Assert.AreEqual("hello\nworld", value);
     }
 
-    [Fact]
-    public static void Builder_UnicodeEscapedString_GetString()
+    [TestMethod]
+    public void Builder_UnicodeEscapedString_GetString()
     {
         // Parse JSON with Unicode escapes (\u0041 = 'A', \u0042 = 'B').
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"emoji": "\u0041\u0042"}""");
@@ -536,15 +537,15 @@ public static class BuilderAndCopyMoveCoverageTests
 
         JsonElement.Mutable root = builder.RootElement;
         string? value = root["emoji"].GetString();
-        Assert.Equal("AB", value);
+        Assert.AreEqual("AB", value);
     }
 
     #endregion
 
     #region TryReplacePropertyValue — property not found
 
-    [Fact]
-    public static void TryReplacePropertyValue_PropertyNotFound_ReturnsFalse()
+    [TestMethod]
+    public void TryReplacePropertyValue_PropertyNotFound_ReturnsFalse()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -553,11 +554,11 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         bool result = GetDoc(in root).TryReplacePropertyValue(Idx(in root), "nonexistent"u8, JsonTokenType.Number, 0, 1);
 
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
-    public static void TryReplacePropertyFromDocument_PropertyNotFound_ReturnsFalse()
+    [TestMethod]
+    public void TryReplacePropertyFromDocument_PropertyNotFound_ReturnsFalse()
     {
         using var sourceDoc = ParsedJsonDocument<JsonElement>.Parse("""42""");
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
@@ -567,15 +568,15 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         bool result = GetDoc(in root).TryReplacePropertyFromDocument(Idx(in root), "nonexistent"u8, sourceDoc, 0);
 
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     #endregion
 
     #region Builder GetPropertyName and text operations on mutable docs
 
-    [Fact]
-    public static void Builder_GetPropertyName_ReturnsPropertyNameElement()
+    [TestMethod]
+    public void Builder_GetPropertyName_ReturnsPropertyNameElement()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"hello": "world"}""");
         using var workspace = JsonWorkspace.Create();
@@ -587,16 +588,16 @@ public static class BuilderAndCopyMoveCoverageTests
         int count = 0;
         foreach (JsonProperty<JsonElement.Mutable> prop in root.EnumerateObject())
         {
-            Assert.Equal("hello", prop.Name);
-            Assert.Equal("world", prop.Value.GetString());
+            Assert.AreEqual("hello", prop.Name);
+            Assert.AreEqual("world", prop.Value.GetString());
             count++;
         }
 
-        Assert.Equal(1, count);
+        Assert.AreEqual(1, count);
     }
 
-    [Fact]
-    public static void Builder_TextEquals_MatchesPropertyName()
+    [TestMethod]
+    public void Builder_TextEquals_MatchesPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"test": 123}""");
         using var workspace = JsonWorkspace.Create();
@@ -605,15 +606,15 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
 
         // Access "test" property to verify text matching works.
-        Assert.Equal(123, root["test"].GetInt32());
+        Assert.AreEqual(123, root["test"].GetInt32());
     }
 
     #endregion
 
     #region Builder TryGetValue for base64
 
-    [Fact]
-    public static void Builder_TryGetBytesFromBase64_ValidBase64()
+    [TestMethod]
+    public void Builder_TryGetBytesFromBase64_ValidBase64()
     {
         // "SGVsbG8=" is base64 for "Hello"
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"data": "SGVsbG8="}""");
@@ -623,12 +624,12 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         bool success = root["data"].TryGetBytesFromBase64(out byte[]? bytes);
 
-        Assert.True(success);
-        Assert.Equal("Hello"u8.ToArray(), bytes);
+        Assert.IsTrue(success);
+        CollectionAssert.AreEqual("Hello"u8.ToArray(), bytes);
     }
 
-    [Fact]
-    public static void Builder_TryGetBytesFromBase64_InvalidBase64()
+    [TestMethod]
+    public void Builder_TryGetBytesFromBase64_InvalidBase64()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"data": "not-valid-base64!!!"}""");
         using var workspace = JsonWorkspace.Create();
@@ -637,16 +638,16 @@ public static class BuilderAndCopyMoveCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         bool success = root["data"].TryGetBytesFromBase64(out byte[]? bytes);
 
-        Assert.False(success);
-        Assert.Null(bytes);
+        Assert.IsFalse(success);
+        Assert.IsNull(bytes);
     }
 
     #endregion
 
     #region SetProperty with ReadOnlySpan<byte> — slow path (ObjectBuilder/ArrayBuilder) covers Source.AddAsProperty(byte[])
 
-    [Fact]
-    public static void SetPropertyUtf8_NewProperty_ObjectBuilder_CoversAddAsPropertySlowPath()
+    [TestMethod]
+    public void SetPropertyUtf8_NewProperty_ObjectBuilder_CoversAddAsPropertySlowPath()
     {
         // When property does NOT exist and source is a builder delegate, AddAsProperty(ReadOnlySpan<byte>) is called.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"existing": 1}""");
@@ -659,11 +660,11 @@ public static class BuilderAndCopyMoveCoverageTests
             ob.AddProperty("inner", 42);
         }));
 
-        Assert.Equal(42, root["newobj"]["inner"].GetInt32());
+        Assert.AreEqual(42, root["newobj"]["inner"].GetInt32());
     }
 
-    [Fact]
-    public static void SetPropertyUtf8_NewProperty_ArrayBuilder_CoversAddAsPropertySlowPath()
+    [TestMethod]
+    public void SetPropertyUtf8_NewProperty_ArrayBuilder_CoversAddAsPropertySlowPath()
     {
         // When property does NOT exist and source is an array builder, AddAsProperty(ReadOnlySpan<byte>) is called.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"existing": 1}""");
@@ -677,15 +678,15 @@ public static class BuilderAndCopyMoveCoverageTests
             ab.AddItem(20);
         }));
 
-        Assert.Equal(2, root["newarr"].GetArrayLength());
+        Assert.AreEqual(2, root["newarr"].GetArrayLength());
     }
 
     #endregion
 
     #region MoveItemToArray (non-end) operations
 
-    [Fact]
-    public static void MoveItemToArray_SourceBeforeDestination()
+    [TestMethod]
+    public void MoveItemToArray_SourceBeforeDestination()
     {
         // Move from first array to second array at a specific index.
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""[[1, 2, 3], [4, 5]]""");
@@ -700,13 +701,13 @@ public static class BuilderAndCopyMoveCoverageTests
         GetDoc(in root).MoveItemToArray(Idx(in firstArr), 1, Idx(in secondArr), 0);
 
         // First array: [1, 3]
-        Assert.Equal(2, root[0].GetArrayLength());
-        Assert.Equal(1, root[0][0].GetInt32());
-        Assert.Equal(3, root[0][1].GetInt32());
+        Assert.AreEqual(2, root[0].GetArrayLength());
+        Assert.AreEqual(1, root[0][0].GetInt32());
+        Assert.AreEqual(3, root[0][1].GetInt32());
 
         // Second array: [2, 4, 5]
-        Assert.Equal(3, root[1].GetArrayLength());
-        Assert.Equal(2, root[1][0].GetInt32());
+        Assert.AreEqual(3, root[1].GetArrayLength());
+        Assert.AreEqual(2, root[1][0].GetInt32());
     }
 
     #endregion
@@ -752,176 +753,176 @@ public static class BuilderAndCopyMoveCoverageTests
         return documentBuilder.RootElement.ToString();
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_Null()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_Null()
     {
         string result = BuildObjectWithUtf8Property(JsonElement.Source.Null());
-        Assert.Equal("""{"prop":null}""", result);
+        Assert.AreEqual("""{"prop":null}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_True()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_True()
     {
         string result = BuildObjectWithUtf8Property(true);
-        Assert.Equal("""{"prop":true}""", result);
+        Assert.AreEqual("""{"prop":true}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_False()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_False()
     {
         string result = BuildObjectWithUtf8Property(false);
-        Assert.Equal("""{"prop":false}""", result);
+        Assert.AreEqual("""{"prop":false}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_Int()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_Int()
     {
         string result = BuildObjectWithUtf8Property(42);
-        Assert.Equal("""{"prop":42}""", result);
+        Assert.AreEqual("""{"prop":42}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_FormattedNumber()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_FormattedNumber()
     {
         string result = BuildObjectWithUtf8Property(JsonElement.Source.FormattedNumber("3.14"u8));
-        Assert.Equal("""{"prop":3.14}""", result);
+        Assert.AreEqual("""{"prop":3.14}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_Utf8String()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_Utf8String()
     {
         string result = BuildObjectWithUtf8Property("hello"u8);
-        Assert.Equal("""{"prop":"hello"}""", result);
+        Assert.AreEqual("""{"prop":"hello"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_Utf16String()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_Utf16String()
     {
         string result = BuildObjectWithUtf8Property("world");
-        Assert.Equal("""{"prop":"world"}""", result);
+        Assert.AreEqual("""{"prop":"world"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_RawStringNoUnescape()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_RawStringNoUnescape()
     {
         string result = BuildObjectWithUtf8Property(JsonElement.Source.RawString("raw"u8, requiresUnescaping: false));
-        Assert.Equal("""{"prop":"raw"}""", result);
+        Assert.AreEqual("""{"prop":"raw"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_RawStringRequiresUnescape()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_RawStringRequiresUnescape()
     {
         string result = BuildObjectWithUtf8Property(JsonElement.Source.RawString("esc\\n"u8, requiresUnescaping: true));
-        Assert.Equal("""{"prop":"esc\n"}""", result);
+        Assert.AreEqual("""{"prop":"esc\n"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_JsonElement()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_JsonElement()
     {
         using var sourceDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
         string result = BuildObjectWithUtf8Property(sourceDoc.RootElement);
-        Assert.Equal("""{"prop":{"x":1}}""", result);
+        Assert.AreEqual("""{"prop":{"x":1}}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_ObjectBuilder()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_ObjectBuilder()
     {
         string result = BuildObjectWithUtf8Property(new JsonElement.Source(static (ref JsonElement.ObjectBuilder ob) =>
         {
             ob.AddProperty("inner", 99);
         }));
-        Assert.Equal("""{"prop":{"inner":99}}""", result);
+        Assert.AreEqual("""{"prop":{"inner":99}}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_ArrayBuilder()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_ArrayBuilder()
     {
         string result = BuildObjectWithUtf8Property(new JsonElement.Source(static (ref JsonElement.ArrayBuilder ab) =>
         {
             ab.AddItem(1);
             ab.AddItem(2);
         }));
-        Assert.Equal("""{"prop":[1,2]}""", result);
+        Assert.AreEqual("""{"prop":[1,2]}""", result);
     }
 
     // AddAsPrebakedProperty — same kinds
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_Null()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_Null()
     {
         string result = BuildObjectWithPrebakedProperty(JsonElement.Source.Null());
-        Assert.Equal("""{"key":null}""", result);
+        Assert.AreEqual("""{"key":null}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_True()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_True()
     {
         string result = BuildObjectWithPrebakedProperty(true);
-        Assert.Equal("""{"key":true}""", result);
+        Assert.AreEqual("""{"key":true}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_False()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_False()
     {
         string result = BuildObjectWithPrebakedProperty(false);
-        Assert.Equal("""{"key":false}""", result);
+        Assert.AreEqual("""{"key":false}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_FormattedNumber()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_FormattedNumber()
     {
         string result = BuildObjectWithPrebakedProperty(JsonElement.Source.FormattedNumber("2.71"u8));
-        Assert.Equal("""{"key":2.71}""", result);
+        Assert.AreEqual("""{"key":2.71}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_Utf8String()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_Utf8String()
     {
         string result = BuildObjectWithPrebakedProperty("utf8val"u8);
-        Assert.Equal("""{"key":"utf8val"}""", result);
+        Assert.AreEqual("""{"key":"utf8val"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_Utf16String()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_Utf16String()
     {
         string result = BuildObjectWithPrebakedProperty("utf16val");
-        Assert.Equal("""{"key":"utf16val"}""", result);
+        Assert.AreEqual("""{"key":"utf16val"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_RawStringNoUnescape()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_RawStringNoUnescape()
     {
         string result = BuildObjectWithPrebakedProperty(JsonElement.Source.RawString("rawval"u8, requiresUnescaping: false));
-        Assert.Equal("""{"key":"rawval"}""", result);
+        Assert.AreEqual("""{"key":"rawval"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_RawStringRequiresUnescape()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_RawStringRequiresUnescape()
     {
         string result = BuildObjectWithPrebakedProperty(JsonElement.Source.RawString("esc\\t"u8, requiresUnescaping: true));
-        Assert.Equal("""{"key":"esc\t"}""", result);
+        Assert.AreEqual("""{"key":"esc\t"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_JsonElement()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_JsonElement()
     {
         using var sourceDoc = ParsedJsonDocument<JsonElement>.Parse("""[10, 20]""");
         string result = BuildObjectWithPrebakedProperty(sourceDoc.RootElement);
-        Assert.Equal("""{"key":[10,20]}""", result);
+        Assert.AreEqual("""{"key":[10,20]}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_ObjectBuilder()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_ObjectBuilder()
     {
         string result = BuildObjectWithPrebakedProperty(new JsonElement.Source(static (ref JsonElement.ObjectBuilder ob) =>
         {
             ob.AddProperty("nested", true);
         }));
-        Assert.Equal("""{"key":{"nested":true}}""", result);
+        Assert.AreEqual("""{"key":{"nested":true}}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_ArrayBuilder()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_ArrayBuilder()
     {
         string result = BuildObjectWithPrebakedProperty(new JsonElement.Source(static (ref JsonElement.ArrayBuilder ab) =>
         {
@@ -929,165 +930,165 @@ public static class BuilderAndCopyMoveCoverageTests
             ab.AddItem(8);
             ab.AddItem(9);
         }));
-        Assert.Equal("""{"key":[7,8,9]}""", result);
+        Assert.AreEqual("""{"key":[7,8,9]}""", result);
     }
 
     #endregion
 
     #region Source.AddAsProperty(byte[]) - StringSimpleType / NumericSimpleType
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_StringSimpleType_Guid()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_StringSimpleType_Guid()
     {
         Guid g = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
         string result = BuildObjectWithUtf8Property(g);
-        Assert.Equal("""{"prop":"01234567-89ab-cdef-0123-456789abcdef"}""", result);
+        Assert.AreEqual("""{"prop":"01234567-89ab-cdef-0123-456789abcdef"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyUtf8_StringSimpleType_DateTimeOffset()
+    [TestMethod]
+    public void SourceAddAsPropertyUtf8_StringSimpleType_DateTimeOffset()
     {
         DateTimeOffset dt = new(2023, 7, 20, 10, 30, 0, TimeSpan.Zero);
         string result = BuildObjectWithUtf8Property(dt);
-        Assert.Equal("""{"prop":"2023-07-20T10:30:00.0000000\u002B00:00"}""", result);
+        Assert.AreEqual("""{"prop":"2023-07-20T10:30:00.0000000\u002B00:00"}""", result);
     }
 
     #endregion
 
     #region Source.AddAsPrebakedProperty - NumericSimpleType / StringSimpleType
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_NumericSimpleType_Int()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_NumericSimpleType_Int()
     {
         string result = BuildObjectWithPrebakedProperty((JsonElement.Source)42);
-        Assert.Equal("""{"key":42}""", result);
+        Assert.AreEqual("""{"key":42}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_NumericSimpleType_Double()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_NumericSimpleType_Double()
     {
         string result = BuildObjectWithPrebakedProperty((JsonElement.Source)3.14);
-        Assert.Equal("""{"key":3.14}""", result);
+        Assert.AreEqual("""{"key":3.14}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_StringSimpleType_Guid()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_StringSimpleType_Guid()
     {
         Guid g = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
         string result = BuildObjectWithPrebakedProperty(g);
-        Assert.Equal("""{"key":"01234567-89ab-cdef-0123-456789abcdef"}""", result);
+        Assert.AreEqual("""{"key":"01234567-89ab-cdef-0123-456789abcdef"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPrebakedProperty_StringSimpleType_DateTime()
+    [TestMethod]
+    public void SourceAddAsPrebakedProperty_StringSimpleType_DateTime()
     {
         DateTime dt = new(2023, 7, 20, 10, 30, 0, DateTimeKind.Utc);
         string result = BuildObjectWithPrebakedProperty(dt);
-        Assert.Equal("""{"key":"2023-07-20T10:30:00.0000000Z"}""", result);
+        Assert.AreEqual("""{"key":"2023-07-20T10:30:00.0000000Z"}""", result);
     }
 
     #endregion
 
     #region Source.AddAsProperty(string) - covers AddAsProperty(ReadOnlySpan<char>) delegation
 
-    [Fact]
-    public static void SourceAddAsPropertyString_Null()
+    [TestMethod]
+    public void SourceAddAsPropertyString_Null()
     {
         string result = BuildObjectWithStringProperty(JsonElement.Source.Null());
-        Assert.Equal("""{"prop":null}""", result);
+        Assert.AreEqual("""{"prop":null}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_True()
+    [TestMethod]
+    public void SourceAddAsPropertyString_True()
     {
         string result = BuildObjectWithStringProperty(true);
-        Assert.Equal("""{"prop":true}""", result);
+        Assert.AreEqual("""{"prop":true}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_False()
+    [TestMethod]
+    public void SourceAddAsPropertyString_False()
     {
         string result = BuildObjectWithStringProperty(false);
-        Assert.Equal("""{"prop":false}""", result);
+        Assert.AreEqual("""{"prop":false}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_NumericSimpleType()
+    [TestMethod]
+    public void SourceAddAsPropertyString_NumericSimpleType()
     {
         string result = BuildObjectWithStringProperty((JsonElement.Source)99);
-        Assert.Equal("""{"prop":99}""", result);
+        Assert.AreEqual("""{"prop":99}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_FormattedNumber()
+    [TestMethod]
+    public void SourceAddAsPropertyString_FormattedNumber()
     {
         string result = BuildObjectWithStringProperty(JsonElement.Source.FormattedNumber("1.23e5"u8));
-        Assert.Equal("""{"prop":1.23e5}""", result);
+        Assert.AreEqual("""{"prop":1.23e5}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_StringSimpleType()
+    [TestMethod]
+    public void SourceAddAsPropertyString_StringSimpleType()
     {
         Guid g = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
         string result = BuildObjectWithStringProperty(g);
-        Assert.Equal("""{"prop":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}""", result);
+        Assert.AreEqual("""{"prop":"aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_RawUtf8StringRequiresUnescaping()
+    [TestMethod]
+    public void SourceAddAsPropertyString_RawUtf8StringRequiresUnescaping()
     {
         string result = BuildObjectWithStringProperty(JsonElement.Source.RawString("esc\\t"u8, requiresUnescaping: true));
-        Assert.Equal("""{"prop":"esc\t"}""", result);
+        Assert.AreEqual("""{"prop":"esc\t"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_RawUtf8StringNotRequiresUnescaping()
+    [TestMethod]
+    public void SourceAddAsPropertyString_RawUtf8StringNotRequiresUnescaping()
     {
         string result = BuildObjectWithStringProperty(JsonElement.Source.RawString("plain"u8, requiresUnescaping: false));
-        Assert.Equal("""{"prop":"plain"}""", result);
+        Assert.AreEqual("""{"prop":"plain"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_Utf8String()
+    [TestMethod]
+    public void SourceAddAsPropertyString_Utf8String()
     {
         string result = BuildObjectWithStringProperty((ReadOnlySpan<byte>)"utf8value"u8);
-        Assert.Equal("""{"prop":"utf8value"}""", result);
+        Assert.AreEqual("""{"prop":"utf8value"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_Utf16String()
+    [TestMethod]
+    public void SourceAddAsPropertyString_Utf16String()
     {
         string result = BuildObjectWithStringProperty("utf16value");
-        Assert.Equal("""{"prop":"utf16value"}""", result);
+        Assert.AreEqual("""{"prop":"utf16value"}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_JsonElement()
+    [TestMethod]
+    public void SourceAddAsPropertyString_JsonElement()
     {
         using var sourceDoc = ParsedJsonDocument<JsonElement>.Parse("""{"a":1}""");
         string result = BuildObjectWithStringProperty(sourceDoc.RootElement);
-        Assert.Equal("""{"prop":{"a":1}}""", result);
+        Assert.AreEqual("""{"prop":{"a":1}}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_ObjectBuilder()
+    [TestMethod]
+    public void SourceAddAsPropertyString_ObjectBuilder()
     {
         string result = BuildObjectWithStringProperty(new JsonElement.Source(static (ref JsonElement.ObjectBuilder ob) =>
         {
             ob.AddProperty("x", 5);
         }));
-        Assert.Equal("""{"prop":{"x":5}}""", result);
+        Assert.AreEqual("""{"prop":{"x":5}}""", result);
     }
 
-    [Fact]
-    public static void SourceAddAsPropertyString_ArrayBuilder()
+    [TestMethod]
+    public void SourceAddAsPropertyString_ArrayBuilder()
     {
         string result = BuildObjectWithStringProperty(new JsonElement.Source(static (ref JsonElement.ArrayBuilder ab) =>
         {
             ab.AddItem(1);
             ab.AddItem(2);
         }));
-        Assert.Equal("""{"prop":[1,2]}""", result);
+        Assert.AreEqual("""{"prop":[1,2]}""", result);
     }
 
     #endregion
@@ -1105,8 +1106,8 @@ public static class BuilderAndCopyMoveCoverageTests
 
     #region Builder - ReplaceRootAndDispose
 
-    [Fact]
-    public static void Builder_ReplaceRootAndDispose_ReplacesEntireDocument()
+    [TestMethod]
+    public void Builder_ReplaceRootAndDispose_ReplacesEntireDocument()
     {
         using var workspace = JsonWorkspace.Create();
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"old": true}""");
@@ -1118,15 +1119,15 @@ public static class BuilderAndCopyMoveCoverageTests
         cvb.EndObject();
         ((IMutableJsonDocument)builder).ReplaceRootAndDispose(ref cvb);
 
-        Assert.Equal("""{"new":42}""", builder.RootElement.ToString());
+        Assert.AreEqual("""{"new":42}""", builder.RootElement.ToString());
     }
 
     #endregion
 
     #region Builder - MovePropertyToProperty/Array source-not-found and self-move
 
-    [Fact]
-    public static void Builder_MovePropertyToProperty_SourceNotFound_ReturnsFalse()
+    [TestMethod]
+    public void Builder_MovePropertyToProperty_SourceNotFound_ReturnsFalse()
     {
         using var workspace = JsonWorkspace.Create();
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a":1,"b":2}""");
@@ -1134,11 +1135,11 @@ public static class BuilderAndCopyMoveCoverageTests
         IMutableJsonDocument mutableDoc = (IMutableJsonDocument)builder;
         // Try to move non-existent property "x"
         bool result = mutableDoc.MovePropertyToProperty(0, "x"u8, 0, "dest"u8);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
-    public static void Builder_MovePropertyToArray_SourceNotFound_ReturnsFalse()
+    [TestMethod]
+    public void Builder_MovePropertyToArray_SourceNotFound_ReturnsFalse()
     {
         using var workspace = JsonWorkspace.Create();
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"obj":{"a":1},"arr":[10]}""");
@@ -1149,11 +1150,11 @@ public static class BuilderAndCopyMoveCoverageTests
         int arrIdx = ((IJsonElement)builder.RootElement["arr"]).ParentDocumentIndex;
         // Move non-existent property "nope" from obj to arr
         bool result = mutableDoc.MovePropertyToArray(objIdx, "nope"u8, arrIdx, 0);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
-    public static void Builder_MovePropertyToArrayEnd_SourceNotFound_ReturnsFalse()
+    [TestMethod]
+    public void Builder_MovePropertyToArrayEnd_SourceNotFound_ReturnsFalse()
     {
         using var workspace = JsonWorkspace.Create();
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"obj":{"a":1},"arr":[10]}""");
@@ -1162,11 +1163,11 @@ public static class BuilderAndCopyMoveCoverageTests
         int objIdx = ((IJsonElement)builder.RootElement["obj"]).ParentDocumentIndex;
         int arrIdx = ((IJsonElement)builder.RootElement["arr"]).ParentDocumentIndex;
         bool result = mutableDoc.MovePropertyToArrayEnd(objIdx, "nope"u8, arrIdx);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
-    public static void Builder_MovePropertyToArray_InsertAtEnd_Works()
+    [TestMethod]
+    public void Builder_MovePropertyToArray_InsertAtEnd_Works()
     {
         using var workspace = JsonWorkspace.Create();
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"obj":{"a":99},"arr":[10,20]}""");
@@ -1176,17 +1177,17 @@ public static class BuilderAndCopyMoveCoverageTests
         int arrIdx = ((IJsonElement)builder.RootElement["arr"]).ParentDocumentIndex;
         // Move "a" from obj to arr at index 2 (end)
         bool result = mutableDoc.MovePropertyToArray(objIdx, "a"u8, arrIdx, 2);
-        Assert.True(result);
+        Assert.IsTrue(result);
         string text = builder.RootElement.ToString();
-        Assert.Equal("""{"obj":{},"arr":[10,20,99]}""", text);
+        Assert.AreEqual("""{"obj":{},"arr":[10,20,99]}""", text);
     }
 
     #endregion
 
     #region Builder - Escaped string retrieval paths (HasComplexChildren)
 
-    [Fact]
-    public static void Builder_GetString_WithEscapedContent_ReturnsUnescaped()
+    [TestMethod]
+    public void Builder_GetString_WithEscapedContent_ReturnsUnescaped()
     {
         // JSON with escape sequences: the raw bytes contain \n which means HasComplexChildren is set
         using var workspace = JsonWorkspace.Create();
@@ -1194,40 +1195,40 @@ public static class BuilderAndCopyMoveCoverageTests
         using var builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable val = builder.RootElement["msg"];
         string str = val.GetString()!;
-        Assert.Equal("hello\nworld", str);
+        Assert.AreEqual("hello\nworld", str);
     }
 
-    [Fact]
-    public static void Builder_GetString_WithTabEscape_ReturnsUnescaped()
+    [TestMethod]
+    public void Builder_GetString_WithTabEscape_ReturnsUnescaped()
     {
         using var workspace = JsonWorkspace.Create();
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"v\":\"tab\\there\"}");
         using var builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable val = builder.RootElement["v"];
         string str = val.GetString()!;
-        Assert.Equal("tab\there", str);
+        Assert.AreEqual("tab\there", str);
     }
 
-    [Fact]
-    public static void Builder_GetString_WithQuoteEscape_ReturnsUnescaped()
+    [TestMethod]
+    public void Builder_GetString_WithQuoteEscape_ReturnsUnescaped()
     {
         using var workspace = JsonWorkspace.Create();
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"v\":\"say \\\"hi\\\"\"}");
         using var builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable val = builder.RootElement["v"];
         string str = val.GetString()!;
-        Assert.Equal("say \"hi\"", str);
+        Assert.AreEqual("say \"hi\"", str);
     }
 
-    [Fact]
-    public static void Builder_GetString_WithUnicodeEscape_ReturnsUnescaped()
+    [TestMethod]
+    public void Builder_GetString_WithUnicodeEscape_ReturnsUnescaped()
     {
         using var workspace = JsonWorkspace.Create();
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"v\":\"\\u0041\\u0042\\u0043\"}");
         using var builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable val = builder.RootElement["v"];
         string str = val.GetString()!;
-        Assert.Equal("ABC", str);
+        Assert.AreEqual("ABC", str);
     }
 
     #endregion

@@ -2,15 +2,16 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using NodaTime;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
-public static class JsonDocumentBuilderInsertItemTests
+[TestClass]
+public class JsonDocumentBuilderInsertItemTests
 {
     #region InsertItem and InsertItemNull Tests
 
-    [Fact]
-    public static void InsertItem_AtBeginningOfArray_InsertsCorrectly()
+    [TestMethod]
+    public void InsertItem_AtBeginningOfArray_InsertsCorrectly()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
@@ -22,15 +23,15 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(0, root[0].GetInt32());
-        Assert.Equal(1, root[1].GetInt32());
-        Assert.Equal(2, root[2].GetInt32());
-        Assert.Equal(3, root[3].GetInt32());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(0, root[0].GetInt32());
+        Assert.AreEqual(1, root[1].GetInt32());
+        Assert.AreEqual(2, root[2].GetInt32());
+        Assert.AreEqual(3, root[3].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_InMiddleOfArray_InsertsCorrectly()
+    [TestMethod]
+    public void InsertItem_InMiddleOfArray_InsertsCorrectly()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
@@ -42,15 +43,15 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(99, root[1].GetInt32());
-        Assert.Equal(2, root[2].GetInt32());
-        Assert.Equal(3, root[3].GetInt32());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(99, root[1].GetInt32());
+        Assert.AreEqual(2, root[2].GetInt32());
+        Assert.AreEqual(3, root[3].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_AtEndOfArray_AppendsCorrectly()
+    [TestMethod]
+    public void InsertItem_AtEndOfArray_AppendsCorrectly()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
@@ -62,15 +63,15 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
-        Assert.Equal(4, root[3].GetInt32());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
+        Assert.AreEqual(4, root[3].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_InEmptyArray_InsertsCorrectly()
+    [TestMethod]
+    public void InsertItem_InEmptyArray_InsertsCorrectly()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
@@ -82,12 +83,12 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(1, root.GetArrayLength());
-        Assert.Equal(42, root[0].GetInt32());
+        Assert.AreEqual(1, root.GetArrayLength());
+        Assert.AreEqual(42, root[0].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_String_Works()
+    [TestMethod]
+    public void InsertItem_String_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -99,14 +100,14 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal("inserted", root[1].GetString());
-        Assert.Equal(2, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual("inserted", root[1].GetString());
+        Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_Bool_Works()
+    [TestMethod]
+    public void InsertItem_Bool_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -118,14 +119,14 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.True(root[1].GetBoolean());
-        Assert.Equal(2, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.IsTrue(root[1].GetBoolean());
+        Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItemNull_Works()
+    [TestMethod]
+    public void InsertItemNull_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -137,14 +138,14 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(JsonValueKind.Null, root[1].ValueKind);
-        Assert.Equal(2, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(JsonValueKind.Null, root[1].ValueKind);
+        Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItemNull_AtBeginning_Works()
+    [TestMethod]
+    public void InsertItemNull_AtBeginning_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
@@ -156,15 +157,15 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(JsonValueKind.Null, root[0].ValueKind);
-        Assert.Equal(1, root[1].GetInt32());
-        Assert.Equal(2, root[2].GetInt32());
-        Assert.Equal(3, root[3].GetInt32());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Null, root[0].ValueKind);
+        Assert.AreEqual(1, root[1].GetInt32());
+        Assert.AreEqual(2, root[2].GetInt32());
+        Assert.AreEqual(3, root[3].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItemNull_AtEnd_Works()
+    [TestMethod]
+    public void InsertItemNull_AtEnd_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
@@ -176,15 +177,15 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
-        Assert.Equal(JsonValueKind.Null, root[3].ValueKind);
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
+        Assert.AreEqual(JsonValueKind.Null, root[3].ValueKind);
     }
 
-    [Fact]
-    public static void InsertItem_MultipleInserts_MaintainsOrder()
+    [TestMethod]
+    public void InsertItem_MultipleInserts_MaintainsOrder()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 5]");
@@ -198,16 +199,16 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
-        Assert.Equal(4, root[3].GetInt32());
-        Assert.Equal(5, root[4].GetInt32());
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
+        Assert.AreEqual(4, root[3].GetInt32());
+        Assert.AreEqual(5, root[4].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_InNestedArray_Works()
+    [TestMethod]
+    public void InsertItem_InNestedArray_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[[1, 2], [3, 4]]");
@@ -219,18 +220,18 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal(3, root[0].GetArrayLength());
-        Assert.Equal(1, root[0][0].GetInt32());
-        Assert.Equal(99, root[0][1].GetInt32());
-        Assert.Equal(2, root[0][2].GetInt32());
-        Assert.Equal(2, root[1].GetArrayLength());
-        Assert.Equal(3, root[1][0].GetInt32());
-        Assert.Equal(4, root[1][1].GetInt32());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual(3, root[0].GetArrayLength());
+        Assert.AreEqual(1, root[0][0].GetInt32());
+        Assert.AreEqual(99, root[0][1].GetInt32());
+        Assert.AreEqual(2, root[0][2].GetInt32());
+        Assert.AreEqual(2, root[1].GetArrayLength());
+        Assert.AreEqual(3, root[1][0].GetInt32());
+        Assert.AreEqual(4, root[1][1].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_InNestedObjectArray_PreservesObject()
+    [TestMethod]
+    public void InsertItem_InNestedObjectArray_PreservesObject()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"items\": [1, 2, 3]}");
@@ -242,17 +243,17 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
         JsonElement.Mutable items = root.GetProperty("items");
-        Assert.Equal(4, items.GetArrayLength());
-        Assert.Equal(1, items[0].GetInt32());
-        Assert.Equal(99, items[1].GetInt32());
-        Assert.Equal(2, items[2].GetInt32());
-        Assert.Equal(3, items[3].GetInt32());
+        Assert.AreEqual(4, items.GetArrayLength());
+        Assert.AreEqual(1, items[0].GetInt32());
+        Assert.AreEqual(99, items[1].GetInt32());
+        Assert.AreEqual(2, items[2].GetInt32());
+        Assert.AreEqual(3, items[3].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_WithMixedTypes_Works()
+    [TestMethod]
+    public void InsertItem_WithMixedTypes_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, \"text\", true]");
@@ -265,16 +266,16 @@ public static class JsonDocumentBuilderInsertItemTests
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(JsonValueKind.Null, root[1].ValueKind);
-        Assert.Equal(3.14, root[2].GetDouble());
-        Assert.Equal("text", root[3].GetString());
-        Assert.True(root[4].GetBoolean());
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(JsonValueKind.Null, root[1].ValueKind);
+        Assert.AreEqual(3.14, root[2].GetDouble());
+        Assert.AreEqual("text", root[3].GetString());
+        Assert.IsTrue(root[4].GetBoolean());
     }
 
-    [Fact]
-    public static void InsertItem_Throws_WhenIndexIsNegative()
+    [TestMethod]
+    public void InsertItem_Throws_WhenIndexIsNegative()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -282,11 +283,11 @@ public static class JsonDocumentBuilderInsertItemTests
         using JsonDocumentBuilder<JsonElement.Mutable> builderDoc = doc.RootElement.CreateBuilder(workspace);
 
         // Act & Assert
-        Assert.Throws<IndexOutOfRangeException>(() => builderDoc.RootElement.InsertItem(-1, 99));
+        Assert.ThrowsExactly<IndexOutOfRangeException>(() => builderDoc.RootElement.InsertItem(-1, 99));
     }
 
-    [Fact]
-    public static void InsertItem_Throws_WhenIndexIsGreaterThanArrayLength()
+    [TestMethod]
+    public void InsertItem_Throws_WhenIndexIsGreaterThanArrayLength()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -294,11 +295,11 @@ public static class JsonDocumentBuilderInsertItemTests
         using JsonDocumentBuilder<JsonElement.Mutable> builderDoc = doc.RootElement.CreateBuilder(workspace);
 
         // Act & Assert
-        Assert.Throws<IndexOutOfRangeException>(() => builderDoc.RootElement.InsertItem(3, 99));
+        Assert.ThrowsExactly<IndexOutOfRangeException>(() => builderDoc.RootElement.InsertItem(3, 99));
     }
 
-    [Fact]
-    public static void InsertItemNull_Throws_WhenIndexIsNegative()
+    [TestMethod]
+    public void InsertItemNull_Throws_WhenIndexIsNegative()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -306,11 +307,11 @@ public static class JsonDocumentBuilderInsertItemTests
         using JsonDocumentBuilder<JsonElement.Mutable> builderDoc = doc.RootElement.CreateBuilder(workspace);
 
         // Act & Assert
-        Assert.Throws<IndexOutOfRangeException>(() => builderDoc.RootElement.InsertItemNull(-1));
+        Assert.ThrowsExactly<IndexOutOfRangeException>(() => builderDoc.RootElement.InsertItemNull(-1));
     }
 
-    [Fact]
-    public static void InsertItemNull_Throws_WhenIndexIsGreaterThanArrayLength()
+    [TestMethod]
+    public void InsertItemNull_Throws_WhenIndexIsGreaterThanArrayLength()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -318,11 +319,11 @@ public static class JsonDocumentBuilderInsertItemTests
         using JsonDocumentBuilder<JsonElement.Mutable> builderDoc = doc.RootElement.CreateBuilder(workspace);
 
         // Act & Assert
-        Assert.Throws<IndexOutOfRangeException>(() => builderDoc.RootElement.InsertItemNull(3));
+        Assert.ThrowsExactly<IndexOutOfRangeException>(() => builderDoc.RootElement.InsertItemNull(3));
     }
 
-    [Fact]
-    public static void InsertItem_ComplexNestedStructure_Works()
+    [TestMethod]
+    public void InsertItem_ComplexNestedStructure_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[[1, 2], {\"nested\": [3, 4]}, [5]]");
@@ -335,18 +336,18 @@ public static class JsonDocumentBuilderInsertItemTests
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
         JsonElement.Mutable nestedArray = root[1].GetProperty("nested");
-        Assert.Equal(3, nestedArray.GetArrayLength());
-        Assert.Equal(3, nestedArray[0].GetInt32());
-        Assert.Equal(99, nestedArray[1].GetInt32());
-        Assert.Equal(4, nestedArray[2].GetInt32());
+        Assert.AreEqual(3, nestedArray.GetArrayLength());
+        Assert.AreEqual(3, nestedArray[0].GetInt32());
+        Assert.AreEqual(99, nestedArray[1].GetInt32());
+        Assert.AreEqual(4, nestedArray[2].GetInt32());
     }
 
     #endregion
 
   #region Additional Type Overload Tests
 
-    [Fact]
-    public static void InsertItem_Guid_Works()
+    [TestMethod]
+    public void InsertItem_Guid_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -359,14 +360,14 @@ public static class JsonDocumentBuilderInsertItemTests
 
  // Assert
   JsonElement.Mutable root = builderDoc.RootElement;
-     Assert.Equal(3, root.GetArrayLength());
-Assert.Equal(1, root[0].GetInt32());
-      Assert.Equal(testGuid, root[1].GetGuid());
-Assert.Equal(2, root[2].GetInt32());
+     Assert.AreEqual(3, root.GetArrayLength());
+Assert.AreEqual(1, root[0].GetInt32());
+      Assert.AreEqual(testGuid, root[1].GetGuid());
+Assert.AreEqual(2, root[2].GetInt32());
     }
 
-[Fact]
-   public static void InsertItem_DateTime_Works()
+[TestMethod]
+   public void InsertItem_DateTime_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -379,14 +380,14 @@ builderDoc.RootElement.InsertItem(1, testDate);
 
         // Assert
   JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-    Assert.Equal(1, root[0].GetInt32());
-    Assert.Equal(testDate, root[1].GetDateTime());
-        Assert.Equal(2, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+    Assert.AreEqual(1, root[0].GetInt32());
+    Assert.AreEqual(testDate, root[1].GetDateTime());
+        Assert.AreEqual(2, root[2].GetInt32());
   }
 
-    [Fact]
-    public static void InsertItem_DateTimeOffset_Works()
+    [TestMethod]
+    public void InsertItem_DateTimeOffset_Works()
 {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -399,14 +400,14 @@ var testDate = new DateTimeOffset(2024, 1, 15, 10, 30, 0, TimeSpan.FromHours(2))
 
  // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-Assert.Equal(1, root[0].GetInt32());
-   Assert.Equal(testDate, root[1].GetDateTimeOffset());
-  Assert.Equal(2, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+Assert.AreEqual(1, root[0].GetInt32());
+   Assert.AreEqual(testDate, root[1].GetDateTimeOffset());
+  Assert.AreEqual(2, root[2].GetInt32());
   }
 
-  [Fact]
-public static void InsertItem_Byte_Works()
+  [TestMethod]
+public void InsertItem_Byte_Works()
     {
 // Arrange
   using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -418,14 +419,14 @@ public static void InsertItem_Byte_Works()
 
  // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
- Assert.Equal(3, root.GetArrayLength());
-    Assert.Equal(1, root[0].GetInt32());
- Assert.Equal(255, root[1].GetByte());
-        Assert.Equal(2, root[2].GetInt32());
+ Assert.AreEqual(3, root.GetArrayLength());
+    Assert.AreEqual(1, root[0].GetInt32());
+ Assert.AreEqual(255, root[1].GetByte());
+        Assert.AreEqual(2, root[2].GetInt32());
 }
 
-    [Fact]
-    public static void InsertItem_SByte_Works()
+    [TestMethod]
+    public void InsertItem_SByte_Works()
     {
       // Arrange
     using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -437,14 +438,14 @@ using JsonDocumentBuilder<JsonElement.Mutable> builderDoc = doc.RootElement.Crea
 
         // Assert
     JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(-100, root[1].GetSByte());
-  Assert.Equal(2, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(-100, root[1].GetSByte());
+  Assert.AreEqual(2, root[2].GetInt32());
     }
 
-   [Fact]
-public static void InsertItem_Short_Works()
+   [TestMethod]
+public void InsertItem_Short_Works()
     {
    // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -456,14 +457,14 @@ public static void InsertItem_Short_Works()
 
         // Assert
     JsonElement.Mutable root = builderDoc.RootElement;
- Assert.Equal(3, root.GetArrayLength());
-  Assert.Equal(1, root[0].GetInt32());
-     Assert.Equal(1000, root[1].GetInt16());
-     Assert.Equal(2, root[2].GetInt32());
+ Assert.AreEqual(3, root.GetArrayLength());
+  Assert.AreEqual(1, root[0].GetInt32());
+     Assert.AreEqual(1000, root[1].GetInt16());
+     Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-  public static void InsertItem_UShort_Works()
+    [TestMethod]
+  public void InsertItem_UShort_Works()
     {
    // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -475,14 +476,14 @@ using var workspace = JsonWorkspace.Create();
 
 // Assert
  JsonElement.Mutable root = builderDoc.RootElement;
-  Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(50000, root[1].GetUInt16());
-        Assert.Equal(2, root[2].GetInt32());
+  Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(50000, root[1].GetUInt16());
+        Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_Int_Works()
+    [TestMethod]
+    public void InsertItem_Int_Works()
     {
   // Arrange
  using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -494,14 +495,14 @@ using var workspace = JsonWorkspace.Create();
 
   // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
- Assert.Equal(3, root.GetArrayLength());
-Assert.Equal(1, root[0].GetInt32());
-     Assert.Equal(123456, root[1].GetInt32());
-        Assert.Equal(2, root[2].GetInt32());
+ Assert.AreEqual(3, root.GetArrayLength());
+Assert.AreEqual(1, root[0].GetInt32());
+     Assert.AreEqual(123456, root[1].GetInt32());
+        Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_UInt_Works()
+    [TestMethod]
+    public void InsertItem_UInt_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -513,14 +514,14 @@ Assert.Equal(1, root[0].GetInt32());
 
    // Assert
   JsonElement.Mutable root = builderDoc.RootElement;
-Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(3000000000u, root[1].GetUInt32());
-  Assert.Equal(2, root[2].GetInt32());
+Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(3000000000u, root[1].GetUInt32());
+  Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_Long_Works()
+    [TestMethod]
+    public void InsertItem_Long_Works()
     {
  // Arrange
  using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -532,14 +533,14 @@ Assert.Equal(3, root.GetArrayLength());
 
     // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-   Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-   Assert.Equal(9876543210L, root[1].GetInt64());
-        Assert.Equal(2, root[2].GetInt32());
+   Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+   Assert.AreEqual(9876543210L, root[1].GetInt64());
+        Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_ULong_Works()
+    [TestMethod]
+    public void InsertItem_ULong_Works()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -551,14 +552,14 @@ Assert.Equal(3, root.GetArrayLength());
 
  // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
- Assert.Equal(1, root[0].GetInt32());
-Assert.Equal(18446744073709551600UL, root[1].GetUInt64());
- Assert.Equal(2, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+ Assert.AreEqual(1, root[0].GetInt32());
+Assert.AreEqual(18446744073709551600UL, root[1].GetUInt64());
+ Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_Float_Works()
+    [TestMethod]
+    public void InsertItem_Float_Works()
   {
 // Arrange
  using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -570,14 +571,14 @@ Assert.Equal(18446744073709551600UL, root[1].GetUInt64());
 
    // Assert
    JsonElement.Mutable root = builderDoc.RootElement;
-  Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(3.14f, root[1].GetSingle());
- Assert.Equal(2, root[2].GetInt32());
+  Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(3.14f, root[1].GetSingle());
+ Assert.AreEqual(2, root[2].GetInt32());
     }
 
-  [Fact]
-  public static void InsertItem_Double_Works()
+  [TestMethod]
+  public void InsertItem_Double_Works()
  {
     // Arrange
 using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -589,14 +590,14 @@ using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
 
       // Assert
    JsonElement.Mutable root = builderDoc.RootElement;
-  Assert.Equal(3, root.GetArrayLength());
- Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2.718281828, root[1].GetDouble());
-        Assert.Equal(2, root[2].GetInt32());
+  Assert.AreEqual(3, root.GetArrayLength());
+ Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2.718281828, root[1].GetDouble());
+        Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_Decimal_Works()
+    [TestMethod]
+    public void InsertItem_Decimal_Works()
 {
         // Arrange
   using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -608,15 +609,15 @@ using var workspace = JsonWorkspace.Create();
 
         // Assert
   JsonElement.Mutable root = builderDoc.RootElement;
-   Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-    Assert.Equal(123.456m, root[1].GetDecimal());
-        Assert.Equal(2, root[2].GetInt32());
+   Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+    Assert.AreEqual(123.456m, root[1].GetDecimal());
+        Assert.AreEqual(2, root[2].GetInt32());
    }
 
 #if NET
-    [Fact]
-    public static void InsertItem_Int128_Works()
+    [TestMethod]
+    public void InsertItem_Int128_Works()
     {
    // Arrange
    using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -629,14 +630,14 @@ using var workspace = JsonWorkspace.Create();
 
         // Assert
   JsonElement.Mutable root = builderDoc.RootElement;
-      Assert.Equal(3, root.GetArrayLength());
- Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(bigNumber, root[1].GetInt128());
-        Assert.Equal(2, root[2].GetInt32());
+      Assert.AreEqual(3, root.GetArrayLength());
+ Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(bigNumber, root[1].GetInt128());
+        Assert.AreEqual(2, root[2].GetInt32());
 }
 
- [Fact]
-    public static void InsertItem_UInt128_Works()
+ [TestMethod]
+    public void InsertItem_UInt128_Works()
     {
         // Arrange
   using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -649,14 +650,14 @@ using var workspace = JsonWorkspace.Create();
 
       // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-    Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-   Assert.Equal(bigNumber, root[1].GetUInt128());
-    Assert.Equal(2, root[2].GetInt32());
+    Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+   Assert.AreEqual(bigNumber, root[1].GetUInt128());
+    Assert.AreEqual(2, root[2].GetInt32());
   }
 
-    [Fact]
-public static void InsertItem_Half_Works()
+    [TestMethod]
+public void InsertItem_Half_Works()
    {
         // Arrange
   using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -669,15 +670,15 @@ public static void InsertItem_Half_Works()
 
       // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
- Assert.Equal(3, root.GetArrayLength());
-      Assert.Equal(1, root[0].GetInt32());
-    Assert.Equal(halfValue, root[1].GetHalf());
-        Assert.Equal(2, root[2].GetInt32());
+ Assert.AreEqual(3, root.GetArrayLength());
+      Assert.AreEqual(1, root[0].GetInt32());
+    Assert.AreEqual(halfValue, root[1].GetHalf());
+        Assert.AreEqual(2, root[2].GetInt32());
 }
 #endif
 
-    [Fact]
-    public static void InsertItem_Object_Works()
+    [TestMethod]
+    public void InsertItem_Object_Works()
    {
    // Arrange
     using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -693,16 +694,16 @@ using var workspace = JsonWorkspace.Create();
 
      // Assert
  JsonElement.Mutable root = builderDoc.RootElement;
-   Assert.Equal(3, root.GetArrayLength());
-   Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(JsonValueKind.Object, root[1].ValueKind);
-    Assert.Equal("test", root[1].GetProperty("name").GetString());
-    Assert.Equal(42, root[1].GetProperty("value").GetInt32());
- Assert.Equal(2, root[2].GetInt32());
+   Assert.AreEqual(3, root.GetArrayLength());
+   Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root[1].ValueKind);
+    Assert.AreEqual("test", root[1].GetProperty("name").GetString());
+    Assert.AreEqual(42, root[1].GetProperty("value").GetInt32());
+ Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-public static void InsertItem_Array_Works()
+    [TestMethod]
+public void InsertItem_Array_Works()
     {
      // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -719,18 +720,18 @@ a.AddItem(30);
 
  // Assert
     JsonElement.Mutable root = builderDoc.RootElement;
-Assert.Equal(3, root.GetArrayLength());
-   Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(JsonValueKind.Array, root[1].ValueKind);
-        Assert.Equal(3, root[1].GetArrayLength());
-Assert.Equal(10, root[1][0].GetInt32());
-Assert.Equal(20, root[1][1].GetInt32());
-   Assert.Equal(30, root[1][2].GetInt32());
-   Assert.Equal(2, root[2].GetInt32());
+Assert.AreEqual(3, root.GetArrayLength());
+   Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, root[1].ValueKind);
+        Assert.AreEqual(3, root[1].GetArrayLength());
+Assert.AreEqual(10, root[1][0].GetInt32());
+Assert.AreEqual(20, root[1][1].GetInt32());
+   Assert.AreEqual(30, root[1][2].GetInt32());
+   Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_OffsetDateTime_Works()
+    [TestMethod]
+    public void InsertItem_OffsetDateTime_Works()
  {
    // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -745,14 +746,14 @@ Assert.Equal(20, root[1][1].GetInt32());
 
      // Assert
   JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(testDate, root[1].GetOffsetDateTime());
-Assert.Equal(2, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(testDate, root[1].GetOffsetDateTime());
+Assert.AreEqual(2, root[2].GetInt32());
     }
 
-   [Fact]
- public static void InsertItem_OffsetDate_Works()
+   [TestMethod]
+ public void InsertItem_OffsetDate_Works()
     {
   // Arrange
   using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -767,14 +768,14 @@ new LocalDate(2024, 1, 15),
 
 // Assert
   JsonElement.Mutable root = builderDoc.RootElement;
-   Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-Assert.Equal(testDate, root[1].GetOffsetDate());
-        Assert.Equal(2, root[2].GetInt32());
+   Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+Assert.AreEqual(testDate, root[1].GetOffsetDate());
+        Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_OffsetTime_Works()
+    [TestMethod]
+    public void InsertItem_OffsetTime_Works()
   {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -789,14 +790,14 @@ Assert.Equal(testDate, root[1].GetOffsetDate());
 
         // Assert
 JsonElement.Mutable root = builderDoc.RootElement;
-    Assert.Equal(3, root.GetArrayLength());
- Assert.Equal(1, root[0].GetInt32());
-Assert.Equal(testTime, root[1].GetOffsetTime());
- Assert.Equal(2, root[2].GetInt32());
+    Assert.AreEqual(3, root.GetArrayLength());
+ Assert.AreEqual(1, root[0].GetInt32());
+Assert.AreEqual(testTime, root[1].GetOffsetTime());
+ Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_LocalDate_Works()
+    [TestMethod]
+    public void InsertItem_LocalDate_Works()
     {
    // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -809,14 +810,14 @@ Assert.Equal(testTime, root[1].GetOffsetTime());
 
 // Assert
     JsonElement.Mutable root = builderDoc.RootElement;
- Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-   Assert.Equal(testDate, root[1].GetLocalDate());
-      Assert.Equal(2, root[2].GetInt32());
+ Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+   Assert.AreEqual(testDate, root[1].GetLocalDate());
+      Assert.AreEqual(2, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_Period_Works()
+    [TestMethod]
+    public void InsertItem_Period_Works()
     {
     // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -829,14 +830,14 @@ Assert.Equal(testTime, root[1].GetOffsetTime());
 
         // Assert
    JsonElement.Mutable root = builderDoc.RootElement;
-Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(testPeriod, root[1].GetPeriod());
-    Assert.Equal(2, root[2].GetInt32());
+Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(testPeriod, root[1].GetPeriod());
+    Assert.AreEqual(2, root[2].GetInt32());
   }
 
-    [Fact]
- public static void InsertItem_Utf8String_Works()
+    [TestMethod]
+ public void InsertItem_Utf8String_Works()
     {
    // Arrange
  using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -849,14 +850,14 @@ builderDoc.RootElement.InsertItem(1, utf8String.AsSpan());
 
   // Assert
  JsonElement.Mutable root = builderDoc.RootElement;
-  Assert.Equal(3, root.GetArrayLength());
-  Assert.Equal(1, root[0].GetInt32());
-      Assert.Equal("test string", root[1].GetString());
- Assert.Equal(2, root[2].GetInt32());
+  Assert.AreEqual(3, root.GetArrayLength());
+  Assert.AreEqual(1, root[0].GetInt32());
+      Assert.AreEqual("test string", root[1].GetString());
+ Assert.AreEqual(2, root[2].GetInt32());
   }
 
-    [Fact]
-  public static void InsertItem_CharSpanString_Works()
+    [TestMethod]
+  public void InsertItem_CharSpanString_Works()
     {
   // Arrange
 using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
@@ -868,18 +869,18 @@ using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
 
         // Assert
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-   Assert.Equal(1, root[0].GetInt32());
-Assert.Equal("char span", root[1].GetString());
-        Assert.Equal(2, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+   Assert.AreEqual(1, root[0].GetInt32());
+Assert.AreEqual("char span", root[1].GetString());
+        Assert.AreEqual(2, root[2].GetInt32());
     }
 
     #endregion
 
     #region AddItem and AddItemNull Tests
 
-    [Fact]
-    public static void AddItem_Int_AppendsToEnd()
+    [TestMethod]
+    public void AddItem_Int_AppendsToEnd()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         using var workspace = JsonWorkspace.Create();
@@ -888,15 +889,15 @@ Assert.Equal("char span", root[1].GetString());
         builderDoc.RootElement.AddItem(4);
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
-        Assert.Equal(4, root[3].GetInt32());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
+        Assert.AreEqual(4, root[3].GetInt32());
     }
 
-    [Fact]
-    public static void AddItem_String_AppendsToEnd()
+    [TestMethod]
+    public void AddItem_String_AppendsToEnd()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""["a","b"]""");
         using var workspace = JsonWorkspace.Create();
@@ -905,14 +906,14 @@ Assert.Equal("char span", root[1].GetString());
         builderDoc.RootElement.AddItem("c");
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("a", root[0].GetString());
-        Assert.Equal("b", root[1].GetString());
-        Assert.Equal("c", root[2].GetString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("a", root[0].GetString());
+        Assert.AreEqual("b", root[1].GetString());
+        Assert.AreEqual("c", root[2].GetString());
     }
 
-    [Fact]
-    public static void AddItem_Bool_AppendsToEnd()
+    [TestMethod]
+    public void AddItem_Bool_AppendsToEnd()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[true]");
         using var workspace = JsonWorkspace.Create();
@@ -921,13 +922,13 @@ Assert.Equal("char span", root[1].GetString());
         builderDoc.RootElement.AddItem(false);
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.True(root[0].GetBoolean());
-        Assert.False(root[1].GetBoolean());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.IsTrue(root[0].GetBoolean());
+        Assert.IsFalse(root[1].GetBoolean());
     }
 
-    [Fact]
-    public static void AddItemNull_AppendsNullToEnd()
+    [TestMethod]
+    public void AddItemNull_AppendsNullToEnd()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
         using var workspace = JsonWorkspace.Create();
@@ -936,14 +937,14 @@ Assert.Equal("char span", root[1].GetString());
         builderDoc.RootElement.AddItemNull();
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(JsonValueKind.Null, root[2].ValueKind);
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(JsonValueKind.Null, root[2].ValueKind);
     }
 
-    [Fact]
-    public static void AddItem_ToEmptyArray_Works()
+    [TestMethod]
+    public void AddItem_ToEmptyArray_Works()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
         using var workspace = JsonWorkspace.Create();
@@ -952,12 +953,12 @@ Assert.Equal("char span", root[1].GetString());
         builderDoc.RootElement.AddItem(42);
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(1, root.GetArrayLength());
-        Assert.Equal(42, root[0].GetInt32());
+        Assert.AreEqual(1, root.GetArrayLength());
+        Assert.AreEqual(42, root[0].GetInt32());
     }
 
-    [Fact]
-    public static void AddItem_MultipleAdds_PreservesOrder()
+    [TestMethod]
+    public void AddItem_MultipleAdds_PreservesOrder()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
         using var workspace = JsonWorkspace.Create();
@@ -968,14 +969,14 @@ Assert.Equal("char span", root[1].GetString());
         builderDoc.RootElement.AddItem(3);
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void AddItem_Object_AppendsToEnd()
+    [TestMethod]
+    public void AddItem_Object_AppendsToEnd()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
         using var workspace = JsonWorkspace.Create();
@@ -988,13 +989,13 @@ Assert.Equal("char span", root[1].GetString());
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(1, root.GetArrayLength());
-        Assert.Equal("test", root[0].GetProperty("name").GetString());
-        Assert.Equal(42, root[0].GetProperty("value").GetInt32());
+        Assert.AreEqual(1, root.GetArrayLength());
+        Assert.AreEqual("test", root[0].GetProperty("name").GetString());
+        Assert.AreEqual(42, root[0].GetProperty("value").GetInt32());
     }
 
-    [Fact]
-    public static void AddItem_Array_AppendsToEnd()
+    [TestMethod]
+    public void AddItem_Array_AppendsToEnd()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[[1]]");
         using var workspace = JsonWorkspace.Create();
@@ -1007,14 +1008,14 @@ Assert.Equal("char span", root[1].GetString());
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal(1, root[0][0].GetInt32());
-        Assert.Equal(2, root[1][0].GetInt32());
-        Assert.Equal(3, root[1][1].GetInt32());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual(1, root[0][0].GetInt32());
+        Assert.AreEqual(2, root[1][0].GetInt32());
+        Assert.AreEqual(3, root[1][1].GetInt32());
     }
 
-    [Fact]
-    public static void AddItem_WithUndefinedSource_IsNoOp()
+    [TestMethod]
+    public void AddItem_WithUndefinedSource_IsNoOp()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         using var workspace = JsonWorkspace.Create();
@@ -1022,7 +1023,7 @@ Assert.Equal("char span", root[1].GetString());
 
         builderDoc.RootElement.AddItem(default(JsonElement.Source));
 
-        Assert.Equal(3, builderDoc.RootElement.GetArrayLength());
+        Assert.AreEqual(3, builderDoc.RootElement.GetArrayLength());
     }
 
     #endregion

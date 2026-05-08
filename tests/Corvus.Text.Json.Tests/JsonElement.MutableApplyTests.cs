@@ -4,16 +4,17 @@
 // </copyright>
 //-----------------------------------------------------------
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
 /// <summary>
 /// Tests for <see cref="JsonElement.Mutable.Apply{T}"/>.
 /// </summary>
+[TestClass]
 public class JsonElementMutableApplyTests
 {
-    [Fact]
+    [TestMethod]
     public void Apply_EmptySourceToEmptyTarget_TargetRemainsEmpty()
     {
         // Arrange
@@ -26,10 +27,10 @@ public class JsonElementMutableApplyTests
         targetDoc.RootElement.Apply(sourceParsed.RootElement);
 
         // Assert
-        Assert.Equal("{}", targetDoc.RootElement.ToString());
+        Assert.AreEqual("{}", targetDoc.RootElement.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_EmptyMutableSourceToEmptyTarget_TargetRemainsEmpty()
     {
         // Arrange
@@ -43,10 +44,10 @@ public class JsonElementMutableApplyTests
         targetDoc.RootElement.Apply(sourceDoc.RootElement);
 
         // Assert
-        Assert.Equal("{}", targetDoc.RootElement.ToString());
+        Assert.AreEqual("{}", targetDoc.RootElement.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_NewPropertiesToEmptyTarget_AddsAllProperties()
     {
         // Arrange
@@ -60,13 +61,13 @@ public class JsonElementMutableApplyTests
 
         // Assert
         JsonElement.Mutable result = targetDoc.RootElement;
-        Assert.True(result.TryGetProperty("name", out JsonElement.Mutable nameProperty));
-        Assert.Equal("John", nameProperty.GetString());
-        Assert.True(result.TryGetProperty("age", out JsonElement.Mutable ageProperty));
-        Assert.Equal(30, ageProperty.GetInt32());
+        Assert.IsTrue(result.TryGetProperty("name", out JsonElement.Mutable nameProperty));
+        Assert.AreEqual("John", nameProperty.GetString());
+        Assert.IsTrue(result.TryGetProperty("age", out JsonElement.Mutable ageProperty));
+        Assert.AreEqual(30, ageProperty.GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_NewMutablePropertiesToEmptyTarget_AddsAllProperties()
     {
         // Arrange
@@ -81,13 +82,13 @@ public class JsonElementMutableApplyTests
 
         // Assert
         JsonElement.Mutable result = targetDoc.RootElement;
-        Assert.True(result.TryGetProperty("name", out JsonElement.Mutable nameProperty));
-        Assert.Equal("John", nameProperty.GetString());
-        Assert.True(result.TryGetProperty("age", out JsonElement.Mutable ageProperty));
-        Assert.Equal(30, ageProperty.GetInt32());
+        Assert.IsTrue(result.TryGetProperty("name", out JsonElement.Mutable nameProperty));
+        Assert.AreEqual("John", nameProperty.GetString());
+        Assert.IsTrue(result.TryGetProperty("age", out JsonElement.Mutable ageProperty));
+        Assert.AreEqual(30, ageProperty.GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_NewPropertiesToExistingTarget_AddsNewProperties()
     {
         // Arrange
@@ -101,15 +102,15 @@ public class JsonElementMutableApplyTests
 
         // Assert
         JsonElement.Mutable result = targetDoc.RootElement;
-        Assert.True(result.TryGetProperty("existing", out JsonElement.Mutable existingProperty));
-        Assert.Equal("value", existingProperty.GetString());
-        Assert.True(result.TryGetProperty("name", out JsonElement.Mutable nameProperty));
-        Assert.Equal("John", nameProperty.GetString());
-        Assert.True(result.TryGetProperty("age", out JsonElement.Mutable ageProperty));
-        Assert.Equal(30, ageProperty.GetInt32());
+        Assert.IsTrue(result.TryGetProperty("existing", out JsonElement.Mutable existingProperty));
+        Assert.AreEqual("value", existingProperty.GetString());
+        Assert.IsTrue(result.TryGetProperty("name", out JsonElement.Mutable nameProperty));
+        Assert.AreEqual("John", nameProperty.GetString());
+        Assert.IsTrue(result.TryGetProperty("age", out JsonElement.Mutable ageProperty));
+        Assert.AreEqual(30, ageProperty.GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_ReplaceExistingProperties_ReplacesValues()
     {
         // Arrange
@@ -123,15 +124,15 @@ public class JsonElementMutableApplyTests
 
         // Assert
         JsonElement.Mutable result = targetDoc.RootElement;
-        Assert.True(result.TryGetProperty("name", out JsonElement.Mutable nameProperty));
-        Assert.Equal("John", nameProperty.GetString()); // Replaced
-        Assert.True(result.TryGetProperty("age", out JsonElement.Mutable ageProperty));
-        Assert.Equal(25, ageProperty.GetInt32()); // Preserved
-        Assert.True(result.TryGetProperty("city", out JsonElement.Mutable cityProperty));
-        Assert.Equal("New York", cityProperty.GetString()); // Added
+        Assert.IsTrue(result.TryGetProperty("name", out JsonElement.Mutable nameProperty));
+        Assert.AreEqual("John", nameProperty.GetString()); // Replaced
+        Assert.IsTrue(result.TryGetProperty("age", out JsonElement.Mutable ageProperty));
+        Assert.AreEqual(25, ageProperty.GetInt32()); // Preserved
+        Assert.IsTrue(result.TryGetProperty("city", out JsonElement.Mutable cityProperty));
+        Assert.AreEqual("New York", cityProperty.GetString()); // Added
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_VariousPropertyTypes_HandlesAllTypes()
     {
         // Arrange
@@ -155,29 +156,29 @@ public class JsonElementMutableApplyTests
         // Assert
         JsonElement.Mutable result = targetDoc.RootElement;
 
-        Assert.True(result.TryGetProperty("stringProp", out JsonElement.Mutable stringProp));
-        Assert.Equal("text", stringProp.GetString());
+        Assert.IsTrue(result.TryGetProperty("stringProp", out JsonElement.Mutable stringProp));
+        Assert.AreEqual("text", stringProp.GetString());
 
-        Assert.True(result.TryGetProperty("numberProp", out JsonElement.Mutable numberProp));
-        Assert.Equal(42, numberProp.GetInt32());
+        Assert.IsTrue(result.TryGetProperty("numberProp", out JsonElement.Mutable numberProp));
+        Assert.AreEqual(42, numberProp.GetInt32());
 
-        Assert.True(result.TryGetProperty("boolProp", out JsonElement.Mutable boolProp));
-        Assert.True(boolProp.GetBoolean());
+        Assert.IsTrue(result.TryGetProperty("boolProp", out JsonElement.Mutable boolProp));
+        Assert.IsTrue(boolProp.GetBoolean());
 
-        Assert.True(result.TryGetProperty("arrayProp", out JsonElement.Mutable arrayProp));
-        Assert.Equal(JsonValueKind.Array, arrayProp.ValueKind);
-        Assert.Equal(3, arrayProp.GetArrayLength());
+        Assert.IsTrue(result.TryGetProperty("arrayProp", out JsonElement.Mutable arrayProp));
+        Assert.AreEqual(JsonValueKind.Array, arrayProp.ValueKind);
+        Assert.AreEqual(3, arrayProp.GetArrayLength());
 
-        Assert.True(result.TryGetProperty("objectProp", out JsonElement.Mutable objectProp));
-        Assert.Equal(JsonValueKind.Object, objectProp.ValueKind);
-        Assert.True(objectProp.TryGetProperty("nested", out JsonElement.Mutable nestedProp));
-        Assert.Equal("value", nestedProp.GetString());
+        Assert.IsTrue(result.TryGetProperty("objectProp", out JsonElement.Mutable objectProp));
+        Assert.AreEqual(JsonValueKind.Object, objectProp.ValueKind);
+        Assert.IsTrue(objectProp.TryGetProperty("nested", out JsonElement.Mutable nestedProp));
+        Assert.AreEqual("value", nestedProp.GetString());
 
-        Assert.True(result.TryGetProperty("nullProp", out JsonElement.Mutable nullProp));
-        Assert.Equal(JsonValueKind.Null, nullProp.ValueKind);
+        Assert.IsTrue(result.TryGetProperty("nullProp", out JsonElement.Mutable nullProp));
+        Assert.AreEqual(JsonValueKind.Null, nullProp.ValueKind);
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_SourceRemainsUnchanged_SourceIsNotModified()
     {
         // Arrange
@@ -191,10 +192,10 @@ public class JsonElementMutableApplyTests
         targetDoc.RootElement.Apply(sourceParsed.RootElement);
 
         // Assert
-        Assert.Equal(originalSourceString, sourceParsed.RootElement.ToString());
+        Assert.AreEqual(originalSourceString, sourceParsed.RootElement.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_MutableSourceRemainsUnchanged_SourceIsNotModified()
     {
         // Arrange
@@ -209,10 +210,10 @@ public class JsonElementMutableApplyTests
         targetDoc.RootElement.Apply(sourceDoc.RootElement);
 
         // Assert
-        Assert.Equal(originalSourceString, sourceDoc.RootElement.ToString());
+        Assert.AreEqual(originalSourceString, sourceDoc.RootElement.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_MultipleSuccessiveApplications_AccumulatesChanges()
     {
         // Arrange
@@ -228,15 +229,15 @@ public class JsonElementMutableApplyTests
 
         // Assert
         JsonElement.Mutable result = targetDoc.RootElement;
-        Assert.True(result.TryGetProperty("initial", out JsonElement.Mutable initialProp));
-        Assert.Equal("value", initialProp.GetString());
-        Assert.True(result.TryGetProperty("first", out JsonElement.Mutable firstProp));
-        Assert.Equal("overwritten", firstProp.GetString()); // Overwritten by second apply
-        Assert.True(result.TryGetProperty("second", out JsonElement.Mutable secondProp));
-        Assert.Equal("application", secondProp.GetString());
+        Assert.IsTrue(result.TryGetProperty("initial", out JsonElement.Mutable initialProp));
+        Assert.AreEqual("value", initialProp.GetString());
+        Assert.IsTrue(result.TryGetProperty("first", out JsonElement.Mutable firstProp));
+        Assert.AreEqual("overwritten", firstProp.GetString()); // Overwritten by second apply
+        Assert.IsTrue(result.TryGetProperty("second", out JsonElement.Mutable secondProp));
+        Assert.AreEqual("application", secondProp.GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_ToNonObjectElement_ThrowsInvalidOperationException()
     {
         // Arrange
@@ -246,10 +247,10 @@ public class JsonElementMutableApplyTests
         using JsonDocumentBuilder<JsonElement.Mutable> targetDoc = targetParsed.RootElement.CreateBuilder(workspace);
 
         // Act & Assert - Apply immutable source to non-object mutable target
-        Assert.Throws<InvalidOperationException>(() => targetDoc.RootElement.Apply(sourceParsed.RootElement));
+        Assert.ThrowsExactly<InvalidOperationException>(() => targetDoc.RootElement.Apply(sourceParsed.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_FromNonObjectElement_ValidatesSourceIsObject()
     {
         // Arrange
@@ -259,6 +260,6 @@ public class JsonElementMutableApplyTests
         using JsonDocumentBuilder<JsonElement.Mutable> targetDoc = targetParsed.RootElement.CreateBuilder(workspace);
 
         // Act & Assert - Apply non-object source should fail
-        Assert.ThrowsAny<InvalidOperationException>(() => targetDoc.RootElement.Apply(sourceParsed.RootElement));
+        Assert.Throws<InvalidOperationException>(() => targetDoc.RootElement.Apply(sourceParsed.RootElement));
     }
 }

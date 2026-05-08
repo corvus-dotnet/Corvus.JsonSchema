@@ -2,17 +2,18 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for BigNumber comparison operations.
 /// </summary>
+[TestClass]
 public class BigNumberComparisonTests
 {
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.ComparisonData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.ComparisonData), typeof(BigNumberTestData))]
     public void CompareTo_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger significand1, int exponent1,
         BigInteger significand2, int exponent2,
@@ -27,12 +28,12 @@ public class BigNumberComparisonTests
         int result2 = bigNumber2.CompareTo(bigNumber1);
 
         // Assert
-        Assert.Equal(expected, Math.Sign(result1));
-        Assert.Equal(-expected, Math.Sign(result2));
+        Assert.AreEqual(expected, Math.Sign(result1));
+        Assert.AreEqual(-expected, Math.Sign(result2));
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.ComparisonData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.ComparisonData), typeof(BigNumberTestData))]
     public void ComparisonOperators_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger significand1, int exponent1,
         BigInteger significand2, int exponent2,
@@ -43,14 +44,14 @@ public class BigNumberComparisonTests
         var bigNumber2 = new Corvus.Numerics.BigNumber(significand2, exponent2);
 
         // Act & Assert
-        Assert.Equal(expected > 0, bigNumber1 > bigNumber2);
-        Assert.Equal(expected < 0, bigNumber1 < bigNumber2);
-        Assert.Equal(expected >= 0, bigNumber1 >= bigNumber2);
-        Assert.Equal(expected <= 0, bigNumber1 <= bigNumber2);
+        Assert.AreEqual(expected > 0, bigNumber1 > bigNumber2);
+        Assert.AreEqual(expected < 0, bigNumber1 < bigNumber2);
+        Assert.AreEqual(expected >= 0, bigNumber1 >= bigNumber2);
+        Assert.AreEqual(expected <= 0, bigNumber1 <= bigNumber2);
 
-        Assert.Equal(expected < 0, bigNumber2 > bigNumber1);
-        Assert.Equal(expected > 0, bigNumber2 < bigNumber1);
-        Assert.Equal(expected <= 0, bigNumber2 >= bigNumber1);
-        Assert.Equal(expected >= 0, bigNumber2 <= bigNumber1);
+        Assert.AreEqual(expected < 0, bigNumber2 > bigNumber1);
+        Assert.AreEqual(expected > 0, bigNumber2 < bigNumber1);
+        Assert.AreEqual(expected <= 0, bigNumber2 >= bigNumber1);
+        Assert.AreEqual(expected >= 0, bigNumber2 <= bigNumber1);
     }
 }

@@ -12,7 +12,8 @@ namespace Corvus.Text.Json.CodeGenerator.Tests;
 /// Tests for <see cref="MethodParameter"/>, exercising uncovered constructors,
 /// implicit operators, and GetName paths.
 /// </summary>
-public static class MethodParameterTests
+[TestClass]
+    public class MethodParameterTests
 {
     private static CG CreateGenerator()
     {
@@ -21,23 +22,23 @@ public static class MethodParameterTests
 
     #region String parameter name constructor (already partially covered)
 
-    [Fact]
-    public static void StringConstructor_SetsAllProperties()
+    [TestMethod]
+    public void StringConstructor_SetsAllProperties()
     {
         var p = new MethodParameter("ref", "int", "count", typeIsNullable: false, defaultValue: "0");
-        Assert.Equal("ref", p.Modifiers);
-        Assert.Equal("int", p.Type);
-        Assert.False(p.TypeIsNullable);
-        Assert.Equal("0", p.DefaultValue);
-        Assert.True(p.RequiresReservedName);
+        Assert.AreEqual("ref", p.Modifiers);
+        Assert.AreEqual("int", p.Type);
+        Assert.IsFalse(p.TypeIsNullable);
+        Assert.AreEqual("0", p.DefaultValue);
+        Assert.IsTrue(p.RequiresReservedName);
     }
 
     #endregion
 
     #region MemberName parameter constructor (lines 47-52, uncovered)
 
-    [Fact]
-    public static void MemberNameConstructor_SetsProperties()
+    [TestMethod]
+    public void MemberNameConstructor_SetsProperties()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
@@ -47,14 +48,14 @@ public static class MethodParameterTests
             Casing.CamelCase);
 
         var p = new MethodParameter("in", "ReadOnlySpan<byte>", memberName, defaultValue: null);
-        Assert.Equal("in", p.Modifiers);
-        Assert.Equal("ReadOnlySpan<byte>", p.Type);
-        Assert.False(p.RequiresReservedName);
-        Assert.Null(p.DefaultValue);
+        Assert.AreEqual("in", p.Modifiers);
+        Assert.AreEqual("ReadOnlySpan<byte>", p.Type);
+        Assert.IsFalse(p.RequiresReservedName);
+        Assert.IsNull(p.DefaultValue);
     }
 
-    [Fact]
-    public static void MemberNameConstructor_WithDefaultValue()
+    [TestMethod]
+    public void MemberNameConstructor_WithDefaultValue()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
@@ -64,15 +65,15 @@ public static class MethodParameterTests
             Casing.CamelCase);
 
         var p = new MethodParameter("", "int", memberName, "42");
-        Assert.Equal("42", p.DefaultValue);
+        Assert.AreEqual("42", p.DefaultValue);
     }
 
     #endregion
 
     #region RequiresReservedName (line 67)
 
-    [Fact]
-    public static void RequiresReservedName_WithMemberName_ReturnsFalse()
+    [TestMethod]
+    public void RequiresReservedName_WithMemberName_ReturnsFalse()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
@@ -82,50 +83,50 @@ public static class MethodParameterTests
             Casing.CamelCase);
 
         var p = new MethodParameter("", "int", memberName);
-        Assert.False(p.RequiresReservedName);
+        Assert.IsFalse(p.RequiresReservedName);
     }
 
-    [Fact]
-    public static void RequiresReservedName_WithStringName_ReturnsTrue()
+    [TestMethod]
+    public void RequiresReservedName_WithStringName_ReturnsTrue()
     {
         var p = new MethodParameter("", "int", "x");
-        Assert.True(p.RequiresReservedName);
+        Assert.IsTrue(p.RequiresReservedName);
     }
 
     #endregion
 
     #region Implicit operators (lines 89, 101, 107)
 
-    [Fact]
-    public static void ImplicitOperator_TypeAndParameterName()
+    [TestMethod]
+    public void ImplicitOperator_TypeAndParameterName()
     {
         MethodParameter p = ("string", "name");
-        Assert.Equal(string.Empty, p.Modifiers);
-        Assert.Equal("string", p.Type);
-        Assert.True(p.RequiresReservedName);
+        Assert.AreEqual(string.Empty, p.Modifiers);
+        Assert.AreEqual("string", p.Type);
+        Assert.IsTrue(p.RequiresReservedName);
     }
 
-    [Fact]
-    public static void ImplicitOperator_WithNullableAndDefaultValue()
+    [TestMethod]
+    public void ImplicitOperator_WithNullableAndDefaultValue()
     {
         MethodParameter p = ("string?", "name", true, "null");
-        Assert.Equal(string.Empty, p.Modifiers);
-        Assert.Equal("string?", p.Type);
-        Assert.True(p.TypeIsNullable);
-        Assert.Equal("null", p.DefaultValue);
+        Assert.AreEqual(string.Empty, p.Modifiers);
+        Assert.AreEqual("string?", p.Type);
+        Assert.IsTrue(p.TypeIsNullable);
+        Assert.AreEqual("null", p.DefaultValue);
     }
 
-    [Fact]
-    public static void ImplicitOperator_WithDefaultValueOnly()
+    [TestMethod]
+    public void ImplicitOperator_WithDefaultValueOnly()
     {
         MethodParameter p = ("int", "count", "0");
-        Assert.Equal(string.Empty, p.Modifiers);
-        Assert.Equal("int", p.Type);
-        Assert.Equal("0", p.DefaultValue);
+        Assert.AreEqual(string.Empty, p.Modifiers);
+        Assert.AreEqual("int", p.Type);
+        Assert.AreEqual("0", p.DefaultValue);
     }
 
-    [Fact]
-    public static void ImplicitOperator_MemberNameTuple()
+    [TestMethod]
+    public void ImplicitOperator_MemberNameTuple()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
@@ -135,13 +136,13 @@ public static class MethodParameterTests
             Casing.CamelCase);
 
         MethodParameter p = ("bool", memberName);
-        Assert.Equal(string.Empty, p.Modifiers);
-        Assert.Equal("bool", p.Type);
-        Assert.False(p.RequiresReservedName);
+        Assert.AreEqual(string.Empty, p.Modifiers);
+        Assert.AreEqual("bool", p.Type);
+        Assert.IsFalse(p.RequiresReservedName);
     }
 
-    [Fact]
-    public static void ImplicitOperator_MemberNameWithDefaultValue()
+    [TestMethod]
+    public void ImplicitOperator_MemberNameWithDefaultValue()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
@@ -151,43 +152,43 @@ public static class MethodParameterTests
             Casing.CamelCase);
 
         MethodParameter p = ("bool", memberName, "true");
-        Assert.Equal(string.Empty, p.Modifiers);
-        Assert.Equal("bool", p.Type);
-        Assert.Equal("true", p.DefaultValue);
-        Assert.False(p.RequiresReservedName);
+        Assert.AreEqual(string.Empty, p.Modifiers);
+        Assert.AreEqual("bool", p.Type);
+        Assert.AreEqual("true", p.DefaultValue);
+        Assert.IsFalse(p.RequiresReservedName);
     }
 
     #endregion
 
     #region GetName (lines 131-133, 136)
 
-    [Fact]
-    public static void GetName_WithSpecificName_ReturnsSpecificName()
+    [TestMethod]
+    public void GetName_WithSpecificName_ReturnsSpecificName()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
         var p = new MethodParameter("", "int", "myParam");
         string name = p.GetName(gen);
-        Assert.Equal("myParam", name);
+        Assert.AreEqual("myParam", name);
     }
 
-    [Fact]
-    public static void GetName_WithSpecificName_IsDeclaration_ReservesName()
+    [TestMethod]
+    public void GetName_WithSpecificName_IsDeclaration_ReservesName()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
         var p = new MethodParameter("", "int", "reserved");
         string name = p.GetName(gen, isDeclaration: true);
-        Assert.Equal("reserved", name);
+        Assert.AreEqual("reserved", name);
 
         // Should not throw — name is now reserved
         bool tryResult = gen.TryReserveName(
             new CSharpMemberName(gen.FullyQualifiedScope, "reserved", Casing.Unmodified));
-        Assert.False(tryResult); // Already reserved
+        Assert.IsFalse(tryResult); // Already reserved
     }
 
-    [Fact]
-    public static void GetName_WithMemberName_ReturnsResolvedName()
+    [TestMethod]
+    public void GetName_WithMemberName_ReturnsResolvedName()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
@@ -198,18 +199,18 @@ public static class MethodParameterTests
 
         var p = new MethodParameter("", "string", memberName);
         string name = p.GetName(gen);
-        Assert.Equal("input", name);
+        Assert.AreEqual("input", name);
     }
 
-    [Fact]
-    public static void GetName_NoNameSet_Throws()
+    [TestMethod]
+    public void GetName_NoNameSet_Throws()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
 
         // Default struct — no name set
         MethodParameter p = default;
-        Assert.Throws<InvalidOperationException>(() => p.GetName(gen));
+        Assert.ThrowsExactly<InvalidOperationException>(() => p.GetName(gen));
     }
 
     #endregion

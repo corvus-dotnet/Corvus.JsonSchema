@@ -6,7 +6,7 @@ using System;
 using System.Globalization;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
@@ -14,11 +14,12 @@ namespace Corvus.Numerics.Tests;
 /// Tests for BigNumber formatting in different locales with exact output verification.
 /// Ensures equivalence with System.Decimal for values within decimal range.
 /// </summary>
+[TestClass]
 public class BigNumberLocaleFormattingTests
 {
     #region Invariant Culture Tests
 
-    [Fact]
+    [TestMethod]
     public void Format_InvariantCulture_FixedPoint_ExactMatch()
     {
         BigNumber bigValue = new(12345, -2); // 123.45
@@ -31,7 +32,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_InvariantCulture_Number_ExactMatch()
     {
         BigNumber bigValue = new(1234567, -2); // 12345.67
@@ -44,7 +45,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("12,345.67");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_InvariantCulture_Currency_ExactMatch()
     {
         BigNumber bigValue = new(12345, -2); // 123.45
@@ -57,7 +58,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("¤123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_InvariantCulture_Percent_ExactMatch()
     {
         BigNumber bigValue = new(75, -2); // 0.75 = 75%
@@ -70,7 +71,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("75.00 %");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_InvariantCulture_Exponential_ExactMatch()
     {
         BigNumber bigValue = new(12345, 0);
@@ -83,7 +84,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("1.23E+004");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_InvariantCulture_NegativeFixedPoint_ExactMatch()
     {
         BigNumber bigValue = new(-12345, -2); // -123.45
@@ -100,7 +101,7 @@ public class BigNumberLocaleFormattingTests
 
     #region US English (en-US) Tests
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishUS_FixedPoint_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-US");
@@ -114,7 +115,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishUS_Number_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-US");
@@ -128,7 +129,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("12,345.67");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishUS_Currency_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-US");
@@ -142,7 +143,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("$123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishUS_Percent_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-US");
@@ -156,7 +157,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("75.00%");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishUS_NegativeCurrency_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-US");
@@ -171,7 +172,7 @@ public class BigNumberLocaleFormattingTests
         // Pattern 0: "($123.45)" Pattern 1: "-$123.45"
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishUS_LargeNumber_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-US");
@@ -189,7 +190,7 @@ public class BigNumberLocaleFormattingTests
 
     #region French (fr-FR) Tests
 
-    [Fact]
+    [TestMethod]
     public void Format_FrenchFrance_FixedPoint_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("fr-FR");
@@ -203,7 +204,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123,45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_FrenchFrance_Number_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("fr-FR");
@@ -218,7 +219,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("12\u202F345,67");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_FrenchFrance_Currency_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("fr-FR");
@@ -232,7 +233,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123,45 €");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_FrenchFrance_Percent_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("fr-FR");
@@ -246,7 +247,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("75,00 %");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_FrenchFrance_NegativeNumber_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("fr-FR");
@@ -264,7 +265,7 @@ public class BigNumberLocaleFormattingTests
 
     #region German (de-DE) Tests
 
-    [Fact]
+    [TestMethod]
     public void Format_GermanGermany_FixedPoint_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("de-DE");
@@ -278,7 +279,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123,45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_GermanGermany_Number_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("de-DE");
@@ -292,7 +293,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("12.345,67");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_GermanGermany_Currency_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("de-DE");
@@ -306,7 +307,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123,45 €");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_GermanGermany_Percent_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("de-DE");
@@ -324,7 +325,7 @@ public class BigNumberLocaleFormattingTests
 
     #region Japanese (ja-JP) Tests
 
-    [Fact]
+    [TestMethod]
     public void Format_JapaneseJapan_FixedPoint_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("ja-JP");
@@ -338,7 +339,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_JapaneseJapan_Number_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("ja-JP");
@@ -352,7 +353,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("12,345.67");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_JapaneseJapan_Currency_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("ja-JP");
@@ -366,7 +367,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe(decimalResult);
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_JapaneseJapan_Percent_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("ja-JP");
@@ -384,7 +385,7 @@ public class BigNumberLocaleFormattingTests
 
     #region British English (en-GB) Tests
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishGB_FixedPoint_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-GB");
@@ -398,7 +399,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishGB_Number_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-GB");
@@ -412,7 +413,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("12,345.67");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishGB_Currency_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-GB");
@@ -426,7 +427,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("£123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_EnglishGB_Percent_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("en-GB");
@@ -444,7 +445,7 @@ public class BigNumberLocaleFormattingTests
 
     #region Spanish (es-ES) Tests
 
-    [Fact]
+    [TestMethod]
     public void Format_SpanishSpain_FixedPoint_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("es-ES");
@@ -458,7 +459,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123,45");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_SpanishSpain_Number_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("es-ES");
@@ -472,7 +473,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("12.345,67");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_SpanishSpain_Currency_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("es-ES");
@@ -486,7 +487,7 @@ public class BigNumberLocaleFormattingTests
         bigResult.ShouldBe("123,45 €");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_SpanishSpain_Percent_ExactMatch()
     {
         var culture = CultureInfo.GetCultureInfo("es-ES");
@@ -504,7 +505,7 @@ public class BigNumberLocaleFormattingTests
 
     #region Zero Value Tests Across Cultures
 
-    [Fact]
+    [TestMethod]
     public void Format_Zero_FixedPoint_AllCulturesExactMatch()
     {
         BigNumber bigValue = BigNumber.Zero;
@@ -528,7 +529,7 @@ public class BigNumberLocaleFormattingTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_Zero_Number_AllCulturesExactMatch()
     {
         BigNumber bigValue = BigNumber.Zero;
@@ -552,7 +553,7 @@ public class BigNumberLocaleFormattingTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_Zero_Currency_AllCulturesExactMatch()
     {
         BigNumber bigValue = BigNumber.Zero;
@@ -575,7 +576,7 @@ public class BigNumberLocaleFormattingTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_Zero_Percent_AllCulturesExactMatch()
     {
         BigNumber bigValue = BigNumber.Zero;
@@ -599,7 +600,7 @@ public class BigNumberLocaleFormattingTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_Zero_PercentEnUS_ExactMatch()
     {
         BigNumber bigValue = BigNumber.Zero;
@@ -617,7 +618,7 @@ public class BigNumberLocaleFormattingTests
 
     #region Precision Tests Across Cultures
 
-    [Fact]
+    [TestMethod]
     public void Format_VariousPrecisions_FixedPoint_ExactMatch()
     {
         BigNumber bigValue = new(123456789, -5); // 1234.56789
@@ -634,7 +635,7 @@ public class BigNumberLocaleFormattingTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_VariousPrecisions_Number_ExactMatch()
     {
         BigNumber bigValue = new(123456789, -5); // 1234.56789
@@ -651,7 +652,7 @@ public class BigNumberLocaleFormattingTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_VariousPrecisions_Currency_ExactMatch()
     {
         BigNumber bigValue = new(123456789, -5); // 1234.56789
@@ -672,7 +673,7 @@ public class BigNumberLocaleFormattingTests
 
     #region Negative Value Tests Across Cultures
 
-    [Fact]
+    [TestMethod]
     public void Format_NegativeValue_AllCultures_ExactMatch()
     {
         BigNumber bigValue = new(-12345, -2); // -123.45
@@ -703,7 +704,7 @@ public class BigNumberLocaleFormattingTests
 
     #region TryFormat with Locales
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_UTF16_MultipleCultures_ExactMatch()
     {
         BigNumber bigValue = new(12345, -2); // 123.45
@@ -730,7 +731,7 @@ public class BigNumberLocaleFormattingTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_UTF8_MultipleCultures_ExactMatch()
     {
         BigNumber bigValue = new(12345, -2); // 123.45
@@ -759,7 +760,7 @@ public class BigNumberLocaleFormattingTests
 
     #region Round-Trip Tests with Locales
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_FormattedWithLocale_ParsesCorrectly()
     {
         BigNumber original = new(123456, -2); // 1234.56
@@ -775,7 +776,7 @@ public class BigNumberLocaleFormattingTests
         parsed.ShouldBe(original);
     }
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_FormattedWithLocale_French_ParsesCorrectly()
     {
         BigNumber original = new(1234567, -2); // 12345.67

@@ -2,16 +2,17 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Validator.Tests;
 
 /// <summary>
 /// Tests for the caching behaviour of <see cref="JsonSchema"/>.
 /// </summary>
+[TestClass]
 public class CacheTests
 {
-    [Fact]
+    [TestMethod]
     public void FromText_SameSchema_ReturnsCachedInstance()
     {
         string schemaJson =
@@ -27,11 +28,11 @@ public class CacheTests
         var second = JsonSchema.FromText(schemaJson);
 
         // Both should validate identically (cached pipeline)
-        Assert.True(first.Validate("\"hello\""));
-        Assert.True(second.Validate("\"hello\""));
+        Assert.IsTrue(first.Validate("\"hello\""));
+        Assert.IsTrue(second.Validate("\"hello\""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromText_RefreshCache_RecompilesSchema()
     {
         string schemaJson =
@@ -44,14 +45,14 @@ public class CacheTests
             """;
 
         var first = JsonSchema.FromText(schemaJson);
-        Assert.True(first.Validate("\"hello\""));
+        Assert.IsTrue(first.Validate("\"hello\""));
 
         // Refresh the cache — this should not throw and should produce a working schema
         var refreshed = JsonSchema.FromText(schemaJson, refreshCache: true);
-        Assert.True(refreshed.Validate("\"hello\""));
+        Assert.IsTrue(refreshed.Validate("\"hello\""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromText_DifferentAlwaysAssertFormat_UsesSeparateCacheEntries()
     {
         string schemaJson =
@@ -71,11 +72,11 @@ public class CacheTests
         var annotating = JsonSchema.FromText(schemaJson, options: annotateFormat);
 
         // "not-an-email" should fail when format is asserted, pass when annotated
-        Assert.False(asserting.Validate("\"not-an-email\""));
-        Assert.True(annotating.Validate("\"not-an-email\""));
+        Assert.IsFalse(asserting.Validate("\"not-an-email\""));
+        Assert.IsTrue(annotating.Validate("\"not-an-email\""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromFile_SameFile_ReturnsCachedInstance()
     {
         string schemaPath = Path.Combine(
@@ -86,11 +87,11 @@ public class CacheTests
         var first = JsonSchema.FromFile(schemaPath);
         var second = JsonSchema.FromFile(schemaPath);
 
-        Assert.True(first.Validate("\"hello\""));
-        Assert.True(second.Validate("\"hello\""));
+        Assert.IsTrue(first.Validate("\"hello\""));
+        Assert.IsTrue(second.Validate("\"hello\""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromFile_RefreshCache_Recompiles()
     {
         string schemaPath = Path.Combine(
@@ -99,9 +100,9 @@ public class CacheTests
             "simple-integer.json");
 
         var first = JsonSchema.FromFile(schemaPath);
-        Assert.True(first.Validate("50"));
+        Assert.IsTrue(first.Validate("50"));
 
         var refreshed = JsonSchema.FromFile(schemaPath, refreshCache: true);
-        Assert.True(refreshed.Validate("50"));
+        Assert.IsTrue(refreshed.Validate("50"));
     }
 }

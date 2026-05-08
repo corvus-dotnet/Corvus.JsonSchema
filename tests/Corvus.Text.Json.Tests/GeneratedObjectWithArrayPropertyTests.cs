@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -11,6 +11,7 @@ namespace Corvus.Text.Json.Tests;
 /// Exercises: setting array properties, required/optional IsUndefined guards,
 /// and RemoveXxx for optional array properties.
 /// </summary>
+[TestClass]
 public class GeneratedObjectWithArrayPropertyTests
 {
     private const string SampleJson =
@@ -20,7 +21,7 @@ public class GeneratedObjectWithArrayPropertyTests
 
     #region Set array properties
 
-    [Fact]
+    [TestMethod]
     public void SetTags_WithValidSource_SetsProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -32,14 +33,14 @@ public class GeneratedObjectWithArrayPropertyTests
         using var tagsDoc =
             ParsedJsonDocument<ObjectWithArrayProperty.JsonStringArray>.Parse("""["x","y"]""");
         root.SetTags(tagsDoc.RootElement);
-        Assert.Equal(2, root.Tags.GetArrayLength());
+        Assert.AreEqual(2, root.Tags.GetArrayLength());
     }
 
     #endregion
 
     #region IsUndefined guards
 
-    [Fact]
+    [TestMethod]
     public void SetTags_WithUndefinedSource_ThrowsForRequired()
     {
         using var workspace = JsonWorkspace.Create();
@@ -58,10 +59,10 @@ public class GeneratedObjectWithArrayPropertyTests
             threw = true;
         }
 
-        Assert.True(threw);
+        Assert.IsTrue(threw);
     }
 
-    [Fact]
+    [TestMethod]
     public void SetScores_WithUndefinedSource_RemovesOptional()
     {
         using var workspace = JsonWorkspace.Create();
@@ -70,14 +71,14 @@ public class GeneratedObjectWithArrayPropertyTests
 
         ObjectWithArrayProperty.Mutable root = builder.RootElement;
         root.SetScores(default);
-        Assert.True(root.Scores.IsUndefined());
+        Assert.IsTrue(root.Scores.IsUndefined());
     }
 
     #endregion
 
     #region Remove optional array property
 
-    [Fact]
+    [TestMethod]
     public void RemoveScores_WhenPresent_ReturnsTrue()
     {
         using var workspace = JsonWorkspace.Create();
@@ -87,15 +88,15 @@ public class GeneratedObjectWithArrayPropertyTests
         ObjectWithArrayProperty.Mutable root = builder.RootElement;
         bool removed = root.RemoveScores();
 
-        Assert.True(removed);
-        Assert.True(root.Scores.IsUndefined());
+        Assert.IsTrue(removed);
+        Assert.IsTrue(root.Scores.IsUndefined());
     }
 
     #endregion
 
     #region Build and CreateBuilder from span (variable-length numeric array)
 
-    [Fact]
+    [TestMethod]
     public void ScoresArray_BuildFromSpan()
     {
         using var workspace = JsonWorkspace.Create();
@@ -108,13 +109,13 @@ public class GeneratedObjectWithArrayPropertyTests
             ObjectWithArrayProperty.JsonDoubleArray.CreateBuilder(workspace, source);
         ObjectWithArrayProperty.JsonDoubleArray.Mutable root = doc.RootElement;
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1.1, (double)root[0]);
-        Assert.Equal(2.2, (double)root[1]);
-        Assert.Equal(3.3, (double)root[2]);
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1.1, (double)root[0]);
+        Assert.AreEqual(2.2, (double)root[1]);
+        Assert.AreEqual(3.3, (double)root[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScoresArray_CreateBuilderFromSpan()
     {
         using var workspace = JsonWorkspace.Create();
@@ -124,12 +125,12 @@ public class GeneratedObjectWithArrayPropertyTests
             ObjectWithArrayProperty.JsonDoubleArray.CreateBuilder(workspace, values);
         ObjectWithArrayProperty.JsonDoubleArray.Mutable root = doc.RootElement;
 
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(10.0, (double)root[0]);
-        Assert.Equal(50.0, (double)root[4]);
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(10.0, (double)root[0]);
+        Assert.AreEqual(50.0, (double)root[4]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScoresArray_BuildFromSpan_RoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -142,13 +143,13 @@ public class GeneratedObjectWithArrayPropertyTests
 
         using var reparsed =
             ParsedJsonDocument<ObjectWithArrayProperty.JsonDoubleArray>.Parse(json);
-        Assert.Equal(3, reparsed.RootElement.GetArrayLength());
-        Assert.Equal(1.5, (double)reparsed.RootElement[0]);
-        Assert.Equal(2.5, (double)reparsed.RootElement[1]);
-        Assert.Equal(3.5, (double)reparsed.RootElement[2]);
+        Assert.AreEqual(3, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual(1.5, (double)reparsed.RootElement[0]);
+        Assert.AreEqual(2.5, (double)reparsed.RootElement[1]);
+        Assert.AreEqual(3.5, (double)reparsed.RootElement[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScoresArray_BuildFromEmptySpan()
     {
         using var workspace = JsonWorkspace.Create();
@@ -158,10 +159,10 @@ public class GeneratedObjectWithArrayPropertyTests
             ObjectWithArrayProperty.JsonDoubleArray.CreateBuilder(workspace, values);
 
         string json = doc.RootElement.ToString();
-        Assert.Equal("[]", json);
+        Assert.AreEqual("[]", json);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScoresArray_ImplicitConversion_FromSpan()
     {
         ReadOnlySpan<double> values = [9.0, 8.5, 7.0];
@@ -172,7 +173,7 @@ public class GeneratedObjectWithArrayPropertyTests
             ObjectWithArrayProperty.JsonDoubleArray.CreateBuilder(workspace, source);
 
         string json = doc.RootElement.ToString();
-        Assert.Equal("[9,8.5,7]", json);
+        Assert.AreEqual("[9,8.5,7]", json);
     }
 
     #endregion

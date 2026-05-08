@@ -7,7 +7,7 @@ using System.Text;
 using Corvus.Numerics;
 using Corvus.Text.Json.Internal;
 using NodaTime;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -16,154 +16,155 @@ namespace Corvus.Text.Json.Tests;
 /// <see cref="FixedStringJsonDocument{T}"/> targeting NodaTime conversions,
 /// NET-only types, numeric type throws on string docs, and interface throws.
 /// </summary>
+[TestClass]
 public class FixedDocumentCoverageTests2
 {
     #region FixedJsonValueDocument — NodaTime TryGetValue conversions (string token)
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_OffsetDateTime_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15T10:30:00+05:00\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out OffsetDateTime value));
-        Assert.Equal(2024, value.Year);
-        Assert.Equal(1, value.Month);
-        Assert.Equal(15, value.Day);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out OffsetDateTime value));
+        Assert.AreEqual(2024, value.Year);
+        Assert.AreEqual(1, value.Month);
+        Assert.AreEqual(15, value.Day);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_OffsetDateTime_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out OffsetDateTime _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out OffsetDateTime _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_OffsetDate_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15+05:00\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out OffsetDate value));
-        Assert.Equal(2024, value.Year);
-        Assert.Equal(1, value.Month);
-        Assert.Equal(15, value.Day);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out OffsetDate value));
+        Assert.AreEqual(2024, value.Year);
+        Assert.AreEqual(1, value.Month);
+        Assert.AreEqual(15, value.Day);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_OffsetDate_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("99");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out OffsetDate _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out OffsetDate _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_OffsetTime_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"10:30:00+05:00\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out OffsetTime value));
-        Assert.Equal(10, value.Hour);
-        Assert.Equal(30, value.Minute);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out OffsetTime value));
+        Assert.AreEqual(10, value.Hour);
+        Assert.AreEqual(30, value.Minute);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_OffsetTime_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("1");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out OffsetTime _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out OffsetTime _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_LocalDate_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out LocalDate value));
-        Assert.Equal(2024, value.Year);
-        Assert.Equal(1, value.Month);
-        Assert.Equal(15, value.Day);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out LocalDate value));
+        Assert.AreEqual(2024, value.Year);
+        Assert.AreEqual(1, value.Month);
+        Assert.AreEqual(15, value.Day);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_LocalDate_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("5");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out LocalDate _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out LocalDate _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_Period_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"P1Y2M3D\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out Period value));
-        Assert.Equal(1, value.Years);
-        Assert.Equal(2, value.Months);
-        Assert.Equal(3, value.Days);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out Period value));
+        Assert.AreEqual(1, value.Years);
+        Assert.AreEqual(2, value.Months);
+        Assert.AreEqual(3, value.Days);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_Period_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("0");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out Period _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out Period _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_Guid_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"12345678-1234-1234-1234-123456789abc\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out Guid value));
-        Assert.Equal(new Guid("12345678-1234-1234-1234-123456789abc"), value);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out Guid value));
+        Assert.AreEqual(new Guid("12345678-1234-1234-1234-123456789abc"), value);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_Guid_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("7");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out Guid _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out Guid _));
         ((IDisposable)doc).Dispose();
     }
 
@@ -171,49 +172,49 @@ public class FixedDocumentCoverageTests2
 
     #region FixedJsonValueDocument — DateTime / DateTimeOffset (string token)
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_DateTime_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15T10:30:00Z\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out DateTime value));
-        Assert.Equal(2024, value.Year);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out DateTime value));
+        Assert.AreEqual(2024, value.Year);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_DateTime_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("100");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out DateTime _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out DateTime _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_DateTimeOffset_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-06-15T12:00:00+05:00\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out DateTimeOffset value));
-        Assert.Equal(2024, value.Year);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out DateTimeOffset value));
+        Assert.AreEqual(2024, value.Year);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_DateTimeOffset_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("200");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out DateTimeOffset _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out DateTimeOffset _));
         ((IDisposable)doc).Dispose();
     }
 
@@ -223,32 +224,32 @@ public class FixedDocumentCoverageTests2
 
     #region FixedJsonValueDocument — NET-only types
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_DateOnly_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out DateOnly value));
-        Assert.Equal(2024, value.Year);
-        Assert.Equal(1, value.Month);
-        Assert.Equal(15, value.Day);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out DateOnly value));
+        Assert.AreEqual(2024, value.Year);
+        Assert.AreEqual(1, value.Month);
+        Assert.AreEqual(15, value.Day);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_DateOnly_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("10");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out DateOnly _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out DateOnly _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_TimeOnly_ExercisesStringPath()
     {
         // Use a string-token doc to exercise the string branch
@@ -261,83 +262,83 @@ public class FixedDocumentCoverageTests2
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_TimeOnly_FailsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("20");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out TimeOnly _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out TimeOnly _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_Int128_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("170141183460469231731687303715884105727");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out Int128 value));
-        Assert.Equal(Int128.MaxValue, value);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out Int128 value));
+        Assert.AreEqual(Int128.MaxValue, value);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_Int128_FailsForString()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"notanumber\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out Int128 _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out Int128 _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_UInt128_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("340282366920938463463374607431768211455");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out UInt128 value));
-        Assert.Equal(UInt128.MaxValue, value);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out UInt128 value));
+        Assert.AreEqual(UInt128.MaxValue, value);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_UInt128_FailsForString()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"nope\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out UInt128 _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out UInt128 _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_Half_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("1.5");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out Half value));
-        Assert.Equal((Half)1.5, value);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out Half value));
+        Assert.AreEqual((Half)1.5, value);
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetValue_Half_FailsForString()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"x\"");
         var doc = FixedJsonValueDocument<JsonElement>.ForString(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.False(jsonDoc.TryGetValue(0, out Half _));
+        Assert.IsFalse(jsonDoc.TryGetValue(0, out Half _));
         ((IDisposable)doc).Dispose();
     }
 
@@ -347,95 +348,95 @@ public class FixedDocumentCoverageTests2
 
     #region FixedJsonValueDocument — Interface throws (number doc)
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_GetArrayInsertionIndex_ThrowsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetArrayInsertionIndex(0, 0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetArrayInsertionIndex(0, 0));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_GetArrayIndexElement_ThrowsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement(0, 0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement(0, 0));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_GetArrayIndexElementGeneric_ThrowsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement<JsonElement>(0, 0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement<JsonElement>(0, 0));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_GetArrayIndexElementOutParams_ThrowsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement(0, 0, out _, out _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement(0, 0, out _, out _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_GetNameOfPropertyValue_ThrowsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetNameOfPropertyValue(0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetNameOfPropertyValue(0));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_GetPropertyRawValueAsString_ThrowsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetPropertyRawValueAsString(0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetPropertyRawValueAsString(0));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetNamedPropertyValue_Utf8_ThrowsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, Encoding.UTF8.GetBytes("x").AsSpan(), out JsonElement _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, Encoding.UTF8.GetBytes("x").AsSpan(), out JsonElement _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_TryGetNamedPropertyValue_Chars_ThrowsForNumber()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
         var doc = FixedJsonValueDocument<JsonElement>.ForNumber(bytes);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, "x".AsSpan(), out JsonElement _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, "x".AsSpan(), out JsonElement _));
         ((IDisposable)doc).Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedValue_GetRawSimpleValueUnsafe_ReturnsRawValue()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("42");
@@ -444,7 +445,7 @@ public class FixedDocumentCoverageTests2
 
         ReadOnlyMemory<byte> raw = jsonDoc.GetRawSimpleValueUnsafe(0);
         string str = Encoding.UTF8.GetString(raw.Span.ToArray());
-        Assert.Equal("42", str);
+        Assert.AreEqual("42", str);
         ((IDisposable)doc).Dispose();
     }
 
@@ -452,358 +453,358 @@ public class FixedDocumentCoverageTests2
 
     #region FixedStringJsonDocument — NodaTime conversions
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_OffsetDateTime_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15T10:30:00+05:00\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out OffsetDateTime value));
-        Assert.Equal(2024, value.Year);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out OffsetDateTime value));
+        Assert.AreEqual(2024, value.Year);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_OffsetDate_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15+05:00\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out OffsetDate value));
-        Assert.Equal(2024, value.Year);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out OffsetDate value));
+        Assert.AreEqual(2024, value.Year);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_OffsetTime_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"10:30:00+05:00\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out OffsetTime value));
-        Assert.Equal(10, value.Hour);
-        Assert.Equal(30, value.Minute);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out OffsetTime value));
+        Assert.AreEqual(10, value.Hour);
+        Assert.AreEqual(30, value.Minute);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_LocalDate_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out LocalDate value));
-        Assert.Equal(2024, value.Year);
-        Assert.Equal(1, value.Month);
-        Assert.Equal(15, value.Day);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out LocalDate value));
+        Assert.AreEqual(2024, value.Year);
+        Assert.AreEqual(1, value.Month);
+        Assert.AreEqual(15, value.Day);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Period_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"P1Y2M3D\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out Period value));
-        Assert.Equal(1, value.Years);
-        Assert.Equal(2, value.Months);
-        Assert.Equal(3, value.Days);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out Period value));
+        Assert.AreEqual(1, value.Years);
+        Assert.AreEqual(2, value.Months);
+        Assert.AreEqual(3, value.Days);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Guid_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"12345678-1234-1234-1234-123456789abc\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out Guid value));
-        Assert.Equal(new Guid("12345678-1234-1234-1234-123456789abc"), value);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out Guid value));
+        Assert.AreEqual(new Guid("12345678-1234-1234-1234-123456789abc"), value);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_DateTime_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15T10:30:00Z\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out DateTime value));
-        Assert.Equal(2024, value.Year);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out DateTime value));
+        Assert.AreEqual(2024, value.Year);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_DateTimeOffset_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-06-15T12:00:00+05:00\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out DateTimeOffset value));
-        Assert.Equal(2024, value.Year);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out DateTimeOffset value));
+        Assert.AreEqual(2024, value.Year);
     }
 
     #endregion
 
     #region FixedStringJsonDocument — Numeric TryGetValue throws
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Sbyte_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out sbyte _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out sbyte _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Byte_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out byte _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out byte _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Short_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out short _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out short _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Ushort_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out ushort _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out ushort _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Int_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out int _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out int _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Uint_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out uint _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out uint _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Long_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out long _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out long _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Ulong_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out ulong _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out ulong _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Double_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out double _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out double _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Float_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out float _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out float _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Decimal_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out decimal _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out decimal _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_BigInteger_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out BigInteger _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out BigInteger _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_BigNumber_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out BigNumber _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out BigNumber _));
     }
 
     #endregion
 
     #region FixedStringJsonDocument — Interface throws
 
-    [Fact]
+    [TestMethod]
     public void FixedString_GetArrayInsertionIndex_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetArrayInsertionIndex(0, 0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetArrayInsertionIndex(0, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_GetArrayIndexElement_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement(0, 0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement(0, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_GetArrayIndexElementGeneric_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement<JsonElement>(0, 0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement<JsonElement>(0, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_GetArrayIndexElementOutParams_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement(0, 0, out _, out _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetArrayIndexElement(0, 0, out _, out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_GetNameOfPropertyValue_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetNameOfPropertyValue(0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetNameOfPropertyValue(0));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_GetPropertyRawValueAsString_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.GetPropertyRawValueAsString(0));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.GetPropertyRawValueAsString(0));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetNamedPropertyValue_Utf8_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, Encoding.UTF8.GetBytes("x").AsSpan(), out JsonElement _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, Encoding.UTF8.GetBytes("x").AsSpan(), out JsonElement _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetNamedPropertyValue_Chars_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, "x".AsSpan(), out JsonElement _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, "x".AsSpan(), out JsonElement _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetNamedPropertyValue_GenericUtf8_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue<JsonElement>(0, Encoding.UTF8.GetBytes("x").AsSpan(), out _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue<JsonElement>(0, Encoding.UTF8.GetBytes("x").AsSpan(), out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetNamedPropertyValue_GenericChars_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue<JsonElement>(0, "x".AsSpan(), out _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue<JsonElement>(0, "x".AsSpan(), out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetNamedPropertyValue_OutDocUtf8_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, Encoding.UTF8.GetBytes("x").AsSpan(), out IJsonDocument? _, out int _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, Encoding.UTF8.GetBytes("x").AsSpan(), out IJsonDocument? _, out int _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetNamedPropertyValue_OutDocChars_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, "x".AsSpan(), out IJsonDocument? _, out int _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetNamedPropertyValue(0, "x".AsSpan(), out IJsonDocument? _, out int _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_GetRawSimpleValueUnsafe_ReturnsRawValue()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"test\"");
@@ -812,7 +813,7 @@ public class FixedDocumentCoverageTests2
 
         ReadOnlyMemory<byte> raw = jsonDoc.GetRawSimpleValueUnsafe(0);
         string str = Encoding.UTF8.GetString(raw.Span.ToArray());
-        Assert.Equal("\"test\"", str);
+        Assert.AreEqual("\"test\"", str);
     }
 
     #endregion
@@ -821,18 +822,18 @@ public class FixedDocumentCoverageTests2
 
     #region FixedStringJsonDocument — NET-only types
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_DateOnly_Success()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"2024-01-15\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.True(jsonDoc.TryGetValue(0, out DateOnly value));
-        Assert.Equal(2024, value.Year);
+        Assert.IsTrue(jsonDoc.TryGetValue(0, out DateOnly value));
+        Assert.AreEqual(2024, value.Year);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_TimeOnly_DoesNotThrow()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"10:30:00\"");
@@ -843,34 +844,34 @@ public class FixedDocumentCoverageTests2
         _ = jsonDoc.TryGetValue(0, out TimeOnly _);
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Int128_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out Int128 _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out Int128 _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_UInt128_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out UInt128 _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out UInt128 _));
     }
 
-    [Fact]
+    [TestMethod]
     public void FixedString_TryGetValue_Half_Throws()
     {
         byte[] bytes = Encoding.UTF8.GetBytes("\"hello\"");
         using var doc = (IDisposable)FixedStringJsonDocument<JsonElement>.Parse(bytes, requiresUnescaping: false);
         IJsonDocument jsonDoc = (IJsonDocument)doc;
 
-        Assert.Throws<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out Half _));
+        Assert.ThrowsExactly<InvalidOperationException>(() => jsonDoc.TryGetValue(0, out Half _));
     }
 
     #endregion

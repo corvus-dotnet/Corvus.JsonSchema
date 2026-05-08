@@ -2,66 +2,74 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft202012.PropertyNames;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuitePropertyNamesValidation : IClassFixture<SuitePropertyNamesValidation.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePropertyNamesValidation
 {
-    private readonly Fixture _fixture;
-    public SuitePropertyNamesValidation(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAllPropertyNamesValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"f\": {},\r\n                    \"foo\": {}\r\n                }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSomePropertyNamesInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"foo\": {},\r\n                    \"foobar\": {}\r\n                }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestObjectWithoutPropertiesIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresArrays()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3, 4]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresStrings()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"foobar\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresOtherNonObjects()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("12");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -77,41 +85,49 @@ public class SuitePropertyNamesValidation : IClassFixture<SuitePropertyNamesVali
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuitePropertyNamesValidationWithPattern : IClassFixture<SuitePropertyNamesValidationWithPattern.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePropertyNamesValidationWithPattern
 {
-    private readonly Fixture _fixture;
-    public SuitePropertyNamesValidationWithPattern(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatchingPropertyNamesValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"a\": {},\r\n                    \"aa\": {},\r\n                    \"aaa\": {}\r\n                }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonMatchingPropertyNameIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"aaA\": {}\r\n                }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestObjectWithoutPropertiesIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -127,34 +143,42 @@ public class SuitePropertyNamesValidationWithPattern : IClassFixture<SuiteProper
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuitePropertyNamesWithBooleanSchemaTrue : IClassFixture<SuitePropertyNamesWithBooleanSchemaTrue.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePropertyNamesWithBooleanSchemaTrue
 {
-    private readonly Fixture _fixture;
-    public SuitePropertyNamesWithBooleanSchemaTrue(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestObjectWithAnyPropertiesIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEmptyObjectIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -170,34 +194,42 @@ public class SuitePropertyNamesWithBooleanSchemaTrue : IClassFixture<SuiteProper
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuitePropertyNamesWithBooleanSchemaFalse : IClassFixture<SuitePropertyNamesWithBooleanSchemaFalse.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePropertyNamesWithBooleanSchemaFalse
 {
-    private readonly Fixture _fixture;
-    public SuitePropertyNamesWithBooleanSchemaFalse(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestObjectWithAnyPropertiesIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEmptyObjectIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -213,41 +245,49 @@ public class SuitePropertyNamesWithBooleanSchemaFalse : IClassFixture<SuitePrope
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuitePropertyNamesWithConst : IClassFixture<SuitePropertyNamesWithConst.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePropertyNamesWithConst
 {
-    private readonly Fixture _fixture;
-    public SuitePropertyNamesWithConst(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestObjectWithPropertyFooIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestObjectWithAnyOtherPropertyIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": 1}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEmptyObjectIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -263,48 +303,56 @@ public class SuitePropertyNamesWithConst : IClassFixture<SuitePropertyNamesWithC
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuitePropertyNamesWithEnum : IClassFixture<SuitePropertyNamesWithEnum.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuitePropertyNamesWithEnum
 {
-    private readonly Fixture _fixture;
-    public SuitePropertyNamesWithEnum(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestObjectWithPropertyFooIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestObjectWithPropertyFooAndBarIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 1, \"bar\": 1}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestObjectWithAnyOtherPropertyIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"baz\": 1}");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEmptyObjectIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

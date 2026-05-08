@@ -6,17 +6,18 @@ namespace Corvus.Text.Json.Tests;
 
 using System;
 using Corvus.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Tests for <see cref="JsonElement.Mutable.RemoveWhere{T}(JsonPredicate{T})"/>.
 /// </summary>
-public static class JsonElementMutableRemoveWhereTests
+[TestClass]
+public class JsonElementMutableRemoveWhereTests
 {
     #region Basic Functionality Tests
 
-    [Fact]
-    public static void RemoveWhere_EmptyArray_NoChanges()
+    [TestMethod]
+    public void RemoveWhere_EmptyArray_NoChanges()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
@@ -28,11 +29,11 @@ public static class JsonElementMutableRemoveWhereTests
         mutableArray.RemoveWhere((in element) => true);
 
         // Assert
-        Assert.Equal(0, mutableArray.GetArrayLength());
+        Assert.AreEqual(0, mutableArray.GetArrayLength());
     }
 
-    [Fact]
-    public static void RemoveWhere_RemoveAllElements_EmptyArray()
+    [TestMethod]
+    public void RemoveWhere_RemoveAllElements_EmptyArray()
     {
         // Arrange
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3, 4, 5]");
@@ -44,11 +45,11 @@ public static class JsonElementMutableRemoveWhereTests
         mutableArray.RemoveWhere((in element) => true);
 
         // Assert
-        Assert.Equal(0, mutableArray.GetArrayLength());
+        Assert.AreEqual(0, mutableArray.GetArrayLength());
     }
 
-    [Fact]
-    public static void RemoveWhere_RemoveNoElements_NoChanges()
+    [TestMethod]
+    public void RemoveWhere_RemoveNoElements_NoChanges()
     {
         // Arrange
         const string json = "[1, 2, 3, 4, 5]";
@@ -62,12 +63,12 @@ public static class JsonElementMutableRemoveWhereTests
         mutableArray.RemoveWhere((in element) => false);
 
         // Assert
-        Assert.Equal(5, mutableArray.GetArrayLength());
-        Assert.Equal(originalJson, mutableArray.GetRawText());
+        Assert.AreEqual(5, mutableArray.GetArrayLength());
+        Assert.AreEqual(originalJson, mutableArray.GetRawText());
     }
 
-    [Fact]
-    public static void RemoveWhere_RemoveEvenNumbers_Success()
+    [TestMethod]
+    public void RemoveWhere_RemoveEvenNumbers_Success()
     {
         // Arrange
         const string json = "[1, 2, 3, 4, 5, 6]";
@@ -81,14 +82,14 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.Number && element.GetInt32() % 2 == 0);
 
         // Assert
-        Assert.Equal(3, mutableArray.GetArrayLength());
-        Assert.Equal(1, mutableArray[0].GetInt32());
-        Assert.Equal(3, mutableArray[1].GetInt32());
-        Assert.Equal(5, mutableArray[2].GetInt32());
+        Assert.AreEqual(3, mutableArray.GetArrayLength());
+        Assert.AreEqual(1, mutableArray[0].GetInt32());
+        Assert.AreEqual(3, mutableArray[1].GetInt32());
+        Assert.AreEqual(5, mutableArray[2].GetInt32());
     }
 
-    [Fact]
-    public static void RemoveWhere_RemoveFirstElement_Success()
+    [TestMethod]
+    public void RemoveWhere_RemoveFirstElement_Success()
     {
         // Arrange
         const string json = "[\"first\", \"second\", \"third\"]";
@@ -102,13 +103,13 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.String && element.GetString() == "first");
 
         // Assert
-        Assert.Equal(2, mutableArray.GetArrayLength());
-        Assert.Equal("second", mutableArray[0].GetString());
-        Assert.Equal("third", mutableArray[1].GetString());
+        Assert.AreEqual(2, mutableArray.GetArrayLength());
+        Assert.AreEqual("second", mutableArray[0].GetString());
+        Assert.AreEqual("third", mutableArray[1].GetString());
     }
 
-    [Fact]
-    public static void RemoveWhere_RemoveLastElement_Success()
+    [TestMethod]
+    public void RemoveWhere_RemoveLastElement_Success()
     {
         // Arrange
         const string json = "[\"first\", \"second\", \"third\"]";
@@ -122,13 +123,13 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.String && element.GetString() == "third");
 
         // Assert
-        Assert.Equal(2, mutableArray.GetArrayLength());
-        Assert.Equal("first", mutableArray[0].GetString());
-        Assert.Equal("second", mutableArray[1].GetString());
+        Assert.AreEqual(2, mutableArray.GetArrayLength());
+        Assert.AreEqual("first", mutableArray[0].GetString());
+        Assert.AreEqual("second", mutableArray[1].GetString());
     }
 
-    [Fact]
-    public static void RemoveWhere_RemoveMiddleElement_Success()
+    [TestMethod]
+    public void RemoveWhere_RemoveMiddleElement_Success()
     {
         // Arrange
         const string json = "[\"first\", \"second\", \"third\"]";
@@ -142,17 +143,17 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.String && element.GetString() == "second");
 
         // Assert
-        Assert.Equal(2, mutableArray.GetArrayLength());
-        Assert.Equal("first", mutableArray[0].GetString());
-        Assert.Equal("third", mutableArray[1].GetString());
+        Assert.AreEqual(2, mutableArray.GetArrayLength());
+        Assert.AreEqual("first", mutableArray[0].GetString());
+        Assert.AreEqual("third", mutableArray[1].GetString());
     }
 
     #endregion
 
     #region Consecutive Elements Tests
 
-    [Fact]
-    public static void RemoveWhere_ConsecutiveElementsAtStart_Success()
+    [TestMethod]
+    public void RemoveWhere_ConsecutiveElementsAtStart_Success()
     {
         // Arrange
         const string json = "[1, 2, 3, 10, 11, 12]";
@@ -166,14 +167,14 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.Number && element.GetInt32() < 10);
 
         // Assert
-        Assert.Equal(3, mutableArray.GetArrayLength());
-        Assert.Equal(10, mutableArray[0].GetInt32());
-        Assert.Equal(11, mutableArray[1].GetInt32());
-        Assert.Equal(12, mutableArray[2].GetInt32());
+        Assert.AreEqual(3, mutableArray.GetArrayLength());
+        Assert.AreEqual(10, mutableArray[0].GetInt32());
+        Assert.AreEqual(11, mutableArray[1].GetInt32());
+        Assert.AreEqual(12, mutableArray[2].GetInt32());
     }
 
-    [Fact]
-    public static void RemoveWhere_ConsecutiveElementsAtEnd_Success()
+    [TestMethod]
+    public void RemoveWhere_ConsecutiveElementsAtEnd_Success()
     {
         // Arrange
         const string json = "[1, 2, 3, 10, 11, 12]";
@@ -187,14 +188,14 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.Number && element.GetInt32() > 5);
 
         // Assert
-        Assert.Equal(3, mutableArray.GetArrayLength());
-        Assert.Equal(1, mutableArray[0].GetInt32());
-        Assert.Equal(2, mutableArray[1].GetInt32());
-        Assert.Equal(3, mutableArray[2].GetInt32());
+        Assert.AreEqual(3, mutableArray.GetArrayLength());
+        Assert.AreEqual(1, mutableArray[0].GetInt32());
+        Assert.AreEqual(2, mutableArray[1].GetInt32());
+        Assert.AreEqual(3, mutableArray[2].GetInt32());
     }
 
-    [Fact]
-    public static void RemoveWhere_ConsecutiveElementsInMiddle_Success()
+    [TestMethod]
+    public void RemoveWhere_ConsecutiveElementsInMiddle_Success()
     {
         // Arrange
         const string json = "[1, 10, 11, 12, 2]";
@@ -208,13 +209,13 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.Number && element.GetInt32() > 5);
 
         // Assert
-        Assert.Equal(2, mutableArray.GetArrayLength());
-        Assert.Equal(1, mutableArray[0].GetInt32());
-        Assert.Equal(2, mutableArray[1].GetInt32());
+        Assert.AreEqual(2, mutableArray.GetArrayLength());
+        Assert.AreEqual(1, mutableArray[0].GetInt32());
+        Assert.AreEqual(2, mutableArray[1].GetInt32());
     }
 
-    [Fact]
-    public static void RemoveWhere_MultipleConsecutiveRanges_Success()
+    [TestMethod]
+    public void RemoveWhere_MultipleConsecutiveRanges_Success()
     {
         // Arrange
         const string json = "[1, 2, 5, 6, 9, 10]";
@@ -228,14 +229,14 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.Number && element.GetInt32() % 2 == 0);
 
         // Assert
-        Assert.Equal(3, mutableArray.GetArrayLength());
-        Assert.Equal(1, mutableArray[0].GetInt32());
-        Assert.Equal(5, mutableArray[1].GetInt32());
-        Assert.Equal(9, mutableArray[2].GetInt32());
+        Assert.AreEqual(3, mutableArray.GetArrayLength());
+        Assert.AreEqual(1, mutableArray[0].GetInt32());
+        Assert.AreEqual(5, mutableArray[1].GetInt32());
+        Assert.AreEqual(9, mutableArray[2].GetInt32());
     }
 
-    [Fact]
-    public static void RemoveWhere_AlternatingPattern_Success()
+    [TestMethod]
+    public void RemoveWhere_AlternatingPattern_Success()
     {
         // Arrange
         const string json = "[1, 2, 3, 4, 5, 6, 7, 8]";
@@ -249,19 +250,19 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.Number && element.GetInt32() % 2 == 0);
 
         // Assert
-        Assert.Equal(4, mutableArray.GetArrayLength());
-        Assert.Equal(1, mutableArray[0].GetInt32());
-        Assert.Equal(3, mutableArray[1].GetInt32());
-        Assert.Equal(5, mutableArray[2].GetInt32());
-        Assert.Equal(7, mutableArray[3].GetInt32());
+        Assert.AreEqual(4, mutableArray.GetArrayLength());
+        Assert.AreEqual(1, mutableArray[0].GetInt32());
+        Assert.AreEqual(3, mutableArray[1].GetInt32());
+        Assert.AreEqual(5, mutableArray[2].GetInt32());
+        Assert.AreEqual(7, mutableArray[3].GetInt32());
     }
 
     #endregion
 
     #region Type-Based Tests
 
-    [Fact]
-    public static void RemoveWhere_RemoveAllStrings_Success()
+    [TestMethod]
+    public void RemoveWhere_RemoveAllStrings_Success()
     {
         // Arrange
         const string json = "[\"hello\", 42, \"world\", true, \"test\", null]";
@@ -274,14 +275,14 @@ public static class JsonElementMutableRemoveWhereTests
         mutableArray.RemoveWhere((in element) => element.ValueKind == JsonValueKind.String);
 
         // Assert
-        Assert.Equal(3, mutableArray.GetArrayLength());
-        Assert.Equal(42, mutableArray[0].GetInt32());
-        Assert.True(mutableArray[1].GetBoolean());
-        Assert.Equal(JsonValueKind.Null, mutableArray[2].ValueKind);
+        Assert.AreEqual(3, mutableArray.GetArrayLength());
+        Assert.AreEqual(42, mutableArray[0].GetInt32());
+        Assert.IsTrue(mutableArray[1].GetBoolean());
+        Assert.AreEqual(JsonValueKind.Null, mutableArray[2].ValueKind);
     }
 
-    [Fact]
-    public static void RemoveWhere_RemoveAllNumbers_Success()
+    [TestMethod]
+    public void RemoveWhere_RemoveAllNumbers_Success()
     {
         // Arrange
         const string json = "[\"hello\", 42, \"world\", 3.14, \"test\", 0]";
@@ -294,14 +295,14 @@ public static class JsonElementMutableRemoveWhereTests
         mutableArray.RemoveWhere((in element) => element.ValueKind == JsonValueKind.Number);
 
         // Assert
-        Assert.Equal(3, mutableArray.GetArrayLength());
-        Assert.Equal("hello", mutableArray[0].GetString());
-        Assert.Equal("world", mutableArray[1].GetString());
-        Assert.Equal("test", mutableArray[2].GetString());
+        Assert.AreEqual(3, mutableArray.GetArrayLength());
+        Assert.AreEqual("hello", mutableArray[0].GetString());
+        Assert.AreEqual("world", mutableArray[1].GetString());
+        Assert.AreEqual("test", mutableArray[2].GetString());
     }
 
-    [Fact]
-    public static void RemoveWhere_RemoveNullValues_Success()
+    [TestMethod]
+    public void RemoveWhere_RemoveNullValues_Success()
     {
         // Arrange
         const string json = "[\"hello\", null, \"world\", null, \"test\"]";
@@ -314,18 +315,18 @@ public static class JsonElementMutableRemoveWhereTests
         mutableArray.RemoveWhere((in element) => element.ValueKind == JsonValueKind.Null);
 
         // Assert
-        Assert.Equal(3, mutableArray.GetArrayLength());
-        Assert.Equal("hello", mutableArray[0].GetString());
-        Assert.Equal("world", mutableArray[1].GetString());
-        Assert.Equal("test", mutableArray[2].GetString());
+        Assert.AreEqual(3, mutableArray.GetArrayLength());
+        Assert.AreEqual("hello", mutableArray[0].GetString());
+        Assert.AreEqual("world", mutableArray[1].GetString());
+        Assert.AreEqual("test", mutableArray[2].GetString());
     }
 
     #endregion
 
     #region Complex Object Tests
 
-    [Fact]
-    public static void RemoveWhere_ComplexObjects_RemoveByProperty()
+    [TestMethod]
+    public void RemoveWhere_ComplexObjects_RemoveByProperty()
     {
         // Arrange
         const string json = """
@@ -347,13 +348,13 @@ public static class JsonElementMutableRemoveWhereTests
             age.GetInt32() > 30);
 
         // Assert
-        Assert.Equal(2, mutableArray.GetArrayLength());
-        Assert.Equal("Alice", mutableArray[0].GetProperty("name").GetString());
-        Assert.Equal("Bob", mutableArray[1].GetProperty("name").GetString());
+        Assert.AreEqual(2, mutableArray.GetArrayLength());
+        Assert.AreEqual("Alice", mutableArray[0].GetProperty("name").GetString());
+        Assert.AreEqual("Bob", mutableArray[1].GetProperty("name").GetString());
     }
 
-    [Fact]
-    public static void RemoveWhere_NestedArrays_RemoveEmptyArrays()
+    [TestMethod]
+    public void RemoveWhere_NestedArrays_RemoveEmptyArrays()
     {
         // Arrange
         const string json = """
@@ -375,18 +376,18 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.Array && element.GetArrayLength() == 0);
 
         // Assert
-        Assert.Equal(3, mutableArray.GetArrayLength());
-        Assert.Equal(3, mutableArray[0].GetArrayLength());
-        Assert.Equal(2, mutableArray[1].GetArrayLength());
-        Assert.Equal(1, mutableArray[2].GetArrayLength());
+        Assert.AreEqual(3, mutableArray.GetArrayLength());
+        Assert.AreEqual(3, mutableArray[0].GetArrayLength());
+        Assert.AreEqual(2, mutableArray[1].GetArrayLength());
+        Assert.AreEqual(1, mutableArray[2].GetArrayLength());
     }
 
     #endregion
 
     #region Nested Array Tests
 
-    [Fact]
-    public static void RemoveWhere_NestedArrayInObject_RemovesCorrectElementsAndPreservesObject()
+    [TestMethod]
+    public void RemoveWhere_NestedArrayInObject_RemovesCorrectElementsAndPreservesObject()
     {
         // Arrange
         const string json = """
@@ -407,19 +408,19 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.Number && element.GetInt32() % 2 == 0);
 
         // Assert
-        Assert.Equal(3, itemsArray.GetArrayLength());
-        Assert.Equal(1, itemsArray[0].GetInt32());
-        Assert.Equal(3, itemsArray[1].GetInt32());
-        Assert.Equal(5, itemsArray[2].GetInt32());
+        Assert.AreEqual(3, itemsArray.GetArrayLength());
+        Assert.AreEqual(1, itemsArray[0].GetInt32());
+        Assert.AreEqual(3, itemsArray[1].GetInt32());
+        Assert.AreEqual(5, itemsArray[2].GetInt32());
 
         // Verify other properties are preserved
-        Assert.Equal("test", builderDoc.RootElement.GetProperty("name").GetString());
-        Assert.True(builderDoc.RootElement.GetProperty("active").GetBoolean());
-        Assert.Equal(3, builderDoc.RootElement.GetPropertyCount());
+        Assert.AreEqual("test", builderDoc.RootElement.GetProperty("name").GetString());
+        Assert.IsTrue(builderDoc.RootElement.GetProperty("active").GetBoolean());
+        Assert.AreEqual(3, builderDoc.RootElement.GetPropertyCount());
     }
 
-    [Fact]
-    public static void RemoveWhere_NestedArrayWithComplexObjects_RemovesCorrectElements()
+    [TestMethod]
+    public void RemoveWhere_NestedArrayWithComplexObjects_RemovesCorrectElements()
     {
         // Arrange
         const string json = """
@@ -447,22 +448,22 @@ public static class JsonElementMutableRemoveWhereTests
             !active.GetBoolean());
 
         // Assert
-        Assert.Equal(2, usersArray.GetArrayLength());
-        Assert.Equal("Alice", usersArray[0].GetProperty("name").GetString());
-        Assert.Equal(1, usersArray[0].GetProperty("id").GetInt32());
-        Assert.True(usersArray[0].GetProperty("active").GetBoolean());
-        Assert.Equal("Charlie", usersArray[1].GetProperty("name").GetString());
-        Assert.Equal(3, usersArray[1].GetProperty("id").GetInt32());
-        Assert.True(usersArray[1].GetProperty("active").GetBoolean());
+        Assert.AreEqual(2, usersArray.GetArrayLength());
+        Assert.AreEqual("Alice", usersArray[0].GetProperty("name").GetString());
+        Assert.AreEqual(1, usersArray[0].GetProperty("id").GetInt32());
+        Assert.IsTrue(usersArray[0].GetProperty("active").GetBoolean());
+        Assert.AreEqual("Charlie", usersArray[1].GetProperty("name").GetString());
+        Assert.AreEqual(3, usersArray[1].GetProperty("id").GetInt32());
+        Assert.IsTrue(usersArray[1].GetProperty("active").GetBoolean());
 
         // Verify other properties are preserved
-        Assert.Equal(4, builderDoc.RootElement.GetProperty("total").GetInt32());
-        Assert.Equal("Engineering", builderDoc.RootElement.GetProperty("department").GetString());
-        Assert.Equal(3, builderDoc.RootElement.GetPropertyCount());
+        Assert.AreEqual(4, builderDoc.RootElement.GetProperty("total").GetInt32());
+        Assert.AreEqual("Engineering", builderDoc.RootElement.GetProperty("department").GetString());
+        Assert.AreEqual(3, builderDoc.RootElement.GetPropertyCount());
     }
 
-    [Fact]
-    public static void RemoveWhere_MultipleNestedArraysInObject_RemovesCorrectElementsFromEach()
+    [TestMethod]
+    public void RemoveWhere_MultipleNestedArraysInObject_RemovesCorrectElementsFromEach()
     {
         // Arrange
         const string json = """
@@ -504,47 +505,47 @@ public static class JsonElementMutableRemoveWhereTests
         // Assert
         // Verify tags array
         JsonElement.Mutable tagsArray = builderDoc.RootElement.GetProperty("tags");
-        Assert.Equal(3, tagsArray.GetArrayLength());
-        Assert.Equal("important", tagsArray[0].GetString());
-        Assert.Equal("urgent", tagsArray[1].GetString());
-        Assert.Equal("normal", tagsArray[2].GetString());
+        Assert.AreEqual(3, tagsArray.GetArrayLength());
+        Assert.AreEqual("important", tagsArray[0].GetString());
+        Assert.AreEqual("urgent", tagsArray[1].GetString());
+        Assert.AreEqual("normal", tagsArray[2].GetString());
 
         // Verify cat1 items (only odd numbers remain)
         JsonElement.Mutable cat1Items = builderDoc.RootElement.GetProperty("categories")[0].GetProperty("items");
-        Assert.Equal(3, cat1Items.GetArrayLength());
-        Assert.Equal(1, cat1Items[0].GetInt32());
-        Assert.Equal(3, cat1Items[1].GetInt32());
-        Assert.Equal(5, cat1Items[2].GetInt32());
+        Assert.AreEqual(3, cat1Items.GetArrayLength());
+        Assert.AreEqual(1, cat1Items[0].GetInt32());
+        Assert.AreEqual(3, cat1Items[1].GetInt32());
+        Assert.AreEqual(5, cat1Items[2].GetInt32());
 
         // Verify cat2 items unchanged
         JsonElement.Mutable cat2Items = builderDoc.RootElement.GetProperty("categories")[1].GetProperty("items");
-        Assert.Equal(3, cat2Items.GetArrayLength());
-        Assert.Equal(10, cat2Items[0].GetInt32());
-        Assert.Equal(20, cat2Items[1].GetInt32());
-        Assert.Equal(30, cat2Items[2].GetInt32());
+        Assert.AreEqual(3, cat2Items.GetArrayLength());
+        Assert.AreEqual(10, cat2Items[0].GetInt32());
+        Assert.AreEqual(20, cat2Items[1].GetInt32());
+        Assert.AreEqual(30, cat2Items[2].GetInt32());
 
         // Verify scores (only >= 100 remain)
         JsonElement.Mutable scoresArray = builderDoc.RootElement.GetProperty("metadata").GetProperty("scores");
-        Assert.Equal(3, scoresArray.GetArrayLength());
-        Assert.Equal(100, scoresArray[0].GetInt32());
-        Assert.Equal(200, scoresArray[1].GetInt32());
-        Assert.Equal(300, scoresArray[2].GetInt32());
+        Assert.AreEqual(3, scoresArray.GetArrayLength());
+        Assert.AreEqual(100, scoresArray[0].GetInt32());
+        Assert.AreEqual(200, scoresArray[1].GetInt32());
+        Assert.AreEqual(300, scoresArray[2].GetInt32());
 
         // Verify flags (only true values remain)
         JsonElement.Mutable flagsArray = builderDoc.RootElement.GetProperty("metadata").GetProperty("flags");
-        Assert.Equal(3, flagsArray.GetArrayLength());
-        Assert.True(flagsArray[0].GetBoolean());
-        Assert.True(flagsArray[1].GetBoolean());
-        Assert.True(flagsArray[2].GetBoolean());
+        Assert.AreEqual(3, flagsArray.GetArrayLength());
+        Assert.IsTrue(flagsArray[0].GetBoolean());
+        Assert.IsTrue(flagsArray[1].GetBoolean());
+        Assert.IsTrue(flagsArray[2].GetBoolean());
 
         // Verify other properties unchanged
-        Assert.Equal(123, builderDoc.RootElement.GetProperty("id").GetInt32());
-        Assert.Equal("cat1", builderDoc.RootElement.GetProperty("categories")[0].GetProperty("name").GetString());
-        Assert.Equal("cat2", builderDoc.RootElement.GetProperty("categories")[1].GetProperty("name").GetString());
+        Assert.AreEqual(123, builderDoc.RootElement.GetProperty("id").GetInt32());
+        Assert.AreEqual("cat1", builderDoc.RootElement.GetProperty("categories")[0].GetProperty("name").GetString());
+        Assert.AreEqual("cat2", builderDoc.RootElement.GetProperty("categories")[1].GetProperty("name").GetString());
     }
 
-    [Fact]
-    public static void RemoveWhere_NestedArrayInArray_RemovesCorrectElementsFromInnerArray()
+    [TestMethod]
+    public void RemoveWhere_NestedArrayInArray_RemovesCorrectElementsFromInnerArray()
     {
         // Arrange
         const string json = """
@@ -573,28 +574,28 @@ public static class JsonElementMutableRemoveWhereTests
 
         // Assert
         // Verify first inner array (odd numbers remain)
-        Assert.Equal(3, builderDoc.RootElement[0].GetArrayLength());
-        Assert.Equal(1, builderDoc.RootElement[0][0].GetInt32());
-        Assert.Equal(3, builderDoc.RootElement[0][1].GetInt32());
-        Assert.Equal(5, builderDoc.RootElement[0][2].GetInt32());
+        Assert.AreEqual(3, builderDoc.RootElement[0].GetArrayLength());
+        Assert.AreEqual(1, builderDoc.RootElement[0][0].GetInt32());
+        Assert.AreEqual(3, builderDoc.RootElement[0][1].GetInt32());
+        Assert.AreEqual(5, builderDoc.RootElement[0][2].GetInt32());
 
         // Verify second inner array (only "keep" strings remain)
-        Assert.Equal(2, builderDoc.RootElement[1].GetArrayLength());
-        Assert.Equal("keep", builderDoc.RootElement[1][0].GetString());
-        Assert.Equal("keep", builderDoc.RootElement[1][1].GetString());
+        Assert.AreEqual(2, builderDoc.RootElement[1].GetArrayLength());
+        Assert.AreEqual("keep", builderDoc.RootElement[1][0].GetString());
+        Assert.AreEqual("keep", builderDoc.RootElement[1][1].GetString());
 
         // Verify third inner array (only true values remain)
-        Assert.Equal(3, builderDoc.RootElement[2].GetArrayLength());
-        Assert.True(builderDoc.RootElement[2][0].GetBoolean());
-        Assert.True(builderDoc.RootElement[2][1].GetBoolean());
-        Assert.True(builderDoc.RootElement[2][2].GetBoolean());
+        Assert.AreEqual(3, builderDoc.RootElement[2].GetArrayLength());
+        Assert.IsTrue(builderDoc.RootElement[2][0].GetBoolean());
+        Assert.IsTrue(builderDoc.RootElement[2][1].GetBoolean());
+        Assert.IsTrue(builderDoc.RootElement[2][2].GetBoolean());
 
         // Verify outer array still has 3 elements
-        Assert.Equal(3, builderDoc.RootElement.GetArrayLength());
+        Assert.AreEqual(3, builderDoc.RootElement.GetArrayLength());
     }
 
-    [Fact]
-    public static void RemoveWhere_ThreeLevelNestedArray_RemovesCorrectElementsFromDeepestLevel()
+    [TestMethod]
+    public void RemoveWhere_ThreeLevelNestedArray_RemovesCorrectElementsFromDeepestLevel()
     {
         // Arrange
         const string json = """
@@ -624,35 +625,35 @@ public static class JsonElementMutableRemoveWhereTests
 
         // Assert
         // Verify first deepest array (odd numbers remain)
-        Assert.Equal(2, builderDoc.RootElement[0][0].GetArrayLength());
-        Assert.Equal(1, builderDoc.RootElement[0][0][0].GetInt32());
-        Assert.Equal(3, builderDoc.RootElement[0][0][1].GetInt32());
+        Assert.AreEqual(2, builderDoc.RootElement[0][0].GetArrayLength());
+        Assert.AreEqual(1, builderDoc.RootElement[0][0][0].GetInt32());
+        Assert.AreEqual(3, builderDoc.RootElement[0][0][1].GetInt32());
 
         // Verify second array in first group unchanged
-        Assert.Equal(4, builderDoc.RootElement[0][1].GetArrayLength());
-        Assert.Equal(5, builderDoc.RootElement[0][1][0].GetInt32());
-        Assert.Equal(6, builderDoc.RootElement[0][1][1].GetInt32());
-        Assert.Equal(7, builderDoc.RootElement[0][1][2].GetInt32());
-        Assert.Equal(8, builderDoc.RootElement[0][1][3].GetInt32());
+        Assert.AreEqual(4, builderDoc.RootElement[0][1].GetArrayLength());
+        Assert.AreEqual(5, builderDoc.RootElement[0][1][0].GetInt32());
+        Assert.AreEqual(6, builderDoc.RootElement[0][1][1].GetInt32());
+        Assert.AreEqual(7, builderDoc.RootElement[0][1][2].GetInt32());
+        Assert.AreEqual(8, builderDoc.RootElement[0][1][3].GetInt32());
 
         // Verify first array in second group unchanged
-        Assert.Equal(4, builderDoc.RootElement[1][0].GetArrayLength());
-        Assert.Equal(9, builderDoc.RootElement[1][0][0].GetInt32());
-        Assert.Equal(10, builderDoc.RootElement[1][0][1].GetInt32());
-        Assert.Equal(11, builderDoc.RootElement[1][0][2].GetInt32());
-        Assert.Equal(12, builderDoc.RootElement[1][0][3].GetInt32());
+        Assert.AreEqual(4, builderDoc.RootElement[1][0].GetArrayLength());
+        Assert.AreEqual(9, builderDoc.RootElement[1][0][0].GetInt32());
+        Assert.AreEqual(10, builderDoc.RootElement[1][0][1].GetInt32());
+        Assert.AreEqual(11, builderDoc.RootElement[1][0][2].GetInt32());
+        Assert.AreEqual(12, builderDoc.RootElement[1][0][3].GetInt32());
 
         // Verify last deepest array (only numbers <= 10 remain)
-        Assert.Equal(0, builderDoc.RootElement[1][1].GetArrayLength()); // All numbers were > 10
+        Assert.AreEqual(0, builderDoc.RootElement[1][1].GetArrayLength()); // All numbers were > 10
 
         // Verify overall structure integrity
-        Assert.Equal(2, builderDoc.RootElement.GetArrayLength());
-        Assert.Equal(2, builderDoc.RootElement[0].GetArrayLength());
-        Assert.Equal(2, builderDoc.RootElement[1].GetArrayLength());
+        Assert.AreEqual(2, builderDoc.RootElement.GetArrayLength());
+        Assert.AreEqual(2, builderDoc.RootElement[0].GetArrayLength());
+        Assert.AreEqual(2, builderDoc.RootElement[1].GetArrayLength());
     }
 
-    [Fact]
-    public static void RemoveWhere_ComplexMixedNestedStructure_RemovesCorrectElements()
+    [TestMethod]
+    public void RemoveWhere_ComplexMixedNestedStructure_RemovesCorrectElements()
     {
         // Arrange
         const string json = """
@@ -697,44 +698,44 @@ public static class JsonElementMutableRemoveWhereTests
         // Assert
         // Verify data.numbers (odd numbers remain)
         JsonElement.Mutable numbersArray = builderDoc.RootElement.GetProperty("data").GetProperty("numbers");
-        Assert.Equal(5, numbersArray.GetArrayLength());
-        Assert.Equal(1, numbersArray[0].GetInt32());
-        Assert.Equal(3, numbersArray[1].GetInt32());
-        Assert.Equal(5, numbersArray[2].GetInt32());
-        Assert.Equal(7, numbersArray[3].GetInt32());
-        Assert.Equal(9, numbersArray[4].GetInt32());
+        Assert.AreEqual(5, numbersArray.GetArrayLength());
+        Assert.AreEqual(1, numbersArray[0].GetInt32());
+        Assert.AreEqual(3, numbersArray[1].GetInt32());
+        Assert.AreEqual(5, numbersArray[2].GetInt32());
+        Assert.AreEqual(7, numbersArray[3].GetInt32());
+        Assert.AreEqual(9, numbersArray[4].GetInt32());
 
         // Verify data.nested.items (consonants remain)
         JsonElement.Mutable itemsArray = builderDoc.RootElement.GetProperty("data").GetProperty("nested").GetProperty("items");
-        Assert.Equal(3, itemsArray.GetArrayLength());
-        Assert.Equal("b", itemsArray[0].GetString());
-        Assert.Equal("c", itemsArray[1].GetString());
-        Assert.Equal("d", itemsArray[2].GetString());
+        Assert.AreEqual(3, itemsArray.GetArrayLength());
+        Assert.AreEqual("b", itemsArray[0].GetString());
+        Assert.AreEqual("c", itemsArray[1].GetString());
+        Assert.AreEqual("d", itemsArray[2].GetString());
 
         // Verify arrays[0] (numbers >= 250 remain)
         JsonElement.Mutable firstArray = builderDoc.RootElement.GetProperty("arrays")[0];
-        Assert.Equal(1, firstArray.GetArrayLength());
-        Assert.Equal(300, firstArray[0].GetInt32());
+        Assert.AreEqual(1, firstArray.GetArrayLength());
+        Assert.AreEqual(300, firstArray[0].GetInt32());
 
         // Verify arrays[1].values (only true values remain)
         JsonElement.Mutable valuesArray = builderDoc.RootElement.GetProperty("arrays")[1].GetProperty("values");
-        Assert.Equal(2, valuesArray.GetArrayLength());
-        Assert.True(valuesArray[0].GetBoolean());
-        Assert.True(valuesArray[1].GetBoolean());
+        Assert.AreEqual(2, valuesArray.GetArrayLength());
+        Assert.IsTrue(valuesArray[0].GetBoolean());
+        Assert.IsTrue(valuesArray[1].GetBoolean());
 
         // Verify overall structure and unchanged properties
-        Assert.Equal("active", builderDoc.RootElement.GetProperty("status").GetString());
-        Assert.Equal(3, builderDoc.RootElement.GetPropertyCount());
-        Assert.Equal(2, builderDoc.RootElement.GetProperty("data").GetPropertyCount());
-        Assert.Equal(2, builderDoc.RootElement.GetProperty("arrays").GetArrayLength());
+        Assert.AreEqual("active", builderDoc.RootElement.GetProperty("status").GetString());
+        Assert.AreEqual(3, builderDoc.RootElement.GetPropertyCount());
+        Assert.AreEqual(2, builderDoc.RootElement.GetProperty("data").GetPropertyCount());
+        Assert.AreEqual(2, builderDoc.RootElement.GetProperty("arrays").GetArrayLength());
     }
 
     #endregion
 
     #region Edge Cases
 
-    [Fact]
-    public static void RemoveWhere_SingleElement_RemoveIt()
+    [TestMethod]
+    public void RemoveWhere_SingleElement_RemoveIt()
     {
         // Arrange
         const string json = "[42]";
@@ -747,12 +748,12 @@ public static class JsonElementMutableRemoveWhereTests
         mutableArray.RemoveWhere((in element) => element.ValueKind == JsonValueKind.Number);
 
         // Assert
-        Assert.Equal(0, mutableArray.GetArrayLength());
-        Assert.Equal("[]", mutableArray.GetRawText());
+        Assert.AreEqual(0, mutableArray.GetArrayLength());
+        Assert.AreEqual("[]", mutableArray.GetRawText());
     }
 
-    [Fact]
-    public static void RemoveWhere_SingleElement_KeepIt()
+    [TestMethod]
+    public void RemoveWhere_SingleElement_KeepIt()
     {
         // Arrange
         const string json = "[42]";
@@ -765,12 +766,12 @@ public static class JsonElementMutableRemoveWhereTests
         mutableArray.RemoveWhere((in element) => element.ValueKind == JsonValueKind.String);
 
         // Assert
-        Assert.Equal(1, mutableArray.GetArrayLength());
-        Assert.Equal(42, mutableArray[0].GetInt32());
+        Assert.AreEqual(1, mutableArray.GetArrayLength());
+        Assert.AreEqual(42, mutableArray[0].GetInt32());
     }
 
-    [Fact]
-    public static void RemoveWhere_LargeArray_PerformanceTest()
+    [TestMethod]
+    public void RemoveWhere_LargeArray_PerformanceTest()
     {
         // Arrange - Create an array with 1000 elements
         var jsonBuilder = new System.Text.StringBuilder("[");
@@ -791,19 +792,19 @@ public static class JsonElementMutableRemoveWhereTests
             element.ValueKind == JsonValueKind.Number && element.GetInt32() % 2 == 0);
 
         // Assert
-        Assert.Equal(500, mutableArray.GetArrayLength());
+        Assert.AreEqual(500, mutableArray.GetArrayLength());
         // Verify first few odd numbers remain
-        Assert.Equal(1, mutableArray[0].GetInt32());
-        Assert.Equal(3, mutableArray[1].GetInt32());
-        Assert.Equal(5, mutableArray[2].GetInt32());
+        Assert.AreEqual(1, mutableArray[0].GetInt32());
+        Assert.AreEqual(3, mutableArray[1].GetInt32());
+        Assert.AreEqual(5, mutableArray[2].GetInt32());
     }
 
     #endregion
 
     #region Error Handling Tests
 
-    [Fact]
-    public static void RemoveWhere_NullPredicate_ThrowsArgumentNullException()
+    [TestMethod]
+    public void RemoveWhere_NullPredicate_ThrowsArgumentNullException()
     {
         // Arrange
         const string json = "[1, 2, 3]";
@@ -813,12 +814,12 @@ public static class JsonElementMutableRemoveWhereTests
         JsonElement.Mutable mutableArray = builderDoc.RootElement;
 
         // Act & Assert
-        Assert.Throws<ArgumentNullException>(() =>
+        Assert.ThrowsExactly<ArgumentNullException>(() =>
             mutableArray.RemoveWhere(null!));
     }
 
-    [Fact]
-    public static void RemoveWhere_NotAnArray_ThrowsInvalidOperationException()
+    [TestMethod]
+    public void RemoveWhere_NotAnArray_ThrowsInvalidOperationException()
     {
         // Arrange
         const string json = "\"not an array\"";
@@ -828,12 +829,12 @@ public static class JsonElementMutableRemoveWhereTests
         JsonElement.Mutable mutableElement = builderDoc.RootElement;
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
             mutableElement.RemoveWhere((in element) => true));
     }
 
-    [Fact]
-    public static void RemoveWhere_ObjectInsteadOfArray_ThrowsInvalidOperationException()
+    [TestMethod]
+    public void RemoveWhere_ObjectInsteadOfArray_ThrowsInvalidOperationException()
     {
         // Arrange
         const string json = "{\"key\": \"value\"}";
@@ -843,12 +844,12 @@ public static class JsonElementMutableRemoveWhereTests
         JsonElement.Mutable mutableElement = builderDoc.RootElement;
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
             mutableElement.RemoveWhere((in element) => true));
     }
 
-    [Fact]
-    public static void RemoveWhere_NullValue_ThrowsInvalidOperationException()
+    [TestMethod]
+    public void RemoveWhere_NullValue_ThrowsInvalidOperationException()
     {
         // Arrange
         const string json = "null";
@@ -858,7 +859,7 @@ public static class JsonElementMutableRemoveWhereTests
         JsonElement.Mutable mutableElement = builderDoc.RootElement;
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
             mutableElement.RemoveWhere((in element) => true));
     }
 
@@ -866,8 +867,8 @@ public static class JsonElementMutableRemoveWhereTests
 
     #region Predicate Exception Tests
 
-    [Fact]
-    public static void RemoveWhere_PredicateThrowsException_PropagatesException()
+    [TestMethod]
+    public void RemoveWhere_PredicateThrowsException_PropagatesException()
     {
         // Arrange
         const string json = "[1, 2, 3]";
@@ -877,13 +878,13 @@ public static class JsonElementMutableRemoveWhereTests
         JsonElement.Mutable mutableArray = builderDoc.RootElement;
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
             mutableArray.RemoveWhere((in element) =>
                 throw new InvalidOperationException("Test exception")));
     }
 
-    [Fact]
-    public static void RemoveWhere_PredicateThrowsOnSecondElement_PartialProcessing()
+    [TestMethod]
+    public void RemoveWhere_PredicateThrowsOnSecondElement_PartialProcessing()
     {
         // Arrange
         const string json = "[1, 2, 3]";
@@ -894,7 +895,7 @@ public static class JsonElementMutableRemoveWhereTests
         int callCount = 0;
 
         // Act & Assert
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
             mutableArray.RemoveWhere((in element) =>
             {
                 callCount++;
@@ -904,7 +905,7 @@ public static class JsonElementMutableRemoveWhereTests
             }));
 
         // The array should remain unchanged due to the exception
-        Assert.Equal(3, mutableArray.GetArrayLength());
+        Assert.AreEqual(3, mutableArray.GetArrayLength());
     }
 
     #endregion

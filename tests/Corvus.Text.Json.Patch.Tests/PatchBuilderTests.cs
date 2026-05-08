@@ -3,13 +3,14 @@
 // </copyright>
 
 using Corvus.Text.Json.Patch;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Patch.Tests;
 
+[TestClass]
 public class PatchBuilderTests
 {
-    [Fact]
+    [TestMethod]
     public void BuildAndApplyAddOperation()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -24,12 +25,12 @@ public class PatchBuilderTests
             .Add("/baz"u8, "qux"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal("qux", root.GetProperty("baz").GetString());
-        Assert.Equal("bar", root.GetProperty("foo").GetString());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual("qux", root.GetProperty("baz").GetString());
+        Assert.AreEqual("bar", root.GetProperty("foo").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void BuildAndApplyRemoveOperation()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -44,12 +45,12 @@ public class PatchBuilderTests
             .Remove("/baz"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.False(root.TryGetProperty("baz"u8, out _));
-        Assert.Equal("bar", root.GetProperty("foo").GetString());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.TryGetProperty("baz"u8, out _));
+        Assert.AreEqual("bar", root.GetProperty("foo").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void BuildAndApplyReplaceOperation()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -64,11 +65,11 @@ public class PatchBuilderTests
             .Replace("/foo"u8, 42);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal(42, root.GetProperty("foo").GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual(42, root.GetProperty("foo").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void BuildAndApplyMoveOperation()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -83,12 +84,12 @@ public class PatchBuilderTests
             .Move("/foo/bar"u8, "/qux/thud"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal("baz", root.GetProperty("qux").GetProperty("thud").GetString());
-        Assert.False(root.GetProperty("foo").TryGetProperty("bar"u8, out _));
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual("baz", root.GetProperty("qux").GetProperty("thud").GetString());
+        Assert.IsFalse(root.GetProperty("foo").TryGetProperty("bar"u8, out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void BuildAndApplyCopyOperation()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -103,12 +104,12 @@ public class PatchBuilderTests
             .Copy("/foo"u8, "/baz"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal("bar", root.GetProperty("foo").GetString());
-        Assert.Equal("bar", root.GetProperty("baz").GetString());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual("bar", root.GetProperty("foo").GetString());
+        Assert.AreEqual("bar", root.GetProperty("baz").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void BuildAndApplyTestOperation()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -123,10 +124,10 @@ public class PatchBuilderTests
             .Test("/foo"u8, "bar"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
+        Assert.IsTrue(root.TryApplyPatch(patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void BuildAndApplyTestOperationFailsOnMismatch()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -141,10 +142,10 @@ public class PatchBuilderTests
             .Test("/foo"u8, "baz"u8);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.False(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.TryApplyPatch(patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void BuildAndApplyMultipleOperations()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -161,16 +162,17 @@ public class PatchBuilderTests
             .Replace("/foo"u8, 42);
 
         JsonPatchDocument patch = patchBuilder.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.False(root.TryGetProperty("baz"u8, out _));
-        Assert.Equal("world", root.GetProperty("hello").GetString());
-        Assert.Equal(42, root.GetProperty("foo").GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.TryGetProperty("baz"u8, out _));
+        Assert.AreEqual("world", root.GetProperty("hello").GetString());
+        Assert.AreEqual(42, root.GetProperty("foo").GetInt32());
     }
 }
 
+[TestClass]
 public class IndividualOperationTests
 {
-    [Fact]
+    [TestMethod]
     public void TryAddToObject()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -182,11 +184,11 @@ public class IndividualOperationTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = "qux";
 
-        Assert.True(root.TryAdd("/baz"u8, in value));
-        Assert.Equal("qux", root.GetProperty("baz").GetString());
+        Assert.IsTrue(root.TryAdd("/baz"u8, in value));
+        Assert.AreEqual("qux", root.GetProperty("baz").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryAddToArray()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -198,12 +200,12 @@ public class IndividualOperationTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 4;
 
-        Assert.True(root.TryAdd("/-"u8, in value));
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(4, root[3].GetInt32());
+        Assert.IsTrue(root.TryAdd("/-"u8, in value));
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(4, root[3].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemoveProperty()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -214,11 +216,11 @@ public class IndividualOperationTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryRemove("/baz"u8));
-        Assert.False(root.TryGetProperty("baz"u8, out _));
+        Assert.IsTrue(root.TryRemove("/baz"u8));
+        Assert.IsFalse(root.TryGetProperty("baz"u8, out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemoveArrayElement()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -229,13 +231,13 @@ public class IndividualOperationTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryRemove("/1"u8));
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(3, root[1].GetInt32());
+        Assert.IsTrue(root.TryRemove("/1"u8));
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(3, root[1].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplaceProperty()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -247,11 +249,11 @@ public class IndividualOperationTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 42;
 
-        Assert.True(root.TryReplace("/foo"u8, in value));
-        Assert.Equal(42, root.GetProperty("foo").GetInt32());
+        Assert.IsTrue(root.TryReplace("/foo"u8, in value));
+        Assert.AreEqual(42, root.GetProperty("foo").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplaceNonExistentFails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -263,10 +265,10 @@ public class IndividualOperationTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 42;
 
-        Assert.False(root.TryReplace("/baz"u8, in value));
+        Assert.IsFalse(root.TryReplace("/baz"u8, in value));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMoveProperty()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -277,12 +279,12 @@ public class IndividualOperationTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryMove("/foo"u8, "/baz/qux"u8));
-        Assert.False(root.TryGetProperty("foo"u8, out _));
-        Assert.Equal("bar", root.GetProperty("baz").GetProperty("qux").GetString());
+        Assert.IsTrue(root.TryMove("/foo"u8, "/baz/qux"u8));
+        Assert.IsFalse(root.TryGetProperty("foo"u8, out _));
+        Assert.AreEqual("bar", root.GetProperty("baz").GetProperty("qux").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopyProperty()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -293,12 +295,12 @@ public class IndividualOperationTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryCopy("/foo"u8, "/baz"u8));
-        Assert.Equal("bar", root.GetProperty("foo").GetString());
-        Assert.Equal("bar", root.GetProperty("baz").GetString());
+        Assert.IsTrue(root.TryCopy("/foo"u8, "/baz"u8));
+        Assert.AreEqual("bar", root.GetProperty("foo").GetString());
+        Assert.AreEqual("bar", root.GetProperty("baz").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTestMatching()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -310,10 +312,10 @@ public class IndividualOperationTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement expected = JsonElement.ParseValue("\"bar\"");
 
-        Assert.True(root.TryTest("/foo"u8, in expected));
+        Assert.IsTrue(root.TryTest("/foo"u8, in expected));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTestNonMatching()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -325,10 +327,10 @@ public class IndividualOperationTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement expected = JsonElement.ParseValue("\"baz\"");
 
-        Assert.False(root.TryTest("/foo"u8, in expected));
+        Assert.IsFalse(root.TryTest("/foo"u8, in expected));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemoveRootFails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -339,10 +341,10 @@ public class IndividualOperationTests
 
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryRemove(""u8));
+        Assert.IsFalse(root.TryRemove(""u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryAddReplaceRoot()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -354,8 +356,8 @@ public class IndividualOperationTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 42;
 
-        Assert.True(root.TryAdd(""u8, in value));
-        Assert.Equal(JsonValueKind.Number, root.ValueKind);
-        Assert.Equal(42, root.GetInt32());
+        Assert.IsTrue(root.TryAdd(""u8, in value));
+        Assert.AreEqual(JsonValueKind.Number, root.ValueKind);
+        Assert.AreEqual(42, root.GetInt32());
     }
 }

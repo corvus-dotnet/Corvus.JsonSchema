@@ -2,18 +2,17 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Buffers;
+using System.Linq;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using System.IO;
-using System.Linq;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Tests;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
-using Xunit;
-using Xunit.Sdk;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json;
 
@@ -372,7 +371,7 @@ internal static partial class JsonTestHelper
             newtonsoft = new JsonTextReader(new StringReader(jsonString)) { MaxDepth = null };
             for (int j = 0; j < i; j++)
             {
-                Assert.True(newtonsoft.Read());
+                Assert.IsTrue(newtonsoft.Read());
             }
             newtonsoft.Skip();
             expectedTokenTypes.Add(MapTokenType(newtonsoft.TokenType));
@@ -392,20 +391,20 @@ internal static partial class JsonTestHelper
             ReadOnlySpan<byte> valueSpan = json.HasValueSequence ? json.ValueSequence.ToArray() : json.ValueSpan;
             if (json.HasValueSequence)
             {
-                Assert.True(json.ValueSpan == default);
+                Assert.IsTrue(json.ValueSpan == default);
                 if ((tokenType != JsonTokenType.String && tokenType != JsonTokenType.PropertyName) || json.GetString().Length != 0)
                 {
                     // Empty strings could still make this true, i.e. ""
-                    Assert.False(json.ValueSequence.IsEmpty);
+                    Assert.IsFalse(json.ValueSequence.IsEmpty);
                 }
             }
             else
             {
-                Assert.True(json.ValueSequence.IsEmpty);
+                Assert.IsTrue(json.ValueSequence.IsEmpty);
                 if ((tokenType != JsonTokenType.String && tokenType != JsonTokenType.PropertyName) || json.GetString().Length != 0)
                 {
                     // Empty strings could still make this true, i.e. ""
-                    Assert.False(json.ValueSpan == default);
+                    Assert.IsFalse(json.ValueSpan == default);
                 }
             }
             switch (tokenType)
@@ -453,23 +452,23 @@ internal static partial class JsonTestHelper
                     break;
 
                 case JsonTokenType.StartObject:
-                    Assert.True(json.ValueSpan.SequenceEqual("{"u8));
-                    Assert.True(json.ValueSequence.IsEmpty);
+                    Assert.IsTrue(json.ValueSpan.SequenceEqual("{"u8));
+                    Assert.IsTrue(json.ValueSequence.IsEmpty);
                     break;
 
                 case JsonTokenType.EndObject:
-                    Assert.True(json.ValueSpan.SequenceEqual("}"u8));
-                    Assert.True(json.ValueSequence.IsEmpty);
+                    Assert.IsTrue(json.ValueSpan.SequenceEqual("}"u8));
+                    Assert.IsTrue(json.ValueSequence.IsEmpty);
                     break;
 
                 case JsonTokenType.StartArray:
-                    Assert.True(json.ValueSpan.SequenceEqual("["u8));
-                    Assert.True(json.ValueSequence.IsEmpty);
+                    Assert.IsTrue(json.ValueSpan.SequenceEqual("["u8));
+                    Assert.IsTrue(json.ValueSequence.IsEmpty);
                     break;
 
                 case JsonTokenType.EndArray:
-                    Assert.True(json.ValueSpan.SequenceEqual("]"u8));
-                    Assert.True(json.ValueSequence.IsEmpty);
+                    Assert.IsTrue(json.ValueSpan.SequenceEqual("]"u8));
+                    Assert.IsTrue(json.ValueSequence.IsEmpty);
                     break;
 
                 default:
@@ -509,21 +508,21 @@ internal static partial class JsonTestHelper
                     break;
 
                 case JsonTokenType.StartObject:
-                    Assert.True(valueSpan.SequenceEqual("{"u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("{"u8));
                     root = ReaderDictionaryLoop(ref json);
                     break;
 
                 case JsonTokenType.StartArray:
-                    Assert.True(valueSpan.SequenceEqual("["u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("["u8));
                     root = ReaderListLoop(ref json);
                     break;
 
                 case JsonTokenType.EndObject:
-                    Assert.True(valueSpan.SequenceEqual("}"u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("}"u8));
                     break;
 
                 case JsonTokenType.EndArray:
-                    Assert.True(valueSpan.SequenceEqual("]"u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("]"u8));
                     break;
 
                 case JsonTokenType.None:
@@ -602,7 +601,7 @@ internal static partial class JsonTestHelper
                     break;
 
                 case JsonTokenType.StartObject:
-                    Assert.True(valueSpan.SequenceEqual("{"u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("{"u8));
                     value = ReaderDictionaryLoop(ref json);
                     if (dictionary.TryGetValue(key, out _))
                     {
@@ -615,7 +614,7 @@ internal static partial class JsonTestHelper
                     break;
 
                 case JsonTokenType.StartArray:
-                    Assert.True(valueSpan.SequenceEqual("["u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("["u8));
                     value = ReaderListLoop(ref json);
                     if (dictionary.TryGetValue(key, out _))
                     {
@@ -628,7 +627,7 @@ internal static partial class JsonTestHelper
                     break;
 
                 case JsonTokenType.EndObject:
-                    Assert.True(valueSpan.SequenceEqual("}"u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("}"u8));
                     return dictionary;
 
                 case JsonTokenType.None:
@@ -673,19 +672,19 @@ internal static partial class JsonTestHelper
                     break;
 
                 case JsonTokenType.StartObject:
-                    Assert.True(valueSpan.SequenceEqual("{"u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("{"u8));
                     value = ReaderDictionaryLoop(ref json);
                     arrayList.Add(value);
                     break;
 
                 case JsonTokenType.StartArray:
-                    Assert.True(valueSpan.SequenceEqual("["u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("["u8));
                     value = ReaderListLoop(ref json);
                     arrayList.Add(value);
                     break;
 
                 case JsonTokenType.EndArray:
-                    Assert.True(valueSpan.SequenceEqual("]"u8));
+                    Assert.IsTrue(valueSpan.SequenceEqual("]"u8));
                     return arrayList;
 
                 case JsonTokenType.None:
@@ -769,7 +768,14 @@ internal static partial class JsonTestHelper
         string value,
         bool skipSpecialRules)
     {
-        Assert.Equal(expectedValue.NormalizeToJsonNetFormat(skipSpecialRules), value.NormalizeToJsonNetFormat(skipSpecialRules), ignoreLineEndingDifferences: true);
+        Assert.AreEqual(
+            NormalizeToLf(expectedValue.NormalizeToJsonNetFormat(skipSpecialRules)),
+            NormalizeToLf(value.NormalizeToJsonNetFormat(skipSpecialRules)));
+    }
+
+    private static string NormalizeToLf(string s)
+    {
+        return s.Replace("\r\n", "\n").Replace("\r", "\n");
     }
 
     public static void AssertContentsNotEqualAgainstJsonNet(
@@ -780,7 +786,7 @@ internal static partial class JsonTestHelper
         string value,
         bool skipSpecialRules)
     {
-        Assert.NotEqual(expectedValue.NormalizeToJsonNetFormat(skipSpecialRules), value.NormalizeToJsonNetFormat(skipSpecialRules));
+        Assert.AreNotEqual(expectedValue.NormalizeToJsonNetFormat(skipSpecialRules), value.NormalizeToJsonNetFormat(skipSpecialRules));
     }
 
     public delegate void AssertThrowsActionUtf8JsonReader(ref Utf8JsonReader json);
@@ -805,7 +811,12 @@ internal static partial class JsonTestHelper
             return matchingEx;
         }
 
-        throw ex is null ? ThrowsException.ForNoException(typeof(TException)) : ThrowsException.ForIncorrectExceptionType(typeof(TException), ex);
+        if (ex is null)
+        {
+            throw new AssertFailedException($"Expected exception of type {typeof(TException).FullName}, but no exception was thrown.");
+        }
+
+        throw new AssertFailedException($"Expected exception of type {typeof(TException).FullName}, but got {ex.GetType().FullName}: {ex.Message}", ex);
     }
 
 #if NET

@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.RegexOptimization;
 
@@ -14,8 +14,9 @@ namespace Corvus.Text.Json.Tests.RegexOptimization;
 /// Tests for range regex pattern optimization with the <c>pattern</c> keyword.
 /// The pattern <c>^.{1,256}$</c> matches strings between 1 and 256 characters long.
 /// </summary>
-[Trait("Optimization", "RegexRange")]
-public class RangePatternKeyword : IClassFixture<RangePatternKeyword.Fixture>
+[TestCategory("RegexRange")]
+[TestClass]
+public class RangePatternKeyword
 {
     private const string Schema = """
         {
@@ -25,51 +26,57 @@ public class RangePatternKeyword : IClassFixture<RangePatternKeyword.Fixture>
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public RangePatternKeyword(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"a\"")]
-    [InlineData("\"hello\"")]
-    [InlineData("\"1234567890\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"a\"")]
+    [DataRow("\"hello\"")]
+    [DataRow("\"1234567890\"")]
     public void StringWithinRangeIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyStringIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("\"\"");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("\"\"");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void StringExceedingMaxIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("\"12345678901\"");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("\"12345678901\"");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("42")]
-    [InlineData("null")]
+    [TestMethod]
+    [DataRow("42")]
+    [DataRow("null")]
     public void NonStringValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -91,8 +98,9 @@ public class RangePatternKeyword : IClassFixture<RangePatternKeyword.Fixture>
 /// <summary>
 /// Tests for range regex with larger bounds matching the Vercel benchmark pattern.
 /// </summary>
-[Trait("Optimization", "RegexRange")]
-public class RangePatternKeywordLarge : IClassFixture<RangePatternKeywordLarge.Fixture>
+[TestCategory("RegexRange")]
+[TestClass]
+public class RangePatternKeywordLarge
 {
     private const string Schema = """
         {
@@ -102,34 +110,40 @@ public class RangePatternKeywordLarge : IClassFixture<RangePatternKeywordLarge.F
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public RangePatternKeywordLarge(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"a\"")]
-    [InlineData("\"hello world\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"a\"")]
+    [DataRow("\"hello world\"")]
     public void StringWithinRangeIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyStringIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("\"\"");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("\"\"");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -151,8 +165,9 @@ public class RangePatternKeywordLarge : IClassFixture<RangePatternKeywordLarge.F
 /// <summary>
 /// Tests for range regex with Unicode codepoints (ensures rune counting, not byte counting).
 /// </summary>
-[Trait("Optimization", "RegexRange")]
-public class RangePatternKeywordUnicode : IClassFixture<RangePatternKeywordUnicode.Fixture>
+[TestCategory("RegexRange")]
+[TestClass]
+public class RangePatternKeywordUnicode
 {
     private const string Schema = """
         {
@@ -162,44 +177,50 @@ public class RangePatternKeywordUnicode : IClassFixture<RangePatternKeywordUnico
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public RangePatternKeywordUnicode(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"\\u00e9\"")]
-    [InlineData("\"ab\"")]
-    [InlineData("\"\\u00e9\\u00e8\\u00ea\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"\\u00e9\"")]
+    [DataRow("\"ab\"")]
+    [DataRow("\"\\u00e9\\u00e8\\u00ea\"")]
     public void UnicodeStringsWithinRuneRangeAreAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"abcd\"")]
-    [InlineData("\"\\u00e9\\u00e8\\u00ea\\u00eb\"")]
+    [TestMethod]
+    [DataRow("\"abcd\"")]
+    [DataRow("\"\\u00e9\\u00e8\\u00ea\\u00eb\"")]
     public void StringsExceedingRuneRangeAreRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyStringIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("\"\"");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("\"\"");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -221,8 +242,9 @@ public class RangePatternKeywordUnicode : IClassFixture<RangePatternKeywordUnico
 /// <summary>
 /// Tests for range regex optimization with the <c>patternProperties</c> keyword.
 /// </summary>
-[Trait("Optimization", "RegexRange")]
-public class RangePatternProperties : IClassFixture<RangePatternProperties.Fixture>
+[TestCategory("RegexRange")]
+[TestClass]
+public class RangePatternProperties
 {
     private const string Schema = """
         {
@@ -235,36 +257,42 @@ public class RangePatternProperties : IClassFixture<RangePatternProperties.Fixtu
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public RangePatternProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"a": "v"}""")]
-    [InlineData("""{"abc": "v", "de": "w"}""")]
-    [InlineData("""{}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"a": "v"}""")]
+    [DataRow("""{"abc": "v", "de": "w"}""")]
+    [DataRow("""{}""")]
     public void ObjectWithShortKeyNamesIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"a": "v", "toolong": "w"}""")]
+    [TestMethod]
+    [DataRow("""{"a": "v", "toolong": "w"}""")]
     public void ObjectWithTooLongKeyNameIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

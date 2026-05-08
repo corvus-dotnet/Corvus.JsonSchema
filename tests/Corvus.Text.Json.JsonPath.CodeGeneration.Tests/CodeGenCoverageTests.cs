@@ -7,8 +7,7 @@ using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.JsonPath;
 using Corvus.Text.Json.JsonPath.CodeGeneration;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonPath.CodeGeneration.Tests;
 
@@ -18,23 +17,30 @@ namespace Corvus.Text.Json.JsonPath.CodeGeneration.Tests;
 /// it dynamically, executes the expression, and validates correctness against the
 /// runtime evaluator.
 /// </summary>
-public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
+[TestClass]
+public class CodeGenCoverageTests
 {
-    private readonly CodeGenConformanceFixture fixture;
-    private readonly ITestOutputHelper output;
+    private static CodeGenConformanceFixture? s_fixture;
 
-    public CodeGenCoverageTests(CodeGenConformanceFixture fixture, ITestOutputHelper output)
+    [ClassInitialize]
+    public static void ClassInit(TestContext _)
     {
-        this.fixture = fixture;
-        this.output = output;
+        s_fixture = new CodeGenConformanceFixture();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
     }
 
     // ── Descendant streaming (general DFS with ArrayPool) ────────────
 
-    [Theory]
-    [InlineData("$..*", """{"a":1,"b":{"c":2}}""")]
-    [InlineData("$..[0]", """[[1,2],[3,[4,5]]]""")]
-    [InlineData("$..[?@>2]", """{"a":[1,2,3],"b":{"c":4}}""")]
+    [TestMethod]
+    [DataRow("$..*", """{"a":1,"b":{"c":2}}""")]
+    [DataRow("$..[0]", """[[1,2],[3,[4,5]]]""")]
+    [DataRow("$..[?@>2]", """{"a":[1,2,3],"b":{"c":4}}""")]
     public void DescendantGeneral_MatchesRuntime(string expression, string json)
     {
         this.AssertCgMatchesRuntime(expression, json);
@@ -42,14 +48,14 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Descendant for name (terminal and non-terminal) ──────────────
 
-    [Fact]
+    [TestMethod]
     public void DescendantForName_Terminal()
     {
         // Terminal $..name → uses DescendantsForName helper (no ArrayPool)
         this.AssertCgMatchesRuntime("$..name", """{"name":"a","x":{"name":"b","y":{"name":"c"}}}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void DescendantForName_NonTerminal()
     {
         // Non-terminal $..name.child → uses EnumerateDescendantProperties
@@ -58,13 +64,13 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Slice with negative step ─────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void SliceNegativeStep()
     {
         this.AssertCgMatchesRuntime("$[4:0:-2]", """[0,1,2,3,4,5]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SliceNegativeStepDefaultBounds()
     {
         this.AssertCgMatchesRuntime("$[::-1]", """[1,2,3]""");
@@ -72,22 +78,22 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── match() and search() with static literal patterns ────────────
 
-    [Fact]
+    [TestMethod]
     public void MatchWithLiteralPattern()
     {
         const string expression = """$[?match(@.name, "te.*")]""";
         const string json = """[{"name":"test"},{"name":"no"},{"name":"temp"}]""";
         CompiledJsonPathExpression compiled = this.CompileAndLog(expression);
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
 
         // Verify generated code includes regex field
-        Assert.Contains("s_regex", compiled.GeneratedCode!);
-        Assert.Contains("using System.Text.RegularExpressions;", compiled.GeneratedCode!);
+        StringAssert.Contains(compiled.GeneratedCode!, "s_regex");
+        StringAssert.Contains(compiled.GeneratedCode!, "using System.Text.RegularExpressions;");
 
         this.AssertCgMatchesRuntime(expression, json);
     }
 
-    [Fact]
+    [TestMethod]
     public void SearchWithLiteralPattern()
     {
         const string expression = """$[?search(@.data, "pat")]""";
@@ -97,7 +103,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── match()/search() with dynamic pattern (runtime regex) ────────
 
-    [Fact]
+    [TestMethod]
     public void SearchWithDynamicPattern()
     {
         // Pattern comes from a property, not a literal → runtime Regex creation
@@ -108,7 +114,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Non-singular filter queries (counter + helpers) ──────────────
 
-    [Fact]
+    [TestMethod]
     public void CountWithNonSingularQuery()
     {
         // count($..items) triggers EmitFilterQueryCounter + GenerateFilterQueryHelper
@@ -117,7 +123,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         this.AssertCgMatchesRuntime(expression, json);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValueWithNonSingularQuery()
     {
         // value(@.items[*]) triggers EmitFilterQueryAsValue → non-singular branch
@@ -129,32 +135,32 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Static literal fields ────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void StringLiteralComparison_EmitsStaticField()
     {
         const string expression = """$[?@.type == "special"]""";
         const string json = """[{"type":"special"},{"type":"normal"}]""";
         CompiledJsonPathExpression compiled = this.CompileAndLog(expression);
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
 
         // Check that a static literal field was emitted
-        Assert.Contains("s_literal", compiled.GeneratedCode!);
+        StringAssert.Contains(compiled.GeneratedCode!, "s_literal");
 
         this.AssertCgMatchesRuntime(expression, json);
     }
 
     // ── Name fields (multiple property accesses) ─────────────────────
 
-    [Fact]
+    [TestMethod]
     public void MultipleNameFields()
     {
         const string expression = """$[?@.first == @.second]""";
         const string json = """[{"first":1,"second":1},{"first":1,"second":2}]""";
         CompiledJsonPathExpression compiled = this.CompileAndLog(expression);
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
 
         // Multiple distinct names should produce multiple s_name fields
-        Assert.Contains("s_name", compiled.GeneratedCode!);
+        StringAssert.Contains(compiled.GeneratedCode!, "s_name");
 
         this.AssertCgMatchesRuntime(expression, json);
     }
@@ -163,70 +169,70 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
     // These target uncovered branches in TryEmitSpecializedComparison
     // and EmitLengthNumericComparison (lines 972-986, 1056-1087, 1108-1126, 1181-1190).
 
-    [Fact]
+    [TestMethod]
     public void ComparisonNotEqual()
     {
         // NotEqual operator → EmitStringEqualityComparison with NotEqual
         this.AssertCgMatchesRuntime("""$[?@.x != "a"]""", """[{"x":"a"},{"x":"b"},{"x":"c"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ComparisonLessThanOrEqual()
     {
         // <= with numeric literal → specialized comparison LessThanOrEqual
         this.AssertCgMatchesRuntime("$[?@.x <= 3]", """[{"x":1},{"x":3},{"x":5}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ComparisonGreaterThanOrEqual()
     {
         // >= with numeric literal → specialized GreaterThanOrEqual
         this.AssertCgMatchesRuntime("$[?@.x >= 3]", """[{"x":1},{"x":3},{"x":5}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ComparisonLessThan()
     {
         // < with numeric literal → specialized LessThan
         this.AssertCgMatchesRuntime("$[?@.x < 3]", """[{"x":1},{"x":3},{"x":5}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ComparisonFlipped_LiteralOnLeft()
     {
         // Literal on left side → FlipOp (lines 971-976)
         this.AssertCgMatchesRuntime("""$[?3 <= @.x]""", """[{"x":1},{"x":3},{"x":5}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ComparisonParenthesizedExpr()
     {
         // Parenthesized expression side → unwrap paren (lines 983-986)
         this.AssertCgMatchesRuntime("$[?(@.x) == 1]", """[{"x":1},{"x":2}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LengthNotEqual()
     {
         // length() != N → EmitLengthNumericComparison NotEqual branch (lines 1055-1065)
         this.AssertCgMatchesRuntime("""$[?length(@.s) != 3]""", """[{"s":"ab"},{"s":"abc"},{"s":"abcd"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LengthLessThanOrEqual()
     {
         // length() <= N → EmitLengthNumericComparison else branch (lines 1077-1087)
         this.AssertCgMatchesRuntime("""$[?length(@.s) <= 3]""", """[{"s":"ab"},{"s":"abc"},{"s":"abcd"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LengthNonIntegralLiteral()
     {
         // length() == 2.5 → non-integral literal path (isIntegral=false branches)
         this.AssertCgMatchesRuntime("""$[?length(@.s) == 2.5]""", """[{"s":"ab"},{"s":"abc"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void CountNonIntegralLiteral()
     {
         // count() == 1.5 → EmitCountNumericComparison non-integral branch (lines 1123-1126)
@@ -235,7 +241,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Not expression ───────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void LogicalNot()
     {
         // ! operator → EmitLogicalNot (line 914 → EmitFilterBool)
@@ -244,7 +250,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Existence test (filter query as bool) ────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void ExistenceTest()
     {
         // @.x used as boolean test → EmitFilterQueryAsTest (lines 915-916)
@@ -253,19 +259,19 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Null/True/False literal comparison ───────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void NullLiteralComparison()
     {
         this.AssertCgMatchesRuntime("$[?@.x == null]", """[{"x":null},{"x":1},{"y":2}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void TrueLiteralComparison()
     {
         this.AssertCgMatchesRuntime("$[?@.x == true]", """[{"x":true},{"x":false},{"x":1}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FalseLiteralComparison()
     {
         this.AssertCgMatchesRuntime("$[?@.x == false]", """[{"x":true},{"x":false},{"x":0}]""");
@@ -273,14 +279,14 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Additional length/count non-integral branches ────────────────
 
-    [Fact]
+    [TestMethod]
     public void LengthNotEqual_NonIntegral()
     {
         // length() != 2.5 → EmitLengthNumericComparison NotEqual+non-integral (lines 1062-1064)
         this.AssertCgMatchesRuntime("""$[?length(@.s) != 2.5]""", """[{"s":"ab"},{"s":"abc"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LengthLessThan_NonIntegral()
     {
         // length() < 2.5 → EmitLengthNumericComparison else+non-integral (lines 1085-1087)
@@ -289,7 +295,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── IsSingularQuery false branch (descendant segment) ────────────
 
-    [Fact]
+    [TestMethod]
     public void DescendantQueryInValueContext()
     {
         // $..x in value context — is NOT singular → IsSingularQuery returns false (line 1527)
@@ -298,21 +304,21 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── FlipOp additional operators ──────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void FlippedGreaterThan()
     {
         // 5 > @.x → FlipOp GreaterThan→LessThan (lines 1184)
         this.AssertCgMatchesRuntime("""$[?5 > @.x]""", """[{"x":3},{"x":7}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FlippedLessThan()
     {
         // 3 < @.x → FlipOp LessThan→GreaterThan (lines 1186-1188)
         this.AssertCgMatchesRuntime("""$[?3 < @.x]""", """[{"x":1},{"x":5}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FlippedGreaterThanOrEqual()
     {
         // 5 >= @.x → FlipOp GreaterThanOrEqual→LessThanOrEqual
@@ -321,7 +327,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Custom function: expression form, value return ───────────────
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_ExpressionForm_ValueReturn()
     {
         var customFn = new CustomFunction(
@@ -335,15 +341,15 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         const string expression = """$[?double_val(@.v) > 5]""";
 
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
         // Verify the custom function helper was generated
-        Assert.Contains("CustomFn_double_val", code);
-        Assert.Contains("private static JsonElement CustomFn_double_val(", code);
+        StringAssert.Contains(code, "CustomFn_double_val");
+        StringAssert.Contains(code, "private static JsonElement CustomFn_double_val(");
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_LogicalReturn()
     {
         var customFn = new CustomFunction(
@@ -356,14 +362,14 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         const string expression = """$[?is_positive(@.v)]""";
 
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
-        Assert.Contains("CustomFn_is_positive", code);
-        Assert.Contains("private static bool CustomFn_is_positive(", code);
+        StringAssert.Contains(code, "CustomFn_is_positive");
+        StringAssert.Contains(code, "private static bool CustomFn_is_positive(");
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_BlockForm()
     {
         var customFn = new CustomFunction(
@@ -376,15 +382,15 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         const string expression = """$[?clamp(@.v) >= 0]""";
 
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
-        Assert.Contains("CustomFn_clamp", code);
+        StringAssert.Contains(code, "CustomFn_clamp");
         // Block form should have multiple lines
-        Assert.Contains("if (x.ValueKind != JsonValueKind.Number)", code);
+        StringAssert.Contains(code, "if (x.ValueKind != JsonValueKind.Number)");
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_NodesParameter()
     {
         var customFn = new CustomFunction(
@@ -398,16 +404,16 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         const string expression = """$[?node_count(@.items[*]) > 1]""";
 
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
-        Assert.Contains("CustomFn_node_count", code);
-        Assert.Contains("ReadOnlySpan<JsonElement> nodes", code);
+        StringAssert.Contains(code, "CustomFn_node_count");
+        StringAssert.Contains(code, "ReadOnlySpan<JsonElement> nodes");
         // Should generate a NodesCollector helper for the @.items[*] query
-        Assert.Contains("FilterQuery", code);
+        StringAssert.Contains(code, "FilterQuery");
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_MultipleParameters()
     {
         var customFn = new CustomFunction(
@@ -423,14 +429,14 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         const string expression = """$[?add_vals(@.x, @.y) > 5]""";
 
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
-        Assert.Contains("CustomFn_add_vals", code);
-        Assert.Contains("JsonElement a, JsonElement b", code);
+        StringAssert.Contains(code, "CustomFn_add_vals");
+        StringAssert.Contains(code, "JsonElement a, JsonElement b");
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_CalledTwice_GeneratesHelperOnce()
     {
         var customFn = new CustomFunction(
@@ -444,8 +450,8 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         const string expression = """$[?noop(@.a) > 0 && noop(@.b) > 0]""";
 
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
         // The helper method should appear exactly once
         int count = 0;
@@ -456,26 +462,26 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             idx++;
         }
 
-        Assert.Equal(1, count);
+        Assert.AreEqual(1, count);
     }
 
     // ── Regex field emission ─────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void MultipleRegexPatterns_EmitsMultipleFields()
     {
         const string expression = """$[?match(@.a, "foo") || search(@.b, "bar")]""";
         CompiledJsonPathExpression compiled = this.CompileAndLog(expression);
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
 
         // Should have two regex fields (fully-qualified type name)
         int regexCount = CountOccurrences(compiled.GeneratedCode!, "private static readonly System.Text.RegularExpressions.Regex s_regex");
-        Assert.True(regexCount >= 2, $"Expected at least 2 regex fields, found {regexCount}");
+        Assert.IsTrue(regexCount >= 2, $"Expected at least 2 regex fields, found {regexCount}");
     }
 
     // ── Partial class emission ───────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void IsPartialFlag_EmitsPartialClass()
     {
         string code = JsonPathCodeGenerator.Generate(
@@ -484,10 +490,10 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             "Test.Namespace",
             isPartial: true);
 
-        Assert.Contains("internal static partial class TestPartial", code);
+        StringAssert.Contains(code, "internal static partial class TestPartial");
     }
 
-    [Fact]
+    [TestMethod]
     public void Accessibility_EmitsPublicClass()
     {
         string code = JsonPathCodeGenerator.Generate(
@@ -496,12 +502,12 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             "Test.Namespace",
             accessibility: "public");
 
-        Assert.Contains("public static class TestPublic", code);
+        StringAssert.Contains(code, "public static class TestPublic");
     }
 
     // ── BuildSignatures coverage ─────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void NullCustomFunctions_NoSignatures()
     {
         // Generate with null custom functions — should not throw
@@ -509,7 +515,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         Assert.DoesNotContain("CustomFn_", code);
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyCustomFunctions_NoSignatures()
     {
         string code = JsonPathCodeGenerator.Generate("$.a", "TestEmpty", "Test.Ns", customFunctions: Array.Empty<CustomFunction>());
@@ -518,28 +524,28 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── EscapeStringLiteral — control character branches (225-235) ──
 
-    [Fact]
+    [TestMethod]
     public void StringLiteralWithNewline()
     {
         // Comparison against a string containing \n → EscapeStringLiteral hits '\n' case (line 227)
         this.AssertCgMatchesRuntime("""$[?@.s == "line1\nline2"]""", """[{"s":"line1\nline2"},{"s":"other"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void StringLiteralWithTab()
     {
         // String with \t → EscapeStringLiteral hits '\t' case (line 229)
         this.AssertCgMatchesRuntime("""$[?@.s == "a\tb"]""", """[{"s":"a\tb"},{"s":"ab"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void StringLiteralWithCarriageReturn()
     {
         // String with \r → EscapeStringLiteral hits '\r' case (line 228)
         this.AssertCgMatchesRuntime("""$[?@.s == "a\rb"]""", """[{"s":"a\rb"},{"s":"ab"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void StringLiteralWithBackslash()
     {
         // String with \\ → EscapeStringLiteral hits '\\' case (line 226)
@@ -548,42 +554,42 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── TranslateIRegexpForCodeGen — character class branches (277-352) ──
 
-    [Fact]
+    [TestMethod]
     public void RegexWithCharacterClass()
     {
         // [abc] → TranslateIRegexpForCodeGen processes character class (lines 338-354)
         this.AssertCgMatchesRuntime("""$[?match(@.s, "[abc]+")]""", """[{"s":"abc"},{"s":"xyz"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexWithNegatedCharacterClass()
     {
         // [^abc] → hits negated class branch (lines 342-346)
         this.AssertCgMatchesRuntime("""$[?match(@.s, "[^abc]+")]""", """[{"s":"xyz"},{"s":"abc"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexWithEscapeInContent()
     {
         // \\d → UnescapeJsonStringContent processes backslash-d (JSON escape → regex escape, lines 277-312)
         this.AssertCgMatchesRuntime("""$[?match(@.s, "\\d+")]""", """[{"s":"123"},{"s":"abc"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexWithUnicodeEscape()
     {
         // \\u0041 → UnescapeJsonStringContent processes \\u hex escape (lines 285-306)
         this.AssertCgMatchesRuntime("""$[?match(@.s, "\\u0041+")]""", """[{"s":"AAA"},{"s":"bbb"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexWithClosingBracketInClass()
     {
         // []] → character class with ] as first char (lines 348-352)
         this.AssertCgMatchesRuntime("""$[?match(@.s, "[]a]+")]""", """[{"s":"]a"},{"s":"b"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexWithNegatedClassClosingBracket()
     {
         // [^]] → negated class with ] as first char after ^ (lines 342-352)
@@ -592,14 +598,14 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── OpToSymbol remaining operators ───────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void NotEqualComparison()
     {
         // != → OpToSymbol hits NotEqual case (line 1197)
         this.AssertCgMatchesRuntime("""$[?@.x != 3]""", """[{"x":1},{"x":3},{"x":5}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void GreaterThanOrEqualComparison()
     {
         // >= → OpToSymbol hits GreaterThanOrEqual case (line 1201)
@@ -608,14 +614,14 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── FlipOp default case (Equal/NotEqual don't flip) ─────────────
 
-    [Fact]
+    [TestMethod]
     public void FlippedEqual()
     {
         // 3 == @.x → FlipOp returns Equal unchanged (line 1188 default case)
         this.AssertCgMatchesRuntime("""$[?3 == @.x]""", """[{"x":1},{"x":3},{"x":5}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FlippedNotEqual()
     {
         // 3 != @.x → FlipOp returns NotEqual unchanged (line 1188 default case)
@@ -624,7 +630,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── EmitFilterQueryAsValue non-singular (1352-1357) ─────────────
 
-    [Fact]
+    [TestMethod]
     public void ValueWithWildcardQuery()
     {
         // value(@.items[*]) — wildcard is non-singular, hits lines 1352-1357
@@ -633,7 +639,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── EmitCountFunction as value context (line 1392) ──────────────
 
-    [Fact]
+    [TestMethod]
     public void CountInComparisonContext()
     {
         // count(@.items[*]) > 1 — hits EmitCountFunction path (line 1392)
@@ -642,28 +648,28 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Singleton prefix: all segments are single-name/index (483-501) ─
 
-    [Fact]
+    [TestMethod]
     public void SingletonPrefix_AllSingleton()
     {
         // $.a.b → every segment is a singleton name → all-singleton path (line 497-501)
         this.AssertCgMatchesRuntime("$.a.b", """{"a":{"b":42},"c":1}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SingletonPrefix_IndexThenName()
     {
         // $[0].x → singleton index prefix + singleton name (lines 489-495, 541-552)
         this.AssertCgMatchesRuntime("$[0].x", """[{"x":1},{"x":2}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SingletonPrefix_NegativeIndex()
     {
         // $[-1].x → singleton with negative index normalization
         this.AssertCgMatchesRuntime("$[-1].x", """[{"x":1},{"x":2},{"x":3}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SingletonPrefix_MixedThenStreaming()
     {
         // $.a[*] → singleton "a" prefix then wildcard streaming (lines 489-495, 504-505)
@@ -672,14 +678,14 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Index selector streaming (656-670) ──────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void IndexStreaming_WithFurtherSegment()
     {
         // $[*][0] → wildcard then index streaming (non-singleton because wildcard precedes)
         this.AssertCgMatchesRuntime("$[*][0]", """[[1,2],[3,4],[5]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void IndexStreaming_NegativeWithChain()
     {
         // $[*][-1].x → wildcard + negative index streaming + name streaming
@@ -688,21 +694,21 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Slice selector streaming (705-733) ──────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void SliceStreaming_PositiveStep()
     {
         // $[*][0:2] → wildcard then positive-step slice streaming
         this.AssertCgMatchesRuntime("$[*][0:2]", """[[1,2,3],[4,5]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SliceStreaming_NegativeStep()
     {
         // $[*][2:0:-1] → wildcard then negative-step slice streaming (lines 724-729)
         this.AssertCgMatchesRuntime("$[*][2:0:-1]", """[[1,2,3],[4,5,6]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SliceStreaming_WithFurtherName()
     {
         // $[0:2].x → slice streaming then name (chain continuation)
@@ -711,28 +717,28 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Descendant streaming general DFS (788-866) ──────────────────
 
-    [Fact]
+    [TestMethod]
     public void DescendantGeneral_IndexSelector()
     {
         // $..[0] with further segment → general DFS (not name-optimized)
         this.AssertCgMatchesRuntime("$..[0].x", """{"a":[{"x":1}],"b":{"c":[{"x":2}]}}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void DescendantGeneral_WildcardWithChain()
     {
         // $..*[0] → general descendant wildcard + index streaming
         this.AssertCgMatchesRuntime("$..[*].x", """{"a":[{"x":1},{"x":2}],"b":{"x":3}}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void DescendantGeneral_FilterSelector()
     {
         // $..[?@>1] with further segment → general DFS + filter + chain
         this.AssertCgMatchesRuntime("$..[?@.x>1].x", """{"a":[{"x":1},{"x":2}],"b":{"x":3}}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void DescendantGeneral_DeepNesting()
     {
         // Deep nesting exercises GrowStack in DFS (lines 835, 851)
@@ -743,7 +749,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Descendant for name streaming non-terminal (876-903) ────────
 
-    [Fact]
+    [TestMethod]
     public void DescendantForName_NonTerminal_WithChain()
     {
         // $..name.child → EnumerateDescendantProperties + streaming chain (lines 896-902)
@@ -752,7 +758,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """{"items":{"name":"a"},"x":{"items":{"name":"b"},"y":{"items":{"name":"c"}}}}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void DescendantForName_Terminal_CounterTarget()
     {
         // count(@..name) → terminal descendant in counter context (lines 883-886)
@@ -763,7 +769,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Logical AND / OR (1228-1271) ────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void LogicalAnd_ShortCircuit()
     {
         // && → EmitLogicalAnd with short-circuit (lines 1228-1246)
@@ -772,7 +778,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """[{"a":0,"b":5},{"a":2,"b":5},{"a":2,"b":15},{"a":3,"b":3}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LogicalOr_ShortCircuit()
     {
         // || → EmitLogicalOr with short-circuit (lines 1253-1271)
@@ -781,7 +787,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """[{"a":1,"b":5},{"a":6,"b":5},{"a":1,"b":1},{"a":0,"b":9}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LogicalAnd_NestedOr()
     {
         // AND containing OR → exercises both emission paths
@@ -792,7 +798,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Filter query as test: non-singular (1290-1308) ──────────────
 
-    [Fact]
+    [TestMethod]
     public void FilterQueryAsTest_NonSingular()
     {
         // @.items[*] as existence test → non-singular path (lines 1300-1307)
@@ -801,7 +807,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """[{"items":[1,2]},{"items":[]},{"other":1}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterQueryAsTest_Singular()
     {
         // @.x as existence test → singular path (lines 1291-1298)
@@ -812,28 +818,28 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Constant literal comparisons: <, > (1152-1164 default) ──────
 
-    [Fact]
+    [TestMethod]
     public void NullLessThan()
     {
         // @.x < null → non-orderable, always false (line 1159)
         this.AssertCgMatchesRuntime("$[?@.x < null]", """[{"x":null},{"x":1}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void NullGreaterThan()
     {
         // @.x > null → non-orderable, always false (line 1159)
         this.AssertCgMatchesRuntime("$[?@.x > null]", """[{"x":null},{"x":1}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void TrueNotEqual()
     {
         // @.x != true → NotEqual branch (line 1155)
         this.AssertCgMatchesRuntime("$[?@.x != true]", """[{"x":true},{"x":false},{"x":1}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FalseLessThanOrEqual()
     {
         // @.x <= false → reduces to == for non-orderable (line 1152)
@@ -842,14 +848,14 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── String ordering comparison (falls through to general, line 1000) ─
 
-    [Fact]
+    [TestMethod]
     public void StringOrderingComparison_LessThan()
     {
         // @.s < "m" → LiteralKind.String with non-equality op → falls to general (line 1000 _ => null)
         this.AssertCgMatchesRuntime("""$[?@.s < "m"]""", """[{"s":"apple"},{"s":"zebra"},{"s":"mango"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void StringOrderingComparison_GreaterThan()
     {
         this.AssertCgMatchesRuntime("""$[?@.s > "m"]""", """[{"s":"apple"},{"s":"zebra"},{"s":"mango"}]""");
@@ -857,7 +863,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Count function in value context (1431-1449) ─────────────────
 
-    [Fact]
+    [TestMethod]
     public void CountFunction_ValueContext()
     {
         // count(@.items[*]) == 2 → EmitCountFunction full path (lines 1431-1449)
@@ -868,7 +874,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Value function (1456-1471) ──────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void ValueFunction_SingleElement()
     {
         // value(@.items[*]) == 42 → single-element returns it (lines 1457-1462)
@@ -879,7 +885,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Match/search with literal vs dynamic patterns (1478-1521) ───
 
-    [Fact]
+    [TestMethod]
     public void MatchWithDynamicPattern()
     {
         // match() with property as pattern → dynamic regex (lines 1497-1517)
@@ -888,7 +894,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """[{"val":"hello","pat":"hel.*"},{"val":"world","pat":"xyz"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void SearchWithLiteralPattern_NonTerminal()
     {
         // search() with literal → pre-compiled regex field (lines 1485-1495)
@@ -899,7 +905,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── GenerateFilterQueryHelper (1584-1617) ───────────────────────
 
-    [Fact]
+    [TestMethod]
     public void FilterQueryHelper_EmptySegments()
     {
         // Existence test with no segments → empty segments path (lines 1593-1599)
@@ -910,7 +916,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """[{"a":1,"b":2,"c":3},{"a":1},[1,2,3]]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterQueryHelper_StreamingChain()
     {
         // Non-singular query with multiple segments → helper method with streaming chain (1602-1616)
@@ -921,7 +927,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Literal field emission: number/string static fields (1635-1678) ─
 
-    [Fact]
+    [TestMethod]
     public void LiteralField_NumberLiteral()
     {
         // @.x == 42 → EmitLiteralFieldRef default case, creates s_literal field (lines 1644-1655)
@@ -932,7 +938,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """[{"x":"hello"},{"x":"world"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LiteralField_ReusedLiteral()
     {
         // Same literal used twice → EmitLiteralFieldRef cache hit (line 1646-1648)
@@ -943,28 +949,28 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Regex field emission (1659-1678) ────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void RegexField_MatchFullAnchor()
     {
         // match() adds ^(?:...)$ anchoring (line 1667)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a.c")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("^(?:", compiled.GeneratedCode!);
-        Assert.Contains(")$", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "^(?:");
+        StringAssert.Contains(compiled.GeneratedCode!, ")$");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexField_SearchNoAnchor()
     {
         // search() does NOT add anchors (line 1671)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?search(@.s, "a.c")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
         Assert.DoesNotContain("^(?:", compiled.GeneratedCode!);
     }
 
     // ── EmitCountFunction in value context (not numeric comparison) (1431-1449)
 
-    [Fact]
+    [TestMethod]
     public void CountFunction_InEqualityNotSpecialized()
     {
         // count(@.items[*]) used where the specialized numeric comparison
@@ -978,7 +984,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── EmitValueFunction else branch (1464-1469) ───────────────────
 
-    [Fact]
+    [TestMethod]
     public void ValueFunction_NonQueryArgument()
     {
         // value() with a function call arg (not FilterQueryNode) → else branch (1464-1469)
@@ -994,7 +1000,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── EmitFilterQueryAsValue non-singular (1356-1361) ─────────────
 
-    [Fact]
+    [TestMethod]
     public void FilterQueryAsValue_NonSingular_InComparison()
     {
         // @.items[*] in a comparison (not value() wrapped) → EmitFilterQueryAsValue non-singular (1356-1361)
@@ -1008,7 +1014,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── EmitCountNumericComparison else (non-FilterQueryNode arg) ────
 
-    [Fact]
+    [TestMethod]
     public void CountNumeric_WithFunctionArg()
     {
         // count(someFunc(...)) where arg is NOT FilterQueryNode →
@@ -1023,7 +1029,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── GenerateFilterQueryHelper empty segments (1593-1599) ────────
 
-    [Fact]
+    [TestMethod]
     public void FilterQueryHelper_RootQuery()
     {
         // count($[*]) → filter query with root ($) + wildcard segments
@@ -1035,39 +1041,39 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── EscapeStringLiteral edge cases (226-236) ────────────────────
 
-    [Fact]
+    [TestMethod]
     public void EscapeStringLiteral_QuoteInPattern()
     {
         // Regex pattern with " character → EscapeStringLiteral hits '"' case (line 226)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\"b")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("\\\"", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "\\\"");
     }
 
     // ── EmitLengthNumericComparison: Equal integral (1070-1075) ─────
 
-    [Fact]
+    [TestMethod]
     public void LengthEqual_Integral()
     {
         // length(@.s) == 3 → Equal + integral branch (lines 1072-1074)
         this.AssertCgMatchesRuntime("""$[?length(@.s) == 3]""", """[{"s":"ab"},{"s":"abc"},{"s":"abcd"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LengthEqual_NonIntegral()
     {
         // length(@.s) == 2.5 → Equal + non-integral branch (lines 1076-1078)
         this.AssertCgMatchesRuntime("""$[?length(@.s) == 2.5]""", """[{"s":"ab"},{"s":"abc"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LengthLessThan_Integral()
     {
         // length(@.s) < 3 → else branch + integral (lines 1083-1086)
         this.AssertCgMatchesRuntime("""$[?length(@.s) < 3]""", """[{"s":"ab"},{"s":"abc"},{"s":"abcd"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void LengthGreaterThan_NonIntegral()
     {
         // length(@.s) > 2.5 → else branch + non-integral (lines 1088-1090)
@@ -1076,7 +1082,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── EmitCountNumericComparison (1104-1133) ──────────────────────
 
-    [Fact]
+    [TestMethod]
     public void CountNumeric_EqualIntegral()
     {
         // count(@..x) == 2 → integral comparison (line 1125)
@@ -1085,7 +1091,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """[{"x":1,"a":{"x":2}},{"x":1},{"x":1,"a":{"x":2,"b":{"x":3}}}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void CountNumeric_LessThanIntegral()
     {
         // count(@..x) < 2 → integral with < (line 1125)
@@ -1094,7 +1100,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """[{"x":1,"a":{"x":2}},{"x":1}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void CountNumeric_NonIntegral()
     {
         // count(@..x) > 1.5 → non-integral branch (line 1129)
@@ -1105,7 +1111,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Filter selector streaming with further segments (735-777) ───
 
-    [Fact]
+    [TestMethod]
     public void FilterStreaming_WithFurtherSegment()
     {
         // $[?@.ok].name → filter streaming + further name selector
@@ -1114,7 +1120,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
             """[{"ok":true,"name":"a"},{"ok":false,"name":"b"},{"ok":true,"name":"c"}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterStreaming_OnArray()
     {
         // $[?@ > 1][0] → filter on array elements + index streaming
@@ -1136,7 +1142,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
         // Code generator
         CompiledJsonPathExpression compiled = this.CompileAndLog(expression);
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
 
         JsonElement cgData = JsonElement.ParseValue(utf8);
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1146,20 +1152,20 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         string rtJson = SerializeNodeList(rtResult);
         string cgJson = cgResult.IsUndefined() ? "[]" : cgResult.GetRawText();
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"RT: {rtJson}");
-        this.output.WriteLine($"CG: {cgJson}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"RT: {rtJson}");
+        Console.WriteLine($"CG: {cgJson}");
 
-        Assert.Equal(rtJson, cgJson);
+        Assert.AreEqual(rtJson, cgJson);
     }
 
     private CompiledJsonPathExpression CompileAndLog(string expression)
     {
-        CompiledJsonPathExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledJsonPathExpression compiled = s_fixture!.GetOrCompile(expression);
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated code ({compiled.GeneratedCode.Length} chars):");
-            this.output.WriteLine(compiled.GeneratedCode);
+            Console.WriteLine($"Generated code ({compiled.GeneratedCode.Length} chars):");
+            Console.WriteLine(compiled.GeneratedCode);
         }
 
         return compiled;
@@ -1221,125 +1227,125 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── EscapeCSharpStringLiteral via regex patterns with control chars ──
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithNewline()
     {
         // Regex literal "\n" → unescaped to actual newline char → EscapeCSharpStringLiteral hits '\n' branch (L34)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\nb")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
         // Generated code should contain the C# escaped form \\n
-        Assert.Contains("\\n", compiled.GeneratedCode!);
+        StringAssert.Contains(compiled.GeneratedCode!, "\\n");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithCarriageReturn()
     {
         // Regex literal "\r" → EscapeCSharpStringLiteral hits '\r' branch (L35)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\rb")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("\\r", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "\\r");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithTab()
     {
         // Regex literal "\t" → EscapeCSharpStringLiteral hits '\t' branch (L36)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\tb")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("\\t", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "\\t");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithBellChar()
     {
         // JSON \u0007 unescapes to bell char → EscapeCSharpStringLiteral hits '\a' branch (L38)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u0007")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("\\a", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "\\a");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithNullChar()
     {
         // JSON \u0000 unescapes to null char → EscapeCSharpStringLiteral hits '\0' branch (L37)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u0000")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("\\0", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "\\0");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithBackspaceChar()
     {
         // JSON \b unescapes to backspace → EscapeCSharpStringLiteral hits '\b' branch (L39)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "x\by")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("\\b", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "\\b");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithFormFeedChar()
     {
         // JSON \f unescapes to form feed → EscapeCSharpStringLiteral hits '\f' branch (L40)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "x\fy")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("\\f", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "\\f");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithVerticalTab()
     {
         // JSON \u000B unescapes to vertical tab → EscapeCSharpStringLiteral hits '\v' branch (L41)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u000B")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("\\v", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "\\v");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithControlChar()
     {
         // JSON \u0001 unescapes to SOH (< 0x20) → EscapeCSharpStringLiteral hits unicode escape branch (L44-46)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u0001")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
-        Assert.Contains("\\u0001", compiled.GeneratedCode!);
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        StringAssert.Contains(compiled.GeneratedCode!, "\\u0001");
     }
 
     // ── UnescapeJsonString escape sequences in match/search patterns ─────
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithBackspace()
     {
         // "\b" in regex → UnescapeJsonString hits 'b' case (L136)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\b")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithFormFeed()
     {
         // "\f" in regex → UnescapeJsonString hits 'f' case (L137)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\f")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithForwardSlash()
     {
         // "\/" in regex → UnescapeJsonString hits '/' case (L135)
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "a\/b")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexPattern_WithUnicodeEscape_InUnescapeJsonString()
     {
         // "\u0041" in regex → UnescapeJsonString hits '\u' case (L141-153) → produces 'A'
         CompiledJsonPathExpression compiled = this.CompileAndLog("""$[?match(@.s, "\u0041+")]""");
-        Assert.True(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
+        Assert.IsTrue(compiled.Method is not null, $"Compilation failed: {compiled.Error}");
     }
 
     // ── OpToSymbol NotEqual via non-specialized path (L1099) ─────────────
 
-    [Fact]
+    [TestMethod]
     public void OpToSymbol_NotEqual_NonSpecialized()
     {
         // count(@..x) != 2 → EmitCountNumericComparison uses OpToSymbol for !=
@@ -1350,7 +1356,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Parenthesized expression in value context (L1222) ───────────────
 
-    [Fact]
+    [TestMethod]
     public void ParenExpression_InValueContext()
     {
         // $[?@.x == (@.y)] → paren wraps a non-specialized comparable, hits EmitFilterValue ParenExpressionNode (L1222)
@@ -1361,7 +1367,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Empty-segments filter query helper (L1490-1495) ─────────────────
 
-    [Fact]
+    [TestMethod]
     public void FilterQueryHelper_EmptySegments_CountSelf()
     {
         // count(@) → filter query with zero segments → GenerateFilterQueryHelper empty-segments path (L1490-1495)
@@ -1372,7 +1378,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Empty-segments nodes collector helper (L1793-1797) ──────────────
 
-    [Fact]
+    [TestMethod]
     public void NodesCollectorHelper_EmptySegments()
     {
         // Custom function with nodes parameter using bare @ (no segments) → GenerateNodesCollectorHelper empty path (L1793-1797)
@@ -1385,16 +1391,16 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
         const string expression = """$[?count_self(@) > 0]""";
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
         // Should contain the NodesCollector helper with the empty-segments early return
-        Assert.Contains("result.Append(source)", code);
+        StringAssert.Contains(code, "result.Append(source)");
     }
 
     // ── Custom function with Logical parameter type (L1644-1645) ────────
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_LogicalParameter()
     {
         // Custom function accepting a logical (bool) parameter → EmitCustomFunctionCall Logical param case (L1644-1645)
@@ -1411,16 +1417,16 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         // Logical parameter requires a filter expression (comparison), not a value
         const string expression = """$[?when_active(@.active == true, @.val) > 0]""";
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
-        Assert.Contains("CustomFn_when_active", code);
-        Assert.Contains("bool flag", code);
+        StringAssert.Contains(code, "CustomFn_when_active");
+        StringAssert.Contains(code, "bool flag");
     }
 
     // ── EnsureCustomFunctionHelper Logical and Nodes parameter types (L1740, L1742-1743) ─
 
-    [Fact]
+    [TestMethod]
     public void CustomFunctionHelper_LogicalParam_MethodSignature()
     {
         // Custom function with logical parameter → EnsureCustomFunctionHelper emits 'bool' param type (L1740)
@@ -1434,13 +1440,13 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         // Logical parameter requires a filter expression (comparison), not a value
         const string expression = """$[?check_flag(@.ok == true) > 0]""";
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
-        Assert.Contains("bool isOk", code);
+        StringAssert.Contains(code, "bool isOk");
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunctionHelper_NodesParam_MethodSignature()
     {
         // Custom function with nodes parameter → EnsureCustomFunctionHelper emits 'ReadOnlySpan<JsonElement>' param type (L1742-1743)
@@ -1453,10 +1459,10 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
         const string expression = """$[?sum_nodes(@.items[*]) > 0]""";
         string code = this.GenerateWithCustomFunctions(expression, [customFn]);
-        this.output.WriteLine("Generated code:");
-        this.output.WriteLine(code);
+        Console.WriteLine("Generated code:");
+        Console.WriteLine(code);
 
-        Assert.Contains("ReadOnlySpan<JsonElement> ns", code);
+        StringAssert.Contains(code, "ReadOnlySpan<JsonElement> ns");
     }
 
     // ── Custom function non-logical return in bool context (L1608-1610) ──
@@ -1469,7 +1475,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── IsSingularQuery: descendant segment returns false (L1425-1426) ───
 
-    [Fact]
+    [TestMethod]
     public void IsSingularQuery_DescendantSegment()
     {
         // value(@..x) with descendant → IsSingularQuery returns false at L1425-1426
@@ -1481,7 +1487,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
 
     // ── Non-singular EmitFilterQueryAsValue (L1252-1257) ────────────────
 
-    [Fact]
+    [TestMethod]
     public void EmitFilterQueryAsValue_NonSingular_Wildcard()
     {
         // @.items[*] as comparable in non-value() context → parser wraps in value()
@@ -1496,7 +1502,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
     // which is called by JsonPathCodeGenerator.UnescapeJsonString for
     // string literals in JSONPath expressions.
 
-    [Fact]
+    [TestMethod]
     public void StringLiteral_WithForwardSlashEscape()
     {
         // JSON escape \/ (forward slash) → UnescapeJsonString L135
@@ -1505,7 +1511,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         this.AssertCgMatchesRuntime(expression, json);
     }
 
-    [Fact]
+    [TestMethod]
     public void StringLiteral_WithUnicodeEscape()
     {
         // JSON escape \uXXXX → UnescapeJsonString L141-153
@@ -1514,7 +1520,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         this.AssertCgMatchesRuntime(expression, json);
     }
 
-    [Fact]
+    [TestMethod]
     public void StringLiteral_WithBackspaceEscape()
     {
         // JSON escape \b → UnescapeJsonString L136
@@ -1523,7 +1529,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         this.AssertCgMatchesRuntime(expression, json);
     }
 
-    [Fact]
+    [TestMethod]
     public void StringLiteral_WithFormfeedEscape()
     {
         // JSON escape \f → UnescapeJsonString L137
@@ -1532,7 +1538,7 @@ public class CodeGenCoverageTests : IClassFixture<CodeGenConformanceFixture>
         this.AssertCgMatchesRuntime(expression, json);
     }
 
-    [Fact]
+    [TestMethod]
     public void StringLiteral_NoEscapes()
     {
         // String with no backslashes → UnescapeJsonString L120-122 (fast path)

@@ -2,19 +2,20 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Generic;
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
 /// <summary>
 /// Tests that the results collector correctly reports missing required properties.
 /// </summary>
+[TestClass]
 public class RequiredPropertyResultsTests
 {
-    [Fact]
+    [TestMethod]
     public void MissingRequiredProperty_AppearsInResults_Verbose()
     {
         // ClosedObjectNoPatterns has required: ["name"]. An empty object is missing "name".
@@ -23,7 +24,7 @@ public class RequiredPropertyResultsTests
 
         bool isValid = doc.RootElement.EvaluateSchema(collector);
 
-        Assert.False(isValid, "An empty object should not be valid when 'name' is required");
+        Assert.IsFalse(isValid, "An empty object should not be valid when 'name' is required");
 
         // Collect all results
         List<(bool IsMatch, string Message)> results = [];
@@ -33,12 +34,10 @@ public class RequiredPropertyResultsTests
         }
 
         // There must be at least one result about the missing required property
-        Assert.Contains(
-            results,
-            r => !r.IsMatch && r.Message.Contains("required", StringComparison.OrdinalIgnoreCase));
+        AssertEx.Contains(results, r => !r.IsMatch && r.Message.Contains("required", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingRequiredProperty_AppearsInResults_Detailed()
     {
         // Same test at Detailed level — the required failure should still be reported
@@ -47,7 +46,7 @@ public class RequiredPropertyResultsTests
 
         bool isValid = doc.RootElement.EvaluateSchema(collector);
 
-        Assert.False(isValid, "An empty object should not be valid when 'name' is required");
+        Assert.IsFalse(isValid, "An empty object should not be valid when 'name' is required");
 
         List<(bool IsMatch, string Message)> results = [];
         foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
@@ -55,12 +54,10 @@ public class RequiredPropertyResultsTests
             results.Add((result.IsMatch, result.GetMessageText()));
         }
 
-        Assert.Contains(
-            results,
-            r => !r.IsMatch && r.Message.Contains("required", StringComparison.OrdinalIgnoreCase));
+        AssertEx.Contains(results, r => !r.IsMatch && r.Message.Contains("required", StringComparison.OrdinalIgnoreCase));
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingRequiredProperty_AppearsInResults_Basic()
     {
         // At Basic level, messages may be empty but failure results should still be present
@@ -69,7 +66,7 @@ public class RequiredPropertyResultsTests
 
         bool isValid = doc.RootElement.EvaluateSchema(collector);
 
-        Assert.False(isValid, "An empty object should not be valid when 'name' is required");
+        Assert.IsFalse(isValid, "An empty object should not be valid when 'name' is required");
 
         bool hasFailure = false;
         foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
@@ -81,10 +78,10 @@ public class RequiredPropertyResultsTests
             }
         }
 
-        Assert.True(hasFailure, "Expected at least one failure result at Basic level for a missing required property");
+        Assert.IsTrue(hasFailure, "Expected at least one failure result at Basic level for a missing required property");
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidDocument_StillReturnsTrue_WithCollector()
     {
         // Ensure the fix doesn't break valid document evaluation
@@ -93,6 +90,6 @@ public class RequiredPropertyResultsTests
 
         bool isValid = doc.RootElement.EvaluateSchema(collector);
 
-        Assert.True(isValid, "A document with the required 'name' property should be valid");
+        Assert.IsTrue(isValid, "A document with the required 'name' property should be valid");
     }
 }

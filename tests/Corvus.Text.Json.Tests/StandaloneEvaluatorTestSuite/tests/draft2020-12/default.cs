@@ -2,38 +2,46 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft202012.Default;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuiteInvalidTypeForDefault : IClassFixture<SuiteInvalidTypeForDefault.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteInvalidTypeForDefault
 {
-    private readonly Fixture _fixture;
-    public SuiteInvalidTypeForDefault(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestValidWhenPropertyIsSpecified()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": 13}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestStillValidWhenTheInvalidDefaultIsUsed()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -49,34 +57,42 @@ public class SuiteInvalidTypeForDefault : IClassFixture<SuiteInvalidTypeForDefau
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuiteInvalidStringValueForDefault : IClassFixture<SuiteInvalidStringValueForDefault.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteInvalidStringValueForDefault
 {
-    private readonly Fixture _fixture;
-    public SuiteInvalidStringValueForDefault(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestValidWhenPropertyIsSpecified()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"bar\": \"good\"}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestStillValidWhenTheInvalidDefaultIsUsed()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -92,41 +108,49 @@ public class SuiteInvalidStringValueForDefault : IClassFixture<SuiteInvalidStrin
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuiteTheDefaultKeywordDoesNotDoAnythingIfThePropertyIsMissing : IClassFixture<SuiteTheDefaultKeywordDoesNotDoAnythingIfThePropertyIsMissing.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteTheDefaultKeywordDoesNotDoAnythingIfThePropertyIsMissing
 {
-    private readonly Fixture _fixture;
-    public SuiteTheDefaultKeywordDoesNotDoAnythingIfThePropertyIsMissing(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAnExplicitPropertyValueIsCheckedAgainstMaximumPassing()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"alpha\": 1 }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnExplicitPropertyValueIsCheckedAgainstMaximumFailing()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"alpha\": 5 }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMissingPropertiesAreNotFilledInWithTheDefault()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

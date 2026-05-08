@@ -1,16 +1,17 @@
 using System.Globalization;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
+[TestClass]
 public class JsonElementHelpersTryFormatExponentialUtf8Tests
 {
-    [Theory]
-    [InlineData("123.456", 2, 'e', "1.23e+002")]
-    [InlineData("123.456", 3, 'e', "1.235e+002")]
-    [InlineData("0.00123", 3, 'e', "1.230e-003")]
-    [InlineData("1234567", 2, 'e', "1.23e+006")]
+    [TestMethod]
+    [DataRow("123.456", 2, 'e', "1.23e+002")]
+    [DataRow("123.456", 3, 'e', "1.235e+002")]
+    [DataRow("0.00123", 3, 'e', "1.230e-003")]
+    [DataRow("1234567", 2, 'e', "1.23e+006")]
     public void TryFormatExponential_WithPrecision_FormatsCorrectly(string jsonNumber, int precision, char exponentChar, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -35,14 +36,14 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             exponentChar,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("123.456", 'e', "1.234560e+002")]
-    [InlineData("0.00123", 'e', "1.230000e-003")]
+    [TestMethod]
+    [DataRow("123.456", 'e', "1.234560e+002")]
+    [DataRow("0.00123", 'e', "1.230000e-003")]
     public void TryFormatExponential_DefaultPrecision_UsesSixDigits(string jsonNumber, char exponentChar, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -67,14 +68,14 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             exponentChar,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("-123.456", 2, "-1.23e+002")]
-    [InlineData("-0.00123", 3, "-1.230e-003")]
+    [TestMethod]
+    [DataRow("-123.456", 2, "-1.23e+002")]
+    [DataRow("-0.00123", 3, "-1.230e-003")]
     public void TryFormatExponential_WithNegativeNumbers_FormatsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -99,14 +100,14 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("123.456", 'e', "1.23e+002")]
-    [InlineData("123.456", 'E', "1.23E+002")]
+    [TestMethod]
+    [DataRow("123.456", 'e', "1.23e+002")]
+    [DataRow("123.456", 'E', "1.23E+002")]
     public void TryFormatExponential_UsesSpecifiedExponentChar(string jsonNumber, char exponentChar, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -131,14 +132,14 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             exponentChar,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("0", 2, "0.00e+000")]
-    [InlineData("0.0", 3, "0.000e+000")]
+    [TestMethod]
+    [DataRow("0", 2, "0.00e+000")]
+    [DataRow("0.0", 3, "0.000e+000")]
     public void TryFormatExponential_WithZero_FormatsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -163,14 +164,14 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("999.999", 2, "1.00e+003")]
-    [InlineData("9.995", 2, "1.00e+001")]
+    [TestMethod]
+    [DataRow("999.999", 2, "1.00e+003")]
+    [DataRow("9.995", 2, "1.00e+001")]
     public void TryFormatExponential_RoundsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -195,12 +196,12 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatExponential_UsesCustomDecimalSeparator()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123.456");
@@ -225,12 +226,12 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("1,23e+002", result);
+        Assert.AreEqual("1,23e+002", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatExponential_UsesCustomNegativeSign()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-123.456");
@@ -255,12 +256,12 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("~1.23e+002", result);
+        Assert.AreEqual("~1.23e+002", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatExponential_ReturnsFalseWhenBufferTooSmall()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123.456");
@@ -285,14 +286,14 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             'e',
             formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData("1e10", 2, "1.00e+010")]
-    [InlineData("1e-10", 2, "1.00e-010")]
-    [InlineData("1.23e5", 3, "1.230e+005")]
+    [TestMethod]
+    [DataRow("1e10", 2, "1.00e+010")]
+    [DataRow("1e-10", 2, "1.00e-010")]
+    [DataRow("1.23e5", 3, "1.230e+005")]
     public void TryFormatExponential_WithExistingExponent_FormatsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -317,8 +318,8 @@ public class JsonElementHelpersTryFormatExponentialUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 }

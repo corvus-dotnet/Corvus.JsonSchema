@@ -5,7 +5,7 @@
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
@@ -13,11 +13,12 @@ namespace Corvus.Numerics.Tests;
 /// Tier 2 Option 4: Arithmetic edge cases.
 /// Target: +0.5% coverage (20 tests).
 /// </summary>
+[TestClass]
 public class BigNumberArithmeticEdgeCasesTests
 {
     #region Extreme Exponent Differences (+5 tests)
 
-    [Fact]
+    [TestMethod]
     public void Add_VeryLargeExponentDifference_HandlesCorrectly()
     {
         BigNumber large = new(1, 100);
@@ -29,7 +30,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ShouldBeGreaterThan(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Add_LargeButSafeExponentDifference_HandlesCorrectly()
     {
         BigNumber large = new(1, 1000000);
@@ -41,7 +42,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ShouldBeGreaterThan(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtract_LargeExponentDifference_HandlesCorrectly()
     {
         BigNumber large = new(1000, 100);
@@ -53,7 +54,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ShouldBeGreaterThan(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiply_ExponentsSumToLarge_HandlesCorrectly()
     {
         BigNumber num1 = new(123, 500);
@@ -64,7 +65,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Exponent.ShouldBeGreaterThan(899);
     }
 
-    [Fact]
+    [TestMethod]
     public void Divide_ExponentDifferenceLarge_HandlesCorrectly()
     {
         BigNumber dividend = new(1000, 500);
@@ -79,7 +80,7 @@ public class BigNumberArithmeticEdgeCasesTests
 
     #region Very Large Significands (+5 tests)
 
-    [Fact]
+    [TestMethod]
     public void Add_VeryLargeSignificands_HandlesCorrectly()
     {
         BigNumber num1 = BigInteger.Parse(new string('9', 100));
@@ -90,7 +91,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ShouldBeGreaterThan(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiply_VeryLargeSignificands_HandlesCorrectly()
     {
         BigNumber num1 = BigInteger.Parse(new string('9', 50));
@@ -101,7 +102,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ToString().Length.ShouldBeGreaterThan(90);
     }
 
-    [Fact]
+    [TestMethod]
     public void Divide_VeryLargeByVerySmall_HandlesCorrectly()
     {
         BigNumber large = BigInteger.Parse(new string('9', 100));
@@ -112,7 +113,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Exponent.ShouldBeGreaterThan(49);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_VeryLargeWithTrailingZeros_HandlesCorrectly()
     {
         string manyNines = new string('9', 100) + new string('0', 50);
@@ -123,7 +124,7 @@ public class BigNumberArithmeticEdgeCasesTests
         normalized.Exponent.ShouldBe(50);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_VeryLargeSignificands_HandlesCorrectly()
     {
         BigNumber num1 = BigInteger.Parse(new string('9', 100));
@@ -136,7 +137,7 @@ public class BigNumberArithmeticEdgeCasesTests
 
     #region Mixed Sign Operations (+5 tests)
 
-    [Fact]
+    [TestMethod]
     public void Add_PositiveAndNegativeCancel_ResultsInZero()
     {
         BigNumber positive = new(123456, 0);
@@ -147,7 +148,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ShouldBe(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Add_NegativeLargerMagnitude_ResultNegative()
     {
         BigNumber small = new(100, 0);
@@ -158,7 +159,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ShouldBeLessThan(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiply_PositiveByNegative_ResultNegative()
     {
         BigNumber positive = new(12345, 5);
@@ -169,7 +170,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ShouldBeLessThan(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiply_NegativeByNegative_ResultPositive()
     {
         BigNumber neg1 = new(-12345, 0);
@@ -180,7 +181,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ShouldBeGreaterThan(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Divide_NegativeByPositive_ResultNegative()
     {
         BigNumber negative = new(-12345, 0);
@@ -195,7 +196,7 @@ public class BigNumberArithmeticEdgeCasesTests
 
     #region Zero and Identity Operations (+5 tests)
 
-    [Fact]
+    [TestMethod]
     public void Add_AnyNumberPlusZero_ReturnsNumber()
     {
         BigNumber num = new(12345, 10);
@@ -206,7 +207,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.ShouldBe(num);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiply_AnyNumberTimesZero_ReturnsZero()
     {
         BigNumber num = new(12345, 10);
@@ -217,7 +218,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Significand.ShouldBe(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiply_AnyNumberTimesOne_ReturnsNumber()
     {
         BigNumber num = new(12345, -5);
@@ -228,7 +229,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.Normalize().ShouldBe(num.Normalize());
     }
 
-    [Fact]
+    [TestMethod]
     public void Divide_AnyNumberByOne_ReturnsNumber()
     {
         BigNumber num = new(12345, -5);
@@ -239,7 +240,7 @@ public class BigNumberArithmeticEdgeCasesTests
         result.ShouldBe(num);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtract_NumberFromItself_ReturnsZero()
     {
         BigNumber num = new(12345, 10);

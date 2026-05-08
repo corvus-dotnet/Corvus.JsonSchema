@@ -8,7 +8,8 @@ using Corvus.Text.Json.JMESPath.SourceGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace Corvus.Text.Json.JMESPath.SourceGenerator.Tests;
 
@@ -16,6 +17,7 @@ namespace Corvus.Text.Json.JMESPath.SourceGenerator.Tests;
 /// Tests that the JMESPath source generator reports the correct diagnostics
 /// (JPSG001, JPSG002, JPSG003) for error conditions.
 /// </summary>
+[TestClass]
 public class SourceGeneratorDiagnosticTests
 {
     private const string SourceWithAttribute = """
@@ -31,87 +33,87 @@ public class SourceGeneratorDiagnosticTests
 
     // ----- JPSG001: Expression file not found -----
 
-    [Fact]
+    [TestMethod]
     public void JPSG001_WhenExpressionFileNotInAdditionalFiles()
     {
         // No AdditionalTexts provided — the referenced "test.jmespath" is missing
         GeneratorDriverRunResult result = RunGenerator(SourceWithAttribute);
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JPSG001");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
-        Assert.Contains("test.jmespath", diag.GetMessage());
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JPSG001");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
+        StringAssert.Contains(diag.GetMessage(), "test.jmespath");
     }
 
     // ----- JPSG002: Empty expression file -----
 
-    [Fact]
+    [TestMethod]
     public void JPSG002_WhenExpressionFileIsEmpty()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             new InMemoryAdditionalText("test.jmespath", string.Empty));
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JPSG002");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
-        Assert.Contains("test.jmespath", diag.GetMessage());
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JPSG002");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
+        StringAssert.Contains(diag.GetMessage(), "test.jmespath");
     }
 
-    [Fact]
+    [TestMethod]
     public void JPSG002_WhenExpressionFileIsWhitespaceOnly()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             new InMemoryAdditionalText("test.jmespath", "   \n  \t  "));
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JPSG002");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JPSG002");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
     }
 
     // ----- JPSG003: Code generation failed -----
 
-    [Fact]
+    [TestMethod]
     public void JPSG003_WhenExpressionIsInvalid()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             new InMemoryAdditionalText("test.jmespath", "###invalid"));
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JPSG003");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
-        Assert.Contains("test.jmespath", diag.GetMessage());
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JPSG003");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
+        StringAssert.Contains(diag.GetMessage(), "test.jmespath");
     }
 
-    [Fact]
+    [TestMethod]
     public void JPSG003_WhenExpressionHasUnterminatedString()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             new InMemoryAdditionalText("test.jmespath", "'unterminated"));
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JPSG003");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JPSG003");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
     }
 
     // ----- No diagnostics for valid expression -----
 
-    [Fact]
+    [TestMethod]
     public void NoDiagnostics_WhenExpressionIsValid()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             new InMemoryAdditionalText("test.jmespath", "foo.bar"));
 
-        Assert.Empty(result.Diagnostics);
+        Assert.AreEqual(0, (result.Diagnostics).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void NoDiagnostics_WhenExpressionIsComplexButValid()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             new InMemoryAdditionalText("test.jmespath", "people[?age > `20`].name | sort(@)"));
 
-        Assert.Empty(result.Diagnostics);
+        Assert.AreEqual(0, (result.Diagnostics).Count());
     }
 
     // ----- Helpers -----

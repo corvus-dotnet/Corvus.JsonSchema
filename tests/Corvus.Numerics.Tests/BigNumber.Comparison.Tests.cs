@@ -5,13 +5,14 @@
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
+[TestClass]
 public class BigNumberComparisonTests
 {
-    [Fact]
+    [TestMethod]
     public void Equality_WithNormalizedValues_ReturnsTrue()
     {
         BigNumber a = new(12300, -2);  // 123.00
@@ -21,7 +22,7 @@ public class BigNumberComparisonTests
         a.Equals(b).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Equality_WithDifferentValues_ReturnsFalse()
     {
         BigNumber a = new(123, 0);
@@ -31,7 +32,7 @@ public class BigNumberComparisonTests
         (a != b).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Equality_WithZero_WorksCorrectly()
     {
         BigNumber zero1 = BigNumber.Zero;
@@ -42,7 +43,7 @@ public class BigNumberComparisonTests
         zero1.ShouldBe(zero3);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_LessThan_ReturnsNegative()
     {
         BigNumber smaller = new(123, 0);
@@ -53,7 +54,7 @@ public class BigNumberComparisonTests
         (smaller <= larger).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_GreaterThan_ReturnsPositive()
     {
         BigNumber larger = new(456, 0);
@@ -64,7 +65,7 @@ public class BigNumberComparisonTests
         (larger >= smaller).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_Equal_ReturnsZero()
     {
         BigNumber a = new(123, -2);
@@ -75,7 +76,7 @@ public class BigNumberComparisonTests
         (a <= b).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_WithDifferentExponents_WorksCorrectly()
     {
         BigNumber a = new(123, 5);   // 12,300,000
@@ -85,7 +86,7 @@ public class BigNumberComparisonTests
         a.CompareTo(b).ShouldBeGreaterThan(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_NegativeNumbers_WorksCorrectly()
     {
         BigNumber negative = new(-123, 0);
@@ -96,7 +97,7 @@ public class BigNumberComparisonTests
         (positive > BigNumber.Zero).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_VeryLargeNumbers_WorksCorrectly()
     {
         // Numbers beyond decimal range
@@ -107,7 +108,7 @@ public class BigNumberComparisonTests
         huge1.CompareTo(huge2).ShouldBeGreaterThan(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_VerySmallNumbers_WorksCorrectly()
     {
         // Numbers beyond decimal precision
@@ -118,7 +119,7 @@ public class BigNumberComparisonTests
         (tiny1 < tiny2).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_WithNull_ReturnsPositive()
     {
         BigNumber value = new(123, 0);
@@ -126,7 +127,7 @@ public class BigNumberComparisonTests
         value.CompareTo(null).ShouldBeGreaterThan(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_WithNonBigNumber_ThrowsArgumentException()
     {
         BigNumber value = new(123, 0);
@@ -134,7 +135,7 @@ public class BigNumberComparisonTests
         Should.Throw<ArgumentException>(() => value.CompareTo("not a BigNumber"));
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_EqualValues_ReturnsSameHash()
     {
         BigNumber a = new(12300, -2);
@@ -143,7 +144,7 @@ public class BigNumberComparisonTests
         a.GetHashCode().ShouldBe(b.GetHashCode());
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_DifferentValues_MayReturnDifferentHash()
     {
         BigNumber a = new(123, 0);

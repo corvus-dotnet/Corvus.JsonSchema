@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.ReservedPropertyNameValidation;
 
@@ -14,52 +14,59 @@ namespace Corvus.Text.Json.Tests.ReservedPropertyNameValidation;
 /// Tests that object schemas with properties whose names collide with generated class names
 /// (e.g. "jsonSchema", "builder", "source", "mutable") generate valid code.
 /// </summary>
-[Trait("category", "CodeGen")]
-public class ReservedPropertyNameValues : IClassFixture<ReservedPropertyNameValues.Fixture>
+[TestCategory("CodeGen")]
+[TestClass]
+public class ReservedPropertyNameValues
 {
-    private readonly Fixture fixture;
-
-    public ReservedPropertyNameValues(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void ValidInstanceIsAccepted()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(
             "{\"jsonSchema\": \"hello\", \"builder\": \"world\", \"source\": \"foo\", \"mutable\": \"bar\"}");
-        Assert.True(instance.EvaluateSchema());
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void PartialInstanceIsAccepted()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(
             "{\"jsonSchema\": \"test\"}");
-        Assert.True(instance.EvaluateSchema());
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyObjectIsAccepted()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("{}");
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidPropertyTypeIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(
             "{\"jsonSchema\": 42}");
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

@@ -1,10 +1,10 @@
 // Copyright (c) William Adams. All rights reserved.
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
-using System.Linq;
 using System.Reflection;
+using System.Linq;
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -20,6 +20,7 @@ namespace Corvus.Text.Json.Tests;
 ///   <item>No patternProperties + unevaluatedProperties: false → do NOT emit</item>
 /// </list>
 /// </summary>
+[TestClass]
 public class PatternPropertyMethodPresenceTests
 {
     /// <summary>
@@ -74,20 +75,20 @@ public class PatternPropertyMethodPresenceTests
     // SetProperty on Mutable
     // -------------------------------------------------------
 
-    [Theory]
-    [MemberData(nameof(TypesWithMutators))]
+    [TestMethod]
+    [DynamicData(nameof(TypesWithMutators))]
     public void MutableType_HasSetProperty(Type mutableType, string scenario)
     {
-        Assert.True(
+        Assert.IsTrue(
             HasPublicInstanceMethod(mutableType, "SetProperty"),
             $"Expected SetProperty on {mutableType.Name} ({scenario})");
     }
 
-    [Theory]
-    [MemberData(nameof(TypesWithoutMutators))]
+    [TestMethod]
+    [DynamicData(nameof(TypesWithoutMutators))]
     public void MutableType_DoesNotHaveSetProperty(Type mutableType, string scenario)
     {
-        Assert.False(
+        Assert.IsFalse(
             HasPublicInstanceMethod(mutableType, "SetProperty"),
             $"Expected NO SetProperty on {mutableType.Name} ({scenario})");
     }
@@ -96,20 +97,20 @@ public class PatternPropertyMethodPresenceTests
     // RemoveProperty on Mutable
     // -------------------------------------------------------
 
-    [Theory]
-    [MemberData(nameof(TypesWithMutators))]
+    [TestMethod]
+    [DynamicData(nameof(TypesWithMutators))]
     public void MutableType_HasRemoveProperty(Type mutableType, string scenario)
     {
-        Assert.True(
+        Assert.IsTrue(
             HasPublicInstanceMethod(mutableType, "RemoveProperty"),
             $"Expected RemoveProperty on {mutableType.Name} ({scenario})");
     }
 
-    [Theory]
-    [MemberData(nameof(TypesWithoutMutators))]
+    [TestMethod]
+    [DynamicData(nameof(TypesWithoutMutators))]
     public void MutableType_DoesNotHaveRemoveProperty(Type mutableType, string scenario)
     {
-        Assert.False(
+        Assert.IsFalse(
             HasPublicInstanceMethod(mutableType, "RemoveProperty"),
             $"Expected NO RemoveProperty on {mutableType.Name} ({scenario})");
     }
@@ -118,20 +119,20 @@ public class PatternPropertyMethodPresenceTests
     // TryGetProperty on Mutable
     // -------------------------------------------------------
 
-    [Theory]
-    [MemberData(nameof(TypesWithMutators))]
+    [TestMethod]
+    [DynamicData(nameof(TypesWithMutators))]
     public void MutableType_HasTryGetProperty(Type mutableType, string scenario)
     {
-        Assert.True(
+        Assert.IsTrue(
             HasPublicInstanceMethod(mutableType, "TryGetProperty"),
             $"Expected TryGetProperty on {mutableType.Name} ({scenario})");
     }
 
-    [Theory]
-    [MemberData(nameof(TypesWithoutMutators))]
+    [TestMethod]
+    [DynamicData(nameof(TypesWithoutMutators))]
     public void MutableType_DoesNotHaveTryGetProperty(Type mutableType, string scenario)
     {
-        Assert.False(
+        Assert.IsFalse(
             HasPublicInstanceMethod(mutableType, "TryGetProperty"),
             $"Expected NO TryGetProperty on {mutableType.Name} ({scenario})");
     }
@@ -140,20 +141,20 @@ public class PatternPropertyMethodPresenceTests
     // TryGetProperty on immutable type
     // -------------------------------------------------------
 
-    [Theory]
-    [MemberData(nameof(ImmutableTypesWithTryGetProperty))]
+    [TestMethod]
+    [DynamicData(nameof(ImmutableTypesWithTryGetProperty))]
     public void ImmutableType_HasTryGetProperty(Type immutableType, string scenario)
     {
-        Assert.True(
+        Assert.IsTrue(
             HasPublicInstanceMethod(immutableType, "TryGetProperty"),
             $"Expected TryGetProperty on {immutableType.Name} ({scenario})");
     }
 
-    [Theory]
-    [MemberData(nameof(ImmutableTypesWithoutTryGetProperty))]
+    [TestMethod]
+    [DynamicData(nameof(ImmutableTypesWithoutTryGetProperty))]
     public void ImmutableType_DoesNotHaveTryGetProperty(Type immutableType, string scenario)
     {
-        Assert.False(
+        Assert.IsFalse(
             HasPublicInstanceMethod(immutableType, "TryGetProperty"),
             $"Expected NO TryGetProperty on {immutableType.Name} ({scenario})");
     }
@@ -162,50 +163,50 @@ public class PatternPropertyMethodPresenceTests
     // AddProperty on Builder
     // -------------------------------------------------------
 
-    [Fact]
+    [TestMethod]
     public void BuilderType_HasAddProperty_LocalPatternsWithAdditionalPropertiesFalse()
     {
-        Assert.True(
+        Assert.IsTrue(
             HasPublicInstanceMethod(typeof(ObjectWithPatternProperties.Builder), "AddProperty"),
             "Expected AddProperty on ObjectWithPatternProperties.Builder");
     }
 
-    [Fact]
+    [TestMethod]
     public void BuilderType_HasAddProperty_ComposedPatternsWithUnevaluatedPropertiesFalse()
     {
-        Assert.True(
+        Assert.IsTrue(
             HasPublicInstanceMethod(typeof(ObjectWithUnevaluatedPatternProperties.Builder), "AddProperty"),
             "Expected AddProperty on ObjectWithUnevaluatedPatternProperties.Builder");
     }
 
-    [Fact]
+    [TestMethod]
     public void BuilderType_DoesNotHaveAddProperty_ComposedPatternsViaRefWithAdditionalPropertiesFalse()
     {
-        Assert.False(
+        Assert.IsFalse(
             HasPublicInstanceMethod(typeof(ObjectWithRefPatternProperties.Builder), "AddProperty"),
             "Expected NO AddProperty on ObjectWithRefPatternProperties.Builder");
     }
 
-    [Fact]
+    [TestMethod]
     public void BuilderType_DoesNotHaveAddProperty_ComposedPatternsViaAllOfWithAdditionalPropertiesFalse()
     {
-        Assert.False(
+        Assert.IsFalse(
             HasPublicInstanceMethod(typeof(ObjectWithAllOfPatternProperties.Builder), "AddProperty"),
             "Expected NO AddProperty on ObjectWithAllOfPatternProperties.Builder");
     }
 
-    [Fact]
+    [TestMethod]
     public void BuilderType_DoesNotHaveAddProperty_NoPatternsWithAdditionalPropertiesFalse()
     {
-        Assert.False(
+        Assert.IsFalse(
             HasPublicInstanceMethod(typeof(ClosedObjectNoPatterns.Builder), "AddProperty"),
             "Expected NO AddProperty on ClosedObjectNoPatterns.Builder");
     }
 
-    [Fact]
+    [TestMethod]
     public void BuilderType_DoesNotHaveAddProperty_NoPatternsWithUnevaluatedPropertiesFalse()
     {
-        Assert.False(
+        Assert.IsFalse(
             HasPublicInstanceMethod(typeof(UnevaluatedClosedObjectNoPatterns.Builder), "AddProperty"),
             "Expected NO AddProperty on UnevaluatedClosedObjectNoPatterns.Builder");
     }

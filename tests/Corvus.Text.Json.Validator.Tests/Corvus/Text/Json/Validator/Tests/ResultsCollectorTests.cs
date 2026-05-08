@@ -2,18 +2,19 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Validator.Tests;
 
 /// <summary>
 /// Tests for results collector integration with <see cref="JsonSchema"/>.
 /// </summary>
+[TestClass]
 public class ResultsCollectorTests
 {
     private static readonly JsonSchema Schema = CreateSchema();
 
-    [Fact]
+    [TestMethod]
     public void Validate_WithCollector_ValidDocument_ReturnsTrue()
     {
         using var collector =
@@ -21,10 +22,10 @@ public class ResultsCollectorTests
 
         bool result = Schema.Validate("""{"name":"Alice","age":30}""", collector);
 
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_WithCollector_InvalidDocument_ReturnsFalse()
     {
         using var collector =
@@ -32,10 +33,10 @@ public class ResultsCollectorTests
 
         bool result = Schema.Validate("""{"name":"Alice"}""", collector);
 
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_WithCollector_InvalidDocument_HasResults()
     {
         using var collector =
@@ -43,10 +44,10 @@ public class ResultsCollectorTests
 
         Schema.Validate("""{"name":"Alice"}""", collector);
 
-        Assert.True(collector.GetResultCount() > 0);
+        Assert.IsTrue(collector.GetResultCount() > 0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_WithCollector_ValidDocument_HasNoFailureResults()
     {
         using var collector =
@@ -64,17 +65,17 @@ public class ResultsCollectorTests
             }
         }
 
-        Assert.False(hasFailure);
+        Assert.IsFalse(hasFailure);
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_WithNullCollector_StillReturnsCorrectResult()
     {
-        Assert.True(Schema.Validate("""{"name":"Alice","age":30}""", null));
-        Assert.False(Schema.Validate("""{"name":"Alice"}""", null));
+        Assert.IsTrue(Schema.Validate("""{"name":"Alice","age":30}""", null));
+        Assert.IsFalse(Schema.Validate("""{"name":"Alice"}""", null));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_WithDetailedCollector_InvalidDocument_HasResults()
     {
         using var collector =
@@ -82,7 +83,7 @@ public class ResultsCollectorTests
 
         Schema.Validate("""{"name":"Alice"}""", collector);
 
-        Assert.True(collector.GetResultCount() > 0);
+        Assert.IsTrue(collector.GetResultCount() > 0);
     }
 
     private static JsonSchema CreateSchema()

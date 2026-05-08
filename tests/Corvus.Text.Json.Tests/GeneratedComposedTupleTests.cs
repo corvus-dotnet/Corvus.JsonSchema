@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -11,47 +11,48 @@ namespace Corvus.Text.Json.Tests;
 /// such as contains, items, or unevaluatedItems.
 /// Covers the closed/open matrix for composed vs local type constraints.
 /// </summary>
+[TestClass]
 public class GeneratedComposedTupleTests
 {
     #region RefTupleWithContains — closed composed tuple (items:false) + contains — pure tuple
 
-    [Fact]
+    [TestMethod]
     public void ClosedComposed_Parse_Succeeds()
     {
         using var doc =
             ParsedJsonDocument<RefTupleWithContains>.Parse("""["hello",42]""");
 
-        Assert.Equal(2, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(2, doc.RootElement.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosedComposed_IndexAccess_ReturnsJsonElement()
     {
         using var doc =
             ParsedJsonDocument<RefTupleWithContains>.Parse("""["hello",42]""");
 
-        Assert.Equal("hello", doc.RootElement[0].ToString());
-        Assert.Equal("42", doc.RootElement[1].ToString());
+        Assert.AreEqual("hello", doc.RootElement[0].ToString());
+        Assert.AreEqual("42", doc.RootElement[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosedComposed_TryGetAsAllOf0Array_AccessesPrefixItems()
     {
         using var doc =
             ParsedJsonDocument<RefTupleWithContains>.Parse("""["hello",42]""");
 
-        Assert.True(doc.RootElement.TryGetAsAllOf0Array(out RefTupleWithContains.AllOf0Array allOf0));
+        Assert.IsTrue(doc.RootElement.TryGetAsAllOf0Array(out RefTupleWithContains.AllOf0Array allOf0));
 
         var item0 =
             JsonString.From(allOf0[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
 
         var item1 =
             JsonInt32.From(allOf0[1]);
-        Assert.Equal(42, (int)item1);
+        Assert.AreEqual(42, (int)item1);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosedComposed_EnumerateArray()
     {
         using var doc =
@@ -63,10 +64,10 @@ public class GeneratedComposedTupleTests
             count++;
         }
 
-        Assert.Equal(2, count);
+        Assert.AreEqual(2, count);
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosedComposed_Build_CreateTuple()
     {
         using var workspace = JsonWorkspace.Create();
@@ -81,12 +82,12 @@ public class GeneratedComposedTupleTests
             RefTupleWithContains.CreateBuilder(workspace, source);
         RefTupleWithContains.Mutable root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("99", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("99", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosedComposed_Build_CreateTuple_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -101,17 +102,17 @@ public class GeneratedComposedTupleTests
             RefTupleWithContains.CreateBuilder(workspace, source);
 
         string json = doc.RootElement.ToString();
-        Assert.Contains("hello", json);
-        Assert.Contains("42", json);
+        StringAssert.Contains(json, "hello");
+        StringAssert.Contains(json, "42");
 
         using var reparsed =
             ParsedJsonDocument<RefTupleWithContains>.Parse(json);
-        Assert.Equal(2, reparsed.RootElement.GetArrayLength());
-        Assert.Equal("hello", reparsed.RootElement[0].ToString());
-        Assert.Equal("42", reparsed.RootElement[1].ToString());
+        Assert.AreEqual(2, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", reparsed.RootElement[0].ToString());
+        Assert.AreEqual("42", reparsed.RootElement[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void ClosedComposed_RoundTrip()
     {
         using var doc =
@@ -121,52 +122,52 @@ public class GeneratedComposedTupleTests
 
         using var roundTrip =
             ParsedJsonDocument<RefTupleWithContains>.Parse(json);
-        Assert.Equal(2, roundTrip.RootElement.GetArrayLength());
-        Assert.Equal("hello", roundTrip.RootElement[0].ToString());
-        Assert.Equal("42", roundTrip.RootElement[1].ToString());
+        Assert.AreEqual(2, roundTrip.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", roundTrip.RootElement[0].ToString());
+        Assert.AreEqual("42", roundTrip.RootElement[1].ToString());
     }
 
     #endregion
 
     #region AllOfOpenTupleClosedLocally — open composed + items:false locally — pure tuple
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedClosedLocally_Parse_Succeeds()
     {
         using var doc =
             ParsedJsonDocument<AllOfOpenTupleClosedLocally>.Parse("""["hello",3.14]""");
 
-        Assert.Equal(2, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(2, doc.RootElement.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedClosedLocally_IndexAccess_ReturnsJsonElement()
     {
         using var doc =
             ParsedJsonDocument<AllOfOpenTupleClosedLocally>.Parse("""["hello",3.14]""");
 
-        Assert.Equal("hello", doc.RootElement[0].ToString());
-        Assert.Equal("3.14", doc.RootElement[1].ToString());
+        Assert.AreEqual("hello", doc.RootElement[0].ToString());
+        Assert.AreEqual("3.14", doc.RootElement[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedClosedLocally_TryGetAsAllOf0Array_AccessesPrefixItems()
     {
         using var doc =
             ParsedJsonDocument<AllOfOpenTupleClosedLocally>.Parse("""["hello",3.14]""");
 
-        Assert.True(doc.RootElement.TryGetAsAllOf0Array(out AllOfOpenTupleClosedLocally.AllOf0Array allOf0));
+        Assert.IsTrue(doc.RootElement.TryGetAsAllOf0Array(out AllOfOpenTupleClosedLocally.AllOf0Array allOf0));
 
         var item0 =
             JsonString.From(allOf0[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
 
         var item1 =
             JsonNumber.From(allOf0[1]);
-        Assert.Equal(3.14, (double)item1, 2);
+        Assert.AreEqual(3.14, (double)item1, 2);
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedClosedLocally_Build_CreateTuple()
     {
         using var workspace = JsonWorkspace.Create();
@@ -181,12 +182,12 @@ public class GeneratedComposedTupleTests
             AllOfOpenTupleClosedLocally.CreateBuilder(workspace, source);
         AllOfOpenTupleClosedLocally.Mutable root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("2.718", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("2.718", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedClosedLocally_Build_CreateTuple_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -204,12 +205,12 @@ public class GeneratedComposedTupleTests
 
         using var reparsed =
             ParsedJsonDocument<AllOfOpenTupleClosedLocally>.Parse(json);
-        Assert.Equal(2, reparsed.RootElement.GetArrayLength());
-        Assert.Equal("hello", reparsed.RootElement[0].ToString());
-        Assert.Equal("1.5", reparsed.RootElement[1].ToString());
+        Assert.AreEqual(2, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", reparsed.RootElement[0].ToString());
+        Assert.AreEqual("1.5", reparsed.RootElement[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedClosedLocally_RoundTrip()
     {
         using var doc =
@@ -219,54 +220,54 @@ public class GeneratedComposedTupleTests
 
         using var roundTrip =
             ParsedJsonDocument<AllOfOpenTupleClosedLocally>.Parse(json);
-        Assert.Equal(2, roundTrip.RootElement.GetArrayLength());
-        Assert.Equal("hello", roundTrip.RootElement[0].ToString());
-        Assert.Equal("3.14", roundTrip.RootElement[1].ToString());
+        Assert.AreEqual(2, roundTrip.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", roundTrip.RootElement[0].ToString());
+        Assert.AreEqual("3.14", roundTrip.RootElement[1].ToString());
     }
 
     #endregion
 
     #region RefTupleWithAdditionalItems — open composed + items:boolean — tuple with additional items
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_Parse_Succeeds()
     {
         using var doc =
             ParsedJsonDocument<RefTupleWithAdditionalItems>.Parse("""["hello",42,true,false]""");
 
-        Assert.Equal(4, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(4, doc.RootElement.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_IndexAccess_ReturnsItemsEntity()
     {
         using var doc =
             ParsedJsonDocument<RefTupleWithAdditionalItems>.Parse("""["hello",42,true,false]""");
 
-        Assert.Equal("hello", doc.RootElement[0].ToString());
-        Assert.Equal("42", doc.RootElement[1].ToString());
-        Assert.Equal("True", doc.RootElement[2].ToString());
-        Assert.Equal("False", doc.RootElement[3].ToString());
+        Assert.AreEqual("hello", doc.RootElement[0].ToString());
+        Assert.AreEqual("42", doc.RootElement[1].ToString());
+        Assert.AreEqual("True", doc.RootElement[2].ToString());
+        Assert.AreEqual("False", doc.RootElement[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_TryGetAsAllOf0Array_AccessesPrefixItems()
     {
         using var doc =
             ParsedJsonDocument<RefTupleWithAdditionalItems>.Parse("""["hello",42,true]""");
 
-        Assert.True(doc.RootElement.TryGetAsAllOf0Array(out RefTupleWithAdditionalItems.AllOf0Array allOf0));
+        Assert.IsTrue(doc.RootElement.TryGetAsAllOf0Array(out RefTupleWithAdditionalItems.AllOf0Array allOf0));
 
         var item0 =
             JsonString.From(allOf0[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
 
         var item1 =
             JsonInt32.From(allOf0[1]);
-        Assert.Equal(42, (int)item1);
+        Assert.AreEqual(42, (int)item1);
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_EnumerateArray()
     {
         using var doc =
@@ -278,10 +279,10 @@ public class GeneratedComposedTupleTests
             count++;
         }
 
-        Assert.Equal(4, count);
+        Assert.AreEqual(4, count);
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_Build_CreateTupleThenAdd()
     {
         using var workspace = JsonWorkspace.Create();
@@ -298,14 +299,14 @@ public class GeneratedComposedTupleTests
             RefTupleWithAdditionalItems.CreateBuilder(workspace, source);
         RefTupleWithAdditionalItems.Mutable root = doc.RootElement;
 
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("42", root[1].ToString());
-        Assert.Equal("True", root[2].ToString());
-        Assert.Equal("False", root[3].ToString());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("42", root[1].ToString());
+        Assert.AreEqual("True", root[2].ToString());
+        Assert.AreEqual("False", root[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_Build_CreateTupleOnly()
     {
         using var workspace = JsonWorkspace.Create();
@@ -320,12 +321,12 @@ public class GeneratedComposedTupleTests
             RefTupleWithAdditionalItems.CreateBuilder(workspace, source);
         RefTupleWithAdditionalItems.Mutable root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("99", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("99", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_Build_AddBeforeCreateTuple_Throws()
     {
         using var workspace = JsonWorkspace.Create();
@@ -349,7 +350,7 @@ public class GeneratedComposedTupleTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_Build_CreateTuple_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -368,13 +369,13 @@ public class GeneratedComposedTupleTests
 
         using var reparsed =
             ParsedJsonDocument<RefTupleWithAdditionalItems>.Parse(json);
-        Assert.Equal(3, reparsed.RootElement.GetArrayLength());
-        Assert.Equal("hello", reparsed.RootElement[0].ToString());
-        Assert.Equal("42", reparsed.RootElement[1].ToString());
-        Assert.Equal("True", reparsed.RootElement[2].ToString());
+        Assert.AreEqual(3, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", reparsed.RootElement[0].ToString());
+        Assert.AreEqual("42", reparsed.RootElement[1].ToString());
+        Assert.AreEqual("True", reparsed.RootElement[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_Mutable_SetItem()
     {
         using var doc =
@@ -386,10 +387,10 @@ public class GeneratedComposedTupleTests
         RefTupleWithAdditionalItems.Mutable root = builderDoc.RootElement;
         root.SetItem(2, false);
 
-        Assert.Equal("False", root[2].ToString());
+        Assert.AreEqual("False", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_Mutable_InsertItem()
     {
         using var doc =
@@ -401,12 +402,12 @@ public class GeneratedComposedTupleTests
         RefTupleWithAdditionalItems.Mutable root = builderDoc.RootElement;
         root.InsertItem(2, false);
 
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal("False", root[2].ToString());
-        Assert.Equal("True", root[3].ToString());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual("False", root[2].ToString());
+        Assert.AreEqual("True", root[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_Mutable_Remove()
     {
         using var doc =
@@ -418,11 +419,11 @@ public class GeneratedComposedTupleTests
         RefTupleWithAdditionalItems.Mutable root = builderDoc.RootElement;
         root.RemoveAt(3);
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("True", root[2].ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("True", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_Mutable_SetItemUndefined_Removes()
     {
         using var doc =
@@ -434,10 +435,10 @@ public class GeneratedComposedTupleTests
         RefTupleWithAdditionalItems.Mutable root = builderDoc.RootElement;
         root.SetItem(3, default);
 
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithItems_RoundTrip()
     {
         using var doc =
@@ -447,56 +448,56 @@ public class GeneratedComposedTupleTests
 
         using var roundTrip =
             ParsedJsonDocument<RefTupleWithAdditionalItems>.Parse(json);
-        Assert.Equal(4, roundTrip.RootElement.GetArrayLength());
-        Assert.Equal("hello", roundTrip.RootElement[0].ToString());
-        Assert.Equal("42", roundTrip.RootElement[1].ToString());
-        Assert.Equal("True", roundTrip.RootElement[2].ToString());
-        Assert.Equal("False", roundTrip.RootElement[3].ToString());
+        Assert.AreEqual(4, roundTrip.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", roundTrip.RootElement[0].ToString());
+        Assert.AreEqual("42", roundTrip.RootElement[1].ToString());
+        Assert.AreEqual("True", roundTrip.RootElement[2].ToString());
+        Assert.AreEqual("False", roundTrip.RootElement[3].ToString());
     }
 
     #endregion
 
     #region AllOfInlineTupleWithUnevaluated — open composed + unevaluatedItems:boolean — tuple with additional items
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_Parse_Succeeds()
     {
         using var doc =
             ParsedJsonDocument<AllOfInlineTupleWithUnevaluated>.Parse("""["hello",3.14,true]""");
 
-        Assert.Equal(3, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(3, doc.RootElement.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_IndexAccess_ReturnsUnevaluatedItemsEntity()
     {
         using var doc =
             ParsedJsonDocument<AllOfInlineTupleWithUnevaluated>.Parse("""["hello",3.14,true,false]""");
 
-        Assert.Equal("hello", doc.RootElement[0].ToString());
-        Assert.Equal("3.14", doc.RootElement[1].ToString());
-        Assert.Equal("True", doc.RootElement[2].ToString());
-        Assert.Equal("False", doc.RootElement[3].ToString());
+        Assert.AreEqual("hello", doc.RootElement[0].ToString());
+        Assert.AreEqual("3.14", doc.RootElement[1].ToString());
+        Assert.AreEqual("True", doc.RootElement[2].ToString());
+        Assert.AreEqual("False", doc.RootElement[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_TryGetAsAllOf0Entity_AccessesPrefixItems()
     {
         using var doc =
             ParsedJsonDocument<AllOfInlineTupleWithUnevaluated>.Parse("""["hello",3.14,true]""");
 
-        Assert.True(doc.RootElement.TryGetAsAllOf0Entity(out AllOfInlineTupleWithUnevaluated.AllOf0Entity entity));
+        Assert.IsTrue(doc.RootElement.TryGetAsAllOf0Entity(out AllOfInlineTupleWithUnevaluated.AllOf0Entity entity));
 
         var item0 =
             JsonString.From(entity[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
 
         var item1 =
             JsonNumber.From(entity[1]);
-        Assert.Equal(3.14, (double)item1, 2);
+        Assert.AreEqual(3.14, (double)item1, 2);
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_EnumerateArray()
     {
         using var doc =
@@ -508,10 +509,10 @@ public class GeneratedComposedTupleTests
             count++;
         }
 
-        Assert.Equal(4, count);
+        Assert.AreEqual(4, count);
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_Build_CreateTupleThenAdd()
     {
         using var workspace = JsonWorkspace.Create();
@@ -528,14 +529,14 @@ public class GeneratedComposedTupleTests
             AllOfInlineTupleWithUnevaluated.CreateBuilder(workspace, source);
         AllOfInlineTupleWithUnevaluated.Mutable root = doc.RootElement;
 
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("3.14", root[1].ToString());
-        Assert.Equal("True", root[2].ToString());
-        Assert.Equal("False", root[3].ToString());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("3.14", root[1].ToString());
+        Assert.AreEqual("True", root[2].ToString());
+        Assert.AreEqual("False", root[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_Build_CreateTupleOnly()
     {
         using var workspace = JsonWorkspace.Create();
@@ -550,12 +551,12 @@ public class GeneratedComposedTupleTests
             AllOfInlineTupleWithUnevaluated.CreateBuilder(workspace, source);
         AllOfInlineTupleWithUnevaluated.Mutable root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("2.718", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("2.718", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_Build_AddBeforeCreateTuple_Throws()
     {
         using var workspace = JsonWorkspace.Create();
@@ -579,7 +580,7 @@ public class GeneratedComposedTupleTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_Build_CreateTuple_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -598,13 +599,13 @@ public class GeneratedComposedTupleTests
 
         using var reparsed =
             ParsedJsonDocument<AllOfInlineTupleWithUnevaluated>.Parse(json);
-        Assert.Equal(3, reparsed.RootElement.GetArrayLength());
-        Assert.Equal("hello", reparsed.RootElement[0].ToString());
-        Assert.Equal("3.14", reparsed.RootElement[1].ToString());
-        Assert.Equal("True", reparsed.RootElement[2].ToString());
+        Assert.AreEqual(3, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", reparsed.RootElement[0].ToString());
+        Assert.AreEqual("3.14", reparsed.RootElement[1].ToString());
+        Assert.AreEqual("True", reparsed.RootElement[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_Mutable_SetItem()
     {
         using var doc =
@@ -616,10 +617,10 @@ public class GeneratedComposedTupleTests
         AllOfInlineTupleWithUnevaluated.Mutable root = builderDoc.RootElement;
         root.SetItem(2, false);
 
-        Assert.Equal("False", root[2].ToString());
+        Assert.AreEqual("False", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_Mutable_InsertItem()
     {
         using var doc =
@@ -631,11 +632,11 @@ public class GeneratedComposedTupleTests
         AllOfInlineTupleWithUnevaluated.Mutable root = builderDoc.RootElement;
         root.InsertItem(2, true);
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("True", root[2].ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("True", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_Mutable_Remove()
     {
         using var doc =
@@ -647,10 +648,10 @@ public class GeneratedComposedTupleTests
         AllOfInlineTupleWithUnevaluated.Mutable root = builderDoc.RootElement;
         root.RemoveAt(3);
 
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_Mutable_RemoveWhere()
     {
         using var doc =
@@ -663,10 +664,10 @@ public class GeneratedComposedTupleTests
         root.RemoveWhere(static (in item) =>
             item.ToString() == "True");
 
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void OpenComposedWithUnevaluated_RoundTrip()
     {
         using var doc =
@@ -676,54 +677,54 @@ public class GeneratedComposedTupleTests
 
         using var roundTrip =
             ParsedJsonDocument<AllOfInlineTupleWithUnevaluated>.Parse(json);
-        Assert.Equal(4, roundTrip.RootElement.GetArrayLength());
-        Assert.Equal("hello", roundTrip.RootElement[0].ToString());
-        Assert.Equal("3.14", roundTrip.RootElement[1].ToString());
-        Assert.Equal("True", roundTrip.RootElement[2].ToString());
-        Assert.Equal("False", roundTrip.RootElement[3].ToString());
+        Assert.AreEqual(4, roundTrip.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", roundTrip.RootElement[0].ToString());
+        Assert.AreEqual("3.14", roundTrip.RootElement[1].ToString());
+        Assert.AreEqual("True", roundTrip.RootElement[2].ToString());
+        Assert.AreEqual("False", roundTrip.RootElement[3].ToString());
     }
 
     #endregion
 
     #region RefClosedTupleWithContains — $ref-based closed tuple (items:false) + contains — pure tuple
 
-    [Fact]
+    [TestMethod]
     public void RefClosedComposed_Parse_Succeeds()
     {
         using var doc =
             ParsedJsonDocument<RefClosedTupleWithContains>.Parse("""["hello",42]""");
 
-        Assert.Equal(2, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(2, doc.RootElement.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefClosedComposed_IndexAccess_ReturnsJsonElement()
     {
         using var doc =
             ParsedJsonDocument<RefClosedTupleWithContains>.Parse("""["hello",42]""");
 
-        Assert.Equal("hello", doc.RootElement[0].ToString());
-        Assert.Equal("42", doc.RootElement[1].ToString());
+        Assert.AreEqual("hello", doc.RootElement[0].ToString());
+        Assert.AreEqual("42", doc.RootElement[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefClosedComposed_TryGetAsBaseTuple_AccessesPrefixItems()
     {
         using var doc =
             ParsedJsonDocument<RefClosedTupleWithContains>.Parse("""["hello",42]""");
 
-        Assert.True(doc.RootElement.TryGetAsBaseTuple(out RefClosedTupleWithContains.BaseTuple baseTuple));
+        Assert.IsTrue(doc.RootElement.TryGetAsBaseTuple(out RefClosedTupleWithContains.BaseTuple baseTuple));
 
         var item0 =
             JsonString.From(baseTuple[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
 
         var item1 =
             JsonInt32.From(baseTuple[1]);
-        Assert.Equal(42, (int)item1);
+        Assert.AreEqual(42, (int)item1);
     }
 
-    [Fact]
+    [TestMethod]
     public void RefClosedComposed_Build_CreateTuple()
     {
         using var workspace = JsonWorkspace.Create();
@@ -738,12 +739,12 @@ public class GeneratedComposedTupleTests
             RefClosedTupleWithContains.CreateBuilder(workspace, source);
         RefClosedTupleWithContains.Mutable root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("99", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("99", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefClosedComposed_Build_CreateTuple_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -761,12 +762,12 @@ public class GeneratedComposedTupleTests
 
         using var reparsed =
             ParsedJsonDocument<RefClosedTupleWithContains>.Parse(json);
-        Assert.Equal(2, reparsed.RootElement.GetArrayLength());
-        Assert.Equal("hello", reparsed.RootElement[0].ToString());
-        Assert.Equal("42", reparsed.RootElement[1].ToString());
+        Assert.AreEqual(2, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", reparsed.RootElement[0].ToString());
+        Assert.AreEqual("42", reparsed.RootElement[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefClosedComposed_RoundTrip()
     {
         using var doc =
@@ -776,54 +777,54 @@ public class GeneratedComposedTupleTests
 
         using var roundTrip =
             ParsedJsonDocument<RefClosedTupleWithContains>.Parse(json);
-        Assert.Equal(2, roundTrip.RootElement.GetArrayLength());
-        Assert.Equal("hello", roundTrip.RootElement[0].ToString());
-        Assert.Equal("42", roundTrip.RootElement[1].ToString());
+        Assert.AreEqual(2, roundTrip.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", roundTrip.RootElement[0].ToString());
+        Assert.AreEqual("42", roundTrip.RootElement[1].ToString());
     }
 
     #endregion
 
     #region RefOpenTupleWithItems — $ref-based open tuple + items:boolean — tuple with additional items
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_Parse_Succeeds()
     {
         using var doc =
             ParsedJsonDocument<RefOpenTupleWithItems>.Parse("""["hello",42,true,false]""");
 
-        Assert.Equal(4, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(4, doc.RootElement.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_IndexAccess_ReturnsItemsEntity()
     {
         using var doc =
             ParsedJsonDocument<RefOpenTupleWithItems>.Parse("""["hello",42,true,false]""");
 
-        Assert.Equal("hello", doc.RootElement[0].ToString());
-        Assert.Equal("42", doc.RootElement[1].ToString());
-        Assert.Equal("True", doc.RootElement[2].ToString());
-        Assert.Equal("False", doc.RootElement[3].ToString());
+        Assert.AreEqual("hello", doc.RootElement[0].ToString());
+        Assert.AreEqual("42", doc.RootElement[1].ToString());
+        Assert.AreEqual("True", doc.RootElement[2].ToString());
+        Assert.AreEqual("False", doc.RootElement[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_TryGetAsBaseTuple_AccessesPrefixItems()
     {
         using var doc =
             ParsedJsonDocument<RefOpenTupleWithItems>.Parse("""["hello",42,true]""");
 
-        Assert.True(doc.RootElement.TryGetAsBaseTuple(out RefOpenTupleWithItems.BaseTuple baseTuple));
+        Assert.IsTrue(doc.RootElement.TryGetAsBaseTuple(out RefOpenTupleWithItems.BaseTuple baseTuple));
 
         var item0 =
             JsonString.From(baseTuple[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
 
         var item1 =
             JsonInt32.From(baseTuple[1]);
-        Assert.Equal(42, (int)item1);
+        Assert.AreEqual(42, (int)item1);
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_Build_CreateTupleThenAdd()
     {
         using var workspace = JsonWorkspace.Create();
@@ -840,14 +841,14 @@ public class GeneratedComposedTupleTests
             RefOpenTupleWithItems.CreateBuilder(workspace, source);
         RefOpenTupleWithItems.Mutable root = doc.RootElement;
 
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("42", root[1].ToString());
-        Assert.Equal("True", root[2].ToString());
-        Assert.Equal("False", root[3].ToString());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("42", root[1].ToString());
+        Assert.AreEqual("True", root[2].ToString());
+        Assert.AreEqual("False", root[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_Build_CreateTupleOnly()
     {
         using var workspace = JsonWorkspace.Create();
@@ -862,12 +863,12 @@ public class GeneratedComposedTupleTests
             RefOpenTupleWithItems.CreateBuilder(workspace, source);
         RefOpenTupleWithItems.Mutable root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("99", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("99", root[1].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_Build_AddBeforeCreateTuple_Throws()
     {
         using var workspace = JsonWorkspace.Create();
@@ -891,7 +892,7 @@ public class GeneratedComposedTupleTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_Build_CreateTuple_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -910,13 +911,13 @@ public class GeneratedComposedTupleTests
 
         using var reparsed =
             ParsedJsonDocument<RefOpenTupleWithItems>.Parse(json);
-        Assert.Equal(3, reparsed.RootElement.GetArrayLength());
-        Assert.Equal("hello", reparsed.RootElement[0].ToString());
-        Assert.Equal("42", reparsed.RootElement[1].ToString());
-        Assert.Equal("True", reparsed.RootElement[2].ToString());
+        Assert.AreEqual(3, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", reparsed.RootElement[0].ToString());
+        Assert.AreEqual("42", reparsed.RootElement[1].ToString());
+        Assert.AreEqual("True", reparsed.RootElement[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_Mutable_SetItem()
     {
         using var doc =
@@ -928,10 +929,10 @@ public class GeneratedComposedTupleTests
         RefOpenTupleWithItems.Mutable root = builderDoc.RootElement;
         root.SetItem(2, false);
 
-        Assert.Equal("False", root[2].ToString());
+        Assert.AreEqual("False", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_Mutable_InsertItem()
     {
         using var doc =
@@ -943,12 +944,12 @@ public class GeneratedComposedTupleTests
         RefOpenTupleWithItems.Mutable root = builderDoc.RootElement;
         root.InsertItem(2, false);
 
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal("False", root[2].ToString());
-        Assert.Equal("True", root[3].ToString());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual("False", root[2].ToString());
+        Assert.AreEqual("True", root[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_Mutable_Remove()
     {
         using var doc =
@@ -960,11 +961,11 @@ public class GeneratedComposedTupleTests
         RefOpenTupleWithItems.Mutable root = builderDoc.RootElement;
         root.RemoveAt(3);
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("True", root[2].ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("True", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefOpenComposedWithItems_RoundTrip()
     {
         using var doc =
@@ -974,11 +975,11 @@ public class GeneratedComposedTupleTests
 
         using var roundTrip =
             ParsedJsonDocument<RefOpenTupleWithItems>.Parse(json);
-        Assert.Equal(4, roundTrip.RootElement.GetArrayLength());
-        Assert.Equal("hello", roundTrip.RootElement[0].ToString());
-        Assert.Equal("42", roundTrip.RootElement[1].ToString());
-        Assert.Equal("True", roundTrip.RootElement[2].ToString());
-        Assert.Equal("False", roundTrip.RootElement[3].ToString());
+        Assert.AreEqual(4, roundTrip.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", roundTrip.RootElement[0].ToString());
+        Assert.AreEqual("42", roundTrip.RootElement[1].ToString());
+        Assert.AreEqual("True", roundTrip.RootElement[2].ToString());
+        Assert.AreEqual("False", roundTrip.RootElement[3].ToString());
     }
 
     #endregion

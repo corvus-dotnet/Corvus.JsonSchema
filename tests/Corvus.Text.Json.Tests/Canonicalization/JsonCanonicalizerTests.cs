@@ -6,7 +6,7 @@ using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Canonicalization;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.Canonicalization;
 
@@ -14,11 +14,12 @@ namespace Corvus.Text.Json.Tests.Canonicalization;
 /// Tests for <see cref="JsonCanonicalizer"/> implementing RFC 8785 (JCS).
 /// Test vectors from https://github.com/cyberphone/json-canonicalization.
 /// </summary>
+[TestClass]
 public class JsonCanonicalizerTests
 {
     #region Cyberphone Test Vectors
 
-    [Fact]
+    [TestMethod]
     public void CypherponeArraysTestVector()
     {
         string input = """[56,{"d":true,"10":null,"1":[]}]""";
@@ -26,7 +27,7 @@ public class JsonCanonicalizerTests
         AssertCanonicalEquals(input, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void CypherponeStructuresTestVector()
     {
         // Input has nested objects with mixed numeric/alpha keys, \n in key, 56.0 float
@@ -45,7 +46,7 @@ public class JsonCanonicalizerTests
         AssertCanonicalEquals(input, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void CypherponeValuesTestVector()
     {
         string input =
@@ -70,7 +71,7 @@ public class JsonCanonicalizerTests
         AssertCanonicalEquals(input, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void CypherponeFrenchTestVector()
     {
         string input =
@@ -91,7 +92,7 @@ public class JsonCanonicalizerTests
         AssertCanonicalEquals(input, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void CypherponeUnicodeTestVector()
     {
         // Input has unnormalized Unicode: A + combining ring above (U+030A)
@@ -108,7 +109,7 @@ public class JsonCanonicalizerTests
         AssertCanonicalEquals(input, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void CypherponeWeirdTestVector()
     {
         string input =
@@ -140,50 +141,50 @@ public class JsonCanonicalizerTests
 
     #region ES6 Number Formatting
 
-    [Theory]
-    [InlineData(0.0, "0")]
-    [InlineData(1.0, "1")]
-    [InlineData(-1.0, "-1")]
-    [InlineData(0.5, "0.5")]
-    [InlineData(4.5, "4.5")]
-    [InlineData(0.002, "0.002")]
-    [InlineData(0.1, "0.1")]
-    [InlineData(56.0, "56")]
+    [TestMethod]
+    [DataRow(0.0, "0")]
+    [DataRow(1.0, "1")]
+    [DataRow(-1.0, "-1")]
+    [DataRow(0.5, "0.5")]
+    [DataRow(4.5, "4.5")]
+    [DataRow(0.002, "0.002")]
+    [DataRow(0.1, "0.1")]
+    [DataRow(56.0, "56")]
     public void Es6NumberFormatBasic(double value, string expected)
     {
         AssertNumberFormat(value, expected);
     }
 
-    [Theory]
-    [InlineData(333333333.33333329, "333333333.3333333")]
-    [InlineData(1e30, "1e+30")]
-    [InlineData(1e-27, "1e-27")]
-    [InlineData(1e21, "1e+21")]
-    [InlineData(1e20, "100000000000000000000")]
-    [InlineData(1e-7, "1e-7")]
-    [InlineData(1e-6, "0.000001")]
+    [TestMethod]
+    [DataRow(333333333.33333329, "333333333.3333333")]
+    [DataRow(1e30, "1e+30")]
+    [DataRow(1e-27, "1e-27")]
+    [DataRow(1e21, "1e+21")]
+    [DataRow(1e20, "100000000000000000000")]
+    [DataRow(1e-7, "1e-7")]
+    [DataRow(1e-6, "0.000001")]
     public void Es6NumberFormatExponentialBoundaries(double value, string expected)
     {
         AssertNumberFormat(value, expected);
     }
 
-    [Theory]
-    [InlineData(double.MaxValue, "1.7976931348623157e+308")]
-    [InlineData(double.MinValue, "-1.7976931348623157e+308")]
-    [InlineData(double.Epsilon, "5e-324")]
+    [TestMethod]
+    [DataRow(double.MaxValue, "1.7976931348623157e+308")]
+    [DataRow(double.MinValue, "-1.7976931348623157e+308")]
+    [DataRow(double.Epsilon, "5e-324")]
     public void Es6NumberFormatExtremes(double value, string expected)
     {
         AssertNumberFormat(value, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Es6NumberFormatNegativeZero()
     {
         // -0.0 must serialize as "0"
         AssertNumberFormat(-0.0, "0");
     }
 
-    [Fact]
+    [TestMethod]
     public void Es6NumberFormatPi()
     {
         AssertNumberFormat(Math.PI, "3.141592653589793");
@@ -193,31 +194,31 @@ public class JsonCanonicalizerTests
 
     #region Property Sorting
 
-    [Fact]
+    [TestMethod]
     public void EmptyObject()
     {
         AssertCanonicalEquals("{}", "{}");
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyArray()
     {
         AssertCanonicalEquals("[]", "[]");
     }
 
-    [Fact]
+    [TestMethod]
     public void SingleProperty()
     {
         AssertCanonicalEquals("""{ "a" : 1 }""", """{"a":1}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void WhitespaceRemoval()
     {
         AssertCanonicalEquals("""{ "b" : 2 , "a" : 1 }""", """{"a":1,"b":2}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedObjectsSorted()
     {
         AssertCanonicalEquals(
@@ -229,7 +230,7 @@ public class JsonCanonicalizerTests
 
     #region String Escaping
 
-    [Fact]
+    [TestMethod]
     public void ControlCharacterEscaping()
     {
         // Control chars U+0000-U+001F: named escapes for \b \t \n \f \r, \uXXXX for others
@@ -238,14 +239,14 @@ public class JsonCanonicalizerTests
         AssertCanonicalEquals(input, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void ForwardSlashNotEscaped()
     {
         // Forward slash must NOT be escaped in JCS
         AssertCanonicalEquals("""{"path":"a/b/c"}""", """{"path":"a/b/c"}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void BackslashAndQuoteEscaped()
     {
         string input = """{"key":"hello\"world\\"}""";
@@ -257,7 +258,7 @@ public class JsonCanonicalizerTests
 
     #region I-JSON Validation
 
-    [Fact]
+    [TestMethod]
     public void DuplicatePropertyNamesThrow()
     {
         // JCS requires I-JSON compliant input; duplicate properties must be rejected.
@@ -282,7 +283,7 @@ public class JsonCanonicalizerTests
         if (propertyCount > 1)
         {
             // Duplicates are preserved — canonicalizer must reject
-            Assert.Throws<InvalidOperationException>(() =>
+            Assert.ThrowsExactly<InvalidOperationException>(() =>
             {
                 byte[] result = JsonCanonicalizer.Canonicalize(root);
             });
@@ -291,35 +292,35 @@ public class JsonCanonicalizerTests
         {
             // Parser deduplicates — canonicalization succeeds
             byte[] result = JsonCanonicalizer.Canonicalize(root);
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void NullElement()
     {
         AssertCanonicalEquals("null", "null");
     }
 
-    [Fact]
+    [TestMethod]
     public void TrueElement()
     {
         AssertCanonicalEquals("true", "true");
     }
 
-    [Fact]
+    [TestMethod]
     public void FalseElement()
     {
         AssertCanonicalEquals("false", "false");
     }
 
-    [Fact]
+    [TestMethod]
     public void StringElement()
     {
         AssertCanonicalEquals("""  "hello"  """, "\"hello\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumberElement()
     {
         AssertCanonicalEquals("42", "42");
@@ -329,25 +330,25 @@ public class JsonCanonicalizerTests
 
     #region TryCanonicalize API
 
-    [Fact]
+    [TestMethod]
     public void TryCanonicalizeSucceedsWithLargeBuffer()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"b":2,"a":1}""");
         Span<byte> buffer = stackalloc byte[256];
         bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
 
-        Assert.True(success);
-        Assert.Equal("""{"a":1,"b":2}""", JsonReaderHelper.TranscodeHelper(buffer.Slice(0, bytesWritten)));
+        Assert.IsTrue(success);
+        Assert.AreEqual("""{"a":1,"b":2}""", JsonReaderHelper.TranscodeHelper(buffer.Slice(0, bytesWritten)));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCanonicalizeFailsWithSmallBuffer()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"b":2,"a":1}""");
         Span<byte> buffer = stackalloc byte[2]; // way too small
         bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
 
-        Assert.False(success);
+        Assert.IsFalse(success);
     }
 
     #endregion
@@ -359,7 +360,7 @@ public class JsonCanonicalizerTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(inputJson);
         byte[] result = JsonCanonicalizer.Canonicalize(doc.RootElement);
         string actual = Encoding.UTF8.GetString(result);
-        Assert.Equal(expectedCanonical, actual);
+        Assert.AreEqual(expectedCanonical, actual);
     }
 
     private static void AssertNumberFormat(double value, string expected)
@@ -370,10 +371,10 @@ public class JsonCanonicalizerTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
         byte[] result = JsonCanonicalizer.Canonicalize(doc.RootElement);
         string actual = Encoding.UTF8.GetString(result);
-        Assert.Equal(expected, actual);
+        Assert.AreEqual(expected, actual);
     }
 
-    [Fact]
+    [TestMethod]
     public void Canonicalize_LargeDocument_UsesArrayPoolFallback()
     {
         // Construct a JSON object large enough to exceed the 256-byte stackalloc buffer,
@@ -399,11 +400,11 @@ public class JsonCanonicalizerTests
 
         // Verify sorted keys (JCS lexicographic sort by UTF-16 code units)
         Assert.StartsWith("{\"property_000\":0,", actual);
-        Assert.Contains("\"property_029\":29", actual);
-        Assert.True(result.Length > 256, "Result should exceed stackalloc threshold");
+        StringAssert.Contains(actual, "\"property_029\":29");
+        Assert.IsTrue(result.Length > 256, "Result should exceed stackalloc threshold");
     }
 
-    [Fact]
+    [TestMethod]
     public void Canonicalize_LargeObject_MoreThan32Properties_RentsIndices()
     {
         // Object with >32 properties triggers ArrayPool rent for sort indices (L235-238)
@@ -428,10 +429,10 @@ public class JsonCanonicalizerTests
 
         // Verify sorted — key_00 before key_01, etc.
         Assert.StartsWith("{\"key_00\":0,", actual);
-        Assert.Contains("\"key_39\":39}", actual);
+        StringAssert.Contains(actual, "\"key_39\":39}");
     }
 
-    [Fact]
+    [TestMethod]
     public void Canonicalize_64LevelsDeep_Succeeds()
     {
         // 64 levels is exactly at MaxDepth — should succeed
@@ -441,10 +442,10 @@ public class JsonCanonicalizerTests
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(nested);
 
         byte[] result = JsonCanonicalizer.Canonicalize(doc.RootElement);
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCanonicalize_NumberOverflow_ReturnsFalse()
     {
         // A number that needs more bytes than a tiny buffer allows
@@ -452,10 +453,10 @@ public class JsonCanonicalizerTests
         Span<byte> buffer = stackalloc byte[3]; // too small for the number
         bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
 
-        Assert.False(success);
+        Assert.IsFalse(success);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCanonicalize_StringOverflow_ReturnsFalse()
     {
         // A string that needs escaping and won't fit in a tiny buffer
@@ -463,10 +464,10 @@ public class JsonCanonicalizerTests
         Span<byte> buffer = stackalloc byte[4]; // too small
         bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
 
-        Assert.False(success);
+        Assert.IsFalse(success);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCanonicalize_ArrayOverflow_WriteByteThenWriteNumber()
     {
         // An array where the string element causes overflow, then WriteNumber sees overflow=true (L284-285)
@@ -475,10 +476,10 @@ public class JsonCanonicalizerTests
         Span<byte> buffer = stackalloc byte[8]; // fits ["aaaa but not full string
         bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
 
-        Assert.False(success);
+        Assert.IsFalse(success);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCanonicalize_ObjectOverflow_WriteBytesOverflowsInStringWrite()
     {
         // Object where the property name string exceeds remaining buffer
@@ -487,10 +488,10 @@ public class JsonCanonicalizerTests
         Span<byte> buffer = stackalloc byte[8]; // enough for {"abcde but not the rest
         bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
 
-        Assert.False(success);
+        Assert.IsFalse(success);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCanonicalize_ArrayWithStringThenLiteral_OverflowInWriteBytes()
     {
         // After string overflow, WriteLiteral (which calls WriteBytes) sees overflow=true (L396-397)
@@ -498,10 +499,10 @@ public class JsonCanonicalizerTests
         Span<byte> buffer = stackalloc byte[8]; // overflows during string, then WriteLiteral checks
         bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
 
-        Assert.False(success);
+        Assert.IsFalse(success);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCanonicalize_WriteBytesPartialOverflow()
     {
         // Buffer has some space but WriteBytes content exceeds it (L401-403)
@@ -510,7 +511,7 @@ public class JsonCanonicalizerTests
         Span<byte> buffer = stackalloc byte[3]; // "[" takes 1, then "true" needs 4, only 2 remain
         bool success = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
 
-        Assert.False(success);
+        Assert.IsFalse(success);
     }
 
     #endregion

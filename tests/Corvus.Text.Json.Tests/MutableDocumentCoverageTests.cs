@@ -1,7 +1,7 @@
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -10,12 +10,13 @@ namespace Corvus.Text.Json.Tests;
 /// code paths in SetProperty, InsertItem, and AddItem overloads.
 /// Identified through dotnet-coverage analysis.
 /// </summary>
-public static class MutableDocumentCoverageTests
+[TestClass]
+public class MutableDocumentCoverageTests
 {
     #region SetProperty<TContext> with ObjectBuilder — string overload (insert + replace branches)
 
-    [Fact]
-    public static void SetProperty_WithContextObjectBuilder()
+    [TestMethod]
+    public void SetProperty_WithContextObjectBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
@@ -33,13 +34,13 @@ public static class MutableDocumentCoverageTests
             });
 
         JsonElement.Mutable root = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.GetProperty("nested"u8).ValueKind);
-        Assert.Equal(10, root.GetProperty("nested"u8).GetProperty("a"u8).GetInt32());
-        Assert.Equal(20, root.GetProperty("nested"u8).GetProperty("b"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.GetProperty("nested"u8).ValueKind);
+        Assert.AreEqual(10, root.GetProperty("nested"u8).GetProperty("a"u8).GetInt32());
+        Assert.AreEqual(20, root.GetProperty("nested"u8).GetProperty("b"u8).GetInt32());
     }
 
-    [Fact]
-    public static void SetProperty_ReplaceExisting_WithContextObjectBuilder()
+    [TestMethod]
+    public void SetProperty_ReplaceExisting_WithContextObjectBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 42}""");
@@ -56,16 +57,16 @@ public static class MutableDocumentCoverageTests
             });
 
         JsonElement.Mutable x = doc.RootElement.GetProperty("x"u8);
-        Assert.Equal(JsonValueKind.Object, x.ValueKind);
-        Assert.Equal("value_one", x.GetProperty("name"u8).GetString());
+        Assert.AreEqual(JsonValueKind.Object, x.ValueKind);
+        Assert.AreEqual("value_one", x.GetProperty("name"u8).GetString());
     }
 
     #endregion
 
     #region SetProperty<TContext> with ArrayBuilder — string overload (insert + replace branches)
 
-    [Fact]
-    public static void SetProperty_WithContextArrayBuilder()
+    [TestMethod]
+    public void SetProperty_WithContextArrayBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
@@ -84,15 +85,15 @@ public static class MutableDocumentCoverageTests
             });
 
         JsonElement.Mutable items = doc.RootElement.GetProperty("items"u8);
-        Assert.Equal(JsonValueKind.Array, items.ValueKind);
-        Assert.Equal(3, items.GetArrayLength());
-        Assert.Equal(101, items[0].GetInt32());
-        Assert.Equal(102, items[1].GetInt32());
-        Assert.Equal(103, items[2].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, items.ValueKind);
+        Assert.AreEqual(3, items.GetArrayLength());
+        Assert.AreEqual(101, items[0].GetInt32());
+        Assert.AreEqual(102, items[1].GetInt32());
+        Assert.AreEqual(103, items[2].GetInt32());
     }
 
-    [Fact]
-    public static void SetProperty_ReplaceExisting_WithContextArrayBuilder()
+    [TestMethod]
+    public void SetProperty_ReplaceExisting_WithContextArrayBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 42}""");
@@ -110,17 +111,17 @@ public static class MutableDocumentCoverageTests
             });
 
         JsonElement.Mutable x = doc.RootElement.GetProperty("x"u8);
-        Assert.Equal(JsonValueKind.Array, x.ValueKind);
-        Assert.Equal(50, x[0].GetInt32());
-        Assert.Equal(100, x[1].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, x.ValueKind);
+        Assert.AreEqual(50, x[0].GetInt32());
+        Assert.AreEqual(100, x[1].GetInt32());
     }
 
     #endregion
 
     #region SetProperty<TContext> with ObjectBuilder — UTF-8 overload (insert + replace branches)
 
-    [Fact]
-    public static void SetProperty_Utf8_WithContextObjectBuilder()
+    [TestMethod]
+    public void SetProperty_Utf8_WithContextObjectBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
@@ -136,11 +137,11 @@ public static class MutableDocumentCoverageTests
                 ob.AddProperty("scaled"u8, ctx * 4);
             });
 
-        Assert.Equal(10.0, doc.RootElement.GetProperty("nested"u8).GetProperty("scaled"u8).GetDouble());
+        Assert.AreEqual(10.0, doc.RootElement.GetProperty("nested"u8).GetProperty("scaled"u8).GetDouble());
     }
 
-    [Fact]
-    public static void SetProperty_Utf8_ReplaceExisting_WithContextObjectBuilder()
+    [TestMethod]
+    public void SetProperty_Utf8_ReplaceExisting_WithContextObjectBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 42}""");
@@ -156,16 +157,16 @@ public static class MutableDocumentCoverageTests
                 ob.AddProperty("replaced"u8, ctx);
             });
 
-        Assert.Equal(JsonValueKind.Object, doc.RootElement.GetProperty("x"u8).ValueKind);
-        Assert.Equal(7, doc.RootElement.GetProperty("x"u8).GetProperty("replaced"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.GetProperty("x"u8).ValueKind);
+        Assert.AreEqual(7, doc.RootElement.GetProperty("x"u8).GetProperty("replaced"u8).GetInt32());
     }
 
     #endregion
 
     #region SetProperty<TContext> with ArrayBuilder — UTF-8 overload (insert + replace branches)
 
-    [Fact]
-    public static void SetProperty_Utf8_WithContextArrayBuilder()
+    [TestMethod]
+    public void SetProperty_Utf8_WithContextArrayBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
@@ -184,11 +185,11 @@ public static class MutableDocumentCoverageTests
                 }
             });
 
-        Assert.Equal(5, doc.RootElement.GetProperty("items"u8).GetArrayLength());
+        Assert.AreEqual(5, doc.RootElement.GetProperty("items"u8).GetArrayLength());
     }
 
-    [Fact]
-    public static void SetProperty_Utf8_ReplaceExisting_WithContextArrayBuilder()
+    [TestMethod]
+    public void SetProperty_Utf8_ReplaceExisting_WithContextArrayBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 42}""");
@@ -207,17 +208,17 @@ public static class MutableDocumentCoverageTests
                 }
             });
 
-        Assert.Equal(JsonValueKind.Array, doc.RootElement.GetProperty("x"u8).ValueKind);
-        Assert.Equal(3, doc.RootElement.GetProperty("x"u8).GetArrayLength());
-        Assert.Equal(20, doc.RootElement.GetProperty("x"u8)[2].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement.GetProperty("x"u8).ValueKind);
+        Assert.AreEqual(3, doc.RootElement.GetProperty("x"u8).GetArrayLength());
+        Assert.AreEqual(20, doc.RootElement.GetProperty("x"u8)[2].GetInt32());
     }
 
     #endregion
 
     #region InsertItem<TContext> + AddItem<TContext> with ArrayBuilder
 
-    [Fact]
-    public static void InsertItem_WithContextArrayBuilder()
+    [TestMethod]
+    public void InsertItem_WithContextArrayBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
@@ -234,13 +235,13 @@ public static class MutableDocumentCoverageTests
                 ab.AddItem(ctx + 1);
             });
 
-        Assert.Equal(4, doc.RootElement.GetArrayLength());
-        Assert.Equal(JsonValueKind.Array, doc.RootElement[0].ValueKind);
-        Assert.Equal(2, doc.RootElement[0].GetArrayLength());
+        Assert.AreEqual(4, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement[0].ValueKind);
+        Assert.AreEqual(2, doc.RootElement[0].GetArrayLength());
     }
 
-    [Fact]
-    public static void AddItem_WithContextArrayBuilder()
+    [TestMethod]
+    public void AddItem_WithContextArrayBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("[1]");
@@ -258,8 +259,8 @@ public static class MutableDocumentCoverageTests
                 }
             });
 
-        Assert.Equal(2, doc.RootElement.GetArrayLength());
-        Assert.Equal(3, doc.RootElement[1].GetArrayLength());
+        Assert.AreEqual(2, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(3, doc.RootElement[1].GetArrayLength());
     }
 
     #endregion

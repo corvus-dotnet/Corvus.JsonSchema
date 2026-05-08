@@ -5,36 +5,29 @@
 using System.Text;
 using System.Text.Json;
 using Corvus.Text.Json.JMESPath;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JMESPath.Tests;
 
 /// <summary>
 /// Runs the official JMESPath compliance test suite from jmespath/jmespath.test.
 /// </summary>
+[TestClass]
 public class ConformanceTests
 {
     private static readonly string TestSuiteRoot = FindTestSuiteRoot();
-    private readonly ITestOutputHelper output;
-
-    public ConformanceTests(ITestOutputHelper output)
-    {
-        this.output = output;
-    }
-
     /// <summary>
     /// Tests that expect a successful result.
     /// </summary>
-    [Theory]
-    [MemberData(nameof(GetSuccessCases))]
+    [TestMethod]
+    [DynamicData(nameof(GetSuccessCases))]
     public void SuccessCase(string file, int group, int caseIndex, string expression)
     {
         (string givenJson, string expectedJson) = LoadCase(file, group, caseIndex);
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Given: {givenJson}");
-        this.output.WriteLine($"Expected: {expectedJson}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Given: {givenJson}");
+        Console.WriteLine($"Expected: {expectedJson}");
 
         Corvus.Text.Json.JsonElement corvusData = Corvus.Text.Json.JsonElement.ParseValue(
             Encoding.UTF8.GetBytes(givenJson));
@@ -44,7 +37,7 @@ public class ConformanceTests
         // Serialize the result via Utf8JsonWriter for correct JSON
         string resultJson = SerializeToJson(result);
 
-        this.output.WriteLine($"Result: {resultJson}");
+        Console.WriteLine($"Result: {resultJson}");
 
         AssertJsonEqual(expectedJson, resultJson);
     }
@@ -52,19 +45,19 @@ public class ConformanceTests
     /// <summary>
     /// Tests that expect a syntax/parse error.
     /// </summary>
-    [Theory]
-    [MemberData(nameof(GetErrorCases))]
+    [TestMethod]
+    [DynamicData(nameof(GetErrorCases))]
     public void ErrorCase(string file, int group, int caseIndex, string expression, string errorType)
     {
         (string givenJson, _) = LoadCase(file, group, caseIndex);
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Expected error: {errorType}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Expected error: {errorType}");
 
         Corvus.Text.Json.JsonElement corvusData = Corvus.Text.Json.JsonElement.ParseValue(
             Encoding.UTF8.GetBytes(givenJson));
 
-        Assert.ThrowsAny<Exception>(() => JMESPathEvaluator.Default.Search(expression, corvusData));
+        Assert.Throws<Exception>(() => JMESPathEvaluator.Default.Search(expression, corvusData));
     }
 
     public static IEnumerable<object[]> GetSuccessCases()
@@ -162,7 +155,7 @@ public class ConformanceTests
     {
         using JsonDocument expectedDoc = JsonDocument.Parse(expected);
         using JsonDocument actualDoc = JsonDocument.Parse(actual);
-        Assert.True(
+        Assert.IsTrue(
             JsonElementDeepEquals(expectedDoc.RootElement, actualDoc.RootElement),
             $"Expected: {expected}\nActual: {actual}");
     }

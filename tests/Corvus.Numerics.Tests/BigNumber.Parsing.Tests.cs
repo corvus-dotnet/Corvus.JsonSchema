@@ -7,13 +7,14 @@ using System.Numerics;
 using System.Text;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
+[TestClass]
 public class BigNumberParsingTests
 {
-    [Fact]
+    [TestMethod]
     public void Parse_SimpleInteger_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("12345");
@@ -22,7 +23,7 @@ public class BigNumberParsingTests
         result.Exponent.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_NegativeInteger_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("-12345");
@@ -31,7 +32,7 @@ public class BigNumberParsingTests
         result.Exponent.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_DecimalNumber_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("123.456");
@@ -39,7 +40,7 @@ public class BigNumberParsingTests
         result.ShouldBe(new BigNumber(123456, -3));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ScientificNotation_Positive_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("1.23E+5");
@@ -47,7 +48,7 @@ public class BigNumberParsingTests
         result.ShouldBe(new BigNumber(123, 3));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ScientificNotation_Negative_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("1.23E-5");
@@ -55,7 +56,7 @@ public class BigNumberParsingTests
         result.ShouldBe(new BigNumber(123, -7));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_Zero_ReturnsZero()
     {
         var result = BigNumber.Parse("0");
@@ -63,7 +64,7 @@ public class BigNumberParsingTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ZeroPointZero_ReturnsZero()
     {
         var result = BigNumber.Parse("0.0");
@@ -71,7 +72,7 @@ public class BigNumberParsingTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_VeryLargeNumber_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("123456789012345678901234567890");
@@ -80,7 +81,7 @@ public class BigNumberParsingTests
         result.Exponent.ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_VerySmallNumber_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("0.000000000000000000000000000123");
@@ -90,7 +91,7 @@ public class BigNumberParsingTests
         normalized.Exponent.ShouldBe(-30);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_ValidNumber_ReturnsTrue()
     {
         bool success = BigNumber.TryParse("123.456", out BigNumber result);
@@ -99,7 +100,7 @@ public class BigNumberParsingTests
         result.ShouldBe(BigNumber.Parse("123.456"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_InvalidNumber_ReturnsFalse()
     {
         bool success = BigNumber.TryParse("not a number", out BigNumber result);
@@ -108,7 +109,7 @@ public class BigNumberParsingTests
         result.ShouldBe(default);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_EmptyString_ReturnsFalse()
     {
         bool success = BigNumber.TryParse("", out _);
@@ -116,7 +117,7 @@ public class BigNumberParsingTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_NullString_ReturnsFalse()
     {
         bool success = BigNumber.TryParse((string)null!, out _);
@@ -124,7 +125,7 @@ public class BigNumberParsingTests
         success.ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_WithCultureInfo_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("123.456", CultureInfo.InvariantCulture);
@@ -132,7 +133,7 @@ public class BigNumberParsingTests
         result.ShouldBe(BigNumber.Parse("123.456"));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_UTF8Bytes_ReturnsCorrectValue()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123.456");
@@ -141,7 +142,7 @@ public class BigNumberParsingTests
         result.ShouldBe(BigNumber.Parse("123.456"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_UTF8Bytes_ReturnsTrue()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123.456");
@@ -151,7 +152,7 @@ public class BigNumberParsingTests
         result.ShouldBe(BigNumber.Parse("123.456"));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_Span_ReturnsCorrectValue()
     {
         ReadOnlySpan<char> span = "123.456".AsSpan();
@@ -160,13 +161,13 @@ public class BigNumberParsingTests
         result.ShouldBe(BigNumber.Parse("123.456"));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_InvalidFormat_ThrowsFormatException()
     {
         Should.Throw<FormatException>(() => BigNumber.Parse("12.34.56"));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_LeadingWhitespace_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("  123.456  ");
@@ -174,7 +175,7 @@ public class BigNumberParsingTests
         result.ShouldBe(BigNumber.Parse("123.456"));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ExponentWithoutDecimal_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("123E5");
@@ -182,7 +183,7 @@ public class BigNumberParsingTests
         result.ShouldBe(new BigNumber(123, 5));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_NegativeExponent_ReturnsCorrectValue()
     {
         var result = BigNumber.Parse("123E-5");

@@ -4,7 +4,7 @@ using System.Buffers;
 using System.Linq;
 using Corvus.Text.Json.Canonicalization;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -12,7 +12,8 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage batch 14: JsonCanonicalizer edge cases, JsonHelpers validation,
 /// and Utf8JsonWriter WriteRawValue sequence paths.
 /// </summary>
-public static class CoverageBatch14Tests
+[TestClass]
+public class CoverageBatch14Tests
 {
     #region JsonHelpers.ValidateInt32MaxArrayLength overflow (line 115-116)
 
@@ -20,11 +21,11 @@ public static class CoverageBatch14Tests
     /// ValidateInt32MaxArrayLength throws OutOfMemoryException for values > 0x7FEFFFFF.
     /// Target: JsonHelpers.cs lines 115-116.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void ValidateInt32MaxArrayLength_ExceedsMax_ThrowsOutOfMemory()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void ValidateInt32MaxArrayLength_ExceedsMax_ThrowsOutOfMemory()
     {
-        Assert.Throws<OutOfMemoryException>(() => JsonHelpers.ValidateInt32MaxArrayLength(0x7FF00000));
+        Assert.ThrowsExactly<OutOfMemoryException>(() => JsonHelpers.ValidateInt32MaxArrayLength(0x7FF00000));
     }
 
     #endregion
@@ -36,16 +37,16 @@ public static class CoverageBatch14Tests
     /// in WriteElement (early return) and WriteByte.
     /// Target: JsonCanonicalizer.cs line 119 (WriteElement early return).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonCanonicalizer_BufferTooSmall_ReturnsOverflow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonCanonicalizer_BufferTooSmall_ReturnsOverflow()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a":123456}"""u8.ToArray());
 
         // 1 byte is far too small for any meaningful output
         Span<byte> tiny = stackalloc byte[1];
         bool result = JsonCanonicalizer.TryCanonicalize(doc.RootElement, tiny, out int written);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     /// <summary>
@@ -53,9 +54,9 @@ public static class CoverageBatch14Tests
     /// the number value triggers the TryFormat failure path inside WriteNumber.
     /// Target: JsonCanonicalizer.cs lines 293-295 (Es6NumberFormatter.TryFormat overflow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonCanonicalizer_NumberOverflow_SetOverflowFlag()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonCanonicalizer_NumberOverflow_SetOverflowFlag()
     {
         // {"a":123456} canonical form is {"a":123456} = 14 bytes
         // {"a": is 5 bytes, "123456" is 6 bytes, "}" is 1 byte = 12 bytes total
@@ -63,7 +64,7 @@ public static class CoverageBatch14Tests
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a":123456}"""u8.ToArray());
         Span<byte> buffer = stackalloc byte[8]; // enough for {"a": (5 bytes) but only 3 bytes left for 123456 (needs 6)
         bool result = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int written);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     #endregion
@@ -90,15 +91,15 @@ public static class CoverageBatch14Tests
     /// WriteRawValue with an empty ReadOnlySequence throws ArgumentException.
     /// Target: Utf8JsonWriter.WriteValues.Raw.cs lines 150-151.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteRawValue_EmptySequence_Throws()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteRawValue_EmptySequence_Throws()
     {
         var bufferWriter = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
 
         var emptySequence = new ReadOnlySequence<byte>(Array.Empty<byte>());
-        Assert.Throws<ArgumentException>(() => writer.WriteRawValue(emptySequence));
+        Assert.ThrowsExactly<ArgumentException>(() => writer.WriteRawValue(emptySequence));
     }
 
     #endregion
@@ -109,9 +110,9 @@ public static class CoverageBatch14Tests
     /// WriteRawValue with a non-empty ReadOnlySequence after previous values triggers list separator.
     /// Target: Utf8JsonWriter.WriteValues.Raw.cs lines 190-191.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteRawValue_Sequence_WithListSeparator()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteRawValue_Sequence_WithListSeparator()
     {
         var bufferWriter = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -125,7 +126,7 @@ public static class CoverageBatch14Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Equal("[42,99]", result);
+        Assert.AreEqual("[42,99]", result);
     }
 
     #endregion
@@ -136,9 +137,9 @@ public static class CoverageBatch14Tests
     /// Writing many double values to a writer triggers the buffer grow path.
     /// Target: Utf8JsonWriter.WriteValues.Double.cs lines 57-59.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDoubleValue_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDoubleValue_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -167,9 +168,9 @@ public static class CoverageBatch14Tests
     /// Writing many float values to a writer triggers the buffer grow path.
     /// Target: Utf8JsonWriter.WriteValues.Float.cs lines 57-59.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteFloatValue_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteFloatValue_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });

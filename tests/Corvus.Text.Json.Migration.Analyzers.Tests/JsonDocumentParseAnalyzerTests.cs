@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.JsonDocumentParseAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ008: JsonDocument.Parse migration to ParsedJsonDocument.
 /// </summary>
+[TestClass]
 public class JsonDocumentParseAnalyzerTests
 {
     private const string StjStubs = @"
@@ -55,7 +56,7 @@ namespace Corvus.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task JsonDocumentParse_TriggersCVJ008()
     {
         const string testCode = StjStubs + @"
@@ -73,7 +74,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode, Verify.Diagnostic().WithLocation(0));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SimpleReplace_CodeFix()
     {
         var test = new CodeFixTest
@@ -107,7 +108,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseWithFromJson_CollapsesIntoTypedParse()
     {
         var test = new CodeFixTest
@@ -143,7 +144,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonJsonDocumentParse_NoDiagnostic()
     {
         const string testCode = @"
@@ -170,7 +171,7 @@ namespace TestApp
     }
 
     // ── Edge case tests ─────────────────────────────────────────────
-    [Fact]
+    [TestMethod]
     public async Task ParseWithFromJson_ExplicitType_CollapsesCorrectly()
     {
         // Explicit JsonDocument type instead of var
@@ -207,7 +208,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseWithRootElementUsedTwice_DoesNotCollapse()
     {
         // doc.RootElement used in two places — unsafe to collapse

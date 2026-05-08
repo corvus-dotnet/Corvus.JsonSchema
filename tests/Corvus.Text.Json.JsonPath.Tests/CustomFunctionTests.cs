@@ -3,18 +3,19 @@
 // </copyright>
 
 using System.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonPath.Tests;
 
 /// <summary>
 /// Tests for the custom function extension mechanism in <see cref="JsonPathEvaluator"/>.
 /// </summary>
+[TestClass]
 public class CustomFunctionTests
 {
     // ── ValueType → ValueType: ceil(value) ──────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void CeilFunction_ReturnsRoundedUp()
     {
         JsonElement data = JsonElement.ParseValue("""[{"price": 9.3}, {"price": 10.0}]"""u8);
@@ -25,10 +26,10 @@ public class CustomFunctionTests
 
         using JsonPathResult result = evaluator.QueryNodes("$[?ceil(@.price) == 10]", data);
 
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void CeilFunction_NoMatch()
     {
         JsonElement data = JsonElement.ParseValue("""[{"price": 10.5}]"""u8);
@@ -40,12 +41,12 @@ public class CustomFunctionTests
         using JsonPathResult result = evaluator.QueryNodes("$[?ceil(@.price) == 10]", data);
 
         // ceil(10.5) == 11, not 10 → no match
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
     // ── LogicalType return: is_even(value) → logical ────────────────
 
-    [Fact]
+    [TestMethod]
     public void IsEvenFunction_FiltersByPredicate()
     {
         JsonElement data = JsonElement.ParseValue("[1, 2, 3, 4, 5, 6]"u8);
@@ -56,15 +57,15 @@ public class CustomFunctionTests
 
         using JsonPathResult result = evaluator.QueryNodes("$[?is_even(@)]", data);
 
-        Assert.Equal(3, result.Count);
-        Assert.Equal(2, result[0].GetInt32());
-        Assert.Equal(4, result[1].GetInt32());
-        Assert.Equal(6, result[2].GetInt32());
+        Assert.AreEqual(3, result.Count);
+        Assert.AreEqual(2, result[0].GetInt32());
+        Assert.AreEqual(4, result[1].GetInt32());
+        Assert.AreEqual(6, result[2].GetInt32());
     }
 
     // ── Multi-arg function: add(value, value) → value ───────────────
 
-    [Fact]
+    [TestMethod]
     public void AddFunction_SumsTwoValues()
     {
         JsonElement data = JsonElement.ParseValue("""[{"a": 1, "b": 2}, {"a": 3, "b": 4}]"""u8);
@@ -75,13 +76,13 @@ public class CustomFunctionTests
 
         using JsonPathResult result = evaluator.QueryNodes("$[?add(@.a, @.b) == 3]", data);
 
-        Assert.Equal(1, result.Count);
-        Assert.Equal(1, result[0].GetProperty("a").GetInt32());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(1, result[0].GetProperty("a").GetInt32());
     }
 
     // ── NodesType arg: node_count(nodes) → value ────────────────────
 
-    [Fact]
+    [TestMethod]
     public void NodeCountFunction_CountsNodes()
     {
         JsonElement data = JsonElement.ParseValue(
@@ -94,10 +95,10 @@ public class CustomFunctionTests
         // node_count(@.items[*]) should return 3 for first element, 1 for second
         using JsonPathResult result = evaluator.QueryNodes("$[?node_count(@.items[*]) == 3]", data);
 
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void SumFunction_SumsNodeValues()
     {
         JsonElement data = JsonElement.ParseValue(
@@ -110,20 +111,20 @@ public class CustomFunctionTests
         // sum(@.prices[*]) == 60 matches the first element
         using JsonPathResult result = evaluator.QueryNodes("$[?sum(@.prices[*]) == 60]", data);
 
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
     // ── Reserved name rejection ─────────────────────────────────────
 
-    [Theory]
-    [InlineData("length")]
-    [InlineData("count")]
-    [InlineData("value")]
-    [InlineData("match")]
-    [InlineData("search")]
+    [TestMethod]
+    [DataRow("length")]
+    [DataRow("count")]
+    [DataRow("value")]
+    [DataRow("match")]
+    [DataRow("search")]
     public void CannotOverrideBuiltInFunction(string name)
     {
-        Assert.Throws<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new JsonPathEvaluator(new Dictionary<string, IJsonPathFunction>
             {
                 [name] = new CeilFunction(),
@@ -132,18 +133,18 @@ public class CustomFunctionTests
 
     // ── Unknown function with no registry throws ────────────────────
 
-    [Fact]
+    [TestMethod]
     public void UnknownFunctionWithNoRegistry_Throws()
     {
         JsonElement data = JsonElement.ParseValue("[]"u8);
 
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?ceil(@) == 1]", data));
     }
 
     // ── Caching works with custom evaluator ─────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void CachingWorksWithCustomFunctions()
     {
         JsonElement data1 = JsonElement.ParseValue("[1, 2, 3]"u8);
@@ -156,13 +157,13 @@ public class CustomFunctionTests
         using JsonPathResult r1 = evaluator.QueryNodes("$[?is_even(@)]", data1);
         using JsonPathResult r2 = evaluator.QueryNodes("$[?is_even(@)]", data2);
 
-        Assert.Equal(1, r1.Count); // only 2
-        Assert.Equal(2, r2.Count); // 4 and 6
+        Assert.AreEqual(1, r1.Count); // only 2
+        Assert.AreEqual(2, r2.Count); // 4 and 6
     }
 
     // ── Wrong arity throws at parse time ────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void WrongArity_ThrowsAtParseTime()
     {
         JsonElement data = JsonElement.ParseValue("[]"u8);
@@ -171,13 +172,13 @@ public class CustomFunctionTests
             ["ceil"] = new CeilFunction(),
         });
 
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             evaluator.QueryNodes("$[?ceil(@, @) == 1]", data));
     }
 
     // ── Wrong arg type throws at parse time ─────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void WrongArgType_ThrowsAtParseTime()
     {
         JsonElement data = JsonElement.ParseValue("[]"u8);
@@ -187,7 +188,7 @@ public class CustomFunctionTests
         });
 
         // is_even expects ValueType, but @.* is NodesType (non-singular)
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             evaluator.QueryNodes("$[?is_even(@.*)]", data));
     }
 
@@ -305,7 +306,7 @@ public class CustomFunctionTests
     // Tests for JsonPathFunction factory methods (delegate-based API)
     // ═══════════════════════════════════════════════════════════════════
 
-    [Fact]
+    [TestMethod]
     public void Factory_Value_SingleArg()
     {
         // Lines 44-48: JsonPathFunction.Value(Func<JsonElement, JsonWorkspace, JsonElement>)
@@ -317,10 +318,10 @@ public class CustomFunctionTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?floor(@.x) == 2]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Factory_Value_TwoArgs()
     {
         // Lines 58-62: JsonPathFunction.Value(Func<JsonElement, JsonElement, JsonWorkspace, JsonElement>)
@@ -332,10 +333,10 @@ public class CustomFunctionTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?modulo(@.a, @.b) == 1]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Factory_Logical()
     {
         // Lines 72-76: JsonPathFunction.Logical(Func<JsonElement, bool>)
@@ -347,10 +348,10 @@ public class CustomFunctionTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?starts_with_cat(@)]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Factory_NodesValue()
     {
         // Lines 91-95: JsonPathFunction.NodesValue(Func<JsonElement[], JsonWorkspace, JsonElement>)
@@ -373,10 +374,10 @@ public class CustomFunctionTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?sum(@.items[*]) == 60]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Factory_NodesLogical()
     {
         // Lines 110-114: JsonPathFunction.NodesLogical(Func<JsonElement[], bool>)
@@ -387,10 +388,10 @@ public class CustomFunctionTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?has_multiple(@.tags[*])]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Factory_Create_CustomSignature()
     {
         // Lines 126-130: JsonPathFunction.Create(returnType, parameterTypes, evaluate)
@@ -404,6 +405,6 @@ public class CustomFunctionTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?gt3(@)]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 }

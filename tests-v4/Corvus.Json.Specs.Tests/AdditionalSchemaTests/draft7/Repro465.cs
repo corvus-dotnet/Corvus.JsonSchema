@@ -5,28 +5,40 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AdditionalSchemaTests.AdditionalDraft7.Repro465;
 
-[Trait("JsonSchemaTestSuite", "AdditionalDraft7")]
-public class SuiteReproSimilarDefinitionNames : IClassFixture<SuiteReproSimilarDefinitionNames.Fixture>
+[TestCategory("AdditionalDraft7")]
+[TestClass]
+public class SuiteReproSimilarDefinitionNames
 {
-    private readonly Fixture _fixture;
-    public SuiteReproSimilarDefinitionNames(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestDataIdFooId2Bar()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"id\": \"foo\",\r\n          \"id2\": \"bar\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 

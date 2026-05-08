@@ -2,16 +2,17 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for BigNumber.TryFormat(Span&lt;char&gt;) method.
 /// </summary>
+[TestClass]
 public class BigNumberTryFormatCharTests
 {
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithZeroSignificandZeroExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -26,7 +27,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "0");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithPositiveSignificandZeroExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -41,7 +42,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "123");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithNegativeSignificandZeroExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -56,7 +57,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "-456");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithZeroExponentPositiveSignificand_ShouldNotIncludeExponent()
     {
         // Arrange
@@ -72,7 +73,7 @@ public class BigNumberTryFormatCharTests
         Assert.DoesNotContain("E", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithPositiveExponent_ShouldIncludeExponent()
     {
         // Arrange
@@ -87,7 +88,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "123E5");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithNegativeExponent_ShouldIncludeExponent()
     {
         // Arrange
@@ -102,7 +103,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "123E-5");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithVeryLargeSignificand_ShouldFormatCorrectly()
     {
         // Arrange
@@ -119,7 +120,7 @@ public class BigNumberTryFormatCharTests
             "1234567890123456789012345678901234567890123456789E1");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithVeryLargeExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -134,7 +135,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "123E999999");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithVeryLargeNegativeExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -149,7 +150,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "123E-999999");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithInsufficientBufferSize_ShouldReturnFalse()
     {
         // Arrange
@@ -160,11 +161,11 @@ public class BigNumberTryFormatCharTests
         bool success = bigNumber.TryFormat(buffer, out int charsWritten);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithExactBufferSize_ShouldReturnTrue()
     {
         // Arrange
@@ -180,7 +181,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "123E5");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithExcessiveBufferSize_ShouldReturnTrue()
     {
         // Arrange
@@ -195,7 +196,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "123E5");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithZeroLengthSpan_ShouldReturnFalse()
     {
         // Arrange
@@ -206,12 +207,12 @@ public class BigNumberTryFormatCharTests
         bool success = bigNumber.TryFormat(buffer, out int charsWritten);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.FormatData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.FormatData), typeof(BigNumberTestData))]
     public void TryFormat_ToCharSpan_WithVariousInputs_ShouldFormatCorrectly(
         BigInteger significand, int exponent, string expected)
     {
@@ -228,7 +229,7 @@ public class BigNumberTryFormatCharTests
             $"BigNumber({significand}, {exponent})");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithNegativeSignificandAndPositiveExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -243,7 +244,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "-789E10");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithNegativeSignificandAndNegativeExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -258,7 +259,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "-789E-10");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_WithZeroSignificandAndNonZeroExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -273,7 +274,7 @@ public class BigNumberTryFormatCharTests
         BigNumberTestData.AssertFormatResult(success, charsWritten, result, "0");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToCharSpan_SignificandRequiringMaxFormatLength_ShouldWork()
     {
         // Arrange - Create a very large significand to test buffer limits
@@ -286,9 +287,9 @@ public class BigNumberTryFormatCharTests
         string result = buffer.Slice(0, charsWritten).ToString();
 
         // Assert
-        Assert.True(success, "Should successfully format very large number");
-        Assert.True(charsWritten > 100, "Should write more than 100 characters");
+        Assert.IsTrue(success, "Should successfully format very large number");
+        Assert.IsTrue(charsWritten > 100, "Should write more than 100 characters");
         Assert.StartsWith(new string('9', 100), result);
-        Assert.Contains("E999", result);
+        StringAssert.Contains(result, "E999");
     }
 }

@@ -3,13 +3,14 @@
 // </copyright>
 
 using System.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Validator.Tests;
 
 /// <summary>
 /// Tests for the factory methods on <see cref="JsonSchema"/>.
 /// </summary>
+[TestClass]
 public class JsonSchemaFactoryTests
 {
     private const string PersonSchemaJson =
@@ -27,25 +28,25 @@ public class JsonSchemaFactoryTests
         }
         """;
 
-    [Fact]
+    [TestMethod]
     public void FromText_WithCanonicalUri_CreatesSchema()
     {
         var schema = JsonSchema.FromText(
             PersonSchemaJson,
             "https://example.com/test/person");
 
-        Assert.True(schema.Validate("""{"name":"Alice","age":30}"""));
+        Assert.IsTrue(schema.Validate("""{"name":"Alice","age":30}"""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromText_WithoutCanonicalUri_UsesSchemaId()
     {
         var schema = JsonSchema.FromText(PersonSchemaJson);
 
-        Assert.True(schema.Validate("""{"name":"Alice","age":30}"""));
+        Assert.IsTrue(schema.Validate("""{"name":"Alice","age":30}"""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromText_WithoutCanonicalUriOrSchemaId_Throws()
     {
         string schemaWithoutId =
@@ -55,21 +56,21 @@ public class JsonSchemaFactoryTests
             }
             """;
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
             JsonSchema.FromText(schemaWithoutId));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromText_ValidatesInvalidDocument()
     {
         var schema = JsonSchema.FromText(
             PersonSchemaJson,
             "https://example.com/test/person");
 
-        Assert.False(schema.Validate("""{"name":"Alice"}"""));
+        Assert.IsFalse(schema.Validate("""{"name":"Alice"}"""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromStream_CreatesSchema()
     {
         using MemoryStream stream = new(Encoding.UTF8.GetBytes(PersonSchemaJson));
@@ -78,10 +79,10 @@ public class JsonSchemaFactoryTests
             stream,
             "https://example.com/test/person-from-stream");
 
-        Assert.True(schema.Validate("""{"name":"Bob","age":25}"""));
+        Assert.IsTrue(schema.Validate("""{"name":"Bob","age":25}"""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromFile_CreatesSchema()
     {
         string schemaPath = Path.Combine(
@@ -91,10 +92,10 @@ public class JsonSchemaFactoryTests
 
         var schema = JsonSchema.FromFile(schemaPath);
 
-        Assert.True(schema.Validate("""{"name":"Charlie","age":40}"""));
+        Assert.IsTrue(schema.Validate("""{"name":"Charlie","age":40}"""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromFile_ValidatesInvalidDocument()
     {
         string schemaPath = Path.Combine(
@@ -104,10 +105,10 @@ public class JsonSchemaFactoryTests
 
         var schema = JsonSchema.FromFile(schemaPath);
 
-        Assert.False(schema.Validate("""{"name":"Charlie","age":-1}"""));
+        Assert.IsFalse(schema.Validate("""{"name":"Charlie","age":-1}"""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromText_SimpleStringSchema()
     {
         string schema =
@@ -123,12 +124,12 @@ public class JsonSchemaFactoryTests
 
         var jsonSchema = JsonSchema.FromText(schema);
 
-        Assert.True(jsonSchema.Validate("\"hello\""));
-        Assert.False(jsonSchema.Validate("\"\""));
-        Assert.False(jsonSchema.Validate("\"this string is way too long\""));
+        Assert.IsTrue(jsonSchema.Validate("\"hello\""));
+        Assert.IsFalse(jsonSchema.Validate("\"\""));
+        Assert.IsFalse(jsonSchema.Validate("\"this string is way too long\""));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromText_SimpleIntegerSchema()
     {
         string schema =
@@ -144,12 +145,12 @@ public class JsonSchemaFactoryTests
 
         var jsonSchema = JsonSchema.FromText(schema);
 
-        Assert.True(jsonSchema.Validate("50"));
-        Assert.False(jsonSchema.Validate("101"));
-        Assert.False(jsonSchema.Validate("-1"));
+        Assert.IsTrue(jsonSchema.Validate("50"));
+        Assert.IsFalse(jsonSchema.Validate("101"));
+        Assert.IsFalse(jsonSchema.Validate("-1"));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromText_ArraySchema()
     {
         string schema =
@@ -166,8 +167,8 @@ public class JsonSchemaFactoryTests
 
         var jsonSchema = JsonSchema.FromText(schema);
 
-        Assert.True(jsonSchema.Validate("""["a","b"]"""));
-        Assert.False(jsonSchema.Validate("[]"));
-        Assert.False(jsonSchema.Validate("""["a","b","c","d"]"""));
+        Assert.IsTrue(jsonSchema.Validate("""["a","b"]"""));
+        Assert.IsFalse(jsonSchema.Validate("[]"));
+        Assert.IsFalse(jsonSchema.Validate("""["a","b","c","d"]"""));
     }
 }

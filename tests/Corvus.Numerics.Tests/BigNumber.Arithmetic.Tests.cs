@@ -5,13 +5,14 @@
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
+[TestClass]
 public class BigNumberArithmeticTests
 {
-    [Fact]
+    [TestMethod]
     public void Addition_SameExponent_ReturnsCorrectSum()
     {
         BigNumber left = new(123, 0);
@@ -22,7 +23,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(new BigNumber(579, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Addition_DifferentExponent_ReturnsCorrectSum()
     {
         BigNumber left = new(123, -2);  // 1.23
@@ -34,7 +35,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Addition_WithZero_ReturnsOriginal()
     {
         BigNumber value = new(123, -2);
@@ -44,7 +45,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(value);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_SameExponent_ReturnsCorrectDifference()
     {
         BigNumber left = new(456, 0);
@@ -55,7 +56,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(new BigNumber(333, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_DifferentExponent_ReturnsCorrectDifference()
     {
         BigNumber left = new(456, -1);   // 45.6
@@ -67,7 +68,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_ResultingInZero_ReturnsZero()
     {
         BigNumber value = new(123, -2);
@@ -77,7 +78,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_Simple_ReturnsCorrectProduct()
     {
         BigNumber left = new(123, 0);
@@ -88,7 +89,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(new BigNumber(56088, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_WithExponents_ReturnsCorrectProduct()
     {
         BigNumber left = new(12, 1);   // 120
@@ -99,7 +100,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(new BigNumber(408, 2));  // 40800
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_ByZero_ReturnsZero()
     {
         BigNumber value = new(123, -2);
@@ -109,7 +110,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_ByOne_ReturnsOriginal()
     {
         BigNumber value = new(123, -2);
@@ -119,7 +120,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(value);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_Simple_ReturnsCorrectQuotient()
     {
         BigNumber dividend = new(100, 0);
@@ -131,7 +132,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_WithPrecision_ReturnsCorrectQuotient()
     {
         BigNumber dividend = new(10, 0);
@@ -143,7 +144,7 @@ public class BigNumberArithmeticTests
         resultDouble.ShouldBe(10.0 / 3.0, tolerance: 0.0000000001);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_ByZero_ThrowsDivideByZeroException()
     {
         BigNumber dividend = new(100, 0);
@@ -151,7 +152,7 @@ public class BigNumberArithmeticTests
         Should.Throw<DivideByZeroException>(() => dividend / BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_ZeroByNonZero_ReturnsZero()
     {
         BigNumber divisor = new(123, -2);
@@ -161,7 +162,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_Simple_ReturnsCorrectRemainder()
     {
         BigNumber dividend = new(17, 0);
@@ -173,7 +174,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_WithZeroDivisor_ThrowsDivideByZeroException()
     {
         BigNumber dividend = new(100, 0);
@@ -181,7 +182,7 @@ public class BigNumberArithmeticTests
         Should.Throw<DivideByZeroException>(() => dividend % BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_WithPositiveExponents_UsesModularArithmetic()
     {
         // 12300 / 100 = 123
@@ -194,7 +195,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_WithPositiveExponents_UsesModularArithmetic()
     {
         // 12345 % 100 = 45
@@ -207,7 +208,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_WithNegativeExponents_UsesModularArithmetic()
     {
         // 0.00123 / 0.01 = 0.123
@@ -220,7 +221,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_WithNegativeExponents_UsesModularArithmetic()
     {
         // 0.12345 % 0.1 = 0.02345
@@ -233,7 +234,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_WithMixedExponents_UsesModularArithmetic()
     {
         // 1230 / 0.1 = 12300
@@ -246,7 +247,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_LargeExponentDifference_AvoidsMaterialization()
     {
         // 123 * 10^100 % (1 * 10^50) = 0
@@ -259,7 +260,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_LargeExponentDifference_AvoidsMaterialization()
     {
         // (456 * 10^100) / (1 * 10^50) = 456 * 10^50
@@ -272,7 +273,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Negation_PositiveNumber_ReturnsNegative()
     {
         BigNumber value = new(123, -2);
@@ -282,7 +283,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(new BigNumber(-123, -2));
     }
 
-    [Fact]
+    [TestMethod]
     public void Negation_NegativeNumber_ReturnsPositive()
     {
         BigNumber value = new(-123, -2);
@@ -292,7 +293,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(new BigNumber(123, -2));
     }
 
-    [Fact]
+    [TestMethod]
     public void Negation_Zero_ReturnsZero()
     {
         BigNumber result = -BigNumber.Zero;
@@ -300,7 +301,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnaryPlus_ReturnsOriginalValue()
     {
         BigNumber value = new(123, -2);
@@ -310,7 +311,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(value);
     }
 
-    [Fact]
+    [TestMethod]
     public void Increment_IncrementsByOne()
     {
         BigNumber value = new(10, 0);
@@ -320,7 +321,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(new BigNumber(11, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Decrement_DecrementsByOne()
     {
         BigNumber value = new(10, 0);
@@ -330,7 +331,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(new BigNumber(9, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Abs_PositiveNumber_ReturnsOriginal()
     {
         BigNumber value = new(123, -2);
@@ -340,7 +341,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(value);
     }
 
-    [Fact]
+    [TestMethod]
     public void Abs_NegativeNumber_ReturnsPositive()
     {
         BigNumber value = new(-123, -2);
@@ -350,7 +351,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(new BigNumber(123, -2));
     }
 
-    [Fact]
+    [TestMethod]
     public void Abs_Zero_ReturnsZero()
     {
         var result = BigNumber.Abs(BigNumber.Zero);
@@ -358,7 +359,7 @@ public class BigNumberArithmeticTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sign_PositiveNumber_ReturnsOne()
     {
         BigNumber value = new(123, -2);
@@ -368,7 +369,7 @@ public class BigNumberArithmeticTests
         sign.ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sign_NegativeNumber_ReturnsMinusOne()
     {
         BigNumber value = new(-123, -2);
@@ -378,7 +379,7 @@ public class BigNumberArithmeticTests
         sign.ShouldBe(-1);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sign_Zero_ReturnsZero()
     {
         int sign = BigNumber.Sign(BigNumber.Zero);

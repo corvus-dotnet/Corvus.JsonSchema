@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -11,12 +11,13 @@ namespace Corvus.Text.Json.Tests;
 /// IJsonDocument interface methods on ParsedJsonDocument, and
 /// TryReplaceProperty/RemoveRange/CopyValueToProperty builder internals.
 /// </summary>
-public static class BuilderSnapshotCoverageTests
+[TestClass]
+public class BuilderSnapshotCoverageTests
 {
     #region Snapshot/Restore with property map
 
-    [Fact]
-    public static void SnapshotAndRestore_WithPropertyMap_RestoresOriginalProperties()
+    [TestMethod]
+    public void SnapshotAndRestore_WithPropertyMap_RestoresOriginalProperties()
     {
         // Creating a builder from a parsed document with properties,
         // then accessing properties by name triggers property map creation.
@@ -28,9 +29,9 @@ public static class BuilderSnapshotCoverageTests
 
         // Access properties to trigger property map build
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
-        Assert.Equal(30, root.GetProperty("age"u8).GetInt32());
-        Assert.True(root.GetProperty("active"u8).GetBoolean());
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(30, root.GetProperty("age"u8).GetInt32());
+        Assert.IsTrue(root.GetProperty("active"u8).GetBoolean());
 
         // Ensure property map is built
         JsonElement.Mutable.EnsurePropertyMap(in root);
@@ -46,20 +47,20 @@ public static class BuilderSnapshotCoverageTests
 
         // Verify mutation
         root = builder.RootElement;
-        Assert.Equal("Bob", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual("Bob", root.GetProperty("name"u8).GetString());
 
         // Restore
         builder.Restore(snapshot);
 
         // Verify restoration
         root = builder.RootElement;
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
-        Assert.Equal(30, root.GetProperty("age"u8).GetInt32());
-        Assert.True(root.GetProperty("active"u8).GetBoolean());
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(30, root.GetProperty("age"u8).GetInt32());
+        Assert.IsTrue(root.GetProperty("active"u8).GetBoolean());
     }
 
-    [Fact]
-    public static void SnapshotAndRestore_ManyProperties_PropertyMapIntact()
+    [TestMethod]
+    public void SnapshotAndRestore_ManyProperties_PropertyMapIntact()
     {
         // Use many properties to ensure buckets/entries are populated
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -73,7 +74,7 @@ public static class BuilderSnapshotCoverageTests
         for (int i = 0; i < 8; i++)
         {
             string propName = ((char)('a' + i)).ToString();
-            Assert.Equal(i + 1, root.GetProperty(propName).GetInt32());
+            Assert.AreEqual(i + 1, root.GetProperty(propName).GetInt32());
         }
 
         JsonElement.Mutable.EnsurePropertyMap(in root);
@@ -93,13 +94,13 @@ public static class BuilderSnapshotCoverageTests
 
         // Verify all original properties are back
         root = builder.RootElement;
-        Assert.Equal(1, root.GetProperty("a"u8).GetInt32());
-        Assert.Equal(4, root.GetProperty("d"u8).GetInt32());
-        Assert.Equal(5, root.GetProperty("e"u8).GetInt32());
+        Assert.AreEqual(1, root.GetProperty("a"u8).GetInt32());
+        Assert.AreEqual(4, root.GetProperty("d"u8).GetInt32());
+        Assert.AreEqual(5, root.GetProperty("e"u8).GetInt32());
     }
 
-    [Fact]
-    public static void SnapshotAndRestore_NestedObject_PropertyMapRestored()
+    [TestMethod]
+    public void SnapshotAndRestore_NestedObject_PropertyMapRestored()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse(
@@ -107,7 +108,7 @@ public static class BuilderSnapshotCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = source.RootElement.CreateBuilder(workspace);
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("hello", root.GetProperty("outer"u8).GetProperty("inner"u8).GetString());
+        Assert.AreEqual("hello", root.GetProperty("outer"u8).GetProperty("inner"u8).GetString());
         JsonElement.Mutable.EnsurePropertyMap(in root);
 
         using JsonDocumentBuilderSnapshot<JsonElement.Mutable> snapshot = builder.CreateSnapshot();
@@ -115,22 +116,22 @@ public static class BuilderSnapshotCoverageTests
         // Mutate the nested structure
         root = builder.RootElement;
         root.SetProperty("outer"u8, "replaced");
-        Assert.Equal(JsonValueKind.String, builder.RootElement.GetProperty("outer"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.String, builder.RootElement.GetProperty("outer"u8).ValueKind);
 
         // Restore
         builder.Restore(snapshot);
 
         // Verify nested structure is back
         root = builder.RootElement;
-        Assert.Equal("hello", root.GetProperty("outer"u8).GetProperty("inner"u8).GetString());
+        Assert.AreEqual("hello", root.GetProperty("outer"u8).GetProperty("inner"u8).GetString());
     }
 
     #endregion
 
     #region TryReplaceProperty paths (unique: simple value + document source)
 
-    [Fact]
-    public static void TryReplaceProperty_SimpleValue_ReplacesExisting()
+    [TestMethod]
+    public void TryReplaceProperty_SimpleValue_ReplacesExisting()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse(
@@ -141,12 +142,12 @@ public static class BuilderSnapshotCoverageTests
 
         // Replace with a simple value (implicit operator from int to Source)
         bool replaced = root.TryReplaceProperty("x"u8, 42);
-        Assert.True(replaced);
-        Assert.Equal(42, builder.RootElement.GetProperty("x"u8).GetInt32());
+        Assert.IsTrue(replaced);
+        Assert.AreEqual(42, builder.RootElement.GetProperty("x"u8).GetInt32());
     }
 
-    [Fact]
-    public static void TryReplaceProperty_FromAnotherDocument_ReplacesExisting()
+    [TestMethod]
+    public void TryReplaceProperty_FromAnotherDocument_ReplacesExisting()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse(
@@ -157,16 +158,16 @@ public static class BuilderSnapshotCoverageTests
 
         JsonElement.Mutable root = builder.RootElement;
         bool replaced = root.TryReplaceProperty("x"u8, replacement.RootElement);
-        Assert.True(replaced);
-        Assert.Equal(JsonValueKind.Object, builder.RootElement.GetProperty("x"u8).ValueKind);
+        Assert.IsTrue(replaced);
+        Assert.AreEqual(JsonValueKind.Object, builder.RootElement.GetProperty("x"u8).ValueKind);
     }
 
     #endregion
 
     #region RemoveProperty
 
-    [Fact]
-    public static void RemoveProperty_ExistingProperty_Removed()
+    [TestMethod]
+    public void RemoveProperty_ExistingProperty_Removed()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse(
@@ -175,16 +176,16 @@ public static class BuilderSnapshotCoverageTests
 
         JsonElement.Mutable root = builder.RootElement;
         bool removed = root.RemoveProperty("b"u8);
-        Assert.True(removed);
+        Assert.IsTrue(removed);
 
         string result = builder.RootElement.ToString();
-        Assert.Contains("\"a\"", result);
+        StringAssert.Contains(result, "\"a\"");
         Assert.DoesNotContain("\"b\"", result);
-        Assert.Contains("\"c\"", result);
+        StringAssert.Contains(result, "\"c\"");
     }
 
-    [Fact]
-    public static void RemoveProperty_NonExistingProperty_ReturnsFalse()
+    [TestMethod]
+    public void RemoveProperty_NonExistingProperty_ReturnsFalse()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse(
@@ -193,15 +194,15 @@ public static class BuilderSnapshotCoverageTests
 
         JsonElement.Mutable root = builder.RootElement;
         bool removed = root.RemoveProperty("nonexistent"u8);
-        Assert.False(removed);
+        Assert.IsFalse(removed);
     }
 
     #endregion
 
     #region Array operations (unique: simple Source path)
 
-    [Fact]
-    public static void SetItem_WithSource_ReplacesArrayElement()
+    [TestMethod]
+    public void SetItem_WithSource_ReplacesArrayElement()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse(
@@ -211,17 +212,17 @@ public static class BuilderSnapshotCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         root.SetItem(1, 99);
 
-        Assert.Equal(1, builder.RootElement[0].GetInt32());
-        Assert.Equal(99, builder.RootElement[1].GetInt32());
-        Assert.Equal(3, builder.RootElement[2].GetInt32());
+        Assert.AreEqual(1, builder.RootElement[0].GetInt32());
+        Assert.AreEqual(99, builder.RootElement[1].GetInt32());
+        Assert.AreEqual(3, builder.RootElement[2].GetInt32());
     }
 
     #endregion
 
     #region CreateBuilder with workspace capacity
 
-    [Fact]
-    public static void CreateBuilder_WithExplicitCapacity_Succeeds()
+    [TestMethod]
+    public void CreateBuilder_WithExplicitCapacity_Succeeds()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
@@ -230,7 +231,7 @@ public static class BuilderSnapshotCoverageTests
             workspace.CreateBuilder<JsonElement.Mutable>(initialCapacity: 50, initialValueBufferSize: 4096);
 
         // The builder was created successfully — verify it's not null and can be disposed
-        Assert.NotNull(builder);
+        Assert.IsNotNull(builder);
     }
 
     #endregion

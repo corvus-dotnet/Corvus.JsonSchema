@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -15,11 +15,12 @@ namespace Corvus.Text.Json.Tests;
 /// Exercises: schema validation for valid/invalid instances, pattern matching
 /// for property names, and correct rejection of non-matching additional properties.
 /// </summary>
+[TestClass]
 public class GeneratedPatternPropertiesTests
 {
     #region Valid instances
 
-    [Fact]
+    [TestMethod]
     public void ValidInstance_WithRequiredNameOnly_PassesValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -27,10 +28,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice"}
             """);
 
-        Assert.True(instance.EvaluateSchema());
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidInstance_WithStringPatternProperties_PassesValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -38,10 +39,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","S_color":"blue","S_label":"important"}
             """);
 
-        Assert.True(instance.EvaluateSchema());
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidInstance_WithIntegerPatternProperties_PassesValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -49,10 +50,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","I_count":42,"I_score":100}
             """);
 
-        Assert.True(instance.EvaluateSchema());
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidInstance_WithMixedPatternProperties_PassesValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -60,10 +61,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","S_color":"blue","I_count":42,"S_tag":"hello","I_level":7}
             """);
 
-        Assert.True(instance.EvaluateSchema());
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidInstance_AccessNameProperty_ReturnsExpectedValue()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -71,14 +72,14 @@ public class GeneratedPatternPropertiesTests
             {"name":"Bob","S_label":"test"}
             """);
 
-        Assert.True(instance.Name.ValueEquals("Bob"));
+        Assert.IsTrue(instance.Name.ValueEquals("Bob"));
     }
 
     #endregion
 
     #region Invalid: missing required property
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_MissingRequiredName_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -86,14 +87,14 @@ public class GeneratedPatternPropertiesTests
             {"S_color":"blue","I_count":42}
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
     #endregion
 
     #region Invalid: wrong value type for pattern
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_StringPatternWithIntegerValue_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -101,10 +102,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","S_color":123}
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_IntegerPatternWithStringValue_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -112,10 +113,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","I_count":"not-a-number"}
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_IntegerPatternWithFloatValue_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -123,10 +124,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","I_count":3.14}
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_StringPatternWithBooleanValue_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -134,10 +135,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","S_flag":true}
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_IntegerPatternWithNullValue_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -145,14 +146,14 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","I_count":null}
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
     #endregion
 
     #region Invalid: additional properties not matching any pattern
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_AdditionalPropertyNotMatchingPattern_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -160,10 +161,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","unknown":"value"}
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_PropertyStartingWithLowercaseS_FailsValidation()
     {
         // "s_color" does NOT match "^S_" (case sensitive)
@@ -172,14 +173,14 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","s_color":"blue"}
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
     #endregion
 
     #region Building via Source/Builder
 
-    [Fact]
+    [TestMethod]
     public void Build_WithRequiredNameOnly_ProducesValidInstance()
     {
         using var workspace = JsonWorkspace.Create();
@@ -189,10 +190,10 @@ public class GeneratedPatternPropertiesTests
                 static (ref b) => b.Create("Alice"));
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
-        Assert.True(root.EvaluateSchema());
+        Assert.IsTrue(root.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Build_ViaSourceBuild_RoundTrips()
     {
         ObjectWithPatternProperties.Source source =
@@ -204,15 +205,15 @@ public class GeneratedPatternPropertiesTests
             ObjectWithPatternProperties.CreateBuilder(workspace, source);
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
-        Assert.True(root.Name.ValueEquals("Carol"));
-        Assert.True(root.EvaluateSchema());
+        Assert.IsTrue(root.Name.ValueEquals("Carol"));
+        Assert.IsTrue(root.EvaluateSchema());
     }
 
     #endregion
 
     #region Mutable: set name property
 
-    [Fact]
+    [TestMethod]
     public void Mutable_SetName_UpdatesValue()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -226,15 +227,15 @@ public class GeneratedPatternPropertiesTests
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
         root.SetName("Bob");
-        Assert.True(root.Name.ValueEquals("Bob"));
-        Assert.True(root.EvaluateSchema());
+        Assert.IsTrue(root.Name.ValueEquals("Bob"));
+        Assert.IsTrue(root.EvaluateSchema());
     }
 
     #endregion
 
     #region Mutable: SetProperty for pattern properties
 
-    [Fact]
+    [TestMethod]
     public void Mutable_SetProperty_StringPattern_PassesValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -248,10 +249,10 @@ public class GeneratedPatternPropertiesTests
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
         root.SetProperty("S_color", "blue");
-        Assert.True(root.EvaluateSchema());
+        Assert.IsTrue(root.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Mutable_SetProperty_IntegerPattern_PassesValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -265,10 +266,10 @@ public class GeneratedPatternPropertiesTests
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
         root.SetProperty("I_count", 42);
-        Assert.True(root.EvaluateSchema());
+        Assert.IsTrue(root.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Mutable_SetProperty_WrongTypeForPattern_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -282,10 +283,10 @@ public class GeneratedPatternPropertiesTests
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
         root.SetProperty("S_color", JsonElement.ParseValue("123"));
-        Assert.False(root.EvaluateSchema());
+        Assert.IsFalse(root.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Mutable_SetProperty_UnmatchedPattern_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -299,14 +300,14 @@ public class GeneratedPatternPropertiesTests
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
         root.SetProperty("unknown", JsonElement.ParseValue("\"value\""));
-        Assert.False(root.EvaluateSchema());
+        Assert.IsFalse(root.EvaluateSchema());
     }
 
     #endregion
 
     #region Mutable: RemoveProperty for pattern properties
 
-    [Fact]
+    [TestMethod]
     public void Mutable_RemoveProperty_PatternProperty_Succeeds()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -320,11 +321,11 @@ public class GeneratedPatternPropertiesTests
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
         bool removed = root.RemoveProperty("S_color");
-        Assert.True(removed);
-        Assert.True(root.EvaluateSchema());
+        Assert.IsTrue(removed);
+        Assert.IsTrue(root.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Mutable_RemoveProperty_NonExistent_ReturnsFalse()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -338,14 +339,14 @@ public class GeneratedPatternPropertiesTests
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
         bool removed = root.RemoveProperty("S_missing");
-        Assert.False(removed);
+        Assert.IsFalse(removed);
     }
 
     #endregion
 
     #region TryGetProperty for pattern properties
 
-    [Fact]
+    [TestMethod]
     public void TryGetProperty_ExistingPatternProperty_ReturnsTrue()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -353,11 +354,11 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","S_color":"blue","I_count":42}
             """);
 
-        Assert.True(instance.TryGetProperty("S_color", out JsonElement value));
-        Assert.Equal("blue", value.ToString());
+        Assert.IsTrue(instance.TryGetProperty("S_color", out JsonElement value));
+        Assert.AreEqual("blue", value.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetProperty_NonExistentPatternProperty_ReturnsFalse()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -365,10 +366,10 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice"}
             """);
 
-        Assert.False(instance.TryGetProperty("S_missing", out _));
+        Assert.IsFalse(instance.TryGetProperty("S_missing", out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetProperty_IntegerPatternProperty_ReturnsValue()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -376,15 +377,15 @@ public class GeneratedPatternPropertiesTests
             {"name":"Alice","I_score":99}
             """);
 
-        Assert.True(instance.TryGetProperty("I_score", out JsonElement value));
-        Assert.Equal("99", value.ToString());
+        Assert.IsTrue(instance.TryGetProperty("I_score", out JsonElement value));
+        Assert.AreEqual("99", value.ToString());
     }
 
     #endregion
 
     #region Builder: AddProperty for pattern properties
 
-    [Fact]
+    [TestMethod]
     public void Builder_ThenSetProperty_StringPattern_PassesValidation()
     {
         using var workspace = JsonWorkspace.Create();
@@ -395,11 +396,11 @@ public class GeneratedPatternPropertiesTests
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
         root.SetProperty("S_color", JsonElement.ParseValue("\"red\""));
-        Assert.True(root.EvaluateSchema());
-        Assert.True(root.TryGetProperty("S_color", out _));
+        Assert.IsTrue(root.EvaluateSchema());
+        Assert.IsTrue(root.TryGetProperty("S_color", out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void Builder_ThenSetProperty_IntegerPattern_PassesValidation()
     {
         using var workspace = JsonWorkspace.Create();
@@ -410,11 +411,11 @@ public class GeneratedPatternPropertiesTests
 
         ObjectWithPatternProperties.Mutable root = builder.RootElement;
         root.SetProperty("I_count", JsonElement.ParseValue("42"));
-        Assert.True(root.EvaluateSchema());
-        Assert.True(root.TryGetProperty("I_count", out _));
+        Assert.IsTrue(root.EvaluateSchema());
+        Assert.IsTrue(root.TryGetProperty("I_count", out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void Builder_ThenSetProperty_MixedPatterns_PassesValidation()
     {
         using var workspace = JsonWorkspace.Create();
@@ -428,14 +429,14 @@ public class GeneratedPatternPropertiesTests
         root.SetProperty("S_tag", JsonElement.ParseValue("\"important\""));
         root.SetProperty("I_count", JsonElement.ParseValue("42"));
         root.SetProperty("I_level", JsonElement.ParseValue("7"));
-        Assert.True(root.EvaluateSchema());
+        Assert.IsTrue(root.EvaluateSchema());
     }
 
     #endregion
 
     #region Non-object values
 
-    [Fact]
+    [TestMethod]
     public void NonObjectValue_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -443,10 +444,10 @@ public class GeneratedPatternPropertiesTests
             "not an object"
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayValue_FailsValidation()
     {
         var instance = ObjectWithPatternProperties.ParseValue(
@@ -454,7 +455,7 @@ public class GeneratedPatternPropertiesTests
             [1, 2, 3]
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
     #endregion

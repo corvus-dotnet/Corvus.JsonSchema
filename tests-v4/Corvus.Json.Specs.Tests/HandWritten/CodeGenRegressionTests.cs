@@ -5,7 +5,7 @@
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.HandWritten;
 
@@ -13,9 +13,10 @@ namespace Corvus.Json.Specs.Tests.HandWritten;
 /// Tests for code generation regression scenarios that only need to verify
 /// code generation succeeds without throwing.
 /// </summary>
+[TestClass]
 public class CodeGenRegressionTests
 {
-    [Fact]
+    [TestMethod]
     public async Task UnableToFindProperty_CodeGenDoesNotThrow()
     {
         // Repro: A large schema with nested $refs and additionalProperties
@@ -74,10 +75,10 @@ public class CodeGenRegressionTests
             useImplicitOperatorString: false);
 
         // We just need to verify that code generation succeeds
-        Assert.NotEmpty(code);
+        Assert.IsTrue((code).Any());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task DuplicateDocumentation_CodeGenSucceeds()
     {
         // Repro #440: A schema that produces duplicate documentation comments.
@@ -101,17 +102,15 @@ public class CodeGenRegressionTests
             optionalAsNullable: false,
             useImplicitOperatorString: false);
 
-        Assert.NotEmpty(code);
+        Assert.IsTrue((code).Any());
 
         // Find the file containing the FilesDefinition property
         GeneratedCodeFile? targetFile = code.FirstOrDefault(
             f => f.FileName.Contains("FilesDefinition.Object"));
 
-        Assert.NotNull(targetFile);
+        Assert.IsNotNull(targetFile);
 
         // Verify it contains the expected remarks about 'files' and 'include'
-        Assert.Contains(
-            "If no &#39;files&#39; or &#39;include&#39; property is present",
-            targetFile!.FileContent);
+        StringAssert.Contains(targetFile!.FileContent, "If no &#39;files&#39; or &#39;include&#39; property is present");
     }
 }

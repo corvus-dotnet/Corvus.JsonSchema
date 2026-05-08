@@ -1,13 +1,14 @@
-﻿// <copyright file="BinaryJsonNumberComparisonLessThanGreaterThan.cs" company="Endjin Limited">
+// <copyright file="BinaryJsonNumberComparisonLessThanGreaterThan.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 using System.Text.Json;
 using Corvus.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonModel.BinaryJsonNumberTests;
 
+[TestClass]
 public class BinaryJsonNumberComparisonLessThanGreaterThan
 {
     /// <summary>
@@ -387,25 +388,25 @@ public class BinaryJsonNumberComparisonLessThanGreaterThan
         Exception,
     }
 
-    [Theory]
-    [MemberData(nameof(GreaterThanExpectationsSByte))]
-    [MemberData(nameof(GreaterThanExpectationsInt16))]
-    [MemberData(nameof(GreaterThanExpectationsInt32))]
-    [MemberData(nameof(GreaterThanExpectationsInt64))]
+    [TestMethod]
+    [DynamicData(nameof(GreaterThanExpectationsSByte))]
+    [DynamicData(nameof(GreaterThanExpectationsInt16))]
+    [DynamicData(nameof(GreaterThanExpectationsInt32))]
+    [DynamicData(nameof(GreaterThanExpectationsInt64))]
 #if NET8_0_OR_GREATER
-    [MemberData(nameof(GreaterThanExpectationsInt128))]
+    [DynamicData(nameof(GreaterThanExpectationsInt128))]
 #endif
-    [MemberData(nameof(GreaterThanExpectationsByte))]
-    [MemberData(nameof(GreaterThanExpectationsUInt16))]
-    [MemberData(nameof(GreaterThanExpectationsUInt32))]
-    [MemberData(nameof(GreaterThanExpectationsUInt64))]
+    [DynamicData(nameof(GreaterThanExpectationsByte))]
+    [DynamicData(nameof(GreaterThanExpectationsUInt16))]
+    [DynamicData(nameof(GreaterThanExpectationsUInt32))]
+    [DynamicData(nameof(GreaterThanExpectationsUInt64))]
 #if NET8_0_OR_GREATER
-    [MemberData(nameof(GreaterThanExpectationsUInt128))]
-    [MemberData(nameof(GreaterThanExpectationsHalf))]
+    [DynamicData(nameof(GreaterThanExpectationsUInt128))]
+    [DynamicData(nameof(GreaterThanExpectationsHalf))]
 #endif
-    [MemberData(nameof(GreaterThanExpectationsSingle))]
-    [MemberData(nameof(GreaterThanExpectationsDecimal))]
-    [MemberData(nameof(GreaterThanExpectationsDouble))]
+    [DynamicData(nameof(GreaterThanExpectationsSingle))]
+    [DynamicData(nameof(GreaterThanExpectationsDecimal))]
+    [DynamicData(nameof(GreaterThanExpectationsDouble))]
     public void ValuesCompare(object lhs, object rhs, Expectation expected)
     {
         BinaryJsonNumber number1 = GetBinaryJsonNumberFor(lhs);
@@ -414,22 +415,22 @@ public class BinaryJsonNumberComparisonLessThanGreaterThan
             switch (expected)
             {
                 case Expectation.False:
-                    Assert.False(number1 > jsonElement);
-                    Assert.True(number1 < jsonElement);
-                    Assert.True(jsonElement > number1);
-                    Assert.False(jsonElement < number1);
+                    Assert.IsFalse(number1 > jsonElement);
+                    Assert.IsTrue(number1 < jsonElement);
+                    Assert.IsTrue(jsonElement > number1);
+                    Assert.IsFalse(jsonElement < number1);
                     break;
                 case Expectation.True:
-                    Assert.True(number1 > jsonElement);
-                    Assert.False(number1 < jsonElement);
-                    Assert.False(jsonElement > number1);
-                    Assert.True(jsonElement < number1);
+                    Assert.IsTrue(number1 > jsonElement);
+                    Assert.IsFalse(number1 < jsonElement);
+                    Assert.IsFalse(jsonElement > number1);
+                    Assert.IsTrue(jsonElement < number1);
                     break;
                 case Expectation.Exception:
-                    Assert.ThrowsAny<Exception>(() => _ = number1 > jsonElement);
-                    Assert.ThrowsAny<Exception>(() => _ = number1 < jsonElement);
-                    Assert.ThrowsAny<Exception>(() => _ = jsonElement > number1);
-                    Assert.ThrowsAny<Exception>(() => _ = jsonElement < number1);
+                    Assert.Throws<Exception>(() => _ = number1 > jsonElement);
+                    Assert.Throws<Exception>(() => _ = number1 < jsonElement);
+                    Assert.Throws<Exception>(() => _ = jsonElement > number1);
+                    Assert.Throws<Exception>(() => _ = jsonElement < number1);
                     break;
             }
         }
@@ -440,16 +441,16 @@ public class BinaryJsonNumberComparisonLessThanGreaterThan
             switch (expected)
             {
                 case Expectation.False:
-                    Assert.False(number1 > number2);
-                    Assert.True(number1 < number2);
+                    Assert.IsFalse(number1 > number2);
+                    Assert.IsTrue(number1 < number2);
                     break;
                 case Expectation.True:
-                    Assert.True(number1 > number2);
-                    Assert.False(number1 < number2);
+                    Assert.IsTrue(number1 > number2);
+                    Assert.IsFalse(number1 < number2);
                     break;
                 case Expectation.Exception:
-                    Assert.ThrowsAny<Exception>(() => _ = number1 > number2);
-                    Assert.ThrowsAny<Exception>(() => _ = number1 < number2);
+                    Assert.Throws<Exception>(() => _ = number1 > number2);
+                    Assert.Throws<Exception>(() => _ = number1 < number2);
                     break;
             }
         }

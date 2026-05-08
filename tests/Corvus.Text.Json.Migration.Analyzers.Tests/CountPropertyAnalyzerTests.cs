@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.CountPropertyAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ005: Count property to GetPropertyCount() migration.
 /// </summary>
+[TestClass]
 public class CountPropertyAnalyzerTests
 {
     private const string V4Stubs = @"
@@ -41,7 +42,7 @@ namespace Corvus.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task CountPropertyAccess_TriggersCVJ005_AndCodeFixReplaces()
     {
         var test = new CodeFixTest
@@ -79,7 +80,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CountMethodCall_NoDiagnostic()
     {
         const string testCode = V4Stubs + @"
@@ -98,7 +99,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CountInExpression_TriggersCVJ005()
     {
         const string testCode = V4Stubs + @"

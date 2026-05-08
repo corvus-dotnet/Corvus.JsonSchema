@@ -4,7 +4,7 @@
 using System.Collections.Generic;
 using System.Numerics;
 using System.Reflection;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
@@ -380,7 +380,7 @@ public static class BigNumberTestData
             message = $"{message}: ";
         }
 
-        Assert.True(expected.Equals(actual),
+        Assert.IsTrue(expected.Equals(actual),
             $"{message}Expected BigNumber({expected.Significand}, {expected.Exponent}) but got BigNumber({actual.Significand}, {actual.Exponent})");
     }
 
@@ -394,7 +394,7 @@ public static class BigNumberTestData
             message = $"{message}: ";
         }
 
-        Assert.True(expected.Equals(actual),
+        Assert.IsTrue(expected.Equals(actual),
             $"{message}Expected BigNumber({GetSignificand(expected)}, {GetExponent(expected)}) but got BigNumber({GetSignificand(actual)}, {GetExponent(actual)})");
     }
 
@@ -408,7 +408,7 @@ public static class BigNumberTestData
             message = $"{message}: ";
         }
 
-        Assert.False(left.Equals(right),
+        Assert.IsFalse(left.Equals(right),
             $"{message}BigNumber({GetSignificand(left)}, {GetExponent(left)}) should not equal BigNumber({GetSignificand(right)}, {GetExponent(right)})");
     }
 
@@ -463,14 +463,14 @@ public static class BigNumberTestData
     /// </summary>
     public static void AssertParseResult(bool success, Corvus.Numerics.BigNumber result, BigInteger expectedSignificand, int expectedExponent, string input)
     {
-        Assert.True(success, $"Should successfully parse: '{input}'");
+        Assert.IsTrue(success, $"Should successfully parse: '{input}'");
 
         BigInteger actualSignificand = GetSignificand(result);
         int actualExponent = GetExponent(result);
 
-        Assert.True(expectedSignificand.Equals(actualSignificand),
+        Assert.IsTrue(expectedSignificand.Equals(actualSignificand),
             $"Significand should match for input: '{input}'. Expected: {expectedSignificand}, Actual: {actualSignificand}");
-        Assert.True(expectedExponent == actualExponent,
+        Assert.IsTrue(expectedExponent == actualExponent,
             $"Exponent should match for input: '{input}'. Expected: {expectedExponent}, Actual: {actualExponent}");
     }
 
@@ -484,10 +484,10 @@ public static class BigNumberTestData
             scenario = $"{scenario}: ";
         }
 
-        Assert.True(success, $"{scenario}TryFormat should have succeeded");
-        Assert.True(expected.Length == charsWritten,
+        Assert.IsTrue(success, $"{scenario}TryFormat should have succeeded");
+        Assert.IsTrue(expected.Length == charsWritten,
             $"{scenario}Characters written should match expected length. Expected: {expected.Length}, Actual: {charsWritten}");
-        Assert.True(expected.Equals(result),
+        Assert.IsTrue(expected.Equals(result),
             $"{scenario}Formatted result should match expected. Expected: '{expected}', Actual: '{result}'");
     }
 

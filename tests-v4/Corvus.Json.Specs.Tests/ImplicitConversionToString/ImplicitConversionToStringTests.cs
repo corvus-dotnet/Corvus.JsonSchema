@@ -6,14 +6,15 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.ImplicitConversionToString;
 
-[Trait("spec", "ImplicitConversionToString")]
+[TestCategory("ImplicitConversionToString")]
+[TestClass]
 public class ImplicitConversionToStringTests
 {
-    [Fact]
+    [TestMethod]
     public async Task CreateImplicitConversionToString()
     {
         string schema = """
@@ -37,10 +38,10 @@ public class ImplicitConversionToStringTests
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement);
 
         string? assignedString = GetImplicitString(generatedType, instance);
-        Assert.Equal("foo", assignedString);
+        Assert.AreEqual("foo", assignedString);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateImplicitConversionToStringWithBuiltInStringType()
     {
         string schema = """
@@ -63,10 +64,10 @@ public class ImplicitConversionToStringTests
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement);
 
         string? assignedString = GetImplicitString(generatedType, instance);
-        Assert.Equal("foo", assignedString);
+        Assert.AreEqual("foo", assignedString);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CreateImplicitConversionToStringWithBuiltInStringFormatType()
     {
         string schema = """
@@ -90,7 +91,7 @@ public class ImplicitConversionToStringTests
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement);
 
         string? assignedString = GetImplicitString(generatedType, instance);
-        Assert.Equal("3af1928d-96f7-4272-a057-beb6194579e6", assignedString);
+        Assert.AreEqual("3af1928d-96f7-4272-a057-beb6194579e6", assignedString);
     }
 
     private static string GetImplicitString(Type type, IJsonValue value)

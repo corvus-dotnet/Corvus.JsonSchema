@@ -5,36 +5,48 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft202012.Optional.Bignum;
 
-[Trait("JsonSchemaTestSuite", "Draft202012")]
-public class SuiteInteger : IClassFixture<SuiteInteger.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteInteger
 {
-    private readonly Fixture _fixture;
-    public SuiteInteger(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestABignumIsAnInteger()
     {
         using var doc = JsonDocument.Parse("12345678910111213141516171819202122232425262728293031");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestANegativeBignumIsAnInteger()
     {
         using var doc = JsonDocument.Parse("-12345678910111213141516171819202122232425262728293031");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -61,32 +73,44 @@ public class SuiteInteger : IClassFixture<SuiteInteger.Fixture>
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft202012")]
-public class SuiteNumber : IClassFixture<SuiteNumber.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteNumber
 {
-    private readonly Fixture _fixture;
-    public SuiteNumber(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestABignumIsANumber()
     {
         using var doc = JsonDocument.Parse("98249283749234923498293171823948729348710298301928331");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestANegativeBignumIsANumber()
     {
         using var doc = JsonDocument.Parse("-98249283749234923498293171823948729348710298301928331");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -113,24 +137,36 @@ public class SuiteNumber : IClassFixture<SuiteNumber.Fixture>
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft202012")]
-public class SuiteString : IClassFixture<SuiteString.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteString
 {
-    private readonly Fixture _fixture;
-    public SuiteString(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestABignumIsNotAString()
     {
         using var doc = JsonDocument.Parse("98249283749234923498293171823948729348710298301928331");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -157,24 +193,36 @@ public class SuiteString : IClassFixture<SuiteString.Fixture>
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft202012")]
-public class SuiteMaximumIntegerComparison : IClassFixture<SuiteMaximumIntegerComparison.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteMaximumIntegerComparison
 {
-    private readonly Fixture _fixture;
-    public SuiteMaximumIntegerComparison(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForHighNumbers()
     {
         using var doc = JsonDocument.Parse("18446744073709551600");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -201,24 +249,36 @@ public class SuiteMaximumIntegerComparison : IClassFixture<SuiteMaximumIntegerCo
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft202012")]
-public class SuiteFloatComparisonWithHighPrecision : IClassFixture<SuiteFloatComparisonWithHighPrecision.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteFloatComparisonWithHighPrecision
 {
-    private readonly Fixture _fixture;
-    public SuiteFloatComparisonWithHighPrecision(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForHighNumbers()
     {
         using var doc = JsonDocument.Parse("972783798187987123879878123.188781371");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -245,24 +305,36 @@ public class SuiteFloatComparisonWithHighPrecision : IClassFixture<SuiteFloatCom
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft202012")]
-public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers : IClassFixture<SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
 {
-    private readonly Fixture _fixture;
-    public SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForVeryNegativeNumbers()
     {
         using var doc = JsonDocument.Parse("-972783798187987123879878123.188781371");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 

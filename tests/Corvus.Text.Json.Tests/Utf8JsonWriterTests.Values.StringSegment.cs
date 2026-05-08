@@ -2,15 +2,16 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Buffers;
-using System.Collections.Generic;
 using System.Linq;
+using System.Collections.Generic;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text.Encodings.Web;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
+[TestClass]
 public partial class Utf8JsonWriterTests
 {
     private enum StringValueEncodingType
@@ -103,8 +104,8 @@ public partial class Utf8JsonWriterTests
         yield return input.SelectMany(arr => arr).ToArray();
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Base64_Basic()
+    [TestMethod]
+    public void WriteStringValueSegment_Base64_Basic()
     {
         {
             WriteStringValueSegment_BasicHelper(
@@ -131,8 +132,8 @@ public partial class Utf8JsonWriterTests
         }
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Base64_ClearedPartial()
+    [TestMethod]
+    public void WriteStringValueSegment_Base64_ClearedPartial()
     {
         var output = new ArrayBufferWriter<byte>();
 
@@ -214,8 +215,8 @@ public partial class Utf8JsonWriterTests
         }
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Base64_Reset()
+    [TestMethod]
+    public void WriteStringValueSegment_Base64_Reset()
     {
         var output = new ArrayBufferWriter<byte>();
         using var jsonUtf8 = new Utf8JsonWriter(output);
@@ -223,40 +224,40 @@ public partial class Utf8JsonWriterTests
         jsonUtf8.WriteBase64StringSegment([0], false);
         jsonUtf8.Flush();
 
-        Assert.Equal(0, jsonUtf8.BytesPending);
-        Assert.Equal(1, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(0, jsonUtf8.BytesPending);
+        Assert.AreEqual(1, jsonUtf8.BytesCommitted);
 
         jsonUtf8.Reset();
 
-        Assert.Equal(0, jsonUtf8.BytesPending);
-        Assert.Equal(0, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(0, jsonUtf8.BytesPending);
+        Assert.AreEqual(0, jsonUtf8.BytesCommitted);
 
         jsonUtf8.WriteBase64StringSegment([0, 0, 0], true);
 
         string expected = @"""AAAA""";
-        Assert.Equal(expected.Length, jsonUtf8.BytesPending);
-        Assert.Equal(0, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(expected.Length, jsonUtf8.BytesPending);
+        Assert.AreEqual(0, jsonUtf8.BytesCommitted);
 
         jsonUtf8.Flush();
 
-        Assert.Equal(0, jsonUtf8.BytesPending);
-        Assert.Equal(expected.Length, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(0, jsonUtf8.BytesPending);
+        Assert.AreEqual(expected.Length, jsonUtf8.BytesCommitted);
         JsonTestHelper.AssertContents('"' + expected, output);
     }
 
-    [Theory]
-    [InlineData("", "")]
-    [InlineData("0 padding", "MCBwYWRkaW5n")]
-    [InlineData("_1 padding", "XzEgcGFkZGluZw==")]
-    [InlineData("__2 padding", "X18yIHBhZGRpbmc=")]
-    public static void WriteStringValueSegment_Base64_SplitDataBasic(string input, string expected)
+    [TestMethod]
+    [DataRow("", "")]
+    [DataRow("0 padding", "MCBwYWRkaW5n")]
+    [DataRow("_1 padding", "XzEgcGFkZGluZw==")]
+    [DataRow("__2 padding", "X18yIHBhZGRpbmc=")]
+    public void WriteStringValueSegment_Base64_SplitDataBasic(string input, string expected)
     {
         byte[] bytes = input.Select(c => (byte)c).ToArray();
         SplitStringDataHelper(bytes, new JsonWriterOptions { Indented = true }, "\"" + expected + "\"", StringValueEncodingType.Base64);
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Empty()
+    [TestMethod]
+    public void WriteStringValueSegment_Empty()
     {
         {
             var output = new ArrayBufferWriter<byte>();
@@ -364,8 +365,8 @@ public partial class Utf8JsonWriterTests
         }
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Flush()
+    [TestMethod]
+    public void WriteStringValueSegment_Flush()
     {
         JavaScriptEncoder noEscape = JavaScriptEncoder.UnsafeRelaxedJsonEscaping;
         TestFlushImpl(['\uD800'], ['\uDC00'], new(), @"""\uD800\uDC00""", StringValueEncodingType.Utf16);
@@ -384,32 +385,32 @@ public partial class Utf8JsonWriterTests
 
             WriteStringValueSegmentHelper(jsonUtf8, unit1, false, encoding);
 
-            Assert.Equal(0, output.WrittenCount);
-            Assert.Equal(0, jsonUtf8.BytesCommitted);
-            Assert.Equal(1, jsonUtf8.BytesPending);
+            Assert.AreEqual(0, output.WrittenCount);
+            Assert.AreEqual(0, jsonUtf8.BytesCommitted);
+            Assert.AreEqual(1, jsonUtf8.BytesPending);
 
             jsonUtf8.Flush();
-            Assert.Equal(1, output.WrittenCount);
-            Assert.Equal(1, jsonUtf8.BytesCommitted);
-            Assert.Equal(0, jsonUtf8.BytesPending);
+            Assert.AreEqual(1, output.WrittenCount);
+            Assert.AreEqual(1, jsonUtf8.BytesCommitted);
+            Assert.AreEqual(0, jsonUtf8.BytesPending);
 
             WriteStringValueSegmentHelper(jsonUtf8, unit2, true, encoding);
 
-            Assert.Equal(1, output.WrittenCount);
-            Assert.Equal(1, jsonUtf8.BytesCommitted);
-            Assert.Equal(expectedBytes.Length - 1, jsonUtf8.BytesPending);
+            Assert.AreEqual(1, output.WrittenCount);
+            Assert.AreEqual(1, jsonUtf8.BytesCommitted);
+            Assert.AreEqual(expectedBytes.Length - 1, jsonUtf8.BytesPending);
 
             jsonUtf8.Flush();
-            Assert.Equal(expectedBytes.Length, output.WrittenCount);
-            Assert.Equal(expectedBytes.Length, jsonUtf8.BytesCommitted);
-            Assert.Equal(0, jsonUtf8.BytesPending);
+            Assert.AreEqual(expectedBytes.Length, output.WrittenCount);
+            Assert.AreEqual(expectedBytes.Length, jsonUtf8.BytesCommitted);
+            Assert.AreEqual(0, jsonUtf8.BytesPending);
 
             JsonTestHelper.AssertContents(expected, output);
         }
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_MixEncoding()
+    [TestMethod]
+    public void WriteStringValueSegment_MixEncoding()
     {
         {
             var output = new ArrayBufferWriter<byte>();
@@ -418,7 +419,7 @@ public partial class Utf8JsonWriterTests
             // High surrogate
             jsonUtf8.WriteStringValueSegment("\uD8D8".AsSpan(), false);
 
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment([0b10_111111], true));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment([0b10_111111], true));
         }
 
         {
@@ -428,7 +429,7 @@ public partial class Utf8JsonWriterTests
             // High surrogate
             jsonUtf8.WriteStringValueSegment("\uD8D8".AsSpan(), false);
 
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteBase64StringSegment([0], true));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteBase64StringSegment([0], true));
         }
 
         {
@@ -438,7 +439,7 @@ public partial class Utf8JsonWriterTests
             // Start of a 3-byte sequence
             jsonUtf8.WriteStringValueSegment([0b1110_1111], false);
 
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment("\u8080".AsSpan(), true));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment("\u8080".AsSpan(), true));
         }
 
         {
@@ -448,7 +449,7 @@ public partial class Utf8JsonWriterTests
             // Start of a 3-byte sequence
             jsonUtf8.WriteStringValueSegment([0b1110_1111], false);
 
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteBase64StringSegment([0], true));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteBase64StringSegment([0], true));
         }
 
         {
@@ -458,7 +459,7 @@ public partial class Utf8JsonWriterTests
             // Partial Base64
             jsonUtf8.WriteBase64StringSegment([0], false);
 
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment([0b10_111111], true));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment([0b10_111111], true));
         }
 
         {
@@ -468,7 +469,7 @@ public partial class Utf8JsonWriterTests
             // Partial Base64
             jsonUtf8.WriteBase64StringSegment([0], false);
 
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment("\u8080".AsSpan(), true));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment("\u8080".AsSpan(), true));
         }
 
         {
@@ -484,7 +485,7 @@ public partial class Utf8JsonWriterTests
             JsonTestHelper.AssertContents("\"", output);
 
             // Writing empty UTF-16 sequence will throw
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment(ReadOnlySpan<char>.Empty, false));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment(ReadOnlySpan<char>.Empty, false));
         }
 
         {
@@ -500,7 +501,7 @@ public partial class Utf8JsonWriterTests
             JsonTestHelper.AssertContents("\"", output);
 
             // Writing empty UTF-8 sequence will throw
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteBase64StringSegment(ReadOnlySpan<byte>.Empty, false));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteBase64StringSegment(ReadOnlySpan<byte>.Empty, false));
         }
 
         {
@@ -516,7 +517,7 @@ public partial class Utf8JsonWriterTests
             JsonTestHelper.AssertContents("\"", output);
 
             // Writing empty UTF-8 sequence will throw
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment(ReadOnlySpan<byte>.Empty, false));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment(ReadOnlySpan<byte>.Empty, false));
         }
 
         {
@@ -532,7 +533,7 @@ public partial class Utf8JsonWriterTests
             JsonTestHelper.AssertContents("\"", output);
 
             // Writing empty base64 sequence will throw
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteBase64StringSegment(ReadOnlySpan<byte>.Empty, false));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteBase64StringSegment(ReadOnlySpan<byte>.Empty, false));
         }
 
         {
@@ -548,7 +549,7 @@ public partial class Utf8JsonWriterTests
             JsonTestHelper.AssertContents("\"", output);
 
             // Writing empty UTF-8 sequence will throw
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment(ReadOnlySpan<byte>.Empty, false));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment(ReadOnlySpan<byte>.Empty, false));
         }
 
         {
@@ -564,12 +565,12 @@ public partial class Utf8JsonWriterTests
             JsonTestHelper.AssertContents("\"", output);
 
             // Writing empty UTF-16 sequence will throw
-            Assert.Throws<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment(ReadOnlySpan<char>.Empty, false));
+            Assert.ThrowsExactly<InvalidOperationException>(() => jsonUtf8.WriteStringValueSegment(ReadOnlySpan<char>.Empty, false));
         }
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Utf16_BadSurrogatePairs()
+    [TestMethod]
+    public void WriteStringValueSegment_Utf16_BadSurrogatePairs()
     {
         const string result = "\\uFFFD\\uD83D\\uDE00\\uFFFD";
 
@@ -596,9 +597,9 @@ public partial class Utf8JsonWriterTests
         JsonTestHelper.AssertContents($"{{\"full\":\"{result}\",\"segmented\":\"{result}\"}}", output);
     }
 
-    [Theory]
-    [MemberData(nameof(BasicStringJsonOptions_TestData))]
-    public static void WriteStringValueSegment_Utf16_Basic(JsonWriterOptions options)
+    [TestMethod]
+    [DynamicData(nameof(BasicStringJsonOptions_TestData))]
+    public void WriteStringValueSegment_Utf16_Basic(JsonWriterOptions options)
     {
         WriteStringValueSegment_BasicHelper(
             "Hello".AsSpan(),
@@ -611,9 +612,9 @@ public partial class Utf8JsonWriterTests
             StringValueEncodingType.Utf16);
     }
 
-    [Theory]
-    [MemberData(nameof(BasicStringJsonOptions_TestData))]
-    public static void WriteStringValueSegment_Utf16_BasicSplit(JsonWriterOptions options)
+    [TestMethod]
+    [DynamicData(nameof(BasicStringJsonOptions_TestData))]
+    public void WriteStringValueSegment_Utf16_BasicSplit(JsonWriterOptions options)
     {
         WriteStringValueSegment_BasicHelper(
             "\uD800 <- Invalid Partial -> \uD800".AsSpan(),
@@ -626,8 +627,8 @@ public partial class Utf8JsonWriterTests
             StringValueEncodingType.Utf16);
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Utf16_ClearedPartial()
+    [TestMethod]
+    public void WriteStringValueSegment_Utf16_ClearedPartial()
     {
         var output = new ArrayBufferWriter<byte>();
 
@@ -649,8 +650,8 @@ public partial class Utf8JsonWriterTests
         }
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Utf16_Reset()
+    [TestMethod]
+    public void WriteStringValueSegment_Utf16_Reset()
     {
         var output = new ArrayBufferWriter<byte>();
         using var jsonUtf8 = new Utf8JsonWriter(output);
@@ -658,41 +659,41 @@ public partial class Utf8JsonWriterTests
         jsonUtf8.WriteStringValueSegment("\uD800".AsSpan(), false);
         jsonUtf8.Flush();
 
-        Assert.Equal(0, jsonUtf8.BytesPending);
-        Assert.Equal(1, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(0, jsonUtf8.BytesPending);
+        Assert.AreEqual(1, jsonUtf8.BytesCommitted);
 
         jsonUtf8.Reset();
 
-        Assert.Equal(0, jsonUtf8.BytesPending);
-        Assert.Equal(0, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(0, jsonUtf8.BytesPending);
+        Assert.AreEqual(0, jsonUtf8.BytesCommitted);
 
         jsonUtf8.WriteStringValueSegment("\uDC00".AsSpan(), true);
 
         string expected = @"""\uFFFD""";
-        Assert.Equal(expected.Length, jsonUtf8.BytesPending);
-        Assert.Equal(0, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(expected.Length, jsonUtf8.BytesPending);
+        Assert.AreEqual(0, jsonUtf8.BytesCommitted);
 
         jsonUtf8.Flush();
 
-        Assert.Equal(0, jsonUtf8.BytesPending);
-        Assert.Equal(expected.Length, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(0, jsonUtf8.BytesPending);
+        Assert.AreEqual(expected.Length, jsonUtf8.BytesCommitted);
         JsonTestHelper.AssertContents('"' + expected, output);
     }
 
-    [Theory]
-    [MemberData(nameof(InvalidUtf16DataWithOptions_TestData))]
-    public static void WriteStringValueSegment_Utf16_SplitCodePointsReplacement(char[] inputArr, JsonWriterOptions options)
+    [TestMethod]
+    [DynamicData(nameof(InvalidUtf16DataWithOptions_TestData))]
+    public void WriteStringValueSegment_Utf16_SplitCodePointsReplacement(char[] inputArr, JsonWriterOptions options)
     {
         char[] expectedChars = new char[inputArr.Length * MaxExpansionFactorWhileEscaping];
 
         options.Encoder.Encode(inputArr, expectedChars, out int charsConsumed, out int charsWritten);
-        Assert.Equal(inputArr.Length, charsConsumed);
+        Assert.AreEqual(inputArr.Length, charsConsumed);
 
         SplitStringDataHelper(inputArr, options, $@"""{new string(expectedChars, 0, charsWritten)}""", StringValueEncodingType.Utf16);
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Utf16_SplitInSurrogatePair()
+    [TestMethod]
+    public void WriteStringValueSegment_Utf16_SplitInSurrogatePair()
     {
         const string result = "\\uD83D\\uDE00\\uD83D\\uDE00\\uD83D\\uDE00";
 
@@ -719,9 +720,9 @@ public partial class Utf8JsonWriterTests
         JsonTestHelper.AssertContents($"{{\"full\":\"{result}\",\"segmented\":\"{result}\"}}", output);
     }
 
-    [Theory]
-    [MemberData(nameof(BasicStringJsonOptions_TestData))]
-    public static void WriteStringValueSegment_Utf8_Basic(JsonWriterOptions options)
+    [TestMethod]
+    [DynamicData(nameof(BasicStringJsonOptions_TestData))]
+    public void WriteStringValueSegment_Utf8_Basic(JsonWriterOptions options)
     {
         WriteStringValueSegment_BasicHelper(
             "Hello"u8,
@@ -734,9 +735,9 @@ public partial class Utf8JsonWriterTests
             StringValueEncodingType.Utf8);
     }
 
-    [Theory]
-    [MemberData(nameof(BasicStringJsonOptions_TestData))]
-    public static void WriteStringValueSegment_Utf8_BasicSplit(JsonWriterOptions options)
+    [TestMethod]
+    [DynamicData(nameof(BasicStringJsonOptions_TestData))]
+    public void WriteStringValueSegment_Utf8_BasicSplit(JsonWriterOptions options)
     {
         byte[] segment1 = [0b10_000000, .. " <- Invalid Partial -> "u8, 0b110_11111];
         byte[] segment2 = [0b10_111111, .. " <- Partial"u8];
@@ -753,8 +754,8 @@ public partial class Utf8JsonWriterTests
             StringValueEncodingType.Utf8);
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Utf8_ClearedPartial()
+    [TestMethod]
+    public void WriteStringValueSegment_Utf8_ClearedPartial()
     {
         {
             var output = new ArrayBufferWriter<byte>();
@@ -803,8 +804,8 @@ public partial class Utf8JsonWriterTests
         }
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Utf8_Reset()
+    [TestMethod]
+    public void WriteStringValueSegment_Utf8_Reset()
     {
         var output = new ArrayBufferWriter<byte>();
         using var jsonUtf8 = new Utf8JsonWriter(output);
@@ -812,29 +813,29 @@ public partial class Utf8JsonWriterTests
         jsonUtf8.WriteStringValueSegment([0b110_11111], false);
         jsonUtf8.Flush();
 
-        Assert.Equal(0, jsonUtf8.BytesPending);
-        Assert.Equal(1, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(0, jsonUtf8.BytesPending);
+        Assert.AreEqual(1, jsonUtf8.BytesCommitted);
 
         jsonUtf8.Reset();
 
-        Assert.Equal(0, jsonUtf8.BytesPending);
-        Assert.Equal(0, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(0, jsonUtf8.BytesPending);
+        Assert.AreEqual(0, jsonUtf8.BytesCommitted);
 
         jsonUtf8.WriteStringValueSegment([0b10_111111], true);
 
         string expected = @"""\uFFFD""";
-        Assert.Equal(expected.Length, jsonUtf8.BytesPending);
-        Assert.Equal(0, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(expected.Length, jsonUtf8.BytesPending);
+        Assert.AreEqual(0, jsonUtf8.BytesCommitted);
 
         jsonUtf8.Flush();
 
-        Assert.Equal(0, jsonUtf8.BytesPending);
-        Assert.Equal(expected.Length, jsonUtf8.BytesCommitted);
+        Assert.AreEqual(0, jsonUtf8.BytesPending);
+        Assert.AreEqual(expected.Length, jsonUtf8.BytesCommitted);
         JsonTestHelper.AssertContents('"' + expected, output);
     }
 
-    [Fact]
-    public static void WriteStringValueSegment_Utf8_Split8CodePointsBasic()
+    [TestMethod]
+    public void WriteStringValueSegment_Utf8_Split8CodePointsBasic()
     {
         const string result = "\\uD83D\\uDE00";
 
@@ -859,14 +860,14 @@ public partial class Utf8JsonWriterTests
         JsonTestHelper.AssertContents($"{{\"full\":\"{result}\",\"segmented\":\"{result}\"}}", output);
     }
 
-    [Theory]
-    [MemberData(nameof(InvalidUtf8DataWithOptions_TestData))]
-    public static void WriteStringValueSegment_Utf8_SplitCodePointsReplacement(byte[] inputArr, JsonWriterOptions options)
+    [TestMethod]
+    [DynamicData(nameof(InvalidUtf8DataWithOptions_TestData))]
+    public void WriteStringValueSegment_Utf8_SplitCodePointsReplacement(byte[] inputArr, JsonWriterOptions options)
     {
         byte[] expectedBytes = new byte[inputArr.Length * MaxExpansionFactorWhileEscaping];
 
         options.Encoder.EncodeUtf8(inputArr, expectedBytes, out int bytesConsumed, out int bytesWritten);
-        Assert.Equal(inputArr.Length, bytesConsumed);
+        Assert.AreEqual(inputArr.Length, bytesConsumed);
 
         string expectedString = $@"""{Encoding.UTF8.GetString(expectedBytes, 0, bytesWritten)}""";
 

@@ -1,10 +1,10 @@
-﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
+// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Diagnostics.Tracing;
 using System.IO;
-using Xunit.Abstractions;
+
 
 namespace TestUtilities;
 
@@ -49,10 +49,6 @@ public sealed class TestEventListener : EventListener
     private List<EventSource> _eventSources = [];
 
     public TestEventListener(TextWriter output, params string[] sourceNames)
-        : this(output.WriteLine, sourceNames)
-    { }
-
-    public TestEventListener(ITestOutputHelper output, params string[] sourceNames)
         : this(output.WriteLine, sourceNames)
     { }
 

@@ -1,33 +1,40 @@
-﻿using System.Reflection;
+using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaAdditionalTests.Draft202012;
 
-[Trait("Additional-JsonSchemaTests", "Draft202012")]
-public class BenchmarkRepro : IClassFixture<BenchmarkRepro.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class BenchmarkRepro
 {
-    private readonly Fixture _fixture;
-
-    public BenchmarkRepro(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestNullIsNotAPerson()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("null");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

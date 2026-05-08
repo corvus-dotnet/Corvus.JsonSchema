@@ -2,96 +2,102 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaAdditionalTests.Draft201909;
 
-[Trait("Additional-JsonSchemaTests", "Draft201909")]
-public class TypeAndFormat : IClassFixture<TypeAndFormat.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class TypeAndFormat
 {
-    private readonly Fixture _fixture;
-
-    public TypeAndFormat(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAnIntegerIsAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("1");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-
-    [Fact]
+    [TestMethod]
     public void TestA64BitIntegerIsNotAnInteger32()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("3000000000");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("3000000000");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAFloatWithZeroFractionalPartIsAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("1.0");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.0");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAFloatIsNotAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("1.1");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.1");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAStringIsNotAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"foo\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"foo\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAStringIsStillNotAnIntegerEvenIfItLooksLikeOne()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"1\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"1\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnObjectIsNotAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{}");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnArrayIsNotAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestABooleanIsNotAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("true");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("true");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNullIsNotAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("null");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -116,86 +122,91 @@ public class TypeAndFormat : IClassFixture<TypeAndFormat.Fixture>
     }
 }
 
-[Trait("Additional-JsonSchemaTests", "Draft201909")]
-public class MultiTypeAndFormat : IClassFixture<MultiTypeAndFormat.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class MultiTypeAndFormat
 {
-    private readonly Fixture _fixture;
-
-    public MultiTypeAndFormat(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAnIntegerIsAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("1");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-
-    [Fact]
+    [TestMethod]
     public void TestA64BitIntegerIsNotAnInteger32()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("3000000000");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("3000000000");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAFloatWithZeroFractionalPartIsAnInteger()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("1.0");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.0");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAFloatIsNotAnIntegerOrAString()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("1.1");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1.1");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAStringIsAllowed()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"foo\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"foo\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-
-    [Fact]
+    [TestMethod]
     public void TestAnObjectIsNotAnIntegerOrAString()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{}");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnArrayIsNotAnIntegerOrAString()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestABooleanIsNotAnIntegerOrAString()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("true");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("true");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNullIsNotAnIntegerOrAString()
     {
-        DynamicJsonElement dynamicInstance = _fixture.DynamicJsonType.ParseInstance("null");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        DynamicJsonElement dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

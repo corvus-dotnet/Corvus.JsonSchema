@@ -3,16 +3,17 @@
 // </copyright>
 
 using Corvus.Text.Json.Jsonata.CodeGeneration;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 
 /// <summary>
 /// Tests for <see cref="JsonataCodeGenerator"/>.
 /// </summary>
+[TestClass]
 public class JsonataCodeGeneratorTests
 {
-    [Fact]
+    [TestMethod]
     public void Generate_SimpleProperty_ContainsEvaluateMethod()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -20,12 +21,12 @@ public class JsonataCodeGeneratorTests
             "SimplePropertyExpr",
             "Test.Generated");
 
-        Assert.Contains("public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)", result);
-        Assert.Contains("namespace Test.Generated;", result);
-        Assert.Contains("class SimplePropertyExpr", result);
+        StringAssert.Contains(result, "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)");
+        StringAssert.Contains(result, "namespace Test.Generated;");
+        StringAssert.Contains(result, "class SimplePropertyExpr");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_SimpleProperty_ContainsExpressionString()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -33,10 +34,10 @@ public class JsonataCodeGeneratorTests
             "SimplePropertyExpr",
             "Test.Generated");
 
-        Assert.Contains("Account.Name", result);
+        StringAssert.Contains(result, "Account.Name");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Arithmetic_ContainsExpression()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -44,11 +45,11 @@ public class JsonataCodeGeneratorTests
             "ArithmeticExpr",
             "Test.Generated");
 
-        Assert.Contains("class ArithmeticExpr", result);
-        Assert.Contains("1 + 2 * 3", result);
+        StringAssert.Contains(result, "class ArithmeticExpr");
+        StringAssert.Contains(result, "1 + 2 * 3");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_StringConcat_ProducesValidCode()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -56,11 +57,11 @@ public class JsonataCodeGeneratorTests
             "ConcatExpr",
             "Test.Generated");
 
-        Assert.Contains("class ConcatExpr", result);
-        Assert.Contains("Evaluate", result);
+        StringAssert.Contains(result, "class ConcatExpr");
+        StringAssert.Contains(result, "Evaluate");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_PredicateFilter_ProducesValidCode()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -68,10 +69,10 @@ public class JsonataCodeGeneratorTests
             "FilterExpr",
             "Test.Generated");
 
-        Assert.Contains("class FilterExpr", result);
+        StringAssert.Contains(result, "class FilterExpr");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_HigherOrderFunction_ProducesValidCode()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -79,10 +80,10 @@ public class JsonataCodeGeneratorTests
             "MapExpr",
             "Test.Generated");
 
-        Assert.Contains("class MapExpr", result);
+        StringAssert.Contains(result, "class MapExpr");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_ObjectConstruction_ProducesValidCode()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -90,10 +91,10 @@ public class JsonataCodeGeneratorTests
             "ObjectExpr",
             "Test.Generated");
 
-        Assert.Contains("class ObjectExpr", result);
+        StringAssert.Contains(result, "class ObjectExpr");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_ComplexExpression_ProducesValidCode()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -101,20 +102,20 @@ public class JsonataCodeGeneratorTests
             "ComplexExpr",
             "Test.Generated");
 
-        Assert.Contains("class ComplexExpr", result);
+        StringAssert.Contains(result, "class ComplexExpr");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_InvalidExpression_Throws()
     {
-        Assert.ThrowsAny<Exception>(() =>
+        Assert.Throws<Exception>(() =>
             JsonataCodeGenerator.Generate(
                 "{{invalid}}",
                 "BadExpr",
                 "Test.Generated"));
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_EmptyNamespace_OmitsNamespaceDeclaration()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -123,10 +124,10 @@ public class JsonataCodeGeneratorTests
             string.Empty);
 
         Assert.DoesNotContain("namespace", result);
-        Assert.Contains("class LiteralExpr", result);
+        StringAssert.Contains(result, "class LiteralExpr");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_SpecialCharacters_EscapesCorrectly()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -135,11 +136,11 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         // The \n in the expression should be escaped in the generated string literal
-        Assert.Contains("class EscapeExpr", result);
-        Assert.Contains("Evaluate", result);
+        StringAssert.Contains(result, "class EscapeExpr");
+        StringAssert.Contains(result, "Evaluate");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_ContainsBindingsOverload()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -148,11 +149,11 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         // Should have both the simple and full overloads
-        Assert.Contains("public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)", result);
-        Assert.Contains("IReadOnlyDictionary<string, JsonElement>? bindings", result);
+        StringAssert.Contains(result, "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)");
+        StringAssert.Contains(result, "IReadOnlyDictionary<string, JsonElement>? bindings");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_ContainsAutoGeneratedHeader()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -160,11 +161,11 @@ public class JsonataCodeGeneratorTests
             "HeaderExpr",
             "Test.Generated");
 
-        Assert.Contains("// <auto-generated/>", result);
-        Assert.Contains("#nullable enable", result);
+        StringAssert.Contains(result, "// <auto-generated/>");
+        StringAssert.Contains(result, "#nullable enable");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_XmlDocEscapesSpecialChars()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -173,14 +174,14 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         // The XML doc comment should escape < as &lt;
-        Assert.Contains("a &lt; b", result);
+        StringAssert.Contains(result, "a &lt; b");
     }
 
     /// <summary>
     /// Verifies that $$ inside a $map lambda does not produce a static lambda,
     /// which would cause CS8820 because the lambda captures __rootData.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_RootRefInsideMapLambda_LambdaIsNotStatic()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -196,7 +197,7 @@ public class JsonataCodeGeneratorTests
     /// <summary>
     /// Verifies that $$ inside a $filter lambda does not produce a static lambda.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_RootRefInsideFilterLambda_LambdaIsNotStatic()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -210,7 +211,7 @@ public class JsonataCodeGeneratorTests
     /// <summary>
     /// Verifies that $$ inside a $reduce lambda does not produce a static lambda.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_RootRefInsideReduceLambda_LambdaIsNotStatic()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -224,7 +225,7 @@ public class JsonataCodeGeneratorTests
     /// <summary>
     /// Verifies that $$ inside a $sort comparator does not produce a static lambda.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_RootRefInsideSortLambda_LambdaIsNotStatic()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -234,14 +235,14 @@ public class JsonataCodeGeneratorTests
 
         // $sort doesn't use the {Static} pattern for its lambda, so this
         // test documents the current behavior. Check the generated code compiles.
-        Assert.Contains("class RootRefInSortExpr", result);
+        StringAssert.Contains(result, "class RootRefInSortExpr");
     }
 
     /// <summary>
     /// Verifies that an external binding inside a $map lambda does not produce a
     /// static lambda.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_BindingInsideMapLambda_LambdaIsNotStatic()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -256,7 +257,7 @@ public class JsonataCodeGeneratorTests
     /// Verifies that nested HOFs with the same parameter name produce distinct
     /// C# parameter names via _lambdaCounter, avoiding name collisions.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_NestedHofSameParamName_DistinctCSharpParams()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -265,15 +266,15 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         // Should have two distinct lambda parameters (el_0 and el_1)
-        Assert.Contains("el_0", result);
-        Assert.Contains("el_1", result);
+        StringAssert.Contains(result, "el_0");
+        StringAssert.Contains(result, "el_1");
     }
 
     /// <summary>
     /// Verifies that $$ inside a nested HOF (inner lambda) produces non-static
     /// lambdas at both levels, since the outer lambda also captures __rootData.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_RootRefInsideNestedHof_AllLambdasNonStatic()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -288,7 +289,7 @@ public class JsonataCodeGeneratorTests
     /// Verifies that an external binding inside a $filter lambda does not
     /// produce a static lambda.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_BindingInsideFilterLambda_LambdaIsNotStatic()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -303,7 +304,7 @@ public class JsonataCodeGeneratorTests
     /// Verifies that an external binding inside a $reduce lambda does not
     /// produce a static lambda.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_BindingInsideReduceLambda_LambdaIsNotStatic()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -318,7 +319,7 @@ public class JsonataCodeGeneratorTests
     /// Verifies that both $$ and an external binding in the same HOF lambda
     /// body produce non-static lambdas.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_RootRefAndBindingInSameLambda_NonStatic()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -328,15 +329,15 @@ public class JsonataCodeGeneratorTests
 
         Assert.DoesNotContain("static (JsonElement el_", result);
         // Both flags should be set
-        Assert.Contains("__rootData", result);
-        Assert.Contains("__bindings", result);
+        StringAssert.Contains(result, "__rootData");
+        StringAssert.Contains(result, "__bindings");
     }
 
     /// <summary>
     /// Verifies that a HOF with index parameter (2-arg $map) generates code
     /// that includes the index parameter.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_MapWithIndex_IncludesIndexParam()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -344,15 +345,15 @@ public class JsonataCodeGeneratorTests
             "MapWithIndexExpr",
             "Test.Generated");
 
-        Assert.Contains("MapElementsWithIndex", result);
-        Assert.Contains("idx_", result);
+        StringAssert.Contains(result, "MapElementsWithIndex");
+        StringAssert.Contains(result, "idx_");
     }
 
     /// <summary>
     /// Verifies that a filter stage on a path step (predicate in path, not HOF)
     /// uses the ApplyStage helper.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_PathWithPredicateStage_UsesApplyStage()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -362,13 +363,13 @@ public class JsonataCodeGeneratorTests
 
         // Path predicates should use either ApplyStage or ApplyStepOverElements
         bool usesStage = result.Contains("ApplyStage") || result.Contains("ApplyStepOverElements");
-        Assert.True(usesStage, "Expected path predicate to use ApplyStage or ApplyStepOverElements");
+        Assert.IsTrue(usesStage, "Expected path predicate to use ApplyStage or ApplyStepOverElements");
     }
 
     /// <summary>
     /// Verifies that numeric index predicates in paths use an optimized array index helper.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_PathWithNumericIndex_UsesChainPredicates()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -377,16 +378,16 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         // Path with numeric index is compiled into a chain-with-predicates call
-        Assert.Contains("NavigatePropertyChainWithPredicates", result);
+        StringAssert.Contains(result, "NavigatePropertyChainWithPredicates");
         // The constant index array encodes [0] for the first step
-        Assert.Contains("s_ci0", result);
+        StringAssert.Contains(result, "s_ci0");
     }
 
     /// <summary>
     /// Verifies that $$ inside a filter predicate on a path (not a HOF) generates
     /// non-static lambdas.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_RootRefInPathPredicate_NonStaticLambda()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -395,14 +396,14 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         Assert.DoesNotContain("static (JsonElement el_", result);
-        Assert.Contains("__rootData", result);
+        StringAssert.Contains(result, "__rootData");
     }
 
     /// <summary>
     /// Verifies that a block expression with variable binding generates
     /// the assignment and returns the last value.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_BlockWithVariableBinding_ProducesValidCode()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -410,15 +411,15 @@ public class JsonataCodeGeneratorTests
             "BlockBindingExpr",
             "Test.Generated");
 
-        Assert.Contains("class BlockBindingExpr", result);
-        Assert.Contains("Evaluate", result);
+        StringAssert.Contains(result, "class BlockBindingExpr");
+        StringAssert.Contains(result, "Evaluate");
     }
 
     /// <summary>
     /// Verifies that string concatenation with multiple operands uses
     /// the flattened ConcatBuilder pattern.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_MultiStringConcat_UsesConcatBuilder()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -426,13 +427,13 @@ public class JsonataCodeGeneratorTests
             "ConcatBuilderExpr",
             "Test.Generated");
 
-        Assert.Contains("BeginConcat", result);
+        StringAssert.Contains(result, "BeginConcat");
     }
 
     /// <summary>
     /// Verifies that constant arithmetic is folded at generation time.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_ConstantArithmetic_IsFolded()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -441,13 +442,13 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         // The expression should be folded to a constant 5, emitted as a static field
-        Assert.Contains("JsonElement.ParseValue(\"5\"u8)", result);
+        StringAssert.Contains(result, "JsonElement.ParseValue(\"5\"u8)");
     }
 
     /// <summary>
     /// Verifies that constant arrays are folded to static fields.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_ConstantArray_IsFolded()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -455,7 +456,7 @@ public class JsonataCodeGeneratorTests
             "ConstArrayExpr",
             "Test.Generated");
 
-        Assert.Contains("JsonElement.ParseValue(\"[1,2,3]\"u8)", result);
+        StringAssert.Contains(result, "JsonElement.ParseValue(\"[1,2,3]\"u8)");
         Assert.DoesNotContain("CreateArrayWithFlatten", result);
         Assert.DoesNotContain("NumberFromDouble", result);
     }
@@ -463,7 +464,7 @@ public class JsonataCodeGeneratorTests
     /// <summary>
     /// Verifies that constant objects are folded to static fields.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_ConstantObject_IsFolded()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -471,7 +472,7 @@ public class JsonataCodeGeneratorTests
             "ConstObjectExpr",
             "Test.Generated");
 
-        Assert.Contains("JsonElement.ParseValue(", result);
+        StringAssert.Contains(result, "JsonElement.ParseValue(");
         Assert.DoesNotContain("ObjectBuilder", result);
         Assert.DoesNotContain("NumberFromDouble", result);
     }
@@ -479,7 +480,7 @@ public class JsonataCodeGeneratorTests
     /// <summary>
     /// Verifies that $zip with all-constant args is evaluated at codegen time.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_ConstantZip_IsFolded()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -488,14 +489,14 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         // The entire zip should be a single static field with the transposed result
-        Assert.Contains("JsonElement.ParseValue(\"[[1,3],[2,4]]\"u8)", result);
+        StringAssert.Contains(result, "JsonElement.ParseValue(\"[[1,3],[2,4]]\"u8)");
         Assert.DoesNotContain("Zip(", result);
     }
 
     /// <summary>
     /// Verifies that constant string literals are folded to static fields.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_ConstantString_IsFolded()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -503,7 +504,7 @@ public class JsonataCodeGeneratorTests
             "ConstStringExpr",
             "Test.Generated");
 
-        Assert.Contains("JsonElement.ParseValue(", result);
+        StringAssert.Contains(result, "JsonElement.ParseValue(");
         Assert.DoesNotContain("StringElement(", result);
     }
 
@@ -511,7 +512,7 @@ public class JsonataCodeGeneratorTests
     /// Verifies that fused sum-over-chain optimization is applied for
     /// $sum over a property path.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_SumOverPropertyChain_IsInlined()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -520,7 +521,7 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         // $sum over a simple property chain should be inlined (not falling back to RT)
-        Assert.Contains("Sum(", result);
+        StringAssert.Contains(result, "Sum(");
         Assert.DoesNotContain("s_evaluator.Evaluate(Expression, data, workspace)", result);
     }
 
@@ -528,7 +529,7 @@ public class JsonataCodeGeneratorTests
     /// Verifies that $map with a simple property chain input uses the
     /// fused MapChainElements helper.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_MapOverPropertyChain_UsesFusedMap()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -536,14 +537,14 @@ public class JsonataCodeGeneratorTests
             "MapChainFusedExpr",
             "Test.Generated");
 
-        Assert.Contains("MapChainElements", result);
+        StringAssert.Contains(result, "MapChainElements");
     }
 
     /// <summary>
     /// Verifies that the sort key extractor for a simple property name
     /// uses a static lambda (since it doesn't capture anything).
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_SortBySimpleProperty_StaticExtractor()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -551,13 +552,13 @@ public class JsonataCodeGeneratorTests
             "SortSimplePropExpr",
             "Test.Generated");
 
-        Assert.Contains("class SortSimplePropExpr", result);
+        StringAssert.Contains(result, "class SortSimplePropExpr");
     }
 
     /// <summary>
     /// Verifies that short-circuit evaluation is used for logical operators.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_LogicalAnd_ProducesConditionalCode()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -566,13 +567,13 @@ public class JsonataCodeGeneratorTests
             "Test.Generated");
 
         // Should use IsTruthy for short-circuit evaluation
-        Assert.Contains("IsTruthy", result);
+        StringAssert.Contains(result, "IsTruthy");
     }
 
     /// <summary>
     /// Verifies that the range operator produces valid code.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_RangeOperator_ProducesValidCode()
     {
         string result = JsonataCodeGenerator.Generate(
@@ -580,14 +581,14 @@ public class JsonataCodeGeneratorTests
             "RangeExpr",
             "Test.Generated");
 
-        Assert.Contains("class RangeExpr", result);
-        Assert.Contains("Evaluate", result);
+        StringAssert.Contains(result, "class RangeExpr");
+        StringAssert.Contains(result, "Evaluate");
     }
 
     /// <summary>
     /// Verifies that a custom function call generates a <c>CustomFn_</c> method.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_CustomFunction_EmitsCustomMethod()
     {
         var customFns = new[]
@@ -601,14 +602,14 @@ public class JsonataCodeGeneratorTests
             "Test.Generated",
             customFns);
 
-        Assert.Contains("CustomFn_double_it", result);
-        Assert.Contains("private static JsonElement CustomFn_double_it(in JsonElement x, JsonWorkspace workspace)", result);
+        StringAssert.Contains(result, "CustomFn_double_it");
+        StringAssert.Contains(result, "private static JsonElement CustomFn_double_it(in JsonElement x, JsonWorkspace workspace)");
     }
 
     /// <summary>
     /// Verifies that unused custom functions are not emitted.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_UnusedCustomFunction_NotEmitted()
     {
         var customFns = new[]
@@ -628,7 +629,7 @@ public class JsonataCodeGeneratorTests
     /// <summary>
     /// Verifies that custom function arity mismatch throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_CustomFunctionArityMismatch_Throws()
     {
         var customFns = new[]
@@ -636,7 +637,7 @@ public class JsonataCodeGeneratorTests
             new CustomFunction("add", new[] { "a", "b" }, "a", isExpression: true),
         };
 
-        Assert.ThrowsAny<Exception>(() =>
+        Assert.Throws<Exception>(() =>
             JsonataCodeGenerator.Generate(
                 "$add(1)",
                 "ArityMismatchExpr",
@@ -647,7 +648,7 @@ public class JsonataCodeGeneratorTests
     /// <summary>
     /// Verifies that multi-param custom functions emit correct signatures.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_CustomFunctionMultiParam_EmitsAllParams()
     {
         var customFns = new[]
@@ -661,13 +662,13 @@ public class JsonataCodeGeneratorTests
             "Test.Generated",
             customFns);
 
-        Assert.Contains("CustomFn_add3(in JsonElement a, in JsonElement b, in JsonElement c, JsonWorkspace workspace)", result);
+        StringAssert.Contains(result, "CustomFn_add3(in JsonElement a, in JsonElement b, in JsonElement c, JsonWorkspace workspace)");
     }
 
     /// <summary>
     /// Verifies that a block-form custom function emits the block body.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Generate_CustomFunctionBlockForm_EmitsBlockBody()
     {
         var customFns = new[]
@@ -681,7 +682,7 @@ public class JsonataCodeGeneratorTests
             "Test.Generated",
             customFns);
 
-        Assert.Contains("CustomFn_clamp", result);
-        Assert.Contains("double v = val.GetDouble();", result);
+        StringAssert.Contains(result, "CustomFn_clamp");
+        StringAssert.Contains(result, "double v = val.GetDouble();");
     }
 }

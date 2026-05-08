@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -12,6 +12,7 @@ namespace Corvus.Text.Json.Tests;
 /// RemoveXxx for optional properties, generic SetProperty/RemoveProperty overloads,
 /// and round-trip serialization.
 /// </summary>
+[TestClass]
 public class GeneratedObjectMutationTests
 {
     private const string SampleJson =
@@ -21,7 +22,7 @@ public class GeneratedObjectMutationTests
 
     #region Named property setters
 
-    [Fact]
+    [TestMethod]
     public void SetName_WithValidSource_SetsProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -30,10 +31,10 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetName("Bob");
-        Assert.Equal("Bob", root.Name.ToString());
+        Assert.AreEqual("Bob", root.Name.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SetAge_WithValidSource_SetsProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -42,10 +43,10 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetAge(42);
-        Assert.Equal("42", root.Age.ToString());
+        Assert.AreEqual("42", root.Age.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SetEmail_WithValidSource_SetsProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -54,10 +55,10 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetEmail("bob@example.com");
-        Assert.Equal("bob@example.com", root.Email.ToString());
+        Assert.AreEqual("bob@example.com", root.Email.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SetIsActive_WithValidSource_SetsProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -66,14 +67,14 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetIsActive(false);
-        Assert.False((bool)root.IsActive);
+        Assert.IsFalse((bool)root.IsActive);
     }
 
     #endregion
 
     #region IsUndefined guards — required properties throw
 
-    [Fact]
+    [TestMethod]
     public void SetName_WithUndefinedSource_ThrowsInvalidOperationException()
     {
         using var workspace = JsonWorkspace.Create();
@@ -92,10 +93,10 @@ public class GeneratedObjectMutationTests
             threw = true;
         }
 
-        Assert.True(threw);
+        Assert.IsTrue(threw);
     }
 
-    [Fact]
+    [TestMethod]
     public void SetAge_WithUndefinedSource_ThrowsInvalidOperationException()
     {
         using var workspace = JsonWorkspace.Create();
@@ -114,14 +115,14 @@ public class GeneratedObjectMutationTests
             threw = true;
         }
 
-        Assert.True(threw);
+        Assert.IsTrue(threw);
     }
 
     #endregion
 
     #region IsUndefined guards — optional properties remove
 
-    [Fact]
+    [TestMethod]
     public void SetEmail_WithUndefinedSource_RemovesProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -130,10 +131,10 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetEmail(default);
-        Assert.True(root.Email.IsUndefined());
+        Assert.IsTrue(root.Email.IsUndefined());
     }
 
-    [Fact]
+    [TestMethod]
     public void SetIsActive_WithUndefinedSource_RemovesProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -142,14 +143,14 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetIsActive(default);
-        Assert.True(root.IsActive.IsUndefined());
+        Assert.IsTrue(root.IsActive.IsUndefined());
     }
 
     #endregion
 
     #region RemoveXxx for optional properties
 
-    [Fact]
+    [TestMethod]
     public void RemoveEmail_WhenPresent_ReturnsTrue()
     {
         using var workspace = JsonWorkspace.Create();
@@ -159,11 +160,11 @@ public class GeneratedObjectMutationTests
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         bool removed = root.RemoveEmail();
 
-        Assert.True(removed);
-        Assert.True(root.Email.IsUndefined());
+        Assert.IsTrue(removed);
+        Assert.IsTrue(root.Email.IsUndefined());
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveEmail_WhenAbsent_ReturnsFalse()
     {
         using var workspace = JsonWorkspace.Create();
@@ -173,10 +174,10 @@ public class GeneratedObjectMutationTests
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         bool removed = root.RemoveEmail();
 
-        Assert.False(removed);
+        Assert.IsFalse(removed);
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveIsActive_WhenPresent_ReturnsTrue()
     {
         using var workspace = JsonWorkspace.Create();
@@ -186,15 +187,15 @@ public class GeneratedObjectMutationTests
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         bool removed = root.RemoveIsActive();
 
-        Assert.True(removed);
-        Assert.True(root.IsActive.IsUndefined());
+        Assert.IsTrue(removed);
+        Assert.IsTrue(root.IsActive.IsUndefined());
     }
 
     #endregion
 
     #region Generic SetProperty/RemoveProperty
 
-    [Fact]
+    [TestMethod]
     public void SetProperty_ByString_SetsProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -203,10 +204,10 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetProperty("name", "Charlie");
-        Assert.Equal("Charlie", root.Name.ToString());
+        Assert.AreEqual("Charlie", root.Name.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SetProperty_ByCharSpan_SetsProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -215,10 +216,10 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetProperty("name".AsSpan(), "Diana");
-        Assert.Equal("Diana", root.Name.ToString());
+        Assert.AreEqual("Diana", root.Name.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SetProperty_ByUtf8Span_SetsProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -227,10 +228,10 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetProperty("name"u8, "Eve");
-        Assert.Equal("Eve", root.Name.ToString());
+        Assert.AreEqual("Eve", root.Name.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveProperty_ByString_RemovesProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -240,11 +241,11 @@ public class GeneratedObjectMutationTests
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         bool removed = root.RemoveProperty("email");
 
-        Assert.True(removed);
-        Assert.True(root.Email.IsUndefined());
+        Assert.IsTrue(removed);
+        Assert.IsTrue(root.Email.IsUndefined());
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveProperty_ByString_WhenAbsent_ReturnsFalse()
     {
         using var workspace = JsonWorkspace.Create();
@@ -254,10 +255,10 @@ public class GeneratedObjectMutationTests
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         bool removed = root.RemoveProperty("email");
 
-        Assert.False(removed);
+        Assert.IsFalse(removed);
     }
 
-    [Fact]
+    [TestMethod]
     public void SetProperty_WithUndefinedSource_RemovesProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -266,14 +267,14 @@ public class GeneratedObjectMutationTests
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
         root.SetProperty("email", default);
-        Assert.True(root.Email.IsUndefined());
+        Assert.IsTrue(root.Email.IsUndefined());
     }
 
     #endregion
 
     #region Round-trip
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_SetAllProperties_SerializesCorrectly()
     {
         using var workspace = JsonWorkspace.Create();
@@ -289,10 +290,10 @@ public class GeneratedObjectMutationTests
         string json = root.ToString();
 
         using var roundTrip = ParsedJsonDocument<ObjectWithMixedProperties>.Parse(json);
-        Assert.Equal("Frank", roundTrip.RootElement.Name.ToString());
-        Assert.Equal("55", roundTrip.RootElement.Age.ToString());
-        Assert.Equal("frank@test.com", roundTrip.RootElement.Email.ToString());
-        Assert.True((bool)roundTrip.RootElement.IsActive);
+        Assert.AreEqual("Frank", roundTrip.RootElement.Name.ToString());
+        Assert.AreEqual("55", roundTrip.RootElement.Age.ToString());
+        Assert.AreEqual("frank@test.com", roundTrip.RootElement.Email.ToString());
+        Assert.IsTrue((bool)roundTrip.RootElement.IsActive);
     }
 
     #endregion

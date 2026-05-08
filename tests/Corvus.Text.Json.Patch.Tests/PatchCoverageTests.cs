@@ -3,7 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Patch;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Patch.Tests;
 
@@ -11,6 +11,7 @@ namespace Corvus.Text.Json.Patch.Tests;
 /// Coverage tests targeting char/string overloads, move dispatch paths,
 /// copy dispatch paths, and error branches in JsonPatchExtensions and PatchBuilder.
 /// </summary>
+[TestClass]
 public class PatchCoverageTests
 {
     private static readonly string LongKey1 = new('x', 140);
@@ -18,7 +19,7 @@ public class PatchCoverageTests
 
     #region PatchBuilder char overloads
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Add_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -29,11 +30,11 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Add("/b".AsSpan(), "v"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal("v", root.GetProperty("b").GetString());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual("v", root.GetProperty("b").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Add_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -44,11 +45,11 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Add("/b", "v"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal("v", root.GetProperty("b").GetString());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual("v", root.GetProperty("b").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Remove_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -59,11 +60,11 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Remove("/b".AsSpan());
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.False(root.TryGetProperty("b"u8, out _));
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.TryGetProperty("b"u8, out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Remove_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -74,11 +75,11 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Remove("/b");
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.False(root.TryGetProperty("b"u8, out _));
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.TryGetProperty("b"u8, out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Replace_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -89,11 +90,11 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Replace("/a".AsSpan(), 99);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal(99, root.GetProperty("a").GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual(99, root.GetProperty("a").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Replace_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -104,11 +105,11 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Replace("/a", 99);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal(99, root.GetProperty("a").GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual(99, root.GetProperty("a").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Move_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -119,12 +120,12 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Move("/a".AsSpan(), "/b/c".AsSpan());
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.False(root.TryGetProperty("a"u8, out _));
-        Assert.Equal("v", root.GetProperty("b").GetProperty("c").GetString());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.TryGetProperty("a"u8, out _));
+        Assert.AreEqual("v", root.GetProperty("b").GetProperty("c").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Move_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -135,12 +136,12 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Move("/a", "/b/c");
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.False(root.TryGetProperty("a"u8, out _));
-        Assert.Equal("v", root.GetProperty("b").GetProperty("c").GetString());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.TryGetProperty("a"u8, out _));
+        Assert.AreEqual("v", root.GetProperty("b").GetProperty("c").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Copy_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -151,12 +152,12 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Copy("/a".AsSpan(), "/b".AsSpan());
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal("v", root.GetProperty("a").GetString());
-        Assert.Equal("v", root.GetProperty("b").GetString());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual("v", root.GetProperty("a").GetString());
+        Assert.AreEqual("v", root.GetProperty("b").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Copy_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -167,12 +168,12 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Copy("/a", "/b");
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal("v", root.GetProperty("a").GetString());
-        Assert.Equal("v", root.GetProperty("b").GetString());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual("v", root.GetProperty("a").GetString());
+        Assert.AreEqual("v", root.GetProperty("b").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Test_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -183,10 +184,10 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Test("/a".AsSpan(), "v"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
+        Assert.IsTrue(root.TryApplyPatch(patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Test_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -197,10 +198,10 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Test("/a", "v"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
+        Assert.IsTrue(root.TryApplyPatch(patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchBuilder_Dispose_WithoutGetPatch()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -221,7 +222,7 @@ public class PatchCoverageTests
 
     #region Standalone char/string API overloads
 
-    [Fact]
+    [TestMethod]
     public void TryAdd_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -230,11 +231,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = "hello";
 
-        Assert.True(root.TryAdd("/b".AsSpan(), in value));
-        Assert.Equal("hello", root.GetProperty("b").GetString());
+        Assert.IsTrue(root.TryAdd("/b".AsSpan(), in value));
+        Assert.AreEqual("hello", root.GetProperty("b").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryAdd_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -243,11 +244,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = "hello";
 
-        Assert.True(root.TryAdd("/b", in value));
-        Assert.Equal("hello", root.GetProperty("b").GetString());
+        Assert.IsTrue(root.TryAdd("/b", in value));
+        Assert.AreEqual("hello", root.GetProperty("b").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -255,11 +256,11 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryRemove("/b".AsSpan()));
-        Assert.False(root.TryGetProperty("b"u8, out _));
+        Assert.IsTrue(root.TryRemove("/b".AsSpan()));
+        Assert.IsFalse(root.TryGetProperty("b"u8, out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -267,11 +268,11 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryRemove("/b"));
-        Assert.False(root.TryGetProperty("b"u8, out _));
+        Assert.IsTrue(root.TryRemove("/b"));
+        Assert.IsFalse(root.TryGetProperty("b"u8, out _));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplace_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -280,11 +281,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 99;
 
-        Assert.True(root.TryReplace("/a".AsSpan(), in value));
-        Assert.Equal(99, root.GetProperty("a").GetInt32());
+        Assert.IsTrue(root.TryReplace("/a".AsSpan(), in value));
+        Assert.AreEqual(99, root.GetProperty("a").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplace_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -293,11 +294,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 99;
 
-        Assert.True(root.TryReplace("/a", in value));
-        Assert.Equal(99, root.GetProperty("a").GetInt32());
+        Assert.IsTrue(root.TryReplace("/a", in value));
+        Assert.AreEqual(99, root.GetProperty("a").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -305,12 +306,12 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryMove("/a".AsSpan(), "/b/c".AsSpan()));
-        Assert.False(root.TryGetProperty("a"u8, out _));
-        Assert.Equal("v", root.GetProperty("b").GetProperty("c").GetString());
+        Assert.IsTrue(root.TryMove("/a".AsSpan(), "/b/c".AsSpan()));
+        Assert.IsFalse(root.TryGetProperty("a"u8, out _));
+        Assert.AreEqual("v", root.GetProperty("b").GetProperty("c").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -318,12 +319,12 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryMove("/a", "/b/c"));
-        Assert.False(root.TryGetProperty("a"u8, out _));
-        Assert.Equal("v", root.GetProperty("b").GetProperty("c").GetString());
+        Assert.IsTrue(root.TryMove("/a", "/b/c"));
+        Assert.IsFalse(root.TryGetProperty("a"u8, out _));
+        Assert.AreEqual("v", root.GetProperty("b").GetProperty("c").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopy_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -331,12 +332,12 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryCopy("/a".AsSpan(), "/b".AsSpan()));
-        Assert.Equal("v", root.GetProperty("a").GetString());
-        Assert.Equal("v", root.GetProperty("b").GetString());
+        Assert.IsTrue(root.TryCopy("/a".AsSpan(), "/b".AsSpan()));
+        Assert.AreEqual("v", root.GetProperty("a").GetString());
+        Assert.AreEqual("v", root.GetProperty("b").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopy_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -344,12 +345,12 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryCopy("/a", "/b"));
-        Assert.Equal("v", root.GetProperty("a").GetString());
-        Assert.Equal("v", root.GetProperty("b").GetString());
+        Assert.IsTrue(root.TryCopy("/a", "/b"));
+        Assert.AreEqual("v", root.GetProperty("a").GetString());
+        Assert.AreEqual("v", root.GetProperty("b").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTest_CharOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -358,10 +359,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement expected = JsonElement.ParseValue("\"v\"");
 
-        Assert.True(root.TryTest("/a".AsSpan(), in expected));
+        Assert.IsTrue(root.TryTest("/a".AsSpan(), in expected));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTest_StringOverload()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -370,7 +371,7 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement expected = JsonElement.ParseValue("\"v\"");
 
-        Assert.True(root.TryTest("/a", in expected));
+        Assert.IsTrue(root.TryTest("/a", in expected));
     }
 
     #endregion
@@ -385,7 +386,7 @@ public class PatchCoverageTests
     private static string BuildNestedJson(string innerValue = "1")
         => "{\"" + LongKey1 + "\":{\"" + LongKey2 + "\":" + innerValue + "}}";
 
-    [Fact]
+    [TestMethod]
     public void TryAdd_CharOverload_LongPath()
     {
         // Add a sibling next to LongKey2 inside the nested object
@@ -396,10 +397,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 42;
 
-        Assert.True(root.TryAdd(("/" + LongKey1 + "/newProp").AsSpan(), in value));
+        Assert.IsTrue(root.TryAdd(("/" + LongKey1 + "/newProp").AsSpan(), in value));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_CharOverload_LongPath()
     {
         string json = BuildNestedJson();
@@ -408,10 +409,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryRemove(LongPathNested.AsSpan()));
+        Assert.IsTrue(root.TryRemove(LongPathNested.AsSpan()));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplace_CharOverload_LongPath()
     {
         string json = BuildNestedJson();
@@ -421,10 +422,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 99;
 
-        Assert.True(root.TryReplace(LongPathNested.AsSpan(), in value));
+        Assert.IsTrue(root.TryReplace(LongPathNested.AsSpan(), in value));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_CharOverload_LongPath()
     {
         string json = "{\"" + LongKey1 + "\":{\"" + LongKey2 + "\":1},\"dest\":{}}";
@@ -433,10 +434,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryMove(LongPathNested.AsSpan(), "/dest/v".AsSpan()));
+        Assert.IsTrue(root.TryMove(LongPathNested.AsSpan(), "/dest/v".AsSpan()));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopy_CharOverload_LongPath()
     {
         string json = BuildNestedJson();
@@ -445,10 +446,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryCopy(LongPathNested.AsSpan(), "/copy".AsSpan()));
+        Assert.IsTrue(root.TryCopy(LongPathNested.AsSpan(), "/copy".AsSpan()));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTest_CharOverload_LongPath()
     {
         string json = BuildNestedJson();
@@ -458,14 +459,14 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement expected = JsonElement.ParseValue("1");
 
-        Assert.True(root.TryTest(LongPathNested.AsSpan(), in expected));
+        Assert.IsTrue(root.TryTest(LongPathNested.AsSpan(), in expected));
     }
 
     #endregion
 
     #region Move dispatch paths (TryApplyMove via TryApplyPatch)
 
-    [Fact]
+    [TestMethod]
     public void Move_ArrayToArray_Append()
     {
         // Move array[0] to end of another array
@@ -477,13 +478,13 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Move("/src/0"u8, "/dst/-"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal(1, root.GetProperty("src").GetArrayLength());
-        Assert.Equal(3, root.GetProperty("dst").GetArrayLength());
-        Assert.Equal(10, root.GetProperty("dst")[2].GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual(1, root.GetProperty("src").GetArrayLength());
+        Assert.AreEqual(3, root.GetProperty("dst").GetArrayLength());
+        Assert.AreEqual(10, root.GetProperty("dst")[2].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Move_ArrayToArray_Index()
     {
         // Move array[1] to index 0 of another array
@@ -495,13 +496,13 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Move("/src/1"u8, "/dst/0"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal(1, root.GetProperty("src").GetArrayLength());
-        Assert.Equal(3, root.GetProperty("dst").GetArrayLength());
-        Assert.Equal(20, root.GetProperty("dst")[0].GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual(1, root.GetProperty("src").GetArrayLength());
+        Assert.AreEqual(3, root.GetProperty("dst").GetArrayLength());
+        Assert.AreEqual(20, root.GetProperty("dst")[0].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Move_ArrayToObject()
     {
         // Move array item to object property
@@ -513,12 +514,12 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Move("/src/0"u8, "/dst/val"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.Equal(1, root.GetProperty("src").GetArrayLength());
-        Assert.Equal(10, root.GetProperty("dst").GetProperty("val").GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.AreEqual(1, root.GetProperty("src").GetArrayLength());
+        Assert.AreEqual(10, root.GetProperty("dst").GetProperty("val").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Move_ObjectToArray_Append()
     {
         // Move object property to end of array
@@ -530,13 +531,13 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Move("/src/val"u8, "/dst/-"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.False(root.GetProperty("src").TryGetProperty("val"u8, out _));
-        Assert.Equal(3, root.GetProperty("dst").GetArrayLength());
-        Assert.Equal(10, root.GetProperty("dst")[2].GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.GetProperty("src").TryGetProperty("val"u8, out _));
+        Assert.AreEqual(3, root.GetProperty("dst").GetArrayLength());
+        Assert.AreEqual(10, root.GetProperty("dst")[2].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Move_ObjectToArray_Index()
     {
         // Move object property to specific index in array
@@ -548,13 +549,13 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Move("/src/val"u8, "/dst/1"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.False(root.GetProperty("src").TryGetProperty("val"u8, out _));
-        Assert.Equal(3, root.GetProperty("dst").GetArrayLength());
-        Assert.Equal(10, root.GetProperty("dst")[1].GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.GetProperty("src").TryGetProperty("val"u8, out _));
+        Assert.AreEqual(3, root.GetProperty("dst").GetArrayLength());
+        Assert.AreEqual(10, root.GetProperty("dst")[1].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Move_ObjectToObject()
     {
         // Move property between objects
@@ -566,16 +567,16 @@ public class PatchCoverageTests
         using PatchBuilder pb = root.BeginPatch(workspace)
             .Move("/src/val"u8, "/dst/val"u8);
         JsonPatchDocument patch = pb.GetPatchAndDispose();
-        Assert.True(root.TryApplyPatch(patch));
-        Assert.False(root.GetProperty("src").TryGetProperty("val"u8, out _));
-        Assert.Equal(10, root.GetProperty("dst").GetProperty("val").GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patch));
+        Assert.IsFalse(root.GetProperty("src").TryGetProperty("val"u8, out _));
+        Assert.AreEqual(10, root.GetProperty("dst").GetProperty("val").GetInt32());
     }
 
     #endregion
 
     #region Move error paths
 
-    [Fact]
+    [TestMethod]
     public void Move_FromRoot_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -583,10 +584,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryMove(""u8, "/b"u8));
+        Assert.IsFalse(root.TryMove(""u8, "/b"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void Move_InvalidSource_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -594,10 +595,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryMove("/nonexistent"u8, "/b"u8));
+        Assert.IsFalse(root.TryMove("/nonexistent"u8, "/b"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void Move_ArrayIndex_OutOfBounds_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -605,14 +606,14 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryMove("/src/5"u8, "/dst/v"u8));
+        Assert.IsFalse(root.TryMove("/src/5"u8, "/dst/v"u8));
     }
 
     #endregion
 
     #region Copy dispatch paths
 
-    [Fact]
+    [TestMethod]
     public void TryCopy_ToArrayAppend()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -620,12 +621,12 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryCopy("/val"u8, "/arr/-"u8));
-        Assert.Equal(2, root.GetProperty("arr").GetArrayLength());
-        Assert.Equal(10, root.GetProperty("arr")[1].GetInt32());
+        Assert.IsTrue(root.TryCopy("/val"u8, "/arr/-"u8));
+        Assert.AreEqual(2, root.GetProperty("arr").GetArrayLength());
+        Assert.AreEqual(10, root.GetProperty("arr")[1].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopy_ToArrayIndex()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -633,12 +634,12 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryCopy("/val"u8, "/arr/0"u8));
-        Assert.Equal(3, root.GetProperty("arr").GetArrayLength());
-        Assert.Equal(10, root.GetProperty("arr")[0].GetInt32());
+        Assert.IsTrue(root.TryCopy("/val"u8, "/arr/0"u8));
+        Assert.AreEqual(3, root.GetProperty("arr").GetArrayLength());
+        Assert.AreEqual(10, root.GetProperty("arr")[0].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopy_InvalidSource_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -646,14 +647,14 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryCopy("/nonexistent"u8, "/b"u8));
+        Assert.IsFalse(root.TryCopy("/nonexistent"u8, "/b"u8));
     }
 
     #endregion
 
     #region Replace dispatch paths
 
-    [Fact]
+    [TestMethod]
     public void TryReplace_RootElement()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -662,11 +663,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 42;
 
-        Assert.True(root.TryReplace(""u8, in value));
-        Assert.Equal(JsonValueKind.Number, root.ValueKind);
+        Assert.IsTrue(root.TryReplace(""u8, in value));
+        Assert.AreEqual(JsonValueKind.Number, root.ValueKind);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplace_ArrayElement()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -675,11 +676,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 99;
 
-        Assert.True(root.TryReplace("/1"u8, in value));
-        Assert.Equal(99, root[1].GetInt32());
+        Assert.IsTrue(root.TryReplace("/1"u8, in value));
+        Assert.AreEqual(99, root[1].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplace_ArrayIndex_OutOfBounds_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -688,14 +689,14 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 99;
 
-        Assert.False(root.TryReplace("/5"u8, in value));
+        Assert.IsFalse(root.TryReplace("/5"u8, in value));
     }
 
     #endregion
 
     #region Remove edge paths
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_ArrayElement()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -703,11 +704,11 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryRemove("/1"u8));
-        Assert.Equal(2, root.GetArrayLength());
+        Assert.IsTrue(root.TryRemove("/1"u8));
+        Assert.AreEqual(2, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_ArrayIndex_OutOfBounds_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -715,10 +716,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryRemove("/5"u8));
+        Assert.IsFalse(root.TryRemove("/5"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_NonExistentProperty_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -726,14 +727,14 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryRemove("/nonexistent"u8));
+        Assert.IsFalse(root.TryRemove("/nonexistent"u8));
     }
 
     #endregion
 
     #region TryApplyPatch internal dispatch (Move/Copy/Test through patch document)
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_MoveFromRoot_Fails()
     {
         // Move with from="" should fail (cannot move root)
@@ -745,10 +746,10 @@ public class PatchCoverageTests
         // Build a patch document manually with from=""
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"move","from":"","path":"/b"}]""");
-        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryApplyPatch(patchDoc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_MoveToRoot_Fails()
     {
         // Move with path="" should fail (cannot move to root)
@@ -759,10 +760,10 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"move","from":"/a","path":""}]""");
-        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryApplyPatch(patchDoc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_InvalidDestIndex_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -772,10 +773,10 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"move","from":"/src/0","path":"/dst/99"}]""");
-        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryApplyPatch(patchDoc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ObjectToArray_InvalidDestIndex_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -785,10 +786,10 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"move","from":"/src/v","path":"/dst/99"}]""");
-        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryApplyPatch(patchDoc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_ToObject()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -798,11 +799,11 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"copy","from":"/a","path":"/b"}]""");
-        Assert.True(root.TryApplyPatch(patchDoc.RootElement));
-        Assert.Equal(10, root.GetProperty("b").GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.AreEqual(10, root.GetProperty("b").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_ToArrayAppend()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -812,12 +813,12 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"copy","from":"/v","path":"/arr/-"}]""");
-        Assert.True(root.TryApplyPatch(patchDoc.RootElement));
-        Assert.Equal(2, root.GetProperty("arr").GetArrayLength());
-        Assert.Equal(10, root.GetProperty("arr")[1].GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.AreEqual(2, root.GetProperty("arr").GetArrayLength());
+        Assert.AreEqual(10, root.GetProperty("arr")[1].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_ToArrayIndex()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -827,12 +828,12 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"copy","from":"/v","path":"/arr/0"}]""");
-        Assert.True(root.TryApplyPatch(patchDoc.RootElement));
-        Assert.Equal(3, root.GetProperty("arr").GetArrayLength());
-        Assert.Equal(10, root.GetProperty("arr")[0].GetInt32());
+        Assert.IsTrue(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.AreEqual(3, root.GetProperty("arr").GetArrayLength());
+        Assert.AreEqual(10, root.GetProperty("arr")[0].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Test_Passes()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -842,10 +843,10 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"test","path":"/a","value":"hello"}]""");
-        Assert.True(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsTrue(root.TryApplyPatch(patchDoc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Test_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -855,10 +856,10 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"test","path":"/a","value":"world"}]""");
-        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryApplyPatch(patchDoc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Test_NonExistentPath_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -868,10 +869,10 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"test","path":"/nope","value":1}]""");
-        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryApplyPatch(patchDoc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Add_RootReplacement()
     {
         // Covers TryAddValueFromSpan root-replacement path (lines 958-960)
@@ -882,11 +883,11 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"add","path":"","value":42}]""");
-        Assert.True(root.TryApplyPatch(patchDoc.RootElement));
-        Assert.Equal(JsonValueKind.Number, root.ValueKind);
+        Assert.IsTrue(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.AreEqual(JsonValueKind.Number, root.ValueKind);
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Replace_RootReplacement()
     {
         // Covers TryApplyReplace root-replacement path (lines 735-738)
@@ -897,11 +898,11 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"replace","path":"","value":42}]""");
-        Assert.True(root.TryApplyPatch(patchDoc.RootElement));
-        Assert.Equal(JsonValueKind.Number, root.ValueKind);
+        Assert.IsTrue(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.AreEqual(JsonValueKind.Number, root.ValueKind);
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Remove_Root_Fails()
     {
         // Covers TryApplyRemove empty-path check (lines 685-688)
@@ -912,14 +913,14 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"remove","path":""}]""");
-        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryApplyPatch(patchDoc.RootElement));
     }
 
     #endregion
 
     #region TryValidateAndApplyPatch
 
-    [Fact]
+    [TestMethod]
     public void TryValidateAndApplyPatch_InvalidPatch_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -930,10 +931,10 @@ public class PatchCoverageTests
         // Not a valid patch document (missing "op")
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"path":"/a","value":1}]""");
-        Assert.False(root.TryValidateAndApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryValidateAndApplyPatch(patchDoc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryValidateAndApplyPatch_ValidPatch_Succeeds()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -943,15 +944,15 @@ public class PatchCoverageTests
 
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(
             """[{"op":"add","path":"/b","value":2}]""");
-        Assert.True(root.TryValidateAndApplyPatch(patchDoc.RootElement));
-        Assert.Equal(2, root.GetProperty("b").GetInt32());
+        Assert.IsTrue(root.TryValidateAndApplyPatch(patchDoc.RootElement));
+        Assert.AreEqual(2, root.GetProperty("b").GetInt32());
     }
 
     #endregion
 
     #region TryParseArrayIndex edge cases
 
-    [Fact]
+    [TestMethod]
     public void TryAdd_LeadingZeroIndex_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -961,10 +962,10 @@ public class PatchCoverageTests
         JsonElement.Source value = 99;
 
         // "/01" has a leading zero → invalid per RFC 6901
-        Assert.False(root.TryAdd("/01"u8, in value));
+        Assert.IsFalse(root.TryAdd("/01"u8, in value));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_NonNumericArrayIndex_Fails()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -973,7 +974,7 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
 
         // "/abc" is not a valid array index
-        Assert.False(root.TryRemove("/abc"u8));
+        Assert.IsFalse(root.TryRemove("/abc"u8));
     }
 
     #endregion
@@ -981,7 +982,7 @@ public class PatchCoverageTests
     #region Additional coverage: long-path ArrayPool rent in char overloads
 
     // The TryAdd long-path test above uses a 148-byte path. We need >256 bytes for ArrayPool rent.
-    [Fact]
+    [TestMethod]
     public void TryAdd_CharOverload_LongPathRent()
     {
         // Path = "/" + LongKey1 + "/" + LongKey2 = 282 bytes > 256
@@ -994,10 +995,10 @@ public class PatchCoverageTests
 
         // Add new property inside the deeply-nested object
         string addPath = "/" + LongKey1 + "/" + LongKey2 + "/newProp";
-        Assert.True(root.TryAdd(addPath.AsSpan(), in value));
+        Assert.IsTrue(root.TryAdd(addPath.AsSpan(), in value));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_CharOverload_LongPathBothPaths()
     {
         // Both from and dest paths >256 bytes
@@ -1010,10 +1011,10 @@ public class PatchCoverageTests
 
         string fromPath = "/" + LongKey1 + "/" + LongKey2;
         string toPath = "/" + longKey3 + "/dest/val";
-        Assert.True(root.TryMove(fromPath.AsSpan(), toPath.AsSpan()));
+        Assert.IsTrue(root.TryMove(fromPath.AsSpan(), toPath.AsSpan()));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopy_CharOverload_LongPathBothPaths()
     {
         string longKey3 = new('z', 140);
@@ -1025,14 +1026,14 @@ public class PatchCoverageTests
 
         string fromPath = "/" + LongKey1 + "/" + LongKey2;
         string toPath = "/" + longKey3 + "/copyVal";
-        Assert.True(root.TryCopy(fromPath.AsSpan(), toPath.AsSpan()));
+        Assert.IsTrue(root.TryCopy(fromPath.AsSpan(), toPath.AsSpan()));
     }
 
     #endregion
 
     #region Diff GrowBuffer (path exceeds initial buffer, triggers GrowBuffer)
 
-    [Fact]
+    [TestMethod]
     public void Diff_LongPropertyName_TriggersGrowBuffer()
     {
         // Initial buffer is 1024 bytes (InitialPathBufferSize). A 1100-char property name
@@ -1046,10 +1047,10 @@ public class PatchCoverageTests
         using ParsedJsonDocument<JsonElement> targetDoc = ParsedJsonDocument<JsonElement>.Parse(target);
 
         JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement, workspace);
-        Assert.Equal(1, patch.GetArrayLength());
+        Assert.AreEqual(1, patch.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void Diff_LongPropertyName_Array_TriggersGrowBuffer()
     {
         // Array diff at a path exceeding 1024 bytes triggers AppendArrayIndex GrowBuffer.
@@ -1063,10 +1064,10 @@ public class PatchCoverageTests
         using ParsedJsonDocument<JsonElement> targetDoc = ParsedJsonDocument<JsonElement>.Parse(target);
 
         JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement, workspace);
-        Assert.True(patch.GetArrayLength() > 0);
+        Assert.IsTrue(patch.GetArrayLength() > 0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Diff_DeeplyNested_TriggersGrowBuffer()
     {
         // Max parse depth is 64. Use 5-char keys so path = 64 * 6 = 384 bytes > 256.
@@ -1079,10 +1080,10 @@ public class PatchCoverageTests
         using ParsedJsonDocument<JsonElement> targetDoc = ParsedJsonDocument<JsonElement>.Parse(target, options);
 
         JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement, workspace);
-        Assert.True(patch.GetArrayLength() > 0);
+        Assert.IsTrue(patch.GetArrayLength() > 0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Diff_DeeplyNestedArray_TriggersGrowBuffer()
     {
         string source = BuildDeeplyNestedWithArray(60, "[1,2]");
@@ -1094,7 +1095,7 @@ public class PatchCoverageTests
         using ParsedJsonDocument<JsonElement> targetDoc = ParsedJsonDocument<JsonElement>.Parse(target, options);
 
         JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement, workspace);
-        Assert.True(patch.GetArrayLength() > 0);
+        Assert.IsTrue(patch.GetArrayLength() > 0);
     }
 
     private static string BuildDeeplyNested(int depth, string leafValue)
@@ -1116,7 +1117,7 @@ public class PatchCoverageTests
 
     #region Additional TryApplyPatch error paths
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Remove_ArrayElement()
     {
         string json = """[1,2,3]""";
@@ -1127,11 +1128,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
-        Assert.Equal("[1,3]", root.ToString());
+        Assert.IsTrue(root.TryApplyPatch(in patch));
+        Assert.AreEqual("[1,3]", root.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Remove_ArrayOutOfBounds_Fails()
     {
         string json = """[1,2]""";
@@ -1142,10 +1143,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Replace_ArrayElement()
     {
         string json = """[1,2,3]""";
@@ -1156,11 +1157,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
-        Assert.Equal("[1,99,3]", root.ToString());
+        Assert.IsTrue(root.TryApplyPatch(in patch));
+        Assert.AreEqual("[1,99,3]", root.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Replace_ArrayOutOfBounds_Fails()
     {
         string json = """[1]""";
@@ -1171,10 +1172,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Replace_NonExistentProperty_Fails()
     {
         string json = """{"a":1}""";
@@ -1185,10 +1186,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ArrayToArray_Append()
     {
         string json = """{"src":[10,20],"dest":[1,2]}""";
@@ -1199,10 +1200,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.IsTrue(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ArrayToArray_Index()
     {
         string json = """{"src":[10,20],"dest":[1,2]}""";
@@ -1213,10 +1214,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.IsTrue(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ArrayToObject()
     {
         string json = """{"src":[10,20],"dest":{}}""";
@@ -1227,10 +1228,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.IsTrue(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ObjectToArray_Append()
     {
         string json = """{"src":{"v":10},"dest":[1,2]}""";
@@ -1241,10 +1242,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.IsTrue(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ObjectToArray_Index()
     {
         string json = """{"src":{"v":10},"dest":[1,2]}""";
@@ -1255,10 +1256,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.IsTrue(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ObjectToObject()
     {
         string json = """{"src":{"v":10},"dest":{}}""";
@@ -1269,10 +1270,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.IsTrue(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ArrayOutOfBounds_Fails()
     {
         string json = """{"src":[10],"dest":[]}""";
@@ -1283,10 +1284,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ArrayToDest_OutOfBounds_Fails()
     {
         string json = """{"src":[10],"dest":[1]}""";
@@ -1297,10 +1298,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ObjToDest_OutOfBounds_Fails()
     {
         string json = """{"src":{"v":1},"dest":[1]}""";
@@ -1311,10 +1312,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_ToRoot()
     {
         string json = """{"a":42}""";
@@ -1325,11 +1326,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
-        Assert.Equal("42", root.ToString());
+        Assert.IsTrue(root.TryApplyPatch(in patch));
+        Assert.AreEqual("42", root.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_InvalidSource_Fails()
     {
         string json = """{"a":1}""";
@@ -1340,10 +1341,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_ToArrayAppend_Internal()
     {
         string json = """{"src":99,"dest":[1]}""";
@@ -1354,10 +1355,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.IsTrue(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_ToArrayIndex_Internal()
     {
         string json = """{"src":99,"dest":[1,2]}""";
@@ -1368,10 +1369,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
+        Assert.IsTrue(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Add_ToArrayAppend()
     {
         string json = """[1,2]""";
@@ -1382,11 +1383,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
-        Assert.Equal("[1,2,3]", root.ToString());
+        Assert.IsTrue(root.TryApplyPatch(in patch));
+        Assert.AreEqual("[1,2,3]", root.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Add_ToArrayIndex()
     {
         string json = """[1,2]""";
@@ -1397,11 +1398,11 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.True(root.TryApplyPatch(in patch));
-        Assert.Equal("[99,1,2]", root.ToString());
+        Assert.IsTrue(root.TryApplyPatch(in patch));
+        Assert.AreEqual("[99,1,2]", root.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Remove_InvalidPath_Fails()
     {
         string json = """{"a":1}""";
@@ -1412,10 +1413,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Replace_InvalidPath_Fails()
     {
         string json = """{"a":1}""";
@@ -1426,10 +1427,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_InvalidFromPath_Fails()
     {
         string json = """{"a":1}""";
@@ -1440,10 +1441,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_InvalidDestPath_Fails()
     {
         string json = """{"src":1}""";
@@ -1454,10 +1455,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void Diff_WithTildeAndSlashInKeys()
     {
         string source = """{"a~b":1,"c/d":2}""";
@@ -1468,14 +1469,14 @@ public class PatchCoverageTests
         using ParsedJsonDocument<JsonElement> targetDoc = ParsedJsonDocument<JsonElement>.Parse(target);
 
         JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement, workspace);
-        Assert.Equal(2, patch.GetArrayLength());
+        Assert.AreEqual(2, patch.GetArrayLength());
     }
 
     #endregion
 
     #region Byte overload error paths + internal TryApply* edge cases
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_InvalidParentPath_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1483,10 +1484,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryRemove("/missing/child"u8));
+        Assert.IsFalse(root.TryRemove("/missing/child"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_ParentIsScalar_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1494,10 +1495,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryRemove("/a/child"u8));
+        Assert.IsFalse(root.TryRemove("/a/child"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplace_InvalidParentPath_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1506,10 +1507,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 99;
 
-        Assert.False(root.TryReplace("/missing/child"u8, in value));
+        Assert.IsFalse(root.TryReplace("/missing/child"u8, in value));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplace_NonNumericArrayIndex_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1518,10 +1519,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 99;
 
-        Assert.False(root.TryReplace("/abc"u8, in value));
+        Assert.IsFalse(root.TryReplace("/abc"u8, in value));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryReplace_ParentIsScalar_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1530,10 +1531,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement.Source value = 99;
 
-        Assert.False(root.TryReplace("/a/child"u8, in value));
+        Assert.IsFalse(root.TryReplace("/a/child"u8, in value));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_InvalidFromParent_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1541,10 +1542,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryMove("/missing/x"u8, "/b"u8));
+        Assert.IsFalse(root.TryMove("/missing/x"u8, "/b"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_ArrayFromIndex_ParseFails_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1552,10 +1553,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryMove("/a/abc"u8, "/b/x"u8));
+        Assert.IsFalse(root.TryMove("/a/abc"u8, "/b/x"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_ArrayFromIndex_OutOfBounds_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1563,10 +1564,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryMove("/a/99"u8, "/b/x"u8));
+        Assert.IsFalse(root.TryMove("/a/99"u8, "/b/x"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_ObjectRemoveFails_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1575,10 +1576,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
 
         // "missing" doesn't exist in "a", RemoveProperty fails
-        Assert.False(root.TryMove("/a/missing"u8, "/b/y"u8));
+        Assert.IsFalse(root.TryMove("/a/missing"u8, "/b/y"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_FromScalarParent_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1586,10 +1587,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryMove("/a/child"u8, "/b"u8));
+        Assert.IsFalse(root.TryMove("/a/child"u8, "/b"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTest_InvalidPath_Byte()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -1598,10 +1599,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement expected = JsonElement.ParseValue("1");
 
-        Assert.False(root.TryTest("/missing"u8, in expected));
+        Assert.IsFalse(root.TryTest("/missing"u8, in expected));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ArrayToDest_NonNumericIndex_Fails()
     {
         // TryApplyMove: Array→Array, dest index parse fails (L841-842)
@@ -1613,10 +1614,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ArrayToScalar_Fails()
     {
         // TryApplyMove: Array source, dest parent is scalar (L860)
@@ -1628,10 +1629,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ObjToArrayNonNumeric_Fails()
     {
         // TryApplyMove: Object→Array, dest index parse fails (L873-874)
@@ -1643,10 +1644,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_ObjToScalar_Fails()
     {
         // TryApplyMove: Object source, dest parent is scalar (L890)
@@ -1658,10 +1659,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_FromScalar_Fails()
     {
         // TryApplyMove: source parent is scalar (L893)
@@ -1673,10 +1674,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_InvalidSourcePath_Fails()
     {
         // TryCopyValueFromSpan: TryResolveParent fails (L1014-1015)
@@ -1688,10 +1689,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_ArrayNonNumericIndex_Fails()
     {
         // TryCopyValueFromSpan: Array, TryParseArrayIndex fails (L1029-1030)
@@ -1703,10 +1704,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_ArrayIndexOutOfBounds_Fails()
     {
         // TryCopyValueFromSpan: Array index out of bounds (L1034-1035)
@@ -1718,10 +1719,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Copy_DestParentIsScalar_Fails()
     {
         // TryCopyValueFromSpan: parent is scalar (L1048)
@@ -1733,10 +1734,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_AddToRootViaEmptyDestPath_Fails()
     {
         // TryApplyMove: empty dest path → "cannot move to root" → false (L796-798)
@@ -1748,10 +1749,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Remove_ParentIsScalar_Fails()
     {
         // TryApplyRemove: parent is neither array nor object (L719)
@@ -1763,10 +1764,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Replace_ParentIsScalar_Fails()
     {
         // TryApplyReplace: parent is scalar (L770)
@@ -1778,10 +1779,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonPatchDocument patch = JsonPatchDocument.ParseValue(patchJson);
 
-        Assert.False(root.TryApplyPatch(in patch));
+        Assert.IsFalse(root.TryApplyPatch(in patch));
     }
 
-    [Fact]
+    [TestMethod]
     public void Diff_LongPath_Array_TriggersAppendArrayIndexGrow()
     {
         // Two 510-char properties so path = 1+510+1+510 = 1022 bytes.
@@ -1796,10 +1797,10 @@ public class PatchCoverageTests
         using ParsedJsonDocument<JsonElement> targetDoc = ParsedJsonDocument<JsonElement>.Parse(target);
 
         JsonPatchDocument patch = JsonDiffExtensions.CreatePatch(sourceDoc.RootElement, targetDoc.RootElement, workspace);
-        Assert.True(patch.GetArrayLength() > 0);
+        Assert.IsTrue(patch.GetArrayLength() > 0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_AddToScalarParent_Byte()
     {
         // TryAddValueFromSpan: parent is scalar (L999)
@@ -1808,7 +1809,7 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryMove("/src"u8, "/val/x"u8));
+        Assert.IsFalse(root.TryMove("/src"u8, "/val/x"u8));
     }
 
     #endregion
@@ -1818,7 +1819,7 @@ public class PatchCoverageTests
     // Short ops (L82-83) and unknown ops (L141) trigger Debug.Assert — they represent
     // invalid API usage (pre-validated patch documents). Not testable without Debug.Assert failure.
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_InvalidPointer_NoSlash_Byte()
     {
         // TryResolveParent: lastSlash < 0 (L1104-1105)
@@ -1827,10 +1828,10 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryRemove("abc"u8));
+        Assert.IsFalse(root.TryRemove("abc"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTest_EmptyPath_ComparesRoot_Byte()
     {
         // TryResolvePointer: empty pointer → root (L1078-1080)
@@ -1840,10 +1841,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement expected = JsonElement.ParseValue("""{"a":1}""");
 
-        Assert.True(root.TryTest(""u8, in expected));
+        Assert.IsTrue(root.TryTest(""u8, in expected));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryTest_InvalidPointer_NoSlash_Byte()
     {
         // TryResolvePointer: TryCreateJsonPointer fails (L1084-1086)
@@ -1853,10 +1854,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
         JsonElement expected = JsonElement.ParseValue("1");
 
-        Assert.False(root.TryTest("abc"u8, in expected));
+        Assert.IsFalse(root.TryTest("abc"u8, in expected));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryRemove_EmptyLastSegment_Byte()
     {
         // TryParseArrayIndex: empty segment (L1144-1145)
@@ -1866,10 +1867,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
 
         // Path "/arr/" → parent is arr (array), last segment is empty
-        Assert.False(root.TryRemove("/arr/"u8));
+        Assert.IsFalse(root.TryRemove("/arr/"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_ToRoot_Byte()
     {
         // TryAddValueFromSpan: empty dest → ReplaceRoot (L958-960)
@@ -1878,11 +1879,11 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.True(root.TryMove("/a"u8, ""u8));
-        Assert.Equal("42", root.ToString());
+        Assert.IsTrue(root.TryMove("/a"u8, ""u8));
+        Assert.AreEqual("42", root.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_CharOverload_LongDestPath()
     {
         // L498-500: ArrayPool return for long dest path in TryMove char overload
@@ -1894,10 +1895,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
 
         // Parent of dest doesn't exist, so move fails — but the ArrayPool rent/return is exercised
-        Assert.False(root.TryMove("/a".AsSpan(), longDest.AsSpan()));
+        Assert.IsFalse(root.TryMove("/a".AsSpan(), longDest.AsSpan()));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopy_CharOverload_LongDestPath()
     {
         // L573-575: ArrayPool return for long dest path in TryCopy char overload
@@ -1907,14 +1908,14 @@ public class PatchCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
         JsonElement.Mutable root = builder.RootElement;
 
-        Assert.False(root.TryCopy("/a".AsSpan(), longDest.AsSpan()));
+        Assert.IsFalse(root.TryCopy("/a".AsSpan(), longDest.AsSpan()));
     }
 
     #endregion
 
     #region Move/Copy from array error paths
 
-    [Fact]
+    [TestMethod]
     public void TryMove_FromArrayNonNumericSegment_Fails()
     {
         // L431-435: TryMove from array path with non-numeric segment
@@ -1924,10 +1925,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
 
         // "foo" is not a valid array index — TryParseArrayIndex fails
-        Assert.False(root.TryMove("/arr/foo"u8, "/b"u8));
+        Assert.IsFalse(root.TryMove("/arr/foo"u8, "/b"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_FromArrayOutOfBounds_Fails()
     {
         // L438-440: TryMove from array with index out of bounds
@@ -1937,10 +1938,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
 
         // index 10 is out of bounds for 3-element array
-        Assert.False(root.TryMove("/arr/10"u8, "/b"u8));
+        Assert.IsFalse(root.TryMove("/arr/10"u8, "/b"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryMove_FromNonContainerParent_Fails()
     {
         // L452-454: fromParent is not array or object (it's a scalar)
@@ -1950,10 +1951,10 @@ public class PatchCoverageTests
         JsonElement.Mutable root = builder.RootElement;
 
         // /a is a string, /a/0 tries to traverse into it
-        Assert.False(root.TryMove("/a/0"u8, "/b"u8));
+        Assert.IsFalse(root.TryMove("/a/0"u8, "/b"u8));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_FromArrayNonNumericSegment_Fails()
     {
         // L822-824: TryApplyMove from array path with non-numeric segment (via TryApplyPatch)
@@ -1964,10 +1965,10 @@ public class PatchCoverageTests
 
         string patchJson = """[{"op":"move","from":"/arr/foo","path":"/b"}]""";
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(patchJson);
-        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryApplyPatch(patchDoc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void PatchApply_Move_FromArrayOutOfBounds_Fails()
     {
         // L827-829: TryApplyMove from array with index out of bounds (via TryApplyPatch)
@@ -1978,7 +1979,7 @@ public class PatchCoverageTests
 
         string patchJson = """[{"op":"move","from":"/arr/10","path":"/b"}]""";
         using ParsedJsonDocument<JsonPatchDocument> patchDoc = ParsedJsonDocument<JsonPatchDocument>.Parse(patchJson);
-        Assert.False(root.TryApplyPatch(patchDoc.RootElement));
+        Assert.IsFalse(root.TryApplyPatch(patchDoc.RootElement));
     }
 
     // Note: L81-83 (opBytes.Length < 5) is unreachable in Debug builds because

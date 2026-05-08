@@ -2,8 +2,9 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Internal;
+using System.Linq;
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -27,6 +28,7 @@ namespace Corvus.Text.Json.Tests;
 /// underlying Utf8Uri/Utf8Iri types via JsonElementHelpers, so the tests prove correct
 /// wiring rather than re-implementing the URI formatting logic.
 /// </summary>
+[TestClass]
 public class FormatAwareUriFormatTests
 {
     // ── raw JSON literals (with surrounding quotes) ───────────────────────────
@@ -46,106 +48,106 @@ public class FormatAwareUriFormatTests
     // uri — ToString
     // ====================================================================
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
     public void UriEntity_ToString_NullOrEmptyFormat_ReturnsRawValue(string? format)
     {
         using var doc = ParsedJsonDocument<JsonUri>.Parse(UriJson);
-        Assert.Equal(CanonicalUri, doc.RootElement.ToString(format, null));
+        Assert.AreEqual(CanonicalUri, doc.RootElement.ToString(format, null));
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
     public void UriEntity_ToString_DisplayFormat_NormalisesSchemeToLowercase(string format)
     {
         using var doc = ParsedJsonDocument<JsonUri>.Parse(UriJson);
         string result = doc.RootElement.ToString(format, null);
         // Both display and canonical normalise scheme to lowercase
         Assert.StartsWith("https://", result);
-        Assert.NotEqual(CanonicalUri, result);
+        Assert.AreNotEqual(CanonicalUri, result);
     }
 
-    [Theory]
-    [InlineData("c")]
-    [InlineData("C")]
+    [TestMethod]
+    [DataRow("c")]
+    [DataRow("C")]
     public void UriEntity_ToString_CanonicalFormat_NormalisesSchemeToLowercase(string format)
     {
         using var doc = ParsedJsonDocument<JsonUri>.Parse(UriJson);
         string result = doc.RootElement.ToString(format, null);
         Assert.StartsWith("https://", result);
-        Assert.NotEqual(CanonicalUri, result);
+        Assert.AreNotEqual(CanonicalUri, result);
     }
 
-    [Theory]
-    [InlineData("x")]
-    [InlineData("Z")]
+    [TestMethod]
+    [DataRow("x")]
+    [DataRow("Z")]
     public void UriEntity_ToString_UnrecognisedFormat_ReturnsRawValue(string format)
     {
         using var doc = ParsedJsonDocument<JsonUri>.Parse(UriJson);
-        Assert.Equal(CanonicalUri, doc.RootElement.ToString(format, null));
+        Assert.AreEqual(CanonicalUri, doc.RootElement.ToString(format, null));
     }
 
     // ====================================================================
     // uri — TryFormat(Span<char>) agrees with ToString
     // ====================================================================
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
-    [InlineData("c")]
-    [InlineData("C")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
+    [DataRow("c")]
+    [DataRow("C")]
+    [DataRow("")]
     public void UriEntity_TryFormatChar_MatchesToString(string format)
     {
         using var doc = ParsedJsonDocument<JsonUri>.Parse(UriJson);
         string expected = doc.RootElement.ToString(format, null);
         Span<char> dest = stackalloc char[512];
-        Assert.True(doc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, dest[..n].ToString());
+        Assert.IsTrue(doc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, dest[..n].ToString());
     }
 
     // ====================================================================
     // uri — TryFormat(Span<byte>) agrees with ToString
     // ====================================================================
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
-    [InlineData("c")]
-    [InlineData("C")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
+    [DataRow("c")]
+    [DataRow("C")]
+    [DataRow("")]
     public void UriEntity_TryFormatByte_MatchesToString(string format)
     {
         using var doc = ParsedJsonDocument<JsonUri>.Parse(UriJson);
         string expected = doc.RootElement.ToString(format, null);
         Span<byte> dest = stackalloc byte[512];
-        Assert.True(doc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
+        Assert.IsTrue(doc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
     }
 
     // ====================================================================
     // uri — Mutable type agrees with immutable
     // ====================================================================
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("c")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("c")]
+    [DataRow("")]
     public void UriEntity_Mutable_ToString_MatchesImmutable(string format)
     {
         using var doc = ParsedJsonDocument<JsonUri>.Parse(UriJson);
         string expected = doc.RootElement.ToString(format, null);
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonUri.Mutable> mutableDoc = doc.RootElement.CreateBuilder(workspace);
-        Assert.Equal(expected, mutableDoc.RootElement.ToString(format, null));
+        Assert.AreEqual(expected, mutableDoc.RootElement.ToString(format, null));
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("c")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("c")]
+    [DataRow("")]
     public void UriEntity_Mutable_TryFormatChar_MatchesImmutable(string format)
     {
         using var doc = ParsedJsonDocument<JsonUri>.Parse(UriJson);
@@ -153,14 +155,14 @@ public class FormatAwareUriFormatTests
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonUri.Mutable> mutableDoc = doc.RootElement.CreateBuilder(workspace);
         Span<char> dest = stackalloc char[512];
-        Assert.True(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, dest[..n].ToString());
+        Assert.IsTrue(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, dest[..n].ToString());
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("c")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("c")]
+    [DataRow("")]
     public void UriEntity_Mutable_TryFormatByte_MatchesImmutable(string format)
     {
         using var doc = ParsedJsonDocument<JsonUri>.Parse(UriJson);
@@ -168,161 +170,161 @@ public class FormatAwareUriFormatTests
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonUri.Mutable> mutableDoc = doc.RootElement.CreateBuilder(workspace);
         Span<byte> dest = stackalloc byte[512];
-        Assert.True(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
+        Assert.IsTrue(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
     }
 
     // ====================================================================
     // uri-reference — ToString
     // ====================================================================
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
     public void UriReferenceEntity_ToString_NullOrEmptyFormat_ReturnsRawValue(string? format)
     {
         using var doc = ParsedJsonDocument<JsonUriReference>.Parse(UriReferenceJson);
-        Assert.Equal(CanonicalUriReference, doc.RootElement.ToString(format, null));
+        Assert.AreEqual(CanonicalUriReference, doc.RootElement.ToString(format, null));
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
     public void UriReferenceEntity_ToString_DisplayFormat_NormalisesPath(string format)
     {
         using var doc = ParsedJsonDocument<JsonUriReference>.Parse(UriReferenceJson);
         string result = doc.RootElement.ToString(format, null);
         // Both display and canonical produce a normalised (non-identical) result from the raw uppercase path
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        Assert.IsNotNull(result);
+        Assert.IsTrue((result).Any());
     }
 
-    [Theory]
-    [InlineData("c")]
-    [InlineData("C")]
+    [TestMethod]
+    [DataRow("c")]
+    [DataRow("C")]
     public void UriReferenceEntity_ToString_CanonicalFormat_NormalisesPath(string format)
     {
         using var doc = ParsedJsonDocument<JsonUriReference>.Parse(UriReferenceJson);
         string result = doc.RootElement.ToString(format, null);
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        Assert.IsNotNull(result);
+        Assert.IsTrue((result).Any());
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
-    [InlineData("c")]
-    [InlineData("C")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
+    [DataRow("c")]
+    [DataRow("C")]
+    [DataRow("")]
     public void UriReferenceEntity_TryFormatChar_MatchesToString(string format)
     {
         using var doc = ParsedJsonDocument<JsonUriReference>.Parse(UriReferenceJson);
         string expected = doc.RootElement.ToString(format, null);
         Span<char> dest = stackalloc char[512];
-        Assert.True(doc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, dest[..n].ToString());
+        Assert.IsTrue(doc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, dest[..n].ToString());
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
-    [InlineData("c")]
-    [InlineData("C")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
+    [DataRow("c")]
+    [DataRow("C")]
+    [DataRow("")]
     public void UriReferenceEntity_TryFormatByte_MatchesToString(string format)
     {
         using var doc = ParsedJsonDocument<JsonUriReference>.Parse(UriReferenceJson);
         string expected = doc.RootElement.ToString(format, null);
         Span<byte> dest = stackalloc byte[512];
-        Assert.True(doc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
+        Assert.IsTrue(doc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
     }
 
     // ====================================================================
     // iri — ToString (IRI allows decoded Unicode in display form)
     // ====================================================================
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
     public void IriEntity_ToString_NullOrEmptyFormat_ReturnsRawValue(string? format)
     {
         using var doc = ParsedJsonDocument<JsonIri>.Parse(IriJson);
-        Assert.Equal(CanonicalIri, doc.RootElement.ToString(format, null));
+        Assert.AreEqual(CanonicalIri, doc.RootElement.ToString(format, null));
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
     public void IriEntity_ToString_DisplayFormat_DecodesUtf8PercentEncoding(string format)
     {
         using var doc = ParsedJsonDocument<JsonIri>.Parse(IriJson);
         string result = doc.RootElement.ToString(format, null);
         // Display form decodes %C3%A9 to é (literal Unicode character valid in IRIs)
-        Assert.Contains("é", result);
+        StringAssert.Contains(result, "é");
         Assert.DoesNotContain("%C3%A9", result);
     }
 
-    [Theory]
-    [InlineData("c")]
-    [InlineData("C")]
+    [TestMethod]
+    [DataRow("c")]
+    [DataRow("C")]
     public void IriEntity_ToString_CanonicalFormat_NormalisesIri(string format)
     {
         using var doc = ParsedJsonDocument<JsonIri>.Parse(IriJson);
         string result = doc.RootElement.ToString(format, null);
         // IRI canonical form also decodes non-ASCII percent-encoding since é is valid in IRIs;
         // the result should at minimum be non-empty and differ from the raw value
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        Assert.IsNotNull(result);
+        Assert.IsTrue((result).Any());
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
-    [InlineData("c")]
-    [InlineData("C")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
+    [DataRow("c")]
+    [DataRow("C")]
+    [DataRow("")]
     public void IriEntity_TryFormatChar_MatchesToString(string format)
     {
         using var doc = ParsedJsonDocument<JsonIri>.Parse(IriJson);
         string expected = doc.RootElement.ToString(format, null);
         Span<char> dest = stackalloc char[512];
-        Assert.True(doc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, dest[..n].ToString());
+        Assert.IsTrue(doc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, dest[..n].ToString());
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
-    [InlineData("c")]
-    [InlineData("C")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
+    [DataRow("c")]
+    [DataRow("C")]
+    [DataRow("")]
     public void IriEntity_TryFormatByte_MatchesToString(string format)
     {
         using var doc = ParsedJsonDocument<JsonIri>.Parse(IriJson);
         string expected = doc.RootElement.ToString(format, null);
         Span<byte> dest = stackalloc byte[512];
-        Assert.True(doc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
+        Assert.IsTrue(doc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("c")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("c")]
+    [DataRow("")]
     public void IriEntity_Mutable_ToString_MatchesImmutable(string format)
     {
         using var doc = ParsedJsonDocument<JsonIri>.Parse(IriJson);
         string expected = doc.RootElement.ToString(format, null);
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonIri.Mutable> mutableDoc = doc.RootElement.CreateBuilder(workspace);
-        Assert.Equal(expected, mutableDoc.RootElement.ToString(format, null));
+        Assert.AreEqual(expected, mutableDoc.RootElement.ToString(format, null));
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("c")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("c")]
+    [DataRow("")]
     public void IriEntity_Mutable_TryFormatChar_MatchesImmutable(string format)
     {
         using var doc = ParsedJsonDocument<JsonIri>.Parse(IriJson);
@@ -330,14 +332,14 @@ public class FormatAwareUriFormatTests
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonIri.Mutable> mutableDoc = doc.RootElement.CreateBuilder(workspace);
         Span<char> dest = stackalloc char[512];
-        Assert.True(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, dest[..n].ToString());
+        Assert.IsTrue(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, dest[..n].ToString());
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("c")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("c")]
+    [DataRow("")]
     public void IriEntity_Mutable_TryFormatByte_MatchesImmutable(string format)
     {
         using var doc = ParsedJsonDocument<JsonIri>.Parse(IriJson);
@@ -345,93 +347,93 @@ public class FormatAwareUriFormatTests
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonIri.Mutable> mutableDoc = doc.RootElement.CreateBuilder(workspace);
         Span<byte> dest = stackalloc byte[512];
-        Assert.True(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
+        Assert.IsTrue(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
     }
 
     // ====================================================================
     // iri-reference — ToString
     // ====================================================================
 
-    [Theory]
-    [InlineData(null)]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow(null)]
+    [DataRow("")]
     public void IriReferenceEntity_ToString_NullOrEmptyFormat_ReturnsRawValue(string? format)
     {
         using var doc = ParsedJsonDocument<JsonIriReference>.Parse(IriReferenceJson);
-        Assert.Equal(CanonicalIriReference, doc.RootElement.ToString(format, null));
+        Assert.AreEqual(CanonicalIriReference, doc.RootElement.ToString(format, null));
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
     public void IriReferenceEntity_ToString_DisplayFormat_DecodesUtf8PercentEncoding(string format)
     {
         using var doc = ParsedJsonDocument<JsonIriReference>.Parse(IriReferenceJson);
         string result = doc.RootElement.ToString(format, null);
-        Assert.Contains("é", result);
+        StringAssert.Contains(result, "é");
         Assert.DoesNotContain("%C3%A9", result);
     }
 
-    [Theory]
-    [InlineData("c")]
-    [InlineData("C")]
+    [TestMethod]
+    [DataRow("c")]
+    [DataRow("C")]
     public void IriReferenceEntity_ToString_CanonicalFormat_NormalisesIri(string format)
     {
         using var doc = ParsedJsonDocument<JsonIriReference>.Parse(IriReferenceJson);
         string result = doc.RootElement.ToString(format, null);
         // IRI-reference canonical also allows decoded Unicode; result must be non-empty
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        Assert.IsNotNull(result);
+        Assert.IsTrue((result).Any());
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
-    [InlineData("c")]
-    [InlineData("C")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
+    [DataRow("c")]
+    [DataRow("C")]
+    [DataRow("")]
     public void IriReferenceEntity_TryFormatChar_MatchesToString(string format)
     {
         using var doc = ParsedJsonDocument<JsonIriReference>.Parse(IriReferenceJson);
         string expected = doc.RootElement.ToString(format, null);
         Span<char> dest = stackalloc char[512];
-        Assert.True(doc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, dest[..n].ToString());
+        Assert.IsTrue(doc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, dest[..n].ToString());
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("G")]
-    [InlineData("c")]
-    [InlineData("C")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("G")]
+    [DataRow("c")]
+    [DataRow("C")]
+    [DataRow("")]
     public void IriReferenceEntity_TryFormatByte_MatchesToString(string format)
     {
         using var doc = ParsedJsonDocument<JsonIriReference>.Parse(IriReferenceJson);
         string expected = doc.RootElement.ToString(format, null);
         Span<byte> dest = stackalloc byte[512];
-        Assert.True(doc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
+        Assert.IsTrue(doc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("c")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("c")]
+    [DataRow("")]
     public void IriReferenceEntity_Mutable_ToString_MatchesImmutable(string format)
     {
         using var doc = ParsedJsonDocument<JsonIriReference>.Parse(IriReferenceJson);
         string expected = doc.RootElement.ToString(format, null);
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonIriReference.Mutable> mutableDoc = doc.RootElement.CreateBuilder(workspace);
-        Assert.Equal(expected, mutableDoc.RootElement.ToString(format, null));
+        Assert.AreEqual(expected, mutableDoc.RootElement.ToString(format, null));
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("c")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("c")]
+    [DataRow("")]
     public void IriReferenceEntity_Mutable_TryFormatChar_MatchesImmutable(string format)
     {
         using var doc = ParsedJsonDocument<JsonIriReference>.Parse(IriReferenceJson);
@@ -439,14 +441,14 @@ public class FormatAwareUriFormatTests
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonIriReference.Mutable> mutableDoc = doc.RootElement.CreateBuilder(workspace);
         Span<char> dest = stackalloc char[512];
-        Assert.True(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, dest[..n].ToString());
+        Assert.IsTrue(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, dest[..n].ToString());
     }
 
-    [Theory]
-    [InlineData("g")]
-    [InlineData("c")]
-    [InlineData("")]
+    [TestMethod]
+    [DataRow("g")]
+    [DataRow("c")]
+    [DataRow("")]
     public void IriReferenceEntity_Mutable_TryFormatByte_MatchesImmutable(string format)
     {
         using var doc = ParsedJsonDocument<JsonIriReference>.Parse(IriReferenceJson);
@@ -454,7 +456,7 @@ public class FormatAwareUriFormatTests
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonIriReference.Mutable> mutableDoc = doc.RootElement.CreateBuilder(workspace);
         Span<byte> dest = stackalloc byte[512];
-        Assert.True(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
-        Assert.Equal(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
+        Assert.IsTrue(mutableDoc.RootElement.TryFormat(dest, out int n, format, null));
+        Assert.AreEqual(expected, JsonReaderHelper.TranscodeHelper(dest[..n]));
     }
 }

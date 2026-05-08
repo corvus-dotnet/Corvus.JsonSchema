@@ -5,7 +5,7 @@
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.HandWritten;
 
@@ -13,6 +13,7 @@ namespace Corvus.Json.Specs.Tests.HandWritten;
 /// Tests that fixed-size numeric arrays can be created from spans
 /// and round-tripped via TryGetNumericValues.
 /// </summary>
+[TestClass]
 public class FixedSizeNumericArrayTests
 {
     private const string SchemaTemplate = """
@@ -46,51 +47,51 @@ public class FixedSizeNumericArrayTests
     private const string TooFewData = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22";
     private const string TooManyData = "0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,24";
 
-    public static TheoryData<string, string, bool> Draft6Data => BuildTheoryData();
+    public static IEnumerable<object[]> Draft6Data => BuildTheoryData();
 
-    public static TheoryData<string, string, bool> Draft7Data => BuildTheoryData();
+    public static IEnumerable<object[]> Draft7Data => BuildTheoryData();
 
-    public static TheoryData<string, string, bool> Draft201909Data => BuildTheoryData();
+    public static IEnumerable<object[]> Draft201909Data => BuildTheoryData();
 
-    public static TheoryData<string, string, bool> Draft202012Data => BuildTheoryData();
+    public static IEnumerable<object[]> Draft202012Data => BuildTheoryData();
 
-    [Theory]
-    [MemberData(nameof(Draft6Data))]
+    [TestMethod]
+    [DynamicData(nameof(Draft6Data))]
     public async Task Draft6_FromValuesRoundTrip(string format, string inputData, bool shouldSucceed)
     {
         await RunFromValuesRoundTrip(DriverFactory.CreateAdditionalDraft6Driver(), format, inputData, shouldSucceed);
     }
 
-    [Theory]
-    [MemberData(nameof(Draft7Data))]
+    [TestMethod]
+    [DynamicData(nameof(Draft7Data))]
     public async Task Draft7_FromValuesRoundTrip(string format, string inputData, bool shouldSucceed)
     {
         await RunFromValuesRoundTrip(DriverFactory.CreateAdditionalDraft7Driver(), format, inputData, shouldSucceed);
     }
 
-    [Theory]
-    [MemberData(nameof(Draft201909Data))]
+    [TestMethod]
+    [DynamicData(nameof(Draft201909Data))]
     public async Task Draft201909_FromValuesRoundTrip(string format, string inputData, bool shouldSucceed)
     {
         await RunFromValuesRoundTrip(DriverFactory.CreateAdditionalDraft201909Driver(), format, inputData, shouldSucceed);
     }
 
-    [Theory]
-    [MemberData(nameof(Draft202012Data))]
+    [TestMethod]
+    [DynamicData(nameof(Draft202012Data))]
     public async Task Draft202012_FromValuesRoundTrip(string format, string inputData, bool shouldSucceed)
     {
         await RunFromValuesRoundTrip(DriverFactory.CreateAdditionalDraft202012Driver(), format, inputData, shouldSucceed);
     }
 
-    private static TheoryData<string, string, bool> BuildTheoryData()
+    private static IEnumerable<object[]> BuildTheoryData()
     {
         string[] formats = ["sbyte", "int16", "int32", "int64", "byte", "uint16", "uint32", "uint64", "double", "decimal", "single"];
-        var data = new TheoryData<string, string, bool>();
+        var data = new List<object[]>();
         foreach (string format in formats)
         {
-            data.Add(format, CorrectData, true);
-            data.Add(format, TooFewData, false);
-            data.Add(format, TooManyData, false);
+            data.Add([format, CorrectData, true]);
+            data.Add([format, TooFewData, false]);
+            data.Add([format, TooManyData, false]);
         }
 
         return data;
@@ -114,11 +115,21 @@ public class FixedSizeNumericArrayTests
             {
                 IJsonValue instance = CreateFromValues(generatedType, format, inputData);
                 bool roundTripsCorrectly = CompareWithTryGetValues(generatedType, instance, format, inputData);
-                Assert.True(roundTripsCorrectly);
+                Assert.IsTrue(roundTripsCorrectly);
             }
             else
             {
-                Assert.ThrowsAny<Exception>(() => CreateFromValues(generatedType, format, inputData));
+                bool threw = false;
+                try
+                {
+                    CreateFromValues(generatedType, format, inputData);
+                }
+                catch (Exception)
+                {
+                    threw = true;
+                }
+
+                Assert.IsTrue(threw, $"Expected an exception for format={format} inputData length");
             }
         }
     }

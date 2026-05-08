@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.FunctionalArrayAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ012: Functional array operations migration.
 /// </summary>
+[TestClass]
 public class FunctionalArrayAnalyzerTests
 {
     private const string V4Stubs = @"
@@ -65,7 +66,7 @@ namespace Corvus.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task Add_TriggersCVJ012_AndCodeFixRenames()
     {
         var test = new CodeFixTest
@@ -103,7 +104,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Insert_TriggersCVJ012_AndCodeFixRenames()
     {
         var test = new CodeFixTest
@@ -141,7 +142,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SetItem_TriggersCVJ012_AndCodeFixKeepsName()
     {
         var test = new CodeFixTest
@@ -179,7 +180,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RemoveAt_TriggersCVJ012_AndCodeFixKeepsName()
     {
         var test = new CodeFixTest
@@ -215,7 +216,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task LocalDeclaration_DropsAssignment()
     {
         var test = new CodeFixTest
@@ -253,7 +254,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonJsonValueType_NoDiagnostic()
     {
         const string testCode = @"
@@ -275,7 +276,7 @@ namespace TestApp
     }
 
     // ── Edge case tests ─────────────────────────────────────────────
-    [Fact]
+    [TestMethod]
     public async Task Add_VarType_DropsAssignment()
     {
         // var instead of explicit type
@@ -314,7 +315,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Add_AssignToDifferentVariable_DropsAssignment()
     {
         // Result assigned to a different variable than the receiver
@@ -353,7 +354,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Add_InExpressionContext_StillRenames()
     {
         // Add() used as argument — cannot drop the outer call, but
@@ -378,7 +379,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(0).WithArguments("Add", "AddItem"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Add_InReturnStatement_PreservesReturn()
     {
         // return arr.Add(item) → arr.AddItem(item); return arr;
@@ -418,7 +419,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Add_Chained_SplitsIntoSeparateCalls()
     {
         // arr = arr.Add(a).Add(b) → arr.AddItem(a); arr.AddItem(b);
@@ -462,7 +463,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AlreadyMutable_NoDiagnostic()
     {
         // If the receiver is already a Mutable type (V5), no V4 diagnostic fires
@@ -484,7 +485,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Add_ExpressionLambda_RenamesOnly()
     {
         // Expression lambda: arr => arr.Add(item)
@@ -527,7 +528,7 @@ namespace TestApp
     }
 
     // ── New array mutator tests ─────────────────────────────────────
-    [Fact]
+    [TestMethod]
     public async Task AddRange_TriggersCVJ012_AndDropsAssignment()
     {
         var test = new CodeFixTest
@@ -565,7 +566,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task InsertRange_TriggersCVJ012_AndDropsAssignment()
     {
         var test = new CodeFixTest
@@ -603,7 +604,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Remove_TriggersCVJ012_AndDropsAssignment()
     {
         var test = new CodeFixTest
@@ -641,7 +642,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RemoveRange_TriggersCVJ012_AndDropsAssignment()
     {
         var test = new CodeFixTest
@@ -677,7 +678,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Replace_TriggersCVJ012_AndDropsAssignment()
     {
         var test = new CodeFixTest

@@ -3,20 +3,21 @@
 
 namespace Corvus.Text.Json.Tests;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Tests for the version tracking behavior of <see cref="JsonElement.Mutable"/>,
 /// verifying that the root element is always live and that intermediate references
 /// are invalidated by sibling mutations.
 /// </summary>
+[TestClass]
 public class VersionTrackingTests
 {
     /// <summary>
     /// Verifies that a cached root element remains valid after a child element is mutated.
     /// The root element is always at index 0 and is never relocated by mutations.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void CachedRootElement_SurvivesChildMutation()
     {
         using var workspace = JsonWorkspace.Create();
@@ -46,15 +47,15 @@ public class VersionTrackingTests
         beta.SetProperty("value"u8, "updated-b"u8);
 
         // Verify both mutations took effect via the always-live root.
-        Assert.Equal("updated-a", root.GetProperty("alpha"u8).GetProperty("value"u8).GetString());
-        Assert.Equal("updated-b", root.GetProperty("beta"u8).GetProperty("value"u8).GetString());
+        Assert.AreEqual("updated-a", root.GetProperty("alpha"u8).GetProperty("value"u8).GetString());
+        Assert.AreEqual("updated-b", root.GetProperty("beta"u8).GetProperty("value"u8).GetString());
     }
 
     /// <summary>
     /// Verifies that a cached root element survives multiple child mutations in sequence.
     /// Each navigation from root creates a temporary child reference that is used and discarded.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void CachedRootElement_SurvivesMultipleChildMutations()
     {
         using var workspace = JsonWorkspace.Create();
@@ -85,16 +86,16 @@ public class VersionTrackingTests
         root.GetProperty("third"u8).SetProperty("value"u8, "updated-3"u8);
 
         // Verify all changes through the always-live root.
-        Assert.Equal("updated-1", root.GetProperty("first"u8).GetProperty("value"u8).GetString());
-        Assert.Equal("updated-2", root.GetProperty("second"u8).GetProperty("value"u8).GetString());
-        Assert.Equal("updated-3", root.GetProperty("third"u8).GetProperty("value"u8).GetString());
+        Assert.AreEqual("updated-1", root.GetProperty("first"u8).GetProperty("value"u8).GetString());
+        Assert.AreEqual("updated-2", root.GetProperty("second"u8).GetProperty("value"u8).GetString());
+        Assert.AreEqual("updated-3", root.GetProperty("third"u8).GetProperty("value"u8).GetString());
     }
 
     /// <summary>
     /// Verifies that a cached intermediate child reference throws after a sibling is mutated.
     /// Unlike the root, intermediate references are invalidated by any other mutation.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void CachedIntermediateChild_ThrowsAfterSiblingMutation()
     {
         using var workspace = JsonWorkspace.Create();
@@ -122,7 +123,7 @@ public class VersionTrackingTests
         alpha.SetProperty("value"u8, "mutated-a"u8);
 
         // 'beta' was obtained before the mutation and is now stale.
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
             beta.SetProperty("value"u8, "this-should-throw"u8));
     }
 
@@ -131,7 +132,7 @@ public class VersionTrackingTests
     /// updates the element's stored version, so subsequent operations on the same
     /// reference remain valid.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void SameElement_MultipleMutations_Succeeds()
     {
         using var workspace = JsonWorkspace.Create();
@@ -156,8 +157,8 @@ public class VersionTrackingTests
         data.SetProperty("z"u8, "new-z"u8);
 
         // All succeeded.
-        Assert.Equal("new-x", data.GetProperty("x"u8).GetString());
-        Assert.Equal("new-y", data.GetProperty("y"u8).GetString());
-        Assert.Equal("new-z", data.GetProperty("z"u8).GetString());
+        Assert.AreEqual("new-x", data.GetProperty("x"u8).GetString());
+        Assert.AreEqual("new-y", data.GetProperty("y"u8).GetString());
+        Assert.AreEqual("new-z", data.GetProperty("z"u8).GetString());
     }
 }

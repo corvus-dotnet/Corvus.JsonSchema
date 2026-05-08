@@ -3,7 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.JsonLogic.CodeGeneration;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.CodeGeneration.Tests;
 
@@ -11,11 +11,12 @@ namespace Corvus.Text.Json.JsonLogic.CodeGeneration.Tests;
 /// Tests that the code generator produces valid code for the Corvus extension type
 /// coercion operators (asDouble, asLong, asBigNumber, asBigInteger) and missing_some.
 /// </summary>
+[TestClass]
 public class TypeCoercionCodeGenTests
 {
     // ----- asDouble -----
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsDouble_FromString_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -23,11 +24,11 @@ public class TypeCoercionCodeGenTests
             "AsDoubleRule",
             "Test.Generated");
 
-        Assert.Contains("class AsDoubleRule", result);
-        Assert.Contains("Evaluate", result);
+        StringAssert.Contains(result, "class AsDoubleRule");
+        StringAssert.Contains(result, "Evaluate");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsDouble_FromVar_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -35,11 +36,11 @@ public class TypeCoercionCodeGenTests
             "AsDoubleVarRule",
             "Test.Generated");
 
-        Assert.Contains("class AsDoubleVarRule", result);
-        Assert.Contains("\"x\"u8", result);
+        StringAssert.Contains(result, "class AsDoubleVarRule");
+        StringAssert.Contains(result, "\"x\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsDouble_InArithmetic_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -47,12 +48,12 @@ public class TypeCoercionCodeGenTests
             "AsDoubleArithRule",
             "Test.Generated");
 
-        Assert.Contains("class AsDoubleArithRule", result);
+        StringAssert.Contains(result, "class AsDoubleArithRule");
     }
 
     // ----- asLong -----
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsLong_FromNumber_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -60,10 +61,10 @@ public class TypeCoercionCodeGenTests
             "AsLongRule",
             "Test.Generated");
 
-        Assert.Contains("class AsLongRule", result);
+        StringAssert.Contains(result, "class AsLongRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsLong_FromString_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -71,12 +72,12 @@ public class TypeCoercionCodeGenTests
             "AsLongStrRule",
             "Test.Generated");
 
-        Assert.Contains("class AsLongStrRule", result);
+        StringAssert.Contains(result, "class AsLongStrRule");
     }
 
     // ----- asBigNumber -----
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsBigNumber_FromString_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -84,10 +85,10 @@ public class TypeCoercionCodeGenTests
             "AsBigNumberRule",
             "Test.Generated");
 
-        Assert.Contains("class AsBigNumberRule", result);
+        StringAssert.Contains(result, "class AsBigNumberRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsBigNumber_FromNumber_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -95,12 +96,12 @@ public class TypeCoercionCodeGenTests
             "AsBigNumberNumRule",
             "Test.Generated");
 
-        Assert.Contains("class AsBigNumberNumRule", result);
+        StringAssert.Contains(result, "class AsBigNumberNumRule");
     }
 
     // ----- asBigInteger -----
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsBigInteger_FromString_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -108,10 +109,10 @@ public class TypeCoercionCodeGenTests
             "AsBigIntegerRule",
             "Test.Generated");
 
-        Assert.Contains("class AsBigIntegerRule", result);
+        StringAssert.Contains(result, "class AsBigIntegerRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsBigInteger_FromNumber_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -119,12 +120,12 @@ public class TypeCoercionCodeGenTests
             "AsBigIntegerNumRule",
             "Test.Generated");
 
-        Assert.Contains("class AsBigIntegerNumRule", result);
+        StringAssert.Contains(result, "class AsBigIntegerNumRule");
     }
 
     // ----- missing_some -----
 
-    [Fact]
+    [TestMethod]
     public void Generate_MissingSome_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -132,10 +133,10 @@ public class TypeCoercionCodeGenTests
             "MissingSomeRule",
             "Test.Generated");
 
-        Assert.Contains("class MissingSomeRule", result);
+        StringAssert.Contains(result, "class MissingSomeRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_MissingSome_WithVar_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -143,12 +144,12 @@ public class TypeCoercionCodeGenTests
             "MissingSomeVarRule",
             "Test.Generated");
 
-        Assert.Contains("class MissingSomeVarRule", result);
+        StringAssert.Contains(result, "class MissingSomeVarRule");
     }
 
     // ----- Coercion in conditional context -----
 
-    [Fact]
+    [TestMethod]
     public void Generate_AsDoubleInIf_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -156,7 +157,7 @@ public class TypeCoercionCodeGenTests
             "AsDoubleIfRule",
             "Test.Generated");
 
-        Assert.Contains("class AsDoubleIfRule", result);
-        Assert.Contains("\"amount\"u8", result);
+        StringAssert.Contains(result, "class AsDoubleIfRule");
+        StringAssert.Contains(result, "\"amount\"u8");
     }
 }

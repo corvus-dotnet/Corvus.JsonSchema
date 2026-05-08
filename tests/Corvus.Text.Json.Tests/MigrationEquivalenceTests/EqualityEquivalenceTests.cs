@@ -4,7 +4,7 @@
 namespace Corvus.Text.Json.Tests.MigrationEquivalenceTests;
 
 using Corvus.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using V4 = MigrationModels.V4;
 using V5 = MigrationModels.V5;
@@ -16,6 +16,7 @@ using V5 = MigrationModels.V5;
 /// <para>V4: <c>Equals(in T)</c>, <c>operator ==</c> / <c>!=</c></para>
 /// <para>V5: <c>Equals(in T)</c>, <c>operator ==</c> / <c>!=</c></para>
 /// </remarks>
+[TestClass]
 public class EqualityEquivalenceTests
 {
     private const string PersonJson = """{"name":"Jo","age":30}""";
@@ -24,138 +25,138 @@ public class EqualityEquivalenceTests
     private const string UnionStringJson = "\"hello\"";
     private const string EnumJson = "\"active\"";
 
-    [Fact]
+    [TestMethod]
     public void V4_Equals_SameObject()
     {
         var v4a = V4.MigrationPerson.Parse(PersonJson);
         var v4b = V4.MigrationPerson.Parse(PersonJson);
-        Assert.True(v4a.Equals(v4b));
-        Assert.True(v4a == v4b);
+        Assert.IsTrue(v4a.Equals(v4b));
+        Assert.IsTrue(v4a == v4b);
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_Equals_SameObject_ParsedValue()
     {
         // Preferred V4 pattern: ParsedValue<T> manages the underlying JsonDocument lifetime.
         using var parsedA = ParsedValue<V4.MigrationPerson>.Parse(PersonJson);
         using var parsedB = ParsedValue<V4.MigrationPerson>.Parse(PersonJson);
-        Assert.True(parsedA.Instance.Equals(parsedB.Instance));
-        Assert.True(parsedA.Instance == parsedB.Instance);
+        Assert.IsTrue(parsedA.Instance.Equals(parsedB.Instance));
+        Assert.IsTrue(parsedA.Instance == parsedB.Instance);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_Equals_SameObject()
     {
         using var docA = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
         using var docB = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
-        Assert.True(docA.RootElement.Equals(docB.RootElement));
-        Assert.True(docA.RootElement == docB.RootElement);
+        Assert.IsTrue(docA.RootElement.Equals(docB.RootElement));
+        Assert.IsTrue(docA.RootElement == docB.RootElement);
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_NotEquals_DifferentObject()
     {
         var v4a = V4.MigrationPerson.Parse(PersonJson);
         var v4b = V4.MigrationPerson.Parse(PersonJson2);
-        Assert.False(v4a.Equals(v4b));
-        Assert.True(v4a != v4b);
+        Assert.IsFalse(v4a.Equals(v4b));
+        Assert.IsTrue(v4a != v4b);
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_NotEquals_DifferentObject_ParsedValue()
     {
         // Preferred V4 pattern: ParsedValue<T> manages the underlying JsonDocument lifetime.
         using var parsedA = ParsedValue<V4.MigrationPerson>.Parse(PersonJson);
         using var parsedB = ParsedValue<V4.MigrationPerson>.Parse(PersonJson2);
-        Assert.False(parsedA.Instance.Equals(parsedB.Instance));
-        Assert.True(parsedA.Instance != parsedB.Instance);
+        Assert.IsFalse(parsedA.Instance.Equals(parsedB.Instance));
+        Assert.IsTrue(parsedA.Instance != parsedB.Instance);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_NotEquals_DifferentObject()
     {
         using var docA = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
         using var docB = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson2);
-        Assert.False(docA.RootElement.Equals(docB.RootElement));
-        Assert.True(docA.RootElement != docB.RootElement);
+        Assert.IsFalse(docA.RootElement.Equals(docB.RootElement));
+        Assert.IsTrue(docA.RootElement != docB.RootElement);
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_Equals_Union()
     {
         var v4a = V4.MigrationUnion.Parse(UnionStringJson);
         var v4b = V4.MigrationUnion.Parse(UnionStringJson);
-        Assert.True(v4a.Equals(v4b));
+        Assert.IsTrue(v4a.Equals(v4b));
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_Equals_Union_ParsedValue()
     {
         // Preferred V4 pattern: ParsedValue<T> manages the underlying JsonDocument lifetime.
         using var parsedA = ParsedValue<V4.MigrationUnion>.Parse(UnionStringJson);
         using var parsedB = ParsedValue<V4.MigrationUnion>.Parse(UnionStringJson);
-        Assert.True(parsedA.Instance.Equals(parsedB.Instance));
+        Assert.IsTrue(parsedA.Instance.Equals(parsedB.Instance));
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_Equals_Union()
     {
         using var docA = ParsedJsonDocument<V5.MigrationUnion>.Parse(UnionStringJson);
         using var docB = ParsedJsonDocument<V5.MigrationUnion>.Parse(UnionStringJson);
-        Assert.True(docA.RootElement.Equals(docB.RootElement));
+        Assert.IsTrue(docA.RootElement.Equals(docB.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_Equals_Enum()
     {
         var v4a = V4.MigrationStatusEnum.Parse(EnumJson);
         var v4b = V4.MigrationStatusEnum.Parse(EnumJson);
-        Assert.True(v4a.Equals(v4b));
+        Assert.IsTrue(v4a.Equals(v4b));
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_Equals_Enum_ParsedValue()
     {
         // Preferred V4 pattern: ParsedValue<T> manages the underlying JsonDocument lifetime.
         using var parsedA = ParsedValue<V4.MigrationStatusEnum>.Parse(EnumJson);
         using var parsedB = ParsedValue<V4.MigrationStatusEnum>.Parse(EnumJson);
-        Assert.True(parsedA.Instance.Equals(parsedB.Instance));
+        Assert.IsTrue(parsedA.Instance.Equals(parsedB.Instance));
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_Equals_Enum()
     {
         using var docA = ParsedJsonDocument<V5.MigrationStatusEnum>.Parse(EnumJson);
         using var docB = ParsedJsonDocument<V5.MigrationStatusEnum>.Parse(EnumJson);
-        Assert.True(docA.RootElement.Equals(docB.RootElement));
+        Assert.IsTrue(docA.RootElement.Equals(docB.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_Equals_Array()
     {
         var v4a = V4.MigrationItemArray.Parse(ArrayJson);
         var v4b = V4.MigrationItemArray.Parse(ArrayJson);
-        Assert.True(v4a.Equals(v4b));
+        Assert.IsTrue(v4a.Equals(v4b));
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_Equals_Array_ParsedValue()
     {
         // Preferred V4 pattern: ParsedValue<T> manages the underlying JsonDocument lifetime.
         using var parsedA = ParsedValue<V4.MigrationItemArray>.Parse(ArrayJson);
         using var parsedB = ParsedValue<V4.MigrationItemArray>.Parse(ArrayJson);
-        Assert.True(parsedA.Instance.Equals(parsedB.Instance));
+        Assert.IsTrue(parsedA.Instance.Equals(parsedB.Instance));
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_Equals_Array()
     {
         using var docA = ParsedJsonDocument<V5.MigrationItemArray>.Parse(ArrayJson);
         using var docB = ParsedJsonDocument<V5.MigrationItemArray>.Parse(ArrayJson);
-        Assert.True(docA.RootElement.Equals(docB.RootElement));
+        Assert.IsTrue(docA.RootElement.Equals(docB.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void BothEngines_Equals_SameResult()
     {
         // Both engines should agree on equality for equivalent JSON
@@ -164,10 +165,10 @@ public class EqualityEquivalenceTests
         using var docV5A = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
         using var docV5B = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
 
-        Assert.Equal(parsedV4A.Instance.Equals(parsedV4B.Instance), docV5A.RootElement.Equals(docV5B.RootElement));
+        Assert.AreEqual(parsedV4A.Instance.Equals(parsedV4B.Instance), docV5A.RootElement.Equals(docV5B.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void BothEngines_NotEquals_SameResult()
     {
         // Both engines should agree on inequality for different JSON
@@ -176,6 +177,6 @@ public class EqualityEquivalenceTests
         using var docV5A = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
         using var docV5B = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson2);
 
-        Assert.Equal(parsedV4A.Instance.Equals(parsedV4B.Instance), docV5A.RootElement.Equals(docV5B.RootElement));
+        Assert.AreEqual(parsedV4A.Instance.Equals(parsedV4B.Instance), docV5A.RootElement.Equals(docV5B.RootElement));
     }
 }

@@ -8,7 +8,8 @@ using Corvus.Text.Json.JsonLogic.SourceGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace Corvus.Text.Json.JsonLogic.SourceGenerator.Tests;
 
@@ -16,6 +17,7 @@ namespace Corvus.Text.Json.JsonLogic.SourceGenerator.Tests;
 /// Tests that the JsonLogic source generator reports the correct diagnostics
 /// (JLSG001–JLSG004) for error conditions.
 /// </summary>
+[TestClass]
 public class SourceGeneratorDiagnosticTests
 {
     private const string SourceWithAttribute = """
@@ -31,47 +33,47 @@ public class SourceGeneratorDiagnosticTests
 
     // ----- JLSG001: Rule file not found -----
 
-    [Fact]
+    [TestMethod]
     public void JLSG001_WhenRuleFileNotInAdditionalFiles()
     {
         GeneratorDriverRunResult result = RunGenerator(SourceWithAttribute);
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JLSG001");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
-        Assert.Contains("test-rule.json", diag.GetMessage());
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JLSG001");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
+        StringAssert.Contains(diag.GetMessage(), "test-rule.json");
     }
 
     // ----- JLSG002: Empty rule file -----
 
-    [Fact]
+    [TestMethod]
     public void JLSG002_WhenRuleFileIsEmpty()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonFiles: [new InMemoryAdditionalText("test-rule.json", string.Empty)]);
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JLSG002");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
-        Assert.Contains("test-rule.json", diag.GetMessage());
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JLSG002");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
+        StringAssert.Contains(diag.GetMessage(), "test-rule.json");
     }
 
     // ----- JLSG003: Code generation failed -----
 
-    [Fact]
+    [TestMethod]
     public void JLSG003_WhenRuleJsonIsInvalid()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonFiles: [new InMemoryAdditionalText("test-rule.json", "{{not valid json")]);
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JLSG003");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
-        Assert.Contains("test-rule.json", diag.GetMessage());
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JLSG003");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
+        StringAssert.Contains(diag.GetMessage(), "test-rule.json");
     }
 
     // ----- JLSG004: Invalid .jlops file -----
 
-    [Fact]
+    [TestMethod]
     public void JLSG004_WhenJlopsFileIsMalformed()
     {
         GeneratorDriverRunResult result = RunGenerator(
@@ -87,31 +89,31 @@ public class SourceGeneratorDiagnosticTests
 
         // Either the invalid jlops triggers JLSG004, or the run completes
         // (possibly with JLSG003 if codegen fails due to missing operator)
-        Assert.True(
+        Assert.IsTrue(
             hasJlsg004 || result.Diagnostics.IsEmpty || hasJlsg003,
             $"Unexpected diagnostics: {string.Join(", ", result.Diagnostics.Select(d => d.Id))}");
     }
 
     // ----- No diagnostics for valid rule -----
 
-    [Fact]
+    [TestMethod]
     public void NoDiagnostics_WhenRuleIsValid()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonFiles: [new InMemoryAdditionalText("test-rule.json", """{"+":[1,2]}""")]);
 
-        Assert.Empty(result.Diagnostics);
+        Assert.AreEqual(0, (result.Diagnostics).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void NoDiagnostics_WhenRuleUsesVar()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonFiles: [new InMemoryAdditionalText("test-rule.json", """{"if":[{">":[{"var":"x"}, 10]}, "big", "small"]}""")]);
 
-        Assert.Empty(result.Diagnostics);
+        Assert.AreEqual(0, (result.Diagnostics).Count());
     }
 
     // ----- Helpers -----

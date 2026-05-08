@@ -2,423 +2,431 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft202012.Optional.Format.IdnHostname;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuiteValidationOfInternationalizedHostNames : IClassFixture<SuiteValidationOfInternationalizedHostNames.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteValidationOfInternationalizedHostNames
 {
-    private readonly Fixture _fixture;
-    public SuiteValidationOfInternationalizedHostNames(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAllStringFormatsIgnoreIntegers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("12");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreFloats()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("13.7");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreObjects()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreArrays()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreBooleans()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("false");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllStringFormatsIgnoreNulls()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("null");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAValidHostNameExampleTestInHangul()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"실례.테스트\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIllegalFirstCharU302eHangulSingleDotToneMark()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"〮실례.테스트\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestContainsIllegalCharU302eHangulSingleDotToneMark()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"실〮례.테스트\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAHostNameWithAComponentTooLong()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실실례례테스트례례례례례례례례례례례례례례례례례테스트례례례례례례례례례례례례례례례례례례례테스트례례례례례례례례례례례례테스트례례실례.테스트\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInvalidLabelCorrectPunycode()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"-> $1.00 <--\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestValidChinesePunycode()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"xn--ihqwcrb4cv8a8dqg056pqjye\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInvalidPunycode()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"xn--X\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestULabelContainsInThe3rdAnd4thPosition()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"XN--aa---o47jg78q\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestULabelStartsWithADash()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"-hello\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestULabelEndsWithADash()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"hello-\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestULabelStartsAndEndsWithADash()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"-hello-\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBeginsWithASpacingCombiningMark()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0903hello\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBeginsWithANonspacingMark()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0300hello\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBeginsWithAnEnclosingMark()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0488hello\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestExceptionsThatArePvalidLeftToRightChars()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u00df\\u03c2\\u0f0b\\u3007\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestExceptionsThatArePvalidRightToLeftChars()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u06fd\\u06fe\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestExceptionsThatAreDisallowedRightToLeftChars()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0640\\u07fa\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestExceptionsThatAreDisallowedLeftToRightChars()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u3031\\u3032\\u3033\\u3034\\u3035\\u302e\\u302f\\u303b\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMiddleDotWithNoPrecedingL()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a\\u00b7l\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMiddleDotWithNothingPreceding()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u00b7l\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMiddleDotWithNoFollowingL()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"l\\u00b7a\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMiddleDotWithNothingFollowing()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"l\\u00b7\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMiddleDotWithSurroundingLS()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"l\\u00b7l\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestGreekKeraiaNotFollowedByGreek()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u03b1\\u0375S\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestGreekKeraiaNotFollowedByAnything()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u03b1\\u0375\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestGreekKeraiaFollowedByGreek()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u03b1\\u0375\\u03b2\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestHebrewGereshNotPrecededByHebrew()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"A\\u05f3\\u05d1\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestHebrewGereshNotPrecededByAnything()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u05f3\\u05d1\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestHebrewGereshPrecededByHebrew()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u05d0\\u05f3\\u05d1\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestHebrewGershayimNotPrecededByHebrew()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"A\\u05f4\\u05d1\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestHebrewGershayimNotPrecededByAnything()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u05f4\\u05d1\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestHebrewGershayimPrecededByHebrew()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u05d0\\u05f4\\u05d1\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestKatakanaMiddleDotWithNoHiraganaKatakanaOrHan()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"def\\u30fbabc\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestKatakanaMiddleDotWithNoOtherCharacters()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u30fb\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestKatakanaMiddleDotWithHiragana()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u30fb\\u3041\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestKatakanaMiddleDotWithKatakana()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u30fb\\u30a1\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestKatakanaMiddleDotWithHan()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u30fb\\u4e08\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestArabicIndicDigitsMixedWithExtendedArabicIndicDigits()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0628\\u0660\\u06f0\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestArabicIndicDigitsNotMixedWithExtendedArabicIndicDigits()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0628\\u0660\\u0628\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestExtendedArabicIndicDigitsNotMixedWithArabicIndicDigits()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u06f00\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroWidthJoinerNotPrecededByVirama()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0915\\u200d\\u0937\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroWidthJoinerNotPrecededByAnything()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u200d\\u0937\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroWidthJoinerPrecededByVirama()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0915\\u094d\\u200d\\u0937\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroWidthNonJoinerPrecededByVirama()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0915\\u094d\\u200c\\u0937\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroWidthNonJoinerNotPrecededByViramaButMatchesRegexp()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u0628\\u064a\\u200c\\u0628\\u064a\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleLabel()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"hostname\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleLabelWithHyphen()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"host-name\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleLabelWithDigits()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"h0stn4me\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleLabelStartingWithDigit()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"1host\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleLabelEndingWithDigit()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"hostnam3\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEmptyString()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -434,160 +442,168 @@ public class SuiteValidationOfInternationalizedHostNames : IClassFixture<SuiteVa
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuiteValidationOfSeparatorsInInternationalizedHostNames : IClassFixture<SuiteValidationOfSeparatorsInInternationalizedHostNames.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteValidationOfSeparatorsInInternationalizedHostNames
 {
-    private readonly Fixture _fixture;
-    public SuiteValidationOfSeparatorsInInternationalizedHostNames(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestSingleDot()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\".\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleIdeographicFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u3002\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleFullwidthFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\uff0e\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleHalfwidthIdeographicFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\uff61\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDotAsLabelSeparator()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a.b\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIdeographicFullStopAsLabelSeparator()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a\\u3002b\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFullwidthFullStopAsLabelSeparator()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a\\uff0eb\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestHalfwidthIdeographicFullStopAsLabelSeparator()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a\\uff61b\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLeadingDot()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\".example\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLeadingIdeographicFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\u3002example\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLeadingFullwidthFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\uff0eexample\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLeadingHalfwidthIdeographicFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"\\uff61example\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrailingDot()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"example.\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrailingIdeographicFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"example\\u3002\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrailingFullwidthFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"example\\uff0e\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrailingHalfwidthIdeographicFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"example\\uff61\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLabelTooLongIfSeparatorIgnoredFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"παράδειγμαπαράδειγμαπαράδειγμαπαράδειγμαπαράδειγμαπα.com\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLabelTooLongIfSeparatorIgnoredIdeographicFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"παράδειγμαπαράδειγμαπαράδειγμαπαράδειγμαπαράδειγμαπα\\u3002com\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLabelTooLongIfSeparatorIgnoredFullwidthFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"παράδειγμαπαράδειγμαπαράδειγμαπαράδειγμαπαράδειγμαπα\\uff0ecom\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLabelTooLongIfSeparatorIgnoredHalfwidthIdeographicFullStop()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"παράδειγμαπαράδειγμαπαράδειγμαπαράδειγμαπαράδειγμαπα\\uff61com\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

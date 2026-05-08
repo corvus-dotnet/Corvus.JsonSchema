@@ -4,7 +4,7 @@
 
 using System.Buffers;
 using Corvus.Text.Json.JsonPath;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonPath.Tests;
 
@@ -12,6 +12,7 @@ namespace Corvus.Text.Json.JsonPath.Tests;
 /// Tests for <see cref="JsonPathResult"/> covering the fits-in-initial-buffer,
 /// spills-once, and spills-with-enlargement scenarios.
 /// </summary>
+[TestClass]
 public class JsonPathResultTests
 {
     /// <summary>
@@ -19,48 +20,48 @@ public class JsonPathResultTests
     /// <see cref="JsonPathResult.HasSpilled"/> stays true because CreatePooled
     /// always uses ArrayPool. But the key metric is 0 B managed allocation.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void QueryNodes_FitsInBuffer_ReturnsCorrectResults()
     {
         // $.store.book[0].title returns 1 node — well within any buffer
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.store.book[0].title", data);
 
-        Assert.Equal(1, result.Count);
-        Assert.Equal(JsonValueKind.String, result[0].ValueKind);
-        Assert.Equal("Sayings of the Century", result[0].GetString());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(JsonValueKind.String, result[0].ValueKind);
+        Assert.AreEqual("Sayings of the Century", result[0].GetString());
     }
 
     /// <summary>
     /// $.store.book[*] returns 4 nodes — fits in initial 16-element pooled buffer.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void QueryNodes_MultipleResults_ReturnsAll()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.store.book[*]", data);
 
-        Assert.Equal(4, result.Count);
+        Assert.AreEqual(4, result.Count);
     }
 
     /// <summary>
     /// $..* on the bookstore JSON returns many nodes — may spill beyond initial buffer.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void QueryNodes_RecursiveDescent_SpillsCorrectly()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$..*", data);
 
         // The exact count depends on the document structure; verify we get a reasonable number
-        Assert.True(result.Count > 16, $"Expected more than 16 results for $..*; got {result.Count}");
+        Assert.IsTrue(result.Count > 16, $"Expected more than 16 results for $..*; got {result.Count}");
     }
 
     /// <summary>
     /// Verifies that JsonPathResult with a caller-provided span works correctly
     /// when the result fits.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void QueryNodes_WithInitialBuffer_FitsInBuffer()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
@@ -68,14 +69,14 @@ public class JsonPathResultTests
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.store.book[*].author", data, buf.AsSpan());
 
-        Assert.Equal(4, result.Count);
-        Assert.False(result.HasSpilled);
+        Assert.AreEqual(4, result.Count);
+        Assert.IsFalse(result.HasSpilled);
     }
 
     /// <summary>
     /// Verifies that JsonPathResult with a small caller-provided buffer spills correctly.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void QueryNodes_WithSmallBuffer_Spills()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
@@ -83,15 +84,15 @@ public class JsonPathResultTests
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.store.book[*].author", data, buf.AsSpan());
 
-        Assert.Equal(4, result.Count);
-        Assert.True(result.HasSpilled);
+        Assert.AreEqual(4, result.Count);
+        Assert.IsTrue(result.HasSpilled);
     }
 
     /// <summary>
     /// Verifies that a large recursive query causes multiple enlargements and still
     /// produces correct results.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void QueryNodes_WithTinyBuffer_SpillsWithEnlargement()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
@@ -99,42 +100,42 @@ public class JsonPathResultTests
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$..*", data, buf.AsSpan());
 
-        Assert.True(result.Count > 16, $"Expected more than 16 results for $..*; got {result.Count}");
-        Assert.True(result.HasSpilled);
+        Assert.IsTrue(result.Count > 16, $"Expected more than 16 results for $..*; got {result.Count}");
+        Assert.IsTrue(result.HasSpilled);
     }
 
     /// <summary>
     /// Verifies Query convenience method still works correctly.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Query_ConvenienceMethod_ReturnsMaterializedArray()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = JsonPathEvaluator.Default.Query("$.store.book[*].author", data, workspace);
 
-        Assert.Equal(JsonValueKind.Array, result.ValueKind);
-        Assert.Equal(4, result.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, result.ValueKind);
+        Assert.AreEqual(4, result.GetArrayLength());
     }
 
     /// <summary>
     /// Verifies that an empty result returns the empty array.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void Query_NoMatch_ReturnsEmptyArray()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = JsonPathEvaluator.Default.Query("$.nonexistent", data, workspace);
 
-        Assert.Equal(JsonValueKind.Array, result.ValueKind);
-        Assert.Equal(0, result.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, result.ValueKind);
+        Assert.AreEqual(0, result.GetArrayLength());
     }
 
     /// <summary>
     /// Verifies the Nodes span provides the correct elements.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void QueryNodes_NodesSpan_MatchesIndexer()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
@@ -142,10 +143,10 @@ public class JsonPathResultTests
             "$.store.book[*].title", data);
 
         ReadOnlySpan<JsonElement> nodes = result.Nodes;
-        Assert.Equal(result.Count, nodes.Length);
+        Assert.AreEqual(result.Count, nodes.Length);
         for (int i = 0; i < result.Count; i++)
         {
-            Assert.Equal(result[i].GetString(), nodes[i].GetString());
+            Assert.AreEqual(result[i].GetString(), nodes[i].GetString());
         }
     }
 
@@ -155,7 +156,7 @@ public class JsonPathResultTests
     /// <see cref="JsonPathResult.Dispose"/> only returns the internally-rented
     /// overflow array; the caller's original buffer is untouched.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void QueryNodes_CallerRentedBuffer_SpillDoesNotDoubleReturn()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
@@ -167,12 +168,12 @@ public class JsonPathResultTests
             using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
                 "$.store.book[*].author", data, callerBuf.AsSpan(0, 2));
 
-            Assert.Equal(4, result.Count);
-            Assert.True(result.HasSpilled);
+            Assert.AreEqual(4, result.Count);
+            Assert.IsTrue(result.HasSpilled);
 
             // Verify all results are correct even after spill
-            Assert.Equal("Nigel Rees", result[0].GetString());
-            Assert.Equal("J. R. R. Tolkien", result[3].GetString());
+            Assert.AreEqual("Nigel Rees", result[0].GetString());
+            Assert.AreEqual("J. R. R. Tolkien", result[3].GetString());
         }
         finally
         {
@@ -186,7 +187,7 @@ public class JsonPathResultTests
     /// many results), only the final overflow array is returned by Dispose and the
     /// caller's original buffer remains theirs to return.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void QueryNodes_CallerRentedBuffer_MultiGrowDoesNotDoubleReturn()
     {
         JsonElement data = JsonElement.ParseValue(BookstoreJson);
@@ -198,8 +199,8 @@ public class JsonPathResultTests
             using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
                 "$..*", data, callerBuf.AsSpan(0, 1));
 
-            Assert.True(result.Count > 16, $"Expected more than 16 results; got {result.Count}");
-            Assert.True(result.HasSpilled);
+            Assert.IsTrue(result.Count > 16, $"Expected more than 16 results; got {result.Count}");
+            Assert.IsTrue(result.HasSpilled);
         }
         finally
         {

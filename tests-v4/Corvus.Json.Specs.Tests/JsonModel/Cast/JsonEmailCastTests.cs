@@ -10,76 +10,77 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 using NodaTime;
 using NodaTime.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonModel.Cast;
 
 /// <summary>
 /// Tests for JsonEmailCast.
 /// </summary>
+[TestClass]
 public class JsonEmailCastTests
 {
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_an_email()
     {
         var sut = JsonEmail.ParseValue("\"hello@endjin.com\"".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_an_email()
     {
         var sut = JsonEmail.Parse("\"hello@endjin.com\"").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonString_for_json_element_backed_value_as_an_email()
     {
         var sut = JsonEmail.ParseValue("\"hello@endjin.com\"".AsSpan());
         var result = (JsonString)sut;
-        Assert.Equal(JsonString.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonString.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonString_for_dotnet_backed_value_as_an_email()
     {
         var sut = JsonEmail.Parse("\"hello@endjin.com\"").AsDotnetBackedValue();
         var result = (JsonString)sut;
-        Assert.Equal(JsonString.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonString.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_JsonString_for_json_element_backed_value_as_an_email()
     {
         JsonString sut = JsonString.ParseValue("\"hello@endjin.com\"".AsSpan());
         var result = (JsonEmail)sut;
-        Assert.Equal(JsonEmail.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonEmail.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_string_for_json_element_backed_value_as_an_email()
     {
         var sut = JsonEmail.ParseValue("\"hello@endjin.com\"".AsSpan());
         var result = (string)sut;
-        Assert.Equal("hello@endjin.com", result);
+        Assert.AreEqual("hello@endjin.com", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_string_for_dotnet_backed_value_as_an_email()
     {
         var sut = JsonEmail.Parse("\"hello@endjin.com\"").AsDotnetBackedValue();
         var result = (string)sut;
-        Assert.Equal("hello@endjin.com", result);
+        Assert.AreEqual("hello@endjin.com", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_string_for_json_element_backed_value_as_an_email()
     {
         string sut = "hello@endjin.com";
         var result = (JsonEmail)sut;
-        Assert.Equal(JsonEmail.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
+        Assert.AreEqual(JsonEmail.ParseValue("\"hello@endjin.com\"".AsSpan()), result);
     }
 }

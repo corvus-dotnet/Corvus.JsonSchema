@@ -7,7 +7,7 @@ using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Canonicalization;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -16,7 +16,8 @@ namespace Corvus.Text.Json.Tests;
 /// Utf8JsonWriter WriteRawValue (empty sequence, comma-before-raw),
 /// and Es6NumberFormatter edge cases.
 /// </summary>
-public static class CoverageBatch6Tests
+[TestClass]
+public class CoverageBatch6Tests
 {
     #region JsonCanonicalizer — number too large for double (lines 273-274)
 
@@ -29,8 +30,8 @@ public static class CoverageBatch6Tests
     /// handles overflow differently (does not produce the same InvalidOperationException path).
     /// </remarks>
 #if NET
-    [Fact]
-    public static void Canonicalizer_NumberOverflowsDouble_ThrowsInvalidOperation()
+    [TestMethod]
+    public void Canonicalizer_NumberOverflowsDouble_ThrowsInvalidOperation()
     {
         // 1e999 is valid JSON number syntax but overflows double (becomes Infinity)
         using ParsedJsonDocument<JsonElement> doc =
@@ -47,8 +48,8 @@ public static class CoverageBatch6Tests
             ex = e;
         }
 
-        Assert.NotNull(ex);
-        Assert.Contains("Infinity", ex!.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.IsNotNull(ex);
+        StringAssert.Contains(ex!.Message, "Infinity", StringComparison.OrdinalIgnoreCase);
     }
 #endif
 
@@ -59,15 +60,15 @@ public static class CoverageBatch6Tests
     /// <summary>
     /// Exercises <c>WriteRawValue(ReadOnlySequence&lt;byte&gt;)</c> with empty sequence (lines 150-151).
     /// </summary>
-    [Fact]
-    public static void Writer_WriteRawValue_EmptySequence_ThrowsArgument()
+    [TestMethod]
+    public void Writer_WriteRawValue_EmptySequence_ThrowsArgument()
     {
         using PooledByteBufferWriter bufferWriter = new(256);
         using Utf8JsonWriter writer = new(bufferWriter);
 
         ReadOnlySequence<byte> emptySequence = ReadOnlySequence<byte>.Empty;
 
-        Assert.Throws<ArgumentException>(() => writer.WriteRawValue(emptySequence));
+        Assert.ThrowsExactly<ArgumentException>(() => writer.WriteRawValue(emptySequence));
     }
 
     #endregion
@@ -79,8 +80,8 @@ public static class CoverageBatch6Tests
     /// When writing a raw value as a non-first element in an array,
     /// _currentDepth &lt; 0 triggers writing a list separator.
     /// </summary>
-    [Fact]
-    public static void Writer_WriteRawValue_CommaBeforeRawInArray()
+    [TestMethod]
+    public void Writer_WriteRawValue_CommaBeforeRawInArray()
     {
         using PooledByteBufferWriter bufferWriter = new(256);
         using Utf8JsonWriter writer = new(bufferWriter);
@@ -96,7 +97,7 @@ public static class CoverageBatch6Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Equal("[1,42]", json);
+        Assert.AreEqual("[1,42]", json);
     }
 
     #endregion
@@ -107,13 +108,13 @@ public static class CoverageBatch6Tests
     /// Exercises <c>Es6NumberFormatter.TryFormat</c> with a zero-length destination (lines 46-47).
     /// The value 0.0 requires at least 1 byte ("0"), so an empty buffer returns false.
     /// </summary>
-    [Fact]
-    public static void Es6NumberFormatter_ZeroWithEmptyBuffer_ReturnsFalse()
+    [TestMethod]
+    public void Es6NumberFormatter_ZeroWithEmptyBuffer_ReturnsFalse()
     {
         Span<byte> empty = Span<byte>.Empty;
         bool result = Es6NumberFormatter.TryFormat(0.0, empty, out int bytesWritten);
-        Assert.False(result);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, bytesWritten);
     }
 
     #endregion
@@ -124,8 +125,8 @@ public static class CoverageBatch6Tests
     /// Exercises WriteRawValue with span after another value in array (verifying
     /// the comma separator in the Span overload path).
     /// </summary>
-    [Fact]
-    public static void Writer_WriteRawValue_SpanCommaInArray()
+    [TestMethod]
+    public void Writer_WriteRawValue_SpanCommaInArray()
     {
         using PooledByteBufferWriter bufferWriter = new(256);
         using Utf8JsonWriter writer = new(bufferWriter);
@@ -140,7 +141,7 @@ public static class CoverageBatch6Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Equal("""["hello","world"]""", json);
+        Assert.AreEqual("""["hello","world"]""", json);
     }
 
     #endregion
@@ -150,8 +151,8 @@ public static class CoverageBatch6Tests
     /// <summary>
     /// Exercises <c>Canonicalize</c> with a small document that fits in stackalloc (lines 60-61).
     /// </summary>
-    [Fact]
-    public static void Canonicalizer_SmallDocument_CanonicalizeOnStack()
+    [TestMethod]
+    public void Canonicalizer_SmallDocument_CanonicalizeOnStack()
     {
         using ParsedJsonDocument<JsonElement> doc =
             ParsedJsonDocument<JsonElement>.Parse("""{"b":2,"a":1}"""u8.ToArray());
@@ -160,7 +161,7 @@ public static class CoverageBatch6Tests
 
         // JCS sorts property names
         string canonical = Encoding.UTF8.GetString(result);
-        Assert.Equal("""{"a":1,"b":2}""", canonical);
+        Assert.AreEqual("""{"a":1,"b":2}""", canonical);
     }
 
     #endregion
@@ -173,8 +174,8 @@ public static class CoverageBatch6Tests
     /// The document must be larger than 512 bytes canonical output to trigger
     /// the buffer-doubling path at line 77.
     /// </summary>
-    [Fact]
-    public static void Canonicalizer_LargeDocument_CanonicalizeSucceeds()
+    [TestMethod]
+    public void Canonicalizer_LargeDocument_CanonicalizeSucceeds()
     {
         // Create a JSON object with enough properties to exceed 512 bytes canonical output
         // Each property "property000":0 is ~16 chars, need >32 to exceed 512
@@ -198,7 +199,7 @@ public static class CoverageBatch6Tests
         byte[] result = JsonCanonicalizer.Canonicalize(doc.RootElement);
 
         // Result should be valid JSON with sorted property names
-        Assert.True(result.Length > 512);
+        Assert.IsTrue(result.Length > 512);
         // First properties should be sorted: property000, property001, etc.
         string canonical = Encoding.UTF8.GetString(result);
         Assert.StartsWith("{\"property000\":", canonical);
@@ -212,8 +213,8 @@ public static class CoverageBatch6Tests
     /// Exercises <c>WriteRawValue(ReadOnlySequence&lt;byte&gt;)</c> with validation enabled
     /// (the non-skipInputValidation path uses Utf8JsonReader to validate, lines 167-173).
     /// </summary>
-    [Fact]
-    public static void Writer_WriteRawValue_Sequence_WithValidation()
+    [TestMethod]
+    public void Writer_WriteRawValue_Sequence_WithValidation()
     {
         using PooledByteBufferWriter bufferWriter = new(256);
         using Utf8JsonWriter writer = new(bufferWriter);
@@ -229,7 +230,7 @@ public static class CoverageBatch6Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Equal("""[1,{"key":"val"}]""", json);
+        Assert.AreEqual("""[1,{"key":"val"}]""", json);
     }
 
     #endregion

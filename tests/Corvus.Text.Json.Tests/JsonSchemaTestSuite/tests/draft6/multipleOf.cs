@@ -2,45 +2,53 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft6.MultipleOf;
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteByInt : IClassFixture<SuiteByInt.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteByInt
 {
-    private readonly Fixture _fixture;
-    public SuiteByInt(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestIntByInt()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("10");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("10");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIntByIntFail()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("7");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("7");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonNumbers()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"foo\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"foo\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -59,48 +67,56 @@ public class SuiteByInt : IClassFixture<SuiteByInt.Fixture>
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteByNumber
 {
-    private readonly Fixture _fixture;
-    public SuiteByNumber(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestZeroIsMultipleOfAnything()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("0");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("0");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test45IsMultipleOf15()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("4.5");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("4.5");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test45IsMultipleOf151()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("-4.5");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("-4.5");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test35IsNotMultipleOf15()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("35");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("35");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -119,34 +135,42 @@ public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteBySmallNumber : IClassFixture<SuiteBySmallNumber.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteBySmallNumber
 {
-    private readonly Fixture _fixture;
-    public SuiteBySmallNumber(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test00075IsMultipleOf00001()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("0.0075");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("0.0075");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test000751IsNotMultipleOf00001()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("0.00751");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("0.00751");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -165,27 +189,35 @@ public class SuiteBySmallNumber : IClassFixture<SuiteBySmallNumber.Fixture>
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteFloatDivisionInf : IClassFixture<SuiteFloatDivisionInf.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteFloatDivisionInf
 {
-    private readonly Fixture _fixture;
-    public SuiteFloatDivisionInf(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAlwaysInvalidButNaiveImplementationsMayRaiseAnOverflowError()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("1e308");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("1e308");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -204,27 +236,35 @@ public class SuiteFloatDivisionInf : IClassFixture<SuiteFloatDivisionInf.Fixture
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteSmallMultipleOfLargeInteger : IClassFixture<SuiteSmallMultipleOfLargeInteger.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteSmallMultipleOfLargeInteger
 {
-    private readonly Fixture _fixture;
-    public SuiteSmallMultipleOfLargeInteger(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAnyIntegerIsAMultipleOf1e8()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("12391239123");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12391239123");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

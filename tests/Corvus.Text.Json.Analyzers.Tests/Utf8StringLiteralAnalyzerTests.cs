@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Analyzers.Utf8StringLiteralAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Analyzers.Tests;
 /// <summary>
 /// Tests for CTJ001: Prefer UTF-8 string literal.
 /// </summary>
+[TestClass]
 public class Utf8StringLiteralAnalyzerTests
 {
     private const string Stubs = @"
@@ -74,7 +75,7 @@ namespace TestLib
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task MethodWithUtf8Overload_FiresCTJ001()
     {
         const string testCode = Stubs + @"
@@ -95,7 +96,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(0).WithArguments("name"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task MethodWithUtf8Overload_CodeFixAppendsU8()
     {
         var test = new CodeFixTest
@@ -131,7 +132,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SetProperty_OnMutable_FiresCTJ001()
     {
         const string testCode = Stubs + @"
@@ -152,7 +153,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(0).WithArguments("age"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RemoveProperty_OnMutable_FiresCTJ001()
     {
         const string testCode = Stubs + @"
@@ -173,7 +174,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(0).WithArguments("temp"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ElementAccessWithStringLiteral_FiresCTJ001()
     {
         const string testCode = Stubs + @"
@@ -194,7 +195,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(0).WithArguments("name"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task MethodWithNoUtf8Overload_NoDiagnostic()
     {
         const string testCode = @"
@@ -218,7 +219,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task VariableArgument_NoDiagnostic()
     {
         const string testCode = Stubs + @"

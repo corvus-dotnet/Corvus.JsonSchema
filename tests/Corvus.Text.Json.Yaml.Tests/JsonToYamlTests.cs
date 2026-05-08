@@ -11,7 +11,7 @@ using Corvus.Yaml;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Yaml;
 #endif
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 #if STJ
 namespace Corvus.Yaml.SystemTextJson.Tests;
@@ -22,129 +22,130 @@ namespace Corvus.Text.Json.Yaml.Tests;
 /// <summary>
 /// Tests for JSON→YAML conversion (all three conversion paths and round-trip).
 /// </summary>
+[TestClass]
 public class JsonToYamlTests
 {
     // ===================================================================
     // Category 1: Basic scalar conversions
     // ===================================================================
 
-    [Theory]
-    [InlineData("""{"key": "hello"}""", "key: hello")]
-    [InlineData("""{"key": 42}""", "key: 42")]
-    [InlineData("""{"key": 3.14}""", "key: 3.14")]
-    [InlineData("""{"key": true}""", "key: true")]
-    [InlineData("""{"key": false}""", "key: false")]
-    [InlineData("""{"key": null}""", "key: null")]
+    [TestMethod]
+    [DataRow("""{"key": "hello"}""", "key: hello")]
+    [DataRow("""{"key": 42}""", "key: 42")]
+    [DataRow("""{"key": 3.14}""", "key: 3.14")]
+    [DataRow("""{"key": true}""", "key: true")]
+    [DataRow("""{"key": false}""", "key: false")]
+    [DataRow("""{"key": null}""", "key: null")]
     public void BasicScalarValues(string json, string expectedYaml)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expectedYaml, yaml);
+        Assert.AreEqual(expectedYaml, yaml);
     }
 
-    [Theory]
-    [InlineData("""42""", "42")]
-    [InlineData("""3.14""", "3.14")]
-    [InlineData("""true""", "true")]
-    [InlineData("""false""", "false")]
-    [InlineData("""null""", "null")]
+    [TestMethod]
+    [DataRow("""42""", "42")]
+    [DataRow("""3.14""", "3.14")]
+    [DataRow("""true""", "true")]
+    [DataRow("""false""", "false")]
+    [DataRow("""null""", "null")]
     public void BareScalarRootValues(string json, string expectedYaml)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expectedYaml, yaml);
+        Assert.AreEqual(expectedYaml, yaml);
     }
 
     // ===================================================================
     // Category 2: Number handling (use "num" key to avoid "n" quoting)
     // ===================================================================
 
-    [Theory]
-    [InlineData("""{"num": 0}""", "num: 0")]
-    [InlineData("""{"num": -42}""", "num: -42")]
-    [InlineData("""{"num": 9223372036854775807}""", "num: 9223372036854775807")]
-    [InlineData("""{"num": 1.23e10}""", "num: 1.23e10")]
-    [InlineData("""{"num": 1.23e-10}""", "num: 1.23e-10")]
+    [TestMethod]
+    [DataRow("""{"num": 0}""", "num: 0")]
+    [DataRow("""{"num": -42}""", "num: -42")]
+    [DataRow("""{"num": 9223372036854775807}""", "num: 9223372036854775807")]
+    [DataRow("""{"num": 1.23e10}""", "num: 1.23e10")]
+    [DataRow("""{"num": 1.23e-10}""", "num: 1.23e-10")]
     public void NumericValues(string json, string expectedYaml)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expectedYaml, yaml);
+        Assert.AreEqual(expectedYaml, yaml);
     }
 
     // ===================================================================
     // Category 3: Empty collections
     // ===================================================================
 
-    [Fact]
+    [TestMethod]
     public void EmptyObject()
     {
         string yaml = YamlDocument.ConvertToYamlString("{}");
-        Assert.Equal("{}", yaml);
+        Assert.AreEqual("{}", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyArray()
     {
         string yaml = YamlDocument.ConvertToYamlString("[]");
-        Assert.Equal("[]", yaml);
+        Assert.AreEqual("[]", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedEmptyCollections()
     {
         string yaml = YamlDocument.ConvertToYamlString("""{"obj": {}, "arr": []}""");
-        Assert.Equal("obj: {}\narr: []", yaml);
+        Assert.AreEqual("obj: {}\narr: []", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayOfEmptyObjects()
     {
         string yaml = YamlDocument.ConvertToYamlString("[{}, {}, {}]");
-        Assert.Equal("- {}\n- {}\n- {}", yaml);
+        Assert.AreEqual("- {}\n- {}\n- {}", yaml);
     }
 
     // ===================================================================
     // Category 4: Nested structures
     // ===================================================================
 
-    [Fact]
+    [TestMethod]
     public void NestedMappings()
     {
         string json = """{"a": {"b": {"c": 1}}}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal("a:\n  b:\n    c: 1", yaml);
+        Assert.AreEqual("a:\n  b:\n    c: 1", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedSequences()
     {
         string json = "[[1, 2], [3, 4]]";
         string yaml = YamlDocument.ConvertToYamlString(json);
         // Sequence-in-sequence: "- " prefix, then children on next line indented
-        Assert.Equal("- \n  - 1\n  - 2\n- \n  - 3\n  - 4", yaml);
+        Assert.AreEqual("- \n  - 1\n  - 2\n- \n  - 3\n  - 4", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void MappingWithSequenceValue()
     {
         string json = """{"items": [1, 2, 3]}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal("items:\n  - 1\n  - 2\n  - 3", yaml);
+        Assert.AreEqual("items:\n  - 1\n  - 2\n  - 3", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void SequenceOfMappings()
     {
         string json = """[{"a": 1}, {"b": 2}]""";
         string yaml = YamlDocument.ConvertToYamlString(json);
         // Mapping-in-sequence: "- " prefix, then first property on next line
-        Assert.Equal("- \n  a: 1\n- \n  b: 2", yaml);
+        Assert.AreEqual("- \n  a: 1\n- \n  b: 2", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void ComplexMixedNesting()
     {
         string json = """{"people": [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(
+        Assert.AreEqual(
             "people:\n  - \n    name: Alice\n    age: 30\n  - \n    name: Bob\n    age: 25",
             yaml);
     }
@@ -153,155 +154,155 @@ public class JsonToYamlTests
     // Category 5: Scalar quoting — strings that must be quoted to round-trip
     // ===================================================================
 
-    [Theory]
-    [InlineData("""{"k": "true"}""", "k: \"true\"")] // looks like bool
-    [InlineData("""{"k": "false"}""", "k: \"false\"")] // looks like bool
-    [InlineData("""{"k": "null"}""", "k: \"null\"")] // looks like null
-    [InlineData("""{"k": "~"}""", "k: \"~\"")] // tilde = null in YAML
-    [InlineData("""{"k": "yes"}""", "k: \"yes\"")] // YAML 1.1 bool
-    [InlineData("""{"k": "no"}""", "k: \"no\"")] // YAML 1.1 bool
-    [InlineData("""{"k": "on"}""", "k: \"on\"")] // YAML 1.1 bool
-    [InlineData("""{"k": "off"}""", "k: \"off\"")] // YAML 1.1 bool
-    [InlineData("""{"k": "True"}""", "k: \"True\"")] // case variant
-    [InlineData("""{"k": "FALSE"}""", "k: \"FALSE\"")] // case variant
-    [InlineData("""{"k": "NULL"}""", "k: \"NULL\"")] // case variant
-    [InlineData("""{"k": "Yes"}""", "k: \"Yes\"")] // case variant
-    [InlineData("""{"k": "NO"}""", "k: \"NO\"")] // case variant
+    [TestMethod]
+    [DataRow("""{"k": "true"}""", "k: \"true\"")] // looks like bool
+    [DataRow("""{"k": "false"}""", "k: \"false\"")] // looks like bool
+    [DataRow("""{"k": "null"}""", "k: \"null\"")] // looks like null
+    [DataRow("""{"k": "~"}""", "k: \"~\"")] // tilde = null in YAML
+    [DataRow("""{"k": "yes"}""", "k: \"yes\"")] // YAML 1.1 bool
+    [DataRow("""{"k": "no"}""", "k: \"no\"")] // YAML 1.1 bool
+    [DataRow("""{"k": "on"}""", "k: \"on\"")] // YAML 1.1 bool
+    [DataRow("""{"k": "off"}""", "k: \"off\"")] // YAML 1.1 bool
+    [DataRow("""{"k": "True"}""", "k: \"True\"")] // case variant
+    [DataRow("""{"k": "FALSE"}""", "k: \"FALSE\"")] // case variant
+    [DataRow("""{"k": "NULL"}""", "k: \"NULL\"")] // case variant
+    [DataRow("""{"k": "Yes"}""", "k: \"Yes\"")] // case variant
+    [DataRow("""{"k": "NO"}""", "k: \"NO\"")] // case variant
     public void StringsLookingLikeBoolOrNull_AreQuoted(string json, string expectedYaml)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expectedYaml, yaml);
+        Assert.AreEqual(expectedYaml, yaml);
     }
 
-    [Theory]
-    [InlineData("""{"k": "123"}""", "k: \"123\"")] // looks like int
-    [InlineData("""{"k": "3.14"}""", "k: \"3.14\"")] // looks like float
-    [InlineData("""{"k": ".inf"}""", "k: \".inf\"")] // looks like YAML infinity
-    [InlineData("""{"k": "-.inf"}""", "k: \"-.inf\"")] // looks like YAML -infinity
-    [InlineData("""{"k": ".nan"}""", "k: \".nan\"")] // looks like YAML NaN
-    [InlineData("""{"k": ".Inf"}""", "k: \".Inf\"")] // case variant
-    [InlineData("""{"k": ".NaN"}""", "k: \".NaN\"")] // case variant
-    [InlineData("""{"k": "0x1A"}""", "k: \"0x1A\"")] // looks like hex int
-    [InlineData("""{"k": "0o17"}""", "k: \"0o17\"")] // looks like octal int
+    [TestMethod]
+    [DataRow("""{"k": "123"}""", "k: \"123\"")] // looks like int
+    [DataRow("""{"k": "3.14"}""", "k: \"3.14\"")] // looks like float
+    [DataRow("""{"k": ".inf"}""", "k: \".inf\"")] // looks like YAML infinity
+    [DataRow("""{"k": "-.inf"}""", "k: \"-.inf\"")] // looks like YAML -infinity
+    [DataRow("""{"k": ".nan"}""", "k: \".nan\"")] // looks like YAML NaN
+    [DataRow("""{"k": ".Inf"}""", "k: \".Inf\"")] // case variant
+    [DataRow("""{"k": ".NaN"}""", "k: \".NaN\"")] // case variant
+    [DataRow("""{"k": "0x1A"}""", "k: \"0x1A\"")] // looks like hex int
+    [DataRow("""{"k": "0o17"}""", "k: \"0o17\"")] // looks like octal int
     public void StringsLookingLikeNumbers_AreQuoted(string json, string expectedYaml)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expectedYaml, yaml);
+        Assert.AreEqual(expectedYaml, yaml);
     }
 
-    [Theory]
-    [InlineData("""{"k": ""}""", "k: \"\"")] // empty string
-    [InlineData("""{"k": "  value"}""", "k: \"  value\"")] // leading spaces
-    [InlineData("""{"k": "value  "}""", "k: \"value  \"")] // trailing spaces
-    [InlineData("""{"k": "hello: world"}""", "k: \"hello: world\"")] // colon+space
-    [InlineData("""{"k": "value #comment"}""", "k: \"value #comment\"")] // space+hash
-    [InlineData("""{"k": "- item"}""", "k: \"- item\"")] // leading dash+space
-    [InlineData("""{"k": "? key"}""", "k: \"? key\"")] // leading question+space
-    [InlineData("""{"k": "&anchor"}""", "k: \"&anchor\"")] // anchor indicator
-    [InlineData("""{"k": "*alias"}""", "k: \"*alias\"")] // alias indicator
-    [InlineData("""{"k": "!tag"}""", "k: \"!tag\"")] // tag indicator
-    [InlineData("""{"k": "{flow}"}""", "k: \"{flow}\"")] // flow mapping indicator
-    [InlineData("""{"k": "[flow]"}""", "k: \"[flow]\"")] // flow sequence indicator
-    [InlineData("""{"k": "%directive"}""", "k: \"%directive\"")] // directive indicator
-    [InlineData("""{"k": "@reserved"}""", "k: \"@reserved\"")] // reserved indicator
-    [InlineData("""{"k": "`backtick"}""", "k: \"`backtick\"")] // reserved indicator
+    [TestMethod]
+    [DataRow("""{"k": ""}""", "k: \"\"")] // empty string
+    [DataRow("""{"k": "  value"}""", "k: \"  value\"")] // leading spaces
+    [DataRow("""{"k": "value  "}""", "k: \"value  \"")] // trailing spaces
+    [DataRow("""{"k": "hello: world"}""", "k: \"hello: world\"")] // colon+space
+    [DataRow("""{"k": "value #comment"}""", "k: \"value #comment\"")] // space+hash
+    [DataRow("""{"k": "- item"}""", "k: \"- item\"")] // leading dash+space
+    [DataRow("""{"k": "? key"}""", "k: \"? key\"")] // leading question+space
+    [DataRow("""{"k": "&anchor"}""", "k: \"&anchor\"")] // anchor indicator
+    [DataRow("""{"k": "*alias"}""", "k: \"*alias\"")] // alias indicator
+    [DataRow("""{"k": "!tag"}""", "k: \"!tag\"")] // tag indicator
+    [DataRow("""{"k": "{flow}"}""", "k: \"{flow}\"")] // flow mapping indicator
+    [DataRow("""{"k": "[flow]"}""", "k: \"[flow]\"")] // flow sequence indicator
+    [DataRow("""{"k": "%directive"}""", "k: \"%directive\"")] // directive indicator
+    [DataRow("""{"k": "@reserved"}""", "k: \"@reserved\"")] // reserved indicator
+    [DataRow("""{"k": "`backtick"}""", "k: \"`backtick\"")] // reserved indicator
     public void StringsWithSpecialCharacters_AreQuoted(string json, string expectedYaml)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expectedYaml, yaml);
+        Assert.AreEqual(expectedYaml, yaml);
     }
 
     // ===================================================================
     // Category 6: Escape sequences in double-quoted strings
     // ===================================================================
 
-    [Fact]
+    [TestMethod]
     public void StringWithNewline_IsDoubleQuotedWithEscape()
     {
         string json = """{"k": "line1\nline2"}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal("k: \"line1\\nline2\"", yaml);
+        Assert.AreEqual("k: \"line1\\nline2\"", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void StringWithCarriageReturn_IsDoubleQuotedWithEscape()
     {
         string json = "{\"k\": \"a\\rb\"}";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal("k: \"a\\rb\"", yaml);
+        Assert.AreEqual("k: \"a\\rb\"", yaml);
     }
 
     // Strings with only embedded quotes, backslash, or tab are NOT double-quoted
     // because those characters are safe in YAML plain scalars
-    [Fact]
+    [TestMethod]
     public void StringWithEmbeddedQuotes_IsPlainScalar()
     {
         string json = """{"k": "say \"hi\""}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal("k: say \"hi\"", yaml);
+        Assert.AreEqual("k: say \"hi\"", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void StringWithBackslash_IsPlainScalar()
     {
         string json = """{"k": "c:\\path"}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal("k: c:\\path", yaml);
+        Assert.AreEqual("k: c:\\path", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void StringWithTab_IsPlainScalar()
     {
         // Tab is safe in YAML plain scalars — it passes through as a literal byte
         string json = """{"k": "col1\tcol2"}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal("k: col1\tcol2", yaml);
+        Assert.AreEqual("k: col1\tcol2", yaml);
     }
 
     // ===================================================================
     // Category 7: Empty string as key
     // ===================================================================
 
-    [Fact]
+    [TestMethod]
     public void EmptyStringKey()
     {
         string json = """{"": "value"}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal("\"\": value", yaml);
+        Assert.AreEqual("\"\": value", yaml);
     }
 
     // ===================================================================
     // Category 8: IndentSize options
     // ===================================================================
 
-    [Theory]
-    [InlineData(2, "a:\n  b: 1")]
-    [InlineData(4, "a:\n    b: 1")]
-    [InlineData(1, "a:\n b: 1")]
+    [TestMethod]
+    [DataRow(2, "a:\n  b: 1")]
+    [DataRow(4, "a:\n    b: 1")]
+    [DataRow(1, "a:\n b: 1")]
     public void IndentSizeOption(int indentSize, string expectedYaml)
     {
         string json = """{"a": {"b": 1}}""";
         string yaml = YamlDocument.ConvertToYamlString(json, new YamlWriterOptions { IndentSize = indentSize });
-        Assert.Equal(expectedYaml, yaml);
+        Assert.AreEqual(expectedYaml, yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void DefaultOptionsUsesTwoSpaceIndent()
     {
         // Verifies that default(YamlWriterOptions) with IndentSize=0 is treated as 2
         string json = """{"a": {"b": 1}}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal("a:\n  b: 1", yaml);
+        Assert.AreEqual("a:\n  b: 1", yaml);
     }
 
     // ===================================================================
     // Category 9: Conversion path equivalence — string, UTF-8, JsonElement
     // ===================================================================
 
-    [Theory]
-    [InlineData("""{"a": 1, "b": [2, 3], "c": {"d": true}}""")]
-    [InlineData("""[1, "two", null, false, {"nested": []}]""")]
-    [InlineData("""{"reserved": "true", "num": "123", "empty": ""}""")]
+    [TestMethod]
+    [DataRow("""{"a": 1, "b": [2, 3], "c": {"d": true}}""")]
+    [DataRow("""[1, "two", null, false, {"nested": []}]""")]
+    [DataRow("""{"reserved": "true", "num": "123", "empty": ""}""")]
     public void AllConversionPathsProduceIdenticalOutput(string json)
     {
         // Path 1: string
@@ -320,15 +321,15 @@ public class JsonToYamlTests
         string fromElement = YamlDocument.ConvertToYamlString(doc.RootElement);
 #endif
 
-        Assert.Equal(fromString, fromUtf8);
-        Assert.Equal(fromString, fromElement);
+        Assert.AreEqual(fromString, fromUtf8);
+        Assert.AreEqual(fromString, fromElement);
     }
 
     // ===================================================================
     // Category 10: Stream and buffer writer output paths
     // ===================================================================
 
-    [Fact]
+    [TestMethod]
     public void ConvertToYaml_WritesToStream()
     {
         string json = """{"name": "test", "value": 42}""";
@@ -338,10 +339,10 @@ public class JsonToYamlTests
 
         stream.Position = 0;
         string yaml = new StreamReader(stream, Encoding.UTF8).ReadToEnd();
-        Assert.Equal("name: test\nvalue: 42", yaml);
+        Assert.AreEqual("name: test\nvalue: 42", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void ConvertToYaml_WritesToBufferWriter()
     {
         string json = """{"name": "test", "value": 42}""";
@@ -354,20 +355,20 @@ public class JsonToYamlTests
 #else
         string yaml = Encoding.UTF8.GetString(writer.WrittenSpan.ToArray());
 #endif
-        Assert.Equal("name: test\nvalue: 42", yaml);
+        Assert.AreEqual("name: test\nvalue: 42", yaml);
     }
 
     // ===================================================================
     // Category 11: Round-trip (JSON → YAML → JSON)
     // ===================================================================
 
-    [Theory]
-    [InlineData("""{"a": 1}""")]
-    [InlineData("""{"a": 1, "b": "hello", "c": true, "d": null}""")]
-    [InlineData("""[1, 2, 3]""")]
-    [InlineData("""{"nested": {"deep": {"value": 42}}}""")]
-    [InlineData("""{"arr": [{"a": 1}, {"b": 2}]}""")]
-    [InlineData("""{"empty_obj": {}, "empty_arr": []}""")]
+    [TestMethod]
+    [DataRow("""{"a": 1}""")]
+    [DataRow("""{"a": 1, "b": "hello", "c": true, "d": null}""")]
+    [DataRow("""[1, 2, 3]""")]
+    [DataRow("""{"nested": {"deep": {"value": 42}}}""")]
+    [DataRow("""{"arr": [{"a": 1}, {"b": 2}]}""")]
+    [DataRow("""{"empty_obj": {}, "empty_arr": []}""")]
     public void RoundTrip_PreservesStructure(string json)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
@@ -377,18 +378,18 @@ public class JsonToYamlTests
         AssertJsonEqual(json, roundTripped);
     }
 
-    [Theory]
-    [InlineData("""{"k": "true"}""")] // string "true" must stay string, not become bool
-    [InlineData("""{"k": "false"}""")]
-    [InlineData("""{"k": "null"}""")] // string "null" must stay string, not become null
-    [InlineData("""{"k": "123"}""")] // string "123" must stay string, not become number
-    [InlineData("""{"k": "3.14"}""")]
-    [InlineData("""{"k": "yes"}""")]
-    [InlineData("""{"k": "no"}""")]
-    [InlineData("""{"k": "~"}""")]
-    [InlineData("""{"k": ""}""")]
-    [InlineData("""{"k": ".inf"}""")]
-    [InlineData("""{"k": ".nan"}""")]
+    [TestMethod]
+    [DataRow("""{"k": "true"}""")] // string "true" must stay string, not become bool
+    [DataRow("""{"k": "false"}""")]
+    [DataRow("""{"k": "null"}""")] // string "null" must stay string, not become null
+    [DataRow("""{"k": "123"}""")] // string "123" must stay string, not become number
+    [DataRow("""{"k": "3.14"}""")]
+    [DataRow("""{"k": "yes"}""")]
+    [DataRow("""{"k": "no"}""")]
+    [DataRow("""{"k": "~"}""")]
+    [DataRow("""{"k": ""}""")]
+    [DataRow("""{"k": ".inf"}""")]
+    [DataRow("""{"k": ".nan"}""")]
     public void RoundTrip_PreservesStringTypes(string json)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
@@ -398,18 +399,18 @@ public class JsonToYamlTests
         AssertJsonEqual(json, roundTripped);
     }
 
-    [Theory]
-    [InlineData("""{"k": "hello: world"}""")]
-    [InlineData("""{"k": "value #comment"}""")]
-    [InlineData("""{"k": "- item"}""")]
-    [InlineData("""{"k": "  leading"}""")]
-    [InlineData("""{"k": "trailing  "}""")]
-    [InlineData("""{"k": "&anchor"}""")]
-    [InlineData("""{"k": "*alias"}""")]
-    [InlineData("""{"k": "line1\nline2"}""")]
-    [InlineData("""{"k": "col1\tcol2"}""")]
-    [InlineData("""{"k": "say \"hi\""}""")]
-    [InlineData("""{"k": "back\\slash"}""")]
+    [TestMethod]
+    [DataRow("""{"k": "hello: world"}""")]
+    [DataRow("""{"k": "value #comment"}""")]
+    [DataRow("""{"k": "- item"}""")]
+    [DataRow("""{"k": "  leading"}""")]
+    [DataRow("""{"k": "trailing  "}""")]
+    [DataRow("""{"k": "&anchor"}""")]
+    [DataRow("""{"k": "*alias"}""")]
+    [DataRow("""{"k": "line1\nline2"}""")]
+    [DataRow("""{"k": "col1\tcol2"}""")]
+    [DataRow("""{"k": "say \"hi\""}""")]
+    [DataRow("""{"k": "back\\slash"}""")]
     public void RoundTrip_PreservesSpecialStrings(string json)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
@@ -419,7 +420,7 @@ public class JsonToYamlTests
         AssertJsonEqual(json, roundTripped);
     }
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_AllReservedWords()
     {
         string json = """{"yes": "yes", "no": "no", "true": "true", "false": "false", "null": "null", "tilde": "~", "on": "on", "off": "off"}""";
@@ -430,7 +431,7 @@ public class JsonToYamlTests
         AssertJsonEqual(json, roundTripped);
     }
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_MixedTypes()
     {
         string json = """{"str": "hello", "num": 42, "float": 3.25, "bool": true, "nil": null, "arr": [1, "two"], "obj": {"inner": true}}""";
@@ -445,16 +446,16 @@ public class JsonToYamlTests
     // Category 12: Unicode handling
     // ===================================================================
 
-    [Theory]
-    [InlineData("""{"k": "你好"}""", "k: 你好")]
-    [InlineData("""{"k": "שלום"}""", "k: שלום")]
+    [TestMethod]
+    [DataRow("""{"k": "你好"}""", "k: 你好")]
+    [DataRow("""{"k": "שלום"}""", "k: שלום")]
     public void UnicodeStrings(string json, string expectedYaml)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expectedYaml, yaml);
+        Assert.AreEqual(expectedYaml, yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_UnicodeStrings()
     {
         string json = """{"emoji": "hello 🌍", "cjk": "你好世界"}""";
@@ -468,7 +469,7 @@ public class JsonToYamlTests
     // Category 13: Large and complex documents
     // ===================================================================
 
-    [Fact]
+    [TestMethod]
     public void LargeArray()
     {
         StringBuilder sb = new("[");
@@ -492,7 +493,7 @@ public class JsonToYamlTests
         AssertJsonEqual(json, roundTripped);
     }
 
-    [Fact]
+    [TestMethod]
     public void LargeObject()
     {
         StringBuilder sb = new("{");
@@ -520,26 +521,26 @@ public class JsonToYamlTests
     // Category 14: Key quoting for reserved single-char keys
     // ===================================================================
 
-    [Theory]
-    [InlineData("""{"n": 1}""", "\"n\": 1")]
-    [InlineData("""{"y": 1}""", "\"y\": 1")]
-    [InlineData("""{"N": 1}""", "\"N\": 1")]
-    [InlineData("""{"Y": 1}""", "\"Y\": 1")]
+    [TestMethod]
+    [DataRow("""{"n": 1}""", "\"n\": 1")]
+    [DataRow("""{"y": 1}""", "\"y\": 1")]
+    [DataRow("""{"N": 1}""", "\"N\": 1")]
+    [DataRow("""{"Y": 1}""", "\"Y\": 1")]
     public void SingleCharReservedKeys_AreQuoted(string json, string expectedYaml)
     {
         string yaml = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expectedYaml, yaml);
+        Assert.AreEqual(expectedYaml, yaml);
     }
 
     // ===================================================================
     // Category 15: Deep nesting (beyond initial stack capacity)
     // ===================================================================
 
-    [Theory]
-    [InlineData(5)]
-    [InlineData(16)]
-    [InlineData(20)]  // Beyond MaxStackDepth initial capacity
-    [InlineData(32)]
+    [TestMethod]
+    [DataRow(5)]
+    [DataRow(16)]
+    [DataRow(20)]  // Beyond MaxStackDepth initial capacity
+    [DataRow(32)]
     public void DeeplyNestedObjects_RoundTrip(int depth)
     {
         // Build JSON: {"a":{"a":{"a":...1...}}}
@@ -564,7 +565,7 @@ public class JsonToYamlTests
 
         // Verify correct indentation depth
         string[] lines = yaml.Split('\n');
-        Assert.Equal(depth, lines.Length);
+        Assert.AreEqual(depth, lines.Length);
         for (int i = 0; i < depth - 1; i++)
         {
             Assert.StartsWith(new string(' ', i * 2) + "a:", lines[i]);
@@ -574,9 +575,9 @@ public class JsonToYamlTests
         Assert.StartsWith(new string(' ', (depth - 1) * 2) + "a: 1", lines[depth - 1]);
     }
 
-    [Theory]
-    [InlineData(5)]
-    [InlineData(20)]
+    [TestMethod]
+    [DataRow(5)]
+    [DataRow(20)]
     public void DeeplyNestedArrays_RoundTrip(int depth)
     {
         // Build JSON: [[[...1...]]]
@@ -604,10 +605,10 @@ public class JsonToYamlTests
     // Category 16: Element overloads
     // ===================================================================
 
-    [Theory]
-    [InlineData("""{"a": 1, "b": [2, 3]}""")]
-    [InlineData("""[1, "two", null]""")]
-    [InlineData("""{"nested": {"deep": true}}""")]
+    [TestMethod]
+    [DataRow("""{"a": 1, "b": [2, 3]}""")]
+    [DataRow("""[1, "two", null]""")]
+    [DataRow("""{"nested": {"deep": true}}""")]
     public void ElementOverload_ProducesSameResult(string json)
     {
         string fromString = YamlDocument.ConvertToYamlString(json);
@@ -620,12 +621,12 @@ public class JsonToYamlTests
         string fromElement = YamlDocument.ConvertToYamlString(doc.RootElement);
 #endif
 
-        Assert.Equal(fromString, fromElement);
+        Assert.AreEqual(fromString, fromElement);
     }
 
-    [Theory]
-    [InlineData("""{"a": 1, "b": [2, 3]}""")]
-    [InlineData("""[1, "two", null]""")]
+    [TestMethod]
+    [DataRow("""{"a": 1, "b": [2, 3]}""")]
+    [DataRow("""[1, "two", null]""")]
     public void ElementOverload_WritesToStream(string json)
     {
 #if STJ
@@ -641,12 +642,12 @@ public class JsonToYamlTests
         stream.Position = 0;
         string yaml = new StreamReader(stream, Encoding.UTF8).ReadToEnd();
         string expected = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expected, yaml);
+        Assert.AreEqual(expected, yaml);
     }
 
-    [Theory]
-    [InlineData("""{"a": 1, "b": [2, 3]}""")]
-    [InlineData("""[1, "two", null]""")]
+    [TestMethod]
+    [DataRow("""{"a": 1, "b": [2, 3]}""")]
+    [DataRow("""[1, "two", null]""")]
     public void ElementOverload_WritesToBufferWriter(string json)
     {
 #if STJ
@@ -665,15 +666,15 @@ public class JsonToYamlTests
         string yaml = Encoding.UTF8.GetString(writer.WrittenSpan.ToArray());
 #endif
         string expected = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expected, yaml);
+        Assert.AreEqual(expected, yaml);
     }
 
     // ===================================================================
     // Category 17: UTF-8 byte overloads with Stream/IBufferWriter
     // ===================================================================
 
-    [Theory]
-    [InlineData("""{"a": 1, "b": "hello"}""")]
+    [TestMethod]
+    [DataRow("""{"a": 1, "b": "hello"}""")]
     public void Utf8Overload_WritesToStream(string json)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(json);
@@ -684,11 +685,11 @@ public class JsonToYamlTests
         stream.Position = 0;
         string yaml = new StreamReader(stream, Encoding.UTF8).ReadToEnd();
         string expected = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expected, yaml);
+        Assert.AreEqual(expected, yaml);
     }
 
-    [Theory]
-    [InlineData("""{"a": 1, "b": "hello"}""")]
+    [TestMethod]
+    [DataRow("""{"a": 1, "b": "hello"}""")]
     public void Utf8Overload_WritesToBufferWriter(string json)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(json);
@@ -702,37 +703,37 @@ public class JsonToYamlTests
         string yaml = Encoding.UTF8.GetString(writer.WrittenSpan.ToArray());
 #endif
         string expected = YamlDocument.ConvertToYamlString(json);
-        Assert.Equal(expected, yaml);
+        Assert.AreEqual(expected, yaml);
     }
 
     // ===================================================================
     // Category 18: IndentSize edge cases
     // ===================================================================
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(-1)]
-    [InlineData(-100)]
+    [TestMethod]
+    [DataRow(0)]
+    [DataRow(-1)]
+    [DataRow(-100)]
     public void IndentSize_ZeroOrNegative_DefaultsToTwo(int indentSize)
     {
         string json = """{"a": {"b": 1}}""";
         string yaml = YamlDocument.ConvertToYamlString(json, new YamlWriterOptions { IndentSize = indentSize });
-        Assert.Equal("a:\n  b: 1", yaml);
+        Assert.AreEqual("a:\n  b: 1", yaml);
     }
 
-    [Fact]
+    [TestMethod]
     public void IndentSize_Large_ProducesWideIndent()
     {
         string json = """{"a": {"b": 1}}""";
         string yaml = YamlDocument.ConvertToYamlString(json, new YamlWriterOptions { IndentSize = 8 });
-        Assert.Equal("a:\n        b: 1", yaml);
+        Assert.AreEqual("a:\n        b: 1", yaml);
     }
 
     // ===================================================================
     // Category 19: Empty containers at various depths
     // ===================================================================
 
-    [Fact]
+    [TestMethod]
     public void EmptyContainersInsideNestedStructure_RoundTrip()
     {
         string json = """{"outer": {"empty_obj": {}, "empty_arr": [], "value": 1}}""";
@@ -742,7 +743,7 @@ public class JsonToYamlTests
         AssertJsonEqual(json, roundTripped);
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedEmptyArraysInArray_RoundTrip()
     {
         string json = """[[], {}, [1], {"a": 1}]""";
@@ -756,7 +757,7 @@ public class JsonToYamlTests
     // Category 20: Consecutive escape sequences
     // ===================================================================
 
-    [Fact]
+    [TestMethod]
     public void ConsecutiveEscapeSequences_RoundTrip()
     {
         string json = """{"k": "line1\nline2\n\ttab\r\nwindows"}""";
@@ -766,7 +767,7 @@ public class JsonToYamlTests
         AssertJsonEqual(json, roundTripped);
     }
 
-    [Fact]
+    [TestMethod]
     public void QuotesAndBackslashesInString_RoundTrip()
     {
         string json = """{"k": "say \"hello\" and use \\path\\file"}""";
@@ -780,16 +781,16 @@ public class JsonToYamlTests
     // Category 21: Property order preservation
     // ===================================================================
 
-    [Fact]
+    [TestMethod]
     public void PropertyOrderPreserved()
     {
         string json = """{"z": 1, "a": 2, "m": 3, "b": 4}""";
         string yaml = YamlDocument.ConvertToYamlString(json);
         string[] lines = yaml.Split('\n');
-        Assert.Equal("z: 1", lines[0]);
-        Assert.Equal("a: 2", lines[1]);
-        Assert.Equal("m: 3", lines[2]);
-        Assert.Equal("b: 4", lines[3]);
+        Assert.AreEqual("z: 1", lines[0]);
+        Assert.AreEqual("a: 2", lines[1]);
+        Assert.AreEqual("m: 3", lines[2]);
+        Assert.AreEqual("b: 4", lines[3]);
     }
 
     // ===================================================================
@@ -799,7 +800,7 @@ public class JsonToYamlTests
     private static void AssertJsonEqual(string expected, string actual)
     {
         // Normalize both JSONs to compact form via re-serialization
-        Assert.Equal(NormalizeJson(expected), NormalizeJson(actual));
+        Assert.AreEqual(NormalizeJson(expected), NormalizeJson(actual));
     }
 
     private static string NormalizeJson(string json)

@@ -5,13 +5,14 @@
 using System.Buffers;
 using System.Text.Json;
 using Corvus.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.UriTemplates;
 
+[TestClass]
 public class JsonUriTemplateSerializationTests
 {
-    [Fact]
+    [TestMethod]
     public void WriteJsonElementBackedJsonUriTemplateToString()
     {
         JsonUriTemplate sut = JsonUriTemplate.Parse("\"http://example.com/dictionary/{term:1}/{term}\"");
@@ -22,11 +23,11 @@ public class JsonUriTemplateSerializationTests
         writer.Flush();
         JsonAny roundTripped = JsonAny.ParseValue(abw.WrittenSpan);
 
-        Assert.Equal(JsonValueKind.String, roundTripped.ValueKind);
-        Assert.Equal(JsonAny.Parse("\"http://example.com/dictionary/{term:1}/{term}\""), roundTripped);
+        Assert.AreEqual(JsonValueKind.String, roundTripped.ValueKind);
+        Assert.AreEqual(JsonAny.Parse("\"http://example.com/dictionary/{term:1}/{term}\""), roundTripped);
     }
 
-    [Fact]
+    [TestMethod]
     public void WriteDotnetBackedJsonUriTemplateToString()
     {
         JsonUriTemplate sut = JsonAny.Parse("\"http://example.com/dictionary/{term:1}/{term}\"").As<JsonUriTemplate>().AsDotnetBackedValue();
@@ -37,7 +38,7 @@ public class JsonUriTemplateSerializationTests
         writer.Flush();
         JsonAny roundTripped = JsonAny.ParseValue(abw.WrittenSpan);
 
-        Assert.Equal(JsonValueKind.String, roundTripped.ValueKind);
-        Assert.Equal(JsonAny.Parse("\"http://example.com/dictionary/{term:1}/{term}\""), roundTripped);
+        Assert.AreEqual(JsonValueKind.String, roundTripped.ValueKind);
+        Assert.AreEqual(JsonAny.Parse("\"http://example.com/dictionary/{term:1}/{term}\""), roundTripped);
     }
 }

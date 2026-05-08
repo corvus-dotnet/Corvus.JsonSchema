@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using AnalyzerTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<
     Corvus.Text.Json.Analyzers.MissingDisposeAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Analyzers.Tests;
 /// <summary>
 /// Tests for CTJ004/CTJ005/CTJ006: Missing dispose on Corvus.Text.Json disposable types.
 /// </summary>
+[TestClass]
 public class MissingDisposeAnalyzerTests
 {
     private const string DisposableStubs = @"
@@ -63,7 +64,7 @@ namespace Corvus.Text.Json
     // ========================
     // CTJ004: ParsedJsonDocument
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task ParsedJsonDocument_WithoutUsing_FiresCTJ004()
     {
         const string testCode = DisposableStubs + @"
@@ -90,7 +91,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParsedJsonDocument_WithUsingDeclaration_NoDiagnostic()
     {
         const string testCode = DisposableStubs + @"
@@ -111,7 +112,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParsedJsonDocument_WithUsingBlock_NoDiagnostic()
     {
         const string testCode = DisposableStubs + @"
@@ -134,7 +135,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParsedJsonDocument_WithExplicitDispose_NoDiagnostic()
     {
         const string testCode = DisposableStubs + @"
@@ -156,7 +157,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParsedJsonDocument_ResultDiscarded_FiresCTJ004()
     {
         const string testCode = DisposableStubs + @"
@@ -186,7 +187,7 @@ namespace TestApp
     // ========================
     // CTJ005: JsonWorkspace
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task JsonWorkspace_WithoutUsing_FiresCTJ005()
     {
         const string testCode = DisposableStubs + @"
@@ -213,7 +214,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task JsonWorkspace_WithUsingDeclaration_NoDiagnostic()
     {
         const string testCode = DisposableStubs + @"
@@ -234,7 +235,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task JsonWorkspace_WithExplicitDispose_NoDiagnostic()
     {
         const string testCode = DisposableStubs + @"
@@ -259,7 +260,7 @@ namespace TestApp
     // ========================
     // CTJ006: JsonDocumentBuilder
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task JsonDocumentBuilder_WithoutUsing_FiresCTJ006()
     {
         const string testCode = DisposableStubs + @"
@@ -288,7 +289,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task JsonDocumentBuilder_WithUsingDeclaration_NoDiagnostic()
     {
         const string testCode = DisposableStubs + @"
@@ -314,7 +315,7 @@ namespace TestApp
     // ========================
     // Code fix tests
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task CodeFix_AddsUsingKeyword()
     {
         const string testCode = DisposableStubs + @"
@@ -354,7 +355,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CodeFix_WorkspaceAddsUsing()
     {
         const string testCode = DisposableStubs + @"
@@ -397,7 +398,7 @@ namespace TestApp
     // ========================
     // Negative tests
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task NonCorvusDisposable_NoDiagnostic()
     {
         const string testCode = @"
@@ -429,7 +430,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UnrelatedLocalVariable_NoDiagnostic()
     {
         const string testCode = DisposableStubs + @"

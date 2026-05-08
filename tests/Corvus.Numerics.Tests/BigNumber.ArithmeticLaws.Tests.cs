@@ -4,18 +4,19 @@
 
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
 /// <summary>
 /// Tests that verify BigNumber arithmetic operations follow mathematical laws.
 /// </summary>
+[TestClass]
 public class BigNumberArithmeticLawsTests
 {
     #region Commutative Laws
 
-    [Fact]
+    [TestMethod]
     public void Addition_Commutative_APlusBEqualsBPlusA()
     {
         var a = BigNumber.Parse("123.456");
@@ -27,7 +28,7 @@ public class BigNumberArithmeticLawsTests
         result1.ShouldBe(result2);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_Commutative_ATimesBEqualsBTimesA()
     {
         var a = BigNumber.Parse("123.456");
@@ -43,7 +44,7 @@ public class BigNumberArithmeticLawsTests
 
     #region Associative Laws
 
-    [Fact]
+    [TestMethod]
     public void Addition_Associative_APlusBPlusCEqualsAPlusBPlusC()
     {
         var a = BigNumber.Parse("123.456");
@@ -56,7 +57,7 @@ public class BigNumberArithmeticLawsTests
         result1.ShouldBe(result2);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_Associative_ATimesBTimesCEqualsATimesBTimesC()
     {
         BigNumber a = new(2, 0);
@@ -73,7 +74,7 @@ public class BigNumberArithmeticLawsTests
 
     #region Distributive Laws
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_Distributive_ATimesBPlusCEqualsATimesBPlusATimesC()
     {
         BigNumber a = new(2, 0);
@@ -90,7 +91,7 @@ public class BigNumberArithmeticLawsTests
 
     #region Identity Laws
 
-    [Fact]
+    [TestMethod]
     public void Addition_Identity_APlusZeroEqualsA()
     {
         var a = BigNumber.Parse("123.456");
@@ -100,7 +101,7 @@ public class BigNumberArithmeticLawsTests
         result.ShouldBe(a);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_Identity_ATimesOneEqualsA()
     {
         var a = BigNumber.Parse("123.456");
@@ -110,7 +111,7 @@ public class BigNumberArithmeticLawsTests
         result.ShouldBe(a);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_Zero_ATimesZeroEqualsZero()
     {
         var a = BigNumber.Parse("123.456");
@@ -124,7 +125,7 @@ public class BigNumberArithmeticLawsTests
 
     #region Inverse Laws
 
-    [Fact]
+    [TestMethod]
     public void Addition_Inverse_APlusNegativeAEqualsZero()
     {
         var a = BigNumber.Parse("123.456");
@@ -134,7 +135,7 @@ public class BigNumberArithmeticLawsTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_Self_AMinusAEqualsZero()
     {
         var a = BigNumber.Parse("123.456");
@@ -144,7 +145,7 @@ public class BigNumberArithmeticLawsTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_ByItself_ADividedByAEqualsOne()
     {
         var a = BigNumber.Parse("123.456");
@@ -158,7 +159,7 @@ public class BigNumberArithmeticLawsTests
 
     #region Comparison Transitivity
 
-    [Fact]
+    [TestMethod]
     public void Comparison_Transitive_IfALessBAndBLessCThenALessC()
     {
         BigNumber a = new(100, 0);
@@ -174,7 +175,7 @@ public class BigNumberArithmeticLawsTests
         aLessC.ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Comparison_Reflexive_AEqualsA()
     {
         var a = BigNumber.Parse("123.456");
@@ -184,7 +185,7 @@ public class BigNumberArithmeticLawsTests
         a.CompareTo(b).ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Comparison_Symmetric_IfAEqualsBThenBEqualsA()
     {
         var a = BigNumber.Parse("123.456");
@@ -198,7 +199,7 @@ public class BigNumberArithmeticLawsTests
 
     #region Arithmetic Properties
 
-    [Fact]
+    [TestMethod]
     public void Negation_DoubleNegation_NegativeNegativeAEqualsA()
     {
         var a = BigNumber.Parse("123.456");
@@ -208,7 +209,7 @@ public class BigNumberArithmeticLawsTests
         result.ShouldBe(a);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_AsAdditionOfNegative_AMinusBEqualsAPlusNegativeB()
     {
         var a = BigNumber.Parse("123.456");
@@ -220,7 +221,7 @@ public class BigNumberArithmeticLawsTests
         result1.ShouldBe(result2);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_AsMultiplicationOfReciprocal_Consistency()
     {
         BigNumber a = new(100, 0);
@@ -236,7 +237,7 @@ public class BigNumberArithmeticLawsTests
 
     #region Edge Case Validations
 
-    [Fact]
+    [TestMethod]
     public void Abs_PreservesZero()
     {
         var result = BigNumber.Abs(BigNumber.Zero);
@@ -244,7 +245,7 @@ public class BigNumberArithmeticLawsTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Abs_Idempotent_AbsAbsAEqualsAbsA()
     {
         var a = BigNumber.Parse("-123.456");
@@ -255,7 +256,7 @@ public class BigNumberArithmeticLawsTests
         result1.ShouldBe(result2);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sign_ConsistentWithComparison()
     {
         BigNumber positive = new(123, 0);
@@ -276,7 +277,7 @@ public class BigNumberArithmeticLawsTests
 
     #region Normalization Laws
 
-    [Fact]
+    [TestMethod]
     public void Normalize_Idempotent_NormalizeNormalizeAEqualsNormalizeA()
     {
         BigNumber a = new(12300, -2);
@@ -287,7 +288,7 @@ public class BigNumberArithmeticLawsTests
         result1.ShouldBe(result2);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_PreservesValue_ANormalizedEqualsA()
     {
         BigNumber a = new(12300, -2);
@@ -297,7 +298,7 @@ public class BigNumberArithmeticLawsTests
         a.ShouldBe(normalized);
     }
 
-    [Fact]
+    [TestMethod]
     public void Arithmetic_ResultsAreNormalized()
     {
         BigNumber a = new(1000, 0);

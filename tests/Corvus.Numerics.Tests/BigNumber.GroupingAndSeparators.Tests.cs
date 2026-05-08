@@ -5,7 +5,7 @@
 using System.Globalization;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
@@ -13,11 +13,12 @@ namespace Corvus.Numerics.Tests;
 /// Phase 3: Grouping and separator logic tests.
 /// Target: +1.2% coverage (15 branches).
 /// </summary>
+[TestClass]
 public class BigNumberGroupingAndSeparatorsTests
 {
     #region Various Group Sizes (+8 branches)
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_StandardGrouping_ThreeDigits()
     {
         // Standard Western grouping [3]
@@ -30,7 +31,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldContain("12,345,678.90");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_IndianGrouping_ThreeTwoPattern()
     {
         // Indian grouping [3, 2]
@@ -45,7 +46,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldContain("12,34,567");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_EastAsianGrouping_FourDigits()
     {
         // East Asian grouping [4]
@@ -59,7 +60,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldContain("123,4567");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_NoGrouping_NoSeparators()
     {
         // No grouping []
@@ -73,7 +74,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldNotContain(",");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_ComplexGrouping_MultiplePatterns()
     {
         // Complex grouping [3, 2, 1]
@@ -86,7 +87,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldContain(",");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_WithCustomGrouping_AppliesGrouping()
     {
         // Currency with custom grouping
@@ -103,7 +104,7 @@ public class BigNumberGroupingAndSeparatorsTests
 
     #region Multi-Character Separators (+4 branches)
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_DoubleCharDecimalSeparator_Works()
     {
         BigNumber num = new(12345, -2);
@@ -115,7 +116,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldContain("123::45");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_DoubleCharGroupSeparator_Works()
     {
         BigNumber num = new(1234567, -2);
@@ -127,7 +128,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldContain(",,");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_MultiCharSeparators_FormatsCorrectly()
     {
         BigNumber num = new(1234567, -2);
@@ -145,7 +146,7 @@ public class BigNumberGroupingAndSeparatorsTests
 
     #region Integer/Fractional Part Splitting (+3 branches)
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_OnlyIntegerPart_NoFractional()
     {
         // Precision 0 - only integer part
@@ -156,7 +157,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldNotContain(".");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_OnlyFractionalPart_IntegerIsZero()
     {
         // Value < 1 - integer part is 0
@@ -167,7 +168,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldContain("0.005");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_BothParts_SplitsCorrectly()
     {
         // Both integer and fractional parts
@@ -177,7 +178,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldBe("123.456");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_LargeIntegerSmallFraction_SplitsCorrectly()
     {
         // Large integer, small fractional part
@@ -187,7 +188,7 @@ public class BigNumberGroupingAndSeparatorsTests
         result.ShouldContain("123,456,789.01");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_SmallIntegerLargeFraction_SplitsCorrectly()
     {
         // Small integer, large fractional part

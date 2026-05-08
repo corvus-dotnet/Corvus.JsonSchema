@@ -1,4 +1,4 @@
-﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
+// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Collections.Generic;
@@ -8,7 +8,7 @@ using System.Linq;
 ////using Corvus.Text.Json.Serialization;
 ////using Corvus.Text.Json.Serialization.Metadata;
 using System.Text.RegularExpressions;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json;
 internal static partial class JsonTestHelper
@@ -175,7 +175,7 @@ internal static partial class JsonTestHelper
     ////        {
     ////            var expectedConverters = (IList<JsonConverter>)property.GetValue(expected);
     ////            var actualConverters = (IList<JsonConverter>)property.GetValue(actual);
-    ////            Assert.Equal(expectedConverters.Count, actualConverters.Count);
+    ////            Assert.AreEqual(expectedConverters.Count, actualConverters.Count);
     ////            for (int i = 0; i < actualConverters.Count; i++)
     ////            {
     ////                Assert.IsType(expectedConverters[i].GetType(), actualConverters[i]);
@@ -185,11 +185,11 @@ internal static partial class JsonTestHelper
     ////        {
     ////            var list1 = (IList<IJsonTypeInfoResolver>)property.GetValue(expected);
     ////            var list2 = (IList<IJsonTypeInfoResolver>)property.GetValue(actual);
-    ////            Assert.Equal(list1, list2);
+    ////            Assert.AreEqual(list1, list2);
     ////        }
     ////        else
     ////        {
-    ////            Assert.Equal(property.GetValue(expected), property.GetValue(actual));
+    ////            Assert.AreEqual(property.GetValue(expected), property.GetValue(actual));
     ////        }
     ////    }
     ////}

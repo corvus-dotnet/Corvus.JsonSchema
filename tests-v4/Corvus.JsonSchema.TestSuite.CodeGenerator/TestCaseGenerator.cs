@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 namespace Corvus.JsonSchema.TestSuite.CodeGenerator;
 
 /// <summary>
-/// Generates xUnit test classes for the JSON Schema Test Suite
+/// Generates MSTest test classes for the JSON Schema Test Suite
 /// using the V4 runtime Roslyn compilation driver.
 /// </summary>
 internal static class TestCaseGenerator
@@ -97,7 +97,7 @@ internal static class TestCaseGenerator
                     .AppendLine("using Corvus.Json;")
                     .AppendLine("using Corvus.Json.Specs.Tests.Infrastructure;")
                     .AppendLine("using Drivers;")
-                    .AppendLine("using Xunit;")
+                    .AppendLine("using Microsoft.VisualStudio.TestTools.UnitTesting;")
                     .AppendLine()
                     .AppendLine($"namespace {namespaceValue};");
 
@@ -106,13 +106,27 @@ internal static class TestCaseGenerator
                     string pascalSuiteName = GetUniqueName(ToPascalCase(testSuite.SuiteName), suiteNames);
                     builder
                         .AppendLine()
-                        .AppendLine($"[Trait(\"JsonSchemaTestSuite\", \"{namespaceGroup}\")]")
-                        .AppendLine($"public class Suite{pascalSuiteName} : IClassFixture<Suite{pascalSuiteName}.Fixture>")
+                        .AppendLine($"[TestCategory(\"{namespaceGroup}\")]")
+                        .AppendLine("[TestClass]")
+                        .AppendLine($"public class Suite{pascalSuiteName}")
                         .AppendLine("{")
-                        .AppendLine("    private readonly Fixture _fixture;")
-                        .AppendLine($"    public Suite{pascalSuiteName}(Fixture fixture)")
+                        .AppendLine("    private static Fixture? s_fixture;")
+                        .AppendLine()
+                        .AppendLine("    [ClassInitialize]")
+                        .AppendLine($"    public static async Task ClassInit(TestContext _)")
                         .AppendLine("    {")
-                        .AppendLine("        _fixture = fixture;")
+                        .AppendLine("        s_fixture = new Fixture();")
+                        .AppendLine("        await s_fixture.InitializeAsync();")
+                        .AppendLine("    }")
+                        .AppendLine()
+                        .AppendLine("    [ClassCleanup]")
+                        .AppendLine("    public static void ClassCleanupMethod()")
+                        .AppendLine("    {")
+                        .AppendLine("        if (s_fixture is not null)")
+                        .AppendLine("        {")
+                        .AppendLine("            s_fixture.Dispose();")
+                        .AppendLine("            s_fixture = null;")
+                        .AppendLine("        }")
                         .AppendLine("    }");
 
                     HashSet<string> testNames = [];
@@ -123,18 +137,18 @@ internal static class TestCaseGenerator
 
                         builder
                             .AppendLine()
-                            .AppendLine("    [Fact]")
+                            .AppendLine("    [TestMethod]")
                             .AppendLine($"    public void Test{testName}()")
                             .AppendLine("    {")
                             .AppendLine($"        using var doc = JsonDocument.Parse({SymbolDisplay.FormatLiteral(test.Instance, true)});")
-                            .AppendLine($"        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);")
-                            .AppendLine($"        Assert.{(test.Expectation ? "True" : "False")}(instance.Validate(ValidationContext.ValidContext).IsValid);")
+                            .AppendLine($"        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);")
+                            .AppendLine($"        Assert.{(test.Expectation ? "IsTrue" : "IsFalse")}(instance.Validate(ValidationContext.ValidContext).IsValid);")
                             .AppendLine("    }");
                     }
 
                     builder
                         .AppendLine()
-                        .AppendLine("    public class Fixture : IAsyncLifetime")
+                        .AppendLine("    public class Fixture : IDisposable")
                         .AppendLine("    {")
                         .AppendLine("        private JsonSchemaBuilderDriver? _driver;")
                         .AppendLine()
@@ -153,10 +167,9 @@ internal static class TestCaseGenerator
                         .AppendLine("                useImplicitOperatorString: false);")
                         .AppendLine("        }")
                         .AppendLine()
-                        .AppendLine("        public Task DisposeAsync()")
+                        .AppendLine("        public void Dispose()")
                         .AppendLine("        {")
                         .AppendLine("            _driver?.Dispose();")
-                        .AppendLine("            return Task.CompletedTask;")
                         .AppendLine("        }")
                         .AppendLine("    }")
                         .AppendLine("}");

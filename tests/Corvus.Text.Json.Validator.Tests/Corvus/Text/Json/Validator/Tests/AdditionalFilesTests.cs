@@ -2,16 +2,17 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Validator.Tests;
 
 /// <summary>
 /// Tests for additional schema file support in <see cref="JsonSchema"/>.
 /// </summary>
+[TestClass]
 public class AdditionalFilesTests
 {
-    [Fact]
+    [TestMethod]
     public void FromText_WithAdditionalFiles_ResolvesRef()
     {
         string addressSchemaPath = Path.Combine(
@@ -63,11 +64,11 @@ public class AdditionalFilesTests
             }
             """;
 
-        Assert.True(schema.Validate(validJson));
-        Assert.False(schema.Validate(invalidJson));
+        Assert.IsTrue(schema.Validate(validJson));
+        Assert.IsFalse(schema.Validate(invalidJson));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromText_WithAdditionalFiles_ResolvesRefById()
     {
         // The address.json schema has $id = "https://example.com/schemas/address"
@@ -108,10 +109,10 @@ public class AdditionalFilesTests
             }
             """;
 
-        Assert.True(schema.Validate(validJson));
+        Assert.IsTrue(schema.Validate(validJson));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromFile_WithAdditionalFiles_ResolvesRef()
     {
         string addressSchemaPath = Path.Combine(
@@ -143,6 +144,6 @@ public class AdditionalFilesTests
             }
             """;
 
-        Assert.True(schema.Validate(validJson));
+        Assert.IsTrue(schema.Validate(validJson));
     }
 }

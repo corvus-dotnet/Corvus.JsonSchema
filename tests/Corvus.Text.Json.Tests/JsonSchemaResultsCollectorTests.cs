@@ -1,11 +1,12 @@
-﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
+// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
+[TestClass]
 public class JsonSchemaResultsCollectorTests
 {
     private static readonly ExpectedResult[] s_expectedForPushAndPopNestedSchemaLocation_WithResults =
@@ -28,7 +29,7 @@ public class JsonSchemaResultsCollectorTests
         new ("", "$defs/Name", "/someProperty", "Evaluated a first property.", true),
         ];
 
-    [Fact]
+    [TestMethod]
     public void All_Providers_Throw_If_Provider_Returns_False()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -49,40 +50,40 @@ public class JsonSchemaResultsCollectorTests
         }
 
         // 1. BeginChildContext with large path provider
-        Assert.Throws<ArgumentException>(() => c.BeginChildContext(0, largePathProvider, null));
-        Assert.Throws<ArgumentException>(() => c.BeginChildContext(0, reducedEvaluationPath: null, documentEvaluationPath: largePathProvider));
-        Assert.Throws<ArgumentException>(() => c.BeginChildContext(0, largePathProvider, largePathProvider));
+        Assert.ThrowsExactly<ArgumentException>(() => c.BeginChildContext(0, largePathProvider, null));
+        Assert.ThrowsExactly<ArgumentException>(() => c.BeginChildContext(0, reducedEvaluationPath: null, documentEvaluationPath: largePathProvider));
+        Assert.ThrowsExactly<ArgumentException>(() => c.BeginChildContext(0, largePathProvider, largePathProvider));
 
         // 2. BeginChildContext (escaped property) with large path provider
-        Assert.Throws<ArgumentException>(() => c.BeginChildContext(0, "prop"u8, largePathProvider));
+        Assert.ThrowsExactly<ArgumentException>(() => c.BeginChildContext(0, "prop"u8, largePathProvider));
 
         // 3. BeginChildContextUnescaped with large path provider
-        Assert.Throws<ArgumentException>(() => c.BeginChildContextUnescaped(0, "prop"u8, largePathProvider));
+        Assert.ThrowsExactly<ArgumentException>(() => c.BeginChildContextUnescaped(0, "prop"u8, largePathProvider));
 
         // 4. BeginChildContext<T> with large path provider
-        Assert.Throws<ArgumentException>(() => c.BeginChildContext(0, 42, (ctx, buffer, out written) => largePathProvider(buffer, out written), null, null));
-        Assert.Throws<ArgumentException>(() => c.BeginChildContext(0, 42, null, (ctx, buffer, out written) => largePathProvider(buffer, out written), null));
-        Assert.Throws<ArgumentException>(() => c.BeginChildContext(0, 42, null, null, (ctx, buffer, out written) => largePathProvider(buffer, out written)));
-        Assert.Throws<ArgumentException>(() => c.BeginChildContext(0, 42, (ctx, buffer, out written) => largePathProvider(buffer, out written), (ctx, buffer, out written) => largePathProvider(buffer, out written), (ctx, buffer, out written) => largePathProvider(buffer, out written)));
+        Assert.ThrowsExactly<ArgumentException>(() => c.BeginChildContext(0, 42, (ctx, buffer, out written) => largePathProvider(buffer, out written), null, null));
+        Assert.ThrowsExactly<ArgumentException>(() => c.BeginChildContext(0, 42, null, (ctx, buffer, out written) => largePathProvider(buffer, out written), null));
+        Assert.ThrowsExactly<ArgumentException>(() => c.BeginChildContext(0, 42, null, null, (ctx, buffer, out written) => largePathProvider(buffer, out written)));
+        Assert.ThrowsExactly<ArgumentException>(() => c.BeginChildContext(0, 42, (ctx, buffer, out written) => largePathProvider(buffer, out written), (ctx, buffer, out written) => largePathProvider(buffer, out written), (ctx, buffer, out written) => largePathProvider(buffer, out written)));
 
         int parent = c.BeginChildContext(0, schemaEvaluationPath: static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/$defs/Name"u8, buffer, out written));
         int sequenceNumber = c.BeginChildContext(parent, "someProperty"u8);
 
         // 8. EvaluatedKeywordPath with large path provider
-        Assert.Throws<ArgumentException>(() => c.EvaluatedKeywordPath(true, largeMessageProvider, largePathProvider));
-        Assert.Throws<ArgumentException>(() => c.EvaluatedKeywordPath(false, 42, (ctx, buffer, out written) => largeMessageProvider(buffer, out written), (ctx, buffer, out written) => largePathProvider(buffer, out written)));
+        Assert.ThrowsExactly<ArgumentException>(() => c.EvaluatedKeywordPath(true, largeMessageProvider, largePathProvider));
+        Assert.ThrowsExactly<ArgumentException>(() => c.EvaluatedKeywordPath(false, 42, (ctx, buffer, out written) => largeMessageProvider(buffer, out written), (ctx, buffer, out written) => largePathProvider(buffer, out written)));
 
         // 10. EvaluatedBooleanSchema with large message provider
-        Assert.Throws<ArgumentException>(() => c.EvaluatedBooleanSchema(true, largeMessageProvider));
-        Assert.Throws<ArgumentException>(() => c.EvaluatedBooleanSchema(false, 42, (ctx, buffer, out written) => largeMessageProvider(buffer, out written)));
+        Assert.ThrowsExactly<ArgumentException>(() => c.EvaluatedBooleanSchema(true, largeMessageProvider));
+        Assert.ThrowsExactly<ArgumentException>(() => c.EvaluatedBooleanSchema(false, 42, (ctx, buffer, out written) => largeMessageProvider(buffer, out written)));
 
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void BeginChildContext_Generic_WithNonNullPathProviders_Works(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -129,14 +130,14 @@ public class JsonSchemaResultsCollectorTests
                 written = prefix.Length + intWritten;
                 return true;
             });
-        Assert.True(seq > 0);
+        Assert.IsTrue(seq > 0);
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void BeginChildContext_Overloads_Work(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -144,19 +145,19 @@ public class JsonSchemaResultsCollectorTests
 
         // Using BeginChildContext with reducedEvaluationPath and documentEvaluationPath as null
         int seq1 = c.BeginChildContext(0);
-        Assert.True(seq1 >= 0);
+        Assert.IsTrue(seq1 >= 0);
 
         // Using BeginChildContext with property name (escaped)
         int seq2 = c.BeginChildContext(0, "propertyName"u8);
-        Assert.True(seq2 >= 0);
+        Assert.IsTrue(seq2 >= 0);
 
         // Using BeginChildContextUnescaped
         int seq3 = c.BeginChildContextUnescaped(0, "unescapedName"u8);
-        Assert.True(seq3 >= 0);
+        Assert.IsTrue(seq3 >= 0);
 
         // Using generic BeginChildContext
         int seq4 = c.BeginChildContext(0, 42, null, null, null);
-        Assert.True(seq4 >= 0);
+        Assert.IsTrue(seq4 >= 0);
 
         // Pop all contexts
         c.PopChildContext(seq4);
@@ -167,7 +168,7 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_WithEscapedPropertyName_UnescapesForDocumentLocation()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -179,19 +180,19 @@ public class JsonSchemaResultsCollectorTests
         c.BeginChildContext(0, escapedProperty);
 
         // SchemaLocation and EvaluationLocation should be empty for property context
-        Assert.Equal("", collector.SchemaLocation);
-        Assert.Equal("", collector.EvaluationLocation);
+        Assert.AreEqual("", collector.SchemaLocation);
+        Assert.AreEqual("", collector.EvaluationLocation);
 
         // DocumentLocation should be "/hello"
-        Assert.Equal("/hello", collector.DocumentLocation);
+        Assert.AreEqual("/hello", collector.DocumentLocation);
 
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void BeginChildContext_WithNonNullPathProviders_Works(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -202,14 +203,14 @@ public class JsonSchemaResultsCollectorTests
             0,
             (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("reduced/path"u8, buffer, out written),
             (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("doc/path"u8, buffer, out written));
-        Assert.True(seq > 0);
+        Assert.IsTrue(seq > 0);
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void BeginChildContext_WithNonNullReducedEvaluationPath_Works(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -220,14 +221,14 @@ public class JsonSchemaResultsCollectorTests
             0,
             "property"u8,
             (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("reduced/escaped"u8, buffer, out written));
-        Assert.True(seq > 0);
+        Assert.IsTrue(seq > 0);
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void BeginChildContextUnescaped_WithNonNullReducedEvaluationPath_Works(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -238,11 +239,11 @@ public class JsonSchemaResultsCollectorTests
             0,
             "property"u8,
             (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("reduced/unescaped"u8, buffer, out written));
-        Assert.True(seq > 0);
+        Assert.IsTrue(seq > 0);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContextUnescaped_WithUnescapedPropertyName_EncodesForDocumentLocation()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -254,27 +255,27 @@ public class JsonSchemaResultsCollectorTests
         c.BeginChildContextUnescaped(0, unescapedProperty);
 
         // SchemaLocation and EvaluationLocation should be empty for property context
-        Assert.Equal("", collector.SchemaLocation);
-        Assert.Equal("", collector.EvaluationLocation);
+        Assert.AreEqual("", collector.SchemaLocation);
+        Assert.AreEqual("", collector.EvaluationLocation);
 
         // DocumentLocation should be "/he~0l~1o"
-        Assert.Equal("/he~1l~0o", collector.DocumentLocation);
+        Assert.AreEqual("/he~1l~0o", collector.DocumentLocation);
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void Collector_Can_Be_Created_Disposed_And_Recreated_With_Larger_Capacity()
     {
         // Create and dispose a collector with default capacity
         var collector1 = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
-        Assert.NotNull(collector1);
+        Assert.IsNotNull(collector1);
         collector1.Dispose();
 
         // Create a new collector with a larger initial capacity
         int largeCapacity = 500;
         var collector2 = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose, largeCapacity);
-        Assert.NotNull(collector2);
+        Assert.IsNotNull(collector2);
 
         // Verify that the collector works as expected
         IJsonSchemaResultsCollector c2 = collector2;
@@ -283,15 +284,15 @@ public class JsonSchemaResultsCollectorTests
 
         // Should be able to enumerate results
         int resultCount = collector2.GetResultCount();
-        Assert.Equal(1, resultCount);
+        Assert.AreEqual(1, resultCount);
 
         collector2.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void CommitChildContext_Generic_Overload_Works(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -300,18 +301,18 @@ public class JsonSchemaResultsCollectorTests
         int seq = c.BeginChildContext(0);
         c.CommitChildContext(seq, true, false, 123, (ctx, buffer, out written) =>
         {
-            Assert.Equal(123, ctx);
+            Assert.AreEqual(123, ctx);
             return JsonSchemaEvaluation.TryCopyMessage("Generic commit"u8, buffer, out written);
         });
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void Construct_JsonSchemaResultsCollector()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
-        Assert.NotNull(collector);
+        Assert.IsNotNull(collector);
         collector.Dispose();
     }
 
@@ -319,31 +320,31 @@ public class JsonSchemaResultsCollectorTests
     {
         internal void AssertEqual(JsonSchemaResultsCollector.Result result)
         {
-            Assert.Equal(evaluationLocation, result.GetEvaluationLocationText());
-            Assert.Equal(schemaLocation, result.GetSchemaEvaluationLocationText());
-            Assert.Equal(documentLocation, result.GetDocumentEvaluationLocationText());
-            Assert.Equal(message, result.GetMessageText());
-            Assert.Equal(isMatch, result.IsMatch);
+            Assert.AreEqual(evaluationLocation, result.GetEvaluationLocationText());
+            Assert.AreEqual(schemaLocation, result.GetSchemaEvaluationLocationText());
+            Assert.AreEqual(documentLocation, result.GetDocumentEvaluationLocationText());
+            Assert.AreEqual(message, result.GetMessageText());
+            Assert.AreEqual(isMatch, result.IsMatch);
         }
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void CreateUnrented_And_Dispose_Works(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.CreateUnrented(level);
-        Assert.NotNull(collector);
+        Assert.IsNotNull(collector);
         collector.Dispose();
         // Double dispose should not throw
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void DoubleDispose_DoesNotThrow(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -351,10 +352,10 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose(); // Should not throw
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void EvaluatedBooleanSchema_Generic_Overload_Works(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -371,10 +372,10 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void EvaluatedKeyword_Overloads_Work(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -396,7 +397,7 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void EvaluatedKeyword_Throws_If_Keyword_Exceeds_Maximum_Length()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -414,7 +415,7 @@ public class JsonSchemaResultsCollectorTests
         }
 
         // The collector will call the provider and see the too-large written value
-        Assert.Throws<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
         {
             int seq = c.BeginChildContext(0);
             c.CommitChildContext(seq, true, false, TooLargeKeywordProvider);
@@ -423,10 +424,10 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void EvaluatedKeywordForProperty_Overloads_Work(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -447,10 +448,10 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void EvaluatedKeywordPath_Overloads_Work(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -475,10 +476,10 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose();
     }
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void IgnoredKeyword_Overloads_Work(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -500,7 +501,7 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void Keywords_Do_Not_Throw_If_Value_Too_Large()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -528,7 +529,7 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void Locations_Are_Concatenated_On_Multiple_BeginChildContext_GenericProvider_Overloads()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -614,20 +615,20 @@ public class JsonSchemaResultsCollectorTests
 
         // First context
         int parentSequenceNumber = c.BeginChildContext(0, 1, evalPath1, schemaPath1, docPath1);
-        Assert.Equal("schema1", collector.SchemaLocation);
-        Assert.Equal("/doc1", collector.DocumentLocation);
-        Assert.Equal("/eval1", collector.EvaluationLocation);
+        Assert.AreEqual("schema1", collector.SchemaLocation);
+        Assert.AreEqual("/doc1", collector.DocumentLocation);
+        Assert.AreEqual("/eval1", collector.EvaluationLocation);
 
         // Second context (should concatenate)
         c.BeginChildContext(parentSequenceNumber, 2, evalPath2, schemaPath2, docPath2);
-        Assert.Equal("schema3", collector.SchemaLocation);
-        Assert.Equal("/doc1/doc3", collector.DocumentLocation);
-        Assert.Equal("/eval1/eval3", collector.EvaluationLocation);
+        Assert.AreEqual("schema3", collector.SchemaLocation);
+        Assert.AreEqual("/doc1/doc3", collector.DocumentLocation);
+        Assert.AreEqual("/eval1/eval3", collector.EvaluationLocation);
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void Locations_Are_Concatenated_On_Multiple_BeginChildContext_PropertyName_Overloads()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -639,21 +640,21 @@ public class JsonSchemaResultsCollectorTests
 
         // Begin with first property
         int parentSequenceNumber = c.BeginChildContext(0, property1);
-        Assert.Equal("", collector.SchemaLocation);
-        Assert.Equal("", collector.EvaluationLocation);
+        Assert.AreEqual("", collector.SchemaLocation);
+        Assert.AreEqual("", collector.EvaluationLocation);
         // DocumentLocation is encoded/escaped, but for ASCII should match
-        Assert.Equal("/property1", collector.DocumentLocation);
+        Assert.AreEqual("/property1", collector.DocumentLocation);
 
         // Second keyword
         c.BeginChildContext(parentSequenceNumber, property2);
-        Assert.Equal("", collector.SchemaLocation);
-        Assert.Equal("", collector.EvaluationLocation);
-        Assert.Equal("/property1/property2", collector.DocumentLocation);
+        Assert.AreEqual("", collector.SchemaLocation);
+        Assert.AreEqual("", collector.EvaluationLocation);
+        Assert.AreEqual("/property1/property2", collector.DocumentLocation);
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void Locations_Are_Concatenated_On_Multiple_BeginChildContext_Provider_Overloads()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -733,26 +734,26 @@ public class JsonSchemaResultsCollectorTests
 
         // First context
         int parentSequenceNumber = c.BeginChildContext(0, evalPath1, schemaPath1, docPath1);
-        Assert.Equal("schema1", collector.SchemaLocation); // SchemaLocation uses evaluationPath provider
-        Assert.Equal("/doc1", collector.DocumentLocation);
-        Assert.Equal("/eval1", collector.EvaluationLocation);
+        Assert.AreEqual("schema1", collector.SchemaLocation); // SchemaLocation uses evaluationPath provider
+        Assert.AreEqual("/doc1", collector.DocumentLocation);
+        Assert.AreEqual("/eval1", collector.EvaluationLocation);
 
         // Second context (should concatenate)
         c.BeginChildContext(parentSequenceNumber, evalPath2, schemaPath2, docPath2);
-        Assert.Equal("schema2", collector.SchemaLocation);
-        Assert.Equal("/doc1/doc2", collector.DocumentLocation);
-        Assert.Equal("/eval1/eval2", collector.EvaluationLocation);
+        Assert.AreEqual("schema2", collector.SchemaLocation);
+        Assert.AreEqual("/doc1/doc2", collector.DocumentLocation);
+        Assert.AreEqual("/eval1/eval2", collector.EvaluationLocation);
 
         // Parallel context (should concatenate with parent)
         c.BeginChildContext(parentSequenceNumber, evalPath3, schemaPath3, docPath3);
-        Assert.Equal("schema3", collector.SchemaLocation);
-        Assert.Equal("/doc1/doc3", collector.DocumentLocation);
-        Assert.Equal("/eval1/eval3", collector.EvaluationLocation);
+        Assert.AreEqual("schema3", collector.SchemaLocation);
+        Assert.AreEqual("/doc1/doc3", collector.DocumentLocation);
+        Assert.AreEqual("/eval1/eval3", collector.EvaluationLocation);
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void Locations_Are_Concatenated_On_Multiple_BeginChildContextUnescaped_PropertyName_Overloads()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -764,20 +765,20 @@ public class JsonSchemaResultsCollectorTests
 
         // Begin with first keyword (unescaped)
         int parentSequenceNumber = c.BeginChildContextUnescaped(0, property1);
-        Assert.Equal("", collector.SchemaLocation);
-        Assert.Equal("", collector.EvaluationLocation);
-        Assert.Equal("/property1", collector.DocumentLocation);
+        Assert.AreEqual("", collector.SchemaLocation);
+        Assert.AreEqual("", collector.EvaluationLocation);
+        Assert.AreEqual("/property1", collector.DocumentLocation);
 
         // Second keyword (unescaped)
         c.BeginChildContextUnescaped(parentSequenceNumber, property2);
-        Assert.Equal("", collector.SchemaLocation);
-        Assert.Equal("", collector.EvaluationLocation);
-        Assert.Equal("/property1/property2", collector.DocumentLocation);
+        Assert.AreEqual("", collector.SchemaLocation);
+        Assert.AreEqual("", collector.EvaluationLocation);
+        Assert.AreEqual("/property1/property2", collector.DocumentLocation);
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void PushAndPopNestedSchemaLocation_WithResults()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -811,7 +812,7 @@ public class JsonSchemaResultsCollectorTests
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void PushAndPopNestedSchemaLocationReverseCommit_WithResults()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);

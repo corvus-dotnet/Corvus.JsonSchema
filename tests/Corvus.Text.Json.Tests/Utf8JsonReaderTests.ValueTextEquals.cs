@@ -3,16 +3,16 @@
 
 using System.Buffers;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
-public static partial class Utf8JsonReaderTests
+public partial class Utf8JsonReaderTests
 {
-    [Theory]
-    [InlineData("\"hello\"", new char[1] { (char)0xDC01 })]    // low surrogate - invalid
-    [InlineData("\"hello\"", new char[1] { (char)0xD801 })]    // high surrogate - missing pair
-    public static void InvalidUTF16Search(string jsonString, char[] lookup)
+    [TestMethod]
+    [DataRow("\"hello\"", new char[1] { (char)0xDC01 })]    // low surrogate - invalid
+    [DataRow("\"hello\"", new char[1] { (char)0xD801 })]    // high surrogate - missing pair
+    public void InvalidUTF16Search(string jsonString, char[] lookup)
     {
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
         bool found = false;
@@ -30,24 +30,24 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.False(found);
+        Assert.IsFalse(found);
     }
 
-    [Fact]
-    public static void LargeLookupUTF16()
+    [TestMethod]
+    public void LargeLookupUTF16()
     {
         string jsonString = "\"hello\"";
         string lookup = new('a', 1_000);
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
 
         var json = new Utf8JsonReader(utf8Data, isFinalBlock: true, state: default);
-        Assert.True(json.Read());
-        Assert.Equal(JsonTokenType.String, json.TokenType);
-        Assert.False(json.ValueTextEquals(lookup.AsSpan()));
+        Assert.IsTrue(json.Read());
+        Assert.AreEqual(JsonTokenType.String, json.TokenType);
+        Assert.IsFalse(json.ValueTextEquals(lookup.AsSpan()));
     }
 
-    [Fact]
-    public static void LargeLookupUTF8()
+    [TestMethod]
+    public void LargeLookupUTF8()
     {
         string jsonString = "\"hello\"";
         byte[] lookup = new byte[1_000];
@@ -55,19 +55,18 @@ public static partial class Utf8JsonReaderTests
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
 
         var json = new Utf8JsonReader(utf8Data, isFinalBlock: true, state: default);
-        Assert.True(json.Read());
-        Assert.Equal(JsonTokenType.String, json.TokenType);
-        Assert.False(json.ValueTextEquals(lookup));
+        Assert.IsTrue(json.Read());
+        Assert.AreEqual(JsonTokenType.String, json.TokenType);
+        Assert.IsFalse(json.ValueTextEquals(lookup));
     }
 
     // NOTE: LookupOverflow test is constrained to run on Windows and MacOSX because it causes
     //       problems on Linux due to the way deferred memory allocation works. On Linux, the allocation can
     //       succeed even if there is not enough memory but then the test may get killed by the OOM killer at the
     //       time the memory is accessed which triggers the full memory allocation.
-    [PlatformSpecific(TestPlatforms.Windows | TestPlatforms.OSX)]
-    [ConditionalFact(typeof(Environment), nameof(Environment.Is64BitProcess))]
-    [OuterLoop]
-    public static void LookupOverflow()
+    [TestMethod]
+    [TestCategory("outerloop")]
+    public void LookupOverflow()
     {
         char[] jsonString = new char[800_000_002];
 
@@ -78,8 +77,8 @@ public static partial class Utf8JsonReaderTests
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
 
         var json = new Utf8JsonReader(utf8Data, isFinalBlock: true, state: default);
-        Assert.True(json.Read());
-        Assert.Equal(JsonTokenType.String, json.TokenType);
+        Assert.IsTrue(json.Read());
+        Assert.AreEqual(JsonTokenType.String, json.TokenType);
 
         try
         {
@@ -90,19 +89,19 @@ public static partial class Utf8JsonReaderTests
         { }
     }
 
-    [Theory]
-    [InlineData("{\"name\": 1234}", "name", true)]
-    [InlineData("{\"name\": 1234}", "namee", false)]
-    [InlineData("{\"name\": 1234}", "na\\u006de", false)]
-    [InlineData("{\"name\": 1234}", "", false)]
-    [InlineData("{\"\": 1234}", "name", false)]
-    [InlineData("{\"\": 1234}", "na\\u006de", false)]
-    [InlineData("{\"\": 1234}", "", true)]
-    [InlineData("{\"na\\u006de\": 1234}", "name", true)]
-    [InlineData("{\"na\\u006de\": 1234}", "namee", false)]
-    [InlineData("{\"na\\u006de\": 1234}", "na\\u006de", false)]
-    [InlineData("{\"na\\u006de\": 1234}", "", false)]
-    public static void TestTextEquals(string jsonString, string lookUpString, bool expectedFound)
+    [TestMethod]
+    [DataRow("{\"name\": 1234}", "name", true)]
+    [DataRow("{\"name\": 1234}", "namee", false)]
+    [DataRow("{\"name\": 1234}", "na\\u006de", false)]
+    [DataRow("{\"name\": 1234}", "", false)]
+    [DataRow("{\"\": 1234}", "name", false)]
+    [DataRow("{\"\": 1234}", "na\\u006de", false)]
+    [DataRow("{\"\": 1234}", "", true)]
+    [DataRow("{\"na\\u006de\": 1234}", "name", true)]
+    [DataRow("{\"na\\u006de\": 1234}", "namee", false)]
+    [DataRow("{\"na\\u006de\": 1234}", "na\\u006de", false)]
+    [DataRow("{\"na\\u006de\": 1234}", "", false)]
+    public void TestTextEquals(string jsonString, string lookUpString, bool expectedFound)
     {
         byte[] lookup = Encoding.UTF8.GetBytes(lookUpString);
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
@@ -123,7 +122,7 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.Equal(expectedFound, found);
+        Assert.AreEqual(expectedFound, found);
 
         ReadOnlySequence<byte> sequence = JsonTestHelper.GetSequence(utf8Data, 1);
         found = false;
@@ -143,11 +142,11 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.Equal(expectedFound, found);
+        Assert.AreEqual(expectedFound, found);
     }
 
-    [Fact]
-    public static void TestTextEqualsBasic()
+    [TestMethod]
+    public void TestTextEqualsBasic()
     {
         bool foundId = false;
         bool foundTransports = false;
@@ -181,15 +180,15 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.True(foundId);
-        Assert.True(foundTransports);
-        Assert.True(foundValue);
-        Assert.True(foundArrayValue);
+        Assert.IsTrue(foundId);
+        Assert.IsTrue(foundTransports);
+        Assert.IsTrue(foundValue);
+        Assert.IsTrue(foundArrayValue);
     }
 
-    [Theory]
-    [InlineData("/*comment*/[1234, true, false, /*comment*/ null, {}]/*comment*/")]
-    public static void TestTextEqualsInvalid(string jsonString)
+    [TestMethod]
+    [DataRow("/*comment*/[1234, true, false, /*comment*/ null, {}]/*comment*/")]
+    public void TestTextEqualsInvalid(string jsonString)
     {
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
 
@@ -247,11 +246,11 @@ public static partial class Utf8JsonReaderTests
             { }
         }
 
-        Assert.Equal(utf8Data.Length, json.BytesConsumed);
+        Assert.AreEqual(utf8Data.Length, json.BytesConsumed);
     }
 
-    [Fact]
-    public static void TestTextEqualsLargeMatch()
+    [TestMethod]
+    public void TestTextEqualsLargeMatch()
     {
         char[] jsonChars = new char[320];  // Some value larger than 256 (stack threshold)
         jsonChars.AsSpan().Fill('a');
@@ -290,7 +289,7 @@ public static partial class Utf8JsonReaderTests
                 }
             }
 
-            Assert.True(found, $"Json String: {jsonString}");
+            Assert.IsTrue(found, $"Json String: {jsonString}");
 
             ReadOnlySequence<byte> sequence = JsonTestHelper.GetSequence(utf8Data, 1);
             found = false;
@@ -310,12 +309,12 @@ public static partial class Utf8JsonReaderTests
                 }
             }
 
-            Assert.True(found, $"Json String: {jsonString}  | Look up: {Encoding.UTF8.GetString(lookupSpan.ToArray())}");
+            Assert.IsTrue(found, $"Json String: {jsonString}  | Look up: {Encoding.UTF8.GetString(lookupSpan.ToArray())}");
         }
     }
 
-    [Fact]
-    public static void TestTextEqualsLargeMismatch()
+    [TestMethod]
+    public void TestTextEqualsLargeMismatch()
     {
         char[] jsonChars = new char[320];  // Some value larger than 256 (stack threshold)
         jsonChars.AsSpan().Fill('a');
@@ -378,7 +377,7 @@ public static partial class Utf8JsonReaderTests
                     }
                 }
 
-                Assert.False(found, $"Json String: {jsonString}");
+                Assert.IsFalse(found, $"Json String: {jsonString}");
 
                 ReadOnlySequence<byte> sequence = JsonTestHelper.GetSequence(utf8Data, 1);
                 found = false;
@@ -398,13 +397,13 @@ public static partial class Utf8JsonReaderTests
                     }
                 }
 
-                Assert.False(found);
+                Assert.IsFalse(found);
             }
         }
     }
 
-    [Fact]
-    public static void TestTextEqualsMismatchMultiSegment()
+    [TestMethod]
+    public void TestTextEqualsMismatchMultiSegment()
     {
         byte[] utf8Data = "\"Hi, \\\"Ahson\\\"!\""u8.ToArray();
         bool found = false;
@@ -428,13 +427,13 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.False(found);
+        Assert.IsFalse(found);
     }
 
-    [Theory]
-    [InlineData("\"\\u0061\\u0061\"")]
-    [InlineData("\"aaaaaaaaaaaa\"")]
-    public static void TestTextEqualsTooLargeToMatch(string jsonString)
+    [TestMethod]
+    [DataRow("\"\\u0061\\u0061\"")]
+    [DataRow("\"aaaaaaaaaaaa\"")]
+    public void TestTextEqualsTooLargeToMatch(string jsonString)
     {
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
 
@@ -457,7 +456,7 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.False(found);
+        Assert.IsFalse(found);
 
         ReadOnlySequence<byte> sequence = JsonTestHelper.GetSequence(utf8Data, 1);
         found = false;
@@ -477,13 +476,13 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.False(found);
+        Assert.IsFalse(found);
     }
 
-    [Theory]
-    [InlineData("\"\\u0061\\u0061\"")]
-    [InlineData("\"aaaaaaaaaaaa\"")]
-    public static void TestTextEqualsTooSmallToMatch(string jsonString)
+    [TestMethod]
+    [DataRow("\"\\u0061\\u0061\"")]
+    [DataRow("\"aaaaaaaaaaaa\"")]
+    public void TestTextEqualsTooSmallToMatch(string jsonString)
     {
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
 
@@ -504,7 +503,7 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.False(found);
+        Assert.IsFalse(found);
 
         ReadOnlySequence<byte> sequence = JsonTestHelper.GetSequence(utf8Data, 1);
         found = false;
@@ -524,22 +523,22 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.False(found);
+        Assert.IsFalse(found);
     }
 
-    [Theory]
-    [InlineData("{\"name\": \"John\"}", "John", true)]
-    [InlineData("{\"name\": \"John\"}", "Johna", false)]
-    [InlineData("{\"name\": \"John\"}", "Joh\\u006e", false)]
-    [InlineData("{\"name\": \"John\"}", "", false)]
-    [InlineData("{\"name\": \"\"}", "John", false)]
-    [InlineData("{\"name\": \"\"}", "Joh\\u006e", false)]
-    [InlineData("{\"name\": \"\"}", "", true)]
-    [InlineData("{\"name\": \"Joh\\u006e\"}", "John", true)]
-    [InlineData("{\"name\": \"Joh\\u006e\"}", "Johna", false)]
-    [InlineData("{\"name\": \"Joh\\u006e\"}", "Joh\\u006e", false)]
-    [InlineData("{\"name\": \"Joh\\u006e\"}", "", false)]
-    public static void TestTextEqualsValue(string jsonString, string lookUpString, bool expectedFound)
+    [TestMethod]
+    [DataRow("{\"name\": \"John\"}", "John", true)]
+    [DataRow("{\"name\": \"John\"}", "Johna", false)]
+    [DataRow("{\"name\": \"John\"}", "Joh\\u006e", false)]
+    [DataRow("{\"name\": \"John\"}", "", false)]
+    [DataRow("{\"name\": \"\"}", "John", false)]
+    [DataRow("{\"name\": \"\"}", "Joh\\u006e", false)]
+    [DataRow("{\"name\": \"\"}", "", true)]
+    [DataRow("{\"name\": \"Joh\\u006e\"}", "John", true)]
+    [DataRow("{\"name\": \"Joh\\u006e\"}", "Johna", false)]
+    [DataRow("{\"name\": \"Joh\\u006e\"}", "Joh\\u006e", false)]
+    [DataRow("{\"name\": \"Joh\\u006e\"}", "", false)]
+    public void TestTextEqualsValue(string jsonString, string lookUpString, bool expectedFound)
     {
         byte[] lookup = Encoding.UTF8.GetBytes(lookUpString);
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
@@ -560,7 +559,7 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.Equal(expectedFound, found);
+        Assert.AreEqual(expectedFound, found);
 
         ReadOnlySequence<byte> sequence = JsonTestHelper.GetSequence(utf8Data, 1);
         found = false;
@@ -580,14 +579,14 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.Equal(expectedFound, found);
+        Assert.AreEqual(expectedFound, found);
     }
 
-    [Theory]
-    [InlineData("{\"name\": \"John\"}", false)]
-    [InlineData("{\"name\": \"\"}", true)]
-    [InlineData("{\"name\": \"Joh\\u006e\"}", false)]
-    public static void TextEqualDefault(string jsonString, bool expectedFound)
+    [TestMethod]
+    [DataRow("{\"name\": \"John\"}", false)]
+    [DataRow("{\"name\": \"\"}", true)]
+    [DataRow("{\"name\": \"Joh\\u006e\"}", false)]
+    public void TextEqualDefault(string jsonString, bool expectedFound)
     {
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
 
@@ -596,9 +595,9 @@ public static partial class Utf8JsonReaderTests
         {
             if (json.TokenType == JsonTokenType.String)
             {
-                Assert.Equal(expectedFound, json.ValueTextEquals(default(ReadOnlySpan<byte>)));
-                Assert.Equal(expectedFound, json.ValueTextEquals(default(ReadOnlySpan<char>)));
-                Assert.Equal(expectedFound, json.ValueTextEquals(default(string)));
+                Assert.AreEqual(expectedFound, json.ValueTextEquals(default(ReadOnlySpan<byte>)));
+                Assert.AreEqual(expectedFound, json.ValueTextEquals(default(ReadOnlySpan<char>)));
+                Assert.AreEqual(expectedFound, json.ValueTextEquals(default(string)));
                 break;
             }
         }
@@ -610,16 +609,16 @@ public static partial class Utf8JsonReaderTests
         {
             if (json.TokenType == JsonTokenType.String)
             {
-                Assert.Equal(expectedFound, json.ValueTextEquals(default(ReadOnlySpan<byte>)));
-                Assert.Equal(expectedFound, json.ValueTextEquals(default(ReadOnlySpan<char>)));
-                Assert.Equal(expectedFound, json.ValueTextEquals(default(string)));
+                Assert.AreEqual(expectedFound, json.ValueTextEquals(default(ReadOnlySpan<byte>)));
+                Assert.AreEqual(expectedFound, json.ValueTextEquals(default(ReadOnlySpan<char>)));
+                Assert.AreEqual(expectedFound, json.ValueTextEquals(default(string)));
                 break;
             }
         }
     }
 
-    [Fact]
-    public static void TextEqualsEscapedCharAtTheLastSegment()
+    [TestMethod]
+    public void TextEqualsEscapedCharAtTheLastSegment()
     {
         string jsonString = "\"aaaaaa\\u0061\"";
         string lookupString = "aaaaaaa";
@@ -642,7 +641,7 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.True(found);
+        Assert.IsTrue(found);
 
         ReadOnlySequence<byte> sequence = JsonTestHelper.CreateSegments(utf8Data);
         found = false;
@@ -662,13 +661,13 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.True(found);
+        Assert.IsTrue(found);
     }
 
-    [Theory]
-    [InlineData("\"aaabbb\"", "aaaaaa")]
-    [InlineData("\"bbbaaa\"", "aaaaaa")]
-    public static void TextMismatchSameLength(string jsonString, string lookupString)
+    [TestMethod]
+    [DataRow("\"aaabbb\"", "aaaaaa")]
+    [DataRow("\"bbbaaa\"", "aaaaaa")]
+    public void TextMismatchSameLength(string jsonString, string lookupString)
     {
         byte[] utf8Data = Encoding.UTF8.GetBytes(jsonString);
 
@@ -689,7 +688,7 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.False(found);
+        Assert.IsFalse(found);
 
         ReadOnlySequence<byte> sequence = JsonTestHelper.CreateSegments(utf8Data);
         found = false;
@@ -709,6 +708,6 @@ public static partial class Utf8JsonReaderTests
             }
         }
 
-        Assert.False(found);
+        Assert.IsFalse(found);
     }
 }

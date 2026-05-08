@@ -4,7 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.JsonLogic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.Tests;
 
@@ -13,101 +13,102 @@ namespace Corvus.Text.Json.JsonLogic.Tests;
 /// that exercise code paths in <see cref="FunctionalEvaluator"/>
 /// and <see cref="JsonLogicHelpers"/> not covered by the standard test suite.
 /// </summary>
+[TestClass]
 public class ArithmeticAndComparisonEdgeCaseTests
 {
     // ─── DIVISION EDGE CASES ─────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"/":[10,3]}""", "null")]       // integer division with remainder
-    [InlineData("""{"/":[0,5]}""", "null", "0")]    // zero divided by non-zero
-    [InlineData("""{"/":[7.5,2.5]}""", "null", "3")]
+    [TestMethod]
+    [DataRow("""{"/":[10,3]}""", "null")]       // integer division with remainder
+    [DataRow("""{"/":[0,5]}""", "null", "0")]    // zero divided by non-zero
+    [DataRow("""{"/":[7.5,2.5]}""", "null", "3")]
     public void Division_ProducesCorrectResults(string rule, string data, string? expected = null)
     {
         string result = Evaluate(rule, data);
         if (expected is not null)
         {
-            Assert.Equal(expected, result);
+            Assert.AreEqual(expected, result);
         }
         else
         {
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_ByZero_HandledGracefully()
     {
         // 1/0 should produce Infinity or NaN — verify no crash
         string result = Evaluate("""{"/":[1,0]}""", "null");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_ZeroByZero_HandledGracefully()
     {
         string result = Evaluate("""{"/":[0,0]}""", "null");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
     // ─── MODULO EDGE CASES ───────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"%":[10,3]}""", "null", "1")]
-    [InlineData("""{"%":[10,5]}""", "null", "0")]
-    [InlineData("""{"%":[7.5,2]}""", "null")]       // float modulo
+    [TestMethod]
+    [DataRow("""{"%":[10,3]}""", "null", "1")]
+    [DataRow("""{"%":[10,5]}""", "null", "0")]
+    [DataRow("""{"%":[7.5,2]}""", "null")]       // float modulo
     public void Modulo_ProducesCorrectResults(string rule, string data, string? expected = null)
     {
         string result = Evaluate(rule, data);
         if (expected is not null)
         {
-            Assert.Equal(expected, result);
+            Assert.AreEqual(expected, result);
         }
         else
         {
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_ByZero_HandledGracefully()
     {
         string result = Evaluate("""{"%":[5,0]}""", "null");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
     // ─── MIN / MAX ───────────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"min":[3,1,2]}""", "null", "1")]
-    [InlineData("""{"max":[3,1,2]}""", "null", "3")]
-    [InlineData("""{"min":[5]}""", "null", "5")]         // single element
-    [InlineData("""{"max":[5]}""", "null", "5")]
-    [InlineData("""{"min":[]}""", "null", "null")]        // empty
-    [InlineData("""{"max":[]}""", "null", "null")]
+    [TestMethod]
+    [DataRow("""{"min":[3,1,2]}""", "null", "1")]
+    [DataRow("""{"max":[3,1,2]}""", "null", "3")]
+    [DataRow("""{"min":[5]}""", "null", "5")]         // single element
+    [DataRow("""{"max":[5]}""", "null", "5")]
+    [DataRow("""{"min":[]}""", "null", "null")]        // empty
+    [DataRow("""{"max":[]}""", "null", "null")]
     public void MinMax_EdgeCases(string rule, string data, string expected)
     {
         string result = Evaluate(rule, data);
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     // ─── COMPARISON EDGE CASES ───────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{">":[2,1]}""", "null", "true")]
-    [InlineData("""{">":[1,1]}""", "null", "false")]
-    [InlineData("""{">=":[1,1]}""", "null", "true")]
-    [InlineData("""{"<":[1,2]}""", "null", "true")]
-    [InlineData("""{"<=":[2,2]}""", "null", "true")]
+    [TestMethod]
+    [DataRow("""{">":[2,1]}""", "null", "true")]
+    [DataRow("""{">":[1,1]}""", "null", "false")]
+    [DataRow("""{">=":[1,1]}""", "null", "true")]
+    [DataRow("""{"<":[1,2]}""", "null", "true")]
+    [DataRow("""{"<=":[2,2]}""", "null", "true")]
     public void Comparison_BasicCases(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData("""{"<":[1,2,3]}""", "null", "true")]     // between: 1 < 2 < 3
-    [InlineData("""{"<":[1,3,2]}""", "null", "false")]     // between: 1 < 3 but 3 !< 2
-    [InlineData("""{"<=":[1,1,3]}""", "null", "true")]     // between inclusive
-    [InlineData("""{"<=":[1,4,3]}""", "null", "false")]
+    [TestMethod]
+    [DataRow("""{"<":[1,2,3]}""", "null", "true")]     // between: 1 < 2 < 3
+    [DataRow("""{"<":[1,3,2]}""", "null", "false")]     // between: 1 < 3 but 3 !< 2
+    [DataRow("""{"<=":[1,1,3]}""", "null", "true")]     // between inclusive
+    [DataRow("""{"<=":[1,4,3]}""", "null", "false")]
     public void Comparison_ThreeArg_Between(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -115,12 +116,12 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── STRICT EQUALITY ─────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"===":[1,1]}""", "null", "true")]
-    [InlineData("""{"===":[1,"1"]}""", "null", "false")]   // strict: different types
-    [InlineData("""{"===":[null,null]}""", "null", "true")]
-    [InlineData("""{"!==":[1,"1"]}""", "null", "true")]
-    [InlineData("""{"!==":[1,1]}""", "null", "false")]
+    [TestMethod]
+    [DataRow("""{"===":[1,1]}""", "null", "true")]
+    [DataRow("""{"===":[1,"1"]}""", "null", "false")]   // strict: different types
+    [DataRow("""{"===":[null,null]}""", "null", "true")]
+    [DataRow("""{"!==":[1,"1"]}""", "null", "true")]
+    [DataRow("""{"!==":[1,1]}""", "null", "false")]
     public void StrictEquality_TypeSensitive(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -128,12 +129,12 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── IN OPERATOR ─────────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"in":["a","abc"]}""", "null", "true")]   // substring in string
-    [InlineData("""{"in":["d","abc"]}""", "null", "false")]
-    [InlineData("""{"in":[2,[1,2,3]]}""", "null", "true")]   // element in array
-    [InlineData("""{"in":[4,[1,2,3]]}""", "null", "false")]
-    [InlineData("""{"in":["",""]}""", "null", "true")]        // empty in empty
+    [TestMethod]
+    [DataRow("""{"in":["a","abc"]}""", "null", "true")]   // substring in string
+    [DataRow("""{"in":["d","abc"]}""", "null", "false")]
+    [DataRow("""{"in":[2,[1,2,3]]}""", "null", "true")]   // element in array
+    [DataRow("""{"in":[4,[1,2,3]]}""", "null", "false")]
+    [DataRow("""{"in":["",""]}""", "null", "true")]        // empty in empty
     public void In_StringAndArray(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -141,11 +142,11 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── MERGE OPERATOR ──────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"merge":[[1,2],[3,4]]}""", "null", "[1,2,3,4]")]
-    [InlineData("""{"merge":[[1],2,[3]]}""", "null", "[1,2,3]")]    // non-array gets wrapped
-    [InlineData("""{"merge":[]}""", "null", "[]")]                   // empty
-    [InlineData("""{"merge":[[1]]}""", "null", "[1]")]               // single array
+    [TestMethod]
+    [DataRow("""{"merge":[[1,2],[3,4]]}""", "null", "[1,2,3,4]")]
+    [DataRow("""{"merge":[[1],2,[3]]}""", "null", "[1,2,3]")]    // non-array gets wrapped
+    [DataRow("""{"merge":[]}""", "null", "[]")]                   // empty
+    [DataRow("""{"merge":[[1]]}""", "null", "[1]")]               // single array
     public void Merge_FlattenArrays(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -153,12 +154,12 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── CAT OPERATOR ────────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"cat":["hello"," ","world"]}""", "null", "\"hello world\"")]
-    [InlineData("""{"cat":[1,2,3]}""", "null", "\"123\"")]                     // numbers coerced to string
-    [InlineData("""{"cat":[]}""", "null", "\"\"")]                              // empty
-    [InlineData("""{"cat":["only"]}""", "null", "\"only\"")]                    // single element
-    [InlineData("""{"cat":[true,false]}""", "null", "\"truefalse\"")]           // booleans
+    [TestMethod]
+    [DataRow("""{"cat":["hello"," ","world"]}""", "null", "\"hello world\"")]
+    [DataRow("""{"cat":[1,2,3]}""", "null", "\"123\"")]                     // numbers coerced to string
+    [DataRow("""{"cat":[]}""", "null", "\"\"")]                              // empty
+    [DataRow("""{"cat":["only"]}""", "null", "\"only\"")]                    // single element
+    [DataRow("""{"cat":[true,false]}""", "null", "\"truefalse\"")]           // booleans
     public void Cat_StringConcatenation(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -166,11 +167,11 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── SUBSTR OPERATOR ─────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"substr":["hello",0,3]}""", "null", "\"hel\"")]
-    [InlineData("""{"substr":["hello",2]}""", "null", "\"llo\"")]      // no length = rest
-    [InlineData("""{"substr":["hello",-3]}""", "null", "\"llo\"")]     // negative start
-    [InlineData("""{"substr":["hello",0,-2]}""", "null", "\"hel\"")]   // negative length (from end)
+    [TestMethod]
+    [DataRow("""{"substr":["hello",0,3]}""", "null", "\"hel\"")]
+    [DataRow("""{"substr":["hello",2]}""", "null", "\"llo\"")]      // no length = rest
+    [DataRow("""{"substr":["hello",-3]}""", "null", "\"llo\"")]     // negative start
+    [DataRow("""{"substr":["hello",0,-2]}""", "null", "\"hel\"")]   // negative length (from end)
     public void Substr_VariousSlices(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -178,40 +179,40 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── LOG OPERATOR ────────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void Log_ReturnsItsArgument()
     {
         // log passes through its argument and prints to console
         string result = Evaluate("""{"log":"hello"}""", "null");
-        Assert.Equal("\"hello\"", result);
+        Assert.AreEqual("\"hello\"", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Log_WithNumericArgument()
     {
         string result = Evaluate("""{"log":42}""", "null");
-        Assert.Equal("42", result);
+        Assert.AreEqual("42", result);
     }
 
     // ─── NOT / DOUBLE-NOT ────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"!":[true]}""", "null", "false")]
-    [InlineData("""{"!":[false]}""", "null", "true")]
-    [InlineData("""{"!":[0]}""", "null", "true")]
-    [InlineData("""{"!":[1]}""", "null", "false")]
-    [InlineData("""{"!":["" ]}""", "null", "true")]
-    [InlineData("""{"!":[[]]}""", "null", "true")]
+    [TestMethod]
+    [DataRow("""{"!":[true]}""", "null", "false")]
+    [DataRow("""{"!":[false]}""", "null", "true")]
+    [DataRow("""{"!":[0]}""", "null", "true")]
+    [DataRow("""{"!":[1]}""", "null", "false")]
+    [DataRow("""{"!":["" ]}""", "null", "true")]
+    [DataRow("""{"!":[[]]}""", "null", "true")]
     public void Not_CoercesToBoolean(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData("""{"!!":[0]}""", "null", "false")]
-    [InlineData("""{"!!":[1]}""", "null", "true")]
-    [InlineData("""{"!!":["hello"]}""", "null", "true")]
-    [InlineData("""{"!!":[""]}""", "null", "false")]
+    [TestMethod]
+    [DataRow("""{"!!":[0]}""", "null", "false")]
+    [DataRow("""{"!!":[1]}""", "null", "true")]
+    [DataRow("""{"!!":["hello"]}""", "null", "true")]
+    [DataRow("""{"!!":[""]}""", "null", "false")]
     public void DoubleNot_CoercesToBoolean(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -219,21 +220,21 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── AND / OR ────────────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"and":[true,true]}""", "null", "true")]
-    [InlineData("""{"and":[true,false]}""", "null", "false")]
-    [InlineData("""{"and":[1,2,3]}""", "null", "3")]       // returns last truthy
-    [InlineData("""{"and":[1,0,3]}""", "null", "0")]       // short-circuits at 0
+    [TestMethod]
+    [DataRow("""{"and":[true,true]}""", "null", "true")]
+    [DataRow("""{"and":[true,false]}""", "null", "false")]
+    [DataRow("""{"and":[1,2,3]}""", "null", "3")]       // returns last truthy
+    [DataRow("""{"and":[1,0,3]}""", "null", "0")]       // short-circuits at 0
     public void And_ShortCircuits(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData("""{"or":[false,true]}""", "null", "true")]
-    [InlineData("""{"or":[false,false]}""", "null", "false")]
-    [InlineData("""{"or":[0,"",null,42]}""", "null", "42")]   // returns first truthy
-    [InlineData("""{"or":[false,0,""]}""", "null", "\"\"")]   // returns last falsy
+    [TestMethod]
+    [DataRow("""{"or":[false,true]}""", "null", "true")]
+    [DataRow("""{"or":[false,false]}""", "null", "false")]
+    [DataRow("""{"or":[0,"",null,42]}""", "null", "42")]   // returns first truthy
+    [DataRow("""{"or":[false,0,""]}""", "null", "\"\"")]   // returns last falsy
     public void Or_ShortCircuits(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -241,14 +242,14 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── IF / TERNARY CHAINS ─────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"if":[true,"yes","no"]}""", "null", "\"yes\"")]
-    [InlineData("""{"if":[false,"yes","no"]}""", "null", "\"no\"")]
-    [InlineData(
+    [TestMethod]
+    [DataRow("""{"if":[true,"yes","no"]}""", "null", "\"yes\"")]
+    [DataRow("""{"if":[false,"yes","no"]}""", "null", "\"no\"")]
+    [DataRow(
         """{"if":[false,"a",false,"b","c"]}""",
         "null",
         "\"c\"")]   // chained if: first false, second false, else "c"
-    [InlineData(
+    [DataRow(
         """{"if":[false,"a",true,"b","c"]}""",
         "null",
         "\"b\"")]   // chained if: first false, second true
@@ -259,7 +260,7 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── MAP / FILTER / REDUCE EDGE CASES ────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void Map_EmptyArray_ReturnsEmpty()
     {
         AssertBothPaths(
@@ -268,7 +269,7 @@ public class ArithmeticAndComparisonEdgeCaseTests
             "[]");
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_EmptyArray_ReturnsEmpty()
     {
         AssertBothPaths(
@@ -277,7 +278,7 @@ public class ArithmeticAndComparisonEdgeCaseTests
             "[]");
     }
 
-    [Fact]
+    [TestMethod]
     public void Reduce_EmptyArrayWithInit_ReturnsInit()
     {
         AssertBothPaths(
@@ -286,7 +287,7 @@ public class ArithmeticAndComparisonEdgeCaseTests
             "99");
     }
 
-    [Fact]
+    [TestMethod]
     public void All_EmptyArray_ReturnsTrue()
     {
         // Vacuous truth: all of nothing is true
@@ -296,7 +297,7 @@ public class ArithmeticAndComparisonEdgeCaseTests
             "false");
     }
 
-    [Fact]
+    [TestMethod]
     public void None_EmptyArray_ReturnsTrue()
     {
         AssertBothPaths(
@@ -305,7 +306,7 @@ public class ArithmeticAndComparisonEdgeCaseTests
             "true");
     }
 
-    [Fact]
+    [TestMethod]
     public void Some_EmptyArray_ReturnsFalse()
     {
         AssertBothPaths(
@@ -316,19 +317,19 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── TYPE COERCION (asDouble/asLong/asBigNumber/asBigInteger) ────
 
-    [Theory]
-    [InlineData("""{"asDouble":"42.5"}""", "null", "42.5")]
-    [InlineData("""{"asDouble":42}""", "null", "42")]
-    [InlineData("""{"asDouble":true}""", "null", "1")]
-    [InlineData("""{"asDouble":false}""", "null", "0")]
+    [TestMethod]
+    [DataRow("""{"asDouble":"42.5"}""", "null", "42.5")]
+    [DataRow("""{"asDouble":42}""", "null", "42")]
+    [DataRow("""{"asDouble":true}""", "null", "1")]
+    [DataRow("""{"asDouble":false}""", "null", "0")]
     public void AsDouble_CoercesToDouble(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
     }
 
-    [Theory]
-    [InlineData("""{"asLong":42.9}""", "null", "42")]      // truncates
-    [InlineData("""{"asLong":"100"}""", "null", "100")]
+    [TestMethod]
+    [DataRow("""{"asLong":42.9}""", "null", "42")]      // truncates
+    [DataRow("""{"asLong":"100"}""", "null", "100")]
     public void AsLong_CoercesToLong(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -336,11 +337,11 @@ public class ArithmeticAndComparisonEdgeCaseTests
 
     // ─── MISSING OPERATOR ────────────────────────────────────────────
 
-    [Theory]
-    [InlineData("""{"missing":["a"]}""", """{"a":1}""", "[]")]
-    [InlineData("""{"missing":["a"]}""", """{}""", "[\"a\"]")]
-    [InlineData("""{"missing":["a","b"]}""", """{"a":1}""", "[\"b\"]")]
-    [InlineData("""{"missing":[]}""", """{}""", "[]")]
+    [TestMethod]
+    [DataRow("""{"missing":["a"]}""", """{"a":1}""", "[]")]
+    [DataRow("""{"missing":["a"]}""", """{}""", "[\"a\"]")]
+    [DataRow("""{"missing":["a","b"]}""", """{"a":1}""", "[\"b\"]")]
+    [DataRow("""{"missing":[]}""", """{}""", "[]")]
     public void Missing_ReturnsAbsentPaths(string rule, string data, string expected)
     {
         AssertBothPaths(rule, data, expected);
@@ -352,7 +353,7 @@ public class ArithmeticAndComparisonEdgeCaseTests
     {
         string result = Evaluate(rule, data);
         string expectedNormalized = NormalizeJson(expected);
-        Assert.Equal(expectedNormalized, result);
+        Assert.AreEqual(expectedNormalized, result);
     }
 
     private static string Evaluate(string rule, string data)

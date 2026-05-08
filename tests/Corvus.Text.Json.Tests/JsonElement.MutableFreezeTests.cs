@@ -2,14 +2,15 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
-public static class JsonElementMutableFreezeTests
+[TestClass]
+public class JsonElementMutableFreezeTests
 {
-    [Fact]
-    public static void FreezeAtInnerArray()
+    [TestMethod]
+    public void FreezeAtInnerArray()
     {
         FreezeAtInner(
             """
@@ -37,26 +38,26 @@ public static class JsonElementMutableFreezeTests
             JsonValueKind.Array);
     }
 
-    [Fact]
-    public static void FreezeAtInnerFalse()
+    [TestMethod]
+    public void FreezeAtInnerFalse()
     {
         FreezeAtInner("false", JsonValueKind.False);
     }
 
-    [Fact]
-    public static void FreezeAtInnerNull()
+    [TestMethod]
+    public void FreezeAtInnerNull()
     {
         FreezeAtInner("null", JsonValueKind.Null);
     }
 
-    [Fact]
-    public static void FreezeAtInnerNumber()
+    [TestMethod]
+    public void FreezeAtInnerNumber()
     {
         FreezeAtInner("1.21e9", JsonValueKind.Number);
     }
 
-    [Fact]
-    public static void FreezeAtInnerObject()
+    [TestMethod]
+    public void FreezeAtInnerObject()
     {
         FreezeAtInner(
             """
@@ -74,20 +75,20 @@ public static class JsonElementMutableFreezeTests
             JsonValueKind.Object);
     }
 
-    [Fact]
-    public static void FreezeAtInnerString()
+    [TestMethod]
+    public void FreezeAtInnerString()
     {
         FreezeAtInner("\"  this  string  has  \\u0039 spaces\"", JsonValueKind.String);
     }
 
-    [Fact]
-    public static void FreezeAtInnerTrue()
+    [TestMethod]
+    public void FreezeAtInnerTrue()
     {
         FreezeAtInner("true", JsonValueKind.True);
     }
 
-    [Fact]
-    public static void FreezeRootElement()
+    [TestMethod]
+    public void FreezeRootElement()
     {
         string json = """{"name":"test","value":42}""";
 
@@ -97,12 +98,12 @@ public static class JsonElementMutableFreezeTests
 
         JsonElement frozen = doc.RootElement.Freeze();
 
-        Assert.Equal(JsonValueKind.Object, frozen.ValueKind);
-        Assert.Equal(json, frozen.GetRawText());
+        Assert.AreEqual(JsonValueKind.Object, frozen.ValueKind);
+        Assert.AreEqual(json, frozen.GetRawText());
     }
 
-    [Fact]
-    public static void FreezeInnerElementFromFrozenElement()
+    [TestMethod]
+    public void FreezeInnerElementFromFrozenElement()
     {
         using var workspace = JsonWorkspace.Create();
         using var parsedDoc = ParsedJsonDocument<JsonElement>.Parse("[[[]]]");
@@ -111,11 +112,11 @@ public static class JsonElementMutableFreezeTests
         JsonElement middle = doc.RootElement[0].Freeze();
         JsonElement inner = middle[0];
 
-        Assert.Equal("[]", inner.GetRawText());
+        Assert.AreEqual("[]", inner.GetRawText());
     }
 
-    [Fact]
-    public static void FreezeTwiceFromSameDocument()
+    [TestMethod]
+    public void FreezeTwiceFromSameDocument()
     {
         string json = "[[]]";
 
@@ -127,17 +128,17 @@ public static class JsonElementMutableFreezeTests
         JsonElement frozen1 = root.Freeze();
         JsonElement frozen2 = root.Freeze();
 
-        Assert.Equal(json, frozen1.GetRawText());
-        Assert.Equal(json, frozen2.GetRawText());
+        Assert.AreEqual(json, frozen1.GetRawText());
+        Assert.AreEqual(json, frozen2.GetRawText());
 
         // Frozen copies are backed by different documents.
-        Assert.NotSame(
+        Assert.AreNotSame(
             SniffParentDocument(frozen1),
             SniffParentDocument(frozen2));
     }
 
-    [Fact]
-    public static void FreezeAfterMutation()
+    [TestMethod]
+    public void FreezeAfterMutation()
     {
         string json = """{"name":"original"}""";
 
@@ -155,14 +156,14 @@ public static class JsonElementMutableFreezeTests
         JsonElement frozenAfter = doc.RootElement.Freeze();
 
         // The frozen-before snapshot should retain the original value.
-        Assert.Equal("original", frozenBefore.GetProperty("name").GetString());
+        Assert.AreEqual("original", frozenBefore.GetProperty("name").GetString());
 
         // The frozen-after snapshot should have the modified value.
-        Assert.Equal("modified", frozenAfter.GetProperty("name").GetString());
+        Assert.AreEqual("modified", frozenAfter.GetProperty("name").GetString());
     }
 
-    [Fact]
-    public static void FrozenElementIsImmutable()
+    [TestMethod]
+    public void FrozenElementIsImmutable()
     {
         using var workspace = JsonWorkspace.Create();
         using var parsedDoc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"test"}""");
@@ -174,12 +175,12 @@ public static class JsonElementMutableFreezeTests
         JsonElement frozen = doc.RootElement.Freeze();
 
         // The frozen element should have the added property.
-        Assert.Equal("value", frozen.GetProperty("added").GetString());
-        Assert.Equal("test", frozen.GetProperty("name").GetString());
+        Assert.AreEqual("value", frozen.GetProperty("added").GetString());
+        Assert.AreEqual("test", frozen.GetProperty("name").GetString());
     }
 
-    [Fact]
-    public static void FrozenElementSurvivesSourceBuilderDispose()
+    [TestMethod]
+    public void FrozenElementSurvivesSourceBuilderDispose()
     {
         string json = """{"key":"value"}""";
         JsonElement frozen;
@@ -195,12 +196,12 @@ public static class JsonElementMutableFreezeTests
             doc.Dispose();
 
             // Frozen element should still be accessible within the workspace.
-            Assert.Equal(json, frozen.GetRawText());
+            Assert.AreEqual(json, frozen.GetRawText());
         }
     }
 
-    [Fact]
-    public static void FreezeSimpleValues()
+    [TestMethod]
+    public void FreezeSimpleValues()
     {
         using var workspace = JsonWorkspace.Create();
         using var parsedDoc = ParsedJsonDocument<JsonElement>.Parse("""[42, "hello", true, false, null]""");
@@ -208,15 +209,15 @@ public static class JsonElementMutableFreezeTests
 
         JsonElement.Mutable root = doc.RootElement;
 
-        Assert.Equal(42, root[0].Freeze().GetInt32());
-        Assert.Equal("hello", root[1].Freeze().GetString());
-        Assert.True(root[2].Freeze().GetBoolean());
-        Assert.False(root[3].Freeze().GetBoolean());
-        Assert.Equal(JsonValueKind.Null, root[4].Freeze().ValueKind);
+        Assert.AreEqual(42, root[0].Freeze().GetInt32());
+        Assert.AreEqual("hello", root[1].Freeze().GetString());
+        Assert.IsTrue(root[2].Freeze().GetBoolean());
+        Assert.IsFalse(root[3].Freeze().GetBoolean());
+        Assert.AreEqual(JsonValueKind.Null, root[4].Freeze().ValueKind);
     }
 
-    [Fact]
-    public static void FreezeNestedObject()
+    [TestMethod]
+    public void FreezeNestedObject()
     {
         string json = """{"outer":{"inner":{"deep":"value"}}}""";
 
@@ -226,12 +227,12 @@ public static class JsonElementMutableFreezeTests
 
         JsonElement frozenInner = doc.RootElement.GetProperty("outer").GetProperty("inner").Freeze();
 
-        Assert.Equal("""{"deep":"value"}""", frozenInner.GetRawText());
-        Assert.Equal("value", frozenInner.GetProperty("deep").GetString());
+        Assert.AreEqual("""{"deep":"value"}""", frozenInner.GetRawText());
+        Assert.AreEqual("value", frozenInner.GetProperty("deep").GetString());
     }
 
-    [Fact]
-    public static void FreezeWithDynamicValues()
+    [TestMethod]
+    public void FreezeWithDynamicValues()
     {
         using var workspace = JsonWorkspace.Create();
         using var parsedDoc = ParsedJsonDocument<JsonElement>.Parse("{}");
@@ -243,12 +244,12 @@ public static class JsonElementMutableFreezeTests
 
         JsonElement frozen = doc.RootElement.Freeze();
 
-        Assert.Equal("dynamic-value", frozen.GetProperty("added").GetString());
-        Assert.Equal(123, frozen.GetProperty("number").GetInt32());
+        Assert.AreEqual("dynamic-value", frozen.GetProperty("added").GetString());
+        Assert.AreEqual(123, frozen.GetProperty("number").GetInt32());
     }
 
-    [Fact]
-    public static void FreezeImmutableElementReturnsThis()
+    [TestMethod]
+    public void FreezeImmutableElementReturnsThis()
     {
         using var parsedDoc = ParsedJsonDocument<JsonElement>.Parse("""{"a":1}""");
         JsonElement original = parsedDoc.RootElement;
@@ -256,12 +257,12 @@ public static class JsonElementMutableFreezeTests
         JsonElement frozen = original.Freeze();
 
         // Already immutable, so Freeze() returns the same instance.
-        Assert.Equal(original.GetRawText(), frozen.GetRawText());
-        Assert.Same(SniffParentDocument(original), SniffParentDocument(frozen));
+        Assert.AreEqual(original.GetRawText(), frozen.GetRawText());
+        Assert.AreSame(SniffParentDocument(original), SniffParentDocument(frozen));
     }
 
-    [Fact]
-    public static void FreezeImmutableClonedElementReturnsThis()
+    [TestMethod]
+    public void FreezeImmutableClonedElementReturnsThis()
     {
         using var parsedDoc = ParsedJsonDocument<JsonElement>.Parse("""{"x":"y"}""");
 
@@ -269,12 +270,12 @@ public static class JsonElementMutableFreezeTests
         JsonElement cloned = parsedDoc.RootElement.Clone();
         JsonElement frozen = cloned.Freeze();
 
-        Assert.Equal(cloned.GetRawText(), frozen.GetRawText());
-        Assert.Same(SniffParentDocument(cloned), SniffParentDocument(frozen));
+        Assert.AreEqual(cloned.GetRawText(), frozen.GetRawText());
+        Assert.AreSame(SniffParentDocument(cloned), SniffParentDocument(frozen));
     }
 
-    [Fact]
-    public static void FreezeCrossDocumentObjectProperty()
+    [TestMethod]
+    public void FreezeCrossDocumentObjectProperty()
     {
         // Assign a property value from one mutable document into another,
         // then freeze the target.
@@ -295,12 +296,12 @@ public static class JsonElementMutableFreezeTests
 
         JsonElement frozen = tgtDoc.RootElement.Freeze();
 
-        Assert.Equal("sourceValue", frozen.GetProperty("target").GetProperty("inner").GetString());
-        Assert.Equal(99, frozen.GetProperty("target").GetProperty("count").GetInt32());
+        Assert.AreEqual("sourceValue", frozen.GetProperty("target").GetProperty("inner").GetString());
+        Assert.AreEqual(99, frozen.GetProperty("target").GetProperty("count").GetInt32());
     }
 
-    [Fact]
-    public static void FreezeCrossDocumentArrayItem()
+    [TestMethod]
+    public void FreezeCrossDocumentArrayItem()
     {
         // Assign an array item from one mutable document into another,
         // then freeze the target.
@@ -319,11 +320,11 @@ public static class JsonElementMutableFreezeTests
 
         JsonElement frozen = tgtDoc.RootElement.Freeze();
 
-        Assert.Equal("val", frozen[0].GetProperty("key").GetString());
+        Assert.AreEqual("val", frozen[0].GetProperty("key").GetString());
     }
 
-    [Fact]
-    public static void FreezeTwoLevelDeepCrossDocumentAssignment()
+    [TestMethod]
+    public void FreezeTwoLevelDeepCrossDocumentAssignment()
     {
         // Three mutable documents: A -> B -> C.
         // Assign a value from A into B, then assign that value from B into C,
@@ -351,11 +352,11 @@ public static class JsonElementMutableFreezeTests
 
         JsonElement frozen = docC.RootElement.Freeze();
 
-        Assert.Equal("fromA", frozen.GetProperty("c").GetProperty("nested").GetProperty("deep").GetString());
+        Assert.AreEqual("fromA", frozen.GetProperty("c").GetProperty("nested").GetProperty("deep").GetString());
     }
 
-    [Fact]
-    public static void FreezeTwoLevelDeepCrossDocumentArrayAssignment()
+    [TestMethod]
+    public void FreezeTwoLevelDeepCrossDocumentArrayAssignment()
     {
         // Three mutable documents with arrays: A -> B -> C.
         using var workspace = JsonWorkspace.Create();
@@ -380,13 +381,13 @@ public static class JsonElementMutableFreezeTests
 
         JsonElement frozen = docC.RootElement.Freeze();
 
-        Assert.Equal(1, frozen[0][0].GetInt32());
-        Assert.Equal(2, frozen[0][1].GetInt32());
-        Assert.Equal(3, frozen[0][2].GetInt32());
+        Assert.AreEqual(1, frozen[0][0].GetInt32());
+        Assert.AreEqual(2, frozen[0][1].GetInt32());
+        Assert.AreEqual(3, frozen[0][2].GetInt32());
     }
 
-    [Fact]
-    public static void FreezeMixedCrossDocumentObjectAndArrayAssignment()
+    [TestMethod]
+    public void FreezeMixedCrossDocumentObjectAndArrayAssignment()
     {
         // Assign an object property from A into B's array, then assign
         // that array element from B into C's property, then freeze.
@@ -413,8 +414,8 @@ public static class JsonElementMutableFreezeTests
 
         JsonElement frozen = docC.RootElement.Freeze();
 
-        Assert.Equal(42, frozen.GetProperty("result").GetProperty("x").GetInt32());
-        Assert.Equal("hello", frozen.GetProperty("result").GetProperty("y").GetString());
+        Assert.AreEqual(42, frozen.GetProperty("result").GetProperty("x").GetInt32());
+        Assert.AreEqual("hello", frozen.GetProperty("result").GetProperty("y").GetString());
     }
 
     private static void FreezeAtInner(string innerJson, JsonValueKind valueType)
@@ -426,14 +427,14 @@ public static class JsonElementMutableFreezeTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = parsedDoc.RootElement.CreateBuilder(workspace);
 
         JsonElement.Mutable target = doc.RootElement.GetProperty("obj")[0].GetProperty("target");
-        Assert.Equal(valueType, target.ValueKind);
+        Assert.AreEqual(valueType, target.ValueKind);
 
         JsonElement frozen = target.Freeze();
-        Assert.Equal(valueType, frozen.ValueKind);
+        Assert.AreEqual(valueType, frozen.ValueKind);
 
         // Frozen element should match the clone output for the same element.
         JsonElement cloned = target.Clone();
-        Assert.Equal(cloned.GetRawText(), frozen.GetRawText());
+        Assert.AreEqual(cloned.GetRawText(), frozen.GetRawText());
     }
 
     private static IJsonDocument SniffParentDocument<TElement>(TElement element)

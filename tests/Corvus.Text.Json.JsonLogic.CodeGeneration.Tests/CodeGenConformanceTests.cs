@@ -4,8 +4,7 @@
 
 using System.Reflection;
 using System.Text;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.CodeGeneration.Tests;
 
@@ -13,23 +12,30 @@ namespace Corvus.Text.Json.JsonLogic.CodeGeneration.Tests;
 /// Runs every JsonLogic conformance test case through the code generator pipeline:
 /// generate C# → dynamically compile → invoke → compare result against expected.
 /// </summary>
-public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
+[TestClass]
+public class CodeGenConformanceTests
 {
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(10);
 
-    private readonly CodeGenConformanceFixture fixture;
-    private readonly ITestOutputHelper output;
+    private static CodeGenConformanceFixture? s_fixture;
 
+    [ClassInitialize]
+    public static void ClassInit(TestContext _)
+    {
+        s_fixture = new CodeGenConformanceFixture();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
     /// <summary>
     /// Initializes a new instance of the <see cref="CodeGenConformanceTests"/> class.
     /// </summary>
-    /// <param name="fixture">The shared compilation fixture.</param>
+    /// <param name="fixture">The shared compilation s_fixture!.</param>
     /// <param name="output">The xUnit test output helper.</param>
-    public CodeGenConformanceTests(CodeGenConformanceFixture fixture, ITestOutputHelper output)
-    {
-        this.fixture = fixture;
-        this.output = output;
-    }
 
     /// <summary>
     /// Runs a single conformance test from the official JsonLogic test suite through code generation.
@@ -38,22 +44,22 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
     /// <param name="rule">The JsonLogic rule as a JSON string.</param>
     /// <param name="data">The data as a JSON string.</param>
     /// <param name="expected">The expected result as a JSON string.</param>
-    [Theory]
-    [Trait("category", "codegen-conformance")]
-    [MemberData(nameof(GetTestCases))]
+    [TestMethod]
+    [TestCategory("codegen-conformance")]
+    [DynamicData(nameof(GetTestCases))]
     public void RunTestCase(int index, string rule, string data, string expected)
     {
-        this.output.WriteLine($"Index:    {index}");
-        this.output.WriteLine($"Rule:     {rule}");
-        this.output.WriteLine($"Data:     {data}");
-        this.output.WriteLine($"Expected: {expected}");
+        Console.WriteLine($"Index:    {index}");
+        Console.WriteLine($"Rule:     {rule}");
+        Console.WriteLine($"Data:     {data}");
+        Console.WriteLine($"Expected: {expected}");
 
         // Dynamically compile the rule (cached per unique rule string).
-        CompiledRule compiled = this.fixture.GetOrCompile(rule);
+        CompiledRule compiled = s_fixture!.GetOrCompile(rule);
 
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated code:\n{compiled.GeneratedCode}");
+            Console.WriteLine($"Generated code:\n{compiled.GeneratedCode}");
         }
 
         if (compiled.Method is null)
@@ -103,9 +109,9 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         string expectedText = NormalizeJson(expected);
         string actualText = NormalizeJson(GetRawText(result));
 
-        this.output.WriteLine($"Actual:   {actualText}");
+        Console.WriteLine($"Actual:   {actualText}");
 
-        Assert.Equal(expectedText, actualText);
+        Assert.AreEqual(expectedText, actualText);
     }
 
     /// <summary>

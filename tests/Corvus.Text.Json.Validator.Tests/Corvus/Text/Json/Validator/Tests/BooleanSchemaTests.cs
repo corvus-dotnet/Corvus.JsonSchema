@@ -2,16 +2,17 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Validator.Tests;
 
 /// <summary>
 /// Tests for boolean schema support (true/false schemas).
 /// </summary>
+[TestClass]
 public class BooleanSchemaTests
 {
-    [Fact]
+    [TestMethod]
     public void TrueSchema_ValidatesAnything()
     {
         string schemaPath = Path.Combine(
@@ -21,15 +22,15 @@ public class BooleanSchemaTests
 
         var schema = JsonSchema.FromFile(schemaPath);
 
-        Assert.True(schema.Validate("\"hello\""));
-        Assert.True(schema.Validate("42"));
-        Assert.True(schema.Validate("true"));
-        Assert.True(schema.Validate("null"));
-        Assert.True(schema.Validate("[]"));
-        Assert.True(schema.Validate("{}"));
+        Assert.IsTrue(schema.Validate("\"hello\""));
+        Assert.IsTrue(schema.Validate("42"));
+        Assert.IsTrue(schema.Validate("true"));
+        Assert.IsTrue(schema.Validate("null"));
+        Assert.IsTrue(schema.Validate("[]"));
+        Assert.IsTrue(schema.Validate("{}"));
     }
 
-    [Fact]
+    [TestMethod]
     public void FalseSchema_RejectsEverything()
     {
         string schemaPath = Path.Combine(
@@ -39,37 +40,37 @@ public class BooleanSchemaTests
 
         var schema = JsonSchema.FromFile(schemaPath);
 
-        Assert.False(schema.Validate("\"hello\""));
-        Assert.False(schema.Validate("42"));
-        Assert.False(schema.Validate("true"));
-        Assert.False(schema.Validate("null"));
-        Assert.False(schema.Validate("[]"));
-        Assert.False(schema.Validate("{}"));
+        Assert.IsFalse(schema.Validate("\"hello\""));
+        Assert.IsFalse(schema.Validate("42"));
+        Assert.IsFalse(schema.Validate("true"));
+        Assert.IsFalse(schema.Validate("null"));
+        Assert.IsFalse(schema.Validate("[]"));
+        Assert.IsFalse(schema.Validate("{}"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TrueSchema_FromText()
     {
         var schema = JsonSchema.FromText(
             "true",
             "https://example.com/test/boolean-true-text");
 
-        Assert.True(schema.Validate("\"anything\""));
-        Assert.True(schema.Validate("123"));
+        Assert.IsTrue(schema.Validate("\"anything\""));
+        Assert.IsTrue(schema.Validate("123"));
     }
 
-    [Fact]
+    [TestMethod]
     public void FalseSchema_FromText()
     {
         var schema = JsonSchema.FromText(
             "false",
             "https://example.com/test/boolean-false-text");
 
-        Assert.False(schema.Validate("\"anything\""));
-        Assert.False(schema.Validate("123"));
+        Assert.IsFalse(schema.Validate("\"anything\""));
+        Assert.IsFalse(schema.Validate("123"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TrueSchema_WithResultsCollector_ReturnsTrue()
     {
         using var collector =
@@ -79,10 +80,10 @@ public class BooleanSchemaTests
             "true",
             "https://example.com/test/boolean-true-collector");
 
-        Assert.True(schema.Validate("\"hello\"", collector));
+        Assert.IsTrue(schema.Validate("\"hello\"", collector));
     }
 
-    [Fact]
+    [TestMethod]
     public void FalseSchema_WithResultsCollector_ReturnsFalse()
     {
         using var collector =
@@ -92,6 +93,6 @@ public class BooleanSchemaTests
             "false",
             "https://example.com/test/boolean-false-collector");
 
-        Assert.False(schema.Validate("\"hello\"", collector));
+        Assert.IsFalse(schema.Validate("\"hello\"", collector));
     }
 }

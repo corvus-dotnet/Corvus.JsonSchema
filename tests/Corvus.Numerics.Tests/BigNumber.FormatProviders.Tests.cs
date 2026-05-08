@@ -2,18 +2,19 @@
 using System.Globalization;
 using System.Text;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 /// <summary>
 /// Tests for BigNumber formatting with standard format providers (G, F, N, E, C, P).
 /// Tests the same format strings that System.Decimal supports.
 /// </summary>
+[TestClass]
 public class BigNumberFormatProvidersTests
 {
     #region General Format (G)
 
-    [Fact]
+    [TestMethod]
     public void Format_G_General_DefaultPrecision()
     {
         BigNumber value = new(123456789, -3);
@@ -23,7 +24,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("123456789E-3");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_G_General_WithPrecision()
     {
         BigNumber value = new(123456789, 0);
@@ -34,7 +35,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("12346E4");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_G_LowercaseG_SameAsUppercase()
     {
         BigNumber value = new(123456, -2);
@@ -45,7 +46,7 @@ public class BigNumberFormatProvidersTests
         resultLower.ShouldBe(resultUpper.ToLowerInvariant());
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_G_Zero()
     {
         BigNumber value = BigNumber.Zero;
@@ -59,7 +60,7 @@ public class BigNumberFormatProvidersTests
 
     #region Fixed-Point Format (F)
 
-    [Fact]
+    [TestMethod]
     public void Format_F_FixedPoint_DefaultPrecision()
     {
         BigNumber value = new(123456, -2);
@@ -70,7 +71,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1234.56");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_F_FixedPoint_WithPrecision()
     {
         BigNumber value = new(123456, -5);
@@ -80,7 +81,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1.23456");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_F_FixedPoint_NoPrecision()
     {
         BigNumber value = new(123456, -2);
@@ -90,7 +91,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1235"); // Rounded
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_F_Negative()
     {
         BigNumber value = new(-123456, -2);
@@ -100,7 +101,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("-1234.56");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_F_LargeNumber()
     {
         BigNumber value = new(123456789, 5);
@@ -114,7 +115,7 @@ public class BigNumberFormatProvidersTests
 
     #region Number Format (N)
 
-    [Fact]
+    [TestMethod]
     public void Format_N_Number_WithThousandsSeparator()
     {
         BigNumber value = new(1234567, -2);
@@ -125,7 +126,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("12,345.67");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_N_Number_WithPrecision()
     {
         BigNumber value = new(1234567, -5);
@@ -135,7 +136,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("12.34567");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_N_Number_FrenchCulture()
     {
         BigNumber value = new(1234567, -2);
@@ -146,7 +147,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("12\u202F345,67");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_N_Negative()
     {
         BigNumber value = new(-1234567, -2);
@@ -160,7 +161,7 @@ public class BigNumberFormatProvidersTests
 
     #region Exponential Format (E)
 
-    [Fact]
+    [TestMethod]
     public void Format_E_Exponential_DefaultPrecision()
     {
         BigNumber value = new(123456789, 0);
@@ -171,7 +172,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1.234568E+008");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_E_Exponential_WithPrecision()
     {
         BigNumber value = new(123456789, 0);
@@ -181,7 +182,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1.235E+008");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_E_Lowercase()
     {
         BigNumber value = new(123456, 0);
@@ -191,7 +192,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1.23e+005");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_E_NegativeExponent()
     {
         BigNumber value = new(123, -5);
@@ -201,7 +202,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1.23E-003");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_E_Negative()
     {
         BigNumber value = new(-123456, 0);
@@ -215,7 +216,7 @@ public class BigNumberFormatProvidersTests
 
     #region Currency Format (C)
 
-    [Fact]
+    [TestMethod]
     public void Format_C_Currency_InvariantCulture()
     {
         BigNumber value = new(123456, -2);
@@ -226,7 +227,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("¤1,234.56");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_C_Currency_USDollars()
     {
         BigNumber value = new(123456, -2);
@@ -236,7 +237,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("$1,234.56");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_C_Currency_Euros()
     {
         BigNumber value = new(123456, -2);
@@ -246,7 +247,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1\u202F234,56 €"); // French uses narrow no-break space
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_C_Currency_WithPrecision()
     {
         BigNumber value = new(123456, -3);
@@ -256,7 +257,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("$123.456");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_C_Negative_WithMinusSign()
     {
         BigNumber value = new(-123456, -2);
@@ -280,7 +281,7 @@ public class BigNumberFormatProvidersTests
 
     #region Percent Format (P)
 
-    [Fact]
+    [TestMethod]
     public void Format_P_Percent_DefaultPrecision()
     {
         BigNumber value = new(75, -2); // 0.75
@@ -290,7 +291,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("75.00 %");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_P_Percent_WithPrecision()
     {
         BigNumber value = new(12345, -4); // 1.2345
@@ -300,7 +301,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("123.5 %");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_P_Percent_USCulture()
     {
         BigNumber value = new(75, -2); // 0.75
@@ -310,7 +311,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("75.00%");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_P_Percent_FrenchCulture()
     {
         BigNumber value = new(75, -2);
@@ -320,7 +321,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("75,00 %");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_P_Negative()
     {
         BigNumber value = new(-75, -2);
@@ -341,7 +342,7 @@ public class BigNumberFormatProvidersTests
 
     #region Null and Default Format
 
-    [Fact]
+    [TestMethod]
     public void Format_NullFormat_UsesGeneralFormat()
     {
         BigNumber value = new(123456, -2);
@@ -352,7 +353,7 @@ public class BigNumberFormatProvidersTests
         resultNull.ShouldBe(resultG);
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_EmptyFormat_UsesGeneralFormat()
     {
         BigNumber value = new(123456, -2);
@@ -367,7 +368,7 @@ public class BigNumberFormatProvidersTests
 
     #region TryFormat with Format Providers
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_UTF16_FixedPoint_Succeeds()
     {
         BigNumber value = new(123456, -2);
@@ -380,7 +381,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1234.56");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_UTF16_Number_WithCulture()
     {
         BigNumber value = new(1234567, -2);
@@ -393,7 +394,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("12\u202F345,67"); // French uses narrow no-break space U+202F
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_UTF16_Currency_Succeeds()
     {
         BigNumber value = new(123456, -2);
@@ -406,7 +407,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("$1,234.56");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_UTF8_FixedPoint_Succeeds()
     {
         BigNumber value = new(123456, -2);
@@ -419,7 +420,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldBe("1234.56");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_UTF8_Number_WithCulture()
     {
         BigNumber value = new(1234567, -2);
@@ -436,7 +437,7 @@ public class BigNumberFormatProvidersTests
 
     #region Round-Trip with Format Providers
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_GeneralFormat_MaintainsPrecision()
     {
         BigNumber original = new(123456789, -5);
@@ -447,7 +448,7 @@ public class BigNumberFormatProvidersTests
         parsed.ShouldBe(original);
     }
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_ExponentialFormat_MaintainsPrecision()
     {
         BigNumber original = new(123456789, 10);
@@ -463,7 +464,7 @@ public class BigNumberFormatProvidersTests
 
     #region Edge Cases
 
-    [Fact]
+    [TestMethod]
     public void Format_InvalidFormatString_ThrowsException()
     {
         BigNumber value = new(123, 0);
@@ -471,7 +472,7 @@ public class BigNumberFormatProvidersTests
         Should.Throw<FormatException>(() => value.ToString("X", CultureInfo.InvariantCulture));
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_Zero_AllFormats()
     {
         BigNumber zero = BigNumber.Zero;
@@ -483,7 +484,7 @@ public class BigNumberFormatProvidersTests
         zero.ToString("P2", CultureInfo.InvariantCulture).ShouldBe("0.00 %");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_VeryLargeNumber_DoesNotOverflow()
     {
         BigNumber value = new(System.Numerics.BigInteger.Parse("123456789012345678901234567890"), 100);
@@ -498,7 +499,7 @@ public class BigNumberFormatProvidersTests
 
     #region Comparison with Decimal Behavior
 
-    [Fact]
+    [TestMethod]
     public void Format_CompareToBehavior_FixedPoint()
     {
         // This test documents expected behavior differences from decimal
@@ -512,7 +513,7 @@ public class BigNumberFormatProvidersTests
         result.ShouldStartWith("0.0000000000");
     }
 
-    [Fact]
+    [TestMethod]
     public void Format_ConsistentWithDecimal_SmallValues()
     {
         // For values within decimal range, should be similar to decimal

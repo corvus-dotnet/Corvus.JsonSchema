@@ -3,35 +3,43 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnnotationTestSuite.Draft202012.Core;
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteRefAndDefs : IClassFixture<SuiteRefAndDefs.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteRefAndDefs
 {
-    private readonly Fixture _fixture;
-    public SuiteRefAndDefs(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleRootAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "\"foo\"",
             "",
             "title",
             "{\r\n                \"#/$defs/foo\": \"Foo\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -47,31 +55,39 @@ public class SuiteRefAndDefs : IClassFixture<SuiteRefAndDefs.Fixture>
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteDynamicRefResolvesToDynamicAnchor : IClassFixture<SuiteDynamicRefResolvesToDynamicAnchor.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteDynamicRefResolvesToDynamicAnchor
 {
-    private readonly Fixture _fixture;
-    public SuiteDynamicRefResolvesToDynamicAnchor(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleRootAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "\"bar\"",
             "",
             "title",
             "{\r\n                \"#/$defs/foo\": \"Foo\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -87,42 +103,50 @@ public class SuiteDynamicRefResolvesToDynamicAnchor : IClassFixture<SuiteDynamic
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicPath : IClassFixture<SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicPath.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicPath
 {
-    private readonly Fixture _fixture;
-    public SuiteDynamicRefResolvesToDifferentDynamicAnchorSDependingOnDynamicPath(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleList0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"kindOfList\": \"numbers\", \"list\": [1] }",
             "/list/0",
             "title",
             "{\r\n                \"#/$defs/numberList/$defs/itemType\": \"Number Item\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1TitleList0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"kindOfList\": \"strings\", \"list\": [\"foo\"] }",
             "/list/0",
             "title",
             "{\r\n                \"#/$defs/stringList/$defs/itemType\": \"String Item\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

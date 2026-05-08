@@ -5,13 +5,14 @@
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
 /// <summary>
 /// Coverage tests for numeric formatting patterns in <see cref="JsonElementHelpers"/>.
 /// </summary>
+[TestClass]
 public class NumericFormatCoverageTests
 {
     #region Currency Negative Patterns 0-15 (char)
@@ -41,8 +42,8 @@ public class NumericFormatCoverageTests
         return data;
     }
 
-    [Theory]
-    [MemberData(nameof(CurrencyNegativePatternData))]
+    [TestMethod]
+    [DynamicData(nameof(CurrencyNegativePatternData))]
     public void TryFormatCurrency_NegativePatterns_Char(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -69,19 +70,19 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.True(success);
-        Assert.Equal(expected, destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(expected, destination.Slice(0, charsWritten).ToString());
     }
 
     #endregion
 
     #region Currency Positive Patterns 0-3 (char)
 
-    [Theory]
-    [InlineData(0, "$1,234.56")]
-    [InlineData(1, "1,234.56$")]
-    [InlineData(2, "$ 1,234.56")]
-    [InlineData(3, "1,234.56 $")]
+    [TestMethod]
+    [DataRow(0, "$1,234.56")]
+    [DataRow(1, "1,234.56$")]
+    [DataRow(2, "$ 1,234.56")]
+    [DataRow(3, "1,234.56 $")]
     public void TryFormatCurrency_PositivePatterns_Char(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
@@ -107,8 +108,8 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.True(success);
-        Assert.Equal(expected, destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(expected, destination.Slice(0, charsWritten).ToString());
     }
 
     #endregion
@@ -136,8 +137,8 @@ public class NumericFormatCoverageTests
         return data;
     }
 
-    [Theory]
-    [MemberData(nameof(PercentNegativePatternData))]
+    [TestMethod]
+    [DynamicData(nameof(PercentNegativePatternData))]
     public void TryFormatPercent_NegativePatterns_Char(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -164,19 +165,19 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.True(success);
-        Assert.Equal(expected, destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(expected, destination.Slice(0, charsWritten).ToString());
     }
 
     #endregion
 
     #region Percent Positive Patterns 0-3 (char)
 
-    [Theory]
-    [InlineData(0, "50.00 %")]
-    [InlineData(1, "50.00%")]
-    [InlineData(2, "%50.00")]
-    [InlineData(3, "% 50.00")]
+    [TestMethod]
+    [DataRow(0, "50.00 %")]
+    [DataRow(1, "50.00%")]
+    [DataRow(2, "%50.00")]
+    [DataRow(3, "% 50.00")]
     public void TryFormatPercent_PositivePatterns_Char(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
@@ -202,24 +203,24 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.True(success);
-        Assert.Equal(expected, destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(expected, destination.Slice(0, charsWritten).ToString());
     }
 
     #endregion
 
     #region Hex Formatting (X) - char
 
-    [Theory]
-    [InlineData("255", "X", "FF")]
-    [InlineData("0", "X", "0")]
-    [InlineData("0", "X3", "000")]
-    [InlineData("0", "X5", "00000")]
-    [InlineData("16", "X", "10")]
-    [InlineData("1", "X", "1")]
-    [InlineData("4096", "X", "1000")]
-    [InlineData("255", "x", "ff")]
-    [InlineData("16", "x", "10")]
+    [TestMethod]
+    [DataRow("255", "X", "FF")]
+    [DataRow("0", "X", "0")]
+    [DataRow("0", "X3", "000")]
+    [DataRow("0", "X5", "00000")]
+    [DataRow("16", "X", "10")]
+    [DataRow("1", "X", "1")]
+    [DataRow("4096", "X", "1000")]
+    [DataRow("255", "x", "ff")]
+    [DataRow("16", "x", "10")]
     public void TryFormatNumber_Hex_Char(string jsonNumber, string format, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -228,21 +229,21 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, format.AsSpan(), null);
 
-        Assert.True(success);
-        Assert.Equal(expected, destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(expected, destination.Slice(0, charsWritten).ToString());
     }
 
     #endregion
 
     #region Binary Formatting (B) - char
 
-    [Theory]
-    [InlineData("255", "11111111")]
-    [InlineData("0", "0")]
-    [InlineData("10", "1010")]
-    [InlineData("1", "1")]
-    [InlineData("8", "1000")]
-    [InlineData("128", "10000000")]
+    [TestMethod]
+    [DataRow("255", "11111111")]
+    [DataRow("0", "0")]
+    [DataRow("10", "1010")]
+    [DataRow("1", "1")]
+    [DataRow("8", "1000")]
+    [DataRow("128", "10000000")]
     public void TryFormatNumber_Binary_Char(string jsonNumber, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -251,18 +252,18 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, "B".AsSpan(), null);
 
-        Assert.True(success);
-        Assert.Equal(expected, destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(expected, destination.Slice(0, charsWritten).ToString());
     }
 
     #endregion
 
     #region Unknown Format Specifier
 
-    [Theory]
-    [InlineData("Z")]
-    [InlineData("Q")]
-    [InlineData("W")]
+    [TestMethod]
+    [DataRow("Z")]
+    [DataRow("Q")]
+    [DataRow("W")]
     public void TryFormatNumber_UnknownFormat_ReturnsFalse_Char(string format)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123");
@@ -271,13 +272,13 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, format.AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Theory]
-    [InlineData("Z")]
-    [InlineData("Q")]
+    [TestMethod]
+    [DataRow("Z")]
+    [DataRow("Q")]
     public void TryFormatNumber_UnknownFormat_ReturnsFalse_Utf8(string format)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123");
@@ -286,22 +287,22 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, format.AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
     #endregion
 
     #region Zero Formatting (UTF-8 path)
 
-    [Theory]
-    [InlineData("C2", "\u00A40.00")]
-    [InlineData("P2", "0.00 %")]
-    [InlineData("E2", "0.00E+000")]
-    [InlineData("X", "0")]
-    [InlineData("B", "0")]
-    [InlineData("F2", "0.00")]
-    [InlineData("G", "0")]
+    [TestMethod]
+    [DataRow("C2", "\u00A40.00")]
+    [DataRow("P2", "0.00 %")]
+    [DataRow("E2", "0.00E+000")]
+    [DataRow("X", "0")]
+    [DataRow("B", "0")]
+    [DataRow("F2", "0.00")]
+    [DataRow("G", "0")]
     public void TryFormatZero_Utf8_WithFormatSpecifiers(string format, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0");
@@ -310,12 +311,12 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, format.AsSpan(), NumberFormatInfo.InvariantInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatZero_Utf8_EmptyFormat_ReturnsZero()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0");
@@ -324,12 +325,12 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, ReadOnlySpan<char>.Empty, null);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("0", result);
+        Assert.AreEqual("0", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatZero_Char_WithFormatSpecifiers()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0");
@@ -338,8 +339,8 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, "C2".AsSpan(), NumberFormatInfo.InvariantInfo);
 
-        Assert.True(success);
-        Assert.Equal("\u00A40.00", destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual("\u00A40.00", destination.Slice(0, charsWritten).ToString());
     }
 
     #endregion
@@ -371,8 +372,8 @@ public class NumericFormatCoverageTests
         return data;
     }
 
-    [Theory]
-    [MemberData(nameof(CurrencyNegativePatternUtf8Data))]
+    [TestMethod]
+    [DynamicData(nameof(CurrencyNegativePatternUtf8Data))]
     public void TryFormatCurrency_NegativePatterns_Utf8(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -399,9 +400,9 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, 2, formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
@@ -429,8 +430,8 @@ public class NumericFormatCoverageTests
         return data;
     }
 
-    [Theory]
-    [MemberData(nameof(PercentNegativePatternUtf8Data))]
+    [TestMethod]
+    [DynamicData(nameof(PercentNegativePatternUtf8Data))]
     public void TryFormatPercent_NegativePatterns_Utf8(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -457,24 +458,24 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, 2, formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region UTF-8 Hex and Binary Formatting
 
-    [Theory]
-    [InlineData("255", "X", "FF")]
-    [InlineData("0", "X", "0")]
-    [InlineData("0", "X3", "000")]
-    [InlineData("0", "X5", "00000")]
-    [InlineData("16", "X", "10")]
-    [InlineData("1", "X", "1")]
-    [InlineData("4096", "X", "1000")]
-    [InlineData("255", "x", "ff")]
+    [TestMethod]
+    [DataRow("255", "X", "FF")]
+    [DataRow("0", "X", "0")]
+    [DataRow("0", "X3", "000")]
+    [DataRow("0", "X5", "00000")]
+    [DataRow("16", "X", "10")]
+    [DataRow("1", "X", "1")]
+    [DataRow("4096", "X", "1000")]
+    [DataRow("255", "x", "ff")]
     public void TryFormatNumber_Hex_Utf8(string jsonNumber, string format, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -483,16 +484,16 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, format.AsSpan(), null);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("255", "11111111")]
-    [InlineData("10", "1010")]
-    [InlineData("1", "1")]
-    [InlineData("128", "10000000")]
+    [TestMethod]
+    [DataRow("255", "11111111")]
+    [DataRow("10", "1010")]
+    [DataRow("1", "1")]
+    [DataRow("128", "10000000")]
     public void TryFormatNumber_Binary_Utf8(string jsonNumber, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -501,20 +502,20 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, "B".AsSpan(), null);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region UTF-8 Percent Positive Patterns 0-3
 
-    [Theory]
-    [InlineData(0, "50.00 %")]
-    [InlineData(1, "50.00%")]
-    [InlineData(2, "%50.00")]
-    [InlineData(3, "% 50.00")]
+    [TestMethod]
+    [DataRow(0, "50.00 %")]
+    [DataRow(1, "50.00%")]
+    [DataRow(2, "%50.00")]
+    [DataRow(3, "% 50.00")]
     public void TryFormatPercent_PositivePatterns_Utf8(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
@@ -540,20 +541,20 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, 2, formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region UTF-8 Currency Positive Patterns 0-3
 
-    [Theory]
-    [InlineData(0, "$1,234.56")]
-    [InlineData(1, "1,234.56$")]
-    [InlineData(2, "$ 1,234.56")]
-    [InlineData(3, "1,234.56 $")]
+    [TestMethod]
+    [DataRow(0, "$1,234.56")]
+    [DataRow(1, "1,234.56$")]
+    [DataRow(2, "$ 1,234.56")]
+    [DataRow(3, "1,234.56 $")]
     public void TryFormatCurrency_PositivePatterns_Utf8(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
@@ -579,32 +580,32 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, 2, formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region Buffer overflow tests - UTF-8 patterns
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    [InlineData(4)]
-    [InlineData(5)]
-    [InlineData(6)]
-    [InlineData(7)]
-    [InlineData(8)]
-    [InlineData(9)]
-    [InlineData(10)]
-    [InlineData(11)]
-    [InlineData(12)]
-    [InlineData(13)]
-    [InlineData(14)]
-    [InlineData(15)]
+    [TestMethod]
+    [DataRow(0)]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
+    [DataRow(4)]
+    [DataRow(5)]
+    [DataRow(6)]
+    [DataRow(7)]
+    [DataRow(8)]
+    [DataRow(9)]
+    [DataRow(10)]
+    [DataRow(11)]
+    [DataRow(12)]
+    [DataRow(13)]
+    [DataRow(14)]
+    [DataRow(15)]
     public void TryFormatCurrency_NegativePattern_BufferTooSmall_Utf8(int pattern)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -630,15 +631,15 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, 2, formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
+    [TestMethod]
+    [DataRow(0)]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
     public void TryFormatCurrency_PositivePattern_BufferTooSmall_Utf8(int pattern)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
@@ -664,23 +665,23 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, 2, formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
-    [InlineData(4)]
-    [InlineData(5)]
-    [InlineData(6)]
-    [InlineData(7)]
-    [InlineData(8)]
-    [InlineData(9)]
-    [InlineData(10)]
-    [InlineData(11)]
+    [TestMethod]
+    [DataRow(0)]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
+    [DataRow(4)]
+    [DataRow(5)]
+    [DataRow(6)]
+    [DataRow(7)]
+    [DataRow(8)]
+    [DataRow(9)]
+    [DataRow(10)]
+    [DataRow(11)]
     public void TryFormatPercent_NegativePattern_BufferTooSmall_Utf8(int pattern)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -705,15 +706,15 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, -1, formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData(0)]
-    [InlineData(1)]
-    [InlineData(2)]
-    [InlineData(3)]
+    [TestMethod]
+    [DataRow(0)]
+    [DataRow(1)]
+    [DataRow(2)]
+    [DataRow(3)]
     public void TryFormatPercent_PositivePattern_BufferTooSmall_Utf8(int pattern)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
@@ -738,15 +739,15 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, -1, formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData(0, 10)]   // ($1,234.56) = 11 bytes
-    [InlineData(4, 10)]   // (1,234.56$) = 11 bytes
-    [InlineData(14, 11)]  // ($ 1,234.56) = 12 bytes
-    [InlineData(15, 11)]  // (1,234.56 $) = 12 bytes
+    [TestMethod]
+    [DataRow(0, 10)]   // ($1,234.56) = 11 bytes
+    [DataRow(4, 10)]   // (1,234.56$) = 11 bytes
+    [DataRow(14, 11)]  // ($ 1,234.56) = 12 bytes
+    [DataRow(15, 11)]  // (1,234.56 $) = 12 bytes
     public void TryFormatCurrency_NegativePattern_BufferOneLess_Utf8(int pattern, int bufferSize)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -772,13 +773,13 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, 2, formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData(2, 9)]   // $ 1,234.56 = 10 bytes (space guard)
-    [InlineData(3, 8)]   // 1,234.56 $ = 10 bytes, buffer 8 hits space guard (8+1>8)
+    [TestMethod]
+    [DataRow(2, 9)]   // $ 1,234.56 = 10 bytes (space guard)
+    [DataRow(3, 8)]   // 1,234.56 $ = 10 bytes, buffer 8 hits space guard (8+1>8)
     public void TryFormatCurrency_PositivePattern_BufferOneLess_Utf8(int pattern, int bufferSize)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
@@ -804,13 +805,13 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, 2, formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData(0, 7)]   // -50.00 % = 8 bytes
-    [InlineData(1, 6)]   // -50.00% = 7 bytes
+    [TestMethod]
+    [DataRow(0, 7)]   // -50.00 % = 8 bytes
+    [DataRow(1, 6)]   // -50.00% = 7 bytes
     public void TryFormatPercent_NegativePattern_BufferOneLess_Utf8(int pattern, int bufferSize)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -835,12 +836,12 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, -1, formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData(3, 2)]   // % 50.00 = 7 bytes (guard for space after %)
+    [TestMethod]
+    [DataRow(3, 2)]   // % 50.00 = 7 bytes (guard for space after %)
     public void TryFormatPercent_PositivePattern_BufferOneLess_Utf8(int pattern, int bufferSize)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
@@ -865,15 +866,15 @@ public class NumericFormatCoverageTests
             isNegative, integral, fractional, exponent,
             destination, out int bytesWritten, -1, formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
     #endregion
 
     #region TryFormatNumber UTF-8 edge cases
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_Utf8_EmptyFormat_BufferTooSmall()
     {
         // Covers lines 3669-3670: empty format, span.TryCopyTo fails
@@ -883,11 +884,11 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, ReadOnlySpan<char>.Empty, null);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_Utf8_InvalidPrecision()
     {
         // Covers lines 3679-3681: invalid precision format (e.g., "Gabc")
@@ -897,11 +898,11 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, "Gabc".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_Char_EmptyFormat_BufferTooSmall()
     {
         // Covers empty format path in char overload where TryTranscode fails
@@ -911,11 +912,11 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, ReadOnlySpan<char>.Empty, null);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumberAsString_InvalidFormat_ReturnsNull()
     {
         // Covers lines 360-362: TryFormatNumberAsString returns false when TryFormatNumber fails
@@ -923,11 +924,11 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumberAsString(
             utf8, "Z".AsSpan(), null, out string? value);
 
-        Assert.False(success);
-        Assert.Null(value);
+        Assert.IsFalse(success);
+        Assert.IsNull(value);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumberAsString_InvalidPrecision_ReturnsNull()
     {
         // Covers lines 397-398: invalid precision in format string
@@ -935,18 +936,18 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumberAsString(
             utf8, "Gabc".AsSpan(), null, out string? value);
 
-        Assert.False(success);
-        Assert.Null(value);
+        Assert.IsFalse(success);
+        Assert.IsNull(value);
     }
 
     #endregion
 
     #region Hex format buffer overflow
 
-    [Theory]
-    [InlineData("255", "X", 1)]   // FF needs 2 chars
-    [InlineData("65535", "X", 2)] // FFFF needs 4 chars
-    [InlineData("0", "X3", 1)]    // 000 needs 3 chars
+    [TestMethod]
+    [DataRow("255", "X", 1)]   // FF needs 2 chars
+    [DataRow("65535", "X", 2)] // FFFF needs 4 chars
+    [DataRow("0", "X3", 1)]    // 000 needs 3 chars
     public void TryFormatNumber_Hex_BufferTooSmall_Char(string jsonNumber, string format, int bufferSize)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -955,14 +956,14 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, format.AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Theory]
-    [InlineData("255", "X", 1)]
-    [InlineData("65535", "X", 2)]
-    [InlineData("0", "X3", 1)]
+    [TestMethod]
+    [DataRow("255", "X", 1)]
+    [DataRow("65535", "X", 2)]
+    [DataRow("0", "X3", 1)]
     public void TryFormatNumber_Hex_BufferTooSmall_Utf8(string jsonNumber, string format, int bufferSize)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -971,17 +972,17 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, format.AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
     #endregion
 
     #region Binary format buffer overflow
 
-    [Theory]
-    [InlineData("255", 4)]   // 11111111 needs 8 chars
-    [InlineData("7", 2)]     // 111 needs 3 chars
+    [TestMethod]
+    [DataRow("255", 4)]   // 11111111 needs 8 chars
+    [DataRow("7", 2)]     // 111 needs 3 chars
     public void TryFormatNumber_Binary_BufferTooSmall_Char(string jsonNumber, int bufferSize)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -990,13 +991,13 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, "B".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Theory]
-    [InlineData("255", 4)]
-    [InlineData("7", 2)]
+    [TestMethod]
+    [DataRow("255", 4)]
+    [DataRow("7", 2)]
     public void TryFormatNumber_Binary_BufferTooSmall_Utf8(string jsonNumber, int bufferSize)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -1005,15 +1006,15 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, "B".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
     #endregion
 
     #region Exponential format buffer overflow
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_Exponential_BufferTooSmall_Char()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123.456");
@@ -1022,11 +1023,11 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, "E".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_Exponential_BufferTooSmall_Utf8()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123.456");
@@ -1035,15 +1036,15 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, "E".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
     #endregion
 
     #region General format buffer overflow
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_General_BufferTooSmall_Char()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123456789");
@@ -1052,11 +1053,11 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, "G".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_General_BufferTooSmall_Utf8()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123456789");
@@ -1065,15 +1066,15 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, "G".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
     #endregion
 
     #region Fixed-point and N format buffer overflow
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_FixedPoint_BufferTooSmall_Char()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123456.789");
@@ -1082,11 +1083,11 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, "F2".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_FixedPoint_BufferTooSmall_Utf8()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123456.789");
@@ -1095,11 +1096,11 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, "F2".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_NumberFormat_BufferTooSmall_Char()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234567.89");
@@ -1108,11 +1109,11 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, "N2".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatNumber_NumberFormat_BufferTooSmall_Utf8()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234567.89");
@@ -1121,18 +1122,18 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, "N2".AsSpan(), null);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
     #endregion
 
     #region Edge cases for precision padding and small numbers
 
-    [Theory]
-    [InlineData("1.5", "F4", "1.5000")]       // fractional digits < precision → pad with zeros (line 2326-2336)
-    [InlineData("123.4", "F6", "123.400000")]  // 1 fractional digit → pad 5 zeros
-    [InlineData("10", "F3", "10.000")]         // integer only → all zeros in fractional
+    [TestMethod]
+    [DataRow("1.5", "F4", "1.5000")]       // fractional digits < precision → pad with zeros (line 2326-2336)
+    [DataRow("123.4", "F6", "123.400000")]  // 1 fractional digit → pad 5 zeros
+    [DataRow("10", "F3", "10.000")]         // integer only → all zeros in fractional
     public void TryFormatFixedPoint_PrecisionExceedsFractional_Char(string jsonNumber, string format, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -1141,14 +1142,14 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, format.AsSpan(), CultureInfo.InvariantCulture);
 
-        Assert.True(success);
-        Assert.Equal(expected, destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(expected, destination.Slice(0, charsWritten).ToString());
     }
 
-    [Theory]
-    [InlineData("1.5", "F4", "1.5000")]
-    [InlineData("123.4", "F6", "123.400000")]
-    [InlineData("10", "F3", "10.000")]
+    [TestMethod]
+    [DataRow("1.5", "F4", "1.5000")]
+    [DataRow("123.4", "F6", "123.400000")]
+    [DataRow("10", "F3", "10.000")]
     public void TryFormatFixedPoint_PrecisionExceedsFractional_Utf8(string jsonNumber, string format, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -1157,14 +1158,14 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, format.AsSpan(), CultureInfo.InvariantCulture);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("0.0000001", "$0.0000")]  // leadingZeros(6) >= precision(4) → all zeros (line 2004-2010)
-    [InlineData("0.001", "$0.00")]         // leadingZeros(2) >= precision(2) → all zeros
+    [TestMethod]
+    [DataRow("0.0000001", "$0.0000")]  // leadingZeros(6) >= precision(4) → all zeros (line 2004-2010)
+    [DataRow("0.001", "$0.00")]         // leadingZeros(2) >= precision(2) → all zeros
     public void TryFormatCurrency_SmallNumber_LeadingZerosExceedPrecision_Char(string jsonNumber, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -1191,14 +1192,14 @@ public class NumericFormatCoverageTests
             destination, out int charsWritten,
             expected.Contains("0000") ? 4 : 2, formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = destination.Slice(0, charsWritten).ToString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("0.0000001", "$0.0000")]
-    [InlineData("0.001", "$0.00")]
+    [TestMethod]
+    [DataRow("0.0000001", "$0.0000")]
+    [DataRow("0.001", "$0.00")]
     public void TryFormatCurrency_SmallNumber_LeadingZerosExceedPrecision_Utf8(string jsonNumber, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -1225,19 +1226,19 @@ public class NumericFormatCoverageTests
             destination, out int bytesWritten,
             expected.Contains("0000") ? 4 : 2, formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region Exponential edge cases
 
-    [Theory]
-    [InlineData("0.000001", "E2", "1.00E-006")]     // Very small number
-    [InlineData("1e10", "E2", "1.00E+010")]          // Large number via exponent
-    [InlineData("-123.456", "E2", "-1.23E+002")]     // Negative with rounding
+    [TestMethod]
+    [DataRow("0.000001", "E2", "1.00E-006")]     // Very small number
+    [DataRow("1e10", "E2", "1.00E+010")]          // Large number via exponent
+    [DataRow("-123.456", "E2", "-1.23E+002")]     // Negative with rounding
     public void TryFormatExponential_EdgeCases_Char(string jsonNumber, string format, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -1246,14 +1247,14 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, format.AsSpan(), CultureInfo.InvariantCulture);
 
-        Assert.True(success);
-        Assert.Equal(expected, destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(expected, destination.Slice(0, charsWritten).ToString());
     }
 
-    [Theory]
-    [InlineData("0.000001", "E2", "1.00E-006")]
-    [InlineData("1e10", "E2", "1.00E+010")]
-    [InlineData("-123.456", "E2", "-1.23E+002")]
+    [TestMethod]
+    [DataRow("0.000001", "E2", "1.00E-006")]
+    [DataRow("1e10", "E2", "1.00E+010")]
+    [DataRow("-123.456", "E2", "-1.23E+002")]
     public void TryFormatExponential_EdgeCases_Utf8(string jsonNumber, string format, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -1262,19 +1263,19 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, format.AsSpan(), CultureInfo.InvariantCulture);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region N format (number with grouping) edge cases
 
-    [Theory]
-    [InlineData("1.5", "N4", "1.5000")]          // precision > available fractional
-    [InlineData("1234567", "N0", "1,234,567")]    // no decimal, grouping only
-    [InlineData("-1.5", "N4", "-1.5000")]         // negative, precision > available
+    [TestMethod]
+    [DataRow("1.5", "N4", "1.5000")]          // precision > available fractional
+    [DataRow("1234567", "N0", "1,234,567")]    // no decimal, grouping only
+    [DataRow("-1.5", "N4", "-1.5000")]         // negative, precision > available
     public void TryFormatNumber_NumberWithGrouping_EdgeCases_Char(string jsonNumber, string format, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -1283,14 +1284,14 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int charsWritten, format.AsSpan(), CultureInfo.InvariantCulture);
 
-        Assert.True(success);
-        Assert.Equal(expected, destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(expected, destination.Slice(0, charsWritten).ToString());
     }
 
-    [Theory]
-    [InlineData("1.5", "N4", "1.5000")]
-    [InlineData("1234567", "N0", "1,234,567")]
-    [InlineData("-1.5", "N4", "-1.5000")]
+    [TestMethod]
+    [DataRow("1.5", "N4", "1.5000")]
+    [DataRow("1234567", "N0", "1,234,567")]
+    [DataRow("-1.5", "N4", "-1.5000")]
     public void TryFormatNumber_NumberWithGrouping_EdgeCases_Utf8(string jsonNumber, string format, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -1299,9 +1300,9 @@ public class NumericFormatCoverageTests
         bool success = JsonElementHelpers.TryFormatNumber(
             utf8, destination, out int bytesWritten, format.AsSpan(), CultureInfo.InvariantCulture);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion

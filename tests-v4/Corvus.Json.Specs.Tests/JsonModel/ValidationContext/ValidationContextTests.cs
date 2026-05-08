@@ -5,45 +5,46 @@
 #pragma warning disable SA1600 // Elements should be documented
 
 using Corvus.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonModel.ValidationContext;
 
+[TestClass]
 public class ValidationContextTests
 {
-    [Theory]
-    [InlineData(true, false, true, false, false, true, null, true)]
-    [InlineData(true, false, false, false, false, true, null, true)]
-    [InlineData(true, false, true, false, false, false, null, false)]
-    [InlineData(true, false, false, false, false, false, null, false)]
-    [InlineData(false, false, true, false, false, true, null, false)]
-    [InlineData(false, false, false, false, false, true, null, false)]
-    [InlineData(false, false, true, false, false, false, null, false)]
-    [InlineData(false, false, false, false, false, false, null, false)]
-    [InlineData(true, false, true, false, false, true, "A message", true)]
-    [InlineData(true, false, false, false, false, true, "A message", true)]
-    [InlineData(true, false, true, false, false, false, "A message", false)]
-    [InlineData(true, false, false, false, false, false, "A message", false)]
-    [InlineData(false, false, true, false, false, true, "A message", false)]
-    [InlineData(false, false, false, false, false, true, "A message", false)]
-    [InlineData(false, false, true, false, false, false, "A message", false)]
-    [InlineData(false, false, false, false, false, false, "A message", false)]
-    [InlineData(true, true, true, false, false, true, null, true)]
-    [InlineData(true, true, false, false, false, true, null, true)]
-    [InlineData(true, true, true, false, false, false, null, false)]
-    [InlineData(true, true, false, false, false, false, null, false)]
-    [InlineData(false, true, true, false, false, true, null, false)]
-    [InlineData(false, true, false, false, false, true, null, false)]
-    [InlineData(false, true, true, false, false, false, null, false)]
-    [InlineData(false, true, false, false, false, false, null, false)]
-    [InlineData(true, true, true, false, false, true, "A message", true)]
-    [InlineData(true, true, false, false, false, true, "A message", true)]
-    [InlineData(true, true, true, false, false, false, "A message", false)]
-    [InlineData(true, true, false, false, false, false, "A message", false)]
-    [InlineData(false, true, true, false, false, true, "A message", false)]
-    [InlineData(false, true, false, false, false, true, "A message", false)]
-    [InlineData(false, true, true, false, false, false, "A message", false)]
-    [InlineData(false, true, false, false, false, false, "A message", false)]
+    [TestMethod]
+    [DataRow(true, false, true, false, false, true, null, true)]
+    [DataRow(true, false, false, false, false, true, null, true)]
+    [DataRow(true, false, true, false, false, false, null, false)]
+    [DataRow(true, false, false, false, false, false, null, false)]
+    [DataRow(false, false, true, false, false, true, null, false)]
+    [DataRow(false, false, false, false, false, true, null, false)]
+    [DataRow(false, false, true, false, false, false, null, false)]
+    [DataRow(false, false, false, false, false, false, null, false)]
+    [DataRow(true, false, true, false, false, true, "A message", true)]
+    [DataRow(true, false, false, false, false, true, "A message", true)]
+    [DataRow(true, false, true, false, false, false, "A message", false)]
+    [DataRow(true, false, false, false, false, false, "A message", false)]
+    [DataRow(false, false, true, false, false, true, "A message", false)]
+    [DataRow(false, false, false, false, false, true, "A message", false)]
+    [DataRow(false, false, true, false, false, false, "A message", false)]
+    [DataRow(false, false, false, false, false, false, "A message", false)]
+    [DataRow(true, true, true, false, false, true, null, true)]
+    [DataRow(true, true, false, false, false, true, null, true)]
+    [DataRow(true, true, true, false, false, false, null, false)]
+    [DataRow(true, true, false, false, false, false, null, false)]
+    [DataRow(false, true, true, false, false, true, null, false)]
+    [DataRow(false, true, false, false, false, true, null, false)]
+    [DataRow(false, true, true, false, false, false, null, false)]
+    [DataRow(false, true, false, false, false, false, null, false)]
+    [DataRow(true, true, true, false, false, true, "A message", true)]
+    [DataRow(true, true, false, false, false, true, "A message", true)]
+    [DataRow(true, true, true, false, false, false, "A message", false)]
+    [DataRow(true, true, false, false, false, false, "A message", false)]
+    [DataRow(false, true, true, false, false, true, "A message", false)]
+    [DataRow(false, true, false, false, false, true, "A message", false)]
+    [DataRow(false, true, true, false, false, false, "A message", false)]
+    [DataRow(false, true, false, false, false, false, "A message", false)]
     public void AddResultsToTheStack(
         bool startValid,
         bool useResults,
@@ -80,14 +81,14 @@ public class ValidationContextTests
 
         context = context.WithResult(addValidResult, message);
 
-        Assert.Equal(expectedValid, context.IsValid);
+        Assert.AreEqual(expectedValid, context.IsValid);
     }
 
-    [Theory]
-    [InlineData(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
-    [InlineData(true, false, false, true, false, "1,2,3", "1,2,3", "0,4")]
-    [InlineData(true, false, false, true, false, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
-    [InlineData(true, false, false, true, false, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
+    [TestMethod]
+    [DataRow(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
+    [DataRow(true, false, false, true, false, "1,2,3", "1,2,3", "0,4")]
+    [DataRow(true, false, false, true, false, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
+    [DataRow(true, false, false, true, false, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
     public void WithEvaluatedProperties(
         bool startValid,
         bool useResults,
@@ -106,11 +107,11 @@ public class ValidationContextTests
         AssertPropertiesEvaluatedLocally(context, evaluatedIndices);
     }
 
-    [Theory]
-    [InlineData(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
-    [InlineData(true, false, false, false, true, "1,2,3", "1,2,3", "0,4")]
-    [InlineData(true, false, false, false, true, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
-    [InlineData(true, false, false, false, true, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
+    [TestMethod]
+    [DataRow(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
+    [DataRow(true, false, false, false, true, "1,2,3", "1,2,3", "0,4")]
+    [DataRow(true, false, false, false, true, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
+    [DataRow(true, false, false, false, true, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
     public void WithEvaluatedItems(
         bool startValid,
         bool useResults,
@@ -129,11 +130,11 @@ public class ValidationContextTests
         AssertItemsEvaluatedLocally(context, evaluatedIndices);
     }
 
-    [Theory]
-    [InlineData(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
-    [InlineData(true, false, false, true, false, "1,2,3", "1,2,3", "0,4")]
-    [InlineData(true, false, false, true, false, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
-    [InlineData(true, false, false, true, false, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
+    [TestMethod]
+    [DataRow(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
+    [DataRow(true, false, false, true, false, "1,2,3", "1,2,3", "0,4")]
+    [DataRow(true, false, false, true, false, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
+    [DataRow(true, false, false, true, false, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
     public void WithMergedChildContextProperties(
         bool startValid,
         bool useResults,
@@ -158,11 +159,11 @@ public class ValidationContextTests
         AssertPropertiesEvaluatedLocallyOrApplied(merged, evaluatedIndices);
     }
 
-    [Theory]
-    [InlineData(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
-    [InlineData(true, false, false, false, true, "1,2,3", "1,2,3", "0,4")]
-    [InlineData(true, false, false, false, true, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
-    [InlineData(true, false, false, false, true, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
+    [TestMethod]
+    [DataRow(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
+    [DataRow(true, false, false, false, true, "1,2,3", "1,2,3", "0,4")]
+    [DataRow(true, false, false, false, true, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
+    [DataRow(true, false, false, false, true, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
     public void WithMergedChildContextItems(
         bool startValid,
         bool useResults,
@@ -187,11 +188,11 @@ public class ValidationContextTests
         AssertItemsEvaluatedLocallyOrApplied(merged, evaluatedIndices);
     }
 
-    [Theory]
-    [InlineData(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
-    [InlineData(true, false, false, true, false, "1,2,3", "1,2,3", "0,4")]
-    [InlineData(true, false, false, true, false, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
-    [InlineData(true, false, false, true, false, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
+    [TestMethod]
+    [DataRow(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
+    [DataRow(true, false, false, true, false, "1,2,3", "1,2,3", "0,4")]
+    [DataRow(true, false, false, true, false, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
+    [DataRow(true, false, false, true, false, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
     public void WithMergedChildContextPropertiesEvaluatedBeforeMerging(
         bool startValid,
         bool useResults,
@@ -216,11 +217,11 @@ public class ValidationContextTests
         AssertPropertiesEvaluatedLocallyOrApplied(merged, evaluatedIndices);
     }
 
-    [Theory]
-    [InlineData(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
-    [InlineData(true, false, false, false, true, "1,2,3", "1,2,3", "0,4")]
-    [InlineData(true, false, false, false, true, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
-    [InlineData(true, false, false, false, true, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
+    [TestMethod]
+    [DataRow(true, false, false, false, false, "1,2,3", "<none>", "0,1,2,3,4")]
+    [DataRow(true, false, false, false, true, "1,2,3", "1,2,3", "0,4")]
+    [DataRow(true, false, false, false, true, "66,129", "66,129", "0,1,2,3,4,63,64,65,67,68,126,127,128,130")]
+    [DataRow(true, false, false, false, true, "65536", "65536", "0,1,2,3,4,63,64,65,67,68,126,127,128,130,65535,262144")]
     public void WithMergedChildContextItemsEvaluatedBeforeMerging(
         bool startValid,
         bool useResults,
@@ -245,11 +246,11 @@ public class ValidationContextTests
         AssertItemsEvaluatedLocallyOrApplied(merged, evaluatedIndices);
     }
 
-    [Theory]
-    [InlineData(true, false, false, false, false, "1,2,3", "4", "<none>", "0,1,2,3,4", "<none>")]
-    [InlineData(true, false, false, true, false, "1,2,3", "4", "1,2,3", "0", "4")]
-    [InlineData(true, false, false, true, false, "66,129", "4", "66,129", "0,1,2,3,63,64,65,67,68,126,127,128,130", "4")]
-    [InlineData(true, false, false, true, false, "65536", "4", "65536", "0,1,2,3,63,64,65,67,68,126,127,128,130,65535,262144", "4")]
+    [TestMethod]
+    [DataRow(true, false, false, false, false, "1,2,3", "4", "<none>", "0,1,2,3,4", "<none>")]
+    [DataRow(true, false, false, true, false, "1,2,3", "4", "1,2,3", "0", "4")]
+    [DataRow(true, false, false, true, false, "66,129", "4", "66,129", "0,1,2,3,63,64,65,67,68,126,127,128,130", "4")]
+    [DataRow(true, false, false, true, false, "65536", "4", "65536", "0,1,2,3,63,64,65,67,68,126,127,128,130,65535,262144", "4")]
     public void WithMergedChildContextPropertiesEvaluatedBeforeAndAfterMerging(
         bool startValid,
         bool useResults,
@@ -343,7 +344,7 @@ public class ValidationContextTests
 
         foreach (string propertyIndex in propertyIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.False(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex.Trim())));
+            Assert.IsFalse(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex.Trim())));
         }
     }
 
@@ -356,7 +357,7 @@ public class ValidationContextTests
 
         foreach (string propertyIndex in propertyIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.True(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex.Trim())));
+            Assert.IsTrue(context.HasEvaluatedLocalProperty(int.Parse(propertyIndex.Trim())));
         }
     }
 
@@ -369,7 +370,7 @@ public class ValidationContextTests
 
         foreach (string propertyIndex in propertyIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.False(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex.Trim())));
+            Assert.IsFalse(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex.Trim())));
         }
     }
 
@@ -382,7 +383,7 @@ public class ValidationContextTests
 
         foreach (string propertyIndex in propertyIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.True(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex.Trim())));
+            Assert.IsTrue(context.HasEvaluatedLocalOrAppliedProperty(int.Parse(propertyIndex.Trim())));
         }
     }
 
@@ -395,7 +396,7 @@ public class ValidationContextTests
 
         foreach (string itemIndex in itemIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.False(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex.Trim())));
+            Assert.IsFalse(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex.Trim())));
         }
     }
 
@@ -408,7 +409,7 @@ public class ValidationContextTests
 
         foreach (string itemIndex in itemIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.True(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex.Trim())));
+            Assert.IsTrue(context.HasEvaluatedLocalItemIndex(int.Parse(itemIndex.Trim())));
         }
     }
 
@@ -421,7 +422,7 @@ public class ValidationContextTests
 
         foreach (string itemIndex in itemIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.False(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex.Trim())));
+            Assert.IsFalse(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex.Trim())));
         }
     }
 
@@ -434,7 +435,7 @@ public class ValidationContextTests
 
         foreach (string itemIndex in itemIndexArray.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries))
         {
-            Assert.True(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex.Trim())));
+            Assert.IsTrue(context.HasEvaluatedLocalOrAppliedItemIndex(int.Parse(itemIndex.Trim())));
         }
     }
 }

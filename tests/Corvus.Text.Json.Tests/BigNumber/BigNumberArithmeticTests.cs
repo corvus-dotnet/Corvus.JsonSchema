@@ -3,17 +3,18 @@
 
 using System.Numerics;
 using Corvus.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for BigNumber arithmetic operations.
 /// </summary>
+[TestClass]
 public class BigNumberArithmeticTests
 {
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.AdditionData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.AdditionData), typeof(BigNumberTestData))]
     public void Addition_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger s1, int e1,
         BigInteger s2, int e2,
@@ -28,11 +29,11 @@ public class BigNumberArithmeticTests
         BigNumber result = bn1 + bn2;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.SubtractionData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.SubtractionData), typeof(BigNumberTestData))]
     public void Subtraction_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger s1, int e1,
         BigInteger s2, int e2,
@@ -47,11 +48,11 @@ public class BigNumberArithmeticTests
         BigNumber result = bn1 - bn2;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.MultiplicationData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.MultiplicationData), typeof(BigNumberTestData))]
     public void Multiplication_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger s1, int e1,
         BigInteger s2, int e2,
@@ -66,11 +67,11 @@ public class BigNumberArithmeticTests
         BigNumber result = bn1 * bn2;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.DivisionData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.DivisionData), typeof(BigNumberTestData))]
     public void Division_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger s1, int e1,
         BigInteger s2, int e2,
@@ -86,10 +87,10 @@ public class BigNumberArithmeticTests
         var result = Corvus.Numerics.BigNumber.Divide(bn1, bn2, precision);
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_ByZero_ShouldThrow()
     {
         // Arrange
@@ -97,11 +98,11 @@ public class BigNumberArithmeticTests
         var bn2 = new Corvus.Numerics.BigNumber(0, 0);
 
         // Act & Assert
-        Assert.Throws<DivideByZeroException>(() => bn1 / bn2);
+        Assert.ThrowsExactly<DivideByZeroException>(() => bn1 / bn2);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.ModuloData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.ModuloData), typeof(BigNumberTestData))]
     public void Modulo_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger s1, int e1,
         BigInteger s2, int e2,
@@ -116,10 +117,10 @@ public class BigNumberArithmeticTests
         BigNumber result = bn1 % bn2;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_ByZero_ShouldThrow()
     {
         // Arrange
@@ -127,10 +128,10 @@ public class BigNumberArithmeticTests
         var bn2 = new Corvus.Numerics.BigNumber(0, 0);
 
         // Act & Assert
-        Assert.Throws<DivideByZeroException>(() => bn1 % bn2);
+        Assert.ThrowsExactly<DivideByZeroException>(() => bn1 % bn2);
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_ZeroDividend_ShouldReturnZero()
     {
         // Arrange
@@ -142,11 +143,11 @@ public class BigNumberArithmeticTests
         BigNumber result = bn1 % bn2;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.IncrementData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.IncrementData), typeof(BigNumberTestData))]
     public void Increment_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger inputS, int inputE,
         BigInteger expectedS, int expectedE)
@@ -159,11 +160,11 @@ public class BigNumberArithmeticTests
         BigNumber result = ++value;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.DecrementData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.DecrementData), typeof(BigNumberTestData))]
     public void Decrement_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger inputS, int inputE,
         BigInteger expectedS, int expectedE)
@@ -176,11 +177,11 @@ public class BigNumberArithmeticTests
         BigNumber result = --value;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.UnaryPlusData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.UnaryPlusData), typeof(BigNumberTestData))]
     public void UnaryPlus_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger inputS, int inputE,
         BigInteger expectedS, int expectedE)
@@ -193,11 +194,11 @@ public class BigNumberArithmeticTests
         BigNumber result = +value;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.UnaryMinusData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.UnaryMinusData), typeof(BigNumberTestData))]
     public void UnaryMinus_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger inputS, int inputE,
         BigInteger expectedS, int expectedE)
@@ -210,10 +211,10 @@ public class BigNumberArithmeticTests
         BigNumber result = -value;
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnaryMinus_AppliedTwice_ShouldReturnOriginalValue()
     {
         // Arrange
@@ -223,10 +224,10 @@ public class BigNumberArithmeticTests
         BigNumber result = -(-original);
 
         // Assert
-        Assert.Equal(original, result);
+        Assert.AreEqual(original, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void IncrementDecrement_Sequence_ShouldReturnToOriginal()
     {
         // Arrange
@@ -241,10 +242,10 @@ public class BigNumberArithmeticTests
         // Note: increment/decrement work on the significand, so 100 (sig=100,exp=0) 
         // becomes 101 (sig=101,exp=0) then back to 100 (sig=100,exp=0)
         // After normalization, 100 becomes 1E2, so we need to normalize original too
-        Assert.Equal(unchangedOriginal.Normalize(), decremented.Normalize());
+        Assert.AreEqual(unchangedOriginal.Normalize(), decremented.Normalize());
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_WithLargeNumbers_ShouldWorkCorrectly()
     {
         // Arrange
@@ -258,10 +259,10 @@ public class BigNumberArithmeticTests
         // 123456789012345678901234567890 % 987654321 = expected remainder
         BigInteger expectedRemainder = BigInteger.Parse("123456789012345678901234567890") % BigInteger.Parse("987654321");
         var expected = new Corvus.Numerics.BigNumber(expectedRemainder, 0);
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Increment_WithNegativeExponent_PreservesDecimalPrecision()
     {
         // Arrange
@@ -272,10 +273,10 @@ public class BigNumberArithmeticTests
 
         // Assert
         var expected = new Corvus.Numerics.BigNumber(225, -2); // 2.25
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Decrement_WithNegativeExponent_PreservesDecimalPrecision()
     {
         // Arrange
@@ -286,10 +287,10 @@ public class BigNumberArithmeticTests
 
         // Assert
         var expected = new Corvus.Numerics.BigNumber(125, -2); // 1.25
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
   }
 
-  [Fact]
+  [TestMethod]
   public void Modulo_WithMixedExponents_ShouldAlignProperly()
     {
         // Arrange
@@ -301,10 +302,10 @@ public class BigNumberArithmeticTests
 
         // Assert
         var expected = new Corvus.Numerics.BigNumber(5, -1); // 0.5
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
   public void Increment_CrossingIntegerBoundary_ShouldWorkCorrectly()
   {
    // Arrange
@@ -315,10 +316,10 @@ public class BigNumberArithmeticTests
 
      // Assert
         var expected = new Corvus.Numerics.BigNumber(199, -2); // 1.99
- Assert.Equal(expected, result);
+ Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Decrement_CrossingZero_WithNegativeExponent()
     {
         // Arrange
@@ -329,10 +330,10 @@ public class BigNumberArithmeticTests
 
         // Assert
      var expected = new Corvus.Numerics.BigNumber(-99, -2); // -0.99
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnaryMinus_WithNegativeExponent_ShouldPreserveExponent()
     {
         // Arrange
@@ -342,11 +343,11 @@ public class BigNumberArithmeticTests
         BigNumber result = -value;
 
         // Assert
-    Assert.Equal(-12345, result.Significand);
-        Assert.Equal(-4, result.Exponent);
+    Assert.AreEqual(-12345, result.Significand);
+        Assert.AreEqual(-4, result.Exponent);
     }
 
-    [Fact]
+    [TestMethod]
     public void Modulo_WithSmallDecimalValues_ShouldWorkCorrectly()
  {
         // Arrange
@@ -358,10 +359,10 @@ public class BigNumberArithmeticTests
 
         // Assert
         var expected = new Corvus.Numerics.BigNumber(1, -1); // 0.1
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void IncrementDecrement_WithNegativeExponent_RoundTrip()
     {
       // Arrange
@@ -373,10 +374,10 @@ public class BigNumberArithmeticTests
         BigNumber decremented = incremented--;
 
         // Assert
-        Assert.Equal(unchangedOriginal, decremented);
+        Assert.AreEqual(unchangedOriginal, decremented);
     }
 
-    [Fact]
+    [TestMethod]
     public void MultipleIncrements_WithNegativeExponent()
     {
         // Arrange
@@ -389,10 +390,10 @@ public class BigNumberArithmeticTests
 
         // Assert
       var expected = new Corvus.Numerics.BigNumber(31, -1); // 3.1
- Assert.Equal(expected, value);
+ Assert.AreEqual(expected, value);
     }
 
-    [Fact]
+    [TestMethod]
     public void MultipleDecrements_WithNegativeExponent()
     {
         // Arrange
@@ -405,6 +406,6 @@ public class BigNumberArithmeticTests
 
         // Assert
         var expected = new Corvus.Numerics.BigNumber(-25, -1); // -2.5
-        Assert.Equal(expected, value);
+        Assert.AreEqual(expected, value);
     }
 }

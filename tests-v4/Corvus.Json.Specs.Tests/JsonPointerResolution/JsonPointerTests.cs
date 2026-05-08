@@ -5,13 +5,14 @@
 using System.Text;
 using System.Text.Json;
 using Corvus.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonPointerResolution
 {
+    [TestClass]
     public class JsonPointerTests
     {
-        [Fact]
+        [TestMethod]
         public void ResolveTopLevelPropertyPointer()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -37,12 +38,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(6, line);
-            Assert.Equal(17, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(6, line);
+            Assert.AreEqual(17, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveTopLevelArray_Pointer0()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -68,12 +69,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(1, line);
-            Assert.Equal(4, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(1, line);
+            Assert.AreEqual(4, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveTopLevelArray_Pointer1()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -99,12 +100,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(6, line);
-            Assert.Equal(4, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(6, line);
+            Assert.AreEqual(4, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void NonExistentTopLevelPointer_Property3()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -130,10 +131,10 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.False(result);
+            Assert.IsFalse(result);
         }
 
-        [Fact]
+        [TestMethod]
         public void NonExistentTopLevelPointer_Nested1()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -159,10 +160,10 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.False(result);
+            Assert.IsFalse(result);
         }
 
-        [Fact]
+        [TestMethod]
         public void NonExistentTopLevelPointer_Foo()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -188,10 +189,10 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.False(result);
+            Assert.IsFalse(result);
         }
 
-        [Fact]
+        [TestMethod]
         public void NonExistentTopLevelPointer_ArrayIndex0()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -217,10 +218,10 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.False(result);
+            Assert.IsFalse(result);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPointer_Property1Nested1()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -250,12 +251,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(2, line);
-            Assert.Equal(19, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(2, line);
+            Assert.AreEqual(19, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPointer_Property1Nested1Foo()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -285,12 +286,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(3, line);
-            Assert.Equal(19, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(3, line);
+            Assert.AreEqual(19, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPointer_Property2Nested1()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -320,12 +321,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(7, line);
-            Assert.Equal(19, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(7, line);
+            Assert.AreEqual(19, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPointer_Property2Nested1Foo()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -355,12 +356,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(8, line);
-            Assert.Equal(19, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(8, line);
+            Assert.AreEqual(19, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPointer_Array0()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -390,12 +391,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(12, line);
-            Assert.Equal(8, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(12, line);
+            Assert.AreEqual(8, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPointer_Array0Property3()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -425,12 +426,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(12, line);
-            Assert.Equal(23, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(12, line);
+            Assert.AreEqual(23, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPointer_Array0Property3Nested()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -460,12 +461,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(12, line);
-            Assert.Equal(35, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(12, line);
+            Assert.AreEqual(35, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPointer_Array0Property3NestedFoo()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -495,12 +496,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(12, line);
-            Assert.Equal(44, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(12, line);
+            Assert.AreEqual(44, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPropertyInTopLevelArray_Pointer0()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -526,12 +527,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(1, line);
-            Assert.Equal(4, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(1, line);
+            Assert.AreEqual(4, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPropertyInTopLevelArray_Pointer1()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -557,12 +558,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(6, line);
-            Assert.Equal(4, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(6, line);
+            Assert.AreEqual(4, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void ResolveNestedPointerWithComments()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -595,12 +596,12 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.True(result);
-            Assert.Equal(8, line);
-            Assert.Equal(19, charOffset);
+            Assert.IsTrue(result);
+            Assert.AreEqual(8, line);
+            Assert.AreEqual(19, charOffset);
         }
 
-        [Fact]
+        [TestMethod]
         public void NonExistentNestedPointer_Property1Foo()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -626,10 +627,10 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.False(result);
+            Assert.IsFalse(result);
         }
 
-        [Fact]
+        [TestMethod]
         public void NonExistentNestedPointer_Property2Foo()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -655,10 +656,10 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.False(result);
+            Assert.IsFalse(result);
         }
 
-        [Fact]
+        [TestMethod]
         public void NonExistentNestedPointer_Nested1Foo()
         {
             byte[] jsonFile = Encoding.UTF8.GetBytes(
@@ -684,7 +685,7 @@ namespace Corvus.Json.Specs.Tests.JsonPointerResolution
                 out int charOffset,
                 out long lineOffset);
 
-            Assert.False(result);
+            Assert.IsFalse(result);
         }
     }
 }

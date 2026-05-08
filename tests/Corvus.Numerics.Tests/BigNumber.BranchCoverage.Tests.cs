@@ -7,18 +7,19 @@ using System.Numerics;
 using System.Reflection;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
 /// <summary>
 /// Tests specifically targeting uncovered branches to achieve maximum coverage.
 /// </summary>
+[TestClass]
 public class BigNumberBranchCoverageTests
 {
     // ========== GetPowerOf10 Branches ==========
 
-    [Fact]
+    [TestMethod]
     public void GetPowerOf10_NegativeExponent_ThrowsArgumentOutOfRangeException()
     {
         // Line 82-84: Test negative exponent in GetPowerOf10
@@ -32,7 +33,7 @@ public class BigNumberBranchCoverageTests
         });
     }
 
-    [Fact]
+    [TestMethod]
     public void GetPowerOf10_ExponentInSecondaryCache_UsesCache()
     {
         // Line 94-96: Test secondary cache (256-1023)
@@ -50,7 +51,7 @@ public class BigNumberBranchCoverageTests
 
     // ========== Normalization Branches ==========
 
-    [Fact]
+    [TestMethod]
     public void Normalize_NonZeroWithoutTrailingZeros_ReturnsUnchanged()
     {
         // Line 196: while loop condition when significand has no trailing zeros
@@ -63,7 +64,7 @@ public class BigNumberBranchCoverageTests
 
     // ========== CompareTo Branches ==========
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_BothZero_ReturnsZero()
     {
         // Line 254: When both significands are zero
@@ -73,7 +74,7 @@ public class BigNumberBranchCoverageTests
         zero1.CompareTo(zero2).ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_FirstZero_ReturnsNegativeOfOtherSign()
     {
         // Line 254: When this is zero, other is not
@@ -85,7 +86,7 @@ public class BigNumberBranchCoverageTests
         zero.CompareTo(negative).ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_NegativeNumberEffectiveDigits_ReturnsNegativeComparison()
     {
         // Line 283: When significand sign is negative, return inverted comparison
@@ -98,7 +99,7 @@ public class BigNumberBranchCoverageTests
 
     // ========== FormatZero Branches ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_NullFormat_ReturnsZero()
     {
         // Line 370-372: null or empty format
@@ -106,7 +107,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString(null, CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_GeneralFormat_ReturnsZero()
     {
         // Line 386: G format for zero
@@ -115,7 +116,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString("g", CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_FixedPointWithPrecision_ReturnsZeroWithDecimals()
     {
         // Line 387: F format with precision > 0
@@ -123,7 +124,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString("F5", CultureInfo.InvariantCulture).ShouldBe("0.00000");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_FixedPointNoPrecision_ReturnsZeroNoDot()
     {
         // Line 387: F format with precision == 0
@@ -131,7 +132,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString("F0", CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_NumberWithPrecision_ReturnsZeroWithDecimals()
     {
         // Line 388: N format with precision > 0
@@ -139,7 +140,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString("N3", CultureInfo.InvariantCulture).ShouldBe("0.000");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_ExponentialWithPrecision_ReturnsScientificZero()
     {
         // Line 389: E format with precision > 0
@@ -148,7 +149,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString("e3", CultureInfo.InvariantCulture).ShouldBe("0.000e+000");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatPercentZero_WithZeroPrecision_NoDot()
     {
         // Line 398: precision == 0 in FormatPercentZero
@@ -156,7 +157,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString("P0", CultureInfo.InvariantCulture).ShouldBe("0 %");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatPercentZero_DefaultPattern_ReturnsCorrectly()
     {
         // Line 406: Default case in PercentPositivePattern switch
@@ -169,7 +170,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString("P2", culture).ShouldBe("0.00 %");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrencyZero_WithZeroPrecision_NoDot()
     {
         // Line 412: precision == 0 in FormatCurrencyZero
@@ -177,7 +178,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString("C0", CultureInfo.InvariantCulture).ShouldBe("¤0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrencyZero_DefaultPattern_ReturnsCorrectly()
     {
         // Line 421: Default case in CurrencyPositivePattern switch
@@ -189,7 +190,7 @@ public class BigNumberBranchCoverageTests
 
     // ========== FormatGeneral Branches ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatGeneral_NormalizedExponentZero_ReturnsSignificandOnly()
     {
         // Line 456-458: When normalized exponent is 0
@@ -197,7 +198,7 @@ public class BigNumberBranchCoverageTests
         num.ToString("G", CultureInfo.InvariantCulture).ShouldBe("12345");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatGeneral_WithPrecisionAndRounding_RoundsCorrectly()
     {
         // Line 443-446: Rounding logic in FormatGeneral
@@ -208,7 +209,7 @@ public class BigNumberBranchCoverageTests
     }
 
     // ========== RoundToPrecision Branches ==========
-    [Fact]
+    [TestMethod]
     public void RoundToPrecision_RemainderIsZero_ReturnsWithoutRounding()
     {
         // Line 530-532: remainder.IsZero branch
@@ -219,7 +220,7 @@ public class BigNumberBranchCoverageTests
     }
 
 #if NET
-    [Fact]
+    [TestMethod]
     public void RoundToPrecision_ToPositiveInfinity_RoundsUp()
     {
         // Line 556-558: ToPositiveInfinity branch  
@@ -231,7 +232,7 @@ public class BigNumberBranchCoverageTests
     }
 #endif
 
-    [Fact]
+    [TestMethod]
     public void RoundToPrecision_DefaultCase_UsesStandardRounding()
     {
         // Line 558: default case in rounding switch
@@ -244,7 +245,7 @@ public class BigNumberBranchCoverageTests
 
     // ========== FormatNumber Branches ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_SignificandShorterThanPrecision_PadsWithZeros()
     {
         // Line 579-583: sigStr.Length <= precision
@@ -256,7 +257,7 @@ public class BigNumberBranchCoverageTests
 
     // ========== FormatExponential Branches ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_ZeroValue_ReturnsFormattedZero()
     {
         // Line 609-612: Zero value in FormatExponential
@@ -266,7 +267,7 @@ public class BigNumberBranchCoverageTests
         result.ShouldBe("0.000E+000");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_RoundingCausesOverflow_AdjustsExponent()
     {
         // Line 639-643: Rounding causes overflow (9.999 -> 10.00)
@@ -278,7 +279,7 @@ public class BigNumberBranchCoverageTests
         result.ShouldContain("E+");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_PrecisionZero_NoDecimalPoint()
     {
         // Line 652-654: precision == 0
@@ -289,7 +290,7 @@ public class BigNumberBranchCoverageTests
         result.ShouldContain("E+");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_SignificandShorterThanPrecision_PadsDecimals()
     {
         // Line 661-664: decimals.Length < precision
@@ -300,7 +301,7 @@ public class BigNumberBranchCoverageTests
         result.ShouldMatch(@"\d\.\d{5}E\+\d{3}");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_OnlyOneDigit_PadsWithZeros()
     {
         // Line 667-670: sigStr.Length == 1
@@ -312,7 +313,7 @@ public class BigNumberBranchCoverageTests
 
     // ========== FormatCurrency Branches ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_SignificandShorterThanPrecision_PadsWithZeros()
     {
         // Line 690-693: sigStr.Length <= precision in FormatCurrency
@@ -324,7 +325,7 @@ public class BigNumberBranchCoverageTests
 
     // ========== Additional Edge Cases ==========
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_SameEffectiveDigitsPositive_ComparesCorrectly()
     {
         // Line 283: positive significand path
@@ -334,7 +335,7 @@ public class BigNumberBranchCoverageTests
         num1.CompareTo(num2).ShouldBeLessThan(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_MultipleTrailingZeros_RemovesAll()
     {
         // Line 196: while loop with multiple iterations
@@ -345,7 +346,7 @@ public class BigNumberBranchCoverageTests
         normalized.Exponent.ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_WithCustomCultureAllPatterns_Works()
     {
         BigNumber zero = BigNumber.Zero;
@@ -357,7 +358,7 @@ public class BigNumberBranchCoverageTests
         zero.ToString("E2", germanCulture).ShouldBe("0,00E+000");
     }
 
-    [Fact]
+    [TestMethod]
     public void GetPowerOf10_ExponentAbove1023_ComputesOnDemand()
     {
         // Line 94-100: Exponent >= 1024 goes to on-demand computation
@@ -370,7 +371,7 @@ public class BigNumberBranchCoverageTests
     }
 
 #if NET
-    [Fact]
+    [TestMethod]
     public void Round_WithToNegativeInfinity_RoundsDown()
     {
         // Additional rounding mode coverage
@@ -380,7 +381,7 @@ public class BigNumberBranchCoverageTests
         result.ToString("F2", CultureInfo.InvariantCulture).ShouldBe("12.34");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_WithToZero_TruncatesTowardZero()
     {
         // ToZero rounding mode
@@ -395,7 +396,7 @@ public class BigNumberBranchCoverageTests
     }
 #endif
 
-    [Fact]
+    [TestMethod]
     public void Round_AwayFromZero_RoundsAwayFromZero()
     {
         // AwayFromZero rounding mode
@@ -409,7 +410,7 @@ public class BigNumberBranchCoverageTests
         resultNeg.ToString("F2", CultureInfo.InvariantCulture).ShouldBe("-12.36");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatGeneral_WithPrecisionZero_UsesDefault()
     {
         // Test G format with precision 0 or negative
@@ -419,7 +420,7 @@ public class BigNumberBranchCoverageTests
         result.ShouldBe("12345E2");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_NegativeSignificand_FormatsCorrectly()
     {
         // Ensure negative numbers work in exponential format
@@ -430,7 +431,7 @@ public class BigNumberBranchCoverageTests
         result.ShouldContain("E+");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_NegativeNumber_FormatsWithGrouping()
     {
         // Ensure negative numbers work in number format
@@ -441,7 +442,7 @@ public class BigNumberBranchCoverageTests
         result.ShouldContain(",");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativeNumber_UsesNegativePattern()
     {
         // Test currency formatting with negative numbers using explicit format info
@@ -460,7 +461,7 @@ public class BigNumberBranchCoverageTests
         result.ShouldBe("-$123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatPercent_SmallNumber_FormatsAsPercentage()
     {
         // Test percent format with small numbers

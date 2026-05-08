@@ -3,7 +3,7 @@
 
 namespace Corvus.Text.Json.Tests.MigrationEquivalenceTests;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using V5 = MigrationModels.V5;
 
@@ -30,11 +30,12 @@ using V5 = MigrationModels.V5;
 /// <c>CreateArrayBuilder(workspace)</c> and <c>CreateObjectBuilder(workspace)</c>.
 /// </para>
 /// </remarks>
+[TestClass]
 public class CreateBuilderEquivalenceTests
 {
     #region Array types — CreateBuilder creates empty array
 
-    [Fact]
+    [TestMethod]
     public void ItemArray_CreateBuilder_ReturnsEmptyArray()
     {
         using var workspace = JsonWorkspace.Create();
@@ -42,11 +43,11 @@ public class CreateBuilderEquivalenceTests
             V5.MigrationItemArray.CreateBuilder(workspace);
         V5.MigrationItemArray.Mutable root = builder.RootElement;
 
-        Assert.Equal(Corvus.Text.Json.JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(0, root.GetArrayLength());
+        Assert.AreEqual(Corvus.Text.Json.JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(0, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void ItemArray_CreateBuilder_ThenAddItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -59,12 +60,12 @@ public class CreateBuilderEquivalenceTests
         root.AddItem(V5.MigrationItemArray.RequiredId.Build(
             (ref b) => b.Create(id: 2, label: "second")));
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal(1, (int)root[0].Id);
-        Assert.Equal(2, (int)root[1].Id);
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual(1, (int)root[0].Id);
+        Assert.AreEqual(2, (int)root[1].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void ItemArray_CreateBuilder_RoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -80,11 +81,11 @@ public class CreateBuilderEquivalenceTests
         using var reparsed =
             ParsedJsonDocument<V5.MigrationItemArray>.Parse(json);
 
-        Assert.Equal(1, reparsed.RootElement.GetArrayLength());
-        Assert.Equal(1, (int)reparsed.RootElement[0].Id);
+        Assert.AreEqual(1, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual(1, (int)reparsed.RootElement[0].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void IntVector_CreateBuilder_ReturnsEmptyArray()
     {
         using var workspace = JsonWorkspace.Create();
@@ -92,15 +93,15 @@ public class CreateBuilderEquivalenceTests
             V5.MigrationIntVector.CreateBuilder(workspace);
         V5.MigrationIntVector.Mutable root = builder.RootElement;
 
-        Assert.Equal(Corvus.Text.Json.JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(0, root.GetArrayLength());
+        Assert.AreEqual(Corvus.Text.Json.JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(0, root.GetArrayLength());
     }
 
     #endregion
 
     #region JsonElement.Mutable — CreateArrayBuilder and CreateObjectBuilder
 
-    [Fact]
+    [TestMethod]
     public void JsonElementMutable_CreateArrayBuilder_ReturnsEmptyArray()
     {
         using var workspace = JsonWorkspace.Create();
@@ -108,11 +109,11 @@ public class CreateBuilderEquivalenceTests
             Corvus.Text.Json.JsonElement.CreateArrayBuilder(workspace);
         Corvus.Text.Json.JsonElement.Mutable root = builder.RootElement;
 
-        Assert.Equal(Corvus.Text.Json.JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(0, root.GetArrayLength());
+        Assert.AreEqual(Corvus.Text.Json.JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(0, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void JsonElementMutable_CreateArrayBuilder_ThenAddItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -124,11 +125,11 @@ public class CreateBuilderEquivalenceTests
         root.AddItem(2);
         root.AddItem(3);
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("[1,2,3]", root.ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("[1,2,3]", root.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void JsonElementMutable_CreateObjectBuilder_ReturnsEmptyObject()
     {
         using var workspace = JsonWorkspace.Create();
@@ -136,11 +137,11 @@ public class CreateBuilderEquivalenceTests
             Corvus.Text.Json.JsonElement.CreateObjectBuilder(workspace);
         Corvus.Text.Json.JsonElement.Mutable root = builder.RootElement;
 
-        Assert.Equal(Corvus.Text.Json.JsonValueKind.Object, root.ValueKind);
-        Assert.Equal(0, root.GetPropertyCount());
+        Assert.AreEqual(Corvus.Text.Json.JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual(0, root.GetPropertyCount());
     }
 
-    [Fact]
+    [TestMethod]
     public void JsonElementMutable_CreateObjectBuilder_ThenSetProperties()
     {
         using var workspace = JsonWorkspace.Create();
@@ -151,12 +152,12 @@ public class CreateBuilderEquivalenceTests
         root.SetProperty("name", "Alice");
         root.SetProperty("age", 30);
 
-        Assert.Equal(2, root.GetPropertyCount());
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
-        Assert.Equal(30, root.GetProperty("age"u8).GetInt32());
+        Assert.AreEqual(2, root.GetPropertyCount());
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(30, root.GetProperty("age"u8).GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void JsonElementMutable_CreateObjectBuilder_RoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -169,7 +170,7 @@ public class CreateBuilderEquivalenceTests
         string json = root.ToString();
 
         using var reparsed = ParsedJsonDocument<Corvus.Text.Json.JsonElement>.Parse(json);
-        Assert.True(reparsed.RootElement.GetProperty("active"u8).GetBoolean());
+        Assert.IsTrue(reparsed.RootElement.GetProperty("active"u8).GetBoolean());
     }
 
     #endregion

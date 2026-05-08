@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
 
@@ -11,11 +11,12 @@ namespace Corvus.Text.Json.Jsonata.Tests;
 /// Tests JSONata evaluation with large JSON inputs to verify
 /// no OOM errors and reasonable performance.
 /// </summary>
+[TestClass]
 public class LargeInputTests
 {
     private static readonly JsonataEvaluator Evaluator = JsonataEvaluator.Default;
 
-    [Fact]
+    [TestMethod]
     public void SumLargeArray()
     {
         // Build a 100K-element array
@@ -43,10 +44,10 @@ public class LargeInputTests
             workspace);
 
         // Sum of 0..99999 = (99999 * 100000) / 2 = 4999950000
-        Assert.Equal(4_999_950_000.0, result.GetDouble());
+        Assert.AreEqual(4_999_950_000.0, result.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterLargeArray()
     {
         var sb = new StringBuilder();
@@ -72,10 +73,10 @@ public class LargeInputTests
             doc.RootElement,
             workspace);
 
-        Assert.Equal(5000.0, result.GetDouble());
+        Assert.AreEqual(5000.0, result.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void MapLargeArray()
     {
         var sb = new StringBuilder();
@@ -101,10 +102,10 @@ public class LargeInputTests
             doc.RootElement,
             workspace);
 
-        Assert.Equal(10_000.0, result.GetDouble());
+        Assert.AreEqual(10_000.0, result.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void DeeplyNestedObjectNavigation()
     {
         // Build a 50-level nested object: {"a":{"a":{"a":...{"a":42}...}}}
@@ -130,10 +131,10 @@ public class LargeInputTests
             doc.RootElement,
             workspace);
 
-        Assert.Equal(42.0, result.GetDouble());
+        Assert.AreEqual(42.0, result.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void LargeObjectPropertyAccess()
     {
         // Build an object with 1000 properties
@@ -161,10 +162,10 @@ public class LargeInputTests
             doc.RootElement,
             workspace);
 
-        Assert.Equal(999.0, result.GetDouble());
+        Assert.AreEqual(999.0, result.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void LargeArrayOfObjects()
     {
         // Build 10K objects with multiple properties
@@ -192,6 +193,6 @@ public class LargeInputTests
             doc.RootElement,
             workspace);
 
-        Assert.Equal(4_999_500_000.0, result.GetDouble());
+        Assert.AreEqual(4_999_500_000.0, result.GetDouble());
     }
 }

@@ -3,12 +3,13 @@
 // </copyright>
 
 using System.Buffers;
+using System.Linq;
 using System.Text;
 using Corvus.Text.Json.Compatibility;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
 using NodaTime;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -16,11 +17,12 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage tests for Utf8JsonWriter minimized paths, Utf8UriTemplate Unicode paths,
 /// and PeriodBuilder indexer.
 /// </summary>
+[TestClass]
 public class WriterAndTemplateCoverageTests
 {
     #region Utf8JsonWriter Minimized Paths
 
-    [Fact]
+    [TestMethod]
     public void WriteGuidMinimized()
     {
         var output = new ArrayBufferWriter<byte>();
@@ -33,10 +35,10 @@ public class WriterAndTemplateCoverageTests
         writer.Flush();
 
         string result = JsonReaderHelper.TranscodeHelper(output.WrittenSpan);
-        Assert.Equal("""["12345678-1234-1234-1234-123456789abc","aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"]""", result);
+        Assert.AreEqual("""["12345678-1234-1234-1234-123456789abc","aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void WriteDecimalMinimized()
     {
         var output = new ArrayBufferWriter<byte>();
@@ -49,10 +51,10 @@ public class WriterAndTemplateCoverageTests
         writer.Flush();
 
         string result = JsonReaderHelper.TranscodeHelper(output.WrittenSpan);
-        Assert.Equal("[123.456,789.012]", result);
+        Assert.AreEqual("[123.456,789.012]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void WriteFloatMinimized()
     {
         var output = new ArrayBufferWriter<byte>();
@@ -65,10 +67,10 @@ public class WriterAndTemplateCoverageTests
         writer.Flush();
 
         string result = JsonReaderHelper.TranscodeHelper(output.WrittenSpan);
-        Assert.Equal("[1.5,2.5]", result);
+        Assert.AreEqual("[1.5,2.5]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void WriteUInt64Minimized()
     {
         var output = new ArrayBufferWriter<byte>();
@@ -81,78 +83,78 @@ public class WriterAndTemplateCoverageTests
         writer.Flush();
 
         string result = JsonReaderHelper.TranscodeHelper(output.WrittenSpan);
-        Assert.Equal("[18446744073709551615,42]", result);
+        Assert.AreEqual("[18446744073709551615,42]", result);
     }
 
     #endregion
 
     #region Utf8UriTemplate Unicode (ParseUcsChar is dead code — lookup table handles all > 0x7F)
 
-    [Theory]
-    [InlineData("caf\u00e9", true)]                  // é = U+00E9 (2-byte UTF-8: 0xC3 0xA9)
-    [InlineData("\u00A0literal", true)]              // U+00A0 = non-breaking space
-    [InlineData("path/\u4e2d\u6587/file", true)]    // Chinese characters
-    [InlineData("\uFDF0end", true)]                  // U+FDF0
+    [TestMethod]
+    [DataRow("caf\u00e9", true)]                  // é = U+00E9 (2-byte UTF-8: 0xC3 0xA9)
+    [DataRow("\u00A0literal", true)]              // U+00A0 = non-breaking space
+    [DataRow("path/\u4e2d\u6587/file", true)]    // Chinese characters
+    [DataRow("\uFDF0end", true)]                  // U+FDF0
     public void Validate_UnicodeInLiterals_Valid(string template, bool expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(template);
         bool result = Utf8UriTemplate.Validate(utf8);
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_SupplementaryCodePoint_Valid()
     {
         // U+10000 (LINEAR B SYLLABLE B008 A) — 4-byte UTF-8: F0 90 80 80
         byte[] utf8 = [0x70, 0x61, 0x74, 0x68, 0xF0, 0x90, 0x80, 0x80]; // "path" + U+10000
         bool result = Utf8UriTemplate.Validate(utf8);
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_HighBytesAcceptedByLookupTable()
     {
         // The IsLiteralLookup table accepts all bytes >= 0x80 individually,
         // so even a lone continuation byte is accepted as a valid literal.
         byte[] utf8 = [0x70, 0x61, 0x74, 0x68, 0x80]; // "path" + lone continuation byte
         bool result = Utf8UriTemplate.Validate(utf8);
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
     #endregion
 
     #region PeriodBuilder Indexer
 
-    [Theory]
-    [InlineData(PeriodUnits.Years, 5)]
-    [InlineData(PeriodUnits.Months, 3)]
-    [InlineData(PeriodUnits.Weeks, 2)]
-    [InlineData(PeriodUnits.Days, 10)]
-    [InlineData(PeriodUnits.Hours, 8)]
-    [InlineData(PeriodUnits.Minutes, 30)]
-    [InlineData(PeriodUnits.Seconds, 45)]
-    [InlineData(PeriodUnits.Milliseconds, 500)]
-    [InlineData(PeriodUnits.Ticks, 1000)]
-    [InlineData(PeriodUnits.Nanoseconds, 999)]
+    [TestMethod]
+    [DataRow(PeriodUnits.Years, 5)]
+    [DataRow(PeriodUnits.Months, 3)]
+    [DataRow(PeriodUnits.Weeks, 2)]
+    [DataRow(PeriodUnits.Days, 10)]
+    [DataRow(PeriodUnits.Hours, 8)]
+    [DataRow(PeriodUnits.Minutes, 30)]
+    [DataRow(PeriodUnits.Seconds, 45)]
+    [DataRow(PeriodUnits.Milliseconds, 500)]
+    [DataRow(PeriodUnits.Ticks, 1000)]
+    [DataRow(PeriodUnits.Nanoseconds, 999)]
     public void PeriodBuilder_IndexerGetter_ReturnsCorrectValue(PeriodUnits unit, long value)
     {
         var builder = new PeriodBuilder();
         builder[unit] = value;
-        Assert.Equal(value, builder[unit]);
+        Assert.AreEqual(value, builder[unit]);
     }
 
-    [Fact]
+    [TestMethod]
     public void PeriodBuilder_IndexerGetter_InvalidUnit_Throws()
     {
         var builder = new PeriodBuilder();
-        Assert.Throws<System.ArgumentOutOfRangeException>(() => builder[(PeriodUnits)0]);
+        Assert.ThrowsExactly<System.ArgumentOutOfRangeException>(() => builder[(PeriodUnits)0]);
     }
 
     #endregion
 
     #region Period.Equals(NodaTime.Period)
 
-    [Fact]
+    [TestMethod]
     public void Period_Equals_NodaTimePeriod_EqualValues()
     {
         var corvusPeriod = new Period(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
@@ -170,10 +172,10 @@ public class WriterAndTemplateCoverageTests
             Nanoseconds = 10,
         }.Build();
 
-        Assert.True(corvusPeriod.Equals(nodaPeriod));
+        Assert.IsTrue(corvusPeriod.Equals(nodaPeriod));
     }
 
-    [Fact]
+    [TestMethod]
     public void Period_Equals_NodaTimePeriod_DifferentValues()
     {
         var corvusPeriod = new Period(1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
@@ -191,42 +193,42 @@ public class WriterAndTemplateCoverageTests
             Nanoseconds = 99,
         }.Build();
 
-        Assert.False(corvusPeriod.Equals(nodaPeriod));
+        Assert.IsFalse(corvusPeriod.Equals(nodaPeriod));
     }
 
     #endregion
 
     #region ParsedJsonDocument IJsonDocument TryGetNamedPropertyValue (char overload with elementParent)
 
-    [Fact]
+    [TestMethod]
     public void ParsedJsonDocument_IJsonDocument_TryGetNamedPropertyValue_Char_Found()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"hello","value":42}"""u8.ToArray());
         IJsonDocument iDoc = doc;
 
         bool found = iDoc.TryGetNamedPropertyValue(0, "name".AsSpan(), out IJsonDocument? parent, out int idx);
-        Assert.True(found);
-        Assert.Same(doc, parent);
-        Assert.True(idx > 0);
+        Assert.IsTrue(found);
+        Assert.AreSame(doc, parent);
+        Assert.IsTrue(idx > 0);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParsedJsonDocument_IJsonDocument_TryGetNamedPropertyValue_Char_NotFound()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"hello"}"""u8.ToArray());
         IJsonDocument iDoc = doc;
 
         bool found = iDoc.TryGetNamedPropertyValue(0, "missing".AsSpan(), out IJsonDocument? parent, out int idx);
-        Assert.False(found);
-        Assert.Null(parent);
-        Assert.Equal(-1, idx);
+        Assert.IsFalse(found);
+        Assert.IsNull(parent);
+        Assert.AreEqual(-1, idx);
     }
 
     #endregion
 
     #region JsonWorkspace.Reset()
 
-    [Fact]
+    [TestMethod]
     public void JsonWorkspace_Reset_ClearsDocuments()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -240,14 +242,14 @@ public class WriterAndTemplateCoverageTests
         // After reset, workspace can be reused for new builders
         using ParsedJsonDocument<JsonElement> sourceDoc2 = ParsedJsonDocument<JsonElement>.Parse("""{"b":2}"""u8.ToArray());
         using JsonDocumentBuilder<JsonElement.Mutable> builder2 = sourceDoc2.RootElement.CreateBuilder(workspace);
-        Assert.Equal("""{"b":2}""", builder2.RootElement.ToString());
+        Assert.AreEqual("""{"b":2}""", builder2.RootElement.ToString());
     }
 
     #endregion
 
     #region ValidationContext.Results (non-null collector path)
 
-    [Fact]
+    [TestMethod]
     public void ValidationContext_Results_WithCollector_ReturnsResults()
     {
         // Validate an invalid instance to produce validation results with a non-empty collector
@@ -259,25 +261,25 @@ public class WriterAndTemplateCoverageTests
 
         // Access Results to trigger BuildResults with non-null collector containing failures
         var results = result.Results;
-        Assert.NotNull(results);
-        Assert.False(result.IsValid);
-        Assert.NotEmpty(results);
+        Assert.IsNotNull(results);
+        Assert.IsFalse(result.IsValid);
+        Assert.IsTrue((results).Any());
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidationContext_Results_NullCollector_ReturnsEmpty()
     {
         // The static ValidContext has no collector — should return empty
         var results = ValidationContext.ValidContext.Results;
-        Assert.NotNull(results);
-        Assert.Empty(results);
+        Assert.IsNotNull(results);
+        Assert.AreEqual(0, (results).Count);
     }
 
     #endregion
 
     #region Utf8JsonWriterCache.RentWriter / ReturnWriter
 
-    [Fact]
+    [TestMethod]
     public void JsonWorkspace_RentWriter_ReturnWriter()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -292,55 +294,55 @@ public class WriterAndTemplateCoverageTests
         workspace.ReturnWriter(writer);
 
         string result = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Equal("""{"x":42}""", result);
+        Assert.AreEqual("""{"x":42}""", result);
     }
 
     #endregion
 
     #region ParsedJsonDocument generic TryGetNamedPropertyValue<TElement>(char overload)
 
-    [Fact]
+    [TestMethod]
     public void ParsedJsonDocument_GenericTryGetNamedPropertyValue_Char_Found()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"hello","value":42}"""u8.ToArray());
         IJsonDocument iDoc = doc;
 
         bool found = iDoc.TryGetNamedPropertyValue<JsonElement>(0, "name".AsSpan(), out JsonElement value);
-        Assert.True(found);
-        Assert.Equal("hello", value.GetString());
+        Assert.IsTrue(found);
+        Assert.AreEqual("hello", value.GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void ParsedJsonDocument_GenericTryGetNamedPropertyValue_Char_NotFound()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"name":"hello"}"""u8.ToArray());
         IJsonDocument iDoc = doc;
 
         bool found = iDoc.TryGetNamedPropertyValue<JsonElement>(0, "missing".AsSpan(), out JsonElement value);
-        Assert.False(found);
-        Assert.Equal(JsonValueKind.Undefined, value.ValueKind);
+        Assert.IsFalse(found);
+        Assert.AreEqual(JsonValueKind.Undefined, value.ValueKind);
     }
 
     #endregion
 
     #region Format validation error messages at Detailed level
 
-    [Theory]
-    [InlineData("""{"date":"not-a-date"}""")]
-    [InlineData("""{"dateTime":"not-a-datetime"}""")]
-    [InlineData("""{"time":"not-a-time"}""")]
-    [InlineData("""{"duration":"not-a-duration"}""")]
-    [InlineData("""{"email":"not an email"}""")]
-    [InlineData("""{"hostname":"not a host!name"}""")]
-    [InlineData("""{"idnEmail":"not an email"}""")]
-    [InlineData("""{"uuid":"not-a-uuid"}""")]
-    [InlineData("""{"uri":":::not a uri"}""")]
-    [InlineData("""{"uriReference":":::not valid"}""")]
-    [InlineData("""{"iri":":::not a iri"}""")]
-    [InlineData("""{"iriReference":":::not valid"}""")]
-    [InlineData("""{"jsonPointer":"no-leading-slash"}""")]
-    [InlineData("""{"relativeJsonPointer":"not/valid"}""")]
-    [InlineData("""{"regex":"[invalid"}""")]
+    [TestMethod]
+    [DataRow("""{"date":"not-a-date"}""")]
+    [DataRow("""{"dateTime":"not-a-datetime"}""")]
+    [DataRow("""{"time":"not-a-time"}""")]
+    [DataRow("""{"duration":"not-a-duration"}""")]
+    [DataRow("""{"email":"not an email"}""")]
+    [DataRow("""{"hostname":"not a host!name"}""")]
+    [DataRow("""{"idnEmail":"not an email"}""")]
+    [DataRow("""{"uuid":"not-a-uuid"}""")]
+    [DataRow("""{"uri":":::not a uri"}""")]
+    [DataRow("""{"uriReference":":::not valid"}""")]
+    [DataRow("""{"iri":":::not a iri"}""")]
+    [DataRow("""{"iriReference":":::not valid"}""")]
+    [DataRow("""{"jsonPointer":"no-leading-slash"}""")]
+    [DataRow("""{"relativeJsonPointer":"not/valid"}""")]
+    [DataRow("""{"regex":"[invalid"}""")]
     public void FormatTypes_StringFormat_InvalidValue_ProducesDetailedError(string json)
     {
         using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
@@ -349,25 +351,25 @@ public class WriterAndTemplateCoverageTests
             ValidationContext.ValidContext,
             ValidationLevel.Detailed);
 
-        Assert.False(result.IsValid);
-        Assert.NotEmpty(result.Results);
+        Assert.IsFalse(result.IsValid);
+        Assert.IsTrue((result.Results).Any());
     }
 
-    [Theory]
-    [InlineData("""{"byte":999}""")]
-    [InlineData("""{"uint16":99999}""")]
-    [InlineData("""{"uint32":5000000000}""")]
-    [InlineData("""{"uint64":-1}""")]
-    [InlineData("""{"uint128":-1}""")]
-    [InlineData("""{"sbyte":200}""")]
-    [InlineData("""{"int16":40000}""")]
-    [InlineData("""{"int32":3000000000}""")]
-    [InlineData("""{"int64":1.5}""")]
-    [InlineData("""{"int128":1.5}""")]
-    [InlineData("""{"half":100000}""")]
-    [InlineData("""{"single":3.5e39}""")]
-    [InlineData("""{"double":1.8e309}""")]
-    [InlineData("""{"decimal":1e30}""")]
+    [TestMethod]
+    [DataRow("""{"byte":999}""")]
+    [DataRow("""{"uint16":99999}""")]
+    [DataRow("""{"uint32":5000000000}""")]
+    [DataRow("""{"uint64":-1}""")]
+    [DataRow("""{"uint128":-1}""")]
+    [DataRow("""{"sbyte":200}""")]
+    [DataRow("""{"int16":40000}""")]
+    [DataRow("""{"int32":3000000000}""")]
+    [DataRow("""{"int64":1.5}""")]
+    [DataRow("""{"int128":1.5}""")]
+    [DataRow("""{"half":100000}""")]
+    [DataRow("""{"single":3.5e39}""")]
+    [DataRow("""{"double":1.8e309}""")]
+    [DataRow("""{"decimal":1e30}""")]
     public void FormatTypes_NumericFormat_InvalidValue_ProducesDetailedError(string json)
     {
         using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
@@ -376,18 +378,18 @@ public class WriterAndTemplateCoverageTests
             ValidationContext.ValidContext,
             ValidationLevel.Detailed);
 
-        Assert.False(result.IsValid);
-        Assert.NotEmpty(result.Results);
+        Assert.IsFalse(result.IsValid);
+        Assert.IsTrue((result.Results).Any());
     }
 
     #endregion
 
     #region Int64/Int128 format validation correctness (BUG: codegen was calling MatchUInt64/MatchUInt128)
 
-    [Theory]
-    [InlineData("""{"int64":-1}""")]
-    [InlineData("""{"int64":-9223372036854775808}""")]
-    [InlineData("""{"int64":9223372036854775807}""")]
+    [TestMethod]
+    [DataRow("""{"int64":-1}""")]
+    [DataRow("""{"int64":-9223372036854775808}""")]
+    [DataRow("""{"int64":9223372036854775807}""")]
     public void FormatTypes_Int64_AcceptsNegativeAndMaxRange(string json)
     {
         using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
@@ -396,12 +398,12 @@ public class WriterAndTemplateCoverageTests
             ValidationContext.ValidContext,
             ValidationLevel.Detailed);
 
-        Assert.True(result.IsValid);
+        Assert.IsTrue(result.IsValid);
     }
 
-    [Theory]
-    [InlineData("""{"int64":9223372036854775808}""")]
-    [InlineData("""{"int64":18446744073709551615}""")]
+    [TestMethod]
+    [DataRow("""{"int64":9223372036854775808}""")]
+    [DataRow("""{"int64":18446744073709551615}""")]
     public void FormatTypes_Int64_RejectsAboveMaxInt64(string json)
     {
         using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
@@ -410,13 +412,13 @@ public class WriterAndTemplateCoverageTests
             ValidationContext.ValidContext,
             ValidationLevel.Detailed);
 
-        Assert.False(result.IsValid);
+        Assert.IsFalse(result.IsValid);
     }
 
-    [Theory]
-    [InlineData("""{"int128":-1}""")]
-    [InlineData("""{"int128":-170141183460469231731687303715884105728}""")]
-    [InlineData("""{"int128":170141183460469231731687303715884105727}""")]
+    [TestMethod]
+    [DataRow("""{"int128":-1}""")]
+    [DataRow("""{"int128":-170141183460469231731687303715884105728}""")]
+    [DataRow("""{"int128":170141183460469231731687303715884105727}""")]
     public void FormatTypes_Int128_AcceptsNegativeAndMaxRange(string json)
     {
         using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
@@ -425,11 +427,11 @@ public class WriterAndTemplateCoverageTests
             ValidationContext.ValidContext,
             ValidationLevel.Detailed);
 
-        Assert.True(result.IsValid);
+        Assert.IsTrue(result.IsValid);
     }
 
-    [Theory]
-    [InlineData("""{"int128":170141183460469231731687303715884105728}""")]
+    [TestMethod]
+    [DataRow("""{"int128":170141183460469231731687303715884105728}""")]
     public void FormatTypes_Int128_RejectsAboveMaxInt128(string json)
     {
         using var doc = ParsedJsonDocument<FormatTypes>.Parse(Encoding.UTF8.GetBytes(json));
@@ -438,14 +440,14 @@ public class WriterAndTemplateCoverageTests
             ValidationContext.ValidContext,
             ValidationLevel.Detailed);
 
-        Assert.False(result.IsValid);
+        Assert.IsFalse(result.IsValid);
     }
 
     #endregion
 
     #region GetHashCodeForString with long strings (>2048 chars triggers ArrayPool path)
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_LongString_UsesArrayPoolPath()
     {
         // Build a JSON string with >2048 characters to exercise the ArrayPool<char> rent path
@@ -459,7 +461,7 @@ public class WriterAndTemplateCoverageTests
 
         // Calling GetHashCode exercises the GetHashCodeForString path
         int hash = value.GetHashCode();
-        Assert.NotEqual(0, hash);
+        Assert.AreNotEqual(0, hash);
     }
 
     #endregion

@@ -4,95 +4,96 @@
 
 using System.Buffers;
 using System.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Validator.Tests;
 
 /// <summary>
 /// Tests for the different Validate overloads on <see cref="JsonSchema"/>.
 /// </summary>
+[TestClass]
 public class ValidateOverloadTests
 {
     private static readonly JsonSchema Schema = CreateSchema();
 
-    [Fact]
+    [TestMethod]
     public void Validate_String_Valid()
     {
-        Assert.True(Schema.Validate("""{"name":"Alice","age":30}"""));
+        Assert.IsTrue(Schema.Validate("""{"name":"Alice","age":30}"""));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_String_Invalid()
     {
-        Assert.False(Schema.Validate("""{"name":"Alice"}"""));
+        Assert.IsFalse(Schema.Validate("""{"name":"Alice"}"""));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_ReadOnlyMemoryByte_Valid()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("""{"name":"Bob","age":25}""");
 
-        Assert.True(Schema.Validate(new ReadOnlyMemory<byte>(utf8)));
+        Assert.IsTrue(Schema.Validate(new ReadOnlyMemory<byte>(utf8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_ReadOnlyMemoryByte_Invalid()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("""{"name":"Bob"}""");
 
-        Assert.False(Schema.Validate(new ReadOnlyMemory<byte>(utf8)));
+        Assert.IsFalse(Schema.Validate(new ReadOnlyMemory<byte>(utf8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_ReadOnlyMemoryChar_Valid()
     {
         string json = """{"name":"Charlie","age":40}""";
 
-        Assert.True(Schema.Validate(json.AsMemory()));
+        Assert.IsTrue(Schema.Validate(json.AsMemory()));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_ReadOnlyMemoryChar_Invalid()
     {
         string json = """{"name":"Charlie"}""";
 
-        Assert.False(Schema.Validate(json.AsMemory()));
+        Assert.IsFalse(Schema.Validate(json.AsMemory()));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_Stream_Valid()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("""{"name":"Diana","age":35}""");
         using MemoryStream stream = new(utf8);
 
-        Assert.True(Schema.Validate(stream));
+        Assert.IsTrue(Schema.Validate(stream));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_Stream_Invalid()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("""{"name":"Diana"}""");
         using MemoryStream stream = new(utf8);
 
-        Assert.False(Schema.Validate(stream));
+        Assert.IsFalse(Schema.Validate(stream));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_ReadOnlySequenceByte_Valid()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("""{"name":"Eve","age":28}""");
         ReadOnlySequence<byte> sequence = new(utf8);
 
-        Assert.True(Schema.Validate(sequence));
+        Assert.IsTrue(Schema.Validate(sequence));
     }
 
-    [Fact]
+    [TestMethod]
     public void Validate_ReadOnlySequenceByte_Invalid()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("""{"name":"Eve"}""");
         ReadOnlySequence<byte> sequence = new(utf8);
 
-        Assert.False(Schema.Validate(sequence));
+        Assert.IsFalse(Schema.Validate(sequence));
     }
 
     private static JsonSchema CreateSchema()

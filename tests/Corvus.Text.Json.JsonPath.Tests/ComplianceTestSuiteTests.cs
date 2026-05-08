@@ -3,8 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.JsonPath;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonPath.Tests;
 
@@ -13,16 +12,10 @@ namespace Corvus.Text.Json.JsonPath.Tests;
 /// <c>jsonpath-compliance-test-suite</c> submodule against
 /// <see cref="JsonPathEvaluator"/>.
 /// </summary>
+[TestClass]
 public class ComplianceTestSuiteTests
 {
     private static readonly Lazy<TestCase[]> AllTests = new(LoadTests);
-    private readonly ITestOutputHelper output;
-
-    public ComplianceTestSuiteTests(ITestOutputHelper output)
-    {
-        this.output = output;
-    }
-
     public static IEnumerable<object[]> ValidTestCases()
     {
         foreach (TestCase tc in AllTests.Value)
@@ -45,12 +38,12 @@ public class ComplianceTestSuiteTests
         }
     }
 
-    [Theory]
-    [MemberData(nameof(ValidTestCases))]
+    [TestMethod]
+    [DynamicData(nameof(ValidTestCases))]
     public void ValidSelector(TestCase testCase)
     {
-        this.output.WriteLine($"Test: {testCase.Name}");
-        this.output.WriteLine($"Selector: {testCase.Selector}");
+        Console.WriteLine($"Test: {testCase.Name}");
+        Console.WriteLine($"Selector: {testCase.Selector}");
 
         JsonElement data = JsonElement.ParseValue(
             System.Text.Encoding.UTF8.GetBytes(testCase.DocumentJson));
@@ -58,7 +51,7 @@ public class ComplianceTestSuiteTests
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = JsonPathEvaluator.Default.Query(testCase.Selector, data, workspace);
 
-        this.output.WriteLine($"Result: {result}");
+        Console.WriteLine($"Result: {result}");
 
         if (testCase.ExpectedResults != null)
         {
@@ -73,27 +66,27 @@ public class ComplianceTestSuiteTests
                 }
             }
 
-            Assert.True(matched,
+            Assert.IsTrue(matched,
                 $"Result {result} did not match any expected result. " +
                 $"Expected one of: {string.Join(" OR ", testCase.ExpectedResults)}");
         }
         else if (testCase.ExpectedResult != null)
         {
-            Assert.True(
+            Assert.IsTrue(
                 JsonArraysEqual(result.ToString()!, testCase.ExpectedResult),
                 $"Expected: {testCase.ExpectedResult}\nActual:   {result}");
         }
     }
 
-    [Theory]
-    [MemberData(nameof(InvalidTestCases))]
+    [TestMethod]
+    [DynamicData(nameof(InvalidTestCases))]
     public void InvalidSelector(TestCase testCase)
     {
-        this.output.WriteLine($"Test: {testCase.Name}");
-        this.output.WriteLine($"Selector: {testCase.Selector}");
+        Console.WriteLine($"Test: {testCase.Name}");
+        Console.WriteLine($"Selector: {testCase.Selector}");
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        Assert.ThrowsAny<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
         {
             JsonElement data = JsonElement.ParseValue("{}"u8);
             JsonPathEvaluator.Default.Query(testCase.Selector, data, workspace);

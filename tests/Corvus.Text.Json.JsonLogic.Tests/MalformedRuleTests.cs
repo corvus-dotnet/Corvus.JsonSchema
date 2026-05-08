@@ -4,7 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.JsonLogic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.Tests;
 
@@ -12,107 +12,108 @@ namespace Corvus.Text.Json.JsonLogic.Tests;
 /// Tests that the JsonLogic runtime evaluator handles malformed, invalid,
 /// and edge-case rules gracefully.
 /// </summary>
+[TestClass]
 public class MalformedRuleTests
 {
     // ----- Literal rules (no operator) -----
 
-    [Theory]
-    [InlineData("42", "42")]
-    [InlineData("\"hello\"", "\"hello\"")]
-    [InlineData("true", "true")]
-    [InlineData("false", "false")]
-    [InlineData("null", "null")]
+    [TestMethod]
+    [DataRow("42", "42")]
+    [DataRow("\"hello\"", "\"hello\"")]
+    [DataRow("true", "true")]
+    [DataRow("false", "false")]
+    [DataRow("null", "null")]
     public void LiteralValue_ReturnedAsIs(string rule, string expected)
     {
         string result = Evaluate(rule, "{}");
-        Assert.Equal(NormalizeJson(expected), result);
+        Assert.AreEqual(NormalizeJson(expected), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyArray_ReturnedAsEmptyArray()
     {
         string result = Evaluate("[]", "{}");
-        Assert.Equal("[]", result);
+        Assert.AreEqual("[]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayOfLiterals_ReturnedAsArray()
     {
         string result = Evaluate("[1, 2, 3]", "{}");
-        Assert.Equal("[1,2,3]", result);
+        Assert.AreEqual("[1,2,3]", result);
     }
 
     // ----- Unknown operators -----
 
-    [Fact]
+    [TestMethod]
     public void UnknownOperator_ThrowsInvalidOperationException()
     {
-        Assert.ThrowsAny<Exception>(() => Evaluate("""{"nonexistent":[1]}""", "{}"));
+        Assert.Throws<Exception>(() => Evaluate("""{"nonexistent":[1]}""", "{}"));
     }
 
     // ----- Empty operator args -----
 
-    [Fact]
+    [TestMethod]
     public void VarWithEmptyString_ReturnsFullData()
     {
         string result = Evaluate("""{"var":""}""", """{"a":1,"b":2}""");
-        Assert.Equal("""{"a":1,"b":2}""", result);
+        Assert.AreEqual("""{"a":1,"b":2}""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void VarWithNoArgs_ReturnsFullData()
     {
         string result = Evaluate("""{"var":[]}""", """{"a":1}""");
         // var with no args typically returns the full data
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
     // ----- Null paths -----
 
-    [Fact]
+    [TestMethod]
     public void VarWithMissingPath_ReturnsNull()
     {
         string result = Evaluate("""{"var":"nonexistent"}""", """{"a":1}""");
-        Assert.Equal("null", result);
+        Assert.AreEqual("null", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void VarWithDefault_ReturnsDefault()
     {
         string result = Evaluate("""{"var":["nonexistent", 99]}""", """{"a":1}""");
-        Assert.Equal("99", result);
+        Assert.AreEqual("99", result);
     }
 
     // ----- Edge cases in comparison operators -----
 
-    [Fact]
+    [TestMethod]
     public void CompareNullWithNumber_EvaluatesCorrectly()
     {
         string result = Evaluate("""{"==":[null, null]}""", "{}");
-        Assert.Equal("true", result);
+        Assert.AreEqual("true", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareNullWithNonNull_ReturnsFalse()
     {
         string result = Evaluate("""{"==":[null, 0]}""", "{}");
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
     // ----- Single-element operator args -----
 
-    [Fact]
+    [TestMethod]
     public void AddWithSingleArg_ReturnsUnaryPlus()
     {
         string result = Evaluate("""{"+":[5]}""", "{}");
-        Assert.Equal("5", result);
+        Assert.AreEqual("5", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void AddWithNoArgs_ReturnsZero()
     {
         string result = Evaluate("""{"+":[]}""", "{}");
-        Assert.Equal("0", result);
+        Assert.AreEqual("0", result);
     }
 
     // ----- Helpers -----

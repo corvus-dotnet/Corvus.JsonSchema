@@ -2,7 +2,7 @@
 
 using System;
 using System.Buffers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -10,7 +10,8 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage batch 16: Utf8JsonWriter indented Grow paths for DateTime/DateTimeOffset/Guid,
 /// and WriteProperties Grow paths for Decimal/Bytes/DateTime/DateTimeOffset (char and byte overloads).
 /// </summary>
-public static class CoverageBatch16Tests
+[TestClass]
+public class CoverageBatch16Tests
 {
     #region Indented DateTime Grow (line 58)
 
@@ -18,9 +19,9 @@ public static class CoverageBatch16Tests
     /// Writing DateTime values in indented mode triggers the indented Grow path.
     /// Target: Utf8JsonWriter.WriteValues.DateTime.cs line 58 (indented Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimeIndented_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimeIndented_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true, Indented = true });
@@ -36,7 +37,7 @@ public static class CoverageBatch16Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("2024-06-15", result);
+        StringAssert.Contains(result, "2024-06-15");
     }
 
     #endregion
@@ -47,9 +48,9 @@ public static class CoverageBatch16Tests
     /// Writing DateTimeOffset values in indented mode triggers the indented Grow path.
     /// Target: Utf8JsonWriter.WriteValues.DateTimeOffset.cs line 58 (indented Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimeOffsetIndented_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimeOffsetIndented_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true, Indented = true });
@@ -65,7 +66,7 @@ public static class CoverageBatch16Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("2024-06-15", result);
+        StringAssert.Contains(result, "2024-06-15");
     }
 
     #endregion
@@ -76,9 +77,9 @@ public static class CoverageBatch16Tests
     /// Writing Guid values in indented mode triggers the indented Grow path.
     /// Target: Utf8JsonWriter.WriteValues.Guid.cs line 59 (indented Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteGuidIndented_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteGuidIndented_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true, Indented = true });
@@ -94,7 +95,7 @@ public static class CoverageBatch16Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("12345678-1234-1234-1234-123456789abc", result);
+        StringAssert.Contains(result, "12345678-1234-1234-1234-123456789abc");
     }
 
     #endregion
@@ -105,9 +106,9 @@ public static class CoverageBatch16Tests
     /// Writing many string-named decimal properties triggers the char transcoding Grow path.
     /// Target: Utf8JsonWriter.WriteProperties.Decimal.cs lines 319-321 (char overload Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDecimalProperty_CharName_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDecimalProperty_CharName_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -122,7 +123,7 @@ public static class CoverageBatch16Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("decimal_property_0", result);
+        StringAssert.Contains(result, "decimal_property_0");
     }
 
     #endregion
@@ -133,9 +134,9 @@ public static class CoverageBatch16Tests
     /// Writing many UTF-8 byte-named decimal properties triggers the byte overload Grow path.
     /// Target: Utf8JsonWriter.WriteProperties.Decimal.cs lines 350-352 (byte overload Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDecimalProperty_ByteName_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDecimalProperty_ByteName_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -157,7 +158,7 @@ public static class CoverageBatch16Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("byte_prop_0", result);
+        StringAssert.Contains(result, "byte_prop_0");
     }
 
     #endregion
@@ -168,9 +169,9 @@ public static class CoverageBatch16Tests
     /// Writing many string-named base64 properties triggers the char transcoding Grow path.
     /// Target: Utf8JsonWriter.WriteProperties.Bytes.cs lines 324-326 (char overload Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteBase64Property_CharName_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteBase64Property_CharName_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -186,7 +187,7 @@ public static class CoverageBatch16Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("base64_property_0", result);
+        StringAssert.Contains(result, "base64_property_0");
     }
 
     #endregion
@@ -197,9 +198,9 @@ public static class CoverageBatch16Tests
     /// Writing many string-named DateTime properties triggers the char transcoding Grow path.
     /// Target: Utf8JsonWriter.WriteProperties.DateTime.cs lines 325-327 (char overload Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimeProperty_CharName_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimeProperty_CharName_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -215,7 +216,7 @@ public static class CoverageBatch16Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("datetime_prop_0", result);
+        StringAssert.Contains(result, "datetime_prop_0");
     }
 
     #endregion
@@ -226,9 +227,9 @@ public static class CoverageBatch16Tests
     /// Writing many string-named DateTimeOffset properties triggers the char transcoding Grow path.
     /// Target: Utf8JsonWriter.WriteProperties.DateTimeOffset.cs lines 324-326 (char overload Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimeOffsetProperty_CharName_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimeOffsetProperty_CharName_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -244,7 +245,7 @@ public static class CoverageBatch16Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("dtoffset_prop_0", result);
+        StringAssert.Contains(result, "dtoffset_prop_0");
     }
 
     #endregion

@@ -5,7 +5,7 @@
 using System;
 using System.Buffers;
 using System.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -13,7 +13,8 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage batch 21: Utf8JsonWriter large escape ArrayPool paths in WriteProperties.String,
 /// and WriteStringSegmentEpilogue Grow path.
 /// </summary>
-public static class CoverageBatch21Tests
+[TestClass]
+public class CoverageBatch21Tests
 {
     #region WriteStringEscapePropertyOrValue(char propName, byte utf8Value) — lines 981-985, 1001-1005
 
@@ -22,9 +23,9 @@ public static class CoverageBatch21Tests
     /// exceeds StackallocByteThreshold (256) triggers ArrayPool rent for the value buffer.
     /// Target: Utf8JsonWriter.WriteProperties.String.cs lines 981-985.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Writer_CharPropByteValue_LargeEscapedValue_TriggersArrayPool()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Writer_CharPropByteValue_LargeEscapedValue_TriggersArrayPool()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(4096);
         using var writer = new Utf8JsonWriter(bufferWriter);
@@ -42,9 +43,9 @@ public static class CoverageBatch21Tests
         writer.Flush();
 
         string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan);
-        Assert.Contains("\"prop\":", json);
+        StringAssert.Contains(json, "\"prop\":");
         // Each '<' → \u003C in the escaped output
-        Assert.Contains("\\u003C", json);
+        StringAssert.Contains(json, "\\u003C");
     }
 
     /// <summary>
@@ -52,9 +53,9 @@ public static class CoverageBatch21Tests
     /// exceeds StackallocCharThreshold (128) triggers ArrayPool rent for the property name buffer.
     /// Target: Utf8JsonWriter.WriteProperties.String.cs lines 1001-1005.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Writer_CharPropByteValue_LargeEscapedPropertyName_TriggersArrayPool()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Writer_CharPropByteValue_LargeEscapedPropertyName_TriggersArrayPool()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(8192);
         using var writer = new Utf8JsonWriter(bufferWriter);
@@ -72,8 +73,8 @@ public static class CoverageBatch21Tests
         writer.Flush();
 
         string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan);
-        Assert.Contains("\\u003C", json);
-        Assert.Contains("\"hello\"", json);
+        StringAssert.Contains(json, "\\u003C");
+        StringAssert.Contains(json, "\"hello\"");
     }
 
     #endregion
@@ -85,9 +86,9 @@ public static class CoverageBatch21Tests
     /// exceeds StackallocByteThreshold (256) triggers ArrayPool rent for the property name buffer.
     /// Target: Utf8JsonWriter.WriteProperties.String.cs lines 1062-1065.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Writer_BytePropCharValue_LargeEscapedPropertyName_TriggersArrayPool()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Writer_BytePropCharValue_LargeEscapedPropertyName_TriggersArrayPool()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(8192);
         using var writer = new Utf8JsonWriter(bufferWriter);
@@ -105,8 +106,8 @@ public static class CoverageBatch21Tests
         writer.Flush();
 
         string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan);
-        Assert.Contains("\\u003C", json);
-        Assert.Contains("\"world\"", json);
+        StringAssert.Contains(json, "\\u003C");
+        StringAssert.Contains(json, "\"world\"");
     }
 
     /// <summary>
@@ -114,9 +115,9 @@ public static class CoverageBatch21Tests
     /// exceeds StackallocCharThreshold (128) triggers ArrayPool rent for the value buffer.
     /// Target: Utf8JsonWriter.WriteProperties.String.cs lines 1041-1045.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Writer_BytePropCharValue_LargeEscapedValue_TriggersArrayPool()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Writer_BytePropCharValue_LargeEscapedValue_TriggersArrayPool()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(8192);
         using var writer = new Utf8JsonWriter(bufferWriter);
@@ -130,8 +131,8 @@ public static class CoverageBatch21Tests
         writer.Flush();
 
         string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan);
-        Assert.Contains("\"key\":", json);
-        Assert.Contains("\\u003C", json);
+        StringAssert.Contains(json, "\"key\":");
+        StringAssert.Contains(json, "\\u003C");
     }
 
     #endregion
@@ -143,9 +144,9 @@ public static class CoverageBatch21Tests
     /// (closing quote) needs to be written triggers a Grow call.
     /// Target: Utf8JsonWriter.WriteValues.StringSegment.cs lines 308-310.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Writer_StringSegmentEpilogue_TriggerGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Writer_StringSegmentEpilogue_TriggerGrow()
     {
         // Use a tight buffer writer that returns exactly the requested size from GetMemory.
         // InitialGrowthSize is 256, so the first memory is exactly 256 bytes.
@@ -172,7 +173,7 @@ public static class CoverageBatch21Tests
         string result = Encoding.UTF8.GetString(bufferWriter.WrittenData.ToArray());
         Assert.StartsWith("[\"", result);
         Assert.EndsWith("\"]", result);
-        Assert.Equal(254, result.AsSpan().Count('A'));
+        Assert.AreEqual(254, result.AsSpan().Count('A'));
     }
 
     /// <summary>
@@ -229,9 +230,9 @@ public static class CoverageBatch21Tests
     /// Writing string property with both UTF-8 property name and UTF-8 value needing large escape
     /// exercises the WriteStringEscapePropertyOrValue(byte, byte) overload with both pools.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Writer_BothUtf8_LargeEscapes_TriggersArrayPools()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Writer_BothUtf8_LargeEscapes_TriggersArrayPools()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(16384);
         using var writer = new Utf8JsonWriter(bufferWriter);
@@ -251,17 +252,17 @@ public static class CoverageBatch21Tests
         writer.Flush();
 
         string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan);
-        Assert.Contains("\\u003C", json);
-        Assert.Contains("\\u003E", json);
+        StringAssert.Contains(json, "\\u003C");
+        StringAssert.Contains(json, "\\u003E");
     }
 
     /// <summary>
     /// Writing string property with both char property name and char value needing large escape
     /// exercises the WriteStringEscapePropertyOrValue(char, char) overload with both pools.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Writer_BothChar_LargeEscapes_TriggersArrayPools()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Writer_BothChar_LargeEscapes_TriggersArrayPools()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(16384);
         using var writer = new Utf8JsonWriter(bufferWriter);
@@ -281,8 +282,8 @@ public static class CoverageBatch21Tests
         writer.Flush();
 
         string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan);
-        Assert.Contains("\\u003C", json);
-        Assert.Contains("\\u003E", json);
+        StringAssert.Contains(json, "\\u003C");
+        StringAssert.Contains(json, "\\u003E");
     }
 
     #endregion

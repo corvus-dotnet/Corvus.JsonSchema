@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.EnumStringSetValidation;
 
@@ -14,58 +14,65 @@ namespace Corvus.Text.Json.Tests.EnumStringSetValidation;
 /// Tests for string enum validation with 4+ values, which triggers the EnumStringSet hash-based
 /// code path instead of sequential SequenceEqual comparisons.
 /// </summary>
-[Trait("Optimization", "EnumStringSet")]
-public class StringEnumWith5Values : IClassFixture<StringEnumWith5Values.Fixture>
+[TestCategory("EnumStringSet")]
+[TestClass]
+public class StringEnumWith5Values
 {
-    private readonly Fixture _fixture;
-
-    public StringEnumWith5Values(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"alpha\"")]
-    [InlineData("\"bravo\"")]
-    [InlineData("\"charlie\"")]
-    [InlineData("\"delta\"")]
-    [InlineData("\"echo\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"alpha\"")]
+    [DataRow("\"bravo\"")]
+    [DataRow("\"charlie\"")]
+    [DataRow("\"delta\"")]
+    [DataRow("\"echo\"")]
     public void ValidEnumValueIsAccepted(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"foxtrot\"")]
-    [InlineData("\"ALPHA\"")]
-    [InlineData("\"Alpha\"")]
-    [InlineData("\"\"")]
-    [InlineData("\"alph\"")]
-    [InlineData("\"alphaa\"")]
+    [TestMethod]
+    [DataRow("\"foxtrot\"")]
+    [DataRow("\"ALPHA\"")]
+    [DataRow("\"Alpha\"")]
+    [DataRow("\"\"")]
+    [DataRow("\"alph\"")]
+    [DataRow("\"alphaa\"")]
     public void InvalidStringValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("42")]
-    [InlineData("true")]
-    [InlineData("null")]
-    [InlineData("[]")]
-    [InlineData("{}")]
+    [TestMethod]
+    [DataRow("42")]
+    [DataRow("true")]
+    [DataRow("null")]
+    [DataRow("[]")]
+    [DataRow("{}")]
     public void NonStringValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -87,41 +94,48 @@ public class StringEnumWith5Values : IClassFixture<StringEnumWith5Values.Fixture
 /// <summary>
 /// Tests for string enum validation at the exact threshold boundary (4 values triggers hash set).
 /// </summary>
-[Trait("Optimization", "EnumStringSet")]
-public class StringEnumWith4Values : IClassFixture<StringEnumWith4Values.Fixture>
+[TestCategory("EnumStringSet")]
+[TestClass]
+public class StringEnumWith4Values
 {
-    private readonly Fixture _fixture;
-
-    public StringEnumWith4Values(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"red\"")]
-    [InlineData("\"green\"")]
-    [InlineData("\"blue\"")]
-    [InlineData("\"yellow\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"red\"")]
+    [DataRow("\"green\"")]
+    [DataRow("\"blue\"")]
+    [DataRow("\"yellow\"")]
     public void ValidEnumValueIsAccepted(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"orange\"")]
-    [InlineData("\"RED\"")]
+    [TestMethod]
+    [DataRow("\"orange\"")]
+    [DataRow("\"RED\"")]
     public void InvalidStringValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -144,62 +158,69 @@ public class StringEnumWith4Values : IClassFixture<StringEnumWith4Values.Fixture
 /// Tests for heterogeneous enum with 4+ string values plus other types.
 /// The string portion should use EnumStringSet, other types use standard matching.
 /// </summary>
-[Trait("Optimization", "EnumStringSet")]
-public class HeterogeneousEnumWith5StringValues : IClassFixture<HeterogeneousEnumWith5StringValues.Fixture>
+[TestCategory("EnumStringSet")]
+[TestClass]
+public class HeterogeneousEnumWith5StringValues
 {
-    private readonly Fixture _fixture;
-
-    public HeterogeneousEnumWith5StringValues(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"alpha\"")]
-    [InlineData("\"bravo\"")]
-    [InlineData("\"charlie\"")]
-    [InlineData("\"delta\"")]
-    [InlineData("\"echo\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"alpha\"")]
+    [DataRow("\"bravo\"")]
+    [DataRow("\"charlie\"")]
+    [DataRow("\"delta\"")]
+    [DataRow("\"echo\"")]
     public void ValidStringEnumValueIsAccepted(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("42")]
-    [InlineData("true")]
-    [InlineData("null")]
+    [TestMethod]
+    [DataRow("42")]
+    [DataRow("true")]
+    [DataRow("null")]
     public void ValidNonStringEnumValueIsAccepted(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"foxtrot\"")]
-    [InlineData("\"\"")]
+    [TestMethod]
+    [DataRow("\"foxtrot\"")]
+    [DataRow("\"\"")]
     public void InvalidStringValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("99")]
-    [InlineData("false")]
-    [InlineData("[]")]
+    [TestMethod]
+    [DataRow("99")]
+    [DataRow("false")]
+    [DataRow("[]")]
     public void InvalidNonStringValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -222,48 +243,55 @@ public class HeterogeneousEnumWith5StringValues : IClassFixture<HeterogeneousEnu
 /// Tests for string enum with values of varying lengths to exercise the hash function's
 /// different code paths (short keys ≤7 bytes vs longer keys).
 /// </summary>
-[Trait("Optimization", "EnumStringSet")]
-public class StringEnumWithVaryingLengths : IClassFixture<StringEnumWithVaryingLengths.Fixture>
+[TestCategory("EnumStringSet")]
+[TestClass]
+public class StringEnumWithVaryingLengths
 {
-    private readonly Fixture _fixture;
-
-    public StringEnumWithVaryingLengths(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"a\"")]
-    [InlineData("\"ab\"")]
-    [InlineData("\"abc\"")]
-    [InlineData("\"abcd\"")]
-    [InlineData("\"abcde\"")]
-    [InlineData("\"abcdef\"")]
-    [InlineData("\"abcdefg\"")]
-    [InlineData("\"abcdefgh\"")]
-    [InlineData("\"a-longer-string-value\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"a\"")]
+    [DataRow("\"ab\"")]
+    [DataRow("\"abc\"")]
+    [DataRow("\"abcd\"")]
+    [DataRow("\"abcde\"")]
+    [DataRow("\"abcdef\"")]
+    [DataRow("\"abcdefg\"")]
+    [DataRow("\"abcdefgh\"")]
+    [DataRow("\"a-longer-string-value\"")]
     public void ValidEnumValueIsAccepted(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"\"")]
-    [InlineData("\"x\"")]
-    [InlineData("\"abcdefgx\"")]
-    [InlineData("\"a-longer-string-valuex\"")]
+    [TestMethod]
+    [DataRow("\"\"")]
+    [DataRow("\"x\"")]
+    [DataRow("\"abcdefgx\"")]
+    [DataRow("\"a-longer-string-valuex\"")]
     public void InvalidStringValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -286,65 +314,72 @@ public class StringEnumWithVaryingLengths : IClassFixture<StringEnumWithVaryingL
 /// Tests for integer enum validation with 4+ values, which triggers the switch-based
 /// code path instead of sequential AreEqualNormalizedJsonNumbers comparisons.
 /// </summary>
-[Trait("Optimization", "EnumIntegerSwitch")]
-public class IntegerEnumWith5Values : IClassFixture<IntegerEnumWith5Values.Fixture>
+[TestCategory("EnumIntegerSwitch")]
+[TestClass]
+public class IntegerEnumWith5Values
 {
-    private readonly Fixture _fixture;
-
-    public IntegerEnumWith5Values(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("1")]
-    [InlineData("2")]
-    [InlineData("3")]
-    [InlineData("4")]
-    [InlineData("5")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("1")]
+    [DataRow("2")]
+    [DataRow("3")]
+    [DataRow("4")]
+    [DataRow("5")]
     public void ValidIntegerEnumValueIsAccepted(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("1.0")]
-    [InlineData("2.0")]
-    [InlineData("5.0")]
+    [TestMethod]
+    [DataRow("1.0")]
+    [DataRow("2.0")]
+    [DataRow("5.0")]
     public void EquivalentDecimalFormIsAccepted(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("0")]
-    [InlineData("6")]
-    [InlineData("-1")]
-    [InlineData("1.5")]
-    [InlineData("99")]
+    [TestMethod]
+    [DataRow("0")]
+    [DataRow("6")]
+    [DataRow("-1")]
+    [DataRow("1.5")]
+    [DataRow("99")]
     public void InvalidNumericValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"1\"")]
-    [InlineData("true")]
-    [InlineData("null")]
+    [TestMethod]
+    [DataRow("\"1\"")]
+    [DataRow("true")]
+    [DataRow("null")]
     public void NonNumericValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -366,44 +401,51 @@ public class IntegerEnumWith5Values : IClassFixture<IntegerEnumWith5Values.Fixtu
 /// <summary>
 /// Tests for integer enum with negative values and zero to exercise switch edge cases.
 /// </summary>
-[Trait("Optimization", "EnumIntegerSwitch")]
-public class IntegerEnumWithNegativeValues : IClassFixture<IntegerEnumWithNegativeValues.Fixture>
+[TestCategory("EnumIntegerSwitch")]
+[TestClass]
+public class IntegerEnumWithNegativeValues
 {
-    private readonly Fixture _fixture;
-
-    public IntegerEnumWithNegativeValues(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("-100")]
-    [InlineData("-1")]
-    [InlineData("0")]
-    [InlineData("1")]
-    [InlineData("100")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("-100")]
+    [DataRow("-1")]
+    [DataRow("0")]
+    [DataRow("1")]
+    [DataRow("100")]
     public void ValidEnumValueIsAccepted(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("-101")]
-    [InlineData("-2")]
-    [InlineData("2")]
-    [InlineData("99")]
+    [TestMethod]
+    [DataRow("-101")]
+    [DataRow("-2")]
+    [DataRow("2")]
+    [DataRow("99")]
     public void InvalidNumericValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -426,43 +468,50 @@ public class IntegerEnumWithNegativeValues : IClassFixture<IntegerEnumWithNegati
 /// Tests for heterogeneous enum with both integer and non-integer numeric values.
 /// Non-integer values prevent the switch optimization; sequential comparison is used instead.
 /// </summary>
-[Trait("Optimization", "EnumIntegerSwitch")]
-public class MixedNumericEnum : IClassFixture<MixedNumericEnum.Fixture>
+[TestCategory("EnumIntegerSwitch")]
+[TestClass]
+public class MixedNumericEnum
 {
-    private readonly Fixture _fixture;
-
-    public MixedNumericEnum(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("1")]
-    [InlineData("2")]
-    [InlineData("3.14")]
-    [InlineData("4")]
-    [InlineData("2.718")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("1")]
+    [DataRow("2")]
+    [DataRow("3.14")]
+    [DataRow("4")]
+    [DataRow("2.718")]
     public void ValidEnumValueIsAccepted(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("5")]
-    [InlineData("3.15")]
-    [InlineData("0")]
+    [TestMethod]
+    [DataRow("5")]
+    [DataRow("3.15")]
+    [DataRow("0")]
     public void InvalidNumericValueIsRejected(string json)
     {
-        var instance = _fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

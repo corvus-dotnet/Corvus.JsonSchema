@@ -11,7 +11,8 @@ namespace Corvus.Text.Json.CodeGenerator.Tests;
 /// Tests for AppendBlockIndent, AppendBlockIndentWithHashOutdent,
 /// AppendParagraphs, and ConditionallyAppend extension methods.
 /// </summary>
-public static class BlockIndentTests
+[TestClass]
+    public class BlockIndentTests
 {
     private static CG CreateGenerator()
     {
@@ -20,143 +21,143 @@ public static class BlockIndentTests
 
     #region AppendBlockIndent
 
-    [Fact]
-    public static void AppendBlockIndent_SingleLine_AppendsWithIndent()
+    [TestMethod]
+    public void AppendBlockIndent_SingleLine_AppendsWithIndent()
     {
         CG gen = CreateGenerator();
         gen.PushIndent();
         gen.AppendBlockIndent("hello");
         string result = gen.ToString();
-        Assert.Contains("hello", result);
+        StringAssert.Contains(result, "hello");
     }
 
-    [Fact]
-    public static void AppendBlockIndent_MultiLine_AppendsAllLines()
+    [TestMethod]
+    public void AppendBlockIndent_MultiLine_AppendsAllLines()
     {
         CG gen = CreateGenerator();
         gen.AppendBlockIndent("line1\nline2\nline3");
         string result = gen.ToString();
-        Assert.Contains("line1", result);
-        Assert.Contains("line2", result);
-        Assert.Contains("line3", result);
+        StringAssert.Contains(result, "line1");
+        StringAssert.Contains(result, "line2");
+        StringAssert.Contains(result, "line3");
     }
 
-    [Fact]
-    public static void AppendBlockIndent_OmitLastLineEnd_DoesNotAppendNewlineAfterLast()
+    [TestMethod]
+    public void AppendBlockIndent_OmitLastLineEnd_DoesNotAppendNewlineAfterLast()
     {
         CG gen = CreateGenerator();
         gen.AppendBlockIndent("line1\nline2", omitLastLineEnd: true);
         string result = gen.ToString();
-        Assert.Contains("line1", result);
-        Assert.Contains("line2", result);
+        StringAssert.Contains(result, "line1");
+        StringAssert.Contains(result, "line2");
         // The last line should not end with a newline (it uses AppendIndent not AppendLineIndent)
-        Assert.False(result.EndsWith("\n", StringComparison.Ordinal));
+        Assert.IsFalse(result.EndsWith("\n", StringComparison.Ordinal));
     }
 
-    [Fact]
-    public static void AppendBlockIndent_WindowsLineEndings_NormalizedCorrectly()
+    [TestMethod]
+    public void AppendBlockIndent_WindowsLineEndings_NormalizedCorrectly()
     {
         CG gen = CreateGenerator();
         gen.AppendBlockIndent("line1\r\nline2\r\nline3");
         string result = gen.ToString();
-        Assert.Contains("line1", result);
-        Assert.Contains("line2", result);
-        Assert.Contains("line3", result);
+        StringAssert.Contains(result, "line1");
+        StringAssert.Contains(result, "line2");
+        StringAssert.Contains(result, "line3");
     }
 
     #endregion
 
     #region AppendBlockIndentWithHashOutdent
 
-    [Fact]
-    public static void AppendBlockIndentWithHashOutdent_RegularLines_AppendsWithIndent()
+    [TestMethod]
+    public void AppendBlockIndentWithHashOutdent_RegularLines_AppendsWithIndent()
     {
         CG gen = CreateGenerator();
         gen.PushIndent();
         gen.AppendBlockIndentWithHashOutdent("regular line\nanother line");
         string result = gen.ToString();
-        Assert.Contains("regular line", result);
-        Assert.Contains("another line", result);
+        StringAssert.Contains(result, "regular line");
+        StringAssert.Contains(result, "another line");
     }
 
-    [Fact]
-    public static void AppendBlockIndentWithHashOutdent_HashLine_AppendsWithoutIndent()
+    [TestMethod]
+    public void AppendBlockIndentWithHashOutdent_HashLine_AppendsWithoutIndent()
     {
         CG gen = CreateGenerator();
         gen.PushIndent();
         gen.AppendBlockIndentWithHashOutdent("#if NET9_0_OR_GREATER\ncode here\n#endif");
         string result = gen.ToString();
         // Hash lines should not be indented
-        Assert.Contains("#if NET9_0_OR_GREATER", result);
-        Assert.Contains("code here", result);
-        Assert.Contains("#endif", result);
+        StringAssert.Contains(result, "#if NET9_0_OR_GREATER");
+        StringAssert.Contains(result, "code here");
+        StringAssert.Contains(result, "#endif");
     }
 
-    [Fact]
-    public static void AppendBlockIndentWithHashOutdent_OmitLastLineEnd_HashLast()
+    [TestMethod]
+    public void AppendBlockIndentWithHashOutdent_OmitLastLineEnd_HashLast()
     {
         CG gen = CreateGenerator();
         gen.PushIndent();
         gen.AppendBlockIndentWithHashOutdent("code\n#endif", omitLastLineEnd: true);
         string result = gen.ToString();
-        Assert.Contains("code", result);
-        Assert.Contains("#endif", result);
-        Assert.False(result.EndsWith("\n", StringComparison.Ordinal));
+        StringAssert.Contains(result, "code");
+        StringAssert.Contains(result, "#endif");
+        Assert.IsFalse(result.EndsWith("\n", StringComparison.Ordinal));
     }
 
-    [Fact]
-    public static void AppendBlockIndentWithHashOutdent_OmitLastLineEnd_RegularLast()
+    [TestMethod]
+    public void AppendBlockIndentWithHashOutdent_OmitLastLineEnd_RegularLast()
     {
         CG gen = CreateGenerator();
         gen.PushIndent();
         gen.AppendBlockIndentWithHashOutdent("#if DEBUG\nlastline", omitLastLineEnd: true);
         string result = gen.ToString();
-        Assert.Contains("#if DEBUG", result);
-        Assert.Contains("lastline", result);
-        Assert.False(result.EndsWith("\n", StringComparison.Ordinal));
+        StringAssert.Contains(result, "#if DEBUG");
+        StringAssert.Contains(result, "lastline");
+        Assert.IsFalse(result.EndsWith("\n", StringComparison.Ordinal));
     }
 
     #endregion
 
     #region AppendParagraphs
 
-    [Fact]
-    public static void AppendParagraphs_SingleParagraph_AppendsPara()
+    [TestMethod]
+    public void AppendParagraphs_SingleParagraph_AppendsPara()
     {
         CG gen = CreateGenerator();
         gen.AppendParagraphs("A single paragraph.");
         string result = gen.ToString();
-        Assert.Contains("/// <para>", result);
-        Assert.Contains("A single paragraph.", result);
-        Assert.Contains("/// </para>", result);
+        StringAssert.Contains(result, "/// <para>");
+        StringAssert.Contains(result, "A single paragraph.");
+        StringAssert.Contains(result, "/// </para>");
     }
 
-    [Fact]
-    public static void AppendParagraphs_MultipleParagraphs_SplitsOnBlankLines()
+    [TestMethod]
+    public void AppendParagraphs_MultipleParagraphs_SplitsOnBlankLines()
     {
         CG gen = CreateGenerator();
         gen.AppendParagraphs("First paragraph.\n\nSecond paragraph.");
         string result = gen.ToString();
         // Should have two <para> sections
         int paraCount = result.Split("/// <para>").Length - 1;
-        Assert.True(paraCount >= 2, $"Expected at least 2 paragraphs, got {paraCount}");
+        Assert.IsTrue(paraCount >= 2, $"Expected at least 2 paragraphs, got {paraCount}");
     }
 
     #endregion
 
     #region ConditionallyAppend
 
-    [Fact]
-    public static void ConditionallyAppend_ConditionTrue_ExecutesAppend()
+    [TestMethod]
+    public void ConditionallyAppend_ConditionTrue_ExecutesAppend()
     {
         CG gen = CreateGenerator();
         gen.ConditionallyAppend(true, g => g.Append("appended"));
         string result = gen.ToString();
-        Assert.Contains("appended", result);
+        StringAssert.Contains(result, "appended");
     }
 
-    [Fact]
-    public static void ConditionallyAppend_ConditionFalse_DoesNotAppend()
+    [TestMethod]
+    public void ConditionallyAppend_ConditionFalse_DoesNotAppend()
     {
         CG gen = CreateGenerator();
         gen.ConditionallyAppend(false, g => g.Append("not-here"));
@@ -168,37 +169,37 @@ public static class BlockIndentTests
 
     #region AppendAutoGeneratedHeader
 
-    [Fact]
-    public static void AppendAutoGeneratedHeader_AppendsAutoGenComment()
+    [TestMethod]
+    public void AppendAutoGeneratedHeader_AppendsAutoGenComment()
     {
         CG gen = CreateGenerator();
         gen.AppendAutoGeneratedHeader();
         string result = gen.ToString();
-        Assert.Contains("auto-generated", result, StringComparison.OrdinalIgnoreCase);
+        StringAssert.Contains(result, "auto-generated", StringComparison.OrdinalIgnoreCase);
     }
 
     #endregion
 
     #region AppendUsings
 
-    [Fact]
-    public static void AppendUsings_AppendsUsingStatements()
+    [TestMethod]
+    public void AppendUsings_AppendsUsingStatements()
     {
         CG gen = CreateGenerator();
         gen.AppendUsings(
             new ConditionalCodeSpecification("System"),
             new ConditionalCodeSpecification("System.Text.Json"));
         string result = gen.ToString();
-        Assert.Contains("using System;", result);
-        Assert.Contains("using System.Text.Json;", result);
+        StringAssert.Contains(result, "using System;");
+        StringAssert.Contains(result, "using System.Text.Json;");
     }
 
     #endregion
 
     #region AppendParameterList
 
-    [Fact]
-    public static void AppendParameterList_LessThan3_SingleLine()
+    [TestMethod]
+    public void AppendParameterList_LessThan3_SingleLine()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
@@ -206,12 +207,12 @@ public static class BlockIndentTests
             new MethodParameter("", "int", "a"),
             new MethodParameter("", "string", "b"));
         string result = gen.ToString();
-        Assert.Contains("int a", result);
-        Assert.Contains("string b", result);
+        StringAssert.Contains(result, "int a");
+        StringAssert.Contains(result, "string b");
     }
 
-    [Fact]
-    public static void AppendParameterList_3OrMore_MultiLine()
+    [TestMethod]
+    public void AppendParameterList_3OrMore_MultiLine()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
@@ -220,76 +221,76 @@ public static class BlockIndentTests
             new MethodParameter("", "string", "b"),
             new MethodParameter("ref", "bool", "c"));
         string result = gen.ToString();
-        Assert.Contains("int a", result);
-        Assert.Contains("string b", result);
-        Assert.Contains("ref bool c", result);
+        StringAssert.Contains(result, "int a");
+        StringAssert.Contains(result, "string b");
+        StringAssert.Contains(result, "ref bool c");
     }
 
-    [Fact]
-    public static void AppendParameterListSingleLine_Empty_EmitsBrackets()
+    [TestMethod]
+    public void AppendParameterListSingleLine_Empty_EmitsBrackets()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
         CodeGeneratorExtensions.AppendParameterListSingleLine(gen, []);
         string result = gen.ToString();
-        Assert.Contains("()", result);
+        StringAssert.Contains(result, "()");
     }
 
-    [Fact]
-    public static void AppendParameterListIndent_Empty_EmitsBrackets()
+    [TestMethod]
+    public void AppendParameterListIndent_Empty_EmitsBrackets()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
         CodeGeneratorExtensions.AppendParameterListIndent(gen, []);
         string result = gen.ToString();
-        Assert.Contains("()", result);
+        StringAssert.Contains(result, "()");
     }
 
-    [Fact]
-    public static void AppendParameterIndent_NullableType_AppendsQuestionMark()
+    [TestMethod]
+    public void AppendParameterIndent_NullableType_AppendsQuestionMark()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
         var param = new MethodParameter("", "string", "value", typeIsNullable: true);
         gen.AppendParameterIndent(param);
         string result = gen.ToString();
-        Assert.Contains("string?", result);
-        Assert.Contains("value", result);
+        StringAssert.Contains(result, "string?");
+        StringAssert.Contains(result, "value");
     }
 
-    [Fact]
-    public static void AppendParameter_NullableType_AppendsQuestionMark()
+    [TestMethod]
+    public void AppendParameter_NullableType_AppendsQuestionMark()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
         var param = new MethodParameter("", "object", "item", typeIsNullable: true);
         gen.AppendParameter(param);
         string result = gen.ToString();
-        Assert.Contains("object?", result);
-        Assert.Contains("item", result);
+        StringAssert.Contains(result, "object?");
+        StringAssert.Contains(result, "item");
     }
 
-    [Fact]
-    public static void AppendParameter_WithDefaultValue_AppendsDefault()
+    [TestMethod]
+    public void AppendParameter_WithDefaultValue_AppendsDefault()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
         var param = new MethodParameter("", "int", "count", defaultValue: "0");
         gen.AppendParameter(param);
         string result = gen.ToString();
-        Assert.Contains("int count = 0", result);
+        StringAssert.Contains(result, "int count = 0");
     }
 
-    [Fact]
-    public static void AppendParameterIndent_WithModifiers_AppendsModifiers()
+    [TestMethod]
+    public void AppendParameterIndent_WithModifiers_AppendsModifiers()
     {
         CG gen = CreateGenerator();
         gen.PushMemberScope("TestType", 0);
         var param = new MethodParameter("ref readonly", "Span<byte>", "buffer");
         gen.AppendParameterIndent(param);
         string result = gen.ToString();
-        Assert.Contains("ref readonly", result);
-        Assert.Contains("Span<byte>", result);
+        StringAssert.Contains(result, "ref readonly");
+        StringAssert.Contains(result, "Span<byte>");
     }
 
     #endregion

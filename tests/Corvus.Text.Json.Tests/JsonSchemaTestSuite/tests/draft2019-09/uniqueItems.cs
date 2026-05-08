@@ -2,220 +2,228 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft201909.UniqueItems;
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidation.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUniqueItemsValidation
 {
-    private readonly Fixture _fixture;
-    public SuiteUniqueItemsValidation(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestUniqueArrayOfIntegersIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, 2]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfIntegersIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, 1]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 1]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfMoreThanTwoIntegersIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, 2, 1]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2, 1]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNumbersAreUniqueIfMathematicallyUnequal()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1.0, 1.00, 1]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1.0, 1.00, 1]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFalseIsNotEqualToZero()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[0, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueIsNotEqualToOne()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayOfStringsIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[\"foo\", \"bar\", \"baz\"]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"foo\", \"bar\", \"baz\"]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfStringsIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[\"foo\", \"bar\", \"foo\"]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\"foo\", \"bar\", \"foo\"]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayOfObjectsIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfObjectsIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestPropertyOrderOfArrayOfObjectsIsIgnored()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\", \"bar\": \"foo\"}, {\"bar\": \"foo\", \"foo\": \"bar\"}]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\", \"bar\": \"foo\"}, {\"bar\": \"foo\", \"foo\": \"bar\"}]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayOfNestedObjectsIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfNestedObjectsIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayOfArraysIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[[\"foo\"], [\"bar\"]]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"bar\"]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfArraysIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[[\"foo\"], [\"foo\"]]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"foo\"]]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfMoreThanTwoArraysIsInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[[\"foo\"], [\"bar\"], [\"foo\"]]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"bar\"], [\"foo\"]]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1AndTrueAreUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0AndFalseAreUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[0, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1AndTrueAreUnique1()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[[1], [true]]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[1], [true]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0AndFalseAreUnique1()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[[0], [false]]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[0], [false]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNested1AndTrueAreUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[[[1], \"foo\"], [[true], \"foo\"]]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[[1], \"foo\"], [[true], \"foo\"]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNested0AndFalseAreUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[[[0], \"foo\"], [[false], \"foo\"]]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[[0], \"foo\"], [[false], \"foo\"]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueHeterogeneousTypesAreValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{}, [1], true, null, 1, \"{}\"]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{}, [1], true, null, 1, \"{}\"]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueHeterogeneousTypesAreInvalid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{}, [1], true, null, {}, 1]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{}, [1], true, null, {}, 1]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDifferentObjectsAreUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 1}]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"a\": 1, \"b\": 2}, {\"a\": 2, \"b\": 1}]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestObjectsAreNonUniqueDespiteKeyOrder()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{\"a\": 1, \"b\": 2}, {\"b\": 2, \"a\": 1}]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"a\": 1, \"b\": 2}, {\"b\": 2, \"a\": 1}]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAFalseAndA0AreUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{\"a\": false}, {\"a\": 0}]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"a\": false}, {\"a\": 0}]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestATrueAndA1AreUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{\"a\": true}, {\"a\": 1}]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"a\": true}, {\"a\": 1}]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -234,76 +242,84 @@ public class SuiteUniqueItemsValidation : IClassFixture<SuiteUniqueItemsValidati
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItemsWithAnArrayOfItems.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUniqueItemsWithAnArrayOfItems
 {
-    private readonly Fixture _fixture;
-    public SuiteUniqueItemsWithAnArrayOfItems(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestFalseTrueFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueFalseFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFalseFalseFromItemsArrayIsNotValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, false]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, false]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueTrueFromItemsArrayIsNotValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, true]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, true]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayExtendedFromFalseTrueIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true, \"foo\", \"bar\"]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true, \"foo\", \"bar\"]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayExtendedFromTrueFalseIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, false, \"foo\", \"bar\"]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, false, \"foo\", \"bar\"]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayExtendedFromFalseTrueIsNotValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true, \"foo\", \"foo\"]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true, \"foo\", \"foo\"]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayExtendedFromTrueFalseIsNotValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, false, \"foo\", \"foo\"]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, false, \"foo\", \"foo\"]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -322,55 +338,63 @@ public class SuiteUniqueItemsWithAnArrayOfItems : IClassFixture<SuiteUniqueItems
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse : IClassFixture<SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse
 {
-    private readonly Fixture _fixture;
-    public SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestFalseTrueFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueFalseFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFalseFalseFromItemsArrayIsNotValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, false]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, false]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueTrueFromItemsArrayIsNotValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, true]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, true]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestExtraItemsAreInvalidEvenIfUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true, null]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true, null]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -389,125 +413,133 @@ public class SuiteUniqueItemsWithAnArrayOfItemsAndAdditionalItemsFalse : IClassF
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFalseValidation.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUniqueItemsFalseValidation
 {
-    private readonly Fixture _fixture;
-    public SuiteUniqueItemsFalseValidation(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestUniqueArrayOfIntegersIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, 2]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 2]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfIntegersIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, 1]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, 1]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNumbersAreUniqueIfMathematicallyUnequal()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1.0, 1.00, 1]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1.0, 1.00, 1]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFalseIsNotEqualToZero()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[0, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueIsNotEqualToOne()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayOfObjectsIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"baz\"}]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfObjectsIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{\"foo\": \"bar\"}, {\"foo\": \"bar\"}]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayOfNestedObjectsIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : false}}}\r\n                ]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfNestedObjectsIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}},\r\n                    {\"foo\": {\"bar\" : {\"baz\" : true}}}\r\n                ]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayOfArraysIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[[\"foo\"], [\"bar\"]]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"bar\"]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayOfArraysIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[[\"foo\"], [\"foo\"]]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[[\"foo\"], [\"foo\"]]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1AndTrueAreUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[1, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[1, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0AndFalseAreUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[0, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[0, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueHeterogeneousTypesAreValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{}, [1], true, null, 1]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{}, [1], true, null, 1]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueHeterogeneousTypesAreValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[{}, [1], true, null, {}, 1]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[{}, [1], true, null, {}, 1]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -526,76 +558,84 @@ public class SuiteUniqueItemsFalseValidation : IClassFixture<SuiteUniqueItemsFal
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUniqueItemsFalseWithAnArrayOfItems.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUniqueItemsFalseWithAnArrayOfItems
 {
-    private readonly Fixture _fixture;
-    public SuiteUniqueItemsFalseWithAnArrayOfItems(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestFalseTrueFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueFalseFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFalseFalseFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueTrueFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayExtendedFromFalseTrueIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true, \"foo\", \"bar\"]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true, \"foo\", \"bar\"]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUniqueArrayExtendedFromTrueFalseIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, false, \"foo\", \"bar\"]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, false, \"foo\", \"bar\"]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayExtendedFromFalseTrueIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true, \"foo\", \"foo\"]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true, \"foo\", \"foo\"]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonUniqueArrayExtendedFromTrueFalseIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, false, \"foo\", \"foo\"]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, false, \"foo\", \"foo\"]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -614,55 +654,63 @@ public class SuiteUniqueItemsFalseWithAnArrayOfItems : IClassFixture<SuiteUnique
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft201909")]
-public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse : IClassFixture<SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse
 {
-    private readonly Fixture _fixture;
-    public SuiteUniqueItemsFalseWithAnArrayOfItemsAndAdditionalItemsFalse(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestFalseTrueFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueFalseFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFalseFalseFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, false]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, false]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTrueTrueFromItemsArrayIsValid()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[true, true]");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[true, true]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestExtraItemsAreInvalidEvenIfUnique()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("[false, true, null]");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[false, true, null]");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

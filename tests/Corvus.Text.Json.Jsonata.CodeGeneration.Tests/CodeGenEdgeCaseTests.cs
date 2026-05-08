@@ -5,8 +5,7 @@
 using System.Reflection;
 using System.Text;
 using Corvus.Text.Json;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 
@@ -15,363 +14,370 @@ namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 /// verifying the generated code produces correct results. These focus on code
 /// paths that the conformance test suite may not exercise thoroughly.
 /// </summary>
-public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
+[TestClass]
+public class CodeGenEdgeCaseTests
 {
-    private readonly CodeGenConformanceFixture fixture;
-    private readonly ITestOutputHelper output;
+    private static CodeGenConformanceFixture? s_fixture;
 
-    public CodeGenEdgeCaseTests(CodeGenConformanceFixture fixture, ITestOutputHelper output)
+    [ClassInitialize]
+    public static void ClassInit(TestContext _)
     {
-        this.fixture = fixture;
-        this.output = output;
+        s_fixture = new CodeGenConformanceFixture();
     }
 
-    [Theory]
-    [Trait("category", "codegen-edge")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     // Nested HOFs with same parameter name — tests variable stashing
-    [InlineData("$map([1,2,3], function($v) { $map([10,20], function($v) { $v }) })", "[[10,20],[10,20],[10,20]]")]
+    [DataRow("$map([1,2,3], function($v) { $map([10,20], function($v) { $v }) })", "[[10,20],[10,20],[10,20]]")]
     // $$ inside $map lambda — tests _usesRootRef fix
-    [InlineData("$map([1], function($v) { $$ })", "[42]", "42")]
+    [DataRow("$map([1], function($v) { $$ })", "[42]", "42")]
     // $$ inside $filter lambda — tests _usesRootRef fix
-    [InlineData("$filter([1,2,3], function($v) { $v = $$ })", "3", "3")]
+    [DataRow("$filter([1,2,3], function($v) { $v = $$ })", "3", "3")]
     // $$ inside $reduce lambda — tests _usesRootRef fix
-    [InlineData("$reduce([1,2,3], function($prev, $curr) { $prev + $curr })", "6")]
+    [DataRow("$reduce([1,2,3], function($prev, $curr) { $prev + $curr })", "6")]
     // Nested HOF with outer parameter capture
-    [InlineData("$map([1,2], function($a) { $map([10,20], function($b) { $a + $b }) })", "[[11,21],[12,22]]")]
+    [DataRow("$map([1,2], function($a) { $map([10,20], function($b) { $a + $b }) })", "[[11,21],[12,22]]")]
     // $map with index parameter
-    [InlineData("$map([10,20,30], function($v, $i) { $i })", "[0,1,2]")]
+    [DataRow("$map([10,20,30], function($v, $i) { $i })", "[0,1,2]")]
     // Block with variable binding
-    [InlineData("($x := 5; $x * 2)", "10")]
+    [DataRow("($x := 5; $x * 2)", "10")]
     // Multi-statement block
-    [InlineData("($a := 3; $b := 4; $a + $b)", "7")]
+    [DataRow("($a := 3; $b := 4; $a + $b)", "7")]
     // Constant folding
-    [InlineData("2 + 3 * 4", "14")]
+    [DataRow("2 + 3 * 4", "14")]
     // String concatenation
-    [InlineData("""  "hello" & " " & "world"  """, "\"hello world\"")]
+    [DataRow("""  "hello" & " " & "world"  """, "\"hello world\"")]
     // Range operator
-    [InlineData("[1..5]", "[1,2,3,4,5]")]
+    [DataRow("[1..5]", "[1,2,3,4,5]")]
     // Truthiness: zero is falsy
-    [InlineData("0 ? \"yes\" : \"no\"", "\"no\"")]
+    [DataRow("0 ? \"yes\" : \"no\"", "\"no\"")]
     // Truthiness: empty string is falsy
-    [InlineData("\"\" ? \"yes\" : \"no\"", "\"no\"")]
+    [DataRow("\"\" ? \"yes\" : \"no\"", "\"no\"")]
     // Truthiness: non-empty string is truthy
-    [InlineData("\"x\" ? \"yes\" : \"no\"", "\"yes\"")]
+    [DataRow("\"x\" ? \"yes\" : \"no\"", "\"yes\"")]
     // Logical short-circuit
-    [InlineData("1 and 0", "false")]
-    [InlineData("0 or 1", "true")]
+    [DataRow("1 and 0", "false")]
+    [DataRow("0 or 1", "true")]
     // In operator
-    [InlineData("3 in [1,2,3,4]", "true")]
-    [InlineData("5 in [1,2,3,4]", "false")]
+    [DataRow("3 in [1,2,3,4]", "true")]
+    [DataRow("5 in [1,2,3,4]", "false")]
     // Unary negation
-    [InlineData("-5", "-5")]
+    [DataRow("-5", "-5")]
     // Modulo
-    [InlineData("10 % 3", "1")]
+    [DataRow("10 % 3", "1")]
     // Multi-level variable shadowing restoration
-    [InlineData("($x := 1; ($x := 2; $x) + $x)", "3")]
+    [DataRow("($x := 1; ($x := 2; $x) + $x)", "3")]
     // Nested $reduce capturing outer lambda parameter
-    [InlineData("$reduce([1,2,3], function($prev, $curr) { $prev + $curr * 2 })", "11")]
+    [DataRow("$reduce([1,2,3], function($prev, $curr) { $prev + $curr * 2 })", "11")]
     // $single with exactly one match
-    [InlineData("$single([1,2,3], function($v) { $v = 2 })", "2")]
+    [DataRow("$single([1,2,3], function($v) { $v = 2 })", "2")]
     // Triple-nested HOF with different parameter names
-    [InlineData("$map([1], function($a) { $map([2], function($b) { $a + $b }) })", "[[3]]")]
+    [DataRow("$map([1], function($a) { $map([2], function($b) { $a + $b }) })", "[[3]]")]
     // Lambda in conditional — then branch
-    [InlineData("true ? $map([1,2], function($v) { $v * 2 }) : [0]", "[2,4]")]
+    [DataRow("true ? $map([1,2], function($v) { $v * 2 }) : [0]", "[2,4]")]
     // Lambda in conditional — else branch
-    [InlineData("false ? [0] : $map([1,2], function($v) { $v * 3 })", "[3,6]")]
+    [DataRow("false ? [0] : $map([1,2], function($v) { $v * 3 })", "[3,6]")]
     // Negative array index — last element
-    [InlineData("[10,20,30][-1]", "30")]
+    [DataRow("[10,20,30][-1]", "30")]
     // Negative array index — second to last
-    [InlineData("[10,20,30][-2]", "20")]
+    [DataRow("[10,20,30][-2]", "20")]
     // Negative index out of range — returns undefined (tested separately)
     // Object construction with literal keys
-    [InlineData("""{"a": 1, "b": 2}""", """{"a":1,"b":2}""")]
+    [DataRow("""{"a": 1, "b": 2}""", """{"a":1,"b":2}""")]
     // Object construction with computed values
-    [InlineData("""{"sum": 1 + 2, "prod": 3 * 4}""", """{"sum":3,"prod":12}""")]
+    [DataRow("""{"sum": 1 + 2, "prod": 3 * 4}""", """{"sum":3,"prod":12}""")]
     // $sort without custom comparator — natural order
-    [InlineData("$sort([3,1,4,1,5])", "[1,1,3,4,5]")]
+    [DataRow("$sort([3,1,4,1,5])", "[1,1,3,4,5]")]
     // $reverse
-    [InlineData("$reverse([1,2,3])", "[3,2,1]")]
+    [DataRow("$reverse([1,2,3])", "[3,2,1]")]
     // $join
-    [InlineData("""$join(["a","b","c"], "-")""", "\"a-b-c\"")]
+    [DataRow("""$join(["a","b","c"], "-")""", "\"a-b-c\"")]
     // $string on number
-    [InlineData("$string(42)", "\"42\"")]
+    [DataRow("$string(42)", "\"42\"")]
     // $number from string
-    [InlineData("""$number("3.14")""", "3.14")]
+    [DataRow("""$number("3.14")""", "3.14")]
     // $floor/$ceil/$round
-    [InlineData("$floor(3.7)", "3")]
-    [InlineData("$ceil(3.2)", "4")]
-    [InlineData("$round(3.456, 2)", "3.46")]
+    [DataRow("$floor(3.7)", "3")]
+    [DataRow("$ceil(3.2)", "4")]
+    [DataRow("$round(3.456, 2)", "3.46")]
     // $abs
-    [InlineData("$abs(-5)", "5")]
+    [DataRow("$abs(-5)", "5")]
     // $power/$sqrt
-    [InlineData("$power(2, 10)", "1024")]
-    [InlineData("$sqrt(144)", "12")]
+    [DataRow("$power(2, 10)", "1024")]
+    [DataRow("$sqrt(144)", "12")]
     // $substring
-    [InlineData("""$substring("hello world", 6)""", "\"world\"")]
-    [InlineData("""$substring("hello world", 0, 5)""", "\"hello\"")]
+    [DataRow("""$substring("hello world", 6)""", "\"world\"")]
+    [DataRow("""$substring("hello world", 0, 5)""", "\"hello\"")]
     // $uppercase/$lowercase
-    [InlineData("""$uppercase("hello")""", "\"HELLO\"")]
-    [InlineData("""$lowercase("HELLO")""", "\"hello\"")]
+    [DataRow("""$uppercase("hello")""", "\"HELLO\"")]
+    [DataRow("""$lowercase("HELLO")""", "\"hello\"")]
     // $trim
-    [InlineData("""$trim("  hello  ")""", "\"hello\"")]
+    [DataRow("""$trim("  hello  ")""", "\"hello\"")]
     // $contains
-    [InlineData("""$contains("hello world", "world")""", "true")]
-    [InlineData("""$contains("hello world", "xyz")""", "false")]
+    [DataRow("""$contains("hello world", "world")""", "true")]
+    [DataRow("""$contains("hello world", "xyz")""", "false")]
     // $split
-    [InlineData("""$split("a,b,c", ",")""", """["a","b","c"]""")]
+    [DataRow("""$split("a,b,c", ",")""", """["a","b","c"]""")]
     // $replace (string pattern, not regex)
-    [InlineData("""$replace("hello", "l", "r")""", "\"herro\"")]
+    [DataRow("""$replace("hello", "l", "r")""", "\"herro\"")]
     // $boolean
-    [InlineData("$boolean(0)", "false")]
-    [InlineData("$boolean(1)", "true")]
-    [InlineData("""$boolean("")""", "false")]
-    [InlineData("""$boolean("x")""", "true")]
+    [DataRow("$boolean(0)", "false")]
+    [DataRow("$boolean(1)", "true")]
+    [DataRow("""$boolean("")""", "false")]
+    [DataRow("""$boolean("x")""", "true")]
     // $not
-    [InlineData("$not(true)", "false")]
-    [InlineData("$not(false)", "true")]
+    [DataRow("$not(true)", "false")]
+    [DataRow("$not(false)", "true")]
     // $append
-    [InlineData("$append([1,2], [3,4])", "[1,2,3,4]")]
+    [DataRow("$append([1,2], [3,4])", "[1,2,3,4]")]
     // $distinct
-    [InlineData("$distinct([1,2,2,3,3,3])", "[1,2,3]")]
+    [DataRow("$distinct([1,2,2,3,3,3])", "[1,2,3]")]
     // $count
-    [InlineData("$count([1,2,3,4,5])", "5")]
+    [DataRow("$count([1,2,3,4,5])", "5")]
     // $sum/$max/$min/$average
-    [InlineData("$sum([1,2,3])", "6")]
-    [InlineData("$max([1,2,3])", "3")]
-    [InlineData("$min([1,2,3])", "1")]
-    [InlineData("$average([2,4,6])", "4")]
+    [DataRow("$sum([1,2,3])", "6")]
+    [DataRow("$max([1,2,3])", "3")]
+    [DataRow("$min([1,2,3])", "1")]
+    [DataRow("$average([2,4,6])", "4")]
     public void EvaluateSelfContainedExpression(string expression, string expectedJson, string inputJson = "null")
     {
         this.CompileAndAssert(expression, inputJson, expectedJson);
     }
 
-    [Theory]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     // $$ with data
-    [InlineData("$$", """{"a":1}""", """{"a":1}""")]
+    [DataRow("$$", """{"a":1}""", """{"a":1}""")]
     // Simple property navigation
-    [InlineData("a.b", """{"a":{"b":42}}""", "42")]
+    [DataRow("a.b", """{"a":{"b":42}}""", "42")]
     // Nested property with auto-map
-    [InlineData("items.name", """{"items":[{"name":"x"},{"name":"y"}]}""", """["x","y"]""")]
+    [DataRow("items.name", """{"items":[{"name":"x"},{"name":"y"}]}""", """["x","y"]""")]
     // Numeric index in path
-    [InlineData("items[0]", """{"items":[10,20,30]}""", "10")]
+    [DataRow("items[0]", """{"items":[10,20,30]}""", "10")]
     // Constant index with post-index navigation (benchmark: indexed-chain pattern)
-    [InlineData("items.orders[0].products.name", """{"items":{"orders":[{"products":[{"name":"x"},{"name":"y"}]}]}}""", """["x","y"]""")]
+    [DataRow("items.orders[0].products.name", """{"items":{"orders":[{"products":[{"name":"x"},{"name":"y"}]}]}}""", """["x","y"]""")]
     // Constant index 0 on singleton (autoboxing: non-array treated as single-element)
-    [InlineData("data.value[0].name", """{"data":{"value":{"name":"hello"}}}""", "\"hello\"")]
+    [DataRow("data.value[0].name", """{"data":{"value":{"name":"hello"}}}""", "\"hello\"")]
     // Constant index out of range returns undefined — tested in undefined section
     // Deep constant index chain with multiple indices
-    [InlineData("a.b[0].c[0].d", """{"a":{"b":[{"c":[{"d":42}]}]}}""", "42")]
+    [DataRow("a.b[0].c[0].d", """{"a":{"b":[{"c":[{"d":42}]}]}}""", "42")]
     // Filter predicate in path
-    [InlineData("items[val > 1].name", """{"items":[{"val":1,"name":"a"},{"val":2,"name":"b"},{"val":3,"name":"c"}]}""", """["b","c"]""")]
+    [DataRow("items[val > 1].name", """{"items":[{"val":1,"name":"a"},{"val":2,"name":"b"},{"val":3,"name":"c"}]}""", """["b","c"]""")]
     // Filter predicate with post-predicate array flattening
-    [InlineData("""items[type="a"].products.name""", """{"items":[{"type":"a","products":[{"name":"x"},{"name":"y"}]},{"type":"b","products":[{"name":"z"}]}]}""", """["x","y"]""")]
+    [DataRow("""items[type="a"].products.name""", """{"items":[{"type":"a","products":[{"name":"x"},{"name":"y"}]},{"type":"b","products":[{"name":"z"}]}]}""", """["x","y"]""")]
     // Equality predicate with nested array — multiple matches
-    [InlineData("""items[type="a"].tags""", """{"items":[{"type":"a","tags":[1,2]},{"type":"a","tags":[3]},{"type":"b","tags":[4]}]}""", """[[1,2],[3]]""")]
+    [DataRow("""items[type="a"].tags""", """{"items":[{"type":"a","tags":[1,2]},{"type":"a","tags":[3]},{"type":"b","tags":[4]}]}""", """[[1,2],[3]]""")]
     // Equality predicate with nested array then property — deep chain
-    [InlineData("""orders[status="shipped"].lines.product.sku""", """{"orders":[{"status":"shipped","lines":[{"product":{"sku":"A1"}},{"product":{"sku":"A2"}}]},{"status":"pending","lines":[{"product":{"sku":"B1"}}]}]}""", """["A1","A2"]""")]
+    [DataRow("""orders[status="shipped"].lines.product.sku""", """{"orders":[{"status":"shipped","lines":[{"product":{"sku":"A1"}},{"product":{"sku":"A2"}}]},{"status":"pending","lines":[{"product":{"sku":"B1"}}]}]}""", """["A1","A2"]""")]
     // Post-predicate: object intermediate then terminal array — no flatten (EvalFromStep path)
-    [InlineData("""items[type="a"].data.values""", """{"items":[{"type":"a","data":{"values":[10,20]}},{"type":"a","data":{"values":[30]}}]}""", """[[10,20],[30]]""")]
+    [DataRow("""items[type="a"].data.values""", """{"items":[{"type":"a","data":{"values":[10,20]}},{"type":"a","data":{"values":[30]}}]}""", """[[10,20],[30]]""")]
     // Post-predicate: array intermediate then terminal array — flatten (CollectAndContinue path)
-    [InlineData("""items[type="a"].entries.value""", """{"items":[{"type":"a","entries":[{"value":10},{"value":20}]},{"type":"a","entries":[{"value":30}]}]}""", """[10,20,30]""")]
+    [DataRow("""items[type="a"].entries.value""", """{"items":[{"type":"a","entries":[{"value":10},{"value":20}]},{"type":"a","entries":[{"value":30}]}]}""", """[10,20,30]""")]
     // Post-predicate: single matching element returns unwrapped result
-    [InlineData("""items[type="a"].name""", """{"items":[{"type":"a","name":"hello"},{"type":"b","name":"world"}]}""", "\"hello\"")]
+    [DataRow("""items[type="a"].name""", """{"items":[{"type":"a","name":"hello"},{"type":"b","name":"world"}]}""", "\"hello\"")]
     // Post-predicate: nested arrays at intermediate — recursive flatten
-    [InlineData("""groups[active=true].members.tags""", """{"groups":[{"active":true,"members":[{"tags":["x","y"]},{"tags":["z"]}]},{"active":false,"members":[{"tags":["q"]}]}]}""", """["x","y","z"]""")]
+    [DataRow("""groups[active=true].members.tags""", """{"groups":[{"active":true,"members":[{"tags":["x","y"]},{"tags":["z"]}]},{"active":false,"members":[{"tags":["q"]}]}]}""", """["x","y","z"]""")]
     // Post-predicate: singleton source object (not array) with equality predicate match
-    [InlineData("""item[type="a"].name""", """{"item":{"type":"a","name":"found"}}""", "\"found\"")]
+    [DataRow("""item[type="a"].name""", """{"item":{"type":"a","name":"found"}}""", "\"found\"")]
     // Pre-predicate steps then post-predicate navigation (single match unwraps)
-    [InlineData("""root.items[type="a"].products.name""", """{"root":{"items":[{"type":"a","products":[{"name":"x"}]},{"type":"b","products":[{"name":"y"}]}]}}""", "\"x\"")]
+    [DataRow("""root.items[type="a"].products.name""", """{"root":{"items":[{"type":"a","products":[{"name":"x"}]},{"type":"b","products":[{"name":"y"}]}]}}""", "\"x\"")]
     // $$ reference inside filter predicate
-    [InlineData("items[val > $$.min].name", """{"items":[{"val":1,"name":"a"},{"val":2,"name":"b"},{"val":3,"name":"c"}],"min":1}""", """["b","c"]""")]
+    [DataRow("items[val > $$.min].name", """{"items":[{"val":1,"name":"a"},{"val":2,"name":"b"},{"val":3,"name":"c"}],"min":1}""", """["b","c"]""")]
     // $sum over property
-    [InlineData("$sum(items.val)", """{"items":[{"val":1},{"val":2},{"val":3}]}""", "6")]
+    [DataRow("$sum(items.val)", """{"items":[{"val":1},{"val":2},{"val":3}]}""", "6")]
     // $count over property
-    [InlineData("$count(items)", """{"items":[1,2,3]}""", "3")]
+    [DataRow("$count(items)", """{"items":[1,2,3]}""", "3")]
     // Sort with custom comparator
-    [InlineData("$sort([3,1,2], function($a, $b) { $a > $b })", "null", """[1,2,3]""")]
+    [DataRow("$sort([3,1,2], function($a, $b) { $a > $b })", "null", """[1,2,3]""")]
     // Object keys/values
-    [InlineData("$keys(x)", """{"x":{"a":1,"b":2}}""", """["a","b"]""")]
+    [DataRow("$keys(x)", """{"x":{"a":1,"b":2}}""", """["a","b"]""")]
     // $exists
-    [InlineData("$exists(a)", """{"a":1}""", "true")]
-    [InlineData("$exists(b)", """{"a":1}""", "false")]
+    [DataRow("$exists(a)", """{"a":1}""", "true")]
+    [DataRow("$exists(b)", """{"a":1}""", "false")]
     // $type
-    [InlineData("$type(a)", """{"a":"hello"}""", "\"string\"")]
-    [InlineData("$type(a)", """{"a":42}""", "\"number\"")]
+    [DataRow("$type(a)", """{"a":"hello"}""", "\"string\"")]
+    [DataRow("$type(a)", """{"a":42}""", "\"number\"")]
     // Negative index on data property
-    [InlineData("items[-1]", """{"items":[10,20,30]}""", "30")]
+    [DataRow("items[-1]", """{"items":[10,20,30]}""", "30")]
     // Wildcard — enumerate all property values
-    [InlineData("$sum(*)", """{"a":1,"b":2,"c":3}""", "6")]
+    [DataRow("$sum(*)", """{"a":1,"b":2,"c":3}""", "6")]
     // Wildcard with property access
-    [InlineData("*.name", """{"x":{"name":"a"},"y":{"name":"b"}}""", """["a","b"]""")]
+    [DataRow("*.name", """{"x":{"name":"a"},"y":{"name":"b"}}""", """["a","b"]""")]
     // Nested path with negative index
-    [InlineData("items[-1].name", """{"items":[{"name":"first"},{"name":"last"}]}""", "\"last\"")]
+    [DataRow("items[-1].name", """{"items":[{"name":"first"},{"name":"last"}]}""", "\"last\"")]
     // $single on array returning undefined (multi-match) — tested in undefined section
     // $flatten
-    [InlineData("$flatten([[1,2],[3,[4,5]]])", "null", "[1,2,3,4,5]")]
+    [DataRow("$flatten([[1,2],[3,[4,5]]])", "null", "[1,2,3,4,5]")]
     // $merge
-    [InlineData("""$merge([{"a":1},{"b":2}])""", "null", """{"a":1,"b":2}""")]
+    [DataRow("""$merge([{"a":1},{"b":2}])""", "null", """{"a":1,"b":2}""")]
     // $lookup
-    [InlineData("""$lookup({"a":1,"b":2}, "b")""", "null", "2")]
+    [DataRow("""$lookup({"a":1,"b":2}, "b")""", "null", "2")]
     // $values
-    [InlineData("$values(x)", """{"x":{"a":1,"b":2}}""", "[1,2]")]
+    [DataRow("$values(x)", """{"x":{"a":1,"b":2}}""", "[1,2]")]
     // Autoboxing: scalar with index 0
-    [InlineData("a[0]", """{"a":42}""", "42")]
+    [DataRow("a[0]", """{"a":42}""", "42")]
     // KeepArray ([]) — single match wraps in array
-    [InlineData("items.a[]", """{"items":[{"a":42}]}""", "[42]")]
+    [DataRow("items.a[]", """{"items":[{"a":42}]}""", "[42]")]
     // KeepArray ([]) — multiple matches with array property values flatten
-    [InlineData("items.a[]", """{"items":[{"a":[1,2]},{"a":[3]}]}""", "[1,2,3]")]
+    [DataRow("items.a[]", """{"items":[{"a":[1,2]},{"a":[3]}]}""", "[1,2,3]")]
     // KeepArray ([]) — 3-level deep nesting flattens correctly
-    [InlineData("items.a[]", """{"items":[[[{"a":1}]]]}""", "[1]")]
+    [DataRow("items.a[]", """{"items":[[[{"a":1}]]]}""", "[1]")]
     // KeepArray ([]) — mixed types: only objects and nested arrays contribute
-    [InlineData("items.x[]", """{"items":[1,"str",{"x":5},null,[{"x":6}]]}""", "[5,6]")]
+    [DataRow("items.x[]", """{"items":[1,"str",{"x":5},null,[{"x":6}]]}""", "[5,6]")]
     // KeepArray ([]) — object input wraps scalar property in array
-    [InlineData("data.name[]", """{"data":{"name":"Alice"}}""", """["Alice"]""")]
+    [DataRow("data.name[]", """{"data":{"name":"Alice"}}""", """["Alice"]""")]
     // $length on string
-    [InlineData("""$length("hello")""", "null", "5")]
+    [DataRow("""$length("hello")""", "null", "5")]
     // $substringBefore/$substringAfter
-    [InlineData("""$substringBefore("hello world", " ")""", "null", "\"hello\"")]
-    [InlineData("""$substringAfter("hello world", " ")""", "null", "\"world\"")]
+    [DataRow("""$substringBefore("hello world", " ")""", "null", "\"hello\"")]
+    [DataRow("""$substringAfter("hello world", " ")""", "null", "\"world\"")]
     public void EvaluateExpressionWithData(string expression, string inputJson, string expectedJson)
     {
         this.CompileAndAssert(expression, inputJson, expectedJson);
     }
 
-    [Theory]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     // External binding in top-level expression
-    [InlineData("$x + 1", "null", "11", """{"x":10}""")]
+    [DataRow("$x + 1", "null", "11", """{"x":10}""")]
     // External binding inside $map lambda
-    [InlineData("$map([1,2,3], function($v) { $v + $offset })", "null", "[11,12,13]", """{"offset":10}""")]
+    [DataRow("$map([1,2,3], function($v) { $v + $offset })", "null", "[11,12,13]", """{"offset":10}""")]
     // External binding inside $filter lambda
-    [InlineData("$filter([1,2,3,4,5], function($v) { $v > $min })", "null", "[4,5]", """{"min":3}""")]
+    [DataRow("$filter([1,2,3,4,5], function($v) { $v > $min })", "null", "[4,5]", """{"min":3}""")]
     // External binding inside $reduce lambda
-    [InlineData("$reduce([1,2,3], function($prev, $curr) { $prev + $curr + $base })", "null", "206", """{"base":100}""")]
+    [DataRow("$reduce([1,2,3], function($prev, $curr) { $prev + $curr + $base })", "null", "206", """{"base":100}""")]
     // Both $$ and external binding
-    [InlineData("$map([1,2], function($v) { $v + $offset })", """{"root":true}""", "[11,12]", """{"offset":10}""")]
+    [DataRow("$map([1,2], function($v) { $v + $offset })", """{"root":true}""", "[11,12]", """{"offset":10}""")]
     // Unused bindings — should still work
-    [InlineData("1 + 2", "null", "3", """{"unused":99}""")]
+    [DataRow("1 + 2", "null", "3", """{"unused":99}""")]
     public void EvaluateExpressionWithBindings(string expression, string inputJson, string expectedJson, string bindingsJson)
     {
         this.CompileAndAssertWithBindings(expression, inputJson, expectedJson, bindingsJson);
     }
 
-    [Theory]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     // Undefined result from missing property
-    [InlineData("a.b.c", """{"a":{"x":1}}""")]
+    [DataRow("a.b.c", """{"a":{"x":1}}""")]
     // Undefined from unresolved variable without bindings
-    [InlineData("$unknown", "null")]
+    [DataRow("$unknown", "null")]
     // Undefined from filter that matches nothing
-    [InlineData("items[val > 100].name", """{"items":[{"val":1,"name":"a"}]}""")]
+    [DataRow("items[val > 100].name", """{"items":[{"val":1,"name":"a"}]}""")]
     // Negative index out of range returns undefined
-    [InlineData("[1,2,3][-10]", "null")]
+    [DataRow("[1,2,3][-10]", "null")]
     // KeepArray ([]) — no matching properties returns undefined
-    [InlineData("items.nonexistent[]", """{"items":[{"a":1},{"b":2}]}""")]
+    [DataRow("items.nonexistent[]", """{"items":[{"a":1},{"b":2}]}""")]
     // KeepArray ([]) — empty array input returns undefined
-    [InlineData("items.a[]", """{"items":[]}""")]
+    [DataRow("items.a[]", """{"items":[]}""")]
     // KeepArray ([]) — missing property on object input returns undefined
-    [InlineData("data.missing[]", """{"data":{"name":"Alice"}}""")]
+    [DataRow("data.missing[]", """{"data":{"name":"Alice"}}""")]
     // Post-predicate: singleton source object with equality predicate mismatch
-    [InlineData("""item[type="b"].name""", """{"item":{"type":"a","name":"found"}}""")]
+    [DataRow("""item[type="b"].name""", """{"item":{"type":"a","name":"found"}}""")]
     // Constant index out of range in chain
-    [InlineData("items.orders[5].name", """{"items":{"orders":[{"name":"x"}]}}""")]
+    [DataRow("items.orders[5].name", """{"items":{"orders":[{"name":"x"}]}}""")]
     public void EvaluateExpressionReturnsUndefined(string expression, string inputJson)
     {
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
-        Assert.NotNull(compiled.Method);
-        Assert.Null(compiled.Error);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
+        Assert.IsNotNull(compiled.Method);
+        Assert.IsNull(compiled.Error);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputJson));
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal(JsonValueKind.Undefined, result.ValueKind);
+        Assert.AreEqual(JsonValueKind.Undefined, result.ValueKind);
     }
 
-    [Theory]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     // $single on empty array throws D3139
-    [InlineData("$single([])", "null", "D3139")]
+    [DataRow("$single([])", "null", "D3139")]
     // $single with multiple matches throws D3138
-    [InlineData("$single([1,2,3], function($v) { $v > 0 })", "null", "D3138")]
+    [DataRow("$single([1,2,3], function($v) { $v > 0 })", "null", "D3138")]
     public void EvaluateExpressionThrowsJsonataException(string expression, string inputJson, string expectedErrorCode)
     {
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
-        Assert.NotNull(compiled.Method);
-        Assert.Null(compiled.Error);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
+        Assert.IsNotNull(compiled.Method);
+        Assert.IsNull(compiled.Error);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputJson));
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
-        var ex = Assert.Throws<TargetInvocationException>(
+        var ex = Assert.ThrowsExactly<TargetInvocationException>(
             () => Invoke(compiled.Method, inputDoc.RootElement, workspace));
-        var jex = Assert.IsType<JsonataException>(ex.InnerException);
-        Assert.Contains(expectedErrorCode, jex.Message);
+        var jex = Assert.IsInstanceOfType<JsonataException>(ex.InnerException);
+        StringAssert.Contains(jex.Message, expectedErrorCode);
     }
 
-    [Fact]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     public void Generate_BlockVariableCapturedInHofLambda_LambdaIsNotStatic()
     {
         // Block-scoped variable ($x) captured inside a HOF lambda must make the
         // lambda non-static; otherwise C# emits CS8820.
-        CompiledExpression compiled = this.fixture.GetOrCompile(
+        CompiledExpression compiled = s_fixture!.GetOrCompile(
             "($x := 5; $map([1,2,3], function($v) { $v + $x }))");
 
-        this.output.WriteLine($"Error: {compiled.Error}");
+        Console.WriteLine($"Error: {compiled.Error}");
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+            Console.WriteLine($"Generated:\n{compiled.GeneratedCode}");
         }
 
         // The expression must compile without error (no CS8820)
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         // And must produce the correct result
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal("[6,7,8]", result.GetRawText());
+        Assert.AreEqual("[6,7,8]", result.GetRawText());
     }
 
-    [Fact]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     public void Generate_BlockVariableInFilterPredicate_Compiles()
     {
         // Block-scoped variable ($x) referenced inside a filter predicate lambda
         // must not cause CS8820 if the filter stage uses {Static}.
-        CompiledExpression compiled = this.fixture.GetOrCompile(
+        CompiledExpression compiled = s_fixture!.GetOrCompile(
             """($threshold := 2; items[$threshold < val].name)""");
 
-        this.output.WriteLine($"Error: {compiled.Error}");
+        Console.WriteLine($"Error: {compiled.Error}");
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+            Console.WriteLine($"Generated:\n{compiled.GeneratedCode}");
         }
 
         // Must compile without error
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         // And produce correct result
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(
             Encoding.UTF8.GetBytes("""{"items":[{"val":1,"name":"a"},{"val":3,"name":"b"},{"val":5,"name":"c"}]}"""));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal("""["b","c"]""", result.GetRawText());
+        Assert.AreEqual("""["b","c"]""", result.GetRawText());
     }
 
     private void CompileAndAssert(string expression, string inputJson, string expectedJson)
     {
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Inlined:    {compiled.IsInlined}");
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Code length: {compiled.GeneratedCode.Length}");
+            Console.WriteLine($"Code length: {compiled.GeneratedCode.Length}");
         }
 
         if (compiled.Error is not null)
@@ -379,7 +385,7 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
             Assert.Fail($"Compilation failed: {compiled.Error}");
         }
 
-        Assert.NotNull(compiled.Method);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputJson));
         using var expectedDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(expectedJson));
@@ -388,18 +394,18 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
 
         string actualJson = result.ValueKind == JsonValueKind.Undefined ? "undefined" : result.GetRawText();
-        this.output.WriteLine($"Expected: {expectedJson}");
-        this.output.WriteLine($"Actual:   {actualJson}");
+        Console.WriteLine($"Expected: {expectedJson}");
+        Console.WriteLine($"Actual:   {actualJson}");
 
         AssertJsonEqual(expectedDoc.RootElement, result);
     }
 
     private void CompileAndAssertWithBindings(string expression, string inputJson, string expectedJson, string bindingsJson)
     {
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Inlined:    {compiled.IsInlined}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Inlined:    {compiled.IsInlined}");
 
         if (compiled.Error is not null)
         {
@@ -407,7 +413,7 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
         }
 
         // Must have the 5-param bindings overload
-        Assert.NotNull(compiled.BindingsMethod);
+        Assert.IsNotNull(compiled.BindingsMethod);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputJson));
         using var expectedDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(expectedJson));
@@ -424,8 +430,8 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
             compiled.BindingsMethod, inputDoc.RootElement, workspace, bindings);
 
         string actualJson = result.ValueKind == JsonValueKind.Undefined ? "undefined" : result.GetRawText();
-        this.output.WriteLine($"Expected: {expectedJson}");
-        this.output.WriteLine($"Actual:   {actualJson}");
+        Console.WriteLine($"Expected: {expectedJson}");
+        Console.WriteLine($"Actual:   {actualJson}");
 
         AssertJsonEqual(expectedDoc.RootElement, result);
     }
@@ -450,7 +456,7 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     {
         if (expected.ValueKind == JsonValueKind.Number && actual.ValueKind == JsonValueKind.Number)
         {
-            Assert.Equal(expected.GetDouble(), actual.GetDouble(), 10);
+            Assert.AreEqual(expected.GetDouble(), actual.GetDouble(), 10);
             return;
         }
 
@@ -463,7 +469,7 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
         {
             int expectedLen = expected.GetArrayLength();
             int actualLen = actual.GetArrayLength();
-            Assert.Equal(expectedLen, actualLen);
+            Assert.AreEqual(expectedLen, actualLen);
             for (int i = 0; i < expectedLen; i++)
             {
                 AssertJsonEqual(expected[i], actual[i]);
@@ -486,10 +492,10 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
                 actualProps[prop.Name] = prop.Value;
             }
 
-            Assert.Equal(expectedProps.Count, actualProps.Count);
+            Assert.AreEqual(expectedProps.Count, actualProps.Count);
             foreach (var kvp in expectedProps)
             {
-                Assert.True(actualProps.ContainsKey(kvp.Key), $"Missing property: {kvp.Key}");
+                Assert.IsTrue(actualProps.ContainsKey(kvp.Key), $"Missing property: {kvp.Key}");
                 AssertJsonEqual(kvp.Value, actualProps[kvp.Key]);
             }
 
@@ -498,11 +504,11 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
 
         if (expected.ValueKind == JsonValueKind.String)
         {
-            Assert.Equal(expected.GetString(), actual.GetString());
+            Assert.AreEqual(expected.GetString(), actual.GetString());
             return;
         }
 
-        Assert.Equal(expected.GetRawText(), actual.GetRawText());
+        Assert.AreEqual(expected.GetRawText(), actual.GetRawText());
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -510,102 +516,102 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
     // in JsonataCodeGenerator.cs, CodeGenStringHelpers.cs
     // ═══════════════════════════════════════════════════════════
 
-    [Theory]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     // Regex with case-insensitive flag (L542-544)
-    [InlineData("""$match("Hello World", /hello/i).match""", "\"Hello\"")]
+    [DataRow("""$match("Hello World", /hello/i).match""", "\"Hello\"")]
     // Regex with multiline flag (L545-547)
-    [InlineData("$contains(\"line1\\nline2\", /^line2/m)", "true")]
+    [DataRow("$contains(\"line1\\nline2\", /^line2/m)", "true")]
     // Division operator (L2936+)
-    [InlineData("10 / 4", "2.5")]
+    [DataRow("10 / 4", "2.5")]
     // String with special characters that exercise EscapeCSharpStringLiteral (L37-46)
-    [InlineData("\"hello\\tworld\"", "\"hello\\tworld\"")]
-    [InlineData("\"line1\\nline2\"", "\"line1\\nline2\"")]
+    [DataRow("\"hello\\tworld\"", "\"hello\\tworld\"")]
+    [DataRow("\"line1\\nline2\"", "\"line1\\nline2\"")]
     // Object constructor with numeric values (L811-824)
-    [InlineData("""{"x": 1, "y": 2, "z": 3}""", """{"x":1,"y":2,"z":3}""")]
+    [DataRow("""{"x": 1, "y": 2, "z": 3}""", """{"x":1,"y":2,"z":3}""")]
     // Transform operator ~> (L2880+)
-    [InlineData("$sum([1,2,3,4] ~> $map(function($v) { $v * $v }))", "30")]
+    [DataRow("$sum([1,2,3,4] ~> $map(function($v) { $v * $v }))", "30")]
     // $each for object iteration
-    [InlineData("""$each({"a":1,"b":2}, function($v, $k) { $k & "=" & $string($v) })""", """["a=1","b=2"]""")]
+    [DataRow("""$each({"a":1,"b":2}, function($v, $k) { $k & "=" & $string($v) })""", """["a=1","b=2"]""")]
     // $spread
-    [InlineData("""$spread({"a":1,"b":2})""", """[{"a":1},{"b":2}]""")]
+    [DataRow("""$spread({"a":1,"b":2})""", """[{"a":1},{"b":2}]""")]
     // $sift — filter object properties
-    [InlineData("""$sift({"a":1,"b":2,"c":3}, function($v) { $v > 1 })""", """{"b":2,"c":3}""")]
+    [DataRow("""$sift({"a":1,"b":2,"c":3}, function($v) { $v > 1 })""", """{"b":2,"c":3}""")]
     // Lambda expression used as value
-    [InlineData("$map([1,2,3], function($v) { $v * $v })", "[1,4,9]")]
+    [DataRow("$map([1,2,3], function($v) { $v * $v })", "[1,4,9]")]
     // $pad
-    [InlineData("""$pad("hello", 10)""", "\"hello     \"")]
-    [InlineData("""$pad("hello", -10)""", "\"     hello\"")]
-    [InlineData("""$pad("hello", 10, "*")""", "\"hello*****\"")]
+    [DataRow("""$pad("hello", 10)""", "\"hello     \"")]
+    [DataRow("""$pad("hello", -10)""", "\"     hello\"")]
+    [DataRow("""$pad("hello", 10, "*")""", "\"hello*****\"")]
     // $eval (falls back to RT)
-    [InlineData("""$eval("1+2")""", "3")]
+    [DataRow("""$eval("1+2")""", "3")]
     // Chained comparison operators
-    [InlineData("1 < 2 and 2 < 3", "true")]
-    [InlineData("1 > 2 or 2 > 3", "false")]
+    [DataRow("1 < 2 and 2 < 3", "true")]
+    [DataRow("1 > 2 or 2 > 3", "false")]
     // CodeGenStringHelpers: EscapeJsonStringContent \b \f paths (L85-86)
     // and EscapeCSharpStringLiteral \b \f paths (L39-40)
-    [InlineData("\"hello\\bworld\"", "\"hello\\bworld\"")]
-    [InlineData("\"hello\\fworld\"", "\"hello\\fworld\"")]
+    [DataRow("\"hello\\bworld\"", "\"hello\\bworld\"")]
+    [DataRow("\"hello\\fworld\"", "\"hello\\fworld\"")]
     // CodeGenStringHelpers: EscapeCSharpStringLiteral \u escape for control chars (L44-46)
-    [InlineData("\"hello\\u0007world\"", "\"hello\\u0007world\"")]
-    [InlineData("\"hello\\u000Bworld\"", "\"hello\\u000Bworld\"")]
+    [DataRow("\"hello\\u0007world\"", "\"hello\\u0007world\"")]
+    [DataRow("\"hello\\u000Bworld\"", "\"hello\\u000Bworld\"")]
     public void EvaluateR2SelfContainedExpression(string expression, string expectedJson)
     {
         this.CompileAndAssert(expression, "null", expectedJson);
     }
 
-    [Theory]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     // Group-by on path: data{key: value} (L793-806, L945-948)
-    [InlineData(
+    [DataRow(
         """Account.Order.Product{`Product Name`: Price}""",
         """{"Account":{"Order":{"Product":[{"Product Name":"Bowler Hat","Price":34.45},{"Product Name":"Trilby hat","Price":21.67}]}}}""",
         """{"Bowler Hat":34.45,"Trilby hat":21.67}""")]
     // Group-by with $sum aggregation (L803-806)
-    [InlineData(
+    [DataRow(
         """Account.Order.Product{`Product Name`: $sum(Price)}""",
         """{"Account":{"Order":[{"Product":[{"Product Name":"Hat","Price":10},{"Product Name":"Hat","Price":20}]},{"Product":[{"Product Name":"Shoes","Price":50}]}]}}""",
         """{"Hat":30,"Shoes":50}""")]
     // KeepSingletonArray on path after wildcard step (L826-836, L951-968)
-    [InlineData("*.name[]", """{"a":{"name":"x"},"b":{"name":"y"}}""", """["x","y"]""")]
+    [DataRow("*.name[]", """{"a":{"name":"x"},"b":{"name":"y"}}""", """["x","y"]""")]
     // Descendant navigation (L844-870)
-    [InlineData("**.price", """{"store":{"book":{"price":10},"pen":{"price":2}}}""", "[10,2]")]
+    [DataRow("**.price", """{"store":{"book":{"price":10},"pen":{"price":2}}}""", "[10,2]")]
     // Descendant + property fusion (L845-870)
-    [InlineData("**.name", """{"a":{"b":{"name":"deep"}}}""", "\"deep\"")]
+    [DataRow("**.name", """{"a":{"b":{"name":"deep"}}}""", "\"deep\"")]
     // OR predicate extraction (L1147-1155)
-    [InlineData(
+    [DataRow(
         """items[type="a" or type="b"].name""",
         """{"items":[{"type":"a","name":"x"},{"type":"b","name":"y"},{"type":"c","name":"z"}]}""",
         """["x","y"]""")]
     // Conditional with undefined-test optimization
-    [InlineData("a ? a : \"default\"", """{"a":"present"}""", "\"present\"")]
-    [InlineData("a ? a : \"default\"", """{}""", "\"default\"")]
+    [DataRow("a ? a : \"default\"", """{"a":"present"}""", "\"present\"")]
+    [DataRow("a ? a : \"default\"", """{}""", "\"default\"")]
     // Multi-step path with fused chain + keepArray step (L663-668)
-    [InlineData("items[0].details.tags[]",
+    [DataRow("items[0].details.tags[]",
         """{"items":[{"details":{"tags":["a","b"]}}]}""",
         """["a","b"]""")]
     // Constant index chain with multiple indices (L1412+)
-    [InlineData("matrix[0][1]",
+    [DataRow("matrix[0][1]",
         """{"matrix":[[10,20,30],[40,50,60]]}""",
         "20")]
     // Pre-index step chain with post-index property (L1600+)
-    [InlineData("data.rows[0].name",
+    [DataRow("data.rows[0].name",
         """{"data":{"rows":[{"name":"first"},{"name":"second"}]}}""",
         "\"first\"")]
     // Deep chain with filter and post-navigation
-    [InlineData("""orders[status="active"].items.product.name""",
+    [DataRow("""orders[status="active"].items.product.name""",
         """{"orders":[{"status":"active","items":[{"product":{"name":"Widget"}},{"product":{"name":"Gadget"}}]},{"status":"closed","items":[{"product":{"name":"Old"}}]}]}""",
         """["Widget","Gadget"]""")]
     // Wildcard enumerate all values then navigate (L837+)
-    [InlineData("*.val",
+    [DataRow("*.val",
         """{"a":{"val":1},"b":{"val":2},"c":{"val":3}}""",
         "[1,2,3]")]
     // NameNode with stages at step 0 (L774-786)
-    [InlineData("items[0].name",
+    [DataRow("items[0].name",
         """{"items":[{"name":"first"},{"name":"second"}]}""",
         "\"first\"")]
     // Sort with custom comparator on path (L2663+)
-    [InlineData("$sort(items, function($a, $b) { $a.age > $b.age }).name",
+    [DataRow("$sort(items, function($a, $b) { $a.age > $b.age }).name",
         """{"items":[{"name":"Charlie","age":30},{"name":"Alice","age":25},{"name":"Bob","age":35}]}""",
         """["Alice","Charlie","Bob"]""")]
     public void EvaluateR2ExpressionWithData(string expression, string inputJson, string expectedJson)
@@ -613,20 +619,20 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
         this.CompileAndAssert(expression, inputJson, expectedJson);
     }
 
-    [Theory]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     // FilterNode standalone — falls back to RT (L594)
-    [InlineData("[0]", "[10,20,30]")]
+    [DataRow("[0]", "[10,20,30]")]
     // Complex annotations with focus — falls back to RT (L602-604)
-    [InlineData("$sum(Account.Order.Product.(Price * Quantity))",
+    [DataRow("$sum(Account.Order.Product.(Price * Quantity))",
         """{"Account":{"Order":[{"Product":{"Price":10,"Quantity":2}},{"Product":{"Price":20,"Quantity":1}}]}}""")]
     public void FallbackExpressions_StillProduceCorrectResults(string expression, string inputJson)
     {
         // These expressions can't be inlined by CG; they fall back to RT.
         // We still verify that CG compilation succeeds and produces correct results.
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         // Run CG version
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputJson));
@@ -637,11 +643,11 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
         using var inputDoc2 = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes(inputJson));
         JsonElement rtResult = JsonataEvaluator.Default.Evaluate(expression, inputDoc2.RootElement);
 
-        Assert.Equal(rtResult.GetRawText(), cgResult.GetRawText());
+        Assert.AreEqual(rtResult.GetRawText(), cgResult.GetRawText());
     }
 
-    [Fact]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     public void EvaluateExpressionWithCustomFunction_BlockFormWithBlankLines()
     {
         // L319-322: blank lines in custom function body
@@ -654,25 +660,25 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
                 isExpression: false),
         };
 
-        CompiledExpression compiled = this.fixture.GetOrCompile("$add_ten(5)", customFns);
+        CompiledExpression compiled = s_fixture!.GetOrCompile("$add_ten(5)", customFns);
 
-        this.output.WriteLine($"Error: {compiled.Error}");
+        Console.WriteLine($"Error: {compiled.Error}");
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+            Console.WriteLine($"Generated:\n{compiled.GeneratedCode}");
         }
 
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal("15", result.GetRawText());
+        Assert.AreEqual("15", result.GetRawText());
     }
 
-    [Fact]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     public void EvaluateExpressionWithCustomFunction_ExpressionForm()
     {
         var customFns = new[]
@@ -684,25 +690,25 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
                 isExpression: true),
         };
 
-        CompiledExpression compiled = this.fixture.GetOrCompile("$double_it(21)", customFns);
+        CompiledExpression compiled = s_fixture!.GetOrCompile("$double_it(21)", customFns);
 
-        this.output.WriteLine($"Error: {compiled.Error}");
+        Console.WriteLine($"Error: {compiled.Error}");
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+            Console.WriteLine($"Generated:\n{compiled.GeneratedCode}");
         }
 
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal("42", result.GetRawText());
+        Assert.AreEqual("42", result.GetRawText());
     }
 
-    [Fact]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     public void EvaluateExpressionWithCustomFunction_BlockForm()
     {
         var customFns = new[]
@@ -714,25 +720,25 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
                 isExpression: false),
         };
 
-        CompiledExpression compiled = this.fixture.GetOrCompile("$clamp(15, 0, 10)", customFns);
+        CompiledExpression compiled = s_fixture!.GetOrCompile("$clamp(15, 0, 10)", customFns);
 
-        this.output.WriteLine($"Error: {compiled.Error}");
+        Console.WriteLine($"Error: {compiled.Error}");
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+            Console.WriteLine($"Generated:\n{compiled.GeneratedCode}");
         }
 
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal("10", result.GetRawText());
+        Assert.AreEqual("10", result.GetRawText());
     }
 
-    [Fact]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     public void EvaluateExpressionWithCustomFunction_UsedInMap()
     {
         var customFns = new[]
@@ -744,26 +750,26 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
                 isExpression: true),
         };
 
-        CompiledExpression compiled = this.fixture.GetOrCompile(
+        CompiledExpression compiled = s_fixture!.GetOrCompile(
             "$map([1,2,3], function($v) { $triple($v) })", customFns);
 
-        this.output.WriteLine($"Error: {compiled.Error}");
+        Console.WriteLine($"Error: {compiled.Error}");
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated:\n{compiled.GeneratedCode}");
+            Console.WriteLine($"Generated:\n{compiled.GeneratedCode}");
         }
 
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(Encoding.UTF8.GetBytes("null"));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal("[3,6,9]", result.GetRawText());
+        Assert.AreEqual("[3,6,9]", result.GetRawText());
     }
 
-    [Fact]
-    [Trait("category", "codegen-edge")]
+    [TestMethod]
+    [TestCategory("codegen-edge")]
     public void EvaluateExpressionWithCustomFunction_WithDataInput()
     {
         var customFns = new[]
@@ -775,15 +781,15 @@ public class CodeGenEdgeCaseTests : IClassFixture<CodeGenConformanceFixture>
                 isExpression: true),
         };
 
-        CompiledExpression compiled = this.fixture.GetOrCompile("$add_bonus(price)", customFns);
+        CompiledExpression compiled = s_fixture!.GetOrCompile("$add_bonus(price)", customFns);
 
-        Assert.Null(compiled.Error);
-        Assert.NotNull(compiled.Method);
+        Assert.IsNull(compiled.Error);
+        Assert.IsNotNull(compiled.Method);
 
         using var inputDoc = ParsedJsonDocument<JsonElement>.Parse(
             Encoding.UTF8.GetBytes("""{"price":50}"""));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = Invoke(compiled.Method, inputDoc.RootElement, workspace);
-        Assert.Equal("60", result.GetRawText());
+        Assert.AreEqual("60", result.GetRawText());
     }
 }

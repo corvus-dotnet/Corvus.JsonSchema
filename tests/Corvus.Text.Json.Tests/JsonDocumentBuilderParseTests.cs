@@ -3,99 +3,100 @@
 // </copyright>
 
 using System.Buffers;
+using System.Linq;
 using System.IO;
 using System.IO.Tests;
-using System.Linq;
 using System.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
 /// <summary>
 /// Tests for <see cref="JsonDocumentBuilder{T}.Parse"/> — parsing directly to a mutable builder.
 /// </summary>
-public static class JsonDocumentBuilderParseTests
+[TestClass]
+public class JsonDocumentBuilderParseTests
 {
     private static readonly byte[] Utf8Bom = [0xEF, 0xBB, 0xBF];
 
     #region Simple value parsing
 
-    [Fact]
-    public static void ParseSimpleNumber()
+    [TestMethod]
+    public void ParseSimpleNumber()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, """42"""u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.Number, root.ValueKind);
-        Assert.Equal(42, root.GetInt32());
+        Assert.AreEqual(JsonValueKind.Number, root.ValueKind);
+        Assert.AreEqual(42, root.GetInt32());
     }
 
-    [Fact]
-    public static void ParseSimpleString()
+    [TestMethod]
+    public void ParseSimpleString()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, "\"hello\""u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.String, root.ValueKind);
-        Assert.Equal("hello", root.GetString());
+        Assert.AreEqual(JsonValueKind.String, root.ValueKind);
+        Assert.AreEqual("hello", root.GetString());
     }
 
-    [Fact]
-    public static void ParseTrue()
+    [TestMethod]
+    public void ParseTrue()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, "true"u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.True, root.ValueKind);
+        Assert.AreEqual(JsonValueKind.True, root.ValueKind);
     }
 
-    [Fact]
-    public static void ParseFalse()
+    [TestMethod]
+    public void ParseFalse()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, "false"u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.False, root.ValueKind);
+        Assert.AreEqual(JsonValueKind.False, root.ValueKind);
     }
 
-    [Fact]
-    public static void ParseNull()
+    [TestMethod]
+    public void ParseNull()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, "null"u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.Null, root.ValueKind);
+        Assert.AreEqual(JsonValueKind.Null, root.ValueKind);
     }
 
     #endregion
 
     #region Object parsing
 
-    [Fact]
-    public static void ParseSimpleObject()
+    [TestMethod]
+    public void ParseSimpleObject()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, """{"name":"Alice","age":30}"""u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
-        Assert.Equal(30, root.GetProperty("age"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(30, root.GetProperty("age"u8).GetInt32());
     }
 
-    [Fact]
-    public static void ParseNestedObject()
+    [TestMethod]
+    public void ParseNestedObject()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
@@ -104,65 +105,65 @@ public static class JsonDocumentBuilderParseTests
                 """{"person":{"name":"Bob","address":{"city":"London"}}}"""u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("Bob", root.GetProperty("person"u8).GetProperty("name"u8).GetString());
-        Assert.Equal("London", root.GetProperty("person"u8).GetProperty("address"u8).GetProperty("city"u8).GetString());
+        Assert.AreEqual("Bob", root.GetProperty("person"u8).GetProperty("name"u8).GetString());
+        Assert.AreEqual("London", root.GetProperty("person"u8).GetProperty("address"u8).GetProperty("city"u8).GetString());
     }
 
-    [Fact]
-    public static void ParseEmptyObject()
+    [TestMethod]
+    public void ParseEmptyObject()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, "{}"u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
     }
 
     #endregion
 
     #region Array parsing
 
-    [Fact]
-    public static void ParseSimpleArray()
+    [TestMethod]
+    public void ParseSimpleArray()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, "[1,2,3]"u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void ParseNestedArray()
+    [TestMethod]
+    public void ParseNestedArray()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, "[[1,2],[3,[4,5]]]"u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(1, root[0][0].GetInt32());
-        Assert.Equal(5, root[1][1][1].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(1, root[0][0].GetInt32());
+        Assert.AreEqual(5, root[1][1][1].GetInt32());
     }
 
-    [Fact]
-    public static void ParseEmptyArray()
+    [TestMethod]
+    public void ParseEmptyArray()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, "[]"u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, root.ValueKind);
     }
 
-    [Fact]
-    public static void ParseArrayOfObjects()
+    [TestMethod]
+    public void ParseArrayOfObjects()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
@@ -171,16 +172,16 @@ public static class JsonDocumentBuilderParseTests
                 """[{"a":1},{"b":2}]"""u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(1, root[0].GetProperty("a"u8).GetInt32());
-        Assert.Equal(2, root[1].GetProperty("b"u8).GetInt32());
+        Assert.AreEqual(1, root[0].GetProperty("a"u8).GetInt32());
+        Assert.AreEqual(2, root[1].GetProperty("b"u8).GetInt32());
     }
 
     #endregion
 
     #region Escaped string handling
 
-    [Fact]
-    public static void ParseEscapedPropertyName()
+    [TestMethod]
+    public void ParseEscapedPropertyName()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
@@ -189,11 +190,11 @@ public static class JsonDocumentBuilderParseTests
                 """{"hello\u0020world":"value"}"""u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("value", root.GetProperty("hello world"u8).GetString());
+        Assert.AreEqual("value", root.GetProperty("hello world"u8).GetString());
     }
 
-    [Fact]
-    public static void ParseEscapedStringValue()
+    [TestMethod]
+    public void ParseEscapedStringValue()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
@@ -202,26 +203,26 @@ public static class JsonDocumentBuilderParseTests
                 """{"key":"line1\nline2"}"""u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("line1\nline2", root.GetProperty("key"u8).GetString());
+        Assert.AreEqual("line1\nline2", root.GetProperty("key"u8).GetString());
     }
 
     #endregion
 
     #region String overload
 
-    [Fact]
-    public static void ParseFromString()
+    [TestMethod]
+    public void ParseFromString()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, """{"x":42}""");
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(42, root.GetProperty("x"u8).GetInt32());
+        Assert.AreEqual(42, root.GetProperty("x"u8).GetInt32());
     }
 
-    [Fact]
-    public static void ParseFromReadOnlyMemoryChar()
+    [TestMethod]
+    public void ParseFromReadOnlyMemoryChar()
     {
         ReadOnlyMemory<char> json = """{"x":42}""".AsMemory();
 
@@ -230,15 +231,15 @@ public static class JsonDocumentBuilderParseTests
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, json);
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(42, root.GetProperty("x"u8).GetInt32());
+        Assert.AreEqual(42, root.GetProperty("x"u8).GetInt32());
     }
 
     #endregion
 
     #region Stream overload
 
-    [Fact]
-    public static void ParseFromSeekableStream()
+    [TestMethod]
+    public void ParseFromSeekableStream()
     {
         byte[] data = Encoding.UTF8.GetBytes("""{"name":"Alice"}""");
 
@@ -247,11 +248,11 @@ public static class JsonDocumentBuilderParseTests
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, new MemoryStream(data));
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
     }
 
-    [Fact]
-    public static void ParseFromUnseekableStream()
+    [TestMethod]
+    public void ParseFromUnseekableStream()
     {
         byte[] data = Encoding.UTF8.GetBytes("""{"name":"Alice"}""");
 
@@ -262,11 +263,11 @@ public static class JsonDocumentBuilderParseTests
                 new WrappedMemoryStream(canRead: true, canWrite: false, canSeek: false, data: data));
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
     }
 
-    [Fact]
-    public static void ParseFromStreamWithBom()
+    [TestMethod]
+    public void ParseFromStreamWithBom()
     {
         byte[] data = Encoding.UTF8.GetBytes("""{"name":"Alice"}""");
         byte[] dataWithBom = Utf8Bom.Concat(data).ToArray();
@@ -276,15 +277,15 @@ public static class JsonDocumentBuilderParseTests
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, new MemoryStream(dataWithBom));
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
     }
 
     #endregion
 
     #region ParseValue from Utf8JsonReader
 
-    [Fact]
-    public static void ParseValueFromReader()
+    [TestMethod]
+    public void ParseValueFromReader()
     {
         byte[] data = Encoding.UTF8.GetBytes("""{"name":"Alice","age":30}""");
         var reader = new Utf8JsonReader(data);
@@ -294,12 +295,12 @@ public static class JsonDocumentBuilderParseTests
             JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
-        Assert.Equal(30, root.GetProperty("age"u8).GetInt32());
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(30, root.GetProperty("age"u8).GetInt32());
     }
 
-    [Fact]
-    public static void ParseValueFromReaderAtPropertyName()
+    [TestMethod]
+    public void ParseValueFromReaderAtPropertyName()
     {
         byte[] data = Encoding.UTF8.GetBytes("""{"outer":{"inner":42}}""");
         var reader = new Utf8JsonReader(data);
@@ -313,15 +314,15 @@ public static class JsonDocumentBuilderParseTests
             JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(42, root.GetProperty("inner"u8).GetInt32());
+        Assert.AreEqual(42, root.GetProperty("inner"u8).GetInt32());
     }
 
     #endregion
 
     #region ParseValue from multi-segment ReadOnlySequence
 
-    [Fact]
-    public static void ParseValueFromReader_MultiSegment_Object()
+    [TestMethod]
+    public void ParseValueFromReader_MultiSegment_Object()
     {
         // Split the JSON across two segments to exercise HasValueSequence paths
         byte[] part1 = Encoding.UTF8.GetBytes("""{"name":"Ali""");
@@ -335,12 +336,12 @@ public static class JsonDocumentBuilderParseTests
             JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
-        Assert.Equal(30, root.GetProperty("age"u8).GetInt32());
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(30, root.GetProperty("age"u8).GetInt32());
     }
 
-    [Fact]
-    public static void ParseValueFromReader_MultiSegment_Array()
+    [TestMethod]
+    public void ParseValueFromReader_MultiSegment_Array()
     {
         // Split array JSON across segments to hit multi-segment StartArray path
         byte[] part1 = Encoding.UTF8.GetBytes("[1,2,");
@@ -354,11 +355,11 @@ public static class JsonDocumentBuilderParseTests
             JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal("[1,2,3,4]", root.ToString());
+        Assert.AreEqual("[1,2,3,4]", root.ToString());
     }
 
-    [Fact]
-    public static void ParseValueFromReader_MultiSegment_NumberSplitAcrossSegments()
+    [TestMethod]
+    public void ParseValueFromReader_MultiSegment_NumberSplitAcrossSegments()
     {
         // Split a number value across segments so HasValueSequence is true for Number token
         byte[] part1 = Encoding.UTF8.GetBytes("123");
@@ -371,11 +372,11 @@ public static class JsonDocumentBuilderParseTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
 
-        Assert.Equal("123456", builder.RootElement.ToString());
+        Assert.AreEqual("123456", builder.RootElement.ToString());
     }
 
-    [Fact]
-    public static void ParseValueFromReader_MultiSegment_StringSplitAcrossSegments()
+    [TestMethod]
+    public void ParseValueFromReader_MultiSegment_StringSplitAcrossSegments()
     {
         // Split a string value across segments to hit the multi-segment string path
         byte[] part1 = Encoding.UTF8.GetBytes("\"hel");
@@ -388,11 +389,11 @@ public static class JsonDocumentBuilderParseTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
 
-        Assert.Equal("hello", builder.RootElement.GetString());
+        Assert.AreEqual("hello", builder.RootElement.GetString());
     }
 
-    [Fact]
-    public static void ParseValueFromReader_MultiSegment_TrueSplitAcrossSegments()
+    [TestMethod]
+    public void ParseValueFromReader_MultiSegment_TrueSplitAcrossSegments()
     {
         // Split 'true' across segments to hit HasValueSequence for True token
         byte[] part1 = Encoding.UTF8.GetBytes("tr");
@@ -405,15 +406,15 @@ public static class JsonDocumentBuilderParseTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.ParseValue(workspace, ref reader);
 
-        Assert.True(builder.RootElement.GetBoolean());
+        Assert.IsTrue(builder.RootElement.GetBoolean());
     }
 
     #endregion
 
     #region Mutation after parse
 
-    [Fact]
-    public static void MutateAfterParse_SetProperty()
+    [TestMethod]
+    public void MutateAfterParse_SetProperty()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
@@ -421,25 +422,25 @@ public static class JsonDocumentBuilderParseTests
 
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("name"u8, "Bob");
-        Assert.Equal("Bob", root.GetProperty("name"u8).GetString());
-        Assert.Equal(30, root.GetProperty("age"u8).GetInt32());
+        Assert.AreEqual("Bob", root.GetProperty("name"u8).GetString());
+        Assert.AreEqual(30, root.GetProperty("age"u8).GetInt32());
     }
 
-    [Fact]
-    public static void MutateAfterParse_RemoveProperty()
+    [TestMethod]
+    public void MutateAfterParse_RemoveProperty()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, """{"name":"Alice","age":30}""");
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.True(root.RemoveProperty("age"u8));
-        Assert.Equal("Alice", root.GetProperty("name"u8).GetString());
-        Assert.False(root.TryGetProperty("age"u8, out _));
+        Assert.IsTrue(root.RemoveProperty("age"u8));
+        Assert.AreEqual("Alice", root.GetProperty("name"u8).GetString());
+        Assert.IsFalse(root.TryGetProperty("age"u8, out _));
     }
 
-    [Fact]
-    public static void MutateAfterParse_InsertArrayItem()
+    [TestMethod]
+    public void MutateAfterParse_InsertArrayItem()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
@@ -447,32 +448,32 @@ public static class JsonDocumentBuilderParseTests
 
         JsonElement.Mutable root = builder.RootElement;
         root.InsertItem(1, 99);
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(99, root[1].GetInt32());
-        Assert.Equal(2, root[2].GetInt32());
-        Assert.Equal(3, root[3].GetInt32());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(99, root[1].GetInt32());
+        Assert.AreEqual(2, root[2].GetInt32());
+        Assert.AreEqual(3, root[3].GetInt32());
     }
 
     #endregion
 
     #region Serialization equivalence
 
-    [Theory]
-    [InlineData("""42""")]
-    [InlineData("\"hello\"")]
-    [InlineData("""true""")]
-    [InlineData("""false""")]
-    [InlineData("""null""")]
-    [InlineData("""{"a":1,"b":"two","c":true,"d":null}""")]
-    [InlineData("""[1,"two",true,null,{"nested":42}]""")]
-    [InlineData("""{"a":{"b":{"c":[1,2,3]}}}""")]
-    [InlineData("""[]""")]
-    [InlineData("""{}""")]
-    [InlineData("""[{"x":1},{"x":2},{"x":3}]""")]
-    [InlineData("""3.14159""")]
-    [InlineData("""-42""")]
-    [InlineData("""1e10""")]
-    public static void SerializationMatchesParseThenBuild(string json)
+    [TestMethod]
+    [DataRow("""42""")]
+    [DataRow("\"hello\"")]
+    [DataRow("""true""")]
+    [DataRow("""false""")]
+    [DataRow("""null""")]
+    [DataRow("""{"a":1,"b":"two","c":true,"d":null}""")]
+    [DataRow("""[1,"two",true,null,{"nested":42}]""")]
+    [DataRow("""{"a":{"b":{"c":[1,2,3]}}}""")]
+    [DataRow("""[]""")]
+    [DataRow("""{}""")]
+    [DataRow("""[{"x":1},{"x":2},{"x":3}]""")]
+    [DataRow("""3.14159""")]
+    [DataRow("""-42""")]
+    [DataRow("""1e10""")]
+    public void SerializationMatchesParseThenBuild(string json)
     {
         // Parse directly to builder
         using var workspace1 = JsonWorkspace.Create();
@@ -487,15 +488,15 @@ public static class JsonDocumentBuilderParseTests
             parsedDoc.RootElement.CreateBuilder(workspace2);
         string traditionalResult = traditionalBuilder.RootElement.ToString();
 
-        Assert.Equal(traditionalResult, directResult);
+        Assert.AreEqual(traditionalResult, directResult);
     }
 
     #endregion
 
     #region Snapshot and restore
 
-    [Fact]
-    public static void SnapshotAndRestoreAfterParse()
+    [TestMethod]
+    public void SnapshotAndRestoreAfterParse()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
@@ -506,19 +507,19 @@ public static class JsonDocumentBuilderParseTests
         // Mutate
         JsonElement.Mutable root = builder.RootElement;
         root.SetProperty("name"u8, "Bob");
-        Assert.Equal("Bob", builder.RootElement.GetProperty("name"u8).GetString());
+        Assert.AreEqual("Bob", builder.RootElement.GetProperty("name"u8).GetString());
 
         // Restore
         builder.Restore(snapshot);
-        Assert.Equal("Alice", builder.RootElement.GetProperty("name"u8).GetString());
+        Assert.AreEqual("Alice", builder.RootElement.GetProperty("name"u8).GetString());
     }
 
     #endregion
 
     #region Clone
 
-    [Fact]
-    public static void CloneElementFromParsedBuilder()
+    [TestMethod]
+    public void CloneElementFromParsedBuilder()
     {
         JsonElement clone;
 
@@ -530,15 +531,15 @@ public static class JsonDocumentBuilderParseTests
         }
 
         // Clone survives after builder disposal
-        Assert.Equal("[1,2,3]", clone.GetRawText());
+        Assert.AreEqual("[1,2,3]", clone.GetRawText());
     }
 
     #endregion
 
     #region Large document
 
-    [Fact]
-    public static void ParseLargeDocument()
+    [TestMethod]
+    public void ParseLargeDocument()
     {
         // Build a JSON object with many properties
         var sb = new StringBuilder("{");
@@ -560,13 +561,13 @@ public static class JsonDocumentBuilderParseTests
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, json);
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(JsonValueKind.Object, root.ValueKind);
-        Assert.Equal(0, root.GetProperty("prop0"u8).GetInt32());
-        Assert.Equal(999, root.GetProperty("prop999"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, root.ValueKind);
+        Assert.AreEqual(0, root.GetProperty("prop0"u8).GetInt32());
+        Assert.AreEqual(999, root.GetProperty("prop999"u8).GetInt32());
     }
 
-    [Fact]
-    public static void ParseDeeplyNestedDocument()
+    [TestMethod]
+    public void ParseDeeplyNestedDocument()
     {
         // Build a deeply nested JSON array [[[[...]]]]
         const int depth = 64;
@@ -576,32 +577,32 @@ public static class JsonDocumentBuilderParseTests
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, json);
 
-        Assert.Equal(JsonValueKind.Array, builder.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, builder.RootElement.ValueKind);
     }
 
     #endregion
 
     #region Floating-point precision
 
-    [Fact]
-    public static void ParseFloatingPointNumber()
+    [TestMethod]
+    public void ParseFloatingPointNumber()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> builder =
             JsonDocumentBuilder<JsonElement.Mutable>.Parse(workspace, "3.141592653589793"u8.ToArray());
 
         JsonElement.Mutable root = builder.RootElement;
-        Assert.Equal(3.141592653589793, root.GetDouble());
+        Assert.AreEqual(3.141592653589793, root.GetDouble());
     }
 
     #endregion
 
     #region WriteTo equivalence
 
-    [Theory]
-    [InlineData("""{"a":1,"b":"two","c":true,"d":null,"e":[1,2]}""")]
-    [InlineData("""[1,"two",true,null,{"nested":42},[]]""")]
-    public static void WriteToProducesSameOutputAsParseThenBuild(string json)
+    [TestMethod]
+    [DataRow("""{"a":1,"b":"two","c":true,"d":null,"e":[1,2]}""")]
+    [DataRow("""[1,"two",true,null,{"nested":42},[]]""")]
+    public void WriteToProducesSameOutputAsParseThenBuild(string json)
     {
         var directBuffer = new ArrayBufferWriter<byte>(1024);
         var traditionalBuffer = new ArrayBufferWriter<byte>(1024);
@@ -625,7 +626,7 @@ public static class JsonDocumentBuilderParseTests
             builder.WriteTo(writer);
         }
 
-        Assert.True(directBuffer.WrittenSpan.SequenceEqual(traditionalBuffer.WrittenSpan));
+        Assert.IsTrue(directBuffer.WrittenSpan.SequenceEqual(traditionalBuffer.WrittenSpan));
     }
 
     #endregion

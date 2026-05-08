@@ -1,13 +1,14 @@
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
 /// <summary>
 /// Tests for the 'validateDocument' command.
 /// </summary>
+[TestClass]
 public class ValidateDocumentCommandTests
 {
-    [Fact]
+    [TestMethod]
     public async Task ValidateDocument_ValidDocument_ReturnsZeroExitCode()
     {
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
@@ -16,11 +17,11 @@ public class ValidateDocumentCommandTests
         ProcessResult result = await CodeGeneratorRunner.RunAsync(
             $"validateDocument \"{schema}\" \"{document}\"");
 
-        Assert.Equal(0, result.ExitCode);
-        Assert.Contains("valid", result.StandardOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.AreEqual(0, result.ExitCode);
+        StringAssert.Contains(result.StandardOutput, "valid", StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateDocument_InvalidDocument_ReportsInvalid()
     {
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
@@ -30,11 +31,11 @@ public class ValidateDocumentCommandTests
             $"validateDocument \"{schema}\" \"{document}\"");
 
         // The command always returns 0 — it reports results, doesn't signal failure via exit code
-        Assert.Equal(0, result.ExitCode);
-        Assert.Contains("invalid", result.StandardOutput, StringComparison.OrdinalIgnoreCase);
+        Assert.AreEqual(0, result.ExitCode);
+        StringAssert.Contains(result.StandardOutput, "invalid", StringComparison.OrdinalIgnoreCase);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateDocument_InvalidDocument_OutputContainsFailMarker()
     {
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
@@ -44,10 +45,10 @@ public class ValidateDocumentCommandTests
             $"validateDocument \"{schema}\" \"{document}\"");
 
         // Should contain fail markers for the errors
-        Assert.Contains("fail", result.StandardOutput);
+        StringAssert.Contains(result.StandardOutput, "fail");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ValidateDocument_InvalidDocument_OutputContainsLineAndColumn()
     {
         string schema = CodeGeneratorRunner.GetFixturePath("Schemas", "simple-object.json");
@@ -59,6 +60,6 @@ public class ValidateDocumentCommandTests
         // Output should contain line/column location in the format (line,col)
         // Remove line breaks entirely to handle any Spectre.Console wrapping
         string normalized = result.StandardOutput.Replace("\r", "").Replace("\n", "");
-        Assert.Matches(@"\(\d+,\d+\)", normalized);
+        StringAssert.Matches(normalized, new System.Text.RegularExpressions.Regex(@"\(\d+,\d+\)"));
     }
 }

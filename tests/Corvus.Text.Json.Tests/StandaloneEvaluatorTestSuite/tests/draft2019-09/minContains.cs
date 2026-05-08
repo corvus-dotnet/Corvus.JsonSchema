@@ -2,38 +2,46 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft201909.MinContains;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMinContainsWithoutContainsIsIgnored : IClassFixture<SuiteMinContainsWithoutContainsIsIgnored.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMinContainsWithoutContainsIsIgnored
 {
-    private readonly Fixture _fixture;
-    public SuiteMinContainsWithoutContainsIsIgnored(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestOneItemValidAgainstLoneMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroItemsStillValidAgainstLoneMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -49,55 +57,63 @@ public class SuiteMinContainsWithoutContainsIsIgnored : IClassFixture<SuiteMinCo
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMinContains1WithContains : IClassFixture<SuiteMinContains1WithContains.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMinContains1WithContains
 {
-    private readonly Fixture _fixture;
-    public SuiteMinContains1WithContains(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyData()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNoElementsMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 2 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleElementMatchesValidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSomeElementsMatchValidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllElementsMatchValidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -113,62 +129,70 @@ public class SuiteMinContains1WithContains : IClassFixture<SuiteMinContains1With
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMinContains2WithContains : IClassFixture<SuiteMinContains2WithContains.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMinContains2WithContains
 {
-    private readonly Fixture _fixture;
-    public SuiteMinContains2WithContains(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyData()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllElementsMatchInvalidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSomeElementsMatchInvalidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllElementsMatchValidMinContainsExactlyAsNeeded()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllElementsMatchValidMinContainsMoreThanNeeded()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1, 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSomeElementsMatchValidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -184,34 +208,42 @@ public class SuiteMinContains2WithContains : IClassFixture<SuiteMinContains2With
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMinContains2WithContainsWithADecimalValue : IClassFixture<SuiteMinContains2WithContainsWithADecimalValue.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMinContains2WithContainsWithADecimalValue
 {
-    private readonly Fixture _fixture;
-    public SuiteMinContains2WithContainsWithADecimalValue(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestOneElementMatchesInvalidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBothElementsMatchValidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -227,48 +259,56 @@ public class SuiteMinContains2WithContainsWithADecimalValue : IClassFixture<Suit
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMaxContainsMinContains : IClassFixture<SuiteMaxContainsMinContains.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMaxContainsMinContains
 {
-    private readonly Fixture _fixture;
-    public SuiteMaxContainsMinContains(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyData()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllElementsMatchInvalidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllElementsMatchInvalidMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1, 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllElementsMatchValidMaxContainsAndMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -284,48 +324,56 @@ public class SuiteMaxContainsMinContains : IClassFixture<SuiteMaxContainsMinCont
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMaxContainsMinContains1 : IClassFixture<SuiteMaxContainsMinContains1.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMaxContainsMinContains1
 {
-    private readonly Fixture _fixture;
-    public SuiteMaxContainsMinContains1(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyData()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInvalidMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInvalidMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1, 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInvalidMaxContainsAndMinContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -341,34 +389,42 @@ public class SuiteMaxContainsMinContains1 : IClassFixture<SuiteMaxContainsMinCon
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMinContains0WithNoMaxContains : IClassFixture<SuiteMinContains0WithNoMaxContains.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMinContains0WithNoMaxContains
 {
-    private readonly Fixture _fixture;
-    public SuiteMinContains0WithNoMaxContains(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyData()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMinContains0MakesContainsAlwaysPass()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 2 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -384,41 +440,49 @@ public class SuiteMinContains0WithNoMaxContains : IClassFixture<SuiteMinContains
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMinContains0WithMaxContains : IClassFixture<SuiteMinContains0WithMaxContains.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMinContains0WithMaxContains
 {
-    private readonly Fixture _fixture;
-    public SuiteMinContains0WithMaxContains(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyData()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNotMoreThanMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTooMany()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

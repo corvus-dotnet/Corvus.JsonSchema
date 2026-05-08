@@ -6,8 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Corvus.Text.Json.JsonPath;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonPath.CodeGeneration.Tests;
 
@@ -15,36 +14,43 @@ namespace Corvus.Text.Json.JsonPath.CodeGeneration.Tests;
 /// Runs the JSONPath Compliance Test Suite (CTS) through the code generator pipeline:
 /// generate C# → compile → execute → compare with expected result.
 /// </summary>
-public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
+[TestClass]
+public class CodeGenConformanceTests
 {
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(30);
     private static readonly Lazy<TestCase[]> AllTests = new(LoadTests);
 
-    private readonly CodeGenConformanceFixture fixture;
-    private readonly ITestOutputHelper output;
+    private static CodeGenConformanceFixture? s_fixture;
 
-    public CodeGenConformanceTests(CodeGenConformanceFixture fixture, ITestOutputHelper output)
+    [ClassInitialize]
+    public static void ClassInit(TestContext _)
     {
-        this.fixture = fixture;
-        this.output = output;
+        s_fixture = new CodeGenConformanceFixture();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
     }
 
     /// <summary>
     /// Tests that expect a valid selector and a matching result.
     /// </summary>
-    [Theory]
-    [Trait("category", "codegen-conformance")]
-    [MemberData(nameof(GetValidCases))]
+    [TestMethod]
+    [TestCategory("codegen-conformance")]
+    [DynamicData(nameof(GetValidCases))]
     public void ValidSelector(TestCase testCase)
     {
-        this.output.WriteLine($"Test: {testCase.Name}");
-        this.output.WriteLine($"Selector: {testCase.Selector}");
+        Console.WriteLine($"Test: {testCase.Name}");
+        Console.WriteLine($"Selector: {testCase.Selector}");
 
-        CompiledJsonPathExpression compiled = this.fixture.GetOrCompile(testCase.Selector);
+        CompiledJsonPathExpression compiled = s_fixture!.GetOrCompile(testCase.Selector);
 
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated code length: {compiled.GeneratedCode.Length}");
+            Console.WriteLine($"Generated code length: {compiled.GeneratedCode.Length}");
         }
 
         if (compiled.Method is null)
@@ -66,7 +72,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
         Corvus.Text.Json.JsonElement result = task.Result;
         string resultJson = result.IsUndefined() ? "null" : result.GetRawText();
 
-        this.output.WriteLine($"Result: {resultJson}");
+        Console.WriteLine($"Result: {resultJson}");
 
         if (testCase.ExpectedResults is not null)
         {
@@ -81,13 +87,13 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
                 }
             }
 
-            Assert.True(matched,
+            Assert.IsTrue(matched,
                 $"Result {resultJson} did not match any expected result. " +
                 $"Expected one of: {string.Join(" OR ", testCase.ExpectedResults)}");
         }
         else if (testCase.ExpectedResult is not null)
         {
-            Assert.True(
+            Assert.IsTrue(
                 JsonArraysEqual(resultJson, testCase.ExpectedResult),
                 $"Expected: {testCase.ExpectedResult}\nActual:   {resultJson}");
         }
@@ -96,27 +102,27 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
     /// <summary>
     /// Tests that expect an invalid selector (parse/compile error).
     /// </summary>
-    [Theory]
-    [Trait("category", "codegen-conformance")]
-    [MemberData(nameof(GetInvalidCases))]
+    [TestMethod]
+    [TestCategory("codegen-conformance")]
+    [DynamicData(nameof(GetInvalidCases))]
     public void InvalidSelector(TestCase testCase)
     {
-        this.output.WriteLine($"Test: {testCase.Name}");
-        this.output.WriteLine($"Selector: {testCase.Selector}");
+        Console.WriteLine($"Test: {testCase.Name}");
+        Console.WriteLine($"Selector: {testCase.Selector}");
 
-        CompiledJsonPathExpression compiled = this.fixture.GetOrCompile(testCase.Selector);
+        CompiledJsonPathExpression compiled = s_fixture!.GetOrCompile(testCase.Selector);
 
         // If the expression failed at parse/codegen time, that's the expected error.
         if (compiled.Method is null && compiled.IsParseError)
         {
-            this.output.WriteLine($"Got expected parse error: {compiled.Error}");
+            Console.WriteLine($"Got expected parse error: {compiled.Error}");
             return;
         }
 
         if (compiled.Method is null)
         {
             // Compilation failed for non-parse reasons — still an error, accept it.
-            this.output.WriteLine($"Got compilation error: {compiled.Error}");
+            Console.WriteLine($"Got compilation error: {compiled.Error}");
             return;
         }
 
@@ -133,7 +139,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
                 Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");
             }
 
-            this.output.WriteLine($"WARNING: Expected invalid selector but evaluation succeeded with: {(task.Result.IsUndefined() ? "undefined" : task.Result.GetRawText())}");
+            Console.WriteLine($"WARNING: Expected invalid selector but evaluation succeeded with: {(task.Result.IsUndefined() ? "undefined" : task.Result.GetRawText())}");
         }
         catch (AggregateException ae) when (ae.InnerException is not null)
         {
@@ -154,7 +160,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
 
         if (caught is not null)
         {
-            this.output.WriteLine($"Got expected error: {caught.GetType().Name}: {caught.Message}");
+            Console.WriteLine($"Got expected error: {caught.GetType().Name}: {caught.Message}");
         }
     }
 

@@ -3,58 +3,59 @@
 // </copyright>
 
 using Corvus.Text.Json.JsonPath.CodeGeneration;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonPath.CodeGeneration.Tests;
 
 /// <summary>
 /// Tests for <see cref="JpfnParser"/> error paths and edge cases.
 /// </summary>
+[TestClass]
 public class JpfnParserTests
 {
-    [Fact]
+    [TestMethod]
     public void MissingFnKeyword_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("notfn foo() : value => 1;"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("notfn foo() : value => 1;"));
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingOpenParen_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn foo) : value => 1;"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn foo) : value => 1;"));
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingFunctionName_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn (value x) : value => x;"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn (value x) : value => x;"));
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingCloseParen_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn foo(value x : value => x;"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn foo(value x : value => x;"));
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingColonBeforeReturnType_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn foo(value x) value => x;"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn foo(value x) value => x;"));
     }
 
-    [Fact]
+    [TestMethod]
     public void UnknownReturnType_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn foo(value x) : nodes => x;"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn foo(value x) : nodes => x;"));
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyExpressionBody_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn foo(value x) : value => ;"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn foo(value x) : value => ;"));
     }
 
-    [Fact]
+    [TestMethod]
     public void UnmatchedBraceInBlockBody_Throws()
     {
         const string input = """
@@ -62,45 +63,45 @@ public class JpfnParserTests
             {
                 return x;
             """;
-        Assert.Throws<FormatException>(() => JpfnParser.Parse(input));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse(input));
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyParameter_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn foo(value x, ) : value => x;"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn foo(value x, ) : value => x;"));
     }
 
-    [Fact]
+    [TestMethod]
     public void TrailingSpaceAfterType_TreatedAsNameOnly()
     {
         // After Trim(), "value " becomes "value" — treated as untyped param named "value"
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse("fn foo(value ) : value => 1;");
-        Assert.Single(result);
-        Assert.Equal("value", result[0].Parameters[0].Name);
-        Assert.Equal(FunctionParamType.Value, result[0].Parameters[0].Type);
+        Assert.AreEqual(1, (result).Count());
+        Assert.AreEqual("value", result[0].Parameters[0].Name);
+        Assert.AreEqual(FunctionParamType.Value, result[0].Parameters[0].Type);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnknownParameterType_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn foo(badtype x) : value => x;"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn foo(badtype x) : value => x;"));
     }
 
-    [Fact]
+    [TestMethod]
     public void UnexpectedTokenAfterReturnType_Throws()
     {
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn foo() : value xyz"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn foo() : value xyz"));
     }
 
-    [Fact]
+    [TestMethod]
     public void EofAfterSignature_Throws()
     {
         // Block form: signature with no opening brace and no more lines
-        Assert.Throws<FormatException>(() => JpfnParser.Parse("fn foo() : value"));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse("fn foo() : value"));
     }
 
-    [Fact]
+    [TestMethod]
     public void BlockFormBraceOnSameLine_Parses()
     {
         const string input = """
@@ -109,59 +110,59 @@ public class JpfnParserTests
             }
             """;
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse(input);
-        Assert.Single(result);
-        Assert.Equal("foo", result[0].Name);
-        Assert.False(result[0].IsExpression);
+        Assert.AreEqual(1, (result).Count());
+        Assert.AreEqual("foo", result[0].Name);
+        Assert.IsFalse(result[0].IsExpression);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExpressionFormWithNoTrailingSemicolon_Parses()
     {
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse("fn id(value x) : value => x");
-        Assert.Single(result);
-        Assert.Equal("id", result[0].Name);
-        Assert.True(result[0].IsExpression);
-        Assert.Equal("x", result[0].Body);
+        Assert.AreEqual(1, (result).Count());
+        Assert.AreEqual("id", result[0].Name);
+        Assert.IsTrue(result[0].IsExpression);
+        Assert.AreEqual("x", result[0].Body);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParameterTypeDefault_IsValue()
     {
         // When only a name is given (no type), should default to value
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse("fn id(x) : value => x");
-        Assert.Single(result);
-        Assert.Equal(FunctionParamType.Value, result[0].Parameters[0].Type);
+        Assert.AreEqual(1, (result).Count());
+        Assert.AreEqual(FunctionParamType.Value, result[0].Parameters[0].Type);
     }
 
-    [Fact]
+    [TestMethod]
     public void LogicalReturnType_Parses()
     {
         const string input = "fn always() : logical => true";
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse(input);
-        Assert.Single(result);
-        Assert.Equal(FunctionParamType.Logical, result[0].ReturnType);
+        Assert.AreEqual(1, (result).Count());
+        Assert.AreEqual(FunctionParamType.Logical, result[0].ReturnType);
     }
 
-    [Fact]
+    [TestMethod]
     public void LogicalParameterType_Parses()
     {
         const string input = "fn check(logical flag) : value => flag ? 1 : 0";
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse(input);
-        Assert.Single(result);
-        Assert.Equal(FunctionParamType.Logical, result[0].Parameters[0].Type);
-        Assert.Equal("flag", result[0].Parameters[0].Name);
+        Assert.AreEqual(1, (result).Count());
+        Assert.AreEqual(FunctionParamType.Logical, result[0].Parameters[0].Type);
+        Assert.AreEqual("flag", result[0].Parameters[0].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void NodesParameterType_Parses()
     {
         const string input = "fn first(nodes n) : value => n[0]";
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse(input);
-        Assert.Single(result);
-        Assert.Equal(FunctionParamType.Nodes, result[0].Parameters[0].Type);
+        Assert.AreEqual(1, (result).Count());
+        Assert.AreEqual(FunctionParamType.Nodes, result[0].Parameters[0].Type);
     }
 
-    [Fact]
+    [TestMethod]
     public void CommentsAndBlankLinesSkipped()
     {
         const string input = """
@@ -173,17 +174,17 @@ public class JpfnParserTests
 
             """;
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse(input);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyInput_ReturnsEmpty()
     {
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse("");
-        Assert.Empty(result);
+        Assert.AreEqual(0, (result).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void BlockFormWithNestedBraces()
     {
         const string input = """
@@ -194,11 +195,11 @@ public class JpfnParserTests
             }
             """;
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse(input);
-        Assert.Single(result);
-        Assert.False(result[0].IsExpression);
+        Assert.AreEqual(1, (result).Count());
+        Assert.IsFalse(result[0].IsExpression);
     }
 
-    [Fact]
+    [TestMethod]
     public void BlockFormWithCommentBeforeBrace()
     {
         const string input = """
@@ -209,11 +210,11 @@ public class JpfnParserTests
             }
             """;
         IReadOnlyList<CustomFunction> result = JpfnParser.Parse(input);
-        Assert.Single(result);
-        Assert.False(result[0].IsExpression);
+        Assert.AreEqual(1, (result).Count());
+        Assert.IsFalse(result[0].IsExpression);
     }
 
-    [Fact]
+    [TestMethod]
     public void BlockFormNonBraceLineAfterSignature_Throws()
     {
         // After the signature, the next non-blank/non-comment line should be '{'
@@ -221,6 +222,6 @@ public class JpfnParserTests
             fn check() : value
             not_a_brace
             """;
-        Assert.Throws<FormatException>(() => JpfnParser.Parse(input));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse(input));
     }
 }

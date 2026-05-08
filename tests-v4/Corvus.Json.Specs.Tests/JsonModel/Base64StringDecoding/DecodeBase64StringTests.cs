@@ -6,98 +6,99 @@
 
 using System.Text;
 using Corvus.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonModel.Base64StringDecoding;
 
 /// <summary>
 /// Tests for DecodeBase64String.
 /// </summary>
+[TestClass]
 public class DecodeBase64StringTests
 {
-    [Fact]
+    [TestMethod]
     public void Decode_a_valid_string_JsonElement()
     {
         var sut = JsonBase64String.ParseValue("\"SSBoYXZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"".AsSpan());
         byte[] decodeBuffer = new byte[1024];
         bool decodeSuccess = sut.TryGetDecodedBase64Bytes(decodeBuffer.AsSpan(), out int decodedByteCount);
-        Assert.True(decodeSuccess);
-        Assert.Equal(System.Text.Encoding.UTF8.GetBytes("I have encoded this string"), decodeBuffer.AsSpan(0, decodedByteCount).ToArray());
+        Assert.IsTrue(decodeSuccess);
+        CollectionAssert.AreEqual(System.Text.Encoding.UTF8.GetBytes("I have encoded this string"), decodeBuffer.AsSpan(0, decodedByteCount).ToArray());
     }
 
-    [Fact]
+    [TestMethod]
     public void Decode_a_valid_string_dotnet()
     {
         var sut = JsonBase64String.Parse("\"SSBoYXZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"").AsDotnetBackedValue();
         byte[] decodeBuffer = new byte[1024];
         bool decodeSuccess = sut.TryGetDecodedBase64Bytes(decodeBuffer.AsSpan(), out int decodedByteCount);
-        Assert.True(decodeSuccess);
-        Assert.Equal(System.Text.Encoding.UTF8.GetBytes("I have encoded this string"), decodeBuffer.AsSpan(0, decodedByteCount).ToArray());
+        Assert.IsTrue(decodeSuccess);
+        CollectionAssert.AreEqual(System.Text.Encoding.UTF8.GetBytes("I have encoded this string"), decodeBuffer.AsSpan(0, decodedByteCount).ToArray());
     }
 
-    [Fact]
+    [TestMethod]
     public void Decode_a_valid_string_with_a_buffer_that_is_too_short_JsonElement()
     {
         var sut = JsonBase64String.ParseValue("\"SSBoYXZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"".AsSpan());
         byte[] decodeBuffer = new byte[10];
         bool decodeSuccess = sut.TryGetDecodedBase64Bytes(decodeBuffer.AsSpan(), out int decodedByteCount);
-        Assert.True(decodedByteCount >= 26);
+        Assert.IsTrue(decodedByteCount >= 26);
     }
 
-    [Fact]
+    [TestMethod]
     public void Decode_a_valid_string_with_a_buffer_that_is_too_short_dotnet()
     {
         var sut = JsonBase64String.Parse("\"SSBoYXZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"").AsDotnetBackedValue();
         byte[] decodeBuffer = new byte[10];
         bool decodeSuccess = sut.TryGetDecodedBase64Bytes(decodeBuffer.AsSpan(), out int decodedByteCount);
-        Assert.True(decodedByteCount >= 26);
+        Assert.IsTrue(decodedByteCount >= 26);
     }
 
-    [Fact]
+    [TestMethod]
     public void Decode_an_invalid_base64_string_JsonElement()
     {
         var sut = JsonBase64String.ParseValue("\"SSBoY%%XZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"".AsSpan());
         byte[] decodeBuffer = new byte[1024];
         bool decodeSuccess = sut.TryGetDecodedBase64Bytes(decodeBuffer.AsSpan(), out int decodedByteCount);
-        Assert.False(decodeSuccess);
-        Assert.Equal(0, decodedByteCount);
+        Assert.IsFalse(decodeSuccess);
+        Assert.AreEqual(0, decodedByteCount);
     }
 
-    [Fact]
+    [TestMethod]
     public void Decode_an_invalid_base64_string_dotnet()
     {
         var sut = JsonBase64String.Parse("\"SSBoY%%XZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"").AsDotnetBackedValue();
         byte[] decodeBuffer = new byte[1024];
         bool decodeSuccess = sut.TryGetDecodedBase64Bytes(decodeBuffer.AsSpan(), out int decodedByteCount);
-        Assert.False(decodeSuccess);
-        Assert.Equal(0, decodedByteCount);
+        Assert.IsFalse(decodeSuccess);
+        Assert.AreEqual(0, decodedByteCount);
     }
 
-    [Fact]
+    [TestMethod]
     public void Test_validity_of_a_valid_base64_string_JsonElement()
     {
         var sut = JsonBase64String.ParseValue("\"SSBoYXZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"".AsSpan());
-        Assert.True(sut.HasBase64Bytes());
+        Assert.IsTrue(sut.HasBase64Bytes());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test_validity_of_a_valid_base64_string_dotnet()
     {
         var sut = JsonBase64String.Parse("\"SSBoYXZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"").AsDotnetBackedValue();
-        Assert.True(sut.HasBase64Bytes());
+        Assert.IsTrue(sut.HasBase64Bytes());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test_validity_of_an_invalid_base64_string_JsonElement()
     {
         var sut = JsonBase64String.ParseValue("\"SSBoY%%XZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"".AsSpan());
-        Assert.False(sut.HasBase64Bytes());
+        Assert.IsFalse(sut.HasBase64Bytes());
     }
 
-    [Fact]
+    [TestMethod]
     public void Test_validity_of_an_invalid_base64_string_dotnet()
     {
         var sut = JsonBase64String.Parse("\"SSBoY%%XZlIGVuY29kZWQgdGhpcyBzdHJpbmc=\"").AsDotnetBackedValue();
-        Assert.False(sut.HasBase64Bytes());
+        Assert.IsFalse(sut.HasBase64Bytes());
     }
 }

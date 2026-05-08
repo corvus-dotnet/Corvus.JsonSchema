@@ -7,7 +7,7 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.HandWritten;
 
@@ -15,52 +15,64 @@ namespace Corvus.Json.Specs.Tests.HandWritten;
 /// Repro 679: Verifies that defaulted properties are correctly applied
 /// when constructing an instance from partial data.
 /// </summary>
-public class Repro679DefaultedPropertyTests : IClassFixture<Repro679DefaultedPropertyTests.Fixture>
+[TestClass]
+public class Repro679DefaultedPropertyTests
 {
-    private readonly Fixture _fixture;
+    private static Fixture? s_fixture;
 
-    public Repro679DefaultedPropertyTests(Fixture fixture)
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void PropertyWithDefault_HasDefaultValue()
     {
         using var doc = JsonDocument.Parse("""{"regularProperty": "Goodbye"}""");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         object? value = GetPropertyValue(instance, "PropertyWithDefault");
-        Assert.NotNull(value);
-        Assert.Equal("Hello", GetUnquotedValue(value!.ToString()));
+        Assert.IsNotNull(value);
+        Assert.AreEqual("Hello", GetUnquotedValue(value!.ToString()));
     }
 
-    [Fact]
+    [TestMethod]
     public void RegularProperty_HasProvidedValue()
     {
         using var doc = JsonDocument.Parse("""{"regularProperty": "Goodbye"}""");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         object? value = GetPropertyValue(instance, "RegularProperty");
-        Assert.NotNull(value);
-        Assert.Equal("Goodbye", GetUnquotedValue(value!.ToString()));
+        Assert.IsNotNull(value);
+        Assert.AreEqual("Goodbye", GetUnquotedValue(value!.ToString()));
     }
 
-    [Fact]
+    [TestMethod]
     public void UnsetProperty_IsUndefined()
     {
         using var doc = JsonDocument.Parse("""{"regularProperty": "Goodbye"}""");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
         object? value = GetPropertyValue(instance, "UnsetProperty");
-        Assert.NotNull(value);
+        Assert.IsNotNull(value);
 
         PropertyInfo? valueKindProp = value!.GetType().GetProperty("ValueKind");
-        Assert.NotNull(valueKindProp);
-        Assert.Equal(JsonValueKind.Undefined, valueKindProp!.GetValue(value));
+        Assert.IsNotNull(valueKindProp);
+        Assert.AreEqual(JsonValueKind.Undefined, valueKindProp!.GetValue(value));
     }
 
     private static object? GetPropertyValue(IJsonValue instance, string propertyName)
     {
         PropertyInfo? prop = instance.GetType().GetProperty(propertyName);
-        Assert.NotNull(prop);
+        Assert.IsNotNull(prop);
         return prop!.GetValue(instance);
     }
 
@@ -74,7 +86,7 @@ public class Repro679DefaultedPropertyTests : IClassFixture<Repro679DefaultedPro
         return value.Trim('"');
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 

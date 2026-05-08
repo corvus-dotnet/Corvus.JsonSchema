@@ -5,7 +5,7 @@
 using System.Text;
 using Corvus.Text.Json.Internal;
 using NodaTime;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -13,9 +13,10 @@ namespace Corvus.Text.Json.Tests;
 /// Tests that NodaTime TryGetValue methods correctly parse escaped JSON string values.
 /// Exercises the hasComplexChildren=true paths.
 /// </summary>
+[TestClass]
 public class JsonReaderHelperNodaTimeEscapedTests
 {
-    [Fact]
+    [TestMethod]
     public void TryGetValue_OffsetDateTime_WithEscapedPlus()
     {
         // "2024-01-15T10:30:00+05:00" with the '+' encoded as \u002B
@@ -26,13 +27,13 @@ public class JsonReaderHelperNodaTimeEscapedTests
 
         // When hasComplexChildren is false, the segment is the unescaped value already
         bool result = JsonReaderHelper.TryGetValue(segment, hasComplexChildren: false, out OffsetDateTime value);
-        Assert.True(result);
-        Assert.Equal(2024, value.Year);
-        Assert.Equal(1, value.Month);
-        Assert.Equal(15, value.Day);
+        Assert.IsTrue(result);
+        Assert.AreEqual(2024, value.Year);
+        Assert.AreEqual(1, value.Month);
+        Assert.AreEqual(15, value.Day);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetValue_OffsetDateTime_WithEscapeSequence_HasComplexChildren()
     {
         // Simulate a segment that contains a JSON escape: the '+' is escaped as \u002B
@@ -41,55 +42,55 @@ public class JsonReaderHelperNodaTimeEscapedTests
 
         // With hasComplexChildren=true, the method should unescape first, then parse
         bool result = JsonReaderHelper.TryGetValue(segment, hasComplexChildren: true, out OffsetDateTime value);
-        Assert.True(result, "Should parse successfully after unescaping \\u002B to '+'");
-        Assert.Equal(2024, value.Year);
+        Assert.IsTrue(result, "Should parse successfully after unescaping \\u002B to '+'");
+        Assert.AreEqual(2024, value.Year);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetValue_OffsetDate_WithEscapeSequence_HasComplexChildren()
     {
         // "2024-01-15+05:00" with '+' escaped as \u002B
         byte[] segment = Encoding.UTF8.GetBytes("2024-01-15\\u002B05:00");
 
         bool result = JsonReaderHelper.TryGetValue(segment, hasComplexChildren: true, out OffsetDate value);
-        Assert.True(result, "Should parse successfully after unescaping \\u002B to '+'");
-        Assert.Equal(2024, value.Year);
+        Assert.IsTrue(result, "Should parse successfully after unescaping \\u002B to '+'");
+        Assert.AreEqual(2024, value.Year);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetValue_OffsetTime_WithEscapeSequence_HasComplexChildren()
     {
         // "10:30:00+05:00" with '+' escaped as \u002B
         byte[] segment = Encoding.UTF8.GetBytes("10:30:00\\u002B05:00");
 
         bool result = JsonReaderHelper.TryGetValue(segment, hasComplexChildren: true, out OffsetTime value);
-        Assert.True(result, "Should parse successfully after unescaping \\u002B to '+'");
-        Assert.Equal(10, value.Hour);
+        Assert.IsTrue(result, "Should parse successfully after unescaping \\u002B to '+'");
+        Assert.AreEqual(10, value.Hour);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetValue_LocalDate_WithEscapeSequence_HasComplexChildren()
     {
         // "2024-01-15" with first '-' escaped as \u002D
         byte[] segment = Encoding.UTF8.GetBytes("2024\\u002D01-15");
 
         bool result = JsonReaderHelper.TryGetValue(segment, hasComplexChildren: true, out LocalDate value);
-        Assert.True(result, "Should parse successfully after unescaping \\u002D to '-'");
-        Assert.Equal(2024, value.Year);
-        Assert.Equal(1, value.Month);
-        Assert.Equal(15, value.Day);
+        Assert.IsTrue(result, "Should parse successfully after unescaping \\u002D to '-'");
+        Assert.AreEqual(2024, value.Year);
+        Assert.AreEqual(1, value.Month);
+        Assert.AreEqual(15, value.Day);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryGetValue_Period_WithEscapeSequence_HasComplexChildren()
     {
         // "P1Y2M3D" with 'Y' escaped as \u0059
         byte[] segment = Encoding.UTF8.GetBytes("P1\\u005902M3D");
 
         bool result = JsonReaderHelper.TryGetValue(segment, hasComplexChildren: true, out Period value);
-        Assert.True(result, "Should parse successfully after unescaping \\u0059 to 'Y'");
-        Assert.Equal(1, value.Years);
-        Assert.Equal(2, value.Months);
-        Assert.Equal(3, value.Days);
+        Assert.IsTrue(result, "Should parse successfully after unescaping \\u0059 to 'Y'");
+        Assert.AreEqual(1, value.Years);
+        Assert.AreEqual(2, value.Months);
+        Assert.AreEqual(3, value.Days);
     }
 }

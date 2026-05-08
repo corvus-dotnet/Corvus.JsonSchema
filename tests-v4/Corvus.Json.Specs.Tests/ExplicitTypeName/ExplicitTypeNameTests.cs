@@ -6,11 +6,12 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.ExplicitTypeName;
 
-[Trait("spec", "ExplicitTypeName")]
+[TestCategory("ExplicitTypeName")]
+[TestClass]
 public class ExplicitTypeNameTests
 {
     private const string CorvusTypeNameSchema = """
@@ -53,9 +54,9 @@ public class ExplicitTypeNameTests
         }
         """;
 
-    [Theory]
-    [InlineData("""[1, "hello", "2012-04-23T18:25:43.511Z"]""", true)]
-    [InlineData("""[0, "hello", "2012-04-23T18:25:43.511Z"]""", false)]
+    [TestMethod]
+    [DataRow("""[1, "hello", "2012-04-23T18:25:43.511Z"]""", true)]
+    [DataRow("""[0, "hello", "2012-04-23T18:25:43.511Z"]""", false)]
     public async Task CorvusTypeName(string inputData, bool expectedValid)
     {
         using var driver = DriverFactory.CreateDraft202012Driver();
@@ -72,12 +73,12 @@ public class ExplicitTypeNameTests
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement);
         ValidationContext result = instance.Validate(ValidationContext.ValidContext);
 
-        Assert.Equal(expectedValid, result.IsValid);
+        Assert.AreEqual(expectedValid, result.IsValid);
     }
 
-    [Theory]
-    [InlineData("""[1, "hello", "2012-04-23T18:25:43.511Z"]""", true)]
-    [InlineData("""[0, "hello", "2012-04-23T18:25:43.511Z"]""", false)]
+    [TestMethod]
+    [DataRow("""[1, "hello", "2012-04-23T18:25:43.511Z"]""", true)]
+    [DataRow("""[0, "hello", "2012-04-23T18:25:43.511Z"]""", false)]
     public async Task InvalidCorvusTypeNameIsIgnored(string inputData, bool expectedValid)
     {
         using var driver = DriverFactory.CreateDraft202012Driver();
@@ -94,6 +95,6 @@ public class ExplicitTypeNameTests
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement);
         ValidationContext result = instance.Validate(ValidationContext.ValidContext);
 
-        Assert.Equal(expectedValid, result.IsValid);
+        Assert.AreEqual(expectedValid, result.IsValid);
     }
 }

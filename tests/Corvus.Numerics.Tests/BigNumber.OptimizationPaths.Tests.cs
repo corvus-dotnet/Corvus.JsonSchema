@@ -6,7 +6,7 @@ using System.Globalization;
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
@@ -14,11 +14,12 @@ namespace Corvus.Numerics.Tests;
 /// Phase 1: Core optimization path tests - Cache, Normalization, Comparison, Rounding.
 /// Target: +0.8% coverage (10 branches).
 /// </summary>
+[TestClass]
 public class BigNumberOptimizationPathsTests
 {
     #region Power-of-10 Cache Boundaries (+2 branches)
 
-    [Fact]
+    [TestMethod]
     public void PowerOf10Cache_Exponent0_UsesFirstCacheEntry()
     {
         // Test first entry in primary cache
@@ -30,7 +31,7 @@ public class BigNumberOptimizationPathsTests
         result.Exponent.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void PowerOf10Cache_Exponent255_UsesLastPrimaryCacheEntry()
     {
         // Test last entry in primary cache (0-255)
@@ -41,7 +42,7 @@ public class BigNumberOptimizationPathsTests
         result.Exponent.ShouldBe(255);
     }
 
-    [Fact]
+    [TestMethod]
     public void PowerOf10Cache_Exponent256_UsesFirstSecondaryCacheEntry()
     {
         // Test first entry in secondary cache (256-1023)
@@ -52,7 +53,7 @@ public class BigNumberOptimizationPathsTests
         result.Exponent.ShouldBe(256);
     }
 
-    [Fact]
+    [TestMethod]
     public void PowerOf10Cache_Exponent1023_UsesLastSecondaryCacheEntry()
     {
         // Test last entry in secondary cache
@@ -62,7 +63,7 @@ public class BigNumberOptimizationPathsTests
         result.Exponent.ShouldBe(1023);
     }
 
-    [Fact]
+    [TestMethod]
     public void PowerOf10Cache_Exponent1024_UsesOnDemandComputation()
     {
         // Test first value requiring on-demand computation (>1023)
@@ -73,7 +74,7 @@ public class BigNumberOptimizationPathsTests
         result.Exponent.ShouldBe(1024);
     }
 
-    [Fact]
+    [TestMethod]
     public void PowerOf10Cache_VeryLargeExponent_ComputesOnDemand()
     {
         // Test very large exponent requiring on-demand computation
@@ -84,7 +85,7 @@ public class BigNumberOptimizationPathsTests
         result.Exponent.ShouldBe(5000);
     }
 
-    [Fact]
+    [TestMethod]
     public void PowerOf10Cache_MultipleOperationsAtBoundary_ReusesCache()
     {
         // Verify cache is reused for multiple operations at same exponent
@@ -102,7 +103,7 @@ public class BigNumberOptimizationPathsTests
 
     #region Normalization Iterations (+1 branch)
 
-    [Fact]
+    [TestMethod]
     public void Normalize_NoTrailingZeros_NoIteration()
     {
         // Number with no trailing zeros - while loop doesn't iterate
@@ -113,7 +114,7 @@ public class BigNumberOptimizationPathsTests
         normalized.Exponent.ShouldBe(-2);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_OneTrailingZero_OneIteration()
     {
         // Number with 1 trailing zero - while loop iterates once
@@ -124,7 +125,7 @@ public class BigNumberOptimizationPathsTests
         normalized.Exponent.ShouldBe(-2);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_ThreeTrailingZeros_ThreeIterations()
     {
         // Number with 3 trailing zeros - while loop iterates 3 times
@@ -135,7 +136,7 @@ public class BigNumberOptimizationPathsTests
         normalized.Exponent.ShouldBe(-1);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_FiveTrailingZeros_FiveIterations()
     {
         // Number with 7 trailing zeros - while loop iterates 7 times
@@ -148,7 +149,7 @@ public class BigNumberOptimizationPathsTests
         normalized.Exponent.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_AllTrailingZeros_ConvertsToZero()
     {
         // Number that is effectively zero
@@ -159,7 +160,7 @@ public class BigNumberOptimizationPathsTests
         normalized.Exponent.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_LargeNumberWithManyTrailingZeros_HandlesCorrectly()
     {
         // Very large number with many trailing zeros
@@ -174,7 +175,7 @@ public class BigNumberOptimizationPathsTests
 
     #region Comparison Fast Paths (+4 branches)
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_BothZeroDifferentExponents_ReturnsZero()
     {
         // Both significands are zero - fast path
@@ -185,7 +186,7 @@ public class BigNumberOptimizationPathsTests
         zero2.CompareTo(zero1).ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_FirstZeroSecondPositive_ReturnsNegative()
     {
         // First is zero, second is positive
@@ -195,7 +196,7 @@ public class BigNumberOptimizationPathsTests
         zero.CompareTo(positive).ShouldBe(-1);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_FirstZeroSecondNegative_ReturnsPositive()
     {
         // First is zero, second is negative
@@ -205,7 +206,7 @@ public class BigNumberOptimizationPathsTests
         zero.CompareTo(negative).ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_SecondZeroFirstPositive_ReturnsPositive()
     {
         // Second is zero, first is positive - tests other.Significand.IsZero branch
@@ -215,7 +216,7 @@ public class BigNumberOptimizationPathsTests
         positive.CompareTo(zero).ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_SecondZeroFirstNegative_ReturnsNegative()
     {
         // Second is zero, first is negative
@@ -225,7 +226,7 @@ public class BigNumberOptimizationPathsTests
         negative.CompareTo(zero).ShouldBe(-1);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_BothNegativeDifferentMagnitudes_ComparesCorrectly()
     {
         // Both negative - tests sign comparison path
@@ -236,7 +237,7 @@ public class BigNumberOptimizationPathsTests
         larger.CompareTo(smaller).ShouldBeGreaterThan(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_BothNegativeSameExponent_UsesEffectiveDigits()
     {
         // Negative numbers with same exponent - tests effective digit comparison
@@ -246,7 +247,7 @@ public class BigNumberOptimizationPathsTests
         num1.CompareTo(num2).ShouldBeGreaterThan(0); // -12345E5 > -67890E5
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_SameExponentPositiveNumbers_SkipsAlignment()
     {
         // Same exponent - can skip expensive alignment
@@ -260,7 +261,7 @@ public class BigNumberOptimizationPathsTests
 
     #region Rounding Mode Edge Cases (+3 branches)
 
-    [Fact]
+    [TestMethod]
     public void Round_ToEven_ExactHalfEvenQuotient_RoundsToEven()
     {
         // At exactly 0.5, quotient is even - should NOT round up
@@ -271,7 +272,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.2");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToEven_ExactHalfOddQuotient_RoundsToEven()
     {
         // At exactly 0.5, quotient is odd - should round up
@@ -282,7 +283,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.4");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToEven_LessThanHalf_NoRounding()
     {
         // Less than 0.5 - never rounds
@@ -292,7 +293,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.2");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToEven_GreaterThanHalf_AlwaysRounds()
     {
         // Greater than 0.5 - always rounds
@@ -302,7 +303,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.3");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_AwayFromZero_ExactHalfPositive_RoundsAway()
     {
         // AwayFromZero at exact half with positive number
@@ -312,7 +313,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.3");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_AwayFromZero_ExactHalfNegative_RoundsAway()
     {
         // AwayFromZero at exact half with negative number
@@ -323,7 +324,7 @@ public class BigNumberOptimizationPathsTests
     }
 
 #if NET
-    [Fact]
+    [TestMethod]
     public void Round_ToNegativeInfinity_PositiveNumber_FloorBehavior()
     {
         // ToNegativeInfinity with positive - rounds down
@@ -333,7 +334,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.2");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToNegativeInfinity_NegativeNumber_FloorBehavior()
     {
         // ToNegativeInfinity with negative - rounds away from zero
@@ -343,7 +344,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("-1.3");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToPositiveInfinity_PositiveNumber_CeilingBehavior()
     {
         // ToPositiveInfinity with positive - rounds away from zero
@@ -353,7 +354,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.3");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToPositiveInfinity_NegativeNumber_CeilingBehavior()
     {
         // ToPositiveInfinity with negative - rounds toward zero
@@ -363,7 +364,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("-1.2");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToZero_PositiveNumber_TruncatesBehavior()
     {
         // ToZero with positive - always rounds down
@@ -373,7 +374,7 @@ public class BigNumberOptimizationPathsTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.2");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToZero_NegativeNumber_TruncatesBehavior()
     {
         // ToZero with negative - rounds toward zero

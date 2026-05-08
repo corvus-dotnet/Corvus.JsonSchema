@@ -5,36 +5,48 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AdditionalSchemaTests.AdditionalDraft202012.CollisionWithBuiltInName;
 
-[Trait("JsonSchemaTestSuite", "AdditionalDraft202012")]
-public class SuiteAPropertyThatMatchesABuiltInName : IClassFixture<SuiteAPropertyThatMatchesABuiltInName.Fixture>
+[TestCategory("AdditionalDraft202012")]
+[TestClass]
+public class SuiteAPropertyThatMatchesABuiltInName
 {
-    private readonly Fixture _fixture;
-    public SuiteAPropertyThatMatchesABuiltInName(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestDataMatchFoo()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"match\": \"foo\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDataMatchF()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"match\": \"f\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 
@@ -61,32 +73,44 @@ public class SuiteAPropertyThatMatchesABuiltInName : IClassFixture<SuiteAPropert
     }
 }
 
-[Trait("JsonSchemaTestSuite", "AdditionalDraft202012")]
-public class SuiteRepro625CollidesWithSystem : IClassFixture<SuiteRepro625CollidesWithSystem.Fixture>
+[TestCategory("AdditionalDraft202012")]
+[TestClass]
+public class SuiteRepro625CollidesWithSystem
 {
-    private readonly Fixture _fixture;
-    public SuiteRepro625CollidesWithSystem(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestDataSystemFooSomeOtherPropBar()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"system\": \"foo\",\r\n          \"someOtherProp\": \"bar\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDataSomeOtherPropBar()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"someOtherProp\": \"bar\"\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.False(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsFalse(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 

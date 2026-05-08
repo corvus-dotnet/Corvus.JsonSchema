@@ -2,38 +2,46 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft4.AdditionalItems;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteAdditionalItemsAsSchema : IClassFixture<SuiteAdditionalItemsAsSchema.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalItemsAsSchema
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalItemsAsSchema(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAdditionalItemsMatchSchema()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ null, 2, 3, 4 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAdditionalItemsDoNotMatchSchema()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ null, 2, 3, \"foo\" ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -49,27 +57,35 @@ public class SuiteAdditionalItemsAsSchema : IClassFixture<SuiteAdditionalItemsAs
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing : IClassFixture<SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing
 {
-    private readonly Fixture _fixture;
-    public SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAllItemsMatchSchema()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, 3, 4, 5 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -85,55 +101,63 @@ public class SuiteWhenItemsIsSchemaAdditionalItemsDoesNothing : IClassFixture<Su
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteArrayOfItemsWithNoAdditionalItemsPermitted : IClassFixture<SuiteArrayOfItemsWithNoAdditionalItemsPermitted.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteArrayOfItemsWithNoAdditionalItemsPermitted
 {
-    private readonly Fixture _fixture;
-    public SuiteArrayOfItemsWithNoAdditionalItemsPermitted(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyArray()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFewerNumberOfItemsPresent1()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFewerNumberOfItemsPresent2()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEqualNumberOfItemsPresent()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, 3 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAdditionalItemsAreNotPermitted()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, 3, 4 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -149,34 +173,42 @@ public class SuiteArrayOfItemsWithNoAdditionalItemsPermitted : IClassFixture<Sui
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteAdditionalItemsAsFalseWithoutItems : IClassFixture<SuiteAdditionalItemsAsFalseWithoutItems.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalItemsAsFalseWithoutItems
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalItemsAsFalseWithoutItems(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestItemsDefaultsToEmptySchemaSoEverythingIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, 3, 4, 5 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonArrays()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\" : \"bar\"}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -192,27 +224,35 @@ public class SuiteAdditionalItemsAsFalseWithoutItems : IClassFixture<SuiteAdditi
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteAdditionalItemsAreAllowedByDefault : IClassFixture<SuiteAdditionalItemsAreAllowedByDefault.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalItemsAreAllowedByDefault
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalItemsAreAllowedByDefault(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestOnlyTheFirstItemIsValidated()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, \"foo\", false]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -228,27 +268,35 @@ public class SuiteAdditionalItemsAreAllowedByDefault : IClassFixture<SuiteAdditi
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase : IClassFixture<SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestItemsDefinedInAllOfAreNotExamined()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, \"hello\" ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -264,34 +312,42 @@ public class SuiteAdditionalItemsDoesNotLookInApplicatorsInvalidCase : IClassFix
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems : IClassFixture<SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems
 {
-    private readonly Fixture _fixture;
-    public SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestValidItems()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"x\", 2, 3 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestWrongTypeOfSecondItem()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"x\", \"y\" ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -307,34 +363,42 @@ public class SuiteItemsValidationAdjustsTheStartingIndexForAdditionalItems : ICl
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteAdditionalItemsWithHeterogeneousArray : IClassFixture<SuiteAdditionalItemsWithHeterogeneousArray.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalItemsWithHeterogeneousArray
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalItemsWithHeterogeneousArray(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestHeterogeneousInvalidInstance()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ \"foo\", \"bar\", 37 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestValidInstance()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ null ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -350,27 +414,35 @@ public class SuiteAdditionalItemsWithHeterogeneousArray : IClassFixture<SuiteAdd
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteAdditionalItemsWithNullInstanceElements : IClassFixture<SuiteAdditionalItemsWithNullInstanceElements.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteAdditionalItemsWithNullInstanceElements
 {
-    private readonly Fixture _fixture;
-    public SuiteAdditionalItemsWithNullInstanceElements(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAllowsNullElements()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ null ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

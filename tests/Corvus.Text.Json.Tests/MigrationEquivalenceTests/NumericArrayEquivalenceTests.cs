@@ -3,7 +3,7 @@
 
 namespace Corvus.Text.Json.Tests.MigrationEquivalenceTests;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using V4 = MigrationModels.V4;
 using V5 = MigrationModels.V5;
@@ -16,120 +16,121 @@ using V5 = MigrationModels.V5;
 /// <para>V4: <c>Vector.FromValues(ReadOnlySpan&lt;int&gt;)</c></para>
 /// <para>V5: <c>Vector.Build(ReadOnlySpan&lt;int&gt;)</c> or <c>Vector.CreateBuilder(workspace, ReadOnlySpan&lt;int&gt;)</c></para>
 /// </remarks>
+[TestClass]
 public class NumericArrayEquivalenceTests
 {
     private const string VectorJson = """[10,20,30]""";
 
-    [Fact]
+    [TestMethod]
     public void V4_TryGetNumericValues()
     {
         var v4 = V4.MigrationIntVector.Parse(VectorJson);
         Span<int> values = stackalloc int[3];
-        Assert.True(v4.TryGetNumericValues(values, out int written));
-        Assert.Equal(3, written);
-        Assert.Equal(10, values[0]);
-        Assert.Equal(20, values[1]);
-        Assert.Equal(30, values[2]);
+        Assert.IsTrue(v4.TryGetNumericValues(values, out int written));
+        Assert.AreEqual(3, written);
+        Assert.AreEqual(10, values[0]);
+        Assert.AreEqual(20, values[1]);
+        Assert.AreEqual(30, values[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_TryGetNumericValues_ParsedValue()
     {
         // Preferred V4 pattern: ParsedValue<T> manages the underlying JsonDocument lifetime.
         using var parsedV4 = Corvus.Json.ParsedValue<V4.MigrationIntVector>.Parse(VectorJson);
         V4.MigrationIntVector v4 = parsedV4.Instance;
         Span<int> values = stackalloc int[3];
-        Assert.True(v4.TryGetNumericValues(values, out int written));
-        Assert.Equal(3, written);
-        Assert.Equal(10, values[0]);
-        Assert.Equal(20, values[1]);
-        Assert.Equal(30, values[2]);
+        Assert.IsTrue(v4.TryGetNumericValues(values, out int written));
+        Assert.AreEqual(3, written);
+        Assert.AreEqual(10, values[0]);
+        Assert.AreEqual(20, values[1]);
+        Assert.AreEqual(30, values[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_TryGetNumericValues()
     {
         using var parsedV5 = Corvus.Text.Json.ParsedJsonDocument<V5.MigrationIntVector>.Parse(VectorJson);
         V5.MigrationIntVector v5 = parsedV5.RootElement;
         Span<int> values = stackalloc int[3];
-        Assert.True(v5.TryGetNumericValues(values, out int written));
-        Assert.Equal(3, written);
-        Assert.Equal(10, values[0]);
-        Assert.Equal(20, values[1]);
-        Assert.Equal(30, values[2]);
+        Assert.IsTrue(v5.TryGetNumericValues(values, out int written));
+        Assert.AreEqual(3, written);
+        Assert.AreEqual(10, values[0]);
+        Assert.AreEqual(20, values[1]);
+        Assert.AreEqual(30, values[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_ElementAccess()
     {
         var v4 = V4.MigrationIntVector.Parse(VectorJson);
-        Assert.Equal(10, (int)v4[0]);
-        Assert.Equal(20, (int)v4[1]);
-        Assert.Equal(30, (int)v4[2]);
+        Assert.AreEqual(10, (int)v4[0]);
+        Assert.AreEqual(20, (int)v4[1]);
+        Assert.AreEqual(30, (int)v4[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_ElementAccess_ParsedValue()
     {
         // Preferred V4 pattern: ParsedValue<T> manages the underlying JsonDocument lifetime.
         using var parsedV4 = Corvus.Json.ParsedValue<V4.MigrationIntVector>.Parse(VectorJson);
         V4.MigrationIntVector v4 = parsedV4.Instance;
-        Assert.Equal(10, (int)v4[0]);
-        Assert.Equal(20, (int)v4[1]);
-        Assert.Equal(30, (int)v4[2]);
+        Assert.AreEqual(10, (int)v4[0]);
+        Assert.AreEqual(20, (int)v4[1]);
+        Assert.AreEqual(30, (int)v4[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_ElementAccess()
     {
         using var parsedV5 = Corvus.Text.Json.ParsedJsonDocument<V5.MigrationIntVector>.Parse(VectorJson);
         V5.MigrationIntVector v5 = parsedV5.RootElement;
-        Assert.Equal(10, (int)v5[0]);
-        Assert.Equal(20, (int)v5[1]);
-        Assert.Equal(30, (int)v5[2]);
+        Assert.AreEqual(10, (int)v5[0]);
+        Assert.AreEqual(20, (int)v5[1]);
+        Assert.AreEqual(30, (int)v5[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_DimensionAndRank()
     {
-        Assert.Equal(1, V4.MigrationIntVector.Rank);
-        Assert.Equal(3, V4.MigrationIntVector.Dimension);
-        Assert.Equal(3, V4.MigrationIntVector.ValueBufferSize);
+        Assert.AreEqual(1, V4.MigrationIntVector.Rank);
+        Assert.AreEqual(3, V4.MigrationIntVector.Dimension);
+        Assert.AreEqual(3, V4.MigrationIntVector.ValueBufferSize);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_DimensionAndRank()
     {
-        Assert.Equal(1, V5.MigrationIntVector.Rank);
-        Assert.Equal(3, V5.MigrationIntVector.Dimension);
-        Assert.Equal(3, V5.MigrationIntVector.ValueBufferSize);
+        Assert.AreEqual(1, V5.MigrationIntVector.Rank);
+        Assert.AreEqual(3, V5.MigrationIntVector.Dimension);
+        Assert.AreEqual(3, V5.MigrationIntVector.ValueBufferSize);
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_GetArrayLength()
     {
         var v4 = V4.MigrationIntVector.Parse(VectorJson);
-        Assert.Equal(3, v4.GetArrayLength());
+        Assert.AreEqual(3, v4.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void V4_GetArrayLength_ParsedValue()
     {
         // Preferred V4 pattern: ParsedValue<T> manages the underlying JsonDocument lifetime.
         using var parsedV4 = Corvus.Json.ParsedValue<V4.MigrationIntVector>.Parse(VectorJson);
         V4.MigrationIntVector v4 = parsedV4.Instance;
-        Assert.Equal(3, v4.GetArrayLength());
+        Assert.AreEqual(3, v4.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_GetArrayLength()
     {
         using var parsedV5 = Corvus.Text.Json.ParsedJsonDocument<V5.MigrationIntVector>.Parse(VectorJson);
         V5.MigrationIntVector v5 = parsedV5.RootElement;
-        Assert.Equal(3, v5.GetArrayLength());
+        Assert.AreEqual(3, v5.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void BothEngines_SameNumericValues()
     {
         using var parsedV4 = Corvus.Json.ParsedValue<V4.MigrationIntVector>.Parse(VectorJson);
@@ -141,30 +142,30 @@ public class NumericArrayEquivalenceTests
         Span<int> v4Values = stackalloc int[3];
         Span<int> v5Values = stackalloc int[3];
 
-        Assert.True(v4.TryGetNumericValues(v4Values, out int v4Written));
-        Assert.True(v5.TryGetNumericValues(v5Values, out int v5Written));
+        Assert.IsTrue(v4.TryGetNumericValues(v4Values, out int v4Written));
+        Assert.IsTrue(v5.TryGetNumericValues(v5Values, out int v5Written));
 
-        Assert.Equal(v4Written, v5Written);
+        Assert.AreEqual(v4Written, v5Written);
         for (int i = 0; i < v4Written; i++)
         {
-            Assert.Equal(v4Values[i], v5Values[i]);
+            Assert.AreEqual(v4Values[i], v5Values[i]);
         }
     }
 
     #region Construct from span — V4 FromValues vs V5 Build / CreateBuilder
 
-    [Fact]
+    [TestMethod]
     public void V4_FromValues()
     {
         // V4: static FromValues(ReadOnlySpan<int>) creates a vector directly.
         var v4 = V4.MigrationIntVector.FromValues([10, 20, 30]);
-        Assert.Equal(3, v4.GetArrayLength());
-        Assert.Equal(10, (int)v4[0]);
-        Assert.Equal(20, (int)v4[1]);
-        Assert.Equal(30, (int)v4[2]);
+        Assert.AreEqual(3, v4.GetArrayLength());
+        Assert.AreEqual(10, (int)v4[0]);
+        Assert.AreEqual(20, (int)v4[1]);
+        Assert.AreEqual(30, (int)v4[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_BuildFromSpan()
     {
         // V5: Build(ReadOnlySpan<int>) returns a Source; pass to CreateBuilder.
@@ -174,13 +175,13 @@ public class NumericArrayEquivalenceTests
             V5.MigrationIntVector.CreateBuilder(workspace, source);
         V5.MigrationIntVector v5 = builder.RootElement;
 
-        Assert.Equal(3, v5.GetArrayLength());
-        Assert.Equal(10, (int)v5[0]);
-        Assert.Equal(20, (int)v5[1]);
-        Assert.Equal(30, (int)v5[2]);
+        Assert.AreEqual(3, v5.GetArrayLength());
+        Assert.AreEqual(10, (int)v5[0]);
+        Assert.AreEqual(20, (int)v5[1]);
+        Assert.AreEqual(30, (int)v5[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_CreateBuilderFromSpan()
     {
         // V5: CreateBuilder(workspace, ReadOnlySpan<int>) — single-call convenience.
@@ -189,13 +190,13 @@ public class NumericArrayEquivalenceTests
             V5.MigrationIntVector.CreateBuilder(workspace, [10, 20, 30]);
         V5.MigrationIntVector v5 = builder.RootElement;
 
-        Assert.Equal(3, v5.GetArrayLength());
-        Assert.Equal(10, (int)v5[0]);
-        Assert.Equal(20, (int)v5[1]);
-        Assert.Equal(30, (int)v5[2]);
+        Assert.AreEqual(3, v5.GetArrayLength());
+        Assert.AreEqual(10, (int)v5[0]);
+        Assert.AreEqual(20, (int)v5[1]);
+        Assert.AreEqual(30, (int)v5[2]);
     }
 
-    [Fact]
+    [TestMethod]
     public void BothEngines_ConstructFromSpan_SameValues()
     {
         // V4: FromValues
@@ -210,13 +211,13 @@ public class NumericArrayEquivalenceTests
         // Extract and compare numeric values
         Span<int> v4Values = stackalloc int[3];
         Span<int> v5Values = stackalloc int[3];
-        Assert.True(v4.TryGetNumericValues(v4Values, out int v4Written));
-        Assert.True(v5.TryGetNumericValues(v5Values, out int v5Written));
+        Assert.IsTrue(v4.TryGetNumericValues(v4Values, out int v4Written));
+        Assert.IsTrue(v5.TryGetNumericValues(v5Values, out int v5Written));
 
-        Assert.Equal(v4Written, v5Written);
+        Assert.AreEqual(v4Written, v5Written);
         for (int i = 0; i < v4Written; i++)
         {
-            Assert.Equal(v4Values[i], v5Values[i]);
+            Assert.AreEqual(v4Values[i], v5Values[i]);
         }
     }
 

@@ -2,52 +2,60 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft4.Minimum;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteMinimumValidation : IClassFixture<SuiteMinimumValidation.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteMinimumValidation
 {
-    private readonly Fixture _fixture;
-    public SuiteMinimumValidation(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAboveTheMinimumIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("2.6");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBoundaryPointIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1.1");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBelowTheMinimumIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("0.6");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonNumbers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"x\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -63,48 +71,56 @@ public class SuiteMinimumValidation : IClassFixture<SuiteMinimumValidation.Fixtu
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteMinimumValidationExplicitFalseExclusivity : IClassFixture<SuiteMinimumValidationExplicitFalseExclusivity.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteMinimumValidationExplicitFalseExclusivity
 {
-    private readonly Fixture _fixture;
-    public SuiteMinimumValidationExplicitFalseExclusivity(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAboveTheMinimumIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("2.6");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBoundaryPointIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1.1");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBelowTheMinimumIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("0.6");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonNumbers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"x\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -120,34 +136,42 @@ public class SuiteMinimumValidationExplicitFalseExclusivity : IClassFixture<Suit
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteExclusiveMinimumValidation : IClassFixture<SuiteExclusiveMinimumValidation.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteExclusiveMinimumValidation
 {
-    private readonly Fixture _fixture;
-    public SuiteExclusiveMinimumValidation(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAboveTheMinimumIsStillValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1.2");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBoundaryPointIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1.1");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -163,69 +187,77 @@ public class SuiteExclusiveMinimumValidation : IClassFixture<SuiteExclusiveMinim
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft4")]
-public class SuiteMinimumValidationWithSignedInteger : IClassFixture<SuiteMinimumValidationWithSignedInteger.Fixture>
+[TestCategory("Draft4")]
+[TestClass]
+public class SuiteMinimumValidationWithSignedInteger
 {
-    private readonly Fixture _fixture;
-    public SuiteMinimumValidationWithSignedInteger(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestNegativeAboveTheMinimumIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-1");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestPositiveAboveTheMinimumIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("0");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBoundaryPointIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-2");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestBoundaryPointWithFloatIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-2.0");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFloatBelowTheMinimumIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-2.0001");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIntBelowTheMinimumIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-3");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonNumbers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"x\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

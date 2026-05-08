@@ -2,16 +2,17 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for BigNumber.TryFormat(Span&lt;byte&gt;) method.
 /// </summary>
+[TestClass]
 public class BigNumberTryFormatByteTests
 {
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithZeroSignificandZeroExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -26,7 +27,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "0");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithPositiveSignificandZeroExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -41,7 +42,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "123");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithNegativeSignificandZeroExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -56,7 +57,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "-456");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithZeroExponentPositiveSignificand_ShouldNotIncludeExponent()
     {
         // Arrange
@@ -72,7 +73,7 @@ public class BigNumberTryFormatByteTests
         Assert.DoesNotContain("E", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithPositiveExponent_ShouldIncludeExponent()
     {
         // Arrange
@@ -87,7 +88,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "123E5");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithNegativeExponent_ShouldIncludeExponent()
     {
         // Arrange
@@ -102,7 +103,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "123E-5");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithVeryLargeSignificand_ShouldFormatCorrectly()
     {
         // Arrange
@@ -119,7 +120,7 @@ public class BigNumberTryFormatByteTests
             "1234567890123456789012345678901234567890123456789E1");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithVeryLargeExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -134,7 +135,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "123E999999");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithVeryLargeNegativeExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -149,7 +150,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "123E-999999");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithInsufficientBufferSize_ShouldReturnFalse()
     {
         // Arrange
@@ -160,11 +161,11 @@ public class BigNumberTryFormatByteTests
         bool success = bigNumber.TryFormat(buffer, out int bytesWritten);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithExactBufferSize_ShouldReturnTrue()
     {
         // Arrange
@@ -180,7 +181,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "123E5");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithExcessiveBufferSize_ShouldReturnTrue()
     {
         // Arrange
@@ -195,7 +196,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "123E5");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithZeroLengthSpan_ShouldReturnFalse()
     {
         // Arrange
@@ -206,12 +207,12 @@ public class BigNumberTryFormatByteTests
         bool success = bigNumber.TryFormat(buffer, out int bytesWritten);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.FormatData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.FormatData), typeof(BigNumberTestData))]
     public void TryFormat_ToByteSpan_WithVariousInputs_ShouldFormatCorrectly(
         BigInteger significand, int exponent, string expected)
     {
@@ -228,7 +229,7 @@ public class BigNumberTryFormatByteTests
             $"BigNumber({significand}, {exponent})");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithNegativeSignificandAndPositiveExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -243,7 +244,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "-789E10");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithNegativeSignificandAndNegativeExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -258,7 +259,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "-789E-10");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_WithZeroSignificandAndNonZeroExponent_ShouldFormatCorrectly()
     {
         // Arrange
@@ -273,7 +274,7 @@ public class BigNumberTryFormatByteTests
         BigNumberTestData.AssertFormatResult(success, bytesWritten, result, "0");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_SignificandRequiringMaxFormatLength_ShouldWork()
     {
         // Arrange - Create a very large significand to test buffer limits
@@ -286,13 +287,13 @@ public class BigNumberTryFormatByteTests
         string result = Encoding.UTF8.GetString(buffer.Slice(0, bytesWritten).ToArray());
 
         // Assert
-        Assert.True(success, "Should successfully format very large number");
-        Assert.True(bytesWritten > 100, "Should write more than 100 bytes");
+        Assert.IsTrue(success, "Should successfully format very large number");
+        Assert.IsTrue(bytesWritten > 100, "Should write more than 100 bytes");
         Assert.StartsWith(new string('9', 100), result);
-        Assert.Contains("E999", result);
+        StringAssert.Contains(result, "E999");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_UTF8Encoding_ShouldBeCorrect()
     {
         // Arrange
@@ -305,12 +306,12 @@ public class BigNumberTryFormatByteTests
         byte[] expectedBytes = BigNumberTestData.GetUtf8Bytes("123E-456");
 
         // Assert
-        Assert.True(success);
-        Assert.Equal(expectedBytes.Length, bytesWritten);
-        Assert.True(resultBytes.AsSpan().SequenceEqual(expectedBytes));
+        Assert.IsTrue(success);
+        Assert.AreEqual(expectedBytes.Length, bytesWritten);
+        Assert.IsTrue(resultBytes.AsSpan().SequenceEqual(expectedBytes));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_ToByteSpan_CompareWithCharSpan_ShouldProduceSameResult()
     {
         // Arrange
@@ -326,9 +327,9 @@ public class BigNumberTryFormatByteTests
         string charResult = charBuffer.Slice(0, charsWritten).ToString();
 
         // Assert
-        Assert.True(byteSuccess);
-        Assert.True(charSuccess);
-        Assert.Equal(charResult, byteResult);
-        Assert.Equal(charsWritten, bytesWritten); // For ASCII characters, byte count should equal char count
+        Assert.IsTrue(byteSuccess);
+        Assert.IsTrue(charSuccess);
+        Assert.AreEqual(charResult, byteResult);
+        Assert.AreEqual(charsWritten, bytesWritten); // For ASCII characters, byte count should equal char count
     }
 }

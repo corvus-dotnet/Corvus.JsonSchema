@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -12,6 +12,7 @@ namespace Corvus.Text.Json.Tests;
 /// IsUndefined guards (SetItem→remove, InsertItem→no-op),
 /// GetArrayLength, and EnumerateArray.
 /// </summary>
+[TestClass]
 public class GeneratedArrayMutationTests
 {
     private const string SampleJson =
@@ -21,7 +22,7 @@ public class GeneratedArrayMutationTests
 
     #region SetItem
 
-    [Fact]
+    [TestMethod]
     public void SetItem_AtValidIndex_ReplacesItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -33,11 +34,11 @@ public class GeneratedArrayMutationTests
         using var itemDoc = ParsedJsonDocument<ArrayOfItems.RequiredId>.Parse("""{"id":99,"label":"replaced"}""");
         root.SetItem(1, itemDoc.RootElement);
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(99, (int)root[1].Id);
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(99, (int)root[1].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void SetItem_AtArrayLength_AppendsItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -49,11 +50,11 @@ public class GeneratedArrayMutationTests
         using var itemDoc = ParsedJsonDocument<ArrayOfItems.RequiredId>.Parse("""{"id":4,"label":"fourth"}""");
         root.SetItem(3, itemDoc.RootElement);
 
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(4, (int)root[3].Id);
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(4, (int)root[3].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void SetItem_WithUndefinedSource_RemovesItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -62,16 +63,16 @@ public class GeneratedArrayMutationTests
 
         ArrayOfItems.Mutable root = builder.RootElement;
         root.SetItem(1, default);
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal(1, (int)root[0].Id);
-        Assert.Equal(3, (int)root[1].Id);
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual(1, (int)root[0].Id);
+        Assert.AreEqual(3, (int)root[1].Id);
     }
 
     #endregion
 
     #region InsertItem
 
-    [Fact]
+    [TestMethod]
     public void InsertItem_AtIndex_InsertsItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -83,13 +84,13 @@ public class GeneratedArrayMutationTests
         using var itemDoc = ParsedJsonDocument<ArrayOfItems.RequiredId>.Parse("""{"id":0,"label":"inserted"}""");
         root.InsertItem(1, itemDoc.RootElement);
 
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(1, (int)root[0].Id);
-        Assert.Equal(0, (int)root[1].Id);
-        Assert.Equal(2, (int)root[2].Id);
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(1, (int)root[0].Id);
+        Assert.AreEqual(0, (int)root[1].Id);
+        Assert.AreEqual(2, (int)root[2].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void InsertItem_WithUndefinedSource_IsNoOp()
     {
         using var workspace = JsonWorkspace.Create();
@@ -98,14 +99,14 @@ public class GeneratedArrayMutationTests
 
         ArrayOfItems.Mutable root = builder.RootElement;
         root.InsertItem(1, default);
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
     #endregion
 
     #region AddItem
 
-    [Fact]
+    [TestMethod]
     public void AddItem_AppendsItemToEnd()
     {
         using var workspace = JsonWorkspace.Create();
@@ -117,12 +118,12 @@ public class GeneratedArrayMutationTests
         using var itemDoc = ParsedJsonDocument<ArrayOfItems.RequiredId>.Parse("""{"id":4,"label":"fourth"}""");
         root.AddItem(itemDoc.RootElement);
 
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(4, (int)root[3].Id);
-        Assert.Equal("fourth", (string)root[3].Label);
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(4, (int)root[3].Id);
+        Assert.AreEqual("fourth", (string)root[3].Label);
     }
 
-    [Fact]
+    [TestMethod]
     public void AddItem_MultipleAppends_PreservesOrder()
     {
         using var workspace = JsonWorkspace.Create();
@@ -136,12 +137,12 @@ public class GeneratedArrayMutationTests
         root.AddItem(item4Doc.RootElement);
         root.AddItem(item5Doc.RootElement);
 
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(4, (int)root[3].Id);
-        Assert.Equal(5, (int)root[4].Id);
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(4, (int)root[3].Id);
+        Assert.AreEqual(5, (int)root[4].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void AddItem_WithUndefinedSource_IsNoOp()
     {
         using var workspace = JsonWorkspace.Create();
@@ -150,14 +151,14 @@ public class GeneratedArrayMutationTests
 
         ArrayOfItems.Mutable root = builder.RootElement;
         root.AddItem(default);
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
     #endregion
 
     #region Remove, RemoveRange, RemoveWhere
 
-    [Fact]
+    [TestMethod]
     public void Remove_AtIndex_RemovesItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -166,11 +167,11 @@ public class GeneratedArrayMutationTests
 
         ArrayOfItems.Mutable root = builder.RootElement;
         root.RemoveAt(0);
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal(2, (int)root[0].Id);
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual(2, (int)root[0].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveRange_RemovesMultipleItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -179,11 +180,11 @@ public class GeneratedArrayMutationTests
 
         ArrayOfItems.Mutable root = builder.RootElement;
         root.RemoveRange(0, 2);
-        Assert.Equal(1, root.GetArrayLength());
-        Assert.Equal(3, (int)root[0].Id);
+        Assert.AreEqual(1, root.GetArrayLength());
+        Assert.AreEqual(3, (int)root[0].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void RemoveWhere_RemovesMatchingItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -192,15 +193,15 @@ public class GeneratedArrayMutationTests
 
         ArrayOfItems.Mutable root = builder.RootElement;
         root.RemoveWhere(static (in item) => (int)item.Id > 1);
-        Assert.Equal(1, root.GetArrayLength());
-        Assert.Equal(1, (int)root[0].Id);
+        Assert.AreEqual(1, root.GetArrayLength());
+        Assert.AreEqual(1, (int)root[0].Id);
     }
 
     #endregion
 
     #region Replace
 
-    [Fact]
+    [TestMethod]
     public void Replace_FindsAndReplacesFirstMatchingItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -215,13 +216,13 @@ public class GeneratedArrayMutationTests
         ArrayOfItems.RequiredId newItem = newDoc.RootElement;
         bool replaced = root.Replace(oldItem, newItem);
 
-        Assert.True(replaced);
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(99, (int)root[1].Id);
-        Assert.Equal("replaced", (string)root[1].Label);
+        Assert.IsTrue(replaced);
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(99, (int)root[1].Id);
+        Assert.AreEqual("replaced", (string)root[1].Label);
     }
 
-    [Fact]
+    [TestMethod]
     public void Replace_ReturnsFalse_WhenItemNotFound()
     {
         using var workspace = JsonWorkspace.Create();
@@ -236,11 +237,11 @@ public class GeneratedArrayMutationTests
         ArrayOfItems.RequiredId newItem = newDoc.RootElement;
         bool replaced = root.Replace(oldItem, newItem);
 
-        Assert.False(replaced);
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.IsFalse(replaced);
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void Replace_WithUndefinedSource_RemovesMatch()
     {
         using var workspace = JsonWorkspace.Create();
@@ -253,17 +254,17 @@ public class GeneratedArrayMutationTests
         ArrayOfItems.RequiredId oldItem = oldDoc.RootElement;
         bool replaced = root.Replace(oldItem, default);
 
-        Assert.True(replaced);
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal(1, (int)root[0].Id);
-        Assert.Equal(3, (int)root[1].Id);
+        Assert.IsTrue(replaced);
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual(1, (int)root[0].Id);
+        Assert.AreEqual(3, (int)root[1].Id);
     }
 
     #endregion
 
     #region GetArrayLength and EnumerateArray
 
-    [Fact]
+    [TestMethod]
     public void GetArrayLength_ReturnsCorrectCount()
     {
         using var workspace = JsonWorkspace.Create();
@@ -271,10 +272,10 @@ public class GeneratedArrayMutationTests
         using JsonDocumentBuilder<ArrayOfItems.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
 
         ArrayOfItems.Mutable root = builder.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void EnumerateArray_IteratesAllItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -288,14 +289,14 @@ public class GeneratedArrayMutationTests
             count++;
         }
 
-        Assert.Equal(3, count);
+        Assert.AreEqual(3, count);
     }
 
     #endregion
 
     #region InsertRange
 
-    [Fact]
+    [TestMethod]
     public void InsertRange_InsertsMultipleItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -318,15 +319,15 @@ public class GeneratedArrayMutationTests
             });
         });
 
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(1, (int)root[0].Id);
-        Assert.Equal(10, (int)root[1].Id);
-        Assert.Equal(20, (int)root[2].Id);
-        Assert.Equal(2, (int)root[3].Id);
-        Assert.Equal(3, (int)root[4].Id);
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(1, (int)root[0].Id);
+        Assert.AreEqual(10, (int)root[1].Id);
+        Assert.AreEqual(20, (int)root[2].Id);
+        Assert.AreEqual(2, (int)root[3].Id);
+        Assert.AreEqual(3, (int)root[4].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void InsertRange_WithContext_InsertsMultipleItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -349,17 +350,17 @@ public class GeneratedArrayMutationTests
             }
         });
 
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(10, (int)root[0].Id);
-        Assert.Equal(20, (int)root[1].Id);
-        Assert.Equal(1, (int)root[2].Id);
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(10, (int)root[0].Id);
+        Assert.AreEqual(20, (int)root[1].Id);
+        Assert.AreEqual(1, (int)root[2].Id);
     }
 
     #endregion
 
     #region AddRange
 
-    [Fact]
+    [TestMethod]
     public void AddRange_AppendsMultipleItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -382,9 +383,9 @@ public class GeneratedArrayMutationTests
             });
         });
 
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(4, (int)root[3].Id);
-        Assert.Equal(5, (int)root[4].Id);
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(4, (int)root[3].Id);
+        Assert.AreEqual(5, (int)root[4].Id);
     }
 
     #endregion

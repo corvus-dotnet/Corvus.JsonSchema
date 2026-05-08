@@ -2,52 +2,60 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft201909.RecursiveRef;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef : IClassFixture<SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef
 {
-    private readonly Fixture _fixture;
-    public SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": false}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestRecursiveMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"foo\": false } }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMismatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"bar\": false }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestRecursiveMismatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": false } }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -63,55 +71,63 @@ public class SuiteRecursiveRefWithoutRecursiveAnchorWorksLikeRef : IClassFixture
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteRecursiveRefWithoutUsingNesting : IClassFixture<SuiteRecursiveRefWithoutUsingNesting.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRecursiveRefWithoutUsingNesting
 {
-    private readonly Fixture _fixture;
-    public SuiteRecursiveRefWithoutUsingNesting(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestIntegerMatchesAtTheOuterLevel()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleLevelMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"hi\" }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoLevelsPropertiesMatchWithInnerDefinition()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": \"hi\" } }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoLevelsNoMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": 1 } }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -127,55 +143,63 @@ public class SuiteRecursiveRefWithoutUsingNesting : IClassFixture<SuiteRecursive
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteRecursiveRefWithNesting : IClassFixture<SuiteRecursiveRefWithNesting.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRecursiveRefWithNesting
 {
-    private readonly Fixture _fixture;
-    public SuiteRecursiveRefWithNesting(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestIntegerMatchesAtTheOuterLevel()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleLevelMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"hi\" }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIntegerNowMatchesAsAPropertyValue()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoLevelsPropertiesMatchWithInnerDefinition()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": \"hi\" } }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoLevelsPropertiesMatchWithRecursiveRef()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": 1 } }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -191,55 +215,63 @@ public class SuiteRecursiveRefWithNesting : IClassFixture<SuiteRecursiveRefWithN
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef : IClassFixture<SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef
 {
-    private readonly Fixture _fixture;
-    public SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestIntegerMatchesAtTheOuterLevel()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleLevelMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"hi\" }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoLevelsPropertiesMatchWithInnerDefinition()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": \"hi\" } }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoLevelsIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": 1 } }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -255,55 +287,63 @@ public class SuiteRecursiveRefWithRecursiveAnchorFalseWorksLikeRef : IClassFixtu
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef : IClassFixture<SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef
 {
-    private readonly Fixture _fixture;
-    public SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestIntegerMatchesAtTheOuterLevel()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSingleLevelMatch()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": \"hi\" }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": 1 }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoLevelsPropertiesMatchWithInnerDefinition()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": \"hi\" } }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoLevelsIntegerDoesNotMatchAsAPropertyValue()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": 1 } }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -319,41 +359,49 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorWorksLikeRef : IClassFixture<
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResource : IClassFixture<SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResource.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResource
 {
-    private readonly Fixture _fixture;
-    public SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResource(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestLeafNodeDoesNotMatchNoRecursion()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": true }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLeafNodeMatchesRecursionUsesTheInnerSchema()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": 1 } }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLeafNodeDoesNotMatchRecursionUsesTheInnerSchema()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": true } }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -369,41 +417,49 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheInitialTargetSchemaResou
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource : IClassFixture<SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource
 {
-    private readonly Fixture _fixture;
-    public SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestLeafNodeDoesNotMatchNoRecursion()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": true }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLeafNodeMatchesRecursionOnlyUsesInnerSchema()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": 1 } }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLeafNodeDoesNotMatchRecursionOnlyUsesInnerSchema()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"foo\": { \"bar\": true } }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -419,34 +475,42 @@ public class SuiteRecursiveRefWithNoRecursiveAnchorInTheOuterSchemaResource : IC
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword : IClassFixture<SuiteMultipleDynamicPathsToTheRecursiveRefKeyword.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword
 {
-    private readonly Fixture _fixture;
-    public SuiteMultipleDynamicPathsToTheRecursiveRefKeyword(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestRecurseToAnyLeafNodeFloatsAreAllowed()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"alpha\": 1.1 }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestRecurseToIntegerNodeFloatsAreNotAllowed()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"november\": 1.1 }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -462,34 +526,42 @@ public class SuiteMultipleDynamicPathsToTheRecursiveRefKeyword : IClassFixture<S
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTime : IClassFixture<SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTime.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTime
 {
-    private readonly Fixture _fixture;
-    public SuiteDynamicRecursiveRefDestinationNotPredictableAtSchemaCompileTime(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestNumericNode()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"alpha\": 1.1 }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIntegerNode()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{ \"november\": 1.1 }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

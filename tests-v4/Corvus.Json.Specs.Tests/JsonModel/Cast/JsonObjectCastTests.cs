@@ -10,28 +10,29 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 using NodaTime;
 using NodaTime.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonModel.Cast;
 
 /// <summary>
 /// Tests for JsonObjectCast.
 /// </summary>
+[TestClass]
 public class JsonObjectCastTests
 {
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_an_object()
     {
         var sut = JsonObject.ParseValue("{\"foo\": 3}".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("{\"foo\": 3}".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("{\"foo\": 3}".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_an_object()
     {
         var sut = JsonObject.Parse("{\"foo\": 3}").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("{\"foo\": 3}".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("{\"foo\": 3}".AsSpan()), result);
     }
 }

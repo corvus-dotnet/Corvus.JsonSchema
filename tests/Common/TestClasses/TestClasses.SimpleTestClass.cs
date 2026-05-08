@@ -5,7 +5,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Serialization.Tests;
 
@@ -304,84 +304,84 @@ public class SimpleTestClass : ITestClass
 
     public void Verify()
     {
-        Assert.Equal((short)1, MyInt16);
-        Assert.Equal((int)2, MyInt32);
-        Assert.Equal((long)3, MyInt64);
-        Assert.Equal((ushort)4, MyUInt16);
-        Assert.Equal((uint)5, MyUInt32);
-        Assert.Equal((ulong)6, MyUInt64);
-        Assert.Equal((byte)7, MyByte);
-        Assert.Equal((sbyte)8, MySByte);
-        Assert.Equal('a', MyChar);
-        Assert.Equal("Hello", MyString);
-        Assert.Equal(3.3m, MyDecimal);
-        Assert.False(MyBooleanFalse);
-        Assert.True(MyBooleanTrue);
-        Assert.Equal(1.1f, MySingle);
-        Assert.Equal(2.2d, MyDouble);
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTime);
-        Assert.Equal(new DateTimeOffset(2019, 1, 30, 12, 1, 2, new TimeSpan(1, 0, 0)), MyDateTimeOffset);
-        Assert.Equal(new Guid("1B33498A-7B7D-4DDA-9C13-F6AA4AB449A6"), MyGuid);
-        Assert.Equal(new Uri("https://github.com/dotnet/runtime"), MyUri);
-        Assert.Equal(SampleEnum.Two, MyEnum);
-        Assert.Equal(SampleEnumInt64.MinNegative, MyInt64Enum);
-        Assert.Equal(SampleEnumUInt64.Max, MyUInt64Enum);
-        Assert.Equal(11, MySimpleStruct.One);
-        Assert.Equal(1.9999, MySimpleStruct.Two);
-        Assert.Equal(64, MySimpleTestStruct.MyInt64);
-        Assert.Equal("Hello", MySimpleTestStruct.MyString);
-        Assert.Equal(32, MySimpleTestStruct.MyInt32Array[0]);
+        Assert.AreEqual((short)1, MyInt16);
+        Assert.AreEqual((int)2, MyInt32);
+        Assert.AreEqual((long)3, MyInt64);
+        Assert.AreEqual((ushort)4, MyUInt16);
+        Assert.AreEqual((uint)5, MyUInt32);
+        Assert.AreEqual((ulong)6, MyUInt64);
+        Assert.AreEqual((byte)7, MyByte);
+        Assert.AreEqual((sbyte)8, MySByte);
+        Assert.AreEqual('a', MyChar);
+        Assert.AreEqual("Hello", MyString);
+        Assert.AreEqual(3.3m, MyDecimal);
+        Assert.IsFalse(MyBooleanFalse);
+        Assert.IsTrue(MyBooleanTrue);
+        Assert.AreEqual(1.1f, MySingle);
+        Assert.AreEqual(2.2d, MyDouble);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTime);
+        Assert.AreEqual(new DateTimeOffset(2019, 1, 30, 12, 1, 2, new TimeSpan(1, 0, 0)), MyDateTimeOffset);
+        Assert.AreEqual(new Guid("1B33498A-7B7D-4DDA-9C13-F6AA4AB449A6"), MyGuid);
+        Assert.AreEqual(new Uri("https://github.com/dotnet/runtime"), MyUri);
+        Assert.AreEqual(SampleEnum.Two, MyEnum);
+        Assert.AreEqual(SampleEnumInt64.MinNegative, MyInt64Enum);
+        Assert.AreEqual(SampleEnumUInt64.Max, MyUInt64Enum);
+        Assert.AreEqual(11, MySimpleStruct.One);
+        Assert.AreEqual(1.9999, MySimpleStruct.Two);
+        Assert.AreEqual(64, MySimpleTestStruct.MyInt64);
+        Assert.AreEqual("Hello", MySimpleTestStruct.MyString);
+        Assert.AreEqual(32, MySimpleTestStruct.MyInt32Array[0]);
 
-        Assert.Equal((short)1, MyInt16Array[0]);
-        Assert.Equal((int)2, MyInt32Array[0]);
-        Assert.Equal((long)3, MyInt64Array[0]);
-        Assert.Equal((ushort)4, MyUInt16Array[0]);
-        Assert.Equal((uint)5, MyUInt32Array[0]);
-        Assert.Equal((ulong)6, MyUInt64Array[0]);
-        Assert.Equal((byte)7, MyByteArray[0]);
-        Assert.Equal((sbyte)8, MySByteArray[0]);
-        Assert.Equal('a', MyCharArray[0]);
-        Assert.Equal("Hello", MyStringArray[0]);
-        Assert.Equal(3.3m, MyDecimalArray[0]);
-        Assert.False(MyBooleanFalseArray[0]);
-        Assert.True(MyBooleanTrueArray[0]);
-        Assert.Equal(1.1f, MySingleArray[0]);
-        Assert.Equal(2.2d, MyDoubleArray[0]);
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeArray[0]);
-        Assert.Equal(new DateTimeOffset(2019, 1, 30, 12, 1, 2, new TimeSpan(1, 0, 0)), MyDateTimeOffsetArray[0]);
-        Assert.Equal(new Guid("1B33498A-7B7D-4DDA-9C13-F6AA4AB449A6"), MyGuidArray[0]);
-        Assert.Equal(new Uri("https://github.com/dotnet/runtime"), MyUriArray[0]);
-        Assert.Equal(SampleEnum.Two, MyEnumArray[0]);
+        Assert.AreEqual((short)1, MyInt16Array[0]);
+        Assert.AreEqual((int)2, MyInt32Array[0]);
+        Assert.AreEqual((long)3, MyInt64Array[0]);
+        Assert.AreEqual((ushort)4, MyUInt16Array[0]);
+        Assert.AreEqual((uint)5, MyUInt32Array[0]);
+        Assert.AreEqual((ulong)6, MyUInt64Array[0]);
+        Assert.AreEqual((byte)7, MyByteArray[0]);
+        Assert.AreEqual((sbyte)8, MySByteArray[0]);
+        Assert.AreEqual('a', MyCharArray[0]);
+        Assert.AreEqual("Hello", MyStringArray[0]);
+        Assert.AreEqual(3.3m, MyDecimalArray[0]);
+        Assert.IsFalse(MyBooleanFalseArray[0]);
+        Assert.IsTrue(MyBooleanTrueArray[0]);
+        Assert.AreEqual(1.1f, MySingleArray[0]);
+        Assert.AreEqual(2.2d, MyDoubleArray[0]);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeArray[0]);
+        Assert.AreEqual(new DateTimeOffset(2019, 1, 30, 12, 1, 2, new TimeSpan(1, 0, 0)), MyDateTimeOffsetArray[0]);
+        Assert.AreEqual(new Guid("1B33498A-7B7D-4DDA-9C13-F6AA4AB449A6"), MyGuidArray[0]);
+        Assert.AreEqual(new Uri("https://github.com/dotnet/runtime"), MyUriArray[0]);
+        Assert.AreEqual(SampleEnum.Two, MyEnumArray[0]);
 
-        Assert.Equal(10, MyInt16TwoDimensionArray[0][0]);
-        Assert.Equal(11, MyInt16TwoDimensionArray[0][1]);
-        Assert.Equal(20, MyInt16TwoDimensionArray[1][0]);
-        Assert.Equal(21, MyInt16TwoDimensionArray[1][1]);
+        Assert.AreEqual(10, MyInt16TwoDimensionArray[0][0]);
+        Assert.AreEqual(11, MyInt16TwoDimensionArray[0][1]);
+        Assert.AreEqual(20, MyInt16TwoDimensionArray[1][0]);
+        Assert.AreEqual(21, MyInt16TwoDimensionArray[1][1]);
 
-        Assert.Equal(10, MyInt16TwoDimensionList[0][0]);
-        Assert.Equal(11, MyInt16TwoDimensionList[0][1]);
-        Assert.Equal(20, MyInt16TwoDimensionList[1][0]);
-        Assert.Equal(21, MyInt16TwoDimensionList[1][1]);
+        Assert.AreEqual(10, MyInt16TwoDimensionList[0][0]);
+        Assert.AreEqual(11, MyInt16TwoDimensionList[0][1]);
+        Assert.AreEqual(20, MyInt16TwoDimensionList[1][0]);
+        Assert.AreEqual(21, MyInt16TwoDimensionList[1][1]);
 
-        Assert.Equal(11, MyInt16ThreeDimensionArray[0][0][0]);
-        Assert.Equal(12, MyInt16ThreeDimensionArray[0][0][1]);
-        Assert.Equal(13, MyInt16ThreeDimensionArray[0][1][0]);
-        Assert.Equal(14, MyInt16ThreeDimensionArray[0][1][1]);
-        Assert.Equal(21, MyInt16ThreeDimensionArray[1][0][0]);
-        Assert.Equal(22, MyInt16ThreeDimensionArray[1][0][1]);
-        Assert.Equal(23, MyInt16ThreeDimensionArray[1][1][0]);
-        Assert.Equal(24, MyInt16ThreeDimensionArray[1][1][1]);
+        Assert.AreEqual(11, MyInt16ThreeDimensionArray[0][0][0]);
+        Assert.AreEqual(12, MyInt16ThreeDimensionArray[0][0][1]);
+        Assert.AreEqual(13, MyInt16ThreeDimensionArray[0][1][0]);
+        Assert.AreEqual(14, MyInt16ThreeDimensionArray[0][1][1]);
+        Assert.AreEqual(21, MyInt16ThreeDimensionArray[1][0][0]);
+        Assert.AreEqual(22, MyInt16ThreeDimensionArray[1][0][1]);
+        Assert.AreEqual(23, MyInt16ThreeDimensionArray[1][1][0]);
+        Assert.AreEqual(24, MyInt16ThreeDimensionArray[1][1][1]);
 
-        Assert.Equal(11, MyInt16ThreeDimensionList[0][0][0]);
-        Assert.Equal(12, MyInt16ThreeDimensionList[0][0][1]);
-        Assert.Equal(13, MyInt16ThreeDimensionList[0][1][0]);
-        Assert.Equal(14, MyInt16ThreeDimensionList[0][1][1]);
-        Assert.Equal(21, MyInt16ThreeDimensionList[1][0][0]);
-        Assert.Equal(22, MyInt16ThreeDimensionList[1][0][1]);
-        Assert.Equal(23, MyInt16ThreeDimensionList[1][1][0]);
-        Assert.Equal(24, MyInt16ThreeDimensionList[1][1][1]);
+        Assert.AreEqual(11, MyInt16ThreeDimensionList[0][0][0]);
+        Assert.AreEqual(12, MyInt16ThreeDimensionList[0][0][1]);
+        Assert.AreEqual(13, MyInt16ThreeDimensionList[0][1][0]);
+        Assert.AreEqual(14, MyInt16ThreeDimensionList[0][1][1]);
+        Assert.AreEqual(21, MyInt16ThreeDimensionList[1][0][0]);
+        Assert.AreEqual(22, MyInt16ThreeDimensionList[1][0][1]);
+        Assert.AreEqual(23, MyInt16ThreeDimensionList[1][1][0]);
+        Assert.AreEqual(24, MyInt16ThreeDimensionList[1][1][1]);
 
-        Assert.Equal("Hello", MyStringList[0]);
+        Assert.AreEqual("Hello", MyStringList[0]);
 
         IEnumerator enumerator = MyStringIEnumerable.GetEnumerator();
         enumerator.MoveNext();
@@ -389,12 +389,12 @@ public class SimpleTestClass : ITestClass
             // Verifying after deserialization.
             if (enumerator.Current is JsonElement currentJsonElement)
             {
-                Assert.Equal("Hello", currentJsonElement.GetString());
+                Assert.AreEqual("Hello", currentJsonElement.GetString());
             }
             // Verifying test data.
             else
             {
-                Assert.Equal("Hello", enumerator.Current);
+                Assert.AreEqual("Hello", enumerator.Current);
             }
         }
 
@@ -402,12 +402,12 @@ public class SimpleTestClass : ITestClass
             // Verifying after deserialization.
             if (MyStringIList[0] is JsonElement currentJsonElement)
             {
-                Assert.Equal("Hello", currentJsonElement.GetString());
+                Assert.AreEqual("Hello", currentJsonElement.GetString());
             }
             // Verifying test data.
             else
             {
-                Assert.Equal("Hello", enumerator.Current);
+                Assert.AreEqual("Hello", enumerator.Current);
             }
         }
 
@@ -417,21 +417,21 @@ public class SimpleTestClass : ITestClass
             // Verifying after deserialization.
             if (enumerator.Current is JsonElement currentJsonElement)
             {
-                Assert.Equal("Hello", currentJsonElement.GetString());
+                Assert.AreEqual("Hello", currentJsonElement.GetString());
             }
             // Verifying test data.
             else
             {
-                Assert.Equal("Hello", enumerator.Current);
+                Assert.AreEqual("Hello", enumerator.Current);
             }
         }
 
-        Assert.Equal("Hello", MyStringIEnumerableT.First());
-        Assert.Equal("Hello", MyStringIListT[0]);
-        Assert.Equal("Hello", MyStringICollectionT.First());
-        Assert.Equal("Hello", MyStringIReadOnlyCollectionT.First());
-        Assert.Equal("Hello", MyStringIReadOnlyListT[0]);
-        Assert.Equal("Hello", MyStringISetT.First());
+        Assert.AreEqual("Hello", MyStringIEnumerableT.First());
+        Assert.AreEqual("Hello", MyStringIListT[0]);
+        Assert.AreEqual("Hello", MyStringICollectionT.First());
+        Assert.AreEqual("Hello", MyStringIReadOnlyCollectionT.First());
+        Assert.AreEqual("Hello", MyStringIReadOnlyListT[0]);
+        Assert.AreEqual("Hello", MyStringISetT.First());
 
         enumerator = MyStringToStringIDict.GetEnumerator();
         enumerator.MoveNext();
@@ -444,63 +444,63 @@ public class SimpleTestClass : ITestClass
 
                 var property = (JsonProperty<JsonElement>)jsonEnumerator.Current;
 
-                Assert.Equal("key", property.Name);
-                Assert.Equal("value", property.Value.GetString());
+                Assert.AreEqual("key", property.Name);
+                Assert.AreEqual("value", property.Value.GetString());
             }
             // Verifying test data.
             else
             {
                 var entry = (DictionaryEntry)enumerator.Current;
-                Assert.Equal("key", entry.Key);
+                Assert.AreEqual("key", entry.Key);
 
                 if (entry.Value is JsonElement element)
                 {
-                    Assert.Equal("value", element.GetString());
+                    Assert.AreEqual("value", element.GetString());
                 }
                 else
                 {
-                    Assert.Equal("value", entry.Value);
+                    Assert.AreEqual("value", entry.Value);
                 }
             }
         }
 
-        Assert.Equal("value", MyStringToStringGenericDict["key"]);
-        Assert.Equal("value", MyStringToStringGenericIDict["key"]);
-        Assert.Equal("value", MyStringToStringGenericIReadOnlyDict["key"]);
+        Assert.AreEqual("value", MyStringToStringGenericDict["key"]);
+        Assert.AreEqual("value", MyStringToStringGenericIDict["key"]);
+        Assert.AreEqual("value", MyStringToStringGenericIReadOnlyDict["key"]);
 
-        Assert.Equal("value", MyStringToStringImmutableDict["key"]);
-        Assert.Equal("value", MyStringToStringIImmutableDict["key"]);
-        Assert.Equal("value", MyStringToStringImmutableSortedDict["key"]);
+        Assert.AreEqual("value", MyStringToStringImmutableDict["key"]);
+        Assert.AreEqual("value", MyStringToStringIImmutableDict["key"]);
+        Assert.AreEqual("value", MyStringToStringImmutableSortedDict["key"]);
 
-        Assert.Equal("myKey", MyStringToStringKeyValuePair.Key);
-        Assert.Equal("myValue", MyStringToStringKeyValuePair.Value);
+        Assert.AreEqual("myKey", MyStringToStringKeyValuePair.Key);
+        Assert.AreEqual("myValue", MyStringToStringKeyValuePair.Value);
 
-        Assert.Equal(2, MyStringStackT.Count);
-        Assert.True(MyStringStackT.Contains("Hello"));
-        Assert.True(MyStringStackT.Contains("World"));
+        Assert.AreEqual(2, MyStringStackT.Count);
+        Assert.IsTrue(MyStringStackT.Contains("Hello"));
+        Assert.IsTrue(MyStringStackT.Contains("World"));
 
         string[] expectedQueue = { "Hello", "World" };
         int i = 0;
         foreach (string item in MyStringQueueT)
         {
-            Assert.Equal(expectedQueue[i], item);
+            Assert.AreEqual(expectedQueue[i], item);
             i++;
         }
 
-        Assert.Equal("Hello", MyStringHashSetT.First());
-        Assert.Equal("Hello", MyStringLinkedListT.First());
-        Assert.Equal("Hello", MyStringSortedSetT.First());
+        Assert.AreEqual("Hello", MyStringHashSetT.First());
+        Assert.AreEqual("Hello", MyStringLinkedListT.First());
+        Assert.AreEqual("Hello", MyStringSortedSetT.First());
 
-        Assert.Equal("Hello", MyStringIImmutableListT[0]);
-        Assert.Equal("Hello", MyStringIImmutableStackT.First());
-        Assert.Equal("Hello", MyStringIImmutableQueueT.First());
-        Assert.Equal("Hello", MyStringIImmutableSetT.First());
-        Assert.Equal("Hello", MyStringImmutableHashSetT.First());
-        Assert.Equal("Hello", MyStringImmutableListT[0]);
-        Assert.Equal("Hello", MyStringImmutableStackT.First());
-        Assert.Equal("Hello", MyStringImmutablQueueT.First());
-        Assert.Equal("Hello", MyStringImmutableSortedSetT.First());
+        Assert.AreEqual("Hello", MyStringIImmutableListT[0]);
+        Assert.AreEqual("Hello", MyStringIImmutableStackT.First());
+        Assert.AreEqual("Hello", MyStringIImmutableQueueT.First());
+        Assert.AreEqual("Hello", MyStringIImmutableSetT.First());
+        Assert.AreEqual("Hello", MyStringImmutableHashSetT.First());
+        Assert.AreEqual("Hello", MyStringImmutableListT[0]);
+        Assert.AreEqual("Hello", MyStringImmutableStackT.First());
+        Assert.AreEqual("Hello", MyStringImmutablQueueT.First());
+        Assert.AreEqual("Hello", MyStringImmutableSortedSetT.First());
 
-        Assert.Null(MyListOfNullString[0]);
+        Assert.IsNull(MyListOfNullString[0]);
     }
 }

@@ -4,7 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
 
@@ -16,9 +16,10 @@ namespace Corvus.Text.Json.Jsonata.Tests;
 /// UniqueItemsHashSet is used by JSONata's $distinct function. When the input array exceeds
 /// StackAllocBucketSize (256), the hash set rents from ArrayPool instead of using stackalloc.
 /// </remarks>
+[TestClass]
 public class UniqueItemsHashSetCoverageTests
 {
-    [Fact]
+    [TestMethod]
     public void Distinct_LargeArray_TriggersArrayPoolRent()
     {
         // Create an array with >256 elements to trigger ArrayPool rent in
@@ -39,13 +40,13 @@ public class UniqueItemsHashSetCoverageTests
 
         string data = sb.ToString();
         string? result = JsonataEvaluator.Default.EvaluateToString("$distinct($)", data);
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
 
         // Verify result has all 300 unique elements
-        Assert.Contains("299", result);
+        StringAssert.Contains(result, "299");
     }
 
-    [Fact]
+    [TestMethod]
     public void Distinct_LargeArrayWithDuplicates_TriggersArrayPoolAndDeduplicates()
     {
         // 300 elements but only 100 unique values — triggers rent AND collision handling
@@ -65,14 +66,14 @@ public class UniqueItemsHashSetCoverageTests
 
         string data = sb.ToString();
         string? result = JsonataEvaluator.Default.EvaluateToString("$distinct($)", data);
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
 
         // Should have exactly 100 unique elements
         Assert.DoesNotContain("100", result);
-        Assert.Contains("99", result);
+        StringAssert.Contains(result, "99");
     }
 
-    [Fact]
+    [TestMethod]
     public void Distinct_LargeArrayWithObjects_TriggersArrayPoolAndDeepEquals()
     {
         // Large array of objects triggers ValueEquals deep comparison
@@ -92,11 +93,11 @@ public class UniqueItemsHashSetCoverageTests
 
         string data = sb.ToString();
         string? result = JsonataEvaluator.Default.EvaluateToString("$count($distinct($))", data);
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
 
         // Each combo of id (0-89) and value (A-Z) gives at most 90 distinct items
         // since value repeats every 26 and id repeats every 90
         int count = int.Parse(result);
-        Assert.True(count > 0 && count <= 270);
+        Assert.IsTrue(count > 0 && count <= 270);
     }
 }

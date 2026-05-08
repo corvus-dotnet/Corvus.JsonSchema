@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using AnalyzerTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<
     Corvus.Text.Json.Analyzers.PreferMemoryParseAnalyzer,
@@ -23,6 +23,7 @@ namespace Corvus.Text.Json.Analyzers.Tests;
 /// <summary>
 /// Tests for CTJ010: Prefer ReadOnlyMemory/Span-based Parse overload.
 /// </summary>
+[TestClass]
 public class PreferMemoryParseAnalyzerTests
 {
     private const string Stubs = @"
@@ -50,7 +51,7 @@ namespace Corvus.Text.Json
     // ========================
     // Pattern A: Encoding roundtrip
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task Parse_EncodingGetString_FiresCTJ010()
     {
         const string testCode = Stubs + @"
@@ -80,7 +81,7 @@ namespace TestApp
     // ========================
     // Pattern B: String literal
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task ParseValue_StringLiteral_FiresCTJ010()
     {
         const string testCode = Stubs + @"
@@ -110,7 +111,7 @@ namespace TestApp
     // ========================
     // Negative tests
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task Parse_WithReadOnlyMemory_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -131,7 +132,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Parse_WithStringVariable_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -152,7 +153,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonCorvusParse_StringLiteral_NoDiagnostic()
     {
         const string testCode = @"
@@ -181,7 +182,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParseValue_Utf8Literal_NoDiagnostic()
     {
         // If the user already uses the u8 suffix, we don't flag it.
@@ -204,7 +205,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Parse_NoBytesOverload_NoDiagnostic()
     {
         // If there's no bytes overload, don't suggest it.

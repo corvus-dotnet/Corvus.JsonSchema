@@ -1,22 +1,23 @@
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
-public static partial class BitStackTests
+[TestClass]
+public partial class BitStackTests
 {
     private static readonly Random s_random = new(42);
 
-    [Theory]
-    [InlineData(32)]
-    [InlineData(64)]
-    [InlineData(256)]
-    public static void BitStackPushPop(int bitLength)
+    [TestMethod]
+    [DataRow(32)]
+    [DataRow(64)]
+    [DataRow(256)]
+    public void BitStackPushPop(int bitLength)
     {
         BitStack bitStack = default;
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(0, bitStack.CurrentDepth);
 
         bool[] values = new bool[bitLength];
         for (int i = 0; i < bitLength; i++)
@@ -34,26 +35,25 @@ public static partial class BitStackTests
             {
                 bitStack.PushFalse();
             }
-            Assert.Equal(i + 1, bitStack.CurrentDepth);
+            Assert.AreEqual(i + 1, bitStack.CurrentDepth);
         }
 
         // Loop backwards when popping.
         for (int i = bitLength - 1; i > 0; i--)
         {
             // We need the value at the top *after* popping off the last one.
-            Assert.Equal(values[i - 1], bitStack.Pop());
-            Assert.Equal(i, bitStack.CurrentDepth);
+            Assert.AreEqual(values[i - 1], bitStack.Pop());
+            Assert.AreEqual(i, bitStack.CurrentDepth);
         }
     }
 
-    [Theory]
-    [OuterLoop]
-    [InlineData(3_200_000)]
-    [InlineData(int.MaxValue / 32 + 1)]    // 67_108_864
-    public static void BitStackPushPopLarge(int bitLength)
+    [TestMethod]
+    [DataRow(3_200_000)]
+    [DataRow(int.MaxValue / 32 + 1)]    // 67_108_864
+    public void BitStackPushPopLarge(int bitLength)
     {
         BitStack bitStack = default;
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(0, bitStack.CurrentDepth);
 
         bool[] values = new bool[bitLength];
         for (int i = 0; i < bitLength; i++)
@@ -76,7 +76,7 @@ public static partial class BitStackTests
                 bitStack.PushFalse();
             }
             expectedDepth++;
-            Assert.Equal(expectedDepth, bitStack.CurrentDepth);
+            Assert.AreEqual(expectedDepth, bitStack.CurrentDepth);
         }
         for (int i = bitLength - IterationCapacity; i < bitLength; i++)
         {
@@ -89,63 +89,63 @@ public static partial class BitStackTests
                 bitStack.PushFalse();
             }
             expectedDepth++;
-            Assert.Equal(expectedDepth, bitStack.CurrentDepth);
+            Assert.AreEqual(expectedDepth, bitStack.CurrentDepth);
         }
 
-        Assert.Equal(IterationCapacity * 2, expectedDepth);
+        Assert.AreEqual(IterationCapacity * 2, expectedDepth);
 
         // Loop backwards when popping.
         for (int i = bitLength - 1; i >= bitLength - IterationCapacity; i--)
         {
             // We need the value at the top *after* popping off the last one.
-            Assert.Equal(values[i - 1], bitStack.Pop());
+            Assert.AreEqual(values[i - 1], bitStack.Pop());
 
             expectedDepth--;
-            Assert.Equal(expectedDepth, bitStack.CurrentDepth);
+            Assert.AreEqual(expectedDepth, bitStack.CurrentDepth);
         }
         for (int i = IterationCapacity - 1; i > 0; i--)
         {
             // We need the value at the top *after* popping off the last one.
-            Assert.Equal(values[i - 1], bitStack.Pop());
+            Assert.AreEqual(values[i - 1], bitStack.Pop());
 
             expectedDepth--;
-            Assert.Equal(expectedDepth, bitStack.CurrentDepth);
+            Assert.AreEqual(expectedDepth, bitStack.CurrentDepth);
         }
     }
 
-    [Fact]
-    public static void DefaultBitStack()
+    [TestMethod]
+    public void DefaultBitStack()
     {
         BitStack bitStack = default;
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(0, bitStack.CurrentDepth);
     }
 
-    [Fact]
-    public static void SetResetFirstBit()
+    [TestMethod]
+    public void SetResetFirstBit()
     {
         BitStack bitStack = default;
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(0, bitStack.CurrentDepth);
         bitStack.SetFirstBit();
-        Assert.Equal(1, bitStack.CurrentDepth);
-        Assert.False(bitStack.Pop());
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(1, bitStack.CurrentDepth);
+        Assert.IsFalse(bitStack.Pop());
+        Assert.AreEqual(0, bitStack.CurrentDepth);
 
         bitStack = default;
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(0, bitStack.CurrentDepth);
         bitStack.ResetFirstBit();
-        Assert.Equal(1, bitStack.CurrentDepth);
-        Assert.False(bitStack.Pop());
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(1, bitStack.CurrentDepth);
+        Assert.IsFalse(bitStack.Pop());
+        Assert.AreEqual(0, bitStack.CurrentDepth);
 
         bitStack = default;
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(0, bitStack.CurrentDepth);
         bitStack.SetFirstBit();
-        Assert.Equal(1, bitStack.CurrentDepth);
-        Assert.False(bitStack.Pop());
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(1, bitStack.CurrentDepth);
+        Assert.IsFalse(bitStack.Pop());
+        Assert.AreEqual(0, bitStack.CurrentDepth);
         bitStack.ResetFirstBit();
-        Assert.Equal(1, bitStack.CurrentDepth);
-        Assert.False(bitStack.Pop());
-        Assert.Equal(0, bitStack.CurrentDepth);
+        Assert.AreEqual(1, bitStack.CurrentDepth);
+        Assert.IsFalse(bitStack.Pop());
+        Assert.AreEqual(0, bitStack.CurrentDepth);
     }
 }

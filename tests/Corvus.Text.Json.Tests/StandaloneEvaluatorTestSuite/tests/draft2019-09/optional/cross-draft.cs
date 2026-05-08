@@ -2,38 +2,46 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft201909.Optional.CrossDraft;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts : IClassFixture<SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts
 {
-    private readonly Fixture _fixture;
-    public SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestFirstItemNotAStringIsInvalid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFirstItemIsAStringIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"a string\", 1, 2, 3]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -49,27 +57,35 @@ public class SuiteRefsToFutureDraftsAreProcessedAsFutureDrafts : IClassFixture<S
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts : IClassFixture<SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts
 {
-    private readonly Fixture _fixture;
-    public SuiteRefsToHistoricDraftsAreProcessedAsHistoricDrafts(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMissingBarIsValid()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\"foo\": \"any value\"}");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

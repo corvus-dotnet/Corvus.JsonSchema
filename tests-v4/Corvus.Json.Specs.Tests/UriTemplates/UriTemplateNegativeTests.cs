@@ -5,10 +5,11 @@
 using System.Collections.Immutable;
 using Corvus.Json;
 using Corvus.Json.UriTemplates;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.UriTemplates;
 
+[TestClass]
 public class UriTemplateNegativeTests
 {
     private static ImmutableDictionary<string, JsonAny> BuildVariables()
@@ -34,41 +35,41 @@ public class UriTemplateNegativeTests
         return builder.ToImmutable();
     }
 
-    [Theory]
-    [InlineData("{/id*")]
-    [InlineData("/id*}")]
-    [InlineData("{/?id}")]
-    [InlineData("{var:prefix}")]
-    [InlineData("{hello:2*}")]
-    [InlineData("{??hello}")]
-    [InlineData("{!hello}")]
-    [InlineData("{with space}")]
-    [InlineData("{ leading_space}")]
-    [InlineData("{trailing_space }")]
-    [InlineData("{=path}")]
-    [InlineData("{$var}")]
-    [InlineData("{|var*}")]
-    [InlineData("{*keys?}")]
-    [InlineData("{?empty=default,var}")]
-    [InlineData("{var}{-prefix|/-/|var}")]
-    [InlineData("?q={searchTerms}&amp;c={example:color?}")]
-    [InlineData("x{?empty|foo=none}")]
-    [InlineData("/h{#hello+}")]
-    [InlineData("/h#{hello+}")]
-    [InlineData("{keys:1}")]
-    [InlineData("{+keys:1}")]
-    [InlineData("{;keys:1*}")]
-    [InlineData("?{-join|&|var,list}")]
-    [InlineData("/people/{~thing}")]
-    [InlineData("/{default-graph-uri}")]
-    [InlineData("/sparql{?query,default-graph-uri}")]
-    [InlineData("/sparql{?query){&default-graph-uri*}")]
-    [InlineData("/resolution{?x, y}")]
+    [TestMethod]
+    [DataRow("{/id*")]
+    [DataRow("/id*}")]
+    [DataRow("{/?id}")]
+    [DataRow("{var:prefix}")]
+    [DataRow("{hello:2*}")]
+    [DataRow("{??hello}")]
+    [DataRow("{!hello}")]
+    [DataRow("{with space}")]
+    [DataRow("{ leading_space}")]
+    [DataRow("{trailing_space }")]
+    [DataRow("{=path}")]
+    [DataRow("{$var}")]
+    [DataRow("{|var*}")]
+    [DataRow("{*keys?}")]
+    [DataRow("{?empty=default,var}")]
+    [DataRow("{var}{-prefix|/-/|var}")]
+    [DataRow("?q={searchTerms}&amp;c={example:color?}")]
+    [DataRow("x{?empty|foo=none}")]
+    [DataRow("/h{#hello+}")]
+    [DataRow("/h#{hello+}")]
+    [DataRow("{keys:1}")]
+    [DataRow("{+keys:1}")]
+    [DataRow("{;keys:1*}")]
+    [DataRow("?{-join|&|var,list}")]
+    [DataRow("/people/{~thing}")]
+    [DataRow("/{default-graph-uri}")]
+    [DataRow("/sparql{?query,default-graph-uri}")]
+    [DataRow("/sparql{?query){&default-graph-uri*}")]
+    [DataRow("/resolution{?x, y}")]
     public void FailureTests(string template)
     {
         ImmutableDictionary<string, JsonAny> variables = BuildVariables();
 
-        Assert.ThrowsAny<Exception>(() =>
+        Assert.Throws<Exception>(() =>
         {
             var uriTemplate = new UriTemplate(template, createParameterParser: false, parameters: variables);
             uriTemplate.Resolve();

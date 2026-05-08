@@ -3,7 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.SourceGenerator.Tests;
 
@@ -11,6 +11,7 @@ namespace Corvus.Text.Json.Jsonata.SourceGenerator.Tests;
 /// Integration tests for the JSONata source generator.
 /// Each test exercises a source-generated evaluator by providing data and asserting on the result.
 /// </summary>
+[TestClass]
 public class JsonataSourceGeneratorTests
 {
     private const string TestData = """
@@ -45,7 +46,7 @@ public class JsonataSourceGeneratorTests
         }
         """;
 
-    [Fact]
+    [TestMethod]
     public void PropertyPath_EvaluatesCorrectly()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -53,11 +54,11 @@ public class JsonataSourceGeneratorTests
         JsonElement result = PropertyPathExpr.Evaluate(doc.RootElement, workspace);
 
         // Account.Order.Product.Price should return [34.45, 21.67, 34.45, 107.99]
-        Assert.Equal(JsonValueKind.Array, result.ValueKind);
-        Assert.Equal(4, result.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, result.ValueKind);
+        Assert.AreEqual(4, result.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void Arithmetic_EvaluatesCorrectly()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -65,11 +66,11 @@ public class JsonataSourceGeneratorTests
         JsonElement result = ArithmeticExpr.Evaluate(doc.RootElement, workspace);
 
         // 1 + 2 * 3 = 7 (JSONata follows standard operator precedence)
-        Assert.Equal(JsonValueKind.Number, result.ValueKind);
-        Assert.Equal("7", result.GetRawText());
+        Assert.AreEqual(JsonValueKind.Number, result.ValueKind);
+        Assert.AreEqual("7", result.GetRawText());
     }
 
-    [Fact]
+    [TestMethod]
     public void StringConcat_EvaluatesCorrectly()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -77,11 +78,11 @@ public class JsonataSourceGeneratorTests
         JsonElement result = StringConcatExpr.Evaluate(doc.RootElement, workspace);
 
         // FirstName & ' ' & Surname = "Fred Smith"
-        Assert.Equal(JsonValueKind.String, result.ValueKind);
-        Assert.Equal("Fred Smith", result.GetString());
+        Assert.AreEqual(JsonValueKind.String, result.ValueKind);
+        Assert.AreEqual("Fred Smith", result.GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SumProduct_EvaluatesCorrectly()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -92,11 +93,11 @@ public class JsonataSourceGeneratorTests
         // = 34.45*2 + 21.67*1 + 34.45*4 + 107.99*1
         // = 68.90 + 21.67 + 137.80 + 107.99
         // = 336.36
-        Assert.Equal(JsonValueKind.Number, result.ValueKind);
-        Assert.Equal("336.36", result.GetRawText());
+        Assert.AreEqual(JsonValueKind.Number, result.ValueKind);
+        Assert.AreEqual("336.36", result.GetRawText());
     }
 
-    [Fact]
+    [TestMethod]
     public void PredicateFilter_EvaluatesCorrectly()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -104,11 +105,11 @@ public class JsonataSourceGeneratorTests
         JsonElement result = PredicateFilterExpr.Evaluate(doc.RootElement, workspace);
 
         // Contact.Phone[type = 'mobile'].number = "07700 900 333"
-        Assert.Equal(JsonValueKind.String, result.ValueKind);
-        Assert.Equal("07700 900 333", result.GetString());
+        Assert.AreEqual(JsonValueKind.String, result.ValueKind);
+        Assert.AreEqual("07700 900 333", result.GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Map_EvaluatesCorrectly()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -116,9 +117,9 @@ public class JsonataSourceGeneratorTests
         JsonElement result = MapExpr.Evaluate(doc.RootElement, workspace);
 
         // $map(Account.Order, function($o) { $o.OrderID }) = ["order103", "order104"]
-        Assert.Equal(JsonValueKind.Array, result.ValueKind);
-        Assert.Equal(2, result.GetArrayLength());
-        Assert.Equal("order103", result[0].GetString());
-        Assert.Equal("order104", result[1].GetString());
+        Assert.AreEqual(JsonValueKind.Array, result.ValueKind);
+        Assert.AreEqual(2, result.GetArrayLength());
+        Assert.AreEqual("order103", result[0].GetString());
+        Assert.AreEqual("order104", result[1].GetString());
     }
 }

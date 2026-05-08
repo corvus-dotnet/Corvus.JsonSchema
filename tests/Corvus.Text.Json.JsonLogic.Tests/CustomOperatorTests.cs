@@ -3,16 +3,17 @@
 // </copyright>
 
 using Corvus.Text.Json.JsonLogic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.Tests;
 
 /// <summary>
 /// Tests for the <see cref="IOperatorCompiler"/> extensibility mechanism.
 /// </summary>
+[TestClass]
 public class CustomOperatorTests
 {
-    [Fact]
+    [TestMethod]
     public void CustomOperator_DoubleIt_EvaluatesCorrectly()
     {
         // Register a custom "double_it" operator that doubles a number
@@ -29,11 +30,11 @@ public class CustomOperatorTests
         JsonLogicRule rule = new(ruleDoc.RootElement);
         JsonElement result = evaluator.Evaluate(rule, dataDoc.RootElement);
 
-        Assert.Equal(JsonValueKind.Number, result.ValueKind);
-        Assert.Equal(10.0, result.GetDouble());
+        Assert.AreEqual(JsonValueKind.Number, result.ValueKind);
+        Assert.AreEqual(10.0, result.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomOperator_OverridesBuiltIn()
     {
         // Override the built-in "+" operator with one that always returns 42
@@ -50,10 +51,10 @@ public class CustomOperatorTests
         JsonLogicRule rule = new(ruleDoc.RootElement);
         JsonElement result = evaluator.Evaluate(rule, dataDoc.RootElement);
 
-        Assert.Equal(42.0, result.GetDouble());
+        Assert.AreEqual(42.0, result.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomOperator_WorksInsideBuiltInOps()
     {
         // Use a custom operator as a sub-expression inside a standard operator
@@ -72,10 +73,10 @@ public class CustomOperatorTests
         JsonLogicRule rule = new(ruleDoc.RootElement);
         JsonElement result = evaluator.Evaluate(rule, dataDoc.RootElement);
 
-        Assert.Equal(10.0, result.GetDouble());
+        Assert.AreEqual(10.0, result.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomOperator_WithWorkspace()
     {
         var customOps = new Dictionary<string, IOperatorCompiler>
@@ -92,10 +93,10 @@ public class CustomOperatorTests
         JsonLogicRule rule = new(ruleDoc.RootElement);
         JsonElement result = evaluator.Evaluate(rule, dataDoc.RootElement, workspace);
 
-        Assert.Equal(14.0, result.GetDouble());
+        Assert.AreEqual(14.0, result.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomOperator_CachingWorks()
     {
         var customOps = new Dictionary<string, IOperatorCompiler>
@@ -111,15 +112,15 @@ public class CustomOperatorTests
         // First evaluation
         using var data1 = ParsedJsonDocument<JsonElement>.Parse("""{"x":3}""");
         JsonElement result1 = evaluator.Evaluate(rule, data1.RootElement);
-        Assert.Equal(6.0, result1.GetDouble());
+        Assert.AreEqual(6.0, result1.GetDouble());
 
         // Second evaluation with same rule, different data (should use cache)
         using var data2 = ParsedJsonDocument<JsonElement>.Parse("""{"x":10}""");
         JsonElement result2 = evaluator.Evaluate(rule, data2.RootElement);
-        Assert.Equal(20.0, result2.GetDouble());
+        Assert.AreEqual(20.0, result2.GetDouble());
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomOperator_ZeroArguments()
     {
         var customOps = new Dictionary<string, IOperatorCompiler>
@@ -135,11 +136,11 @@ public class CustomOperatorTests
         JsonLogicRule rule = new(ruleDoc.RootElement);
         JsonElement result = evaluator.Evaluate(rule, dataDoc.RootElement);
 
-        Assert.Equal(JsonValueKind.Number, result.ValueKind);
-        Assert.Equal(3.14159, result.GetDouble(), 5);
+        Assert.AreEqual(JsonValueKind.Number, result.ValueKind);
+        Assert.AreEqual(3.14159, result.GetDouble(), 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void DefaultEvaluator_StillWorksWithoutCustomOps()
     {
         using var ruleDoc = ParsedJsonDocument<JsonElement>.Parse("""{"+":[1,2,3]}""");
@@ -148,7 +149,7 @@ public class CustomOperatorTests
         JsonLogicRule rule = new(ruleDoc.RootElement);
         JsonElement result = JsonLogicEvaluator.Default.Evaluate(rule, dataDoc.RootElement);
 
-        Assert.Equal("6", result.GetRawText());
+        Assert.AreEqual("6", result.GetRawText());
     }
 
     // ─── Test IOperatorCompiler implementations ─────────────────

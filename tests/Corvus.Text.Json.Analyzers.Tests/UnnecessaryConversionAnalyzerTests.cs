@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Analyzers.UnnecessaryConversionAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Analyzers.Tests;
 /// <summary>
 /// Tests for CTJ002: Unnecessary conversion to .NET type.
 /// </summary>
+[TestClass]
 public class UnnecessaryConversionAnalyzerTests
 {
     // Stubs: Source struct with implicit conversions, and types that use it.
@@ -64,7 +65,7 @@ namespace TestLib
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task CastToString_WhenSourceAcceptsOriginal_FiresCTJ002()
     {
         const string testCode = Stubs + @"
@@ -86,7 +87,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(0).WithArguments("string"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CastToInt_WhenSourceAcceptsOriginal_FiresCTJ002()
     {
         const string testCode = Stubs + @"
@@ -108,7 +109,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(0).WithArguments("int"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CastToString_InAddItem_FiresCTJ002()
     {
         const string testCode = Stubs + @"
@@ -130,7 +131,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(0).WithArguments("string"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CodeFix_RemovesCast()
     {
         var test = new CodeFixTest
@@ -168,7 +169,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NoCast_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -188,7 +189,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CastToSameAsParameter_NoDiagnostic()
     {
         // When the cast target type IS the parameter type, it's not unnecessary.
@@ -214,7 +215,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CastToTypeWithNoImplicitConversion_NoDiagnostic()
     {
         // Source has no implicit conversion from Widget, so the cast to string IS necessary

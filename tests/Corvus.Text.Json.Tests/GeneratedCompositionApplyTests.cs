@@ -4,15 +4,16 @@
 
 using Corvus.Text.Json;
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
+[TestClass]
 public class GeneratedCompositionApplyTests
 {
     #region CompositionAnyOf Apply Tests
 
-    [Fact]
+    [TestMethod]
     public void AnyOf_Apply_RequiredKindAndMessage_MergesProperties()
     {
         using var workspace = JsonWorkspace.Create();
@@ -34,10 +35,10 @@ public class GeneratedCompositionApplyTests
             matchRequiredCodeAndKind: static (in _) => "numeric",
             defaultMatch: static (in _) => "default");
 
-        Assert.Equal("text:hello", result);
+        Assert.AreEqual("text:hello", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnyOf_Apply_RequiredCodeAndKind_MergesProperties()
     {
         using var workspace = JsonWorkspace.Create();
@@ -59,10 +60,10 @@ public class GeneratedCompositionApplyTests
             matchRequiredCodeAndKind: static (in v) => "numeric:" + ((int)v.Code).ToString(),
             defaultMatch: static (in _) => "default");
 
-        Assert.Equal("numeric:42", result);
+        Assert.AreEqual("numeric:42", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void AnyOf_Apply_OverwritesExistingProperties()
     {
         using var workspace = JsonWorkspace.Create();
@@ -80,19 +81,19 @@ public class GeneratedCompositionApplyTests
         // After overwrite, kind should be "numeric" and code=99, but message still present
         using var asTextVariant =
             ParsedJsonDocument<CompositionAnyOf.RequiredKindAndMessage>.Parse(json);
-        Assert.Equal("original", asTextVariant.RootElement.Message.ToString());
+        Assert.AreEqual("original", asTextVariant.RootElement.Message.ToString());
 
         using var asNumericVariant =
             ParsedJsonDocument<CompositionAnyOf.RequiredCodeAndKind>.Parse(json);
-        Assert.Equal("numeric", asNumericVariant.RootElement.Kind.ToString());
-        Assert.Equal(99, (int)asNumericVariant.RootElement.Code);
+        Assert.AreEqual("numeric", asNumericVariant.RootElement.Kind.ToString());
+        Assert.AreEqual(99, (int)asNumericVariant.RootElement.Code);
     }
 
     #endregion
 
     #region AllOfObjectWithProperties Apply Tests
 
-    [Fact]
+    [TestMethod]
     public void AllOfWithProperties_Apply_RequiredName_MergesIntoLocalProperties()
     {
         using var workspace = JsonWorkspace.Create();
@@ -108,12 +109,12 @@ public class GeneratedCompositionApplyTests
         string json = root.ToString();
 
         using var roundTrip = ParsedJsonDocument<AllOfObjectWithProperties>.Parse(json);
-        Assert.Equal("Bob", roundTrip.RootElement.Name.ToString());
-        Assert.Equal(30, (int)roundTrip.RootElement.Age);
-        Assert.Equal("a@b.com", roundTrip.RootElement.Email.ToString());
+        Assert.AreEqual("Bob", roundTrip.RootElement.Name.ToString());
+        Assert.AreEqual(30, (int)roundTrip.RootElement.Age);
+        Assert.AreEqual("a@b.com", roundTrip.RootElement.Email.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfWithProperties_Apply_OverwritesExistingProperty()
     {
         using var workspace = JsonWorkspace.Create();
@@ -129,15 +130,15 @@ public class GeneratedCompositionApplyTests
         string json = root.ToString();
 
         using var roundTrip = ParsedJsonDocument<AllOfObjectWithProperties>.Parse(json);
-        Assert.Equal("Bob", roundTrip.RootElement.Name.ToString());
-        Assert.Equal("a@b.com", roundTrip.RootElement.Email.ToString());
+        Assert.AreEqual("Bob", roundTrip.RootElement.Name.ToString());
+        Assert.AreEqual("a@b.com", roundTrip.RootElement.Email.ToString());
     }
 
     #endregion
 
     #region CompositionAllOf Additional Apply Tests
 
-    [Fact]
+    [TestMethod]
     public void AllOf_Apply_BothComponents_MergesAll()
     {
         using var workspace = JsonWorkspace.Create();
@@ -156,11 +157,11 @@ public class GeneratedCompositionApplyTests
         string json = root.ToString();
 
         using var roundTrip = ParsedJsonDocument<CompositionAllOf>.Parse(json);
-        Assert.Equal("Alice", roundTrip.RootElement.FirstName.ToString());
-        Assert.Equal("Smith", roundTrip.RootElement.LastName.ToString());
+        Assert.AreEqual("Alice", roundTrip.RootElement.FirstName.ToString());
+        Assert.AreEqual("Smith", roundTrip.RootElement.LastName.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOf_Apply_EmptyComponent_PreservesExisting()
     {
         using var workspace = JsonWorkspace.Create();
@@ -176,15 +177,15 @@ public class GeneratedCompositionApplyTests
         string json = root.ToString();
 
         using var roundTrip = ParsedJsonDocument<CompositionAllOf>.Parse(json);
-        Assert.Equal("Alice", roundTrip.RootElement.FirstName.ToString());
-        Assert.Equal("Smith", roundTrip.RootElement.LastName.ToString());
+        Assert.AreEqual("Alice", roundTrip.RootElement.FirstName.ToString());
+        Assert.AreEqual("Smith", roundTrip.RootElement.LastName.ToString());
     }
 
     #endregion
 
     #region CompositionAllOf Empty CreateBuilder Tests (all-optional properties ambiguity check)
 
-    [Fact]
+    [TestMethod]
     public void AllOf_AllOptionalProperties_ConvenienceOverloadAsEmpty_CreatesEmptyObject()
     {
         // CompositionAllOf has allOf with two object schemas, both with only optional properties.
@@ -203,10 +204,10 @@ public class GeneratedCompositionApplyTests
         using var parsedSecond = ParsedJsonDocument<CompositionAllOf.AllOf1Entity>.Parse("""{"lastName":"Smith"}""");
         mutable.Apply(parsedSecond.RootElement);
 
-        Assert.Equal("""{"firstName":"Alice","lastName":"Smith"}""", mutable.ToString());
+        Assert.AreEqual("""{"firstName":"Alice","lastName":"Smith"}""", mutable.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOf_AllOptionalProperties_ConvenienceOverloadAsEmpty_ThenApplySingle()
     {
         using var workspace = JsonWorkspace.Create();
@@ -218,10 +219,10 @@ public class GeneratedCompositionApplyTests
         using var parsedFirst = ParsedJsonDocument<CompositionAllOf.AllOf0Entity>.Parse("""{"firstName":"Bob"}""");
         mutable.Apply(parsedFirst.RootElement);
 
-        Assert.Equal("""{"firstName":"Bob"}""", mutable.ToString());
+        Assert.AreEqual("""{"firstName":"Bob"}""", mutable.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOf_ConvenienceOverload_StillCallableWithNamedParameters()
     {
         // Verify the convenience overload with named parameters is also callable.
@@ -229,10 +230,10 @@ public class GeneratedCompositionApplyTests
         using JsonDocumentBuilder<CompositionAllOf.Mutable> builder =
             CompositionAllOf.CreateBuilder(workspace, firstName: "Carol", lastName: "Jones");
 
-        Assert.Equal("""{"firstName":"Carol","lastName":"Jones"}""", builder.RootElement.ToString());
+        Assert.AreEqual("""{"firstName":"Carol","lastName":"Jones"}""", builder.RootElement.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOf_ConvenienceOverloadPartialParams_ThenApply_OverwritesExistingProperties()
     {
         using var workspace = JsonWorkspace.Create();
@@ -244,7 +245,7 @@ public class GeneratedCompositionApplyTests
         using var updated = ParsedJsonDocument<CompositionAllOf.AllOf0Entity>.Parse("""{"firstName":"Updated"}""");
         mutable.Apply(updated.RootElement);
 
-        Assert.Equal("""{"firstName":"Updated"}""", mutable.ToString());
+        Assert.AreEqual("""{"firstName":"Updated"}""", mutable.ToString());
     }
 
     #endregion

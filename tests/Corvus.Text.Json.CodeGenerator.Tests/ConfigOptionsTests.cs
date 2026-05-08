@@ -1,5 +1,5 @@
 using System.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
@@ -7,6 +7,7 @@ namespace Corvus.Text.Json.CodeGenerator.Tests;
 /// Tests for advanced config options: additionalFiles, namedTypes, namespaces,
 /// assertFormat, useUnixLineEndings, addExplicitUsings, etc.
 /// </summary>
+[TestClass]
 public class ConfigOptionsTests : IDisposable
 {
     private readonly string _outputDir;
@@ -24,7 +25,7 @@ public class ConfigOptionsTests : IDisposable
         CodeGeneratorRunner.CleanupTempDirectory(_tempConfigDir);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithAdditionalFiles_ResolvesExternalRef()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -47,19 +48,19 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0, $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+        Assert.IsTrue(files.Length > 0, $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
 
         // Should have generated types for the address reference too
         bool hasAddressType = files.Any(f =>
             Path.GetFileName(f).Contains("Address", StringComparison.OrdinalIgnoreCase));
-        Assert.True(hasAddressType,
+        Assert.IsTrue(hasAddressType,
             $"Expected an Address type from the additional file. Files: {string.Join(", ", files.Select(Path.GetFileName))}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithNamedTypes_UsesSpecifiedTypeName()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -93,19 +94,19 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0, $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+        Assert.IsTrue(files.Length > 0, $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
 
         // The named type should appear in the generated files
         bool hasNamedType = files.Any(f =>
             Path.GetFileName(f).Contains("PostalAddress", StringComparison.OrdinalIgnoreCase));
-        Assert.True(hasNamedType,
+        Assert.IsTrue(hasNamedType,
             $"Expected a PostalAddress type from namedTypes. Files: {string.Join(", ", files.Select(Path.GetFileName))}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithNamedTypeAndNamespace_GeneratesAtSpecifiedNamespace()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -140,25 +141,25 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0, $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+        Assert.IsTrue(files.Length > 0, $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
 
         // The named type with explicit namespace should be generated at root level
         bool hasType = files.Any(f =>
             Path.GetFileName(f).Contains("MailingAddress", StringComparison.OrdinalIgnoreCase));
-        Assert.True(hasType,
+        Assert.IsTrue(hasType,
             $"Expected a MailingAddress type. Files: {string.Join(", ", files.Select(Path.GetFileName))}");
 
         // Verify the generated file contains the specified namespace
         string matchingFile = files.First(f =>
             Path.GetFileName(f).Contains("MailingAddress", StringComparison.OrdinalIgnoreCase));
         string content = await File.ReadAllTextAsync(matchingFile);
-        Assert.Contains("TestGenerated.Shared", content);
+        StringAssert.Contains(content, "TestGenerated.Shared");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithOutputRootNamespace_OverridesDefault()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -178,10 +179,10 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0, $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
+        Assert.IsTrue(files.Length > 0, $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
 
         // Verify the root type file uses the overridden namespace
         string rootFile = files.First(f =>
@@ -189,10 +190,10 @@ public class ConfigOptionsTests : IDisposable
             && !Path.GetFileName(f).Contains('.', StringComparison.Ordinal)
                 || Path.GetFileName(f).Equals("CustomPerson.cs", StringComparison.OrdinalIgnoreCase));
         string content = await File.ReadAllTextAsync(rootFile);
-        Assert.Contains("TestGenerated.Custom", content);
+        StringAssert.Contains(content, "TestGenerated.Custom");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithUseUnixLineEndings_GeneratesLfOnly()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -208,18 +209,18 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0, "Expected generated files");
+        Assert.IsTrue(files.Length > 0, "Expected generated files");
 
         // Check that the generated files use LF, not CRLF
         string content = await File.ReadAllTextAsync(files[0]);
         Assert.DoesNotContain("\r\n", content);
-        Assert.Contains("\n", content);
+        StringAssert.Contains(content, "\n");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithAddExplicitUsings_IncludesUsingStatements()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -235,21 +236,21 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0, "Expected generated files");
+        Assert.IsTrue(files.Length > 0, "Expected generated files");
 
         // With explicit usings, the GlobalDeclarations file should contain 'using global::System;'
         string globalDecl = files.FirstOrDefault(f =>
             Path.GetFileName(f).Contains("GlobalDeclarations", StringComparison.OrdinalIgnoreCase));
-        Assert.NotNull(globalDecl);
+        Assert.IsNotNull(globalDecl);
 
         string content = await File.ReadAllTextAsync(globalDecl);
-        Assert.Contains("using global::System;", content);
+        StringAssert.Contains(content, "using global::System;");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithoutAddExplicitUsings_OmitsStandardUsings()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -265,21 +266,21 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0, "Expected generated files");
+        Assert.IsTrue(files.Length > 0, "Expected generated files");
 
         // Without explicit usings, the GlobalDeclarations file should NOT contain 'using global::System;'
         string globalDecl = files.FirstOrDefault(f =>
             Path.GetFileName(f).Contains("GlobalDeclarations", StringComparison.OrdinalIgnoreCase));
-        Assert.NotNull(globalDecl);
+        Assert.IsNotNull(globalDecl);
 
         string content = await File.ReadAllTextAsync(globalDecl);
         Assert.DoesNotContain("using global::System;", content);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithOutputMapFile_CreatesValidMapFile()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -296,8 +297,8 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
-        Assert.True(File.Exists(mapFile), $"Expected map file at {mapFile}");
+        Assert.AreEqual(0, result.ExitCode);
+        Assert.IsTrue(File.Exists(mapFile), $"Expected map file at {mapFile}");
 
         string mapContent = await File.ReadAllTextAsync(mapFile);
 
@@ -305,10 +306,10 @@ public class ConfigOptionsTests : IDisposable
         Assert.StartsWith("[", mapContent.TrimStart());
 
         // Map file should reference the generated type
-        Assert.Contains("MappedPerson", mapContent);
+        StringAssert.Contains(mapContent, "MappedPerson");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithAssertFormat_ProducesFiles()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -324,14 +325,14 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0,
+        Assert.IsTrue(files.Length > 0,
             $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithOptionalAsNullable_ProducesFiles()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -347,14 +348,14 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0,
+        Assert.IsTrue(files.Length > 0,
             $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithNamespaces_MapsSchemaUriToNamespace()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -384,14 +385,14 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0,
+        Assert.IsTrue(files.Length > 0,
             $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithSchemaVariant_Draft201909_ProducesFiles()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -407,10 +408,10 @@ public class ConfigOptionsTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 0,
+        Assert.IsTrue(files.Length > 0,
             $"Expected generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
     }
 

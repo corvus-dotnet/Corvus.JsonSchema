@@ -1,11 +1,12 @@
 using System.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
 /// <summary>
 /// Tests for the 'config' command that generates from a configuration file.
 /// </summary>
+[TestClass]
 public class ConfigCommandTests : IDisposable
 {
     private readonly string _outputDir;
@@ -23,7 +24,7 @@ public class ConfigCommandTests : IDisposable
         CodeGeneratorRunner.CleanupTempDirectory(_tempConfigDir);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_SingleType_ProducesFiles()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -38,13 +39,13 @@ public class ConfigCommandTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
-        Assert.True(
+        Assert.AreEqual(0, result.ExitCode);
+        Assert.IsTrue(
             Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Length > 0,
             $"Expected generated .cs files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_MultipleTypes_ProducesFilesForAll()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -60,13 +61,13 @@ public class ConfigCommandTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\"");
 
-        Assert.Equal(0, result.ExitCode);
+        Assert.AreEqual(0, result.ExitCode);
 
         string[] files = Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories);
-        Assert.True(files.Length > 1, $"Expected multiple generated files for multi-type config. Got {files.Length}. Stdout: {result.StandardOutput}");
+        Assert.IsTrue(files.Length > 1, $"Expected multiple generated files for multi-type config. Got {files.Length}. Stdout: {result.StandardOutput}");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Config_WithV4Engine_ProducesFiles()
     {
         string schemasDir = CodeGeneratorRunner.GetFixturePath("Schemas");
@@ -81,8 +82,8 @@ public class ConfigCommandTests : IDisposable
 
         ProcessResult result = await CodeGeneratorRunner.RunAsync($"config \"{configPath}\" --engine V4");
 
-        Assert.Equal(0, result.ExitCode);
-        Assert.True(
+        Assert.AreEqual(0, result.ExitCode);
+        Assert.IsTrue(
             Directory.GetFiles(_outputDir, "*.cs", SearchOption.AllDirectories).Length > 0,
             $"Expected V4 generated files. Stdout: {result.StandardOutput} Stderr: {result.StandardError}");
     }

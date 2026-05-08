@@ -1,7 +1,7 @@
-﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
+// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -12,8 +12,8 @@ internal class DummyResultsCollector : IJsonSchemaResultsCollector
 
     public void AssertState()
     {
-        Assert.Equal(1, _childContextCount);
-        Assert.Equal(0, _schemaLocationCount);
+        Assert.AreEqual(1, _childContextCount);
+        Assert.AreEqual(0, _schemaLocationCount);
     }
 
     public int BeginChildContext(int parentSequenceNumber, JsonSchemaPathProvider reducedEvaluationPath = null, JsonSchemaPathProvider schemaEvaluationPath = null, JsonSchemaPathProvider documentEvaluationPath = null) => _childContextCount++;

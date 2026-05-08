@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="MSTest.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
@@ -18,7 +18,13 @@
     <NoWarn Condition="'$(TargetFramework)' == 'net481'">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
     <!-- Warnings to always disable -->
     <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065;CS8632</NoWarn>
-    <NoWarn>$(NoWarn);xUnit1031;xUnit2013;xUnit2017;CA2265</NoWarn>
+    <NoWarn>$(NoWarn);CA2265</NoWarn>
+    <!-- MSTest 4.x handles implicit numeric conversions in DataRow at runtime -->
+    <NoWarn>$(NoWarn);MSTEST0014</NoWarn>
+    <!-- Assertions with known-true conditions are intentional in edge case tests -->
+    <NoWarn>$(NoWarn);MSTEST0032</NoWarn>
+    <!-- Some test methods use internal types via InternalsVisibleTo -->
+    <NoWarn>$(NoWarn);MSTEST0003</NoWarn>
     <!-- these tests depend on the pdb files. Causes test failures like:
           [FAIL] Corvus.Text.Json.Tests.DebuggerTests.DefaultJsonElement -->
     <DebuggerSupport Condition="'$(DebuggerSupport)' == '' and '$(TargetOS)' == 'browser'">true</DebuggerSupport>
@@ -39,7 +45,6 @@
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <Nullable>disable</Nullable>
     <IsPackable>false</IsPackable>
-    <IsTestProject>true</IsTestProject>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
     <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
@@ -54,10 +59,6 @@
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
-    <PackageReference Include="coverlet.collector">
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-      <PrivateAssets>all</PrivateAssets>
-    </PackageReference>
     <PackageReference Include="Microsoft.Bcl.Memory" />
     <PackageReference Include="Microsoft.Extensions.DependencyModel" />
   </ItemGroup>
@@ -121,6 +122,7 @@
     <Compile Include="MutableDocumentCoverageTests.cs" />
     <Compile Include="PercentBufferOverflowTests.cs" />
     <Compile Include="AnnotationProducerCoverageTests.cs" />
+    <Compile Include="TestExtensions.cs" />
     <Compile Include="ValueStackCoverageTests.cs" />
     <Compile Include="LargeArrayBuilderTests.cs" />
     <Compile Include="EvaluatorMessageCoverageTests.cs" />
@@ -359,14 +361,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src-v4\Corvus.Json.CodeGeneration\Corvus.Json.CodeGeneration.csproj" />
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
-    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
-    <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="Newtonsoft.Json" />
-    <PackageReference Include="xunit" />
-    <PackageReference Include="xunit.runner.visualstudio">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
   </ItemGroup>
   <!-- Only include System.Text.Json for net481 as it's included in .NET 6+ runtime -->
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
@@ -391,20 +386,11 @@
     <ProjectReference Include="..\Corvus.Text.Json.Tests.MigrationModels.V5\Corvus.Text.Json.Tests.MigrationModels.V5.csproj" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
-    <PackageReference Include="Microsoft.DotNet.XUnitAssert">
-    </PackageReference>
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator">
       <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Remove="..\..\Common\tests\xunit.runner.json" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="$(CommonTestPath)xunit.runner.json" CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="JsonSchemaTestSuite\**\*.cs" />

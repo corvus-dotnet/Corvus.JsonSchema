@@ -7,7 +7,6 @@ using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 
-
 namespace Corvus.Text.Json.CodeGenerator.Tests;
 
 /// <summary>
@@ -15,6 +14,7 @@ namespace Corvus.Text.Json.CodeGenerator.Tests;
 /// <see cref="CallbackDocumentResolver"/>, <see cref="PrepopulatedDocumentResolver"/>,
 /// and <see cref="FileSystemDocumentResolver"/>.
 /// </summary>
+[TestClass]
 public sealed class DocumentResolverCoverageTests : IDisposable
 {
     private readonly string tempDir;
@@ -35,7 +35,7 @@ public sealed class DocumentResolverCoverageTests : IDisposable
 
     #region CallbackDocumentResolver
 
-    [Fact]
+    [TestMethod]
     public async Task CallbackDocumentResolver_ResolvesViaCallback()
     {
         // Arrange
@@ -55,12 +55,12 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(System.Text.Json.JsonValueKind.Object, result.Value.ValueKind);
-        Assert.Equal("string", result.Value.GetProperty("type").GetString());
+        Assert.IsNotNull(result);
+        Assert.AreEqual(System.Text.Json.JsonValueKind.Object, result.Value.ValueKind);
+        Assert.AreEqual("string", result.Value.GetProperty("type").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CallbackDocumentResolver_CachesResolvedDocument()
     {
         // Arrange
@@ -78,12 +78,12 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? second = await resolver.TryResolve(reference);
 
         // Assert - callback called only once (second time resolved from cache)
-        Assert.Equal(1, callbackCount);
-        Assert.NotNull(first);
-        Assert.NotNull(second);
+        Assert.AreEqual(1, callbackCount);
+        Assert.IsNotNull(first);
+        Assert.IsNotNull(second);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CallbackDocumentResolver_ReturnsNullForUnresolvable()
     {
         // Arrange
@@ -94,10 +94,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CallbackDocumentResolver_AddDocumentPreloadsCache()
     {
         // Arrange
@@ -117,12 +117,12 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert - resolved from preloaded cache, callback never called
-        Assert.Equal(0, callbackCount);
-        Assert.NotNull(result);
-        Assert.True(result.Value.GetProperty("preloaded").GetBoolean());
+        Assert.AreEqual(0, callbackCount);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.Value.GetProperty("preloaded").GetBoolean());
     }
 
-    [Fact]
+    [TestMethod]
     public void CallbackDocumentResolver_Reset_ClearsCache()
     {
         // Arrange
@@ -136,7 +136,7 @@ public sealed class DocumentResolverCoverageTests : IDisposable
 
     #region PrepopulatedDocumentResolver
 
-    [Fact]
+    [TestMethod]
     public async Task PrepopulatedDocumentResolver_AddAndResolve()
     {
         // Arrange
@@ -148,12 +148,12 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(new JsonReference("test://doc.json"));
 
         // Assert
-        Assert.True(added);
-        Assert.NotNull(result);
-        Assert.Equal("test", result.Value.GetProperty("name").GetString());
+        Assert.IsTrue(added);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("test", result.Value.GetProperty("name").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PrepopulatedDocumentResolver_AddDuplicate_ReturnsFalse()
     {
         // Arrange
@@ -166,16 +166,16 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         bool second = resolver.AddDocument("test://dup.json", doc2);
 
         // Assert
-        Assert.True(first);
-        Assert.False(second);
+        Assert.IsTrue(first);
+        Assert.IsFalse(second);
 
         // The original is still returned
         System.Text.Json.JsonElement? result = await resolver.TryResolve(new JsonReference("test://dup.json"));
-        Assert.NotNull(result);
-        Assert.True(result.Value.GetProperty("first").GetBoolean());
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.Value.GetProperty("first").GetBoolean());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PrepopulatedDocumentResolver_ResolveWithPointer()
     {
         // Arrange
@@ -189,11 +189,11 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("string", result.Value.GetProperty("type").GetString());
+        Assert.IsNotNull(result);
+        Assert.AreEqual("string", result.Value.GetProperty("type").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PrepopulatedDocumentResolver_ResolveUnknownUri_ReturnsNull()
     {
         // Arrange
@@ -203,10 +203,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(new JsonReference("test://unknown.json"));
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PrepopulatedDocumentResolver_Reset_ClearsDocuments()
     {
         // Arrange
@@ -219,10 +219,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(new JsonReference("test://reset.json"));
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void PrepopulatedDocumentResolver_Dispose_ThrowsOnSubsequentUse()
     {
         // Arrange
@@ -232,7 +232,7 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         resolver.Dispose();
 
         // Assert
-        Assert.Throws<ObjectDisposedException>(() =>
+        Assert.ThrowsExactly<ObjectDisposedException>(() =>
             resolver.AddDocument("test://x.json", JsonDocument.Parse("{}")));
     }
 
@@ -240,46 +240,46 @@ public sealed class DocumentResolverCoverageTests : IDisposable
 
     #region FileSystemDocumentResolver
 
-    [Fact]
+    [TestMethod]
     public void FileSystemDocumentResolver_ConstructorWithBaseDirectory()
     {
         // Act & Assert - constructor with explicit base directory
         using var resolver = new FileSystemDocumentResolver(this.tempDir);
-        Assert.NotNull(resolver);
+        Assert.IsNotNull(resolver);
     }
 
-    [Fact]
+    [TestMethod]
     public void FileSystemDocumentResolver_ConstructorWithBaseDirectory_ThrowsOnEmpty()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() => new FileSystemDocumentResolver(string.Empty));
+        Assert.ThrowsExactly<ArgumentException>(() => new FileSystemDocumentResolver(string.Empty));
     }
 
-    [Fact]
+    [TestMethod]
     public void FileSystemDocumentResolver_ConstructorWithPreProcessor()
     {
         // Act & Assert - constructor with pre-processor
         using var resolver = new FileSystemDocumentResolver(new PassthroughPreProcessor());
-        Assert.NotNull(resolver);
+        Assert.IsNotNull(resolver);
     }
 
-    [Fact]
+    [TestMethod]
     public void FileSystemDocumentResolver_ConstructorWithBaseDirectoryAndPreProcessor()
     {
         // Act & Assert
         using var resolver = new FileSystemDocumentResolver(this.tempDir, new PassthroughPreProcessor());
-        Assert.NotNull(resolver);
+        Assert.IsNotNull(resolver);
     }
 
-    [Fact]
+    [TestMethod]
     public void FileSystemDocumentResolver_ConstructorWithBaseDirectoryAndPreProcessor_ThrowsOnEmpty()
     {
         // Act & Assert
-        Assert.Throws<ArgumentException>(() =>
+        Assert.ThrowsExactly<ArgumentException>(() =>
             new FileSystemDocumentResolver(string.Empty, new PassthroughPreProcessor()));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_ResolvesLocalFile()
     {
         // Arrange
@@ -294,12 +294,12 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal(System.Text.Json.JsonValueKind.Object, result.Value.ValueKind);
-        Assert.Equal("object", result.Value.GetProperty("type").GetString());
+        Assert.IsNotNull(result);
+        Assert.AreEqual(System.Text.Json.JsonValueKind.Object, result.Value.ValueKind);
+        Assert.AreEqual("object", result.Value.GetProperty("type").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_ResolvesWithPointer()
     {
         // Arrange
@@ -314,11 +314,11 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("string", result.Value.GetProperty("type").GetString());
+        Assert.IsNotNull(result);
+        Assert.AreEqual("string", result.Value.GetProperty("type").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_ResolvesWithPreProcessor()
     {
         // Arrange
@@ -333,11 +333,11 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.True(result.Value.GetProperty("raw").GetBoolean());
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.Value.GetProperty("raw").GetBoolean());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_NonExistentFile_ReturnsNull()
     {
         // Arrange
@@ -348,10 +348,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_CachesResolvedDocument()
     {
         // Arrange
@@ -370,13 +370,13 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? second = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.NotNull(first);
-        Assert.NotNull(second);
-        Assert.Equal(1, first.Value.GetProperty("version").GetInt32());
-        Assert.Equal(1, second.Value.GetProperty("version").GetInt32());
+        Assert.IsNotNull(first);
+        Assert.IsNotNull(second);
+        Assert.AreEqual(1, first.Value.GetProperty("version").GetInt32());
+        Assert.AreEqual(1, second.Value.GetProperty("version").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_AddDocument_PreloadsCache()
     {
         // Arrange
@@ -391,11 +391,11 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert - resolves from AddDocument cache
-        Assert.NotNull(result);
-        Assert.True(result.Value.GetProperty("added").GetBoolean());
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.Value.GetProperty("added").GetBoolean());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_Reset_ClearsCache()
     {
         // Arrange
@@ -416,10 +416,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_Dispose_ThrowsOnSubsequentUse()
     {
         // Arrange
@@ -429,7 +429,7 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         resolver.Dispose();
 
         // Assert
-        await Assert.ThrowsAsync<ObjectDisposedException>(async () =>
+        await Assert.ThrowsExactlyAsync<ObjectDisposedException>(async () =>
             await resolver.TryResolve(new JsonReference("any.json")));
     }
 
@@ -437,7 +437,7 @@ public sealed class DocumentResolverCoverageTests : IDisposable
 
     #region CompoundDocumentResolver
 
-    [Fact]
+    [TestMethod]
     public async Task CompoundDocumentResolver_ResolvesFromFirstMatchingResolver()
     {
         // Arrange
@@ -452,11 +452,11 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.NotNull(result);
-        Assert.Equal("prepopulated", result.Value.GetProperty("source").GetString());
+        Assert.IsNotNull(result);
+        Assert.AreEqual("prepopulated", result.Value.GetProperty("source").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompoundDocumentResolver_ReturnsNullWhenNoResolverMatches()
     {
         // Arrange
@@ -467,10 +467,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
         // Assert
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompoundDocumentResolver_AddDocument_AddsToAllResolvers()
     {
         // Arrange
@@ -484,10 +484,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         bool result = resolver.AddDocument("test://added.json", doc);
 
         // Assert
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompoundDocumentResolver_Reset_ResetsAllResolvers()
     {
         // Arrange
@@ -498,7 +498,7 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         resolver.Reset();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompoundDocumentResolver_CachedDocument_WithValidFragment_ReturnsElement()
     {
         // Covers CompoundDocumentResolver.TryResolve lines 42-45 (cached doc + fragment resolution success)
@@ -510,12 +510,12 @@ public sealed class DocumentResolverCoverageTests : IDisposable
 
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
-        Assert.NotNull(result);
-        Assert.Equal(System.Text.Json.JsonValueKind.Number, result.Value.ValueKind);
-        Assert.Equal(42, result.Value.GetInt32());
+        Assert.IsNotNull(result);
+        Assert.AreEqual(System.Text.Json.JsonValueKind.Number, result.Value.ValueKind);
+        Assert.AreEqual(42, result.Value.GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CompoundDocumentResolver_CachedDocument_WithInvalidFragment_ReturnsNull()
     {
         // Covers CompoundDocumentResolver.TryResolve line 48 (cached doc + fragment resolution failure)
@@ -527,10 +527,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
 
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_ParameterlessConstructor_UsesCurrentDirectory()
     {
         // Covers FileSystemDocumentResolver lines 64-67 (parameterless constructor)
@@ -540,10 +540,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         var reference = new JsonReference("nonexistent-file-xyz-12345.json");
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_CachedDocument_WithInvalidFragment_ReturnsNull()
     {
         // Covers FileSystemDocumentResolver.TryResolve line 91 (cached doc + failed fragment)
@@ -555,16 +555,16 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         // First resolve caches the document
         var refWithRoot = new JsonReference("cached-schema.json");
         System.Text.Json.JsonElement? first = await resolver.TryResolve(refWithRoot);
-        Assert.NotNull(first);
+        Assert.IsNotNull(first);
 
         // Second resolve with invalid fragment hits the cached path line 91
         var refWithBadFragment = new JsonReference("cached-schema.json#/nonexistent/deep/path");
         System.Text.Json.JsonElement? second = await resolver.TryResolve(refWithBadFragment);
 
-        Assert.Null(second);
+        Assert.IsNull(second);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_FileNotFound_ReturnsNull()
     {
         // Covers FileSystemDocumentResolver.TryResolve line 126 (catch block)
@@ -573,10 +573,10 @@ public sealed class DocumentResolverCoverageTests : IDisposable
 
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PrepopulatedDocumentResolver_WithInvalidFragment_ReturnsNull()
     {
         // Covers PrepopulatedDocumentResolver line 50 (foreach completes without fragment match)
@@ -587,7 +587,7 @@ public sealed class DocumentResolverCoverageTests : IDisposable
         var reference = new JsonReference("test://schema.json#/nonexistent");
         System.Text.Json.JsonElement? result = await resolver.TryResolve(reference);
 
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
     #endregion

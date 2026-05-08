@@ -7,7 +7,7 @@ using System.Text;
 using System.Text.Json;
 using Corvus.Numerics;
 using NodaTime;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -16,119 +16,120 @@ namespace Corvus.Text.Json.Tests;
 /// - JsonElement.Source.WriteTo(Utf8JsonWriter) for all Source kinds
 /// - JsonElement.Mutable numeric Get* FormatException paths
 /// </summary>
-public static class SourceAndNumericCoverageTests
+[TestClass]
+public class SourceAndNumericCoverageTests
 {
     #region Source.WriteTo — exercises each Kind branch
 
-    [Fact]
-    public static void WriteTo_Null_WritesJsonNull()
+    [TestMethod]
+    public void WriteTo_Null_WritesJsonNull()
     {
         JsonElement.Source source = JsonElement.Source.Null();
         string result = WriteSourceToString(source);
-        Assert.Equal("null", result);
+        Assert.AreEqual("null", result);
     }
 
-    [Fact]
-    public static void WriteTo_True_WritesJsonTrue()
+    [TestMethod]
+    public void WriteTo_True_WritesJsonTrue()
     {
         JsonElement.Source source = true;
         string result = WriteSourceToString(source);
-        Assert.Equal("true", result);
+        Assert.AreEqual("true", result);
     }
 
-    [Fact]
-    public static void WriteTo_False_WritesJsonFalse()
+    [TestMethod]
+    public void WriteTo_False_WritesJsonFalse()
     {
         JsonElement.Source source = false;
         string result = WriteSourceToString(source);
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
-    [Fact]
-    public static void WriteTo_NumericSimpleType_Int_WritesNumber()
+    [TestMethod]
+    public void WriteTo_NumericSimpleType_Int_WritesNumber()
     {
         JsonElement.Source source = 42;
         string result = WriteSourceToString(source);
-        Assert.Equal("42", result);
+        Assert.AreEqual("42", result);
     }
 
-    [Fact]
-    public static void WriteTo_NumericSimpleType_Long_WritesNumber()
+    [TestMethod]
+    public void WriteTo_NumericSimpleType_Long_WritesNumber()
     {
         JsonElement.Source source = 9876543210L;
         string result = WriteSourceToString(source);
-        Assert.Equal("9876543210", result);
+        Assert.AreEqual("9876543210", result);
     }
 
-    [Fact]
-    public static void WriteTo_NumericSimpleType_Double_WritesNumber()
+    [TestMethod]
+    public void WriteTo_NumericSimpleType_Double_WritesNumber()
     {
         JsonElement.Source source = 3.14;
         string result = WriteSourceToString(source);
-        Assert.Contains("3.14", result);
+        StringAssert.Contains(result, "3.14");
     }
 
-    [Fact]
-    public static void WriteTo_FormattedNumber_WritesRawNumber()
+    [TestMethod]
+    public void WriteTo_FormattedNumber_WritesRawNumber()
     {
         JsonElement.Source source = JsonElement.Source.FormattedNumber("1.23e+10"u8);
         string result = WriteSourceToString(source);
-        Assert.Equal("1.23e+10", result);
+        Assert.AreEqual("1.23e+10", result);
     }
 
-    [Fact]
-    public static void WriteTo_StringSimpleType_Guid_WritesQuotedString()
+    [TestMethod]
+    public void WriteTo_StringSimpleType_Guid_WritesQuotedString()
     {
         Guid g = Guid.Parse("01234567-89ab-cdef-0123-456789abcdef");
         JsonElement.Source source = g;
         string result = WriteSourceToString(source);
-        Assert.Contains("01234567-89ab-cdef-0123-456789abcdef", result);
+        StringAssert.Contains(result, "01234567-89ab-cdef-0123-456789abcdef");
     }
 
-    [Fact]
-    public static void WriteTo_Utf16String_WritesQuotedString()
+    [TestMethod]
+    public void WriteTo_Utf16String_WritesQuotedString()
     {
         JsonElement.Source source = "hello world";
         string result = WriteSourceToString(source);
-        Assert.Equal("\"hello world\"", result);
+        Assert.AreEqual("\"hello world\"", result);
     }
 
-    [Fact]
-    public static void WriteTo_RawUtf8String_RequiresUnescaping_WritesString()
+    [TestMethod]
+    public void WriteTo_RawUtf8String_RequiresUnescaping_WritesString()
     {
         JsonElement.Source source = JsonElement.Source.RawString("raw\\nvalue"u8, requiresUnescaping: true);
         string result = WriteSourceToString(source);
-        Assert.Contains("raw", result);
+        StringAssert.Contains(result, "raw");
     }
 
-    [Fact]
-    public static void WriteTo_RawUtf8String_NotRequiresUnescaping_WritesString()
+    [TestMethod]
+    public void WriteTo_RawUtf8String_NotRequiresUnescaping_WritesString()
     {
         JsonElement.Source source = JsonElement.Source.RawString("simple"u8, requiresUnescaping: false);
         string result = WriteSourceToString(source);
-        Assert.Equal("\"simple\"", result);
+        Assert.AreEqual("\"simple\"", result);
     }
 
-    [Fact]
-    public static void WriteTo_Utf8String_WritesString()
+    [TestMethod]
+    public void WriteTo_Utf8String_WritesString()
     {
         // ReadOnlySpan<byte> implicit operator → Kind.Utf8String
         JsonElement.Source source = "utf8test"u8;
         string result = WriteSourceToString(source);
-        Assert.Equal("\"utf8test\"", result);
+        Assert.AreEqual("\"utf8test\"", result);
     }
 
-    [Fact]
-    public static void WriteTo_JsonElement_WritesElement()
+    [TestMethod]
+    public void WriteTo_JsonElement_WritesElement()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("""{"a":1}""");
         JsonElement.Source source = doc.RootElement;
         string result = WriteSourceToString(source);
-        Assert.Contains("\"a\"", result);
+        StringAssert.Contains(result, "\"a\"");
     }
 
-    [Fact]
-    public static void WriteTo_ObjectBuilder_ThrowsInvalidOperationException()
+    [TestMethod]
+    public void WriteTo_ObjectBuilder_ThrowsInvalidOperationException()
     {
         JsonElement.Source source = new(
             static (ref JsonElement.ObjectBuilder ob) =>
@@ -149,11 +150,11 @@ public static class SourceAndNumericCoverageTests
             threw = true;
         }
 
-        Assert.True(threw);
+        Assert.IsTrue(threw);
     }
 
-    [Fact]
-    public static void WriteTo_ArrayBuilder_ThrowsInvalidOperationException()
+    [TestMethod]
+    public void WriteTo_ArrayBuilder_ThrowsInvalidOperationException()
     {
         JsonElement.Source source = new(
             static (ref JsonElement.ArrayBuilder ab) =>
@@ -174,7 +175,7 @@ public static class SourceAndNumericCoverageTests
             threw = true;
         }
 
-        Assert.True(threw);
+        Assert.IsTrue(threw);
     }
 
     #endregion
@@ -190,20 +191,20 @@ public static class SourceAndNumericCoverageTests
     // Similarly, GetBigNumber's FormatException path (lines 3794-3795) is unreachable
     // because BigNumber can parse any valid JSON number up to 10,000 characters.
 
-    [Fact]
-    public static void GetBigInteger_NonInteger_ThrowsFormatException()
+    [TestMethod]
+    public void GetBigInteger_NonInteger_ThrowsFormatException()
     {
         // 3.14 is not an integer
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("3.14");
         using JsonDocumentBuilder<JsonElement.Mutable> builder = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<FormatException>(() => builder.RootElement.GetBigInteger());
+        Assert.ThrowsExactly<FormatException>(() => builder.RootElement.GetBigInteger());
     }
 
 #if NET9_0_OR_GREATER
-    [Fact]
-    public static void GetInt128_OverflowNumber_ThrowsFormatException()
+    [TestMethod]
+    public void GetInt128_OverflowNumber_ThrowsFormatException()
     {
         // Number that exceeds Int128.MaxValue (170141183460469231731687303715884105727, 39 digits)
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -211,17 +212,17 @@ public static class SourceAndNumericCoverageTests
             "999999999999999999999999999999999999999999");
         using JsonDocumentBuilder<JsonElement.Mutable> builder = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<FormatException>(() => builder.RootElement.GetInt128());
+        Assert.ThrowsExactly<FormatException>(() => builder.RootElement.GetInt128());
     }
 
-    [Fact]
-    public static void GetUInt128_NegativeNumber_ThrowsFormatException()
+    [TestMethod]
+    public void GetUInt128_NegativeNumber_ThrowsFormatException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("-1");
         using JsonDocumentBuilder<JsonElement.Mutable> builder = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<FormatException>(() => builder.RootElement.GetUInt128());
+        Assert.ThrowsExactly<FormatException>(() => builder.RootElement.GetUInt128());
     }
 
     // GetHalf FormatException path (line 3738-3739) is unreachable — see note above.
@@ -231,19 +232,19 @@ public static class SourceAndNumericCoverageTests
 
     #region Additional Source kind coverage via SetProperty (exercises AddAsProperty paths)
 
-    [Fact]
-    public static void SetProperty_NullSource_SetsPropertyToNull()
+    [TestMethod]
+    public void SetProperty_NullSource_SetsPropertyToNull()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}""");
         using JsonDocumentBuilder<JsonElement.Mutable> builder = source.RootElement.CreateBuilder(workspace);
 
         builder.RootElement.SetProperty("x"u8, JsonElement.Source.Null());
-        Assert.Equal(JsonValueKind.Null, builder.RootElement.GetProperty("x"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Null, builder.RootElement.GetProperty("x"u8).ValueKind);
     }
 
-    [Fact]
-    public static void SetProperty_BoolTrue_SetsPropertyToTrue()
+    [TestMethod]
+    public void SetProperty_BoolTrue_SetsPropertyToTrue()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}""");
@@ -251,11 +252,11 @@ public static class SourceAndNumericCoverageTests
 
         JsonElement.Source trueSource = true;
         builder.RootElement.SetProperty("x"u8, trueSource);
-        Assert.True(builder.RootElement.GetProperty("x"u8).GetBoolean());
+        Assert.IsTrue(builder.RootElement.GetProperty("x"u8).GetBoolean());
     }
 
-    [Fact]
-    public static void SetProperty_BoolFalse_SetsPropertyToFalse()
+    [TestMethod]
+    public void SetProperty_BoolFalse_SetsPropertyToFalse()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}""");
@@ -263,44 +264,44 @@ public static class SourceAndNumericCoverageTests
 
         JsonElement.Source falseSource = false;
         builder.RootElement.SetProperty("x"u8, falseSource);
-        Assert.False(builder.RootElement.GetProperty("x"u8).GetBoolean());
+        Assert.IsFalse(builder.RootElement.GetProperty("x"u8).GetBoolean());
     }
 
-    [Fact]
-    public static void SetProperty_FormattedNumber_SetsPropertyToNumber()
+    [TestMethod]
+    public void SetProperty_FormattedNumber_SetsPropertyToNumber()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}""");
         using JsonDocumentBuilder<JsonElement.Mutable> builder = source.RootElement.CreateBuilder(workspace);
 
         builder.RootElement.SetProperty("x"u8, JsonElement.Source.FormattedNumber("99.5"u8));
-        Assert.Equal(99.5, builder.RootElement.GetProperty("x"u8).GetDouble());
+        Assert.AreEqual(99.5, builder.RootElement.GetProperty("x"u8).GetDouble());
     }
 
-    [Fact]
-    public static void SetProperty_RawUtf8String_RequiresUnescaping_SetsProperty()
+    [TestMethod]
+    public void SetProperty_RawUtf8String_RequiresUnescaping_SetsProperty()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}""");
         using JsonDocumentBuilder<JsonElement.Mutable> builder = source.RootElement.CreateBuilder(workspace);
 
         builder.RootElement.SetProperty("x"u8, JsonElement.Source.RawString("hello\\nworld"u8, requiresUnescaping: true));
-        Assert.Equal(JsonValueKind.String, builder.RootElement.GetProperty("x"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.String, builder.RootElement.GetProperty("x"u8).ValueKind);
     }
 
-    [Fact]
-    public static void SetProperty_RawUtf8String_NotRequiresUnescaping_SetsProperty()
+    [TestMethod]
+    public void SetProperty_RawUtf8String_NotRequiresUnescaping_SetsProperty()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}""");
         using JsonDocumentBuilder<JsonElement.Mutable> builder = source.RootElement.CreateBuilder(workspace);
 
         builder.RootElement.SetProperty("x"u8, JsonElement.Source.RawString("plain"u8, requiresUnescaping: false));
-        Assert.Equal("plain", builder.RootElement.GetProperty("x"u8).GetString());
+        Assert.AreEqual("plain", builder.RootElement.GetProperty("x"u8).GetString());
     }
 
-    [Fact]
-    public static void SetProperty_Utf8String_SetsProperty()
+    [TestMethod]
+    public void SetProperty_Utf8String_SetsProperty()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}""");
@@ -308,22 +309,22 @@ public static class SourceAndNumericCoverageTests
 
         JsonElement.Source utf8Source = "utf8value"u8;
         builder.RootElement.SetProperty("x"u8, utf8Source);
-        Assert.Equal("utf8value", builder.RootElement.GetProperty("x"u8).GetString());
+        Assert.AreEqual("utf8value", builder.RootElement.GetProperty("x"u8).GetString());
     }
 
-    [Fact]
-    public static void SetProperty_Utf16String_SetsProperty()
+    [TestMethod]
+    public void SetProperty_Utf16String_SetsProperty()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}""");
         using JsonDocumentBuilder<JsonElement.Mutable> builder = source.RootElement.CreateBuilder(workspace);
 
         builder.RootElement.SetProperty("x"u8, "utf16 value");
-        Assert.Equal("utf16 value", builder.RootElement.GetProperty("x"u8).GetString());
+        Assert.AreEqual("utf16 value", builder.RootElement.GetProperty("x"u8).GetString());
     }
 
-    [Fact]
-    public static void SetProperty_JsonElement_SetsPropertyFromElement()
+    [TestMethod]
+    public void SetProperty_JsonElement_SetsPropertyFromElement()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}""");
@@ -332,7 +333,7 @@ public static class SourceAndNumericCoverageTests
 
         JsonElement.Source elementSource = other.RootElement;
         builder.RootElement.SetProperty("x"u8, elementSource);
-        Assert.Equal(JsonValueKind.Array, builder.RootElement.GetProperty("x"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, builder.RootElement.GetProperty("x"u8).ValueKind);
     }
 
     #endregion

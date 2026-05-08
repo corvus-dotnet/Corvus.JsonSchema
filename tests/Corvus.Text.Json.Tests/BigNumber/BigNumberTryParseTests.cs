@@ -4,16 +4,17 @@
 using System.Collections.Generic;
 using System.Numerics;
 using Corvus.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for BigNumber.TryParse methods.
 /// </summary>
+[TestClass]
 public class BigNumberTryParseTests
 {
-    [Fact]
+    [TestMethod]
     public void TryParse_WithZero_ShouldParseCorrectly()
     {
         // Arrange
@@ -26,7 +27,7 @@ public class BigNumberTryParseTests
         BigNumberTestData.AssertParseResult(success, result, BigInteger.Zero, 0, "0");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithPositiveInteger_ShouldParseCorrectly()
     {
         // Arrange
@@ -39,7 +40,7 @@ public class BigNumberTryParseTests
         BigNumberTestData.AssertParseResult(success, result, new BigInteger(123), 0, "123");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithNegativeInteger_ShouldParseCorrectly()
     {
         // Arrange
@@ -52,7 +53,7 @@ public class BigNumberTryParseTests
         BigNumberTestData.AssertParseResult(success, result, new BigInteger(-456), 0, "-456");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithDecimalNumber_ShouldParseCorrectly()
     {
         // Arrange
@@ -62,12 +63,12 @@ public class BigNumberTryParseTests
         bool success = Corvus.Numerics.BigNumber.TryParse(input, out BigNumber result);
 
         // Assert
-        Assert.True(success);
-        Assert.Equal(new BigInteger(123456), result.Significand);
-        Assert.Equal(-3, result.Exponent);
+        Assert.IsTrue(success);
+        Assert.AreEqual(new BigInteger(123456), result.Significand);
+        Assert.AreEqual(-3, result.Exponent);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithScientificNotation_ShouldParseCorrectly()
     {
         // Arrange
@@ -77,12 +78,12 @@ public class BigNumberTryParseTests
         bool success = Corvus.Numerics.BigNumber.TryParse(input, out BigNumber result);
 
         // Assert
-        Assert.True(success);
-        Assert.Equal(new BigInteger(123), result.Significand);
-        Assert.Equal(2, result.Exponent);
+        Assert.IsTrue(success);
+        Assert.AreEqual(new BigInteger(123), result.Significand);
+        Assert.AreEqual(2, result.Exponent);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithLargeNumber_ShouldParseCorrectly()
     {
         // Arrange
@@ -92,12 +93,12 @@ public class BigNumberTryParseTests
         bool success = Corvus.Numerics.BigNumber.TryParse(input, out BigNumber result);
 
         // Assert
-        Assert.True(success);
-        Assert.Equal(BigInteger.Parse("999999999999999999999999999999"), result.Significand);
-        Assert.Equal(0, result.Exponent);
+        Assert.IsTrue(success);
+        Assert.AreEqual(BigInteger.Parse("999999999999999999999999999999"), result.Significand);
+        Assert.AreEqual(0, result.Exponent);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithEmptyInput_ShouldReturnFalse()
     {
         // Arrange
@@ -107,11 +108,11 @@ public class BigNumberTryParseTests
         bool success = Corvus.Numerics.BigNumber.TryParse(input, out BigNumber result);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(default, result);
+        Assert.IsFalse(success);
+        Assert.AreEqual(default, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithInvalidInput_ShouldReturnFalse()
     {
         // Arrange
@@ -121,12 +122,12 @@ public class BigNumberTryParseTests
         bool success = Corvus.Numerics.BigNumber.TryParse(input, out BigNumber result);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(default, result);
+        Assert.IsFalse(success);
+        Assert.AreEqual(default, result);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.ParseData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.ParseData), typeof(BigNumberTestData))]
     public void TryParse_TheoryTest_WithValidInputs_ShouldParseCorrectly(
         string input, bool expectedSuccess, BigInteger expectedSignificand, int expectedExponent)
     {
@@ -137,14 +138,14 @@ public class BigNumberTryParseTests
         bool success = Corvus.Numerics.BigNumber.TryParse(inputSpan, out BigNumber result);
 
         // Assert
-        Assert.Equal(expectedSuccess, success);
+        Assert.AreEqual(expectedSuccess, success);
         if (expectedSuccess)
         {
             BigNumberTestData.AssertParseResult(success, result, expectedSignificand, expectedExponent, input);
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_RoundTripTest_ShouldPreserveValue()
     {
         // Arrange
@@ -157,7 +158,7 @@ public class BigNumberTryParseTests
         {
             // Format the number to a string
             bool formatSuccess = original.TryFormat(charBuffer, out int charsWritten);
-            Assert.True(formatSuccess);
+            Assert.IsTrue(formatSuccess);
 
             ReadOnlySpan<char> formattedString = charBuffer.Slice(0, charsWritten);
             ReadOnlySpan<byte> formattedInput = Encoding.UTF8.GetBytes(formattedString.ToString());
@@ -166,7 +167,7 @@ public class BigNumberTryParseTests
             bool parseSuccess = Corvus.Numerics.BigNumber.TryParse(formattedInput, out BigNumber parsedBigNumber);
 
             // Assert
-            Assert.True(parseSuccess);
+            Assert.IsTrue(parseSuccess);
             BigNumberTestData.AssertBigNumbersEqual(original, parsedBigNumber,
                 $"Round-trip failed for {formattedString.ToString()}");
         }

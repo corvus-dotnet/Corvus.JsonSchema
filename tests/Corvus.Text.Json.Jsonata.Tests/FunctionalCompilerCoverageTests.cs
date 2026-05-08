@@ -3,7 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json.Jsonata;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
 
@@ -11,6 +11,7 @@ namespace Corvus.Text.Json.Jsonata.Tests;
 /// Tests targeting uncovered branches in <see cref="FunctionalCompiler"/>,
 /// identified from merged Cobertura coverage data.
 /// </summary>
+[TestClass]
 public class FunctionalCompilerCoverageTests
 {
     private static string Eval(string expression, string data = "null")
@@ -23,7 +24,7 @@ public class FunctionalCompilerCoverageTests
     // both filter AND sort stages (stepIdx==0 goes through line 2694).
     // Standalone `expr^(key)` compiles via CompileSortStage, not ApplyStages.
 
-    [Fact]
+    [TestMethod]
     public void SortStageInApplyStages_FilterThenSort()
     {
         // Path step 0 with both filter and sort stages → ApplyStages sort branch (5187-5230)
@@ -37,10 +38,10 @@ public class FunctionalCompilerCoverageTests
         """;
         // items[price > 5] filters then ^(price) sorts — both are stages on step 0
         string result = Eval("items[price > 5]^(price).name", data);
-        Assert.Equal("""["A","C","B"]""", result);
+        Assert.AreEqual("""["A","C","B"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SortStageInApplyStages_ArrayFlattening()
     {
         // Sort stage flattens array-of-arrays before sorting (lines 5196-5206)
@@ -56,10 +57,10 @@ public class FunctionalCompilerCoverageTests
         """;
         // Account.Order.Product produces array-of-arrays; filter [Price>0] + sort ^(Price) as stages
         string result = Eval("Account.Order.Product[Price > 0]^(Price).Name", data);
-        Assert.Equal("""["A","B","C"]""", result);
+        Assert.AreEqual("""["A","B","C"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SortStageInApplyStages_SingleElement()
     {
         // Sort with single element after filtering — hits sortElements.Count <= 1
@@ -70,10 +71,10 @@ public class FunctionalCompilerCoverageTests
         ]}
         """;
         string result = Eval("items[price > 20]^(price).name", data);
-        Assert.Equal("\"B\"", result);
+        Assert.AreEqual("\"B\"", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SortStage_DescendingOrder()
     {
         string data = """
@@ -84,13 +85,13 @@ public class FunctionalCompilerCoverageTests
         ]}
         """;
         string result = Eval("items^(>price).name", data);
-        Assert.Equal("""["B","C","A"]""", result);
+        Assert.AreEqual("""["B","C","A"]""", result);
     }
 
     // ─── ApplySortStagesOnly (lines 5958-5981) ──────────────────────
     // Called at stepIdx > 0 in path compilation (line 2698).
 
-    [Fact]
+    [TestMethod]
     public void ApplySortStagesOnly_MultiStepPathSort()
     {
         // Multi-step path with sort on step > 0 → ApplySortStagesOnly → ApplyStages
@@ -107,36 +108,36 @@ public class FunctionalCompilerCoverageTests
         """;
         // store.books[price > 0]^(price) — books is stepIdx > 0
         string result = Eval("store.books[price > 0]^(price).title", data);
-        Assert.Equal("""["A","B","C"]""", result);
+        Assert.AreEqual("""["A","B","C"]""", result);
     }
 
     // ─── Numeric index sequences (lines 5330-5370, 5597-5625) ─────────
     // Multi-value stage result that is all-numeric triggers numeric index selection.
     // This requires a filter predicate that RETURNS numeric values (not booleans).
 
-    [Fact]
+    [TestMethod]
     public void NumericIndex_PredicateReturningIndex()
     {
         // A predicate that returns a number is used as an index selector
         // e.g., items[[0,2]] uses the array [0,2] as numeric indices
         string data = """{"items": ["a", "b", "c", "d", "e"]}""";
         string result = Eval("$map([0,2,4], function($i){items[$i]})", data);
-        Assert.Equal("""["a","c","e"]""", result);
+        Assert.AreEqual("""["a","c","e"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void NumericIndexFilter_NegativeIndex()
     {
         string data = """{"items": ["a", "b", "c"]}""";
         string result = Eval("items[-1]", data);
-        Assert.Equal("\"c\"", result);
+        Assert.AreEqual("\"c\"", result);
     }
 
     // ─── Nested array collection — LookupField (lines 1014-1028) ─────────
     // LookupField is called when a field name is looked up on an array value.
     // This requires a path where an intermediate step returns an array.
 
-    [Fact]
+    [TestMethod]
     public void LookupField_ArrayInput_CollectsFieldValues()
     {
         // Array field lookup: field is looked up on each element of the array
@@ -151,22 +152,22 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("account.orders.items.name", data);
-        Assert.Equal("""["x","y","z"]""", result);
+        Assert.AreEqual("""["x","y","z"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void LookupField_TopLevelArrayInput()
     {
         // Direct field lookup on an array of objects
         string data = """[{"name": "a"}, {"name": "b"}, {"name": "c"}]""";
         string result = Eval("name", data);
-        Assert.Equal("""["a","b","c"]""", result);
+        Assert.AreEqual("""["a","b","c"]""", result);
     }
 
     // ─── CollectAndContinue nested arrays (lines 1567-1581) ─────────────
     // When items in a collection step are arrays, they need recursive processing.
 
-    [Fact]
+    [TestMethod]
     public void CollectAndContinue_NestedArraysWithIndex()
     {
         // Path with constant index after array-producing step
@@ -180,10 +181,10 @@ public class FunctionalCompilerCoverageTests
         """;
         // data.children[0] — applies constant index across nested arrays
         string result = Eval("data.children[0].val", data);
-        Assert.Equal("""[10,30]""", result);
+        Assert.AreEqual("""[10,30]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedCollection_MixedObjectsAndArrays()
     {
         string data = """
@@ -195,7 +196,7 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("data.children.val", data);
-        Assert.Equal("""[1,2,3]""", result);
+        Assert.AreEqual("""[1,2,3]""", result);
     }
 
     // ─── Multi-step path with predicate and sort combined ─────────────
@@ -203,7 +204,7 @@ public class FunctionalCompilerCoverageTests
     // the parser never creates SortNode as a stage annotation. Sort is always
     // a separate SortNode step or compiled via CompileSortStage.
 
-    [Fact]
+    [TestMethod]
     public void PathWithPredicateAndSort_CombinedPipeline()
     {
         string data = """
@@ -218,12 +219,12 @@ public class FunctionalCompilerCoverageTests
         """;
         // Filter then sort
         string result = Eval("orders[price >= 20]^(price).product", data);
-        Assert.Equal("""["Widget","Gadget","Doohickey"]""", result);
+        Assert.AreEqual("""["Widget","Gadget","Doohickey"]""", result);
     }
 
     // ─── Sort-only path (standalone ^() via CompileSortStage) ─────────────
 
-    [Fact]
+    [TestMethod]
     public void SortOnlyStages_MultipleSortCriteria()
     {
         string data = """
@@ -235,21 +236,21 @@ public class FunctionalCompilerCoverageTests
         ]}
         """;
         string result = Eval("items^(cat, name).name", data);
-        Assert.Equal("""["X","Y","W","Z"]""", result);
+        Assert.AreEqual("""["X","Y","W","Z"]""", result);
     }
 
     // ─── CreateArrayElement / CreateNumberElement / etc. (lines 9051-9079)
 
-    [Fact]
+    [TestMethod]
     public void NumberOfNonNumericString_ThrowsD3030()
     {
         // $number("abc") throws D3030 in JSONata
-        var ex = Assert.Throws<JsonataException>(
+        var ex = Assert.ThrowsExactly<JsonataException>(
             () => Eval("""$number("abc")"""));
-        Assert.Equal("D3030", ex.Code);
+        Assert.AreEqual("D3030", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void PathExpression_ArrayOfArrays_Flattens()
     {
         // Path producing array-of-arrays that needs flattening
@@ -262,68 +263,68 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("departments.employees.name", data);
-        Assert.Equal("""["Alice","Bob","Charlie"]""", result);
+        Assert.AreEqual("""["Alice","Bob","Charlie"]""", result);
     }
 
     // ─── Keep-array semantics ([] suffix) ─────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void KeepArray_SingletonWrappedInArray()
     {
         string data = """{"items": [{"name": "only"}]}""";
         string result = Eval("items[].name", data);
         // With [], singleton should still be wrapped in array
-        Assert.Equal("""["only"]""", result);
+        Assert.AreEqual("""["only"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void KeepArray_EmptyArrayPreserved()
     {
         string result = Eval("$append([], [])", """{}""");
-        Assert.Equal("[]", result);
+        Assert.AreEqual("[]", result);
     }
 
     // ─── Index binding variable (#$i syntax, lines 5085-5105) ─────────
 
-    [Fact]
+    [TestMethod]
     public void IndexBinding_FilterByPosition()
     {
         // #$i creates an index binding variable that expands singleton arrays
         // and enables position-based filtering (lines 5092-5105)
         string data = """{"items": [10, 20, 30, 40, 50]}""";
         string result = Eval("items#$i[$i >= 2]", data);
-        Assert.Equal("[30,40,50]", result);
+        Assert.AreEqual("[30,40,50]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void IndexBinding_FirstElement()
     {
         string data = """{"items": ["a", "b", "c", "d"]}""";
         string result = Eval("items#$i[$i = 0]", data);
-        Assert.Equal("\"a\"", result);
+        Assert.AreEqual("\"a\"", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void IndexBinding_LastElementExpression()
     {
         // Use a simple constant index instead of $count() which can't resolve in filter context
         string data = """{"items": [1, 2, 3, 4, 5]}""";
         string result = Eval("items#$i[$i = 4]", data);
-        Assert.Equal("5", result);
+        Assert.AreEqual("5", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void IndexBinding_WithObjectArray()
     {
         // Index binding on array of objects
         string data = """{"orders": [{"id": "A"}, {"id": "B"}, {"id": "C"}]}""";
         string result = Eval("orders#$i[$i > 0].id", data);
-        Assert.Equal("""["B","C"]""", result);
+        Assert.AreEqual("""["B","C"]""", result);
     }
 
     // ─── Transform on multi-value sequence (lines 8287-8296) ──────────
 
-    [Fact]
+    [TestMethod]
     public void Transform_MultiValueSequence()
     {
         // When ~> |pattern|update| operates on a multi-element sequence
@@ -340,11 +341,11 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("""orders.product ~> |$[type="fruit"]|{"selected": true}|""", data);
-        Assert.Contains("\"selected\"", result);
-        Assert.Contains("true", result);
+        StringAssert.Contains(result, "\"selected\"");
+        StringAssert.Contains(result, "true");
     }
 
-    [Fact]
+    [TestMethod]
     public void Transform_MultiValueWithDelete()
     {
         // Transform with delete field on multiple path-resolved items
@@ -358,251 +359,251 @@ public class FunctionalCompilerCoverageTests
         """;
         string result = Eval("""records.inner ~> |$|{}, ["temp"]|""", data);
         Assert.DoesNotContain("\"temp\"", result);
-        Assert.Contains("\"name\"", result);
-        Assert.Contains("\"value\"", result);
+        StringAssert.Contains(result, "\"name\"");
+        StringAssert.Contains(result, "\"value\"");
     }
 
     // ─── Numeric path with filter stages (lines 5344-5359) ────────────
 
-    [Fact]
+    [TestMethod]
     public void NumericIndex_AfterFilter()
     {
         // Combining filter and numeric index stages
         string data = """{"items": [1, 2, 3, 4, 5, 6, 7, 8]}""";
         string result = Eval("items[$>3][0]", data);
-        Assert.Equal("4", result);
+        Assert.AreEqual("4", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void NumericIndex_NegativeOnFilteredResult()
     {
         string data = """{"items": [10, 20, 30, 40, 50]}""";
         string result = Eval("items[$>=30][-1]", data);
-        Assert.Equal("50", result);
+        Assert.AreEqual("50", result);
     }
 
     // ─── Binary/Octal parsing via $number (exercises BuiltInFunctions paths) ───
 
-    [Fact]
+    [TestMethod]
     public void Number_BinaryPrefix_LowerCase()
     {
         string result = Eval("""$number("0b1010")""");
-        Assert.Equal("10", result);
+        Assert.AreEqual("10", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Number_BinaryPrefix_UpperCase()
     {
         string result = Eval("""$number("0B1111")""");
-        Assert.Equal("15", result);
+        Assert.AreEqual("15", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Number_OctalPrefix_LowerCase()
     {
         string result = Eval("""$number("0o17")""");
-        Assert.Equal("15", result);
+        Assert.AreEqual("15", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Number_OctalPrefix_UpperCase()
     {
         string result = Eval("""$number("0O777")""");
-        Assert.Equal("511", result);
+        Assert.AreEqual("511", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Number_BinaryPrefix_InvalidDigits()
     {
         // "0b1234" has invalid binary digits — $number throws D3030
-        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0b1234")"""));
-        Assert.Equal("D3030", ex.Code);
+        var ex = Assert.ThrowsExactly<JsonataException>(() => Eval("""$number("0b1234")"""));
+        Assert.AreEqual("D3030", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void Number_OctalPrefix_InvalidDigits()
     {
         // "0o89" has invalid octal digits — $number throws D3030
-        var ex = Assert.Throws<JsonataException>(() => Eval("""$number("0o89")"""));
-        Assert.Equal("D3030", ex.Code);
+        var ex = Assert.ThrowsExactly<JsonataException>(() => Eval("""$number("0o89")"""));
+        Assert.AreEqual("D3030", ex.Code);
     }
 
     // ─── Property lookup on array input (lines 1018-1031) ─────────────
 
-    [Fact]
+    [TestMethod]
     public void PropertyLookup_OnArrayOfObjects()
     {
         // Looking up a field on an array iterates each element
         string result = Eval("""data.name""", """{"data":[{"name":"Alice"},{"name":"Bob"}]}""");
-        Assert.Equal("""["Alice","Bob"]""", result);
+        Assert.AreEqual("""["Alice","Bob"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void PropertyLookup_OnArrayWithMissingField()
     {
         // Some elements may not have the field
         string result = Eval("""data.name""", """{"data":[{"name":"Alice"},{"x":1},{"name":"Carol"}]}""");
-        Assert.Equal("""["Alice","Carol"]""", result);
+        Assert.AreEqual("""["Alice","Carol"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void PropertyLookup_RootIsArray()
     {
         // When root input IS an array, property access should iterate
         string result = Eval("name", """[{"name":"a"},{"name":"b"}]""");
-        Assert.Equal("""["a","b"]""", result);
+        Assert.AreEqual("""["a","b"]""", result);
     }
 
     // ─── Sort by terms applied to path (CompileSortStage, lines 7954-8017) ───
 
-    [Fact]
+    [TestMethod]
     public void Sort_ByTerms_Ascending()
     {
         string result = Eval("""items^(v)""", """{"items":[{"v":3},{"v":1},{"v":2}]}""");
-        Assert.Equal("""[{"v":1},{"v":2},{"v":3}]""", result);
+        Assert.AreEqual("""[{"v":1},{"v":2},{"v":3}]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sort_ByTerms_Descending()
     {
         string result = Eval("""items^(>v)""", """{"items":[{"v":3},{"v":1},{"v":2}]}""");
-        Assert.Equal("""[{"v":3},{"v":2},{"v":1}]""", result);
+        Assert.AreEqual("""[{"v":3},{"v":2},{"v":1}]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sort_ByTerms_MultiKey()
     {
         string result = Eval(
             """items^(a, >b)""",
             """{"items":[{"a":1,"b":3},{"a":2,"b":1},{"a":1,"b":2}]}""");
-        Assert.Equal("""[{"a":1,"b":3},{"a":1,"b":2},{"a":2,"b":1}]""", result);
+        Assert.AreEqual("""[{"a":1,"b":3},{"a":1,"b":2},{"a":2,"b":1}]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sort_ByTerms_SingleElement_ReturnsSame()
     {
         string result = Eval("""items^(v)""", """{"items":[{"v":1}]}""");
-        Assert.Equal("""{"v":1}""", result);
+        Assert.AreEqual("""{"v":1}""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sort_ByTerms_Strings()
     {
         string result = Eval(
             """items^(name)""",
             """{"items":[{"name":"banana"},{"name":"apple"},{"name":"cherry"}]}""");
-        Assert.Equal("""[{"name":"apple"},{"name":"banana"},{"name":"cherry"}]""", result);
+        Assert.AreEqual("""[{"name":"apple"},{"name":"banana"},{"name":"cherry"}]""", result);
     }
 
     // ─── Focus variable + sort (triggers sort step with $var bound) ───
 
-    [Fact]
+    [TestMethod]
     public void Focus_ThenSort()
     {
         // Account.Order^(Product.Price) — sort Orders by Product.Price
         string result = Eval(
             """Account.Order^(Product.Price)""",
             """{"Account":{"Order":[{"Product":{"Price":3}},{"Product":{"Price":1}},{"Product":{"Price":2}}]}}""");
-        Assert.Equal("""[{"Product":{"Price":1}},{"Product":{"Price":2}},{"Product":{"Price":3}}]""", result);
+        Assert.AreEqual("""[{"Product":{"Price":1}},{"Product":{"Price":2}},{"Product":{"Price":3}}]""", result);
     }
 
     // ─── Index binding (#$var) expansion (lines 5095-5108) ────────────
 
-    [Fact]
+    [TestMethod]
     public void IndexBinding_OnArrayResult()
     {
         // #$i binds the position index to each element
         string result = Eval(
             """items#$i[$i=1]""",
             """{"items":["a","b","c"]}""");
-        Assert.Equal("\"b\"", result);
+        Assert.AreEqual("\"b\"", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void IndexBinding_OnFilteredArray()
     {
         string result = Eval(
             """items#$i[$i<=1]""",
             """{"items":["a","b","c","d"]}""");
-        Assert.Equal("""["a","b"]""", result);
+        Assert.AreEqual("""["a","b"]""", result);
     }
 
     // ─── Array constructor paths (lines 6801-6836) ────────────────────
 
-    [Fact]
+    [TestMethod]
     public void ArrayConstructor_WithSingletonValue()
     {
         string result = Eval("""[item]""", """{"item":"hello"}""");
-        Assert.Equal("""["hello"]""", result);
+        Assert.AreEqual("""["hello"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayConstructor_WithNestedArray()
     {
         // Array within array constructor should flatten into the array
         string result = Eval("""[items]""", """{"items":["a","b"]}""");
-        Assert.Equal("""["a","b"]""", result);
+        Assert.AreEqual("""["a","b"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayConstructor_MultipleExpressions()
     {
         string result = Eval("""[a, b, c]""", """{"a":1,"b":2,"c":3}""");
-        Assert.Equal("[1,2,3]", result);
+        Assert.AreEqual("[1,2,3]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayConstructor_MixedTypes()
     {
         string result = Eval("""[1, "two", true, null]""");
-        Assert.Equal("""[1,"two",true,null]""", result);
+        Assert.AreEqual("""[1,"two",true,null]""", result);
     }
 
     // ─── String predicates are boolean (truthy/falsy), not coerced to numeric indices ───
 
-    [Fact]
+    [TestMethod]
     public void FilterPredicate_StringNumericIndex()
     {
         // String "2" in predicate is truthy → all items pass → returns whole array.
         string result = Eval(
             """( $idx := "2"; items[$idx] )""",
             """{"items":["a","b","c","d","e"]}""");
-        Assert.Equal("""["a","b","c","d","e"]""", result);
+        Assert.AreEqual("""["a","b","c","d","e"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterPredicate_HexStringIndex()
     {
         // String "0x2" in predicate is truthy → all items pass → returns whole array.
         string result = Eval(
             """( $idx := "0x2"; items[$idx] )""",
             """{"items":["a","b","c","d","e"]}""");
-        Assert.Equal("""["a","b","c","d","e"]""", result);
+        Assert.AreEqual("""["a","b","c","d","e"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterPredicate_BinaryStringIndex()
     {
         // String "0b10" in predicate is truthy → all items pass → returns whole array.
         string result = Eval(
             """( $idx := "0b10"; items[$idx] )""",
             """{"items":["a","b","c","d","e"]}""");
-        Assert.Equal("""["a","b","c","d","e"]""", result);
+        Assert.AreEqual("""["a","b","c","d","e"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FilterPredicate_OctalStringIndex()
     {
         // String "0o3" in predicate is truthy → all items pass → returns whole array.
         string result = Eval(
             """( $idx := "0o3"; items[$idx] )""",
             """{"items":["a","b","c","d","e"]}""");
-        Assert.Equal("""["a","b","c","d","e"]""", result);
+        Assert.AreEqual("""["a","b","c","d","e"]""", result);
     }
 
     // ─── Transform operator (lines 121 dispatch, CompileTransform) ────
 
-    [Fact]
+    [TestMethod]
     public void Transform_BasicPattern()
     {
         // ~> |pattern|transform| — transform matching objects
@@ -610,28 +611,28 @@ public class FunctionalCompilerCoverageTests
             """$ ~> |Account.Order|{"total":Price * Quantity}|""",
             """{"Account":{"Order":{"Price":5,"Quantity":3}}}""");
         // The transform adds the "total" field
-        Assert.Contains("\"total\":15", result);
+        StringAssert.Contains(result, "\"total\":15");
     }
 
     // ─── WrapWithStages on non-PathNode (lines 175-201) ─────
     // A variable with a filter predicate: $var[pred] produces a non-PathNode (VariableNode)
     // with Stages containing a FilterNode. This is the only way to hit WrapWithStages.
 
-    [Fact]
+    [TestMethod]
     public void WrapWithStages_VariableWithFilter()
     {
         // $arr[pred] — VariableNode with FilterNode stage, hits WrapWithStages.
         // The SortNode branch (line 186) is dead code — parser never puts SortNode in Stages.
         string result = Eval("""( $arr := [1,2,3,4,5]; $arr[$ > 3] )""");
-        Assert.Equal("[4,5]", result);
+        Assert.AreEqual("[4,5]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void WrapWithStages_VariableWithMultipleFilters()
     {
         // Multiple filter stages on a non-PathNode variable: $arr[pred1][pred2]
         string result = Eval("""( $arr := [1,2,3,4,5,6,7,8]; $arr[$ > 2][$ < 7] )""");
-        Assert.Equal("[3,4,5,6]", result);
+        Assert.AreEqual("[3,4,5,6]", result);
     }
 
     // ─── Focus binding @$var cross-join with multi-valued parent (lines 2978-2998) ─────
@@ -639,7 +640,7 @@ public class FunctionalCompilerCoverageTests
     // multi-valued sequence. The cross-join navigates the remaining path from
     // the parent context, filtering by the focus variable.
 
-    [Fact]
+    [TestMethod]
     public void FocusBinding_MultiParentContext_CrossJoin()
     {
         // Multi-step path where the parent produces multiple elements for the focus step.
@@ -658,12 +659,12 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("""library.loans@$l.books[isbn=$l.isbn].title""", data);
-        Assert.Contains("Alpha", result);
-        Assert.Contains("Beta", result);
-        Assert.Contains("Gamma", result);
+        StringAssert.Contains(result, "Alpha");
+        StringAssert.Contains(result, "Beta");
+        StringAssert.Contains(result, "Gamma");
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusBinding_WithArrayFlattening()
     {
         // Focus binding where the focus context is the parent step.
@@ -679,15 +680,15 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("""orders.lines@$line.catalog[sku=$line.sku].name""", data);
-        Assert.Contains("Widget", result);
-        Assert.Contains("Gadget", result);
-        Assert.Contains("Doohickey", result);
+        StringAssert.Contains(result, "Widget");
+        StringAssert.Contains(result, "Gadget");
+        StringAssert.Contains(result, "Doohickey");
     }
 
     // ─── Sort continuation after sort step (lines 3057-3082, 4043-4061) ─────
     // When a sort step is NOT the last step, elements must continue through remaining steps.
 
-    [Fact]
+    [TestMethod]
     public void SortWithContinuation_PropertyAfterSort()
     {
         // Account.Order.Product^($.Price).Name: sort is intermediate, .Name continues
@@ -701,10 +702,10 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("items^(price).name", data);
-        Assert.Equal("""["A","B","C"]""", result);
+        Assert.AreEqual("""["A","B","C"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SortWithContinuation_DeepPath()
     {
         // Sort on intermediate step, then navigate deeper
@@ -721,15 +722,15 @@ public class FunctionalCompilerCoverageTests
         """;
         string result = Eval("store.shelves^(priority).books.title", data);
         // Sorted by priority → shelf1, shelf2, shelf3 → their books' titles
-        Assert.Contains("A1", result);
-        Assert.Contains("B1", result);
-        Assert.Contains("C1", result);
+        StringAssert.Contains(result, "A1");
+        StringAssert.Contains(result, "B1");
+        StringAssert.Contains(result, "C1");
     }
 
     // ─── Index binding #$i on multi-element parent (lines 4088-4108) ─────
     // EvalIndexStep receives multi-element inputContext.
 
-    [Fact]
+    [TestMethod]
     public void IndexBinding_MultiParentContext()
     {
         // groups.items produces multi-valued, then #$i binds index on multi-parent
@@ -744,13 +745,13 @@ public class FunctionalCompilerCoverageTests
         // groups.items gives [a,b,c,d] as multi-valued, #$i indexes each
         string result = Eval("groups.items#$i[$i=0]", data);
         // Should return first element(s) at index 0 within each group
-        Assert.Contains("a", result);
+        StringAssert.Contains(result, "a");
     }
 
     // ─── Sort stage with array flattening in ApplyStages (lines 5466-5501) ─────
     // When applying sort stages, input contains arrays that need flattening first.
 
-    [Fact]
+    [TestMethod]
     public void SortStage_ArrayOfArraysFlattening()
     {
         // Path producing array-of-arrays, then sort stage flattens before sorting
@@ -764,10 +765,10 @@ public class FunctionalCompilerCoverageTests
         """;
         // departments.people produces arrays, [age>0] filters all (pass-through), ^(age) sorts
         string result = Eval("departments.people[age > 0]^(age).name", data);
-        Assert.Equal("""["Alice","Charlie","Bob"]""", result);
+        Assert.AreEqual("""["Alice","Charlie","Bob"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SortStage_ArrayFlattening_SingleResult()
     {
         // When sort produces single element (sortElements.Count <= 1), lines 5486-5494
@@ -779,7 +780,7 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("departments.people[age > 20]^(age).name", data);
-        Assert.Equal("\"Alice\"", result);
+        Assert.AreEqual("\"Alice\"", result);
     }
 
     // ─── Group-by with simple name pair optimization (lines 221-229) ─────
@@ -787,7 +788,7 @@ public class FunctionalCompilerCoverageTests
     // Requires a NON-PathNode expression with group-by (variables pass through ProcessAst
     // unchanged as VariableNode, which is not PathNode).
 
-    [Fact]
+    [TestMethod]
     public void GroupBy_SimpleNamePair_NonPathVariable()
     {
         // $items{category: price} — variable (non-PathNode) with simple NameNode key + value
@@ -803,25 +804,25 @@ public class FunctionalCompilerCoverageTests
         """;
         string result = Eval("""( $items := items; $items{category: price} )""", data);
         // Groups by category, collects prices: {"A": [10,30], "B": 20}
-        Assert.Contains("A", result);
-        Assert.Contains("B", result);
+        StringAssert.Contains(result, "A");
+        StringAssert.Contains(result, "B");
     }
 
-    [Fact]
+    [TestMethod]
     public void GroupBy_NonPath_FunctionResult()
     {
         // Group-by on a non-path expression (function result)
         // $append() returns a non-PathNode result; group-by applied to it hits WrapWithGroupBy.
         string result = Eval(
             """( $data := $append([{"g":"X","v":1}], [{"g":"Y","v":2}]); $data{g: v} )""");
-        Assert.Contains("X", result);
-        Assert.Contains("Y", result);
+        StringAssert.Contains(result, "X");
+        StringAssert.Contains(result, "Y");
     }
 
     // ─── Sort stage on intermediate step (lines 3394-3412) ─────
     // Tuple-based path with sort at intermediate position.
 
-    [Fact]
+    [TestMethod]
     public void SortOnIntermediateStep_WithLabels()
     {
         // Sort on an intermediate step where labels are involved
@@ -838,13 +839,13 @@ public class FunctionalCompilerCoverageTests
         """;
         // Sort books by year, then get titles
         string result = Eval("library.books^(year).title", data);
-        Assert.Equal("""["A","B","C"]""", result);
+        Assert.AreEqual("""["A","B","C"]""", result);
     }
 
     // ─── Multi-parent context in inner step (lines 3294-3314) ─────
     // When inner focus evaluation has parentContext.Count > 1.
 
-    [Fact]
+    [TestMethod]
     public void InnerFocusStep_MultiParent()
     {
         // Complex cross-join where navigation correlates across collections.
@@ -863,14 +864,14 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("""data.refs@$r.items[code=$r.code].value""", data);
-        Assert.Contains("100", result);
-        Assert.Contains("200", result);
+        StringAssert.Contains(result, "100");
+        StringAssert.Contains(result, "200");
         Assert.DoesNotContain("300", result);
     }
 
     // ─── Path with sort at step > 0 and continuation (line 3057) ─────
 
-    [Fact]
+    [TestMethod]
     public void Sort_IntermediateStepWithArrayInput()
     {
         // store.products^(price)[0] — sort at step 1, then index at step 2
@@ -886,7 +887,7 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("store.products^(price)[0].name", data);
-        Assert.Equal("\"Cheap\"", result);
+        Assert.AreEqual("\"Cheap\"", result);
     }
 
     // ─── Multi-value non-singleton numeric index filter (lines 5621-5648) ─────
@@ -895,7 +896,7 @@ public class FunctionalCompilerCoverageTests
     // This occurs when a path within the element navigates through an array and
     // collects multiple numeric values.
 
-    [Fact]
+    [TestMethod]
     public void NumericIndexFilter_MultiValueSequence_SelectsByPosition()
     {
         // Each element has refs.idx producing a multi-value Sequence of numbers.
@@ -913,13 +914,13 @@ public class FunctionalCompilerCoverageTests
         // Element 2: refs.idx → [0,2], position 2 matches index 2 → included
         // Element 3: refs.idx → [3], position 3 matches → included
         string result = Eval("$[refs.idx].val", data);
-        Assert.Contains("first", result);
-        Assert.Contains("second", result);
-        Assert.Contains("third", result);
-        Assert.Contains("fourth", result);
+        StringAssert.Contains(result, "first");
+        StringAssert.Contains(result, "second");
+        StringAssert.Contains(result, "third");
+        StringAssert.Contains(result, "fourth");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumericIndexFilter_MultiValueSequence_NoMatch()
     {
         // Elements where the multi-value numeric indices don't match the element position
@@ -934,10 +935,10 @@ public class FunctionalCompilerCoverageTests
         // Element 1: refs.idx → [0,2], position 1 not in [0,2] → excluded
         // Element 2: refs.idx → [0,1], position 2 not in [0,1] → excluded
         string result = Eval("$[refs.idx].val", data);
-        Assert.Equal("undefined", result);
+        Assert.AreEqual("undefined", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void NumericIndexFilter_MultiValueSequence_NegativeIndex()
     {
         // Multi-value result with negative indices
@@ -953,14 +954,14 @@ public class FunctionalCompilerCoverageTests
         // Element 1: refs.idx → [-2, 0] → [1, 0], position 1 matches 1 → included
         // Element 2: refs.idx → [1], position 2 ≠ 1 → excluded
         string result = Eval("$[refs.idx].val", data);
-        Assert.Equal("\"B\"", result);
+        Assert.AreEqual("\"B\"", result);
     }
 
     // ─── GroupBy on path step (lines 2116-2124) ─────────────────────────────
     // When a path step has a group annotation ({key: value}), the groupByPairs
     // array is populated during compilation.
 
-    [Fact]
+    [TestMethod]
     public void GroupBy_OnPathStep()
     {
         string data = """
@@ -974,17 +975,17 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("orders{category: $sum(price)}", data);
-        Assert.Contains("electronics", result);
-        Assert.Contains("150", result);
-        Assert.Contains("books", result);
-        Assert.Contains("50", result);
+        StringAssert.Contains(result, "electronics");
+        StringAssert.Contains(result, "150");
+        StringAssert.Contains(result, "books");
+        StringAssert.Contains(result, "50");
     }
 
     // ─── Array constructor with tuple (IsTupleSequence) (lines 6826-6831) ────
     // When an array constructor element evaluates to a tuple sequence, each item
     // in the tuple is spread into the result array.
 
-    [Fact]
+    [TestMethod]
     public void ArrayConstructor_TupleViaVariable()
     {
         // Assign a tuple (array ctor containing lambda) to a variable, then use
@@ -993,12 +994,12 @@ public class FunctionalCompilerCoverageTests
         // evaluates to a tuple sequence → hits the IsTupleSequence branch (6826-6832).
         // Inner tuple: [lambda, 10, 20]. Outer spreads it: [lambda, 10, 20, 30].
         // Reference: $sum throws T0412 because lambda is not a number.
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             Eval("( $inner := [function($x){$x*2}, 10, 20]; $sum([$inner, 30]) )"));
-        Assert.Equal("T0412", ex.Code);
+        Assert.AreEqual("T0412", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayConstructor_NestedArrayConstructor_InTuplePath()
     {
         // [lambda, [1,2,3]] — lambda forces tuple path, then [1,2,3] is an array
@@ -1006,14 +1007,14 @@ public class FunctionalCompilerCoverageTests
         string result = Eval("""$count([function($x){$x}, [1,2,3]])""");
         // The array has 4 items: the lambda + 3 array elements spread in
         // Actually depends on how the tuple serializes — let's check:
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
     // ─── Multi-element parent context with array flattening (lines 2978-2988) ─
     // When a path step with focus binding produces multiple parent context elements,
     // and those elements are arrays that need flattening.
 
-    [Fact]
+    [TestMethod]
     public void MultiElementContext_ArrayFlattening_FocusBinding()
     {
         // Focus binding produces multiple parent contexts; each is an array
@@ -1028,11 +1029,11 @@ public class FunctionalCompilerCoverageTests
         // departments.teams produces arrays of arrays
         // Flattening gives individual names
         string result = Eval("departments.teams", data);
-        Assert.Contains("Alice", result);
-        Assert.Contains("Frank", result);
+        StringAssert.Contains(result, "Alice");
+        StringAssert.Contains(result, "Frank");
     }
 
-    [Fact]
+    [TestMethod]
     public void MultiElementContext_PropertyLookupOnNestedArrays()
     {
         // Multi-step path where intermediate results are arrays needing flattening
@@ -1045,15 +1046,15 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("groups.members.scores", data);
-        Assert.Contains("10", result);
-        Assert.Contains("50", result);
+        StringAssert.Contains(result, "10");
+        StringAssert.Contains(result, "50");
     }
 
     // ─── Non-singleton Sequence numeric filter in ApplyStages (lines 5352-5390) ──
     // When a filter predicate returns a non-singleton Sequence of numeric values
     // (Count > 1), the allNum path processes each as a numeric index.
 
-    [Fact]
+    [TestMethod]
     public void NonSingletonSequence_NumericFilter()
     {
         // $idx.* produces a Sequence with multiple numeric elements (0 and 2)
@@ -1062,20 +1063,20 @@ public class FunctionalCompilerCoverageTests
         string data = """{"idx": {"a": 0, "b": 2}, "items": ["x","y","z","w"]}""";
         string result = Eval("items[$$.idx.*]", data);
         // Elements at indices 0 and 2
-        Assert.Equal("""["x","z"]""", result);
+        Assert.AreEqual("""["x","z"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void NonSingletonSequence_NumericFilter_NegativeIndex()
     {
         // Non-singleton Sequence with a negative index triggers idx + elements.Count
         string data = """{"idx": {"a": 0, "b": -1}, "items": ["x","y","z"]}""";
         string result = Eval("items[$$.idx.*]", data);
         // Index 0 → "x", index -1 → 2 → "z"
-        Assert.Equal("""["x","z"]""", result);
+        Assert.AreEqual("""["x","z"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void NonSingletonSequence_NonNumericFallback()
     {
         // Non-singleton Sequence with mixed types hits allNum=false; break
@@ -1083,7 +1084,7 @@ public class FunctionalCompilerCoverageTests
         string data = """{"idx": {"a": 1, "b": "foo"}, "items": ["x","y","z"]}""";
         string result = Eval("items[$$.idx.*]", data);
         // Result is [1, "foo"] which is truthy → all elements included
-        Assert.Equal("""["x","y","z"]""", result);
+        Assert.AreEqual("""["x","y","z"]""", result);
     }
 
     // ─── Non-singleton Sequence filter in ApplyFocusStages (lines 5621-5650) ─────
@@ -1093,7 +1094,7 @@ public class FunctionalCompilerCoverageTests
     // the PARENT context, not the focus elements. If no remaining steps, focus
     // elements are returned directly.
 
-    [Fact]
+    [TestMethod]
     public void FocusStages_NonSingletonSequence_NumericFilter()
     {
         // items@$x creates a focus binding; filter [$$.idx.*] returns Sequence(0,2)
@@ -1102,12 +1103,12 @@ public class FunctionalCompilerCoverageTests
         string data = """{"idx": {"a": 0, "b": 2}, "items": ["x","y","z","w"]}""";
         string result = Eval("items@$x[$$.idx.*]", data);
         // Elements at indices 0 and 2 survive the filter; result is parent repeated.
-        Assert.Equal(
+        Assert.AreEqual(
             """[{"idx":{"a":0,"b":2},"items":["x","y","z","w"]},{"idx":{"a":0,"b":2},"items":["x","y","z","w"]}]""",
             result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusStages_NonSingletonSequence_NegativeIndex()
     {
         // Focus binding with negative index in the Sequence → line 5634-5636 (idx < 0)
@@ -1115,47 +1116,47 @@ public class FunctionalCompilerCoverageTests
         string data = """{"idx": {"a": 0, "b": -1}, "items": ["x","y","z"]}""";
         string result = Eval("items@$x[$$.idx.*]", data);
         // Index 0 → element 0 ("x"), index -1 → last element ("z"); parent repeated.
-        Assert.Equal(
+        Assert.AreEqual(
             """[{"idx":{"a":0,"b":-1},"items":["x","y","z"]},{"idx":{"a":0,"b":-1},"items":["x","y","z"]}]""",
             result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusStages_NonSingletonSequence_NonNumericFallback()
     {
         // Focus binding with mixed type filter → allNum=false → IsTruthy fallback
         string data = """{"idx": {"a": 1, "b": "foo"}, "items": ["x","y","z"]}""";
         string result = Eval("items@$x[$$.idx.*]", data);
         // Non-numeric element makes allNum=false, falls through to IsTruthy
-        Assert.Contains("x", result);
-        Assert.Contains("y", result);
-        Assert.Contains("z", result);
+        StringAssert.Contains(result, "x");
+        StringAssert.Contains(result, "y");
+        StringAssert.Contains(result, "z");
     }
 
     // ─── Fused array-of-objects with multi-element prefix (lines 7000-7015) ──────
     // CompileFusedArrayOfObjects generates code for [path.{"key": val}].
     // When the prefix path produces a non-singleton Sequence, lines 7000-7015 fire.
 
-    [Fact]
+    [TestMethod]
     public void FusedArrayOfObjects_MultiElementPrefix()
     {
         // $data.* produces a multi-element Sequence (non-singleton)
         // The array constructor [path.*.{"name": name}] triggers the fused optimization
         string data = """{"items": {"a": {"name": "Alice", "age": 30}, "b": {"name": "Bob", "age": 25}}}""";
         string result = Eval("[items.*.{\"label\": name}]", data);
-        Assert.Contains("Alice", result);
-        Assert.Contains("Bob", result);
+        StringAssert.Contains(result, "Alice");
+        StringAssert.Contains(result, "Bob");
     }
 
-    [Fact]
+    [TestMethod]
     public void FusedArrayOfObjects_MultiElementPrefix_ArrayElements()
     {
         // When prefix produces multiple elements that ARE arrays, trigger inner flattening (7004-7009)
         string data = """{"groups": [{"people": [{"name": "A"}, {"name": "B"}]}, {"people": [{"name": "C"}]}]}""";
         string result = Eval("[groups.people.{\"label\": name}]", data);
-        Assert.Contains("A", result);
-        Assert.Contains("B", result);
-        Assert.Contains("C", result);
+        StringAssert.Contains(result, "A");
+        StringAssert.Contains(result, "B");
+        StringAssert.Contains(result, "C");
     }
 
     // ─── Multi-element parentContext in EvalFocusStep (lines 2986-3003) ─────────
@@ -1163,7 +1164,7 @@ public class FunctionalCompilerCoverageTests
     // elements from prior steps), lines 2986-3003 iterate each element.
     // If any element is an array AND stepIdx > 0, FlattenArrayStep is called.
 
-    [Fact]
+    [TestMethod]
     public void MultiElementParentContext_InFocusStep()
     {
         // *.n@$x where wildcard deep-flattens nested arrays to individual objects.
@@ -1172,17 +1173,17 @@ public class FunctionalCompilerCoverageTests
         // returns the parent objects (each produced one focus element via .n).
         string data = """{"a": [[{"n": 1}], [{"n": 2}]], "b": [[{"n": 3}]]}""";
         string result = Eval("*.n@$x", data);
-        Assert.Equal("""[{"n":1},{"n":2},{"n":3}]""", result);
+        Assert.AreEqual("""[{"n":1},{"n":2},{"n":3}]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void MultiElementParentContext_InFocusStep_NoArrays()
     {
         // When all elements are objects (not arrays), takes the else branch at line 2997
         string data = """{"a": {"name": "Alice"}, "b": {"name": "Bob"}}""";
         string result = Eval("*.name@$x", data);
-        Assert.Contains("Alice", result);
-        Assert.Contains("Bob", result);
+        StringAssert.Contains(result, "Alice");
+        StringAssert.Contains(result, "Bob");
     }
 
     // ─── Group-by on a step within a path (lines 2123-2132) ─────────────────────
@@ -1192,7 +1193,7 @@ public class FunctionalCompilerCoverageTests
     // Group-by is applied AFTER all steps evaluate, so the key/value expressions
     // must be valid on the final step results.
 
-    [Fact]
+    [TestMethod]
     public void GroupBy_OnWildcardStep_ThenNavigate()
     {
         // *{type: v}.items → group-by is on the wildcard step.
@@ -1201,15 +1202,15 @@ public class FunctionalCompilerCoverageTests
         // then .items on {} → undefined.
         string data = """{"g1": {"items": [{"type": "A", "v": 1}, {"type": "B", "v": 2}]}, "g2": {"items": [{"type": "A", "v": 3}]}}""";
         string result = Eval("*{type: v}.items", data);
-        Assert.Equal("undefined", result); // {} has no .items property → undefined
+        Assert.AreEqual("undefined", result); // {} has no .items property → undefined
 
         // *{type: v} alone returns {} (group-by always produces an object, even with no valid keys)
         string result2 = Eval("*{type: v}", data);
-        Assert.Equal("{}", result2);
+        Assert.AreEqual("{}", result2);
 
         // *.items{type: v} → group-by on the LAST step (items) works correctly
         string result3 = Eval("*.items{type: v}", data);
-        Assert.Equal("""{"A":[1,3],"B":2}""", result3);
+        Assert.AreEqual("""{"A":[1,3],"B":2}""", result3);
     }
 
     // ─── CompileName array input (lines 1020-1035) ──────────────────────────────
@@ -1221,7 +1222,7 @@ public class FunctionalCompilerCoverageTests
     // The filter [0] prevents inline, and nested arrays mean CompileName
     // sees array input from FlattenArrayStep.
 
-    [Fact]
+    [TestMethod]
     public void CompileName_ArrayInput_NestedArrayWithWildcard()
     {
         // *.n[0] on triple-nested data where wildcard deep-flattens all nested arrays.
@@ -1229,10 +1230,10 @@ public class FunctionalCompilerCoverageTests
         // (each n is position 0 in its own single-element context)
         string data = """{"a": [[[{"n": 1}, {"n": 2}]]], "b": [[[{"n": 3}]]]}""";
         string result = Eval("*.n[0]", data);
-        Assert.Equal("[1,2,3]", result);
+        Assert.AreEqual("[1,2,3]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompileName_ScalarInput_ReturnsUndefined()
     {
         // *.n[0] on data with scalars inside nested arrays.
@@ -1240,14 +1241,14 @@ public class FunctionalCompilerCoverageTests
         // Scalars are skipped, only objects contribute results.
         string data = """{"a": [[[1, {"n": 2}]]]}""";
         string result = Eval("*.n[0]", data);
-        Assert.Equal("2", result);
+        Assert.AreEqual("2", result);
     }
 
     // ─── Multi-element input context with array flattening (lines 4088-4098) ───
     // When inputContext has multiple elements and some are arrays that need
     // flattening at step > 0.
 
-    [Fact]
+    [TestMethod]
     public void MultiElementInputContext_FlatteningAtIntermediateStep()
     {
         // Path where step 1 produces multiple values that are arrays, and step 2
@@ -1263,10 +1264,10 @@ public class FunctionalCompilerCoverageTests
         // data.items produces array-of-arrays at step 1,
         // .x at step 2 must flatten each inner array
         string result = Eval("data.items.x", data);
-        Assert.Equal("[1,2,3]", result);
+        Assert.AreEqual("[1,2,3]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void MultiElementInputContext_DeepNesting()
     {
         // Deep path with multiple intermediate arrays
@@ -1279,14 +1280,14 @@ public class FunctionalCompilerCoverageTests
         }
         """;
         string result = Eval("a.b.c.d", data);
-        Assert.Equal("[1,2,3,4,5]", result);
+        Assert.AreEqual("[1,2,3,4,5]", result);
     }
 
     // ─── Index binding on singleton array expansion (lines 5095-5103) ─────────
     // When a stage has an index binding variable and the current value is a
     // singleton wrapping a JSON array, it must be expanded to multi-value.
 
-    [Fact]
+    [TestMethod]
     public void IndexBinding_SingletonArrayExpansion()
     {
         // When #$i appears AFTER a constant-index filter like [0], and the result is
@@ -1301,16 +1302,16 @@ public class FunctionalCompilerCoverageTests
         // #$i → expand to multi-value, bind index per-element
         // .name → extract name from each
         string result = Eval("items[0]#$i.name", data);
-        Assert.Contains("x", result);
-        Assert.Contains("y", result);
-        Assert.Contains("z", result);
+        StringAssert.Contains(result, "x");
+        StringAssert.Contains(result, "y");
+        StringAssert.Contains(result, "z");
     }
 
     // ─── JSON array as filter predicate (lines 5310-5351) ─────────────────────
     // When a filter predicate returns a singleton containing a JSON array of numbers,
     // those numbers are used as index selectors.
 
-    [Fact]
+    [TestMethod]
     public void NumericIndexFilter_JsonArrayResult()
     {
         // Filter where predicate returns a JSON array of indices (not a Sequence)
@@ -1326,12 +1327,12 @@ public class FunctionalCompilerCoverageTests
         // Element 1: indices=[1], position 1 in [1] → included
         // Element 2: indices=[0,1,2], position 2 in [0,1,2] → included
         string result = Eval("$[indices].val", data);
-        Assert.Contains("A", result);
-        Assert.Contains("B", result);
-        Assert.Contains("C", result);
+        StringAssert.Contains(result, "A");
+        StringAssert.Contains(result, "B");
+        StringAssert.Contains(result, "C");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumericIndexFilter_JsonArrayResult_NoMatch()
     {
         // Filter where predicate returns a JSON array that doesn't match position
@@ -1346,22 +1347,22 @@ public class FunctionalCompilerCoverageTests
         // Element 1: position 1, indices=[0,2] → 1 not in [0,2] → excluded
         // Element 2: position 2, indices=[0,1] → 2 not in [0,1] → excluded
         string result = Eval("$[indices].val", data);
-        Assert.Equal("undefined", result);
+        Assert.AreEqual("undefined", result);
     }
 
     // ─── Truthiness filter fallback (lines 5394-5398) ─────────────────────────
     // When a filter predicate returns a non-boolean, non-numeric, non-array value,
     // the truthiness check is the final fallback.
 
-    [Fact]
+    [TestMethod]
     public void TruthinessFilter_StringResult()
     {
         // Filter where predicate returns a string (truthy if non-empty)
         string data = """[{"name": "hello"}, {"name": ""}, {"name": "world"}, {}]""";
         // $[name] — predicate returns a string; truthy for non-empty strings
         string result = Eval("$[name].name", data);
-        Assert.Contains("hello", result);
-        Assert.Contains("world", result);
+        StringAssert.Contains(result, "hello");
+        StringAssert.Contains(result, "world");
         // Empty string is falsy — should be excluded
         Assert.DoesNotContain("\"\"", result);
     }
@@ -1369,57 +1370,57 @@ public class FunctionalCompilerCoverageTests
     // ─── ObjectDeepEquals (lines 9055-9082) ──────────────────────────────
     // Deep equality comparison between JSON objects (order-independent).
 
-    [Fact]
+    [TestMethod]
     public void ObjectDeepEquals_SameProperties_DifferentOrder()
     {
         // Object equality is order-independent → lines 9055-9091
         string result = Eval("""{"a":1, "b":2} = {"b":2, "a":1}""");
-        Assert.Equal("true", result);
+        Assert.AreEqual("true", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ObjectDeepEquals_DifferentPropertyCount()
     {
         // Different property counts → line 9072-9074 (early return false)
         string result = Eval("""{"a":1, "b":2} = {"a":1}""");
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ObjectDeepEquals_MissingProperty()
     {
         // Same count but missing key → line 9080-9082
         string result = Eval("""{"a":1, "b":2} = {"a":1, "c":2}""");
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ObjectDeepEquals_NestedObjectDifference()
     {
         // Nested object value mismatch → line 9085-9088
         string result = Eval("""{"x": {"a":1}} = {"x": {"a":2}}""");
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayDeepEquals_ElementMismatch()
     {
         // Array elements differ → lines 9046-9048
         string result = Eval("[1,2,3] = [1,2,4]");
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayDeepEquals_LengthMismatch()
     {
         // Array length differs → lines 9035-9037
         string result = Eval("[1,2] = [1,2,3]");
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
     // ─── FocusStages singleton array filter with negative index (lines 5599-5607) ──
 
-    [Fact]
+    [TestMethod]
     public void FocusStages_SingletonArrayFilter_NegativeIndex()
     {
         // Focus filter evaluates to singleton array containing negative index.
@@ -1427,12 +1428,12 @@ public class FunctionalCompilerCoverageTests
         // Focus without continuation returns parent context per surviving element.
         string data = """{"items": ["a","b","c","d"]}""";
         string result = Eval("items@$x[[-1, 0]]", data);
-        Assert.Equal(
+        Assert.AreEqual(
             """[{"items":["a","b","c","d"]},{"items":["a","b","c","d"]}]""",
             result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusStages_SingletonArrayFilter_BooleanBreaksAllNum()
     {
         // Focus filter array contains boolean → breaks allNum loop → lines 5589-5591
@@ -1440,14 +1441,14 @@ public class FunctionalCompilerCoverageTests
         // Focus without continuation returns parent context per surviving element.
         string data = """{"items": ["a","b","c"]}""";
         string result = Eval("items@$x[[true, 0]]", data);
-        Assert.Equal(
+        Assert.AreEqual(
             """[{"items":["a","b","c"]},{"items":["a","b","c"]},{"items":["a","b","c"]}]""",
             result);
     }
 
     // ─── CollectAndContinue nested array and array-valued properties (lines 1565-1586) ──
 
-    [Fact]
+    [TestMethod]
     public void SimplePropertyChain_CollectAndContinue_ArrayProperty()
     {
         // n[0] on data where objects have array-valued "n" property.
@@ -1456,10 +1457,10 @@ public class FunctionalCompilerCoverageTests
         string data = """[{"n": [10, 20]}, {"n": 30}]""";
         string result = Eval("n[0]", data);
         // Collected: [10, 20, 30], apply index [0] → 10
-        Assert.Equal("10", result);
+        Assert.AreEqual("10", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void SimplePropertyChain_CollectAndContinue_NestedArray()
     {
         // n[0] on data with nested array items → lines 1578-1586 (CollectAndContinue recurse)
@@ -1469,12 +1470,12 @@ public class FunctionalCompilerCoverageTests
         //   Inner: {n:[10,20]} → prop "n" = [10,20] (Array) → flatten → [10, 20]
         // {n:30} → prop "n" = 30 → [30]
         // Collected: [10, 20, 30], index [0] → 10
-        Assert.Equal("10", result);
+        Assert.AreEqual("10", result);
     }
 
     // ─── EvalChainOverArrayIntoStatic branches (lines 1969-1986) ──────────────────
 
-    [Fact]
+    [TestMethod]
     public void CoalesceChain_NestedArrayTraversal()
     {
         // The ?? operator desugars to $exists(lhs) ? lhs : rhs with shared AST reference.
@@ -1483,20 +1484,20 @@ public class FunctionalCompilerCoverageTests
         // [{name:"x"}] is Array → line 1977 (recursive call)
         string data = """{"data": {"items": [[{"name": "x"}], {"name": "y"}]}}""";
         string result = Eval("data.items.name ?? \"none\"", data);
-        Assert.Equal("""["x","y"]""", result);
+        Assert.AreEqual("""["x","y"]""", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CoalesceChain_ScalarFallback()
     {
         // data.items.name via ?? coalesce where items array has scalars mixed with objects.
         // scalar (Number) → line 1983-1986 (found = false, break)
         string data = """{"data": {"items": [1, {"name": "z"}]}}""";
         string result = Eval("data.items.name ?? \"none\"", data);
-        Assert.Equal("\"z\"", result);
+        Assert.AreEqual("\"z\"", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CoalesceChain_PropertyNotFound()
     {
         // prop.x ?? "y" — chain where prop is an array; second item lacks property "x".
@@ -1504,10 +1505,10 @@ public class FunctionalCompilerCoverageTests
         // → lines 1972-1974 (found = false, break for that item).
         string data = """{"prop": [{"x": 1}, {"y": 2}]}""";
         string result = Eval("prop.x ?? \"y\"", data);
-        Assert.Equal("1", result);
+        Assert.AreEqual("1", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FocusStages_ArrayFilter_NonNumericElement()
     {
         // items@$x[["abc"]] — items is a path step with focus @$x and filter stage [["abc"]].
@@ -1517,14 +1518,14 @@ public class FunctionalCompilerCoverageTests
         // Focus without continuation returns parent context per surviving element.
         string data = """{"items": [1, 2, 3]}""";
         string result = Eval("items@$x[[\"abc\"]]", data);
-        Assert.Equal(
+        Assert.AreEqual(
             """[{"items":[1,2,3]},{"items":[1,2,3]},{"items":[1,2,3]}]""",
             result);
     }
 
     // ─── AccumulateGroupBy with singleton array sub-result (lines 4427-4437) ──────
 
-    [Fact]
+    [TestMethod]
     public void GroupBy_SingletonArrayResult_Flattened()
     {
         // *#$i{$string($i): $}.vals — wildcard with index + group-by (step-level) then navigate
@@ -1533,11 +1534,11 @@ public class FunctionalCompilerCoverageTests
         // AccumulateGroupBy: subResult.IsSingleton && el.ValueKind == Array → lines 4432-4437.
         string data = """{"x": {"vals": [1,2]}, "y": {"vals": [3]}}""";
         string result = Eval("*#$i{$string($i): $}.vals", data);
-        Assert.Contains("\"0\"", result);
-        Assert.Contains("\"1\"", result);
+        StringAssert.Contains(result, "\"0\"");
+        StringAssert.Contains(result, "\"1\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void GroupBy_ScalarSingletonResult()
     {
         // *#$i{$string($i): $}.name — wildcard with index + group-by (step-level) then navigate
@@ -1545,11 +1546,11 @@ public class FunctionalCompilerCoverageTests
         // AccumulateGroupBy: subResult.IsSingleton && el.ValueKind != Array → lines 4440-4442.
         string data = """{"x": {"name": "alice"}, "y": {"name": "bob"}}""";
         string result = Eval("*#$i{$string($i): $}.name", data);
-        Assert.Contains("\"0\"", result);
-        Assert.Contains("alice", result);
+        StringAssert.Contains(result, "\"0\"");
+        StringAssert.Contains(result, "alice");
     }
 
-    [Fact]
+    [TestMethod]
     public void GroupBy_MultiValueResult()
     {
         // *#$i{$string($i): $}.* — wildcard with index + group-by (step-level) then
@@ -1557,82 +1558,82 @@ public class FunctionalCompilerCoverageTests
         // AccumulateGroupBy: subResult is NOT singleton → lines 4444-4450.
         string data = """{"x": {"a": 1, "b": 2}, "y": {"c": 3}}""";
         string result = Eval("*#$i{$string($i): $}.*", data);
-        Assert.Contains("\"0\"", result);
-        Assert.Contains("\"1\"", result);
+        StringAssert.Contains(result, "\"0\"");
+        StringAssert.Contains(result, "\"1\"");
     }
 
     // ─── String arrays in predicates are truthy (not numeric indices) ──
 
-    [Fact]
+    [TestMethod]
     public void TryCoerceToNumber_HexString()
     {
         // ["0x01"] is a truthy array (non-empty, contains non-number) → all items pass.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[\"0x01\"]]", data);
-        Assert.Equal("[10,20,30]", result);
+        Assert.AreEqual("[10,20,30]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCoerceToNumber_BinaryString()
     {
         // ["0b10"] is a truthy array → all items pass.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[\"0b10\"]]", data);
-        Assert.Equal("[10,20,30]", result);
+        Assert.AreEqual("[10,20,30]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCoerceToNumber_OctalString()
     {
         // ["0o02"] is a truthy array → all items pass.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[\"0o02\"]]", data);
-        Assert.Equal("[10,20,30]", result);
+        Assert.AreEqual("[10,20,30]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCoerceToNumber_InvalidHexString()
     {
         // "0xZZ" → TryParseSpecialRadix → hex parse fails → lines 8742-8743.
         // allNum becomes false, filter treated as truthy → all elements pass.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[\"0xZZ\"]]", data);
-        Assert.Equal("[10,20,30]", result);
+        Assert.AreEqual("[10,20,30]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCoerceToNumber_InvalidBinaryString()
     {
         // "0b222" → TryParseSpecialRadix → binary: char '2' is not '0' or '1'
         // → lines 8805-8808 (invalid binary digit) on NET; lines 8754-8756 on net481.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[\"0b222\"]]", data);
-        Assert.Equal("[10,20,30]", result);
+        Assert.AreEqual("[10,20,30]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCoerceToNumber_InvalidOctalString()
     {
         // "0o89" → TryParseSpecialRadix → octal: char '8' is > '7'
         // → lines 8824-8827 (invalid octal digit) on NET.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[\"0o89\"]]", data);
-        Assert.Equal("[10,20,30]", result);
+        Assert.AreEqual("[10,20,30]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCoerceToNumber_NullInFilterArray()
     {
         // [null, 1] — array with non-number element (null) is not treated as numeric indices.
         // Falls through to truthiness: non-empty array is truthy → all items pass.
         string data = """{"items": [10, 20, 30]}""";
         string result = Eval("items[[null, 1]]", data);
-        Assert.Equal("[10,20,30]", result);
+        Assert.AreEqual("[10,20,30]", result);
     }
 
     // ─── AnyChainOverArray: scalar/array branches (lines 1897-1910) ─────────────────
 
-    [Fact]
+    [TestMethod]
     public void CoalesceChain_ScalarIntermediateInArray()
     {
         // x.y.z ?? "default" where y contains [42, {"z":1}]. Parser desugars ?? to
@@ -1642,10 +1643,10 @@ public class FunctionalCompilerCoverageTests
         //   item={"z":1} → Object → get "z" → found=true → return true.
         string data = """{"x": {"y": [42, {"z": 1}]}}""";
         string result = Eval("x.y.z ?? \"default\"", data);
-        Assert.Equal("1", result);
+        Assert.AreEqual("1", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CoalesceChain_NestedArrayInArray()
     {
         // x.y.z ?? "default" where y contains [[[1]], {"z":99}].
@@ -1655,10 +1656,10 @@ public class FunctionalCompilerCoverageTests
         // Next item: {"z":99} → Object → found=true → return true.
         string data = """{"x": {"y": [[[1]], {"z": 99}]}}""";
         string result = Eval("x.y.z ?? \"default\"", data);
-        Assert.Equal("99", result);
+        Assert.AreEqual("99", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void CoalesceChain_ScalarIntermediateReturnsFalse()
     {
         // x.y.z ?? "default" where y=42 (scalar). AnySimplePropertyChain:
@@ -1666,10 +1667,10 @@ public class FunctionalCompilerCoverageTests
         // step=2: current=42 (Number) → else branch → lines 1945-1947: return Undefined.
         string data = """{"x": {"y": 42}}""";
         string result = Eval("x.y.z ?? \"default\"", data);
-        Assert.Equal("\"default\"", result);
+        Assert.AreEqual("\"default\"", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExistsChain_ScalarInAnyChainOverArray()
     {
         // $exists(a.missing.deep) where a=[{"missing":42}]. Fused $exists uses AnySimplePropertyChain.
@@ -1678,10 +1679,10 @@ public class FunctionalCompilerCoverageTests
         // step=2: current=42 (Number) → else → lines 1907-1910: found=false, break.
         string data = """{"a": [{"missing": 42}]}""";
         string result = Eval("$exists(a.missing.deep)", data);
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExistsChain_NestedArrayInAnyChainOverArray()
     {
         // $exists(a.missing.deep) where a=[{"missing":[[1]]}]. AnyChainOverArray:
@@ -1691,20 +1692,20 @@ public class FunctionalCompilerCoverageTests
         //   Returns false. → lines 1904-1905: found=false, break.
         string data = """{"a": [{"missing": [[1]]}]}""";
         string result = Eval("$exists(a.missing.deep)", data);
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExistsChain_NestedArrayReturnsTrue()
     {
         // $exists(a.missing.deep) where "missing" is array containing {"deep":99}.
         // AnyChainOverArray recursion SUCCEEDS → lines 1900-1901: return true.
         string data = """{"a": [{"missing": [{"deep": 99}]}]}""";
         string result = Eval("$exists(a.missing.deep)", data);
-        Assert.Equal("true", result);
+        Assert.AreEqual("true", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExistsChain_ScalarAtTopLevel()
     {
         // $exists(a.b.c) where "a"=42 (scalar). AnySimplePropertyChain:
@@ -1712,67 +1713,67 @@ public class FunctionalCompilerCoverageTests
         // else branch → lines 1872-1874: return false.
         string data = """{"a": 42}""";
         string result = Eval("$exists(a.b.c)", data);
-        Assert.Equal("false", result);
+        Assert.AreEqual("false", result);
     }
 
     // ─── $substring with hex string params (TryCoerceToNumber via BuiltInFunctions) ──
 
-    [Fact]
+    [TestMethod]
     public void Substring_HexStartAndLength()
     {
         // $substring("hello", "0x01", "0x03") — BuiltInFunctions calls TryCoerceToNumber
         // on start/length string params → hex string path → TryParseSpecialRadix.
         string result = Eval("$substring(\"hello\", \"0x01\", \"0x03\")");
-        Assert.Equal("\"ell\"", result);
+        Assert.AreEqual("\"ell\"", result);
     }
 
     // ─── EscapeJsonStringContent: control characters in constant arrays (lines 494-502) ──
 
-    [Fact]
+    [TestMethod]
     public void ConstantArray_StringWithTab()
     {
         // Constant array with string containing \t → CompileConstant → SerializeConstantJson
         // → EscapeJsonStringContent → case '\t' at line 495.
         string result = Eval("[\"a\\tb\"]");
-        Assert.Equal("[\"a\\tb\"]", result);
+        Assert.AreEqual("[\"a\\tb\"]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ConstantArray_StringWithCarriageReturn()
     {
         // String with \r → EscapeJsonStringContent → case '\r' at line 494.
         string result = Eval("[\"a\\rb\"]");
-        Assert.Equal("[\"a\\rb\"]", result);
+        Assert.AreEqual("[\"a\\rb\"]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ConstantArray_StringWithBackspace()
     {
         // String with \b → EscapeJsonStringContent → case '\b' at line 496.
         string result = Eval("[\"a\\bb\"]");
-        Assert.Equal("[\"a\\bb\"]", result);
+        Assert.AreEqual("[\"a\\bb\"]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ConstantArray_StringWithFormFeed()
     {
         // String with \f → EscapeJsonStringContent → case '\f' at line 497.
         string result = Eval("[\"a\\fb\"]");
-        Assert.Equal("[\"a\\fb\"]", result);
+        Assert.AreEqual("[\"a\\fb\"]", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ConstantArray_StringWithControlChar()
     {
         // String with \u0001 → EscapeJsonStringContent → default case → c < ' '
         // → lines 499-501: sb.AppendFormat("\\u{0:X4}", (int)c).
         string result = Eval("[\"a\\u0001b\"]");
-        Assert.Equal("[\"a\\u0001b\"]", result);
+        Assert.AreEqual("[\"a\\u0001b\"]", result);
     }
 
     // ─── AccumulateGroupBy: number key error and coercion (lines 4468-4475, 4591-4598) ──
 
-    [Fact]
+    [TestMethod]
     public void AccumulateGroupBy_NumberKeyThrowsT1003()
     {
         // Group-by where the key expression evaluates to a number → T1003 error.
@@ -1783,21 +1784,21 @@ public class FunctionalCompilerCoverageTests
         {
             string result = Eval("*#$i{$i: $}.x", data);
             // If it doesn't throw, the key was coerced — the code still exercises the path
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
         }
         catch (JsonataException ex)
         {
-            Assert.Equal("T1003", ex.Code);
+            Assert.AreEqual("T1003", ex.Code);
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AccumulateGroupBy_BooleanKeyThrowsT1003()
     {
         // Group-by where the key is boolean → T1003 error (matching reference).
         // [1,2,3]{($ > 1): $} — boolean key from comparison.
-        var ex = Assert.Throws<JsonataException>(() => Eval("[1,2,3]{($ > 1): $}"));
-        Assert.Equal("T1003", ex.Code);
+        var ex = Assert.ThrowsExactly<JsonataException>(() => Eval("[1,2,3]{($ > 1): $}"));
+        Assert.AreEqual("T1003", ex.Code);
     }
 
     // ─── AppendNullToBuffer: NaN/Infinity path — verified as defensive dead code ────

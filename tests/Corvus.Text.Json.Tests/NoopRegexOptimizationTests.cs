@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.RegexOptimization;
 
@@ -15,8 +15,9 @@ namespace Corvus.Text.Json.Tests.RegexOptimization;
 /// The pattern <c>.*</c> matches any string; we verify that validation still
 /// works correctly when the regex is replaced with inline always-true logic.
 /// </summary>
-[Trait("Optimization", "RegexNoop")]
-public class NoopPatternKeyword : IClassFixture<NoopPatternKeyword.Fixture>
+[TestCategory("RegexNoop")]
+[TestClass]
+public class NoopPatternKeyword
 {
     private const string Schema = """
         {
@@ -26,41 +27,47 @@ public class NoopPatternKeyword : IClassFixture<NoopPatternKeyword.Fixture>
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public NoopPatternKeyword(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"hello\"")]
-    [InlineData("\"\"")]
-    [InlineData("\"a very long string with lots of characters 1234567890!@#$%\"")]
-    [InlineData("\"unicode: \\u00e9\\u00e8\\u00ea\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"hello\"")]
+    [DataRow("\"\"")]
+    [DataRow("\"a very long string with lots of characters 1234567890!@#$%\"")]
+    [DataRow("\"unicode: \\u00e9\\u00e8\\u00ea\"")]
     public void StringValueAlwaysMatchesNoopPattern(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("42")]
-    [InlineData("true")]
-    [InlineData("null")]
-    [InlineData("[1, 2]")]
-    [InlineData("{\"a\": 1}")]
+    [TestMethod]
+    [DataRow("42")]
+    [DataRow("true")]
+    [DataRow("null")]
+    [DataRow("[1, 2]")]
+    [DataRow("{\"a\": 1}")]
     public void NonStringValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -82,8 +89,9 @@ public class NoopPatternKeyword : IClassFixture<NoopPatternKeyword.Fixture>
 /// <summary>
 /// Tests for noop regex optimization with the anchored <c>^.*$</c> variant.
 /// </summary>
-[Trait("Optimization", "RegexNoop")]
-public class NoopPatternKeywordAnchored : IClassFixture<NoopPatternKeywordAnchored.Fixture>
+[TestCategory("RegexNoop")]
+[TestClass]
+public class NoopPatternKeywordAnchored
 {
     private const string Schema = """
         {
@@ -93,36 +101,42 @@ public class NoopPatternKeywordAnchored : IClassFixture<NoopPatternKeywordAnchor
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public NoopPatternKeywordAnchored(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"hello\"")]
-    [InlineData("\"\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"hello\"")]
+    [DataRow("\"\"")]
     public void StringValueAlwaysMatchesAnchoredNoopPattern(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("42")]
-    [InlineData("null")]
+    [TestMethod]
+    [DataRow("42")]
+    [DataRow("null")]
     public void NonStringValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -145,8 +159,9 @@ public class NoopPatternKeywordAnchored : IClassFixture<NoopPatternKeywordAnchor
 /// Tests for noop regex optimization with the <c>[\s\S]*</c> variant
 /// (character class matching any character, zero or more times).
 /// </summary>
-[Trait("Optimization", "RegexNoop")]
-public class NoopPatternKeywordCharClass : IClassFixture<NoopPatternKeywordCharClass.Fixture>
+[TestCategory("RegexNoop")]
+[TestClass]
+public class NoopPatternKeywordCharClass
 {
     private const string Schema = """
         {
@@ -156,35 +171,41 @@ public class NoopPatternKeywordCharClass : IClassFixture<NoopPatternKeywordCharC
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public NoopPatternKeywordCharClass(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"hello world\"")]
-    [InlineData("\"\"")]
-    [InlineData("\"\\n\\t\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"hello world\"")]
+    [DataRow("\"\"")]
+    [DataRow("\"\\n\\t\"")]
     public void StringValueAlwaysMatchesCharClassNoopPattern(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void NonStringValueIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("42");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("42");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -207,8 +228,9 @@ public class NoopPatternKeywordCharClass : IClassFixture<NoopPatternKeywordCharC
 /// Tests for noop regex optimization with the <c>patternProperties</c> keyword.
 /// A <c>.*</c> pattern property should match all properties unconditionally.
 /// </summary>
-[Trait("Optimization", "RegexNoop")]
-public class NoopPatternProperties : IClassFixture<NoopPatternProperties.Fixture>
+[TestCategory("RegexNoop")]
+[TestClass]
+public class NoopPatternProperties
 {
     private const string Schema = """
         {
@@ -221,46 +243,52 @@ public class NoopPatternProperties : IClassFixture<NoopPatternProperties.Fixture
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public NoopPatternProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"foo": "bar"}""")]
-    [InlineData("""{"a": "b", "c": "d"}""")]
-    [InlineData("""{}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"foo": "bar"}""")]
+    [DataRow("""{"a": "b", "c": "d"}""")]
+    [DataRow("""{}""")]
     public void ObjectWithAllStringValuesIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"foo": 42}""")]
-    [InlineData("""{"a": "valid", "b": 123}""")]
+    [TestMethod]
+    [DataRow("""{"foo": 42}""")]
+    [DataRow("""{"a": "valid", "b": 123}""")]
     public void ObjectWithNonStringValuesIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"not an object\"")]
-    [InlineData("42")]
+    [TestMethod]
+    [DataRow("\"not an object\"")]
+    [DataRow("42")]
     public void NonObjectValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

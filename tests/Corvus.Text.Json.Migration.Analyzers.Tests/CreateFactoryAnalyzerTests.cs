@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.CreateAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ013/CVJ014/CVJ015: Create, FromItems, FromValues migration.
 /// </summary>
+[TestClass]
 public class CreateFactoryAnalyzerTests
 {
     private const string V4Stubs = @"
@@ -63,7 +64,7 @@ public struct JsonWorkspace : System.IDisposable
 ";
 
     // ── Top-level (Builder) tests ────────────────────────────────────
-    [Fact]
+    [TestMethod]
     public async Task Create_TopLevel_RewritesToCreateBuilder()
     {
         var test = new CodeFixTest
@@ -100,7 +101,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Create_TopLevel_ReusesExistingWorkspace()
     {
         var test = new CodeFixTest
@@ -137,7 +138,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Create_UsedAsInstance_RewritesToCreateBuilder()
     {
         // Variable has member access → it's a builder, not a source.
@@ -177,7 +178,7 @@ namespace TestApp
     }
 
     // ── Source (Build) tests ─────────────────────────────────────────
-    [Fact]
+    [TestMethod]
     public async Task Create_DirectArgument_RewritesToBuild()
     {
         // Create() used directly as an argument → Source → Build().
@@ -214,7 +215,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Create_AssignedThenPassedAsArgument_RewritesToBuild()
     {
         // Variable assigned from Create(), then used only as argument → Source → Build().
@@ -254,7 +255,7 @@ namespace TestApp
     }
 
     // ── FromItems (CVJ014) tests ─────────────────────────────────────
-    [Fact]
+    [TestMethod]
     public async Task FromItems_TopLevel_RewritesToCreateBuilderWithBuild()
     {
         var test = new CodeFixTest
@@ -293,7 +294,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FromItems_DirectArgument_RewritesToBuild()
     {
         var test = new CodeFixTest
@@ -330,7 +331,7 @@ namespace TestApp
     }
 
     // ── FromValues (CVJ015) tests ────────────────────────────────────
-    [Fact]
+    [TestMethod]
     public async Task FromValues_TopLevel_RewritesToCreateBuilder()
     {
         var test = new CodeFixTest
@@ -367,7 +368,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FromValues_ReusesExistingWorkspace()
     {
         var test = new CodeFixTest
@@ -406,7 +407,7 @@ namespace TestApp
     }
 
     // ── Edge case tests ─────────────────────────────────────────────
-    [Fact]
+    [TestMethod]
     public async Task Create_VarType_BuildPath_DoesNotAppendSource()
     {
         // var should NOT be rewritten to var.Source
@@ -445,7 +446,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Create_WorkspaceOutOfScope_InsertsNew()
     {
         // Workspace declared in a different block should NOT be reused.
@@ -492,7 +493,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Create_ExpressionBodied_DiagnosticOnly()
     {
         // Expression-bodied member — no BlockSyntax to insert workspace into.
@@ -511,7 +512,7 @@ namespace TestApp
             Verify.Diagnostic("CVJ013").WithLocation(0));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Create_FieldAssignment_TopLevel()
     {
         // Assigned to a field — no local declaration, not inside argument.
@@ -552,7 +553,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Create_StandaloneStatement_TopLevel()
     {
         // Create() as standalone expression statement — no assignment at all.
@@ -588,7 +589,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task Create_InTernary_TopLevel()
     {
         // Create() in ternary — not inside an argument list,

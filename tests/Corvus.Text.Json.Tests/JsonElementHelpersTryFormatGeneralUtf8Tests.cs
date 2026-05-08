@@ -1,6 +1,6 @@
 using System.Globalization;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -9,18 +9,19 @@ namespace Corvus.Text.Json.Tests;
 /// This outputs: [sign]&lt;integral&gt;&lt;fractional&gt;[exponentChar][exponentSign]&lt;exponent&gt;
 /// For example: "123456e-3" or "-999"
 /// </summary>
+[TestClass]
 public class JsonElementHelpersTryFormatGeneralUtf8Tests
 {
-    [Theory]
-    [InlineData("123", "123")]
-    [InlineData("123.456", "123.456")]
-    [InlineData("0.001", "1e-3")]
-    [InlineData("0.01", "1e-2")]
-    [InlineData("0.1", "0.1")]
-    [InlineData("1e5", "100000")]
-    [InlineData("1e-5", "1e-5")]
-    [InlineData("1e6", "1000000")]
-    [InlineData("1e15", "1e+15")]
+    [TestMethod]
+    [DataRow("123", "123")]
+    [DataRow("123.456", "123.456")]
+    [DataRow("0.001", "1e-3")]
+    [DataRow("0.01", "1e-2")]
+    [DataRow("0.1", "0.1")]
+    [DataRow("1e5", "100000")]
+    [DataRow("1e-5", "1e-5")]
+    [DataRow("1e6", "1000000")]
+    [DataRow("1e15", "1e+15")]
     public void TryFormatGeneral_WithoutPrecisionLimit_OutputsFullSignificandAndExponent(string jsonNumber, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -45,18 +46,18 @@ public class JsonElementHelpersTryFormatGeneralUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("123.556", 3, "124")]
-    [InlineData("123.456", 3, "123")]
-    [InlineData("123.456", 4, "123.5")]
-    [InlineData("123.456", 5, "123.46")]
-    [InlineData("999.5", 3, "1e+3")]
-    [InlineData("9.995", 3, "10")]
+    [TestMethod]
+    [DataRow("123.556", 3, "124")]
+    [DataRow("123.456", 3, "123")]
+    [DataRow("123.456", 4, "123.5")]
+    [DataRow("123.456", 5, "123.46")]
+    [DataRow("999.5", 3, "1e+3")]
+    [DataRow("9.995", 3, "10")]
     public void TryFormatGeneral_WithPrecision_RoundsSignificand(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -81,15 +82,15 @@ public class JsonElementHelpersTryFormatGeneralUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("-123", "-123")]
-    [InlineData("-123.456", "-123.456")]
-    [InlineData("-0.001", "-1e-3")]
+    [TestMethod]
+    [DataRow("-123", "-123")]
+    [DataRow("-123.456", "-123.456")]
+    [DataRow("-0.001", "-1e-3")]
     public void TryFormatGeneral_WithNegativeNumbers_IncludesNegativeSign(string jsonNumber, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -114,16 +115,16 @@ public class JsonElementHelpersTryFormatGeneralUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("1e-5", 'e', "1e-5")]
-    [InlineData("1e-5", 'E', "1E-5")]
-    [InlineData("1e15", 'e', "1e+15")]
-    [InlineData("1e15", 'E', "1E+15")]
+    [TestMethod]
+    [DataRow("1e-5", 'e', "1e-5")]
+    [DataRow("1e-5", 'E', "1E-5")]
+    [DataRow("1e15", 'e', "1e+15")]
+    [DataRow("1e15", 'E', "1E+15")]
     public void TryFormatGeneral_UsesSpecifiedExponentChar(string jsonNumber, char exponentChar, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -148,12 +149,12 @@ public class JsonElementHelpersTryFormatGeneralUtf8Tests
             exponentChar,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatGeneral_UsesCustomNegativeSign()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-123");
@@ -178,12 +179,12 @@ public class JsonElementHelpersTryFormatGeneralUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("~123", result);
+        Assert.AreEqual("~123", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatGeneral_UsesCustomNegativeSignForExponent()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1.23e-5");
@@ -208,12 +209,12 @@ public class JsonElementHelpersTryFormatGeneralUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("1.23e~5", result);
+        Assert.AreEqual("1.23e~5", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatGeneral_ReturnsFalseWhenBufferTooSmall()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123.456");
@@ -238,13 +239,13 @@ public class JsonElementHelpersTryFormatGeneralUtf8Tests
             'e',
             formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData("123.456789", 6, "123.457")]
-    [InlineData("0.9995", 3, "1")]
+    [TestMethod]
+    [DataRow("123.456789", 6, "123.457")]
+    [DataRow("0.9995", 3, "1")]
     public void TryFormatGeneral_RoundingCarriesIntoExponent(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -269,12 +270,12 @@ public class JsonElementHelpersTryFormatGeneralUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatGeneral_WithZero_OutputsZero()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0");
@@ -299,8 +300,8 @@ public class JsonElementHelpersTryFormatGeneralUtf8Tests
             'e',
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("0", result);
+        Assert.AreEqual("0", result);
     }
 }

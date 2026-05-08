@@ -10,7 +10,7 @@
 using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis.Testing;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using Verify = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerVerifier<
     Corvus.Text.Json.Migration.Analyzers.AsAccessorAnalyzer,
@@ -21,6 +21,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ010: V4 As* accessors removed in V5.
 /// </summary>
+[TestClass]
 public class AsAccessorAnalyzerTests
 {
     private const string V4InterfaceStubs = @"
@@ -30,7 +31,7 @@ namespace Corvus.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task AsString_TriggersCVJ010()
     {
         const string testCode = V4InterfaceStubs + @"
@@ -58,7 +59,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AsNumber_TriggersCVJ010()
     {
         const string testCode = V4InterfaceStubs + @"
@@ -86,7 +87,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AsObject_TriggersCVJ010()
     {
         const string testCode = V4InterfaceStubs + @"
@@ -114,7 +115,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AsArray_TriggersCVJ010()
     {
         const string testCode = V4InterfaceStubs + @"
@@ -142,7 +143,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AsBoolean_TriggersCVJ010()
     {
         const string testCode = V4InterfaceStubs + @"
@@ -170,7 +171,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode, expected);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ToString_NoDiagnostic()
     {
         const string testCode = @"
@@ -193,7 +194,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RegularProperty_NoDiagnostic()
     {
         const string testCode = @"
@@ -217,7 +218,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AsString_OnNonJsonValueType_NoDiagnostic()
     {
         const string testCode = V4InterfaceStubs + @"

@@ -5,15 +5,16 @@
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
+[TestClass]
 public class BigNumberVerySmallNumbersTests
 {
     #region Construction and Representation
 
-    [Fact]
+    [TestMethod]
     public void Constructor_VerySmallNumber_10ToMinus50_Succeeds()
     {
         // 1 × 10^-50
@@ -23,7 +24,7 @@ public class BigNumberVerySmallNumbersTests
         tiny.Exponent.ShouldBe(-50);
     }
 
-    [Fact]
+    [TestMethod]
     public void Constructor_VerySmallNumber_10ToMinus100_Succeeds()
     {
         // 1 × 10^-100
@@ -33,7 +34,7 @@ public class BigNumberVerySmallNumbersTests
         tiny.Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Constructor_VerySmallNumber_10ToMinus500_Succeeds()
     {
         // 1 × 10^-500
@@ -43,7 +44,7 @@ public class BigNumberVerySmallNumbersTests
         tiny.Exponent.ShouldBe(-500);
     }
 
-    [Fact]
+    [TestMethod]
     public void Constructor_VerySmallNumber_10ToMinus1000_Succeeds()
     {
         // 1 × 10^-1000
@@ -53,7 +54,7 @@ public class BigNumberVerySmallNumbersTests
         tiny.Exponent.ShouldBe(-1000);
     }
 
-    [Fact]
+    [TestMethod]
     public void Constructor_ExtremelySmallNumber_NearLongMin_Succeeds()
     {
         // Very close to minimum possible exponent
@@ -67,7 +68,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Parsing Very Small Numbers
 
-    [Fact]
+    [TestMethod]
     public void Parse_50DecimalPlaces_Succeeds()
     {
         // 0.00000000000000000000000000000000000000000000000123
@@ -79,7 +80,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-52);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_100DecimalPlaces_AllZerosExceptLast_Succeeds()
     {
         string hundredDecimals = "0." + new string('0', 99) + "7";
@@ -90,7 +91,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_200DecimalPlaces_Succeeds()
     {
         string twoHundredDecimals = "0." + new string('0', 199) + "123456789";
@@ -102,7 +103,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-208);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ScientificNotation_Minus100_Succeeds()
     {
         var parsed = BigNumber.Parse("1.23456789E-100");
@@ -112,7 +113,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-108);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ScientificNotation_Minus500_Succeeds()
     {
         var parsed = BigNumber.Parse("9.87654321E-500");
@@ -123,7 +124,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-508);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ScientificNotation_Minus1000_Succeeds()
     {
         var parsed = BigNumber.Parse("5.5E-1000");
@@ -137,7 +138,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Arithmetic with Very Small Numbers
 
-    [Fact]
+    [TestMethod]
     public void Addition_TwoVerySmallNumbers_SameExponent_Succeeds()
     {
         BigNumber a = new(123, -100);
@@ -149,7 +150,7 @@ public class BigNumberVerySmallNumbersTests
         sum.Normalize().Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Addition_TwoVerySmallNumbers_DifferentExponent_Succeeds()
     {
         BigNumber a = new(123, -100);  // 123 × 10^-100
@@ -163,7 +164,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-101);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_VerySmallNumbers_Succeeds()
     {
         BigNumber a = new(1000, -100);
@@ -175,7 +176,7 @@ public class BigNumberVerySmallNumbersTests
         diff.Normalize().Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_VerySmallNumbers_Succeeds()
     {
         BigNumber a = new(123, -50);
@@ -188,7 +189,7 @@ public class BigNumberVerySmallNumbersTests
         product.Normalize().Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_SmallBySmall_ExtremeResult_Succeeds()
     {
         BigNumber a = new(5, -500);
@@ -201,7 +202,7 @@ public class BigNumberVerySmallNumbersTests
         product.Normalize().Exponent.ShouldBe(-999);  // 10 normalized to 1 × 10^1, so -1000 + 1 = -999
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_VerySmallByNormal_Succeeds()
     {
         BigNumber tiny = new(1, -100);
@@ -214,7 +215,7 @@ public class BigNumberVerySmallNumbersTests
         quotient.Normalize().Exponent.ShouldBe(-101);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_NormalByVerySmall_CreatesLarge_Succeeds()
     {
         BigNumber normal = new(1, 0);
@@ -230,7 +231,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Comparison of Very Small Numbers
 
-    [Fact]
+    [TestMethod]
     public void Comparison_TwoVerySmallNumbers_SameExponent_Succeeds()
     {
         BigNumber smaller = new(123, -100);
@@ -240,7 +241,7 @@ public class BigNumberVerySmallNumbersTests
         (larger > smaller).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Comparison_TwoVerySmallNumbers_DifferentExponent_Succeeds()
     {
         BigNumber a = new(123, -100);  // 123 × 10^-100
@@ -250,7 +251,7 @@ public class BigNumberVerySmallNumbersTests
         (b < a).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Comparison_VerySmallWithZero_Succeeds()
     {
         BigNumber tiny = new(1, -1000);
@@ -260,7 +261,7 @@ public class BigNumberVerySmallNumbersTests
         (tiny != BigNumber.Zero).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Comparison_VerySmallWithNormal_Succeeds()
     {
         BigNumber tiny = new(999999999, -100);
@@ -270,7 +271,7 @@ public class BigNumberVerySmallNumbersTests
         (normal > tiny).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Comparison_NegativeVerySmall_Succeeds()
     {
         BigNumber negativeTiny = new(-1, -100);
@@ -285,7 +286,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Conversion of Very Small Numbers
 
-    [Fact]
+    [TestMethod]
     public void Conversion_VerySmallToDouble_BecomesZero()
     {
         // Beyond double's precision
@@ -296,7 +297,7 @@ public class BigNumberVerySmallNumbersTests
         result.ShouldBe(0.0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Conversion_VerySmallToDouble_WithinRange_Succeeds()
     {
         // Within double's range (approximately 10^-308)
@@ -308,7 +309,7 @@ public class BigNumberVerySmallNumbersTests
         result.ShouldBeLessThan(1.0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Conversion_VerySmallToDecimal_BeyondRange_LosesPrecision()
     {
         // Beyond decimal's precision (10^-28), but -50 might still convert
@@ -320,7 +321,7 @@ public class BigNumberVerySmallNumbersTests
         result.ShouldBeLessThanOrEqualTo(0.0000000000000000000000000001m);
     }
 
-    [Fact]
+    [TestMethod]
     public void Conversion_VerySmallToLong_Truncates()
     {
         BigNumber tiny = new(123456789, -50);
@@ -334,7 +335,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Formatting Very Small Numbers
 
-    [Fact]
+    [TestMethod]
     public void ToString_VerySmallNumber_UsesScientificNotation()
     {
         BigNumber tiny = new(123, -100);
@@ -345,7 +346,7 @@ public class BigNumberVerySmallNumbersTests
         str.ShouldContain("123");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_VerySmallNumber_Succeeds()
     {
         BigNumber tiny = new(987654321, -200);
@@ -357,7 +358,7 @@ public class BigNumberVerySmallNumbersTests
         charsWritten.ShouldBeGreaterThan(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_UTF8_VerySmallNumber_Succeeds()
     {
         BigNumber tiny = new(12345, -150);
@@ -373,7 +374,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Real-World Very Small Number Scenarios
 
-    [Fact]
+    [TestMethod]
     public void Physics_ElectronMass_Succeeds()
     {
         // Electron mass: 9.109 × 10^-31 kg
@@ -383,7 +384,7 @@ public class BigNumberVerySmallNumbersTests
         electronMass.Normalize().Exponent.ShouldBe(-34);
     }
 
-    [Fact]
+    [TestMethod]
     public void Physics_GravitationalConstant_Succeeds()
     {
         // G = 6.674 × 10^-11 N⋅m²/kg²
@@ -393,7 +394,7 @@ public class BigNumberVerySmallNumbersTests
         g.Normalize().Exponent.ShouldBe(-14);
     }
 
-    [Fact]
+    [TestMethod]
     public void Chemistry_MolecularConcentration_Succeeds()
     {
         // Extremely dilute solution: 1 × 10^-100 M
@@ -403,7 +404,7 @@ public class BigNumberVerySmallNumbersTests
         concentration.Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Quantum_ReducedPlanckConstant_Succeeds()
     {
         // ℏ = 1.055 × 10^-34 J⋅s
@@ -413,7 +414,7 @@ public class BigNumberVerySmallNumbersTests
         hBar.Normalize().Exponent.ShouldBe(-37);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cosmology_VacuumEnergy_Succeeds()
     {
         // Vacuum energy density: ~ 10^-9 J/m³ (simplified)
@@ -423,7 +424,7 @@ public class BigNumberVerySmallNumbersTests
         vacuumEnergy.Normalize().Exponent.ShouldBe(-11);
     }
 
-    [Fact]
+    [TestMethod]
     public void Probability_ExtremelyUnlikely_Succeeds()
     {
         // Probability of an extremely rare event: 10^-1000
@@ -439,7 +440,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Mixed Magnitude Operations
 
-    [Fact]
+    [TestMethod]
     public void Addition_VerySmallPlusVeryLarge_Succeeds()
     {
         BigNumber tiny = new(1, -100);
@@ -452,7 +453,7 @@ public class BigNumberVerySmallNumbersTests
         sum.Significand.ShouldNotBe(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_NormalMinusVerySmall_Succeeds()
     {
         BigNumber normal = new(1, 0);
@@ -465,7 +466,7 @@ public class BigNumberVerySmallNumbersTests
         diff.Significand.ShouldNotBe(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_VerySmallByVeryLarge_Succeeds()
     {
         BigNumber tiny = new(5, -100);
@@ -482,7 +483,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Precision and Accuracy
 
-    [Fact]
+    [TestMethod]
     public void Addition_ManyVerySmallNumbers_MaintainsPrecision()
     {
         BigNumber sum = BigNumber.Zero;
@@ -499,7 +500,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-97);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_AlmostEqualVerySmallNumbers_Succeeds()
     {
         BigNumber a = new(1000000000, -100);
@@ -511,7 +512,7 @@ public class BigNumberVerySmallNumbersTests
         diff.Normalize().Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_VerySmallNumbers_HighPrecision_Succeeds()
     {
         BigNumber a = new(1, -100);
@@ -527,7 +528,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Edge Cases
 
-    [Fact]
+    [TestMethod]
     public void Normalize_VerySmallWithTrailingZeros_Succeeds()
     {
         // 1000 × 10^-100 should normalize to 1 × 10^-97
@@ -539,7 +540,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-97);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_VerySmallNoTrailingZeros_Unchanged()
     {
         BigNumber value = new(123456789, -100);
@@ -550,7 +551,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void IsInteger_VerySmallNumber_ReturnsFalse()
     {
         BigNumber tiny = new(123, -50);
@@ -558,7 +559,7 @@ public class BigNumberVerySmallNumbersTests
         tiny.IsInteger().ShouldBeFalse();
     }
 
-    [Fact]
+    [TestMethod]
     public void Abs_NegativeVerySmall_ReturnsPositive()
     {
         BigNumber negativeTiny = new(-123456, -100);
@@ -569,7 +570,7 @@ public class BigNumberVerySmallNumbersTests
         abs.Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sign_VerySmallPositive_ReturnsOne()
     {
         BigNumber tiny = new(1, -1000);
@@ -579,7 +580,7 @@ public class BigNumberVerySmallNumbersTests
         sign.ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sign_VerySmallNegative_ReturnsMinusOne()
     {
         BigNumber tiny = new(-1, -1000);
@@ -593,7 +594,7 @@ public class BigNumberVerySmallNumbersTests
 
     #region Extreme Precision Scenarios
 
-    [Fact]
+    [TestMethod]
     public void Parse_1000DecimalPlaces_Succeeds()
     {
         // Create a number with 1000 decimal places
@@ -605,7 +606,7 @@ public class BigNumberVerySmallNumbersTests
         normalized.Exponent.ShouldBe(-1000);
     }
 
-    [Fact]
+    [TestMethod]
     public void Arithmetic_With1000DigitPrecision_Succeeds()
     {
         BigNumber a = new(1, -500);
@@ -618,7 +619,7 @@ public class BigNumberVerySmallNumbersTests
         sum.Normalize().Exponent.ShouldBe(-500);
     }
 
-    [Fact]
+    [TestMethod]
     public void Comparison_ExtremelyCloseVerySmallNumbers_Succeeds()
     {
         // Use numbers that won't hit floating-point precision issues in Log10

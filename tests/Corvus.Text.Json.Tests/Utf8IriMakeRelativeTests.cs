@@ -4,24 +4,25 @@
 
 using System.Text;
 using Corvus.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
 /// <summary>
 /// Tests for making relative IRI references from absolute IRI references.
 /// </summary>
+[TestClass]
 public class Utf8IriMakeRelativeTests
 {
     // Make relative references from absolute IRIs
-    [Theory]
-    [InlineData("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/test.json", "")]
-    [InlineData("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/test.json#/$defs/TestType", "#/$defs/TestType")]
-    [InlineData("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/other.json", "other.json")]
-    [InlineData("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/other.json#/$defs/TestType", "other.json#/$defs/TestType")]
-    [InlineData("https://endjin.com/home/user/test.json", "https://endjin.com/home/other/file.json", "../other/file.json")]
-    [InlineData("https://endjin.com/schema.json", "https://endjin.com/schema.json#/$defs/Type", "#/$defs/Type")]
-    [InlineData("https://endjin.com/path/to/schema.json", "https://endjin.com/path/to/schema.json#/properties/name", "#/properties/name")]
+    [TestMethod]
+    [DataRow("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/test.json", "")]
+    [DataRow("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/test.json#/$defs/TestType", "#/$defs/TestType")]
+    [DataRow("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/other.json", "other.json")]
+    [DataRow("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/other.json#/$defs/TestType", "other.json#/$defs/TestType")]
+    [DataRow("https://endjin.com/home/user/test.json", "https://endjin.com/home/other/file.json", "../other/file.json")]
+    [DataRow("https://endjin.com/schema.json", "https://endjin.com/schema.json#/$defs/Type", "#/$defs/Type")]
+    [DataRow("https://endjin.com/path/to/schema.json", "https://endjin.com/path/to/schema.json#/properties/name", "#/properties/name")]
     public void Utf8Iri_MakeRelative_AbsoluteIris(string baseIri, string targetIri, string expectedRelative)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseIri);
@@ -33,16 +34,16 @@ public class Utf8IriMakeRelativeTests
 
         bool success = baseIriObj.TryMakeRelative(targetIriObj, buffer, out Utf8IriReference result);
 
-        Assert.True(success);
-        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.True(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
+        Assert.IsTrue(success);
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.IsTrue(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
     }
 
     // Test with non-ASCII characters (IRIs support Unicode)
-    [Theory]
-    [InlineData("http://example.com/données/test.json", "http://example.com/données/test.json", "")]
-    [InlineData("http://example.com/données/test.json", "http://example.com/données/other.json", "other.json")]
-    [InlineData("http://example.com/données/test.json", "http://example.com/données/other.json#/$defs/Type", "other.json#/$defs/Type")]
-    [InlineData("http://例え.jp/パス/test.json", "http://例え.jp/パス/other.json", "other.json")]
+    [TestMethod]
+    [DataRow("http://example.com/données/test.json", "http://example.com/données/test.json", "")]
+    [DataRow("http://example.com/données/test.json", "http://example.com/données/other.json", "other.json")]
+    [DataRow("http://example.com/données/test.json", "http://example.com/données/other.json#/$defs/Type", "other.json#/$defs/Type")]
+    [DataRow("http://例え.jp/パス/test.json", "http://例え.jp/パス/other.json", "other.json")]
     public void Utf8Iri_MakeRelative_WithNonAsciiCharacters(string baseIri, string targetIri, string expectedRelative)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseIri);
@@ -54,15 +55,15 @@ public class Utf8IriMakeRelativeTests
 
         bool success = baseIriObj.TryMakeRelative(targetIriObj, buffer, out Utf8IriReference result);
 
-        Assert.True(success);
-        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.True(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
+        Assert.IsTrue(success);
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.IsTrue(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
     }
 
     // Test cases that should return full target IRI when scheme/host/port don't match
-    [Theory]
-    [InlineData("https://endjin.com/path/test.json", "http://endjin.com/path/test.json")] // Different scheme
-    [InlineData("https://endjin.com/path/test.json", "https://example.com/path/test.json")] // Different host
-    [InlineData("https://endjin.com:8080/path/test.json", "https://endjin.com/path/test.json")] // Different port
+    [TestMethod]
+    [DataRow("https://endjin.com/path/test.json", "http://endjin.com/path/test.json")] // Different scheme
+    [DataRow("https://endjin.com/path/test.json", "https://example.com/path/test.json")] // Different host
+    [DataRow("https://endjin.com:8080/path/test.json", "https://endjin.com/path/test.json")] // Different port
     public void Utf8Iri_MakeRelative_DifferentAuthority_ReturnsFullIri(string baseIri, string targetIri)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseIri);
@@ -74,14 +75,14 @@ public class Utf8IriMakeRelativeTests
 
         bool success = baseIriObj.TryMakeRelative(targetIriObj, buffer, out Utf8IriReference result);
 
-        Assert.True(success);
-        Assert.Equal(targetIri, result.ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual(targetIri, result.ToString());
     }
 
     // Test with query strings
-    [Theory]
-    [InlineData("https://endjin.com/path/test.json", "https://endjin.com/path/other.json?query=value", "other.json?query=value")]
-    [InlineData("https://endjin.com/path/test.json?q1=v1", "https://endjin.com/path/other.json?q2=v2", "other.json?q2=v2")]
+    [TestMethod]
+    [DataRow("https://endjin.com/path/test.json", "https://endjin.com/path/other.json?query=value", "other.json?query=value")]
+    [DataRow("https://endjin.com/path/test.json?q1=v1", "https://endjin.com/path/other.json?q2=v2", "other.json?q2=v2")]
     public void Utf8Iri_MakeRelative_WithQueryStrings(string baseIri, string targetIri, string expectedRelative)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseIri);
@@ -93,14 +94,14 @@ public class Utf8IriMakeRelativeTests
 
         bool success = baseIriObj.TryMakeRelative(targetIriObj, buffer, out Utf8IriReference result);
 
-        Assert.True(success);
-        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.True(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
+        Assert.IsTrue(success);
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.IsTrue(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
     }
 
     // Test TryMakeRelative with Utf8Uri target
-    [Theory]
-    [InlineData("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/other.json", "other.json")]
-    [InlineData("https://endjin.com/home/user/test.json", "https://endjin.com/home/other/file.json", "../other/file.json")]
+    [TestMethod]
+    [DataRow("https://endjin.com/home/user/test.json", "https://endjin.com/home/user/other.json", "other.json")]
+    [DataRow("https://endjin.com/home/user/test.json", "https://endjin.com/home/other/file.json", "../other/file.json")]
     public void Utf8Iri_MakeRelative_WithUtf8UriTarget(string baseIri, string targetUri, string expectedRelative)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseIri);
@@ -112,16 +113,16 @@ public class Utf8IriMakeRelativeTests
 
         bool success = baseIriObj.TryMakeRelative(targetUriObj, buffer, out Utf8IriReference result);
 
-        Assert.True(success);
-        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.True(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
+        Assert.IsTrue(success);
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.IsTrue(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
     }
 
     // Additional path difference scenarios
-    [Theory]
-    [InlineData("https://endjin.com/a/b/c/d/test.json", "https://endjin.com/a/b/c/d/e/other.json", "e/other.json")]
-    [InlineData("https://endjin.com/a/b/c/d/test.json", "https://endjin.com/a/b/other.json", "../../other.json")]
-    [InlineData("https://endjin.com/a/b/c/d/test.json", "https://endjin.com/a/other.json", "../../../other.json")]
-    [InlineData("https://endjin.com/a/b/test.json", "https://endjin.com/x/y/other.json", "../../x/y/other.json")]
+    [TestMethod]
+    [DataRow("https://endjin.com/a/b/c/d/test.json", "https://endjin.com/a/b/c/d/e/other.json", "e/other.json")]
+    [DataRow("https://endjin.com/a/b/c/d/test.json", "https://endjin.com/a/b/other.json", "../../other.json")]
+    [DataRow("https://endjin.com/a/b/c/d/test.json", "https://endjin.com/a/other.json", "../../../other.json")]
+    [DataRow("https://endjin.com/a/b/test.json", "https://endjin.com/x/y/other.json", "../../x/y/other.json")]
     public void Utf8Iri_MakeRelative_VariousPathDifferences(string baseIri, string targetIri, string expectedRelative)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseIri);
@@ -133,14 +134,14 @@ public class Utf8IriMakeRelativeTests
 
         bool success = baseIriObj.TryMakeRelative(targetIriObj, buffer, out Utf8IriReference result);
 
-        Assert.True(success);
-        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.True(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
+        Assert.IsTrue(success);
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.IsTrue(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
     }
 
     // Test case insensitivity for scheme and host
-    [Theory]
-    [InlineData("HTTPS://ENDJIN.COM/path/test.json", "https://endjin.com/path/other.json", "other.json")]
-    [InlineData("https://endjin.com/path/test.json", "HTTPS://ENDJIN.COM/path/other.json", "other.json")]
+    [TestMethod]
+    [DataRow("HTTPS://ENDJIN.COM/path/test.json", "https://endjin.com/path/other.json", "other.json")]
+    [DataRow("https://endjin.com/path/test.json", "HTTPS://ENDJIN.COM/path/other.json", "other.json")]
     public void Utf8Iri_MakeRelative_CaseInsensitiveSchemeAndHost(string baseIri, string targetIri, string expectedRelative)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseIri);
@@ -152,14 +153,14 @@ public class Utf8IriMakeRelativeTests
 
         bool success = baseIriObj.TryMakeRelative(targetIriObj, buffer, out Utf8IriReference result);
 
-        Assert.True(success);
-        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.True(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
+        Assert.IsTrue(success);
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.IsTrue(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
     }
 
     // Test root paths
-    [Theory]
-    [InlineData("https://endjin.com/test.json", "https://endjin.com/other.json", "other.json")]
-    [InlineData("https://endjin.com/a/test.json", "https://endjin.com/other.json", "../other.json")]
+    [TestMethod]
+    [DataRow("https://endjin.com/test.json", "https://endjin.com/other.json", "other.json")]
+    [DataRow("https://endjin.com/a/test.json", "https://endjin.com/other.json", "../other.json")]
     public void Utf8Iri_MakeRelative_RootPaths(string baseIri, string targetIri, string expectedRelative)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseIri);
@@ -171,14 +172,14 @@ public class Utf8IriMakeRelativeTests
 
         bool success = baseIriObj.TryMakeRelative(targetIriObj, buffer, out Utf8IriReference result);
 
-        Assert.True(success);
-        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.True(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
+        Assert.IsTrue(success);
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.IsTrue(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
     }
 
     // Test colon handling in first path segment (RFC 3986, Section 4.2)
-    [Theory]
-    [InlineData("https://endjin.com/path/", "https://endjin.com/path/c:test", "./c:test")]
-    [InlineData("https://endjin.com/path/", "https://endjin.com/path/file:name", "./file:name")]
+    [TestMethod]
+    [DataRow("https://endjin.com/path/", "https://endjin.com/path/c:test", "./c:test")]
+    [DataRow("https://endjin.com/path/", "https://endjin.com/path/file:name", "./file:name")]
     public void Utf8Iri_MakeRelative_ColonInFirstSegment_PrependsCurrentDirectory(string baseIri, string targetIri, string expectedRelative)
     {
         byte[] baseBytes = Encoding.UTF8.GetBytes(baseIri);
@@ -190,7 +191,7 @@ public class Utf8IriMakeRelativeTests
 
         bool success = baseIriObj.TryMakeRelative(targetIriObj, buffer, out Utf8IriReference result);
 
-        Assert.True(success);
-        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.True(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
+        Assert.IsTrue(success);
+        byte[] expectedBytes = Encoding.UTF8.GetBytes(expectedRelative); Assert.IsTrue(result.OriginalIriReference.SequenceEqual(expectedBytes), $"Expected: {expectedRelative}, Actual: {JsonReaderHelper.GetTextFromUtf8(result.OriginalIriReference)}");
     }
 }

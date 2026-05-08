@@ -6,7 +6,7 @@ using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.Patch;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Patch.Tests;
 
@@ -14,13 +14,14 @@ namespace Corvus.Text.Json.Patch.Tests;
 /// Tests for <see cref="JsonDiffExtensions.CreatePatch"/> which produces
 /// RFC 6902 JSON Patch documents that transform a source into a target.
 /// </summary>
+[TestClass]
 public class JsonDiffTests
 {
     // ──────────────────────────────────────────────
     // Identity / no-op
     // ──────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void IdenticalObjectsProduceEmptyPatch()
     {
         AssertDiffRoundTrips(
@@ -28,7 +29,7 @@ public class JsonDiffTests
             """{"a":1,"b":2}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void IdenticalArraysProduceEmptyPatch()
     {
         AssertDiffRoundTrips(
@@ -36,7 +37,7 @@ public class JsonDiffTests
             """[1,2,3]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void IdenticalScalarsProduceEmptyPatch()
     {
         AssertDiffRoundTrips("""42""", """42""");
@@ -49,7 +50,7 @@ public class JsonDiffTests
     // Root-level replacement
     // ──────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void DifferentRootTypesProduceReplace()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -58,7 +59,7 @@ public class JsonDiffTests
         AssertDiffRoundTrips("""42""", "\"hello\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void DifferentRootScalarsProduceReplace()
     {
         AssertDiffRoundTrips("""1""", """2""");
@@ -66,7 +67,7 @@ public class JsonDiffTests
         AssertDiffRoundTrips("""true""", """false""");
     }
 
-    [Fact]
+    [TestMethod]
     public void NullToObjectProducesReplace()
     {
         AssertDiffRoundTrips("""null""", """{"a":1}""");
@@ -76,7 +77,7 @@ public class JsonDiffTests
     // Object property changes
     // ──────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void AddedPropertyProducesAdd()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -89,7 +90,7 @@ public class JsonDiffTests
         AssertDiffRoundTrips("""{"a":1}""", """{"a":1,"b":2}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void RemovedPropertyProducesRemove()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -102,7 +103,7 @@ public class JsonDiffTests
         AssertDiffRoundTrips("""{"a":1,"b":2}""", """{"a":1}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ChangedPropertyProducesReplace()
     {
         AssertDiffRoundTrips(
@@ -110,7 +111,7 @@ public class JsonDiffTests
             """{"a":2}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void MultiplePropertyChanges()
     {
         AssertDiffRoundTrips(
@@ -118,7 +119,7 @@ public class JsonDiffTests
             """{"a":1,"b":99,"d":4}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedObjectChanges()
     {
         AssertDiffRoundTrips(
@@ -126,7 +127,7 @@ public class JsonDiffTests
             """{"a":{"b":{"c":2}}}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ReorderedPropertiesProduceEmptyPatch()
     {
         // Object property order is not significant
@@ -139,7 +140,7 @@ public class JsonDiffTests
     // Array changes
     // ──────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void ArrayElementChangeProducesReplace()
     {
         AssertDiffRoundTrips(
@@ -147,7 +148,7 @@ public class JsonDiffTests
             """[1,99,3]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void DifferentLengthArraysProduceWholeReplace()
     {
         AssertDiffRoundTrips(
@@ -155,13 +156,13 @@ public class JsonDiffTests
             """[1,2,3,4]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyToNonEmptyArrayProducesReplace()
     {
         AssertDiffRoundTrips("""[]""", """[1]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedArrayChanges()
     {
         AssertDiffRoundTrips(
@@ -173,7 +174,7 @@ public class JsonDiffTests
     // Pointer escaping (RFC 6901)
     // ──────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void PropertyNameWithTildeIsEscaped()
     {
         AssertDiffRoundTrips(
@@ -181,7 +182,7 @@ public class JsonDiffTests
             """{"a~b":2}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void PropertyNameWithSlashIsEscaped()
     {
         AssertDiffRoundTrips(
@@ -189,7 +190,7 @@ public class JsonDiffTests
             """{"a/b":2}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyPropertyName()
     {
         AssertDiffRoundTrips(
@@ -197,7 +198,7 @@ public class JsonDiffTests
             """{"":2}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void PropertyNameWithTildeAndSlash()
     {
         AssertDiffRoundTrips(
@@ -209,7 +210,7 @@ public class JsonDiffTests
     // Mixed nested structures
     // ──────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void ComplexNestedDiff()
     {
         AssertDiffRoundTrips(
@@ -217,7 +218,7 @@ public class JsonDiffTests
             """{"users":[{"name":"Alice","age":31},{"name":"Bob","age":25}],"count":2,"active":true}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ObjectInsideArrayChange()
     {
         AssertDiffRoundTrips(
@@ -225,7 +226,7 @@ public class JsonDiffTests
             """[{"a":1},{"b":3}]""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ReplaceObjectWithScalar()
     {
         AssertDiffRoundTrips(
@@ -233,7 +234,7 @@ public class JsonDiffTests
             """{"a":42}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ReplaceScalarWithObject()
     {
         AssertDiffRoundTrips(
@@ -241,7 +242,7 @@ public class JsonDiffTests
             """{"a":{"b":1}}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void ReplaceArrayWithObject()
     {
         AssertDiffRoundTrips(
@@ -253,25 +254,25 @@ public class JsonDiffTests
     // Empty containers
     // ──────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void EmptyObjectToNonEmpty()
     {
         AssertDiffRoundTrips("""{}""", """{"a":1}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void NonEmptyObjectToEmpty()
     {
         AssertDiffRoundTrips("""{"a":1}""", """{}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyObjectsAreEqual()
     {
         AssertDiffRoundTrips("""{}""", """{}""");
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyArraysAreEqual()
     {
         AssertDiffRoundTrips("""[]""", """[]""");
@@ -281,7 +282,7 @@ public class JsonDiffTests
     // Deep nesting
     // ──────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void DeepNesting()
     {
         AssertDiffRoundTrips(
@@ -309,7 +310,7 @@ public class JsonDiffTests
             count++;
         }
 
-        Assert.Equal(expected, count);
+        Assert.AreEqual(expected, count);
     }
 
     /// <summary>
@@ -331,10 +332,10 @@ public class JsonDiffTests
 
         JsonElement.Mutable mutable = builder.RootElement;
         bool applied = mutable.TryApplyPatch(patch);
-        Assert.True(applied, "Patch application should succeed");
+        Assert.IsTrue(applied, "Patch application should succeed");
 
         // Verify the patched result matches the target
         JsonElement patchedElement = mutable.Clone();
-        Assert.Equal(targetDoc.RootElement, patchedElement);
+        Assert.AreEqual(targetDoc.RootElement, patchedElement);
     }
 }

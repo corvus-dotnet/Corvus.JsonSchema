@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -29,9 +29,10 @@ namespace Corvus.Text.Json.Tests;
 /// are unreachable on this compilation target.
 /// </para>
 /// </remarks>
+[TestClass]
 public class ValueStackCoverageTests
 {
-    [Fact]
+    [TestMethod]
     public void AppendSingleItem_TriggersResize_WhenCapacityExceeded()
     {
         // ArrayPool minimum bucket is 16 for int, so we must exceed that.
@@ -46,8 +47,8 @@ public class ValueStackCoverageTests
             // This append exceeds the rented capacity, triggering AddWithResize (lines 62-64, 138-145).
             stack.Append(99);
 
-            Assert.Equal(17, stack.Length);
-            Assert.Equal(99, stack[16]);
+            Assert.AreEqual(17, stack.Length);
+            Assert.AreEqual(99, stack[16]);
         }
         finally
         {
@@ -55,7 +56,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendSpan_SingleElement_UsesInlinePath()
     {
         var stack = new ValueStack<int>(8);
@@ -64,8 +65,8 @@ public class ValueStackCoverageTests
             ReadOnlySpan<int> single = stackalloc int[] { 42 };
             stack.Append(single);
 
-            Assert.Equal(1, stack.Length);
-            Assert.Equal(42, stack[0]);
+            Assert.AreEqual(1, stack.Length);
+            Assert.AreEqual(42, stack[0]);
         }
         finally
         {
@@ -73,7 +74,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendSpan_MultiElement_UsesAppendMultiChar()
     {
         var stack = new ValueStack<int>(8);
@@ -83,10 +84,10 @@ public class ValueStackCoverageTests
             ReadOnlySpan<int> items = stackalloc int[] { 10, 20, 30 };
             stack.Append(items);
 
-            Assert.Equal(3, stack.Length);
-            Assert.Equal(10, stack[0]);
-            Assert.Equal(20, stack[1]);
-            Assert.Equal(30, stack[2]);
+            Assert.AreEqual(3, stack.Length);
+            Assert.AreEqual(10, stack[0]);
+            Assert.AreEqual(20, stack[1]);
+            Assert.AreEqual(30, stack[2]);
         }
         finally
         {
@@ -94,7 +95,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendSpan_MultiElement_TriggersGrow()
     {
         var stack = new ValueStack<int>(4);
@@ -111,8 +112,8 @@ public class ValueStackCoverageTests
             ReadOnlySpan<int> overflow = stackalloc int[] { 100, 200, 300 };
             stack.Append(overflow);
 
-            Assert.Equal(18, stack.Length);
-            Assert.Equal(300, stack[17]);
+            Assert.AreEqual(18, stack.Length);
+            Assert.AreEqual(300, stack[17]);
         }
         finally
         {
@@ -120,7 +121,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Insert_AtIndexZero_ShiftsExistingElements()
     {
         var stack = new ValueStack<int>(8);
@@ -133,11 +134,11 @@ public class ValueStackCoverageTests
             ReadOnlySpan<int> prefix = stackalloc int[] { 1, 2 };
             stack.Insert(0, prefix);
 
-            Assert.Equal(4, stack.Length);
-            Assert.Equal(1, stack[0]);
-            Assert.Equal(2, stack[1]);
-            Assert.Equal(3, stack[2]);
-            Assert.Equal(4, stack[3]);
+            Assert.AreEqual(4, stack.Length);
+            Assert.AreEqual(1, stack[0]);
+            Assert.AreEqual(2, stack[1]);
+            Assert.AreEqual(3, stack[2]);
+            Assert.AreEqual(4, stack[3]);
         }
         finally
         {
@@ -145,7 +146,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Insert_AtIndexZero_TriggersGrow()
     {
         var stack = new ValueStack<int>(4);
@@ -161,10 +162,10 @@ public class ValueStackCoverageTests
             ReadOnlySpan<int> prefix = stackalloc int[] { 1, 2 };
             stack.Insert(0, prefix);
 
-            Assert.Equal(18, stack.Length);
-            Assert.Equal(1, stack[0]);
-            Assert.Equal(2, stack[1]);
-            Assert.Equal(10, stack[2]);
+            Assert.AreEqual(18, stack.Length);
+            Assert.AreEqual(1, stack[0]);
+            Assert.AreEqual(2, stack[1]);
+            Assert.AreEqual(10, stack[2]);
         }
         finally
         {
@@ -172,7 +173,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendSpan_ReturnsWritableSpan()
     {
         var stack = new ValueStack<int>(8);
@@ -184,10 +185,10 @@ public class ValueStackCoverageTests
             span[1] = 200;
             span[2] = 300;
 
-            Assert.Equal(3, stack.Length);
-            Assert.Equal(100, stack[0]);
-            Assert.Equal(200, stack[1]);
-            Assert.Equal(300, stack[2]);
+            Assert.AreEqual(3, stack.Length);
+            Assert.AreEqual(100, stack[0]);
+            Assert.AreEqual(200, stack[1]);
+            Assert.AreEqual(300, stack[2]);
         }
         finally
         {
@@ -195,7 +196,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendSpan_TriggersGrow_WhenInsufficient()
     {
         var stack = new ValueStack<int>(4);
@@ -214,8 +215,8 @@ public class ValueStackCoverageTests
             span[1] = 200;
             span[2] = 300;
 
-            Assert.Equal(18, stack.Length);
-            Assert.Equal(100, stack[15]);
+            Assert.AreEqual(18, stack.Length);
+            Assert.AreEqual(100, stack[15]);
         }
         finally
         {
@@ -223,7 +224,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void AsSpan_ReturnsCurrentContent()
     {
         var stack = new ValueStack<int>(8);
@@ -235,10 +236,10 @@ public class ValueStackCoverageTests
 
             // AsSpan (lines 147-150).
             ReadOnlySpan<int> span = stack.AsSpan();
-            Assert.Equal(3, span.Length);
-            Assert.Equal(10, span[0]);
-            Assert.Equal(20, span[1]);
-            Assert.Equal(30, span[2]);
+            Assert.AreEqual(3, span.Length);
+            Assert.AreEqual(10, span[0]);
+            Assert.AreEqual(20, span[1]);
+            Assert.AreEqual(30, span[2]);
         }
         finally
         {
@@ -246,7 +247,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopyTo_Success_WhenDestinationLargeEnough()
     {
         var stack = new ValueStack<int>(8);
@@ -260,11 +261,11 @@ public class ValueStackCoverageTests
             Span<int> dest = stackalloc int[4];
             bool result = stack.TryCopyTo(dest, out int written);
 
-            Assert.True(result);
-            Assert.Equal(3, written);
-            Assert.Equal(1, dest[0]);
-            Assert.Equal(2, dest[1]);
-            Assert.Equal(3, dest[2]);
+            Assert.IsTrue(result);
+            Assert.AreEqual(3, written);
+            Assert.AreEqual(1, dest[0]);
+            Assert.AreEqual(2, dest[1]);
+            Assert.AreEqual(3, dest[2]);
         }
         finally
         {
@@ -272,7 +273,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void TryCopyTo_Failure_WhenDestinationTooSmall()
     {
         var stack = new ValueStack<int>(8);
@@ -286,8 +287,8 @@ public class ValueStackCoverageTests
             Span<int> dest = stackalloc int[2];
             bool result = stack.TryCopyTo(dest, out int written);
 
-            Assert.False(result);
-            Assert.Equal(0, written);
+            Assert.IsFalse(result);
+            Assert.AreEqual(0, written);
         }
         finally
         {
@@ -295,7 +296,7 @@ public class ValueStackCoverageTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Sort_OrdersElements()
     {
         var stack = new ValueStack<int>(8);
@@ -311,11 +312,11 @@ public class ValueStackCoverageTests
             stack.Sort();
 
             ReadOnlySpan<int> sorted = stack.AsSpan();
-            Assert.Equal(1, sorted[0]);
-            Assert.Equal(1, sorted[1]);
-            Assert.Equal(3, sorted[2]);
-            Assert.Equal(4, sorted[3]);
-            Assert.Equal(5, sorted[4]);
+            Assert.AreEqual(1, sorted[0]);
+            Assert.AreEqual(1, sorted[1]);
+            Assert.AreEqual(3, sorted[2]);
+            Assert.AreEqual(4, sorted[3]);
+            Assert.AreEqual(5, sorted[4]);
         }
         finally
         {

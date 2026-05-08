@@ -2,52 +2,60 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft202012.Optional.Anchor;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft202012")]
-public class SuiteAnchorInsideAnEnumIsNotARealIdentifier : IClassFixture<SuiteAnchorInsideAnEnumIsNotARealIdentifier.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteAnchorInsideAnEnumIsNotARealIdentifier
 {
-    private readonly Fixture _fixture;
-    public SuiteAnchorInsideAnEnumIsNotARealIdentifier(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestExactMatchToEnumAndTypeMatches()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"$anchor\": \"my_anchor\",\r\n                    \"type\": \"null\"\r\n                }");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestInImplementationsThatStripAnchorThisMayMatchEitherDef()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"type\": \"null\"\r\n                }");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatchRefToAnchor()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"a string to match #/$defs/anchor_in_enum\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNoMatchOnEnumOrRefToAnchor()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

@@ -11,252 +11,253 @@ namespace Corvus.Text.Json.CodeGenerator.Tests;
 /// Tests for <see cref="CSharpMemberName"/> covering the TranslateNonLetterToWord switch
 /// and fallback paths.
 /// </summary>
-public static class CSharpMemberNameTests
+[TestClass]
+    public class CSharpMemberNameTests
 {
     #region Single non-letter character translation (TranslateNonLetterToWord)
 
-    [Theory]
-    [InlineData(" ", "Value")]   // Space is whitespace -> IsNullOrWhiteSpace -> baseName="Value"
-    [InlineData("!", "Excl")]
-    [InlineData("\"", "Quot")]
-    [InlineData("#", "Num")]
-    [InlineData("$", "Dollar")]
-    [InlineData("%", "Percent")]
-    [InlineData("&", "Amp")]
-    [InlineData("'", "Apos")]
-    [InlineData("(", "Lpar")]
-    [InlineData(")", "Rpar")]
-    [InlineData("*", "Ast")]
-    [InlineData("+", "Plus")]
-    [InlineData(",", "Comma")]
-    [InlineData("-", "Minus")]
-    [InlineData(".", "Period")]
-    [InlineData("/", "Sol")]
-    public static void SingleNonLetter_PascalCase_TranslatesCorrectly_Punctuation(string input, string expected)
+    [TestMethod]
+    [DataRow(" ", "Value")]   // Space is whitespace -> IsNullOrWhiteSpace -> baseName="Value"
+    [DataRow("!", "Excl")]
+    [DataRow("\"", "Quot")]
+    [DataRow("#", "Num")]
+    [DataRow("$", "Dollar")]
+    [DataRow("%", "Percent")]
+    [DataRow("&", "Amp")]
+    [DataRow("'", "Apos")]
+    [DataRow("(", "Lpar")]
+    [DataRow(")", "Rpar")]
+    [DataRow("*", "Ast")]
+    [DataRow("+", "Plus")]
+    [DataRow(",", "Comma")]
+    [DataRow("-", "Minus")]
+    [DataRow(".", "Period")]
+    [DataRow("/", "Sol")]
+    public void SingleNonLetter_PascalCase_TranslatesCorrectly_Punctuation(string input, string expected)
     {
         var name = new CSharpMemberName("Scope", input, Casing.PascalCase);
-        Assert.Equal(expected, name.BuildName());
+        Assert.AreEqual(expected, name.BuildName());
     }
 
-    [Theory]
-    [InlineData("0", "Zero")]
-    [InlineData("1", "One")]
-    [InlineData("2", "Two")]
-    [InlineData("3", "Three")]
-    [InlineData("4", "Four")]
-    [InlineData("5", "Five")]
-    [InlineData("6", "Six")]
-    [InlineData("7", "Seven")]
-    [InlineData("8", "Eight")]
-    [InlineData("9", "Nine")]
-    public static void SingleNonLetter_PascalCase_TranslatesCorrectly_Digits(string input, string expected)
+    [TestMethod]
+    [DataRow("0", "Zero")]
+    [DataRow("1", "One")]
+    [DataRow("2", "Two")]
+    [DataRow("3", "Three")]
+    [DataRow("4", "Four")]
+    [DataRow("5", "Five")]
+    [DataRow("6", "Six")]
+    [DataRow("7", "Seven")]
+    [DataRow("8", "Eight")]
+    [DataRow("9", "Nine")]
+    public void SingleNonLetter_PascalCase_TranslatesCorrectly_Digits(string input, string expected)
     {
         // Digits translate to words ("zero", "five" etc.) then PascalCase is applied.
         // The translated word starts with a letter, so no "Value" prefix is added.
         var name = new CSharpMemberName("Scope", input, Casing.PascalCase);
-        Assert.Equal(expected, name.BuildName());
+        Assert.AreEqual(expected, name.BuildName());
     }
 
-    [Theory]
-    [InlineData(":", "Colon")]
-    [InlineData(";", "Semi")]
-    [InlineData("<", "Lt")]
-    [InlineData("=", "EqualsValue")]   // "Equals" is a C# reserved word -> suffix appended
-    [InlineData(">", "Gt")]
-    [InlineData("?", "Quest")]
-    [InlineData("@", "Commat")]
-    [InlineData("[", "Lsqb")]
-    [InlineData("\\", "Bsol")]
-    [InlineData("]", "Rsqb")]
-    [InlineData("^", "Caret")]
-    [InlineData("_", "Lowbar")]
-    [InlineData("`", "Grave")]
-    [InlineData("{", "Lcub")]
-    [InlineData("|", "Verbar")]
-    [InlineData("}", "Rcub")]
-    [InlineData("~", "Tilde")]
-    public static void SingleNonLetter_PascalCase_TranslatesCorrectly_SymbolsAndBrackets(string input, string expected)
+    [TestMethod]
+    [DataRow(":", "Colon")]
+    [DataRow(";", "Semi")]
+    [DataRow("<", "Lt")]
+    [DataRow("=", "EqualsValue")]   // "Equals" is a C# reserved word -> suffix appended
+    [DataRow(">", "Gt")]
+    [DataRow("?", "Quest")]
+    [DataRow("@", "Commat")]
+    [DataRow("[", "Lsqb")]
+    [DataRow("\\", "Bsol")]
+    [DataRow("]", "Rsqb")]
+    [DataRow("^", "Caret")]
+    [DataRow("_", "Lowbar")]
+    [DataRow("`", "Grave")]
+    [DataRow("{", "Lcub")]
+    [DataRow("|", "Verbar")]
+    [DataRow("}", "Rcub")]
+    [DataRow("~", "Tilde")]
+    public void SingleNonLetter_PascalCase_TranslatesCorrectly_SymbolsAndBrackets(string input, string expected)
     {
         var name = new CSharpMemberName("Scope", input, Casing.PascalCase);
-        Assert.Equal(expected, name.BuildName());
+        Assert.AreEqual(expected, name.BuildName());
     }
 
-    [Theory]
-    [InlineData("\u20AC", "Euro")]       // Euro sign - CurrencySymbol
-    [InlineData("\u201A", "Sbquo")]      // Single low-9 quotation mark
-    [InlineData("\u201E", "Bdquo")]      // Double low-9 quotation mark
-    [InlineData("\u2026", "Hellip")]     // Horizontal ellipsis
-    [InlineData("\u2020", "Dagger")]     // Dagger
-    [InlineData("\u2021", "Dagger")]     // Double dagger ("Dagger" with capital D -> PascalCase)
-    [InlineData("\u02DC", "Tilde")]      // Small tilde (ModifierSymbol, NOT a letter)
-    [InlineData("\u2030", "Permil")]     // Per mille sign
-    [InlineData("\u2039", "Lsaquo")]     // Single left-pointing angle quotation
-    public static void SingleNonLetter_PascalCase_TranslatesCorrectly_ExtendedPunctuation(string input, string expected)
+    [TestMethod]
+    [DataRow("\u20AC", "Euro")]       // Euro sign - CurrencySymbol
+    [DataRow("\u201A", "Sbquo")]      // Single low-9 quotation mark
+    [DataRow("\u201E", "Bdquo")]      // Double low-9 quotation mark
+    [DataRow("\u2026", "Hellip")]     // Horizontal ellipsis
+    [DataRow("\u2020", "Dagger")]     // Dagger
+    [DataRow("\u2021", "Dagger")]     // Double dagger ("Dagger" with capital D -> PascalCase)
+    [DataRow("\u02DC", "Tilde")]      // Small tilde (ModifierSymbol, NOT a letter)
+    [DataRow("\u2030", "Permil")]     // Per mille sign
+    [DataRow("\u2039", "Lsaquo")]     // Single left-pointing angle quotation
+    public void SingleNonLetter_PascalCase_TranslatesCorrectly_ExtendedPunctuation(string input, string expected)
     {
         var name = new CSharpMemberName("Scope", input, Casing.PascalCase);
-        Assert.Equal(expected, name.BuildName());
+        Assert.AreEqual(expected, name.BuildName());
     }
 
-    [Theory]
-    [InlineData("\u2018", "Lsquo")]      // Left single quotation mark
-    [InlineData("\u2019", "Rsquo")]      // Right single quotation mark
-    [InlineData("\u201C", "Ldquo")]      // Left double quotation mark
-    [InlineData("\u201D", "Rdquo")]      // Right double quotation mark
-    [InlineData("\u2022", "Bull")]       // Bullet
-    [InlineData("\u2013", "Ndash")]      // En dash
-    [InlineData("\u2014", "Mdash")]      // Em dash
-    [InlineData("\u2122", "Trade")]      // Trade mark sign
-    [InlineData("\u203A", "Rsaquo")]     // Single right-pointing angle quotation
-    public static void SingleNonLetter_PascalCase_TranslatesCorrectly_SmartPunctuation(string input, string expected)
+    [TestMethod]
+    [DataRow("\u2018", "Lsquo")]      // Left single quotation mark
+    [DataRow("\u2019", "Rsquo")]      // Right single quotation mark
+    [DataRow("\u201C", "Ldquo")]      // Left double quotation mark
+    [DataRow("\u201D", "Rdquo")]      // Right double quotation mark
+    [DataRow("\u2022", "Bull")]       // Bullet
+    [DataRow("\u2013", "Ndash")]      // En dash
+    [DataRow("\u2014", "Mdash")]      // Em dash
+    [DataRow("\u2122", "Trade")]      // Trade mark sign
+    [DataRow("\u203A", "Rsaquo")]     // Single right-pointing angle quotation
+    public void SingleNonLetter_PascalCase_TranslatesCorrectly_SmartPunctuation(string input, string expected)
     {
         var name = new CSharpMemberName("Scope", input, Casing.PascalCase);
-        Assert.Equal(expected, name.BuildName());
+        Assert.AreEqual(expected, name.BuildName());
     }
 
-    [Theory]
-    [InlineData("\u00A1", "Iexcl")]      // Inverted exclamation mark
-    [InlineData("\u00A2", "Cent")]       // Cent sign
-    [InlineData("\u00A3", "Pound")]      // Pound sign
-    [InlineData("\u00A4", "Curren")]     // Currency sign
-    [InlineData("\u00A5", "Yen")]        // Yen sign
-    [InlineData("\u00A6", "Brvbar")]     // Broken bar
-    [InlineData("\u00A7", "Sect")]       // Section sign
-    [InlineData("\u00A8", "Uml")]        // Diaeresis
-    [InlineData("\u00A9", "Copy")]       // Copyright sign
-    [InlineData("\u00AB", "Laquo")]      // Left-pointing double angle quotation
-    [InlineData("\u00AC", "Not")]        // Not sign
-    [InlineData("\u00AE", "Reg")]        // Registered sign
-    [InlineData("\u00AF", "Macr")]       // Macron
-    [InlineData("\u00B0", "Deg")]        // Degree sign
-    [InlineData("\u00B1", "Plusmn")]     // Plus-minus sign
-    [InlineData("\u00B2", "Sup2")]       // Superscript two
-    [InlineData("\u00B3", "Sup3")]       // Superscript three
-    [InlineData("\u00B4", "Acute")]      // Acute accent
-    [InlineData("\u00B6", "Para")]       // Pilcrow sign
-    [InlineData("\u00B7", "Middot")]     // Middle dot
-    [InlineData("\u00B8", "Cedil")]      // Cedilla
-    [InlineData("\u00B9", "Sup1")]       // Superscript one
-    [InlineData("\u00BB", "Raquo")]      // Right-pointing double angle quotation
-    [InlineData("\u00BC", "Frac14")]     // Vulgar fraction one quarter
-    [InlineData("\u00BD", "Frac12")]     // Vulgar fraction one half
-    [InlineData("\u00BE", "Frac34")]     // Vulgar fraction three quarters
-    [InlineData("\u00BF", "Iquest")]     // Inverted question mark
-    public static void SingleNonLetter_PascalCase_TranslatesCorrectly_Latin1Supplement(string input, string expected)
+    [TestMethod]
+    [DataRow("\u00A1", "Iexcl")]      // Inverted exclamation mark
+    [DataRow("\u00A2", "Cent")]       // Cent sign
+    [DataRow("\u00A3", "Pound")]      // Pound sign
+    [DataRow("\u00A4", "Curren")]     // Currency sign
+    [DataRow("\u00A5", "Yen")]        // Yen sign
+    [DataRow("\u00A6", "Brvbar")]     // Broken bar
+    [DataRow("\u00A7", "Sect")]       // Section sign
+    [DataRow("\u00A8", "Uml")]        // Diaeresis
+    [DataRow("\u00A9", "Copy")]       // Copyright sign
+    [DataRow("\u00AB", "Laquo")]      // Left-pointing double angle quotation
+    [DataRow("\u00AC", "Not")]        // Not sign
+    [DataRow("\u00AE", "Reg")]        // Registered sign
+    [DataRow("\u00AF", "Macr")]       // Macron
+    [DataRow("\u00B0", "Deg")]        // Degree sign
+    [DataRow("\u00B1", "Plusmn")]     // Plus-minus sign
+    [DataRow("\u00B2", "Sup2")]       // Superscript two
+    [DataRow("\u00B3", "Sup3")]       // Superscript three
+    [DataRow("\u00B4", "Acute")]      // Acute accent
+    [DataRow("\u00B6", "Para")]       // Pilcrow sign
+    [DataRow("\u00B7", "Middot")]     // Middle dot
+    [DataRow("\u00B8", "Cedil")]      // Cedilla
+    [DataRow("\u00B9", "Sup1")]       // Superscript one
+    [DataRow("\u00BB", "Raquo")]      // Right-pointing double angle quotation
+    [DataRow("\u00BC", "Frac14")]     // Vulgar fraction one quarter
+    [DataRow("\u00BD", "Frac12")]     // Vulgar fraction one half
+    [DataRow("\u00BE", "Frac34")]     // Vulgar fraction three quarters
+    [DataRow("\u00BF", "Iquest")]     // Inverted question mark
+    public void SingleNonLetter_PascalCase_TranslatesCorrectly_Latin1Supplement(string input, string expected)
     {
         var name = new CSharpMemberName("Scope", input, Casing.PascalCase);
-        Assert.Equal(expected, name.BuildName());
+        Assert.AreEqual(expected, name.BuildName());
     }
 
-    [Theory]
-    [InlineData("\u00D7", "Times")]      // Multiplication sign (MathSymbol, not a letter)
-    [InlineData("\u00F7", "Divide")]     // Division sign (MathSymbol, not a letter)
-    public static void SingleNonLetter_PascalCase_TranslatesCorrectly_MathSymbols(string input, string expected)
+    [TestMethod]
+    [DataRow("\u00D7", "Times")]      // Multiplication sign (MathSymbol, not a letter)
+    [DataRow("\u00F7", "Divide")]     // Division sign (MathSymbol, not a letter)
+    public void SingleNonLetter_PascalCase_TranslatesCorrectly_MathSymbols(string input, string expected)
     {
         var name = new CSharpMemberName("Scope", input, Casing.PascalCase);
-        Assert.Equal(expected, name.BuildName());
+        Assert.AreEqual(expected, name.BuildName());
     }
 
-    [Fact]
-    public static void SingleNonLetter_UnrecognizedCharacter_ReturnsValue()
+    [TestMethod]
+    public void SingleNonLetter_UnrecognizedCharacter_ReturnsValue()
     {
         // A character not in the switch table returns null -> falls back to "Value"
         var name = new CSharpMemberName("Scope", "\u0001", Casing.PascalCase);
-        Assert.Equal("Value", name.BuildName());
+        Assert.AreEqual("Value", name.BuildName());
     }
 
     #endregion
 
     #region CamelCase variants
 
-    [Theory]
-    [InlineData("!", "excl")]
-    [InlineData("#", "num")]
-    [InlineData("$", "dollar")]
-    [InlineData("~", "tilde")]
-    [InlineData("0", "zero")]
-    [InlineData("9", "nine")]
-    public static void SingleNonLetter_CamelCase_TranslatesCorrectly(string input, string expected)
+    [TestMethod]
+    [DataRow("!", "excl")]
+    [DataRow("#", "num")]
+    [DataRow("$", "dollar")]
+    [DataRow("~", "tilde")]
+    [DataRow("0", "zero")]
+    [DataRow("9", "nine")]
+    public void SingleNonLetter_CamelCase_TranslatesCorrectly(string input, string expected)
     {
         var name = new CSharpMemberName("Scope", input, Casing.CamelCase);
-        Assert.Equal(expected, name.BuildName());
+        Assert.AreEqual(expected, name.BuildName());
     }
 
     #endregion
 
     #region Fallback path (totalLength == 0 after FixReservedWords)
 
-    [Fact]
-    public static void AllSpecialChars_PascalCase_FallsBackToValue()
+    [TestMethod]
+    public void AllSpecialChars_PascalCase_FallsBackToValue()
     {
         // "---" has no letters/digits -> ToPascalCase strips everything -> fallback to "Value"
         var name = new CSharpMemberName("Scope", "---", Casing.PascalCase);
-        Assert.Equal("Value", name.BuildName());
+        Assert.AreEqual("Value", name.BuildName());
     }
 
-    [Fact]
-    public static void AllSpecialChars_CamelCase_FallsBackTovalue()
+    [TestMethod]
+    public void AllSpecialChars_CamelCase_FallsBackTovalue()
     {
         // "---" has no letters/digits -> ToCamelCase strips everything -> fallback to "value"
         var name = new CSharpMemberName("Scope", "---", Casing.CamelCase);
-        Assert.Equal("value", name.BuildName());
+        Assert.AreEqual("value", name.BuildName());
     }
 
-    [Fact]
-    public static void AllSpecialChars_Unmodified_UsesRawValue()
+    [TestMethod]
+    public void AllSpecialChars_Unmodified_UsesRawValue()
     {
         // Unmodified casing doesn't go through FixReservedWords -- uses raw value
         var name = new CSharpMemberName("Scope", "---", Casing.Unmodified);
-        Assert.Equal("---", name.BuildName());
+        Assert.AreEqual("---", name.BuildName());
     }
 
     #endregion
 
     #region Prefix and suffix handling
 
-    [Fact]
-    public static void PascalCase_WithPrefix()
+    [TestMethod]
+    public void PascalCase_WithPrefix()
     {
         var name = new CSharpMemberName("Scope", "hello", Casing.PascalCase, prefix: "my");
-        Assert.Equal("MyHello", name.BuildName());
+        Assert.AreEqual("MyHello", name.BuildName());
     }
 
-    [Fact]
-    public static void CamelCase_WithPrefix()
+    [TestMethod]
+    public void CamelCase_WithPrefix()
     {
         var name = new CSharpMemberName("Scope", "hello", Casing.CamelCase, prefix: "my");
-        Assert.Equal("myHello", name.BuildName());
+        Assert.AreEqual("myHello", name.BuildName());
     }
 
-    [Fact]
-    public static void PascalCase_WithSuffix()
+    [TestMethod]
+    public void PascalCase_WithSuffix()
     {
         var name = new CSharpMemberName("Scope", "hello", Casing.PascalCase, suffix: "type");
-        Assert.Equal("HelloType", name.BuildName());
+        Assert.AreEqual("HelloType", name.BuildName());
     }
 
-    [Fact]
-    public static void CamelCase_WithoutPrefix_UsesBaseNameCamelCase()
+    [TestMethod]
+    public void CamelCase_WithoutPrefix_UsesBaseNameCamelCase()
     {
         var name = new CSharpMemberName("Scope", "Hello", Casing.CamelCase);
-        Assert.Equal("hello", name.BuildName());
+        Assert.AreEqual("hello", name.BuildName());
     }
 
     #endregion
 
     #region Empty/whitespace baseName
 
-    [Fact]
-    public static void EmptyBaseName_PascalCase_FallsBackToValue()
+    [TestMethod]
+    public void EmptyBaseName_PascalCase_FallsBackToValue()
     {
         var name = new CSharpMemberName("Scope", "", Casing.PascalCase);
-        Assert.Equal("Value", name.BuildName());
+        Assert.AreEqual("Value", name.BuildName());
     }
 
-    [Fact]
-    public static void WhitespaceBaseName_PascalCase_FallsBackToValue()
+    [TestMethod]
+    public void WhitespaceBaseName_PascalCase_FallsBackToValue()
     {
         var name = new CSharpMemberName("Scope", "   ", Casing.PascalCase);
-        Assert.Equal("Value", name.BuildName());
+        Assert.AreEqual("Value", name.BuildName());
     }
 
     #endregion

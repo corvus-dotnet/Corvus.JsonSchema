@@ -10,140 +10,141 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 using NodaTime;
 using NodaTime.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonModel.Cast;
 
 /// <summary>
 /// Tests for JsonContentCast.
 /// </summary>
+[TestClass]
 public class JsonContentCastTests
 {
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_an_content_JsonContent()
     {
         var sut = JsonContent.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_an_content_JsonContentPre201909()
     {
         var sut = JsonContentPre201909.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_an_content_JsonContent()
     {
         var sut = JsonContent.Parse("\"{\\\"foo\\\": \\\"bar\\\"}\"").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_an_content_JsonContentPre201909()
     {
         var sut = JsonContentPre201909.Parse("\"{\\\"foo\\\": \\\"bar\\\"}\"").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonString_for_json_element_backed_value_as_an_content_JsonContent()
     {
         var sut = JsonContent.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan());
         var result = (JsonString)sut;
-        Assert.Equal(JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonString_for_json_element_backed_value_as_an_content_JsonContentPre201909()
     {
         var sut = JsonContentPre201909.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan());
         var result = (JsonString)sut;
-        Assert.Equal(JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonString_for_dotnet_backed_value_as_an_content_JsonContent()
     {
         var sut = JsonContent.Parse("\"{\\\"foo\\\": \\\"bar\\\"}\"").AsDotnetBackedValue();
         var result = (JsonString)sut;
-        Assert.Equal(JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonString_for_dotnet_backed_value_as_an_content_JsonContentPre201909()
     {
         var sut = JsonContentPre201909.Parse("\"{\\\"foo\\\": \\\"bar\\\"}\"").AsDotnetBackedValue();
         var result = (JsonString)sut;
-        Assert.Equal(JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_JsonString_for_json_element_backed_value_as_an_content_JsonContent()
     {
         JsonString sut = JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan());
         var result = (JsonContent)sut;
-        Assert.Equal(JsonContent.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonContent.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_JsonString_for_json_element_backed_value_as_an_content_JsonContentPre201909()
     {
         JsonString sut = JsonString.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan());
         var result = (JsonContentPre201909)sut;
-        Assert.Equal(JsonContentPre201909.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonContentPre201909.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_string_for_json_element_backed_value_as_an_content_JsonContent()
     {
         var sut = JsonContent.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan());
         var result = (string)sut;
-        Assert.Equal("{\"foo\": \"bar\"}", result);
+        Assert.AreEqual("{\"foo\": \"bar\"}", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_string_for_json_element_backed_value_as_an_content_JsonContentPre201909()
     {
         var sut = JsonContentPre201909.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan());
         var result = (string)sut;
-        Assert.Equal("{\"foo\": \"bar\"}", result);
+        Assert.AreEqual("{\"foo\": \"bar\"}", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_string_for_dotnet_backed_value_as_an_content_JsonContent()
     {
         var sut = JsonContent.Parse("\"{\\\"foo\\\": \\\"bar\\\"}\"").AsDotnetBackedValue();
         var result = (string)sut;
-        Assert.Equal("{\"foo\": \"bar\"}", result);
+        Assert.AreEqual("{\"foo\": \"bar\"}", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_string_for_dotnet_backed_value_as_an_content_JsonContentPre201909()
     {
         var sut = JsonContentPre201909.Parse("\"{\\\"foo\\\": \\\"bar\\\"}\"").AsDotnetBackedValue();
         var result = (string)sut;
-        Assert.Equal("{\"foo\": \"bar\"}", result);
+        Assert.AreEqual("{\"foo\": \"bar\"}", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_string_for_json_element_backed_value_as_an_content_JsonContent()
     {
         string sut = "{\\\"foo\\\": \\\"bar\\\"}";
         var result = (JsonContent)sut;
-        Assert.Equal(JsonContent.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonContent.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_string_for_json_element_backed_value_as_an_content_JsonContentPre201909()
     {
         string sut = "{\\\"foo\\\": \\\"bar\\\"}";
         var result = (JsonContentPre201909)sut;
-        Assert.Equal(JsonContentPre201909.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
+        Assert.AreEqual(JsonContentPre201909.ParseValue("\"{\\\"foo\\\": \\\"bar\\\"}\"".AsSpan()), result);
     }
 }

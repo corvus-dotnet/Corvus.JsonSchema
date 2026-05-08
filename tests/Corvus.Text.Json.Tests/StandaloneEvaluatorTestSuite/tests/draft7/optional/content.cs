@@ -2,45 +2,53 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft7.Optional.Content;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteValidationOfStringEncodedContentBasedOnMediaType : IClassFixture<SuiteValidationOfStringEncodedContentBasedOnMediaType.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteValidationOfStringEncodedContentBasedOnMediaType
 {
-    private readonly Fixture _fixture;
-    public SuiteValidationOfStringEncodedContentBasedOnMediaType(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAValidJsonDocument()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"{\\\"foo\\\": \\\"bar\\\"}\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnInvalidJsonDocument()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"{:}\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonStrings()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("100");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -56,41 +64,49 @@ public class SuiteValidationOfStringEncodedContentBasedOnMediaType : IClassFixtu
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteValidationOfBinaryStringEncoding : IClassFixture<SuiteValidationOfBinaryStringEncoding.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteValidationOfBinaryStringEncoding
 {
-    private readonly Fixture _fixture;
-    public SuiteValidationOfBinaryStringEncoding(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAValidBase64String()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"eyJmb28iOiAiYmFyIn0K\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnInvalidBase64StringIsNotAValidCharacter()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"eyJmb28iOi%iYmFyIn0K\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonStrings()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("100");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -106,48 +122,56 @@ public class SuiteValidationOfBinaryStringEncoding : IClassFixture<SuiteValidati
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft7")]
-public class SuiteValidationOfBinaryEncodedMediaTypeDocuments : IClassFixture<SuiteValidationOfBinaryEncodedMediaTypeDocuments.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteValidationOfBinaryEncodedMediaTypeDocuments
 {
-    private readonly Fixture _fixture;
-    public SuiteValidationOfBinaryEncodedMediaTypeDocuments(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAValidBase64EncodedJsonDocument()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"eyJmb28iOiAiYmFyIn0K\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAValidlyEncodedInvalidJsonDocument()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"ezp9Cg==\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAnInvalidBase64StringThatIsValidJson()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"{}\"");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonStrings()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("100");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

@@ -6,7 +6,7 @@ using System.Buffers;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Canonicalization;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -15,7 +15,8 @@ namespace Corvus.Text.Json.Tests;
 /// RawUtf8JsonString (TakeOwnership, Dispose), JsonCanonicalizer (max depth, overflow),
 /// and JsonWorkspace (GetDocument throw, Reset with capacity/length).
 /// </summary>
-public static class CoverageBatch5Tests
+[TestClass]
+public class CoverageBatch5Tests
 {
     #region JsonHelpers.Date — DateOnly parse paths (lines 132-143)
 
@@ -23,24 +24,24 @@ public static class CoverageBatch5Tests
     /// <summary>
     /// Exercises <c>TryParseAsIso(ReadOnlySpan&lt;byte&gt;, out DateOnly)</c> success path (lines 132-138).
     /// </summary>
-    [Fact]
-    public static void Date_TryParseAsIso_DateOnly_Success()
+    [TestMethod]
+    public void Date_TryParseAsIso_DateOnly_Success()
     {
         bool result = JsonHelpers.TryParseAsIso("2024-03-15"u8, out DateOnly value);
-        Assert.True(result);
-        Assert.Equal(new DateOnly(2024, 3, 15), value);
+        Assert.IsTrue(result);
+        Assert.AreEqual(new DateOnly(2024, 3, 15), value);
     }
 
     /// <summary>
     /// Exercises <c>TryParseAsIso(ReadOnlySpan&lt;byte&gt;, out DateOnly)</c> failure path (lines 141-143).
     /// A datetime string with time component is not a calendar-date-only.
     /// </summary>
-    [Fact]
-    public static void Date_TryParseAsIso_DateOnly_Failure_HasTime()
+    [TestMethod]
+    public void Date_TryParseAsIso_DateOnly_Failure_HasTime()
     {
         bool result = JsonHelpers.TryParseAsIso("2024-03-15T10:30:00Z"u8, out DateOnly value);
-        Assert.False(result);
-        Assert.Equal(default, value);
+        Assert.IsFalse(result);
+        Assert.AreEqual(default, value);
     }
 #endif
 
@@ -52,13 +53,13 @@ public static class CoverageBatch5Tests
     /// Exercises <c>TryCreateDateTime</c> with year 0000, which returns false (lines 523-525).
     /// ISO 8601 year 0000 is not a valid DateTime year.
     /// </summary>
-    [Fact]
-    public static void Date_TryParseAsISO_Year0000_ReturnsFalse()
+    [TestMethod]
+    public void Date_TryParseAsISO_Year0000_ReturnsFalse()
     {
         // "0000-01-01" has year=0 which TryCreateDateTime rejects
         bool result = JsonHelpers.TryParseAsISO("0000-01-01"u8, out DateTimeOffset value);
-        Assert.False(result);
-        Assert.Equal(default, value);
+        Assert.IsFalse(result);
+        Assert.AreEqual(default, value);
     }
 
     #endregion
@@ -68,8 +69,8 @@ public static class CoverageBatch5Tests
     /// <summary>
     /// Exercises <c>RawUtf8JsonString.TakeOwnership</c> with extra rented bytes (lines 56-59).
     /// </summary>
-    [Fact]
-    public static void RawUtf8JsonString_TakeOwnership_WithExtraRentedBytes()
+    [TestMethod]
+    public void RawUtf8JsonString_TakeOwnership_WithExtraRentedBytes()
     {
         byte[] rented = ArrayPool<byte>.Shared.Rent(64);
         byte[] data = Encoding.UTF8.GetBytes("\"hello\"");
@@ -79,9 +80,9 @@ public static class CoverageBatch5Tests
         RawUtf8JsonString str = new(rented.AsMemory(0, data.Length), rented);
         ReadOnlyMemory<byte> owned = str.TakeOwnership(out byte[]? extraBytes);
 
-        Assert.NotNull(extraBytes);
-        Assert.Equal(rented, extraBytes);
-        Assert.Equal(data.Length, owned.Length);
+        Assert.IsNotNull(extraBytes);
+        Assert.AreEqual(rented, extraBytes);
+        Assert.AreEqual(data.Length, owned.Length);
 
         // Return the rented array ourselves since TakeOwnership transfers ownership
         ArrayPool<byte>.Shared.Return(extraBytes!);
@@ -90,8 +91,8 @@ public static class CoverageBatch5Tests
     /// <summary>
     /// Exercises <c>RawUtf8JsonString.Dispose</c> with extra rented bytes (lines 67-77).
     /// </summary>
-    [Fact]
-    public static void RawUtf8JsonString_Dispose_WithExtraRentedBytes()
+    [TestMethod]
+    public void RawUtf8JsonString_Dispose_WithExtraRentedBytes()
     {
         byte[] rented = ArrayPool<byte>.Shared.Rent(64);
         byte[] data = Encoding.UTF8.GetBytes("\"world\"");
@@ -103,7 +104,7 @@ public static class CoverageBatch5Tests
 
         // After dispose, TakeOwnership should return null for extraBytes
         ReadOnlyMemory<byte> owned = str.TakeOwnership(out byte[]? extraBytes);
-        Assert.Null(extraBytes);
+        Assert.IsNull(extraBytes);
     }
 
     #endregion
@@ -114,8 +115,8 @@ public static class CoverageBatch5Tests
     /// Exercises the max depth check in <c>JsonCanonicalizer</c> (lines 122-124).
     /// Creates JSON nested 65 levels deep (MaxDepth=64).
     /// </summary>
-    [Fact]
-    public static void Canonicalizer_MaxDepthExceeded_ThrowsInvalidOperation()
+    [TestMethod]
+    public void Canonicalizer_MaxDepthExceeded_ThrowsInvalidOperation()
     {
         // Build JSON nested 65 levels: [[[[...]]]]
         StringBuilder sb = new();
@@ -149,8 +150,8 @@ public static class CoverageBatch5Tests
             ex = e;
         }
 
-        Assert.NotNull(ex);
-        Assert.Contains("depth", ex!.Message, StringComparison.OrdinalIgnoreCase);
+        Assert.IsNotNull(ex);
+        StringAssert.Contains(ex!.Message, "depth", StringComparison.OrdinalIgnoreCase);
     }
 
     #endregion
@@ -162,8 +163,8 @@ public static class CoverageBatch5Tests
     /// Uses a tiny buffer so the first element (true) overflows via WriteBytes,
     /// then the second element (42) hits the overflow check in WriteNumber.
     /// </summary>
-    [Fact]
-    public static void Canonicalizer_OverflowBeforeNumber_EarlyReturn()
+    [TestMethod]
+    public void Canonicalizer_OverflowBeforeNumber_EarlyReturn()
     {
         // [true,42] — "true" needs 4 bytes, after "[" (1 byte) we have only 1 byte left
         using ParsedJsonDocument<JsonElement> doc =
@@ -173,7 +174,7 @@ public static class CoverageBatch5Tests
         // Then "," and "42" are attempted — WriteNumber hits overflow early-return
         Span<byte> buffer = stackalloc byte[2];
         bool result = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     #endregion
@@ -185,8 +186,8 @@ public static class CoverageBatch5Tests
     /// Uses a tiny buffer so the first element (a number) overflows,
     /// then the second element (null) hits the overflow check in WriteBytes/WriteLiteral.
     /// </summary>
-    [Fact]
-    public static void Canonicalizer_OverflowBeforeWriteBytes_EarlyReturn()
+    [TestMethod]
+    public void Canonicalizer_OverflowBeforeWriteBytes_EarlyReturn()
     {
         // [42,null] — "42" formatted by Es6NumberFormatter won't fit in tiny remaining space
         using ParsedJsonDocument<JsonElement> doc =
@@ -196,7 +197,7 @@ public static class CoverageBatch5Tests
         // then "null" WriteBytes hits overflow early-return
         Span<byte> buffer = stackalloc byte[2];
         bool result = JsonCanonicalizer.TryCanonicalize(doc.RootElement, buffer, out int bytesWritten);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     #endregion
@@ -206,21 +207,21 @@ public static class CoverageBatch5Tests
     /// <summary>
     /// Exercises <c>JsonWorkspace.GetDocument</c> with negative index (lines 236-237).
     /// </summary>
-    [Fact]
-    public static void Workspace_GetDocument_NegativeIndex_Throws()
+    [TestMethod]
+    public void Workspace_GetDocument_NegativeIndex_Throws()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Assert.Throws<ArgumentOutOfRangeException>(() => workspace.GetDocument(-1));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => workspace.GetDocument(-1));
     }
 
     /// <summary>
     /// Exercises <c>JsonWorkspace.GetDocument</c> with index beyond length (lines 236-237).
     /// </summary>
-    [Fact]
-    public static void Workspace_GetDocument_BeyondLength_Throws()
+    [TestMethod]
+    public void Workspace_GetDocument_BeyondLength_Throws()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        Assert.Throws<ArgumentOutOfRangeException>(() => workspace.GetDocument(0));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => workspace.GetDocument(0));
     }
 
     #endregion
@@ -231,8 +232,8 @@ public static class CoverageBatch5Tests
     /// Exercises <c>JsonWorkspace.Reset</c> when _length > 0 (lines 330-332).
     /// Creates a builder (which adds a document), then calls Reset with same capacity.
     /// </summary>
-    [Fact]
-    public static void Workspace_Reset_WithExistingDocuments_ClearsArray()
+    [TestMethod]
+    public void Workspace_Reset_WithExistingDocuments_ClearsArray()
     {
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented(initialDocumentCapacity: 5);
 
@@ -255,8 +256,8 @@ public static class CoverageBatch5Tests
     /// <summary>
     /// Exercises <c>JsonWorkspace.Reset</c> when new capacity exceeds current array (lines 323-326).
     /// </summary>
-    [Fact]
-    public static void Workspace_Reset_WithLargerCapacity_ReallocatesArray()
+    [TestMethod]
+    public void Workspace_Reset_WithLargerCapacity_ReallocatesArray()
     {
         // Create with small initial capacity
         using JsonWorkspace workspace = JsonWorkspace.CreateUnrented(initialDocumentCapacity: 2);
@@ -272,8 +273,8 @@ public static class CoverageBatch5Tests
     /// <summary>
     /// Exercises <c>JsonWorkspace.ResetAllStateForCacheReuse</c> when already disposed (line 356).
     /// </summary>
-    [Fact]
-    public static void Workspace_ResetAllStateForCacheReuse_WhenDisposed_Throws()
+    [TestMethod]
+    public void Workspace_ResetAllStateForCacheReuse_WhenDisposed_Throws()
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
 
@@ -285,7 +286,7 @@ public static class CoverageBatch5Tests
         workspace.Dispose(); // sets _length = -1 because _length > 0
 
         // ResetAllStateForCacheReuse checks _length >= 0, fails → ThrowObjectDisposedException
-        Assert.Throws<ObjectDisposedException>(() => workspace.ResetAllStateForCacheReuse());
+        Assert.ThrowsExactly<ObjectDisposedException>(() => workspace.ResetAllStateForCacheReuse());
     }
 
     #endregion

@@ -2,38 +2,46 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft201909.MaxContains;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMaxContainsWithoutContainsIsIgnored : IClassFixture<SuiteMaxContainsWithoutContainsIsIgnored.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMaxContainsWithoutContainsIsIgnored
 {
-    private readonly Fixture _fixture;
-    public SuiteMaxContainsWithoutContainsIsIgnored(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestOneItemValidAgainstLoneMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTwoItemsStillValidAgainstLoneMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -49,55 +57,63 @@ public class SuiteMaxContainsWithoutContainsIsIgnored : IClassFixture<SuiteMaxCo
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMaxContainsWithContains : IClassFixture<SuiteMaxContainsWithContains.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMaxContainsWithContains
 {
-    private readonly Fixture _fixture;
-    public SuiteMaxContainsWithContains(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyData()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllElementsMatchValidMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAllElementsMatchInvalidMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSomeElementsMatchValidMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestSomeElementsMatchInvalidMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 2, 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -113,34 +129,42 @@ public class SuiteMaxContainsWithContains : IClassFixture<SuiteMaxContainsWithCo
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMaxContainsWithContainsValueWithADecimal : IClassFixture<SuiteMaxContainsWithContainsValueWithADecimal.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMaxContainsWithContainsValueWithADecimal
 {
-    private readonly Fixture _fixture;
-    public SuiteMaxContainsWithContainsValueWithADecimal(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestOneElementMatchesValidMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestTooManyElementsMatchInvalidMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -156,41 +180,49 @@ public class SuiteMaxContainsWithContainsValueWithADecimal : IClassFixture<Suite
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMinContainsMaxContains : IClassFixture<SuiteMinContainsMaxContains.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMinContainsMaxContains
 {
-    private readonly Fixture _fixture;
-    public SuiteMinContainsMaxContains(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestActualMinContainsMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMinContainsActualMaxContains()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1 ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMinContainsMaxContainsActual()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1, 1, 1, 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -206,34 +238,42 @@ public class SuiteMinContainsMaxContains : IClassFixture<SuiteMinContainsMaxCont
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft201909")]
-public class SuiteMaxContains0WithMinContains0 : IClassFixture<SuiteMaxContains0WithMinContains0.Fixture>
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteMaxContains0WithMinContains0
 {
-    private readonly Fixture _fixture;
-    public SuiteMaxContains0WithMinContains0(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestEmptyArray()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ ]");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestOneMatchingItem()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[ 1 ]");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

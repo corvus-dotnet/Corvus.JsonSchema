@@ -5,7 +5,7 @@ using System.Numerics;
 using Corvus.Numerics;
 using Corvus.Text.Json.Internal;
 using NodaTime;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -13,12 +13,13 @@ namespace Corvus.Text.Json.Tests;
 /// Tests targeting specific uncovered code paths in JsonElement.Mutable identified
 /// through Cobertura XML coverage analysis.
 /// </summary>
-public static class MutableAccessorCoverageTests
+[TestClass]
+public class MutableAccessorCoverageTests
 {
     #region Category 1: Explicit cast and equality operators
 
-    [Fact]
-    public static void ExplicitCast_FromMutableDocument_Succeeds()
+    [TestMethod]
+    public void ExplicitCast_FromMutableDocument_Succeeds()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""42""");
@@ -28,20 +29,20 @@ public static class MutableAccessorCoverageTests
         JsonElement element = doc.RootElement;
         JsonElement.Mutable mutable = (JsonElement.Mutable)element;
 
-        Assert.Equal(42, mutable.GetInt32());
+        Assert.AreEqual(42, mutable.GetInt32());
     }
 
-    [Fact]
-    public static void ExplicitCast_FromImmutableDocument_ThrowsFormatException()
+    [TestMethod]
+    public void ExplicitCast_FromImmutableDocument_ThrowsFormatException()
     {
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""42""");
         JsonElement element = source.RootElement;
 
-        Assert.Throws<FormatException>(() => (JsonElement.Mutable)element);
+        Assert.ThrowsExactly<FormatException>(() => (JsonElement.Mutable)element);
     }
 
-    [Fact]
-    public static void EqualityOperator_MutableAndJsonElement_Equal()
+    [TestMethod]
+    public void EqualityOperator_MutableAndJsonElement_Equal()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""42""");
@@ -50,12 +51,12 @@ public static class MutableAccessorCoverageTests
         JsonElement.Mutable mutable = doc.RootElement;
         JsonElement immutable = source.RootElement;
 
-        Assert.True(mutable == immutable);
-        Assert.False(mutable != immutable);
+        Assert.IsTrue(mutable == immutable);
+        Assert.IsFalse(mutable != immutable);
     }
 
-    [Fact]
-    public static void EqualityOperator_MutableAndJsonElement_NotEqual()
+    [TestMethod]
+    public void EqualityOperator_MutableAndJsonElement_NotEqual()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""42""");
@@ -65,235 +66,235 @@ public static class MutableAccessorCoverageTests
         JsonElement.Mutable mutable = doc.RootElement;
         JsonElement immutable = other.RootElement;
 
-        Assert.False(mutable == immutable);
-        Assert.True(mutable != immutable);
+        Assert.IsFalse(mutable == immutable);
+        Assert.IsTrue(mutable != immutable);
     }
 
     #endregion
 
     #region Category 2: Value accessors — success and failure paths
 
-    [Fact]
-    public static void GetUtf8String_Success()
+    [TestMethod]
+    public void GetUtf8String_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"hello\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         UnescapedUtf8JsonString result = doc.RootElement.GetUtf8String();
-        Assert.True(result.Span.SequenceEqual("hello"u8));
+        Assert.IsTrue(result.Span.SequenceEqual("hello"u8));
     }
 
-    [Fact]
-    public static void GetDouble_Success()
+    [TestMethod]
+    public void GetDouble_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""3.14""");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         double value = doc.RootElement.GetDouble();
-        Assert.Equal(3.14, value);
+        Assert.AreEqual(3.14, value);
     }
 
-    [Fact]
-    public static void GetDouble_Failure_ThrowsInvalidOperationException()
+    [TestMethod]
+    public void GetDouble_Failure_ThrowsInvalidOperationException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"not a number\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<InvalidOperationException>(() => doc.RootElement.GetDouble());
+        Assert.ThrowsExactly<InvalidOperationException>(() => doc.RootElement.GetDouble());
     }
 
-    [Fact]
-    public static void GetSingle_Success()
+    [TestMethod]
+    public void GetSingle_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""1.5""");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         float value = doc.RootElement.GetSingle();
-        Assert.Equal(1.5f, value);
+        Assert.AreEqual(1.5f, value);
     }
 
-    [Fact]
-    public static void GetSingle_Failure_ThrowsInvalidOperationException()
+    [TestMethod]
+    public void GetSingle_Failure_ThrowsInvalidOperationException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"not a number\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<InvalidOperationException>(() => doc.RootElement.GetSingle());
+        Assert.ThrowsExactly<InvalidOperationException>(() => doc.RootElement.GetSingle());
     }
 
-    [Fact]
-    public static void GetBigNumber_Success()
+    [TestMethod]
+    public void GetBigNumber_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""123456789.123456789""");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         BigNumber value = doc.RootElement.GetBigNumber();
-        Assert.NotEqual(default, value);
+        Assert.AreNotEqual(default, value);
     }
 
-    [Fact]
-    public static void GetBigNumber_Failure_ThrowsInvalidOperationException()
+    [TestMethod]
+    public void GetBigNumber_Failure_ThrowsInvalidOperationException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"not a number\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<InvalidOperationException>(() => doc.RootElement.GetBigNumber());
+        Assert.ThrowsExactly<InvalidOperationException>(() => doc.RootElement.GetBigNumber());
     }
 
-    [Fact]
-    public static void GetBigInteger_Success()
+    [TestMethod]
+    public void GetBigInteger_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""99999999999999999999""");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         BigInteger value = doc.RootElement.GetBigInteger();
-        Assert.Equal(BigInteger.Parse("99999999999999999999"), value);
+        Assert.AreEqual(BigInteger.Parse("99999999999999999999"), value);
     }
 
-    [Fact]
-    public static void GetBigInteger_Failure_ThrowsInvalidOperationException()
+    [TestMethod]
+    public void GetBigInteger_Failure_ThrowsInvalidOperationException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"not a number\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<InvalidOperationException>(() => doc.RootElement.GetBigInteger());
+        Assert.ThrowsExactly<InvalidOperationException>(() => doc.RootElement.GetBigInteger());
     }
 
     #endregion
 
     #region Category 3: NodaTime accessors — success and failure paths
 
-    [Fact]
-    public static void GetLocalDate_Success()
+    [TestMethod]
+    public void GetLocalDate_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"2024-01-15\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         LocalDate value = doc.RootElement.GetLocalDate();
-        Assert.Equal(new LocalDate(2024, 1, 15), value);
+        Assert.AreEqual(new LocalDate(2024, 1, 15), value);
     }
 
-    [Fact]
-    public static void GetLocalDate_Failure_ThrowsFormatException()
+    [TestMethod]
+    public void GetLocalDate_Failure_ThrowsFormatException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"not a date\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<FormatException>(() => doc.RootElement.GetLocalDate());
+        Assert.ThrowsExactly<FormatException>(() => doc.RootElement.GetLocalDate());
     }
 
-    [Fact]
-    public static void GetOffsetTime_Success()
+    [TestMethod]
+    public void GetOffsetTime_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"10:30:00+05:00\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         OffsetTime value = doc.RootElement.GetOffsetTime();
-        Assert.Equal(new OffsetTime(new LocalTime(10, 30, 0), Offset.FromHours(5)), value);
+        Assert.AreEqual(new OffsetTime(new LocalTime(10, 30, 0), Offset.FromHours(5)), value);
     }
 
-    [Fact]
-    public static void GetOffsetTime_Failure_ThrowsFormatException()
+    [TestMethod]
+    public void GetOffsetTime_Failure_ThrowsFormatException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"not a time\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<FormatException>(() => doc.RootElement.GetOffsetTime());
+        Assert.ThrowsExactly<FormatException>(() => doc.RootElement.GetOffsetTime());
     }
 
-    [Fact]
-    public static void GetOffsetDateTime_Success()
+    [TestMethod]
+    public void GetOffsetDateTime_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"2024-01-15T10:30:00+05:00\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         OffsetDateTime value = doc.RootElement.GetOffsetDateTime();
-        Assert.Equal(new LocalDateTime(2024, 1, 15, 10, 30, 0).WithOffset(Offset.FromHours(5)), value);
+        Assert.AreEqual(new LocalDateTime(2024, 1, 15, 10, 30, 0).WithOffset(Offset.FromHours(5)), value);
     }
 
-    [Fact]
-    public static void GetOffsetDateTime_Failure_ThrowsFormatException()
+    [TestMethod]
+    public void GetOffsetDateTime_Failure_ThrowsFormatException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"not a datetime\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<FormatException>(() => doc.RootElement.GetOffsetDateTime());
+        Assert.ThrowsExactly<FormatException>(() => doc.RootElement.GetOffsetDateTime());
     }
 
-    [Fact]
-    public static void GetOffsetDate_Success()
+    [TestMethod]
+    public void GetOffsetDate_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"2024-01-15+05:00\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         OffsetDate value = doc.RootElement.GetOffsetDate();
-        Assert.Equal(new OffsetDate(new LocalDate(2024, 1, 15), Offset.FromHours(5)), value);
+        Assert.AreEqual(new OffsetDate(new LocalDate(2024, 1, 15), Offset.FromHours(5)), value);
     }
 
-    [Fact]
-    public static void GetOffsetDate_Failure_ThrowsFormatException()
+    [TestMethod]
+    public void GetOffsetDate_Failure_ThrowsFormatException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"not a date\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<FormatException>(() => doc.RootElement.GetOffsetDate());
+        Assert.ThrowsExactly<FormatException>(() => doc.RootElement.GetOffsetDate());
     }
 
-    [Fact]
-    public static void GetPeriod_Success()
+    [TestMethod]
+    public void GetPeriod_Success()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"P1Y2M3D\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         Period value = doc.RootElement.GetPeriod();
-        Assert.Equal(Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(3), value);
+        Assert.AreEqual(Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(3), value);
     }
 
-    [Fact]
-    public static void GetPeriod_Failure_ThrowsFormatException()
+    [TestMethod]
+    public void GetPeriod_Failure_ThrowsFormatException()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"not a period\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
-        Assert.Throws<FormatException>(() => doc.RootElement.GetPeriod());
+        Assert.ThrowsExactly<FormatException>(() => doc.RootElement.GetPeriod());
     }
 
     #endregion
 
     #region Category 4: Internal properties and ToString/GetHashCode
 
-    [Fact]
-    public static void ValueIsEscaped_ReturnsFalse_ForSimpleString()
+    [TestMethod]
+    public void ValueIsEscaped_ReturnsFalse_ForSimpleString()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"hello\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         bool escaped = doc.RootElement.ValueIsEscaped;
-        Assert.False(escaped);
+        Assert.IsFalse(escaped);
     }
 
-    [Fact]
-    public static void ValueIsEscaped_ReturnsTrue_ForEscapedString()
+    [TestMethod]
+    public void ValueIsEscaped_ReturnsTrue_ForEscapedString()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         // JSON with an escaped character (backslash-n)
@@ -301,22 +302,22 @@ public static class MutableAccessorCoverageTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         bool escaped = doc.RootElement.ValueIsEscaped;
-        Assert.True(escaped);
+        Assert.IsTrue(escaped);
     }
 
-    [Fact]
-    public static void ValueSpan_ReturnsUtf8Bytes()
+    [TestMethod]
+    public void ValueSpan_ReturnsUtf8Bytes()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("\"hello\"");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         ReadOnlySpan<byte> span = doc.RootElement.ValueSpan;
-        Assert.True(span.SequenceEqual("hello"u8));
+        Assert.IsTrue(span.SequenceEqual("hello"u8));
     }
 
-    [Fact]
-    public static void EnsurePropertyMap_CallsSuccessfully()
+    [TestMethod]
+    public void EnsurePropertyMap_CallsSuccessfully()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1, "b": 2}""");
@@ -327,15 +328,15 @@ public static class MutableAccessorCoverageTests
         JsonElement.Mutable.EnsurePropertyMap(in root);
     }
 
-    [Fact]
-    public static void ToString_ReturnsEmpty_WhenParentIsNull()
+    [TestMethod]
+    public void ToString_ReturnsEmpty_WhenParentIsNull()
     {
         JsonElement.Mutable defaultMutable = default;
-        Assert.Equal(string.Empty, defaultMutable.ToString());
+        Assert.AreEqual(string.Empty, defaultMutable.ToString());
     }
 
-    [Fact]
-    public static void ToString_ReturnsEmpty_WhenVersionIsStale()
+    [TestMethod]
+    public void ToString_ReturnsEmpty_WhenVersionIsStale()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"a": [1, 2, 3]}""");
@@ -349,18 +350,18 @@ public static class MutableAccessorCoverageTests
         doc.RootElement.SetProperty("b"u8, 99);
 
         // The stale element's ToString should return empty
-        Assert.Equal(string.Empty, item.ToString());
+        Assert.AreEqual(string.Empty, item.ToString());
     }
 
-    [Fact]
-    public static void GetHashCode_ReturnsZero_WhenParentIsNull()
+    [TestMethod]
+    public void GetHashCode_ReturnsZero_WhenParentIsNull()
     {
         JsonElement.Mutable defaultMutable = default;
-        Assert.Equal(0, defaultMutable.GetHashCode());
+        Assert.AreEqual(0, defaultMutable.GetHashCode());
     }
 
-    [Fact]
-    public static void GetHashCode_ReturnsNonZero_ForValidElement()
+    [TestMethod]
+    public void GetHashCode_ReturnsNonZero_ForValidElement()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""42""");
@@ -374,8 +375,8 @@ public static class MutableAccessorCoverageTests
 
     #region Category 5: SetProperty CVB fallback (builder delegate path)
 
-    [Fact]
-    public static void SetProperty_WithObjectBuilderSource_InsertNew()
+    [TestMethod]
+    public void SetProperty_WithObjectBuilderSource_InsertNew()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
@@ -390,12 +391,12 @@ public static class MutableAccessorCoverageTests
         doc.RootElement.SetProperty("newProp"u8, in objectSource);
 
         JsonElement.Mutable newProp = doc.RootElement.GetProperty("newProp"u8);
-        Assert.Equal(JsonValueKind.Object, newProp.ValueKind);
-        Assert.Equal(42, newProp.GetProperty("inner"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, newProp.ValueKind);
+        Assert.AreEqual(42, newProp.GetProperty("inner"u8).GetInt32());
     }
 
-    [Fact]
-    public static void SetProperty_WithObjectBuilderSource_ReplaceExisting()
+    [TestMethod]
+    public void SetProperty_WithObjectBuilderSource_ReplaceExisting()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
@@ -410,12 +411,12 @@ public static class MutableAccessorCoverageTests
         doc.RootElement.SetProperty("x"u8, in objectSource);
 
         JsonElement.Mutable x = doc.RootElement.GetProperty("x"u8);
-        Assert.Equal(JsonValueKind.Object, x.ValueKind);
-        Assert.True(x.GetProperty("replaced"u8).GetBoolean());
+        Assert.AreEqual(JsonValueKind.Object, x.ValueKind);
+        Assert.IsTrue(x.GetProperty("replaced"u8).GetBoolean());
     }
 
-    [Fact]
-    public static void SetProperty_WithArrayBuilderSource_InsertNew()
+    [TestMethod]
+    public void SetProperty_WithArrayBuilderSource_InsertNew()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
@@ -431,18 +432,18 @@ public static class MutableAccessorCoverageTests
         doc.RootElement.SetProperty("arr"u8, in arraySource);
 
         JsonElement.Mutable arr = doc.RootElement.GetProperty("arr"u8);
-        Assert.Equal(JsonValueKind.Array, arr.ValueKind);
-        Assert.Equal(2, arr.GetArrayLength());
-        Assert.Equal(10, arr[0].GetInt32());
-        Assert.Equal(20, arr[1].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, arr.ValueKind);
+        Assert.AreEqual(2, arr.GetArrayLength());
+        Assert.AreEqual(10, arr[0].GetInt32());
+        Assert.AreEqual(20, arr[1].GetInt32());
     }
 
     #endregion
 
     #region Category 6: TryReplaceProperty CVB fallback
 
-    [Fact]
-    public static void TryReplaceProperty_WithObjectBuilderSource_ReplacesExisting()
+    [TestMethod]
+    public void TryReplaceProperty_WithObjectBuilderSource_ReplacesExisting()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1, "y": 2}""");
@@ -455,13 +456,13 @@ public static class MutableAccessorCoverageTests
 
         bool replaced = doc.RootElement.TryReplaceProperty("x"u8, in objectSource);
 
-        Assert.True(replaced);
-        Assert.Equal(JsonValueKind.Object, doc.RootElement.GetProperty("x"u8).ValueKind);
-        Assert.Equal(99, doc.RootElement.GetProperty("x"u8).GetProperty("z"u8).GetInt32());
+        Assert.IsTrue(replaced);
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.GetProperty("x"u8).ValueKind);
+        Assert.AreEqual(99, doc.RootElement.GetProperty("x"u8).GetProperty("z"u8).GetInt32());
     }
 
-    [Fact]
-    public static void TryReplaceProperty_WithObjectBuilderSource_ReturnsFalseWhenNotFound()
+    [TestMethod]
+    public void TryReplaceProperty_WithObjectBuilderSource_ReturnsFalseWhenNotFound()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
@@ -474,15 +475,15 @@ public static class MutableAccessorCoverageTests
 
         bool replaced = doc.RootElement.TryReplaceProperty("nonexistent"u8, in objectSource);
 
-        Assert.False(replaced);
+        Assert.IsFalse(replaced);
     }
 
     #endregion
 
     #region Category 7: SetPropertyNull insert path
 
-    [Fact]
-    public static void SetPropertyNull_InsertsNewProperty_WhenNotExists()
+    [TestMethod]
+    public void SetPropertyNull_InsertsNewProperty_WhenNotExists()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 1}""");
@@ -491,11 +492,11 @@ public static class MutableAccessorCoverageTests
         doc.RootElement.SetPropertyNull("newNull"u8);
 
         JsonElement.Mutable newProp = doc.RootElement.GetProperty("newNull"u8);
-        Assert.Equal(JsonValueKind.Null, newProp.ValueKind);
+        Assert.AreEqual(JsonValueKind.Null, newProp.ValueKind);
     }
 
-    [Fact]
-    public static void SetPropertyNull_ReplacesExistingProperty()
+    [TestMethod]
+    public void SetPropertyNull_ReplacesExistingProperty()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"x": 42}""");
@@ -503,15 +504,15 @@ public static class MutableAccessorCoverageTests
 
         doc.RootElement.SetPropertyNull("x"u8);
 
-        Assert.Equal(JsonValueKind.Null, doc.RootElement.GetProperty("x"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Null, doc.RootElement.GetProperty("x"u8).ValueKind);
     }
 
     #endregion
 
     #region Category 8: Array item operations
 
-    [Fact]
-    public static void SetItem_WithObjectBuilderSource_CVBFallback()
+    [TestMethod]
+    public void SetItem_WithObjectBuilderSource_CVBFallback()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""[1, 2, 3]""");
@@ -525,12 +526,12 @@ public static class MutableAccessorCoverageTests
 
         doc.RootElement.SetItem(1, in objectSource);
 
-        Assert.Equal(JsonValueKind.Object, doc.RootElement[1].ValueKind);
-        Assert.Equal("value", doc.RootElement[1].GetProperty("key"u8).GetString());
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement[1].ValueKind);
+        Assert.AreEqual("value", doc.RootElement[1].GetProperty("key"u8).GetString());
     }
 
-    [Fact]
-    public static void SetItem_WithContextObjectBuilder_ReplaceExisting()
+    [TestMethod]
+    public void SetItem_WithContextObjectBuilder_ReplaceExisting()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""[1, 2, 3]""");
@@ -545,12 +546,12 @@ public static class MutableAccessorCoverageTests
                 ob.AddProperty("val"u8, ctx * 10);
             });
 
-        Assert.Equal(JsonValueKind.Object, doc.RootElement[0].ValueKind);
-        Assert.Equal(50, doc.RootElement[0].GetProperty("val"u8).GetInt32());
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement[0].ValueKind);
+        Assert.AreEqual(50, doc.RootElement[0].GetProperty("val"u8).GetInt32());
     }
 
-    [Fact]
-    public static void SetItem_WithContextObjectBuilder_InsertAtEnd()
+    [TestMethod]
+    public void SetItem_WithContextObjectBuilder_InsertAtEnd()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""[1, 2]""");
@@ -565,12 +566,12 @@ public static class MutableAccessorCoverageTests
                 ob.AddProperty("n"u8, c);
             });
 
-        Assert.Equal(3, doc.RootElement.GetArrayLength());
-        Assert.Equal(7, doc.RootElement[2].GetProperty("n"u8).GetInt32());
+        Assert.AreEqual(3, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(7, doc.RootElement[2].GetProperty("n"u8).GetInt32());
     }
 
-    [Fact]
-    public static void SetItem_WithContextArrayBuilder_ReplaceExisting()
+    [TestMethod]
+    public void SetItem_WithContextArrayBuilder_ReplaceExisting()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""[1, 2, 3]""");
@@ -588,15 +589,15 @@ public static class MutableAccessorCoverageTests
                 }
             });
 
-        Assert.Equal(JsonValueKind.Array, doc.RootElement[1].ValueKind);
-        Assert.Equal(3, doc.RootElement[1].GetArrayLength());
-        Assert.Equal(0, doc.RootElement[1][0].GetInt32());
-        Assert.Equal(100, doc.RootElement[1][1].GetInt32());
-        Assert.Equal(200, doc.RootElement[1][2].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement[1].ValueKind);
+        Assert.AreEqual(3, doc.RootElement[1].GetArrayLength());
+        Assert.AreEqual(0, doc.RootElement[1][0].GetInt32());
+        Assert.AreEqual(100, doc.RootElement[1][1].GetInt32());
+        Assert.AreEqual(200, doc.RootElement[1][2].GetInt32());
     }
 
-    [Fact]
-    public static void SetItem_WithContextArrayBuilder_InsertAtEnd()
+    [TestMethod]
+    public void SetItem_WithContextArrayBuilder_InsertAtEnd()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""[1]""");
@@ -612,13 +613,13 @@ public static class MutableAccessorCoverageTests
                 ab.AddItem(c + 1);
             });
 
-        Assert.Equal(2, doc.RootElement.GetArrayLength());
-        Assert.Equal(JsonValueKind.Array, doc.RootElement[1].ValueKind);
-        Assert.Equal(2, doc.RootElement[1][0].GetInt32());
+        Assert.AreEqual(2, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement[1].ValueKind);
+        Assert.AreEqual(2, doc.RootElement[1][0].GetInt32());
     }
 
-    [Fact]
-    public static void InsertItem_WithObjectBuilderSource_CVBFallback()
+    [TestMethod]
+    public void InsertItem_WithObjectBuilderSource_CVBFallback()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""[1, 2, 3]""");
@@ -632,17 +633,17 @@ public static class MutableAccessorCoverageTests
 
         doc.RootElement.InsertItem(1, in objectSource);
 
-        Assert.Equal(4, doc.RootElement.GetArrayLength());
-        Assert.Equal(JsonValueKind.Object, doc.RootElement[1].ValueKind);
-        Assert.True(doc.RootElement[1].GetProperty("inserted"u8).GetBoolean());
+        Assert.AreEqual(4, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement[1].ValueKind);
+        Assert.IsTrue(doc.RootElement[1].GetProperty("inserted"u8).GetBoolean());
     }
 
     #endregion
 
     #region Category 9: EvaluateSchema and interface properties
 
-    [Fact]
-    public static void EvaluateSchema_OnMutableElement()
+    [TestMethod]
+    public void EvaluateSchema_OnMutableElement()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""42""");
@@ -651,26 +652,26 @@ public static class MutableAccessorCoverageTests
         // Just exercises the EvaluateSchema path — result depends on schema config
         bool result = doc.RootElement.EvaluateSchema();
         // Default schema evaluation on a number should pass (no schema constraints)
-        Assert.True(result);
+        Assert.IsTrue(result);
     }
 
-    [Fact]
-    public static void IJsonElement_ValueKind_ExplicitInterface()
+    [TestMethod]
+    public void IJsonElement_ValueKind_ExplicitInterface()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"key": "value"}""");
         using JsonDocumentBuilder<JsonElement.Mutable> doc = source.RootElement.CreateBuilder(workspace);
 
         IJsonElement element = doc.RootElement;
-        Assert.Equal(JsonValueKind.Object, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, element.ValueKind);
     }
 
     #endregion
 
     #region Category 10: From<T> generic method
 
-    [Fact]
-    public static void From_CreatesMutableFromMutableElement()
+    [TestMethod]
+    public void From_CreatesMutableFromMutableElement()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using ParsedJsonDocument<JsonElement> source = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
@@ -679,8 +680,8 @@ public static class MutableAccessorCoverageTests
         JsonElement.Mutable original = doc.RootElement;
         JsonElement.Mutable copy = JsonElement.Mutable.From(in original);
 
-        Assert.Equal(original.ValueKind, copy.ValueKind);
-        Assert.Equal(original.GetRawText(), copy.GetRawText());
+        Assert.AreEqual(original.ValueKind, copy.ValueKind);
+        Assert.AreEqual(original.GetRawText(), copy.GetRawText());
     }
 
     #endregion

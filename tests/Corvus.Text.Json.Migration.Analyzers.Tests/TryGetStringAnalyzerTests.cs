@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.MiscPatternAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ018: TryGetString to TryGetValue migration.
 /// </summary>
+[TestClass]
 public class TryGetStringAnalyzerTests
 {
     private const string V4Stubs = @"
@@ -41,7 +42,7 @@ namespace Corvus.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task TryGetString_TriggersCVJ018_AndCodeFixRenames()
     {
         var test = new CodeFixTest
@@ -79,7 +80,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TryGetString_OnNonJsonValue_NoDiagnostic()
     {
         const string testCode = @"

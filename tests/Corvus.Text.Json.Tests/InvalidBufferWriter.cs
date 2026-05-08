@@ -8,10 +8,6 @@ namespace Corvus.Text.Json.Tests;
 
 internal class InvalidBufferWriter : IBufferWriter<byte>
 {
-    public InvalidBufferWriter()
-    {
-    }
-
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Advance(int bytes)
     {

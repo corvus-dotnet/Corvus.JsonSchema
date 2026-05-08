@@ -5,7 +5,7 @@
 using System;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -13,7 +13,8 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage batch 8: targeting Utf8JsonWriter property and value write paths
 /// that require buffer Grow or list separators.
 /// </summary>
-public static class CoverageBatch8Tests
+[TestClass]
+public class CoverageBatch8Tests
 {
     #region WritePropertyNameMinimized byte[] — Grow path (Helpers.cs lines 184-186)
 
@@ -22,8 +23,8 @@ public static class CoverageBatch8Tests
     /// by deeply nesting StartObject calls to consume the initial 256-byte buffer.
     /// The method is only called for START tokens (nested objects/arrays).
     /// </summary>
-    [Fact]
-    public static void Writer_MinimizedStartObject_TriggersGrow()
+    [TestMethod]
+    public void Writer_MinimizedStartObject_TriggersGrow()
     {
         using PooledByteBufferWriter bufferWriter = new(16);
         using Utf8JsonWriter writer = new(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -52,8 +53,8 @@ public static class CoverageBatch8Tests
     /// Exercises <c>WritePropertyNameMinimized(ReadOnlySpan&lt;char&gt;, byte token)</c> Grow path
     /// via deeply nested StartObject calls with char-based property name.
     /// </summary>
-    [Fact]
-    public static void Writer_MinimizedStartObjectChar_TriggersGrow()
+    [TestMethod]
+    public void Writer_MinimizedStartObjectChar_TriggersGrow()
     {
         using PooledByteBufferWriter bufferWriter = new(16);
         using Utf8JsonWriter writer = new(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -82,8 +83,8 @@ public static class CoverageBatch8Tests
     /// Exercises <c>WritePropertyNameIndented(ReadOnlySpan&lt;byte&gt;, byte token)</c> Grow path.
     /// Indented mode adds indent bytes per level, so fewer nestings needed.
     /// </summary>
-    [Fact]
-    public static void Writer_IndentedStartObject_TriggersGrow()
+    [TestMethod]
+    public void Writer_IndentedStartObject_TriggersGrow()
     {
         using PooledByteBufferWriter bufferWriter = new(16);
         using Utf8JsonWriter writer = new(bufferWriter, new JsonWriterOptions { Indented = true, SkipValidation = true });
@@ -100,7 +101,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Contains("\"c\":", json);
+        StringAssert.Contains(json, "\"c\":");
     }
 
     #endregion
@@ -111,8 +112,8 @@ public static class CoverageBatch8Tests
     /// Exercises <c>WriteStringValueMinimized</c> for DateTime with list separator
     /// (_currentDepth &lt; 0 triggers comma for second element).
     /// </summary>
-    [Fact]
-    public static void Writer_DateTimeValue_SecondInArray_WritesSeparator()
+    [TestMethod]
+    public void Writer_DateTimeValue_SecondInArray_WritesSeparator()
     {
         using PooledByteBufferWriter bufferWriter = new(256);
         using Utf8JsonWriter writer = new(bufferWriter);
@@ -127,7 +128,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Equal("""["2024-01-15T10:30:00Z","2024-06-20T14:45:00Z"]""", json);
+        Assert.AreEqual("""["2024-01-15T10:30:00Z","2024-06-20T14:45:00Z"]""", json);
     }
 
     #endregion
@@ -137,8 +138,8 @@ public static class CoverageBatch8Tests
     /// <summary>
     /// Exercises <c>WriteStringValueMinimized</c> for DateTimeOffset with list separator.
     /// </summary>
-    [Fact]
-    public static void Writer_DateTimeOffsetValue_SecondInArray_WritesSeparator()
+    [TestMethod]
+    public void Writer_DateTimeOffsetValue_SecondInArray_WritesSeparator()
     {
         using PooledByteBufferWriter bufferWriter = new(256);
         using Utf8JsonWriter writer = new(bufferWriter);
@@ -153,7 +154,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Equal("""["2024-01-15T10:30:00+00:00","2024-06-20T14:45:00+02:00"]""", json);
+        Assert.AreEqual("""["2024-01-15T10:30:00+00:00","2024-06-20T14:45:00+02:00"]""", json);
     }
 
     #endregion
@@ -164,8 +165,8 @@ public static class CoverageBatch8Tests
     /// Exercises <c>WriteStringValueIndented</c> for DateTime with Grow.
     /// Writes enough DateTime values to consume the initial buffer, triggering Grow.
     /// </summary>
-    [Fact]
-    public static void Writer_IndentedDateTimeValue_TriggersGrow()
+    [TestMethod]
+    public void Writer_IndentedDateTimeValue_TriggersGrow()
     {
         using PooledByteBufferWriter bufferWriter = new(16);
         using Utf8JsonWriter writer = new(bufferWriter, new JsonWriterOptions { Indented = true });
@@ -183,7 +184,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Contains("2024-01-12", json);
+        StringAssert.Contains(json, "2024-01-12");
     }
 
     #endregion
@@ -193,8 +194,8 @@ public static class CoverageBatch8Tests
     /// <summary>
     /// Exercises <c>WriteStringValueIndented</c> for DateTimeOffset with Grow.
     /// </summary>
-    [Fact]
-    public static void Writer_IndentedDateTimeOffsetValue_TriggersGrow()
+    [TestMethod]
+    public void Writer_IndentedDateTimeOffsetValue_TriggersGrow()
     {
         using PooledByteBufferWriter bufferWriter = new(16);
         using Utf8JsonWriter writer = new(bufferWriter, new JsonWriterOptions { Indented = true });
@@ -210,7 +211,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Contains("2024-01-12", json);
+        StringAssert.Contains(json, "2024-01-12");
     }
 
     #endregion
@@ -220,8 +221,8 @@ public static class CoverageBatch8Tests
     /// <summary>
     /// Exercises <c>WriteBase64Minimized</c> comma path (line 134-136: _currentDepth &lt; 0).
     /// </summary>
-    [Fact]
-    public static void Writer_Base64Value_SecondInArray_WritesSeparator()
+    [TestMethod]
+    public void Writer_Base64Value_SecondInArray_WritesSeparator()
     {
         using PooledByteBufferWriter bufferWriter = new(256);
         using Utf8JsonWriter writer = new(bufferWriter);
@@ -236,7 +237,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Equal("""["AQIDBA==","BQYHCA=="]""", json);
+        Assert.AreEqual("""["AQIDBA==","BQYHCA=="]""", json);
     }
 
     #endregion
@@ -247,8 +248,8 @@ public static class CoverageBatch8Tests
     /// Exercises <c>WriteBase64Indented</c> Grow path by writing enough base64 values
     /// to consume the initial buffer.
     /// </summary>
-    [Fact]
-    public static void Writer_IndentedBase64Value_TriggersGrow()
+    [TestMethod]
+    public void Writer_IndentedBase64Value_TriggersGrow()
     {
         using PooledByteBufferWriter bufferWriter = new(16);
         using Utf8JsonWriter writer = new(bufferWriter, new JsonWriterOptions { Indented = true });
@@ -268,7 +269,7 @@ public static class CoverageBatch8Tests
         writer.Flush();
 
         string json = JsonReaderHelper.TranscodeHelper(bufferWriter.WrittenSpan);
-        Assert.Contains("AQIDBAUGBwgJCgsMDQ4PEA==", json);
+        StringAssert.Contains(json, "AQIDBAUGBwgJCgsMDQ4PEA==");
     }
 
     #endregion

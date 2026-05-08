@@ -2,7 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <!-- For some reason, xunit.core.props isn't excluded in VS and sets this to true. -->
     <IsTestProject>false</IsTestProject>
     <LangVersion>preview</LangVersion>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -20,7 +19,7 @@
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <NoWarn Condition="$(TargetFrameworks.Contains('net481'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847;CS8601</NoWarn>
     <!-- Warnings to always disable -->
-    <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065;xUnit2013</NoWarn>
+    <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065</NoWarn>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
     <Nullable>enable</Nullable>
@@ -81,7 +80,9 @@
     <Compile Include="JsonSchemaTestSuite\TestFile.cs" />
     <Compile Include="JsonSchemaTestSuite\TestSpecification.cs" />
     <Compile Include="Metaschema.cs" />
-    <Compile Include="System\AssertExtensions.cs" />
+    <!--<Compile Include="System\AssertExtensions.cs" />-->
+    <Compile Include="AssertEx.cs" />
+    <Compile Include="TheoryData.cs" />
     <Compile Include="System\IO\StreamExtensions.cs" />
     <Compile Include="System\IO\PathGenerator.cs" />
     <Compile Include="System\RetryHelper.cs" />
@@ -107,9 +108,7 @@
       Interop.Library is not designed to support runtime checks therefore we are picking the Windows
       variant from the Common folder and adding the missing members manually.
     -->
-    <Compile Include="Interop\Interop.Libraries.cs" />
-    <Compile Include="RandomTestCaseOrderer.cs" />
-    <Compile Include="RandomTestCollectionOrderer.cs" />
+    <Compile Include="Interop\Interop.Libraries.cs" />    <!--<Compile Include="RandomTestCaseOrderer.cs" />-->    <!--<Compile Include="RandomTestCollectionOrderer.cs" />-->
     <Compile Include="TestEventListener.cs" />
     <Compile Include="TestEvaluatorHelper.cs" />
     <Compile Include="AnnotationTestHelper.cs" />
@@ -169,10 +168,7 @@
     <ProjectReference Include="..\..\..\src-v4\Corvus.Json.SourceGenerator\Corvus.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
     <PackageReference Include="Microsoft.Bcl.Memory" />
     <PackageReference Include="Microsoft.DotNet.RemoteExecutor" />
-    <PackageReference Include="Microsoft.DotNet.XUnitExtensions" />
-    <PackageReference Include="xunit" ExcludeAssets="build" />
-    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
-    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
+    <PackageReference Include="MSTest.TestFramework" />
   </ItemGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
     <PackageReference Include="System.Memory" />

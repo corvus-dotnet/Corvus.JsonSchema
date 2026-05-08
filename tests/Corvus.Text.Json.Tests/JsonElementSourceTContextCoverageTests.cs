@@ -2,7 +2,7 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -25,43 +25,44 @@ namespace Corvus.Text.Json.Tests;
 /// boundary for the ref struct's captured references.
 /// </para>
 /// </remarks>
-public static class JsonElementSourceTContextCoverageTests
+[TestClass]
+public class JsonElementSourceTContextCoverageTests
 {
     #region Constructors and properties
 
-    [Fact]
-    public static void Default_IsUndefined()
+    [TestMethod]
+    public void Default_IsUndefined()
     {
         JsonElement.Source<int> source = default;
-        Assert.True(source.IsUndefined);
+        Assert.IsTrue(source.IsUndefined);
     }
 
-    [Fact]
-    public static void ArrayBuilderConstructor_IsNotUndefined()
+    [TestMethod]
+    public void ArrayBuilderConstructor_IsNotUndefined()
     {
         var source = new JsonElement.Source<int>(
             42,
             static (in int ctx, ref JsonElement.ArrayBuilder ab) => ab.AddItem(ctx));
 
-        Assert.False(source.IsUndefined);
+        Assert.IsFalse(source.IsUndefined);
     }
 
-    [Fact]
-    public static void ObjectBuilderConstructor_IsNotUndefined()
+    [TestMethod]
+    public void ObjectBuilderConstructor_IsNotUndefined()
     {
         var source = new JsonElement.Source<int>(
             7,
             static (in int ctx, ref JsonElement.ObjectBuilder ob) => ob.AddProperty("v"u8, ctx));
 
-        Assert.False(source.IsUndefined);
+        Assert.IsFalse(source.IsUndefined);
     }
 
     #endregion
 
     #region AddAsItem — all three Kind branches
 
-    [Fact]
-    public static void AddAsItem_ArrayBuilder_ProducesArray()
+    [TestMethod]
+    public void AddAsItem_ArrayBuilder_ProducesArray()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourceItem(
@@ -74,13 +75,13 @@ public static class JsonElementSourceTContextCoverageTests
                     ab.AddItem(ctx + 1);
                 }));
 
-        Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
-        Assert.Equal(2, doc.RootElement.GetArrayLength());
-        Assert.Equal(10, doc.RootElement[0].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement.ValueKind);
+        Assert.AreEqual(2, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(10, doc.RootElement[0].GetInt32());
     }
 
-    [Fact]
-    public static void AddAsItem_ObjectBuilder_ProducesObject()
+    [TestMethod]
+    public void AddAsItem_ObjectBuilder_ProducesObject()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourceItem(
@@ -92,12 +93,12 @@ public static class JsonElementSourceTContextCoverageTests
                     ob.AddProperty("name"u8, ctx);
                 }));
 
-        Assert.Equal(JsonValueKind.Object, doc.RootElement.ValueKind);
-        Assert.Equal("test", doc.RootElement.GetProperty("name"u8).GetString());
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.ValueKind);
+        Assert.AreEqual("test", doc.RootElement.GetProperty("name"u8).GetString());
     }
 
-    [Fact]
-    public static void AddAsItem_SourceWrapping_DelegatesToInner()
+    [TestMethod]
+    public void AddAsItem_SourceWrapping_DelegatesToInner()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourceItem(
@@ -109,12 +110,12 @@ public static class JsonElementSourceTContextCoverageTests
                         ob.AddProperty("wrapped"u8, true);
                     })));
 
-        Assert.Equal(JsonValueKind.Object, doc.RootElement.ValueKind);
-        Assert.True(doc.RootElement.GetProperty("wrapped"u8).GetBoolean());
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.ValueKind);
+        Assert.IsTrue(doc.RootElement.GetProperty("wrapped"u8).GetBoolean());
     }
 
-    [Fact]
-    public static void AddAsItem_ImplicitOperator_FromNonGenericSource()
+    [TestMethod]
+    public void AddAsItem_ImplicitOperator_FromNonGenericSource()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
 
@@ -127,16 +128,16 @@ public static class JsonElementSourceTContextCoverageTests
 
         using var doc = BuildFromSourceItem(workspace, source);
 
-        Assert.Equal(JsonValueKind.Array, doc.RootElement.ValueKind);
-        Assert.Equal(99, doc.RootElement[0].GetInt32());
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement.ValueKind);
+        Assert.AreEqual(99, doc.RootElement[0].GetInt32());
     }
 
     #endregion
 
     #region AddAsProperty(utf8) — all three Kind branches
 
-    [Fact]
-    public static void AddAsProperty_Utf8_ArrayBuilder()
+    [TestMethod]
+    public void AddAsProperty_Utf8_ArrayBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourceUtf8Property(
@@ -148,11 +149,11 @@ public static class JsonElementSourceTContextCoverageTests
                     ab.AddItem(ctx);
                 }));
 
-        Assert.Equal(JsonValueKind.Array, doc.RootElement.GetProperty("items"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement.GetProperty("items"u8).ValueKind);
     }
 
-    [Fact]
-    public static void AddAsProperty_Utf8_ObjectBuilder()
+    [TestMethod]
+    public void AddAsProperty_Utf8_ObjectBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourceUtf8Property(
@@ -164,11 +165,11 @@ public static class JsonElementSourceTContextCoverageTests
                     ob.AddProperty("n"u8, ctx);
                 }));
 
-        Assert.Equal(7, doc.RootElement.GetProperty("items"u8).GetProperty("n"u8).GetInt32());
+        Assert.AreEqual(7, doc.RootElement.GetProperty("items"u8).GetProperty("n"u8).GetInt32());
     }
 
-    [Fact]
-    public static void AddAsProperty_Utf8_SourceWrapping()
+    [TestMethod]
+    public void AddAsProperty_Utf8_SourceWrapping()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourceUtf8Property(
@@ -180,15 +181,15 @@ public static class JsonElementSourceTContextCoverageTests
                         ab.AddItem(42);
                     })));
 
-        Assert.Equal(JsonValueKind.Array, doc.RootElement.GetProperty("items"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement.GetProperty("items"u8).ValueKind);
     }
 
     #endregion
 
     #region AddAsPrebakedProperty — all three Kind branches
 
-    [Fact]
-    public static void AddAsPrebakedProperty_ArrayBuilder()
+    [TestMethod]
+    public void AddAsPrebakedProperty_ArrayBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourcePrebakedProperty(
@@ -200,11 +201,11 @@ public static class JsonElementSourceTContextCoverageTests
                     ab.AddItem(ctx);
                 }));
 
-        Assert.Equal(JsonValueKind.Array, doc.RootElement.GetProperty("arr"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement.GetProperty("arr"u8).ValueKind);
     }
 
-    [Fact]
-    public static void AddAsPrebakedProperty_ObjectBuilder()
+    [TestMethod]
+    public void AddAsPrebakedProperty_ObjectBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourcePrebakedProperty(
@@ -216,11 +217,11 @@ public static class JsonElementSourceTContextCoverageTests
                     ob.AddProperty("v"u8, ctx);
                 }));
 
-        Assert.Equal(9, doc.RootElement.GetProperty("arr"u8).GetProperty("v"u8).GetInt32());
+        Assert.AreEqual(9, doc.RootElement.GetProperty("arr"u8).GetProperty("v"u8).GetInt32());
     }
 
-    [Fact]
-    public static void AddAsPrebakedProperty_SourceWrapping()
+    [TestMethod]
+    public void AddAsPrebakedProperty_SourceWrapping()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourcePrebakedProperty(
@@ -232,15 +233,15 @@ public static class JsonElementSourceTContextCoverageTests
                         ob.AddProperty("ok"u8, true);
                     })));
 
-        Assert.True(doc.RootElement.GetProperty("arr"u8).GetProperty("ok"u8).GetBoolean());
+        Assert.IsTrue(doc.RootElement.GetProperty("arr"u8).GetProperty("ok"u8).GetBoolean());
     }
 
     #endregion
 
     #region AddAsProperty(string) — exercises string → char span dispatch for all Kinds
 
-    [Fact]
-    public static void AddAsProperty_String_ArrayBuilder()
+    [TestMethod]
+    public void AddAsProperty_String_ArrayBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourceStringProperty(
@@ -252,11 +253,11 @@ public static class JsonElementSourceTContextCoverageTests
                     ab.AddItem(ctx);
                 }));
 
-        Assert.Equal(JsonValueKind.Array, doc.RootElement.GetProperty("list"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement.GetProperty("list"u8).ValueKind);
     }
 
-    [Fact]
-    public static void AddAsProperty_String_ObjectBuilder()
+    [TestMethod]
+    public void AddAsProperty_String_ObjectBuilder()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourceStringProperty(
@@ -268,11 +269,11 @@ public static class JsonElementSourceTContextCoverageTests
                     ob.AddProperty("n"u8, ctx);
                 }));
 
-        Assert.Equal(4, doc.RootElement.GetProperty("list"u8).GetProperty("n"u8).GetInt32());
+        Assert.AreEqual(4, doc.RootElement.GetProperty("list"u8).GetProperty("n"u8).GetInt32());
     }
 
-    [Fact]
-    public static void AddAsProperty_String_SourceWrapping()
+    [TestMethod]
+    public void AddAsProperty_String_SourceWrapping()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc = BuildFromSourceStringProperty(
@@ -284,7 +285,7 @@ public static class JsonElementSourceTContextCoverageTests
                         ab.AddItem(100);
                     })));
 
-        Assert.Equal(JsonValueKind.Array, doc.RootElement.GetProperty("list"u8).ValueKind);
+        Assert.AreEqual(JsonValueKind.Array, doc.RootElement.GetProperty("list"u8).ValueKind);
     }
 
     #endregion

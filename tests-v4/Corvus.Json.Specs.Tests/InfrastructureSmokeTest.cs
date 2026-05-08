@@ -9,13 +9,14 @@ using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
 using Microsoft.Extensions.Configuration;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests;
 
 /// <summary>
 /// Smoke test to verify the test infrastructure compiles and runs.
 /// </summary>
+[TestClass]
 public class InfrastructureSmokeTest : IDisposable
 {
     private readonly IConfiguration configuration;
@@ -58,7 +59,7 @@ public class InfrastructureSmokeTest : IDisposable
         GC.SuppressFinalize(this);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CanGenerateTypeFromInlineSchema()
     {
         Type generatedType = await this.driver.GenerateTypeForVirtualFile(
@@ -70,10 +71,10 @@ public class InfrastructureSmokeTest : IDisposable
             optionalAsNullable: false,
             useImplicitOperatorString: false);
 
-        Assert.NotNull(generatedType);
+        Assert.IsNotNull(generatedType);
 
         using var doc = JsonDocument.Parse("\"hello\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement.Clone());
-        Assert.Equal(JsonValueKind.String, instance.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, instance.ValueKind);
     }
 }

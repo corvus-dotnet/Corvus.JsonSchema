@@ -3,17 +3,18 @@
 // </copyright>
 
 using Corvus.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Coverage tests for ObjectBuilder.AddArrayValue overloads with ReadOnlySpan&lt;char&gt; property names.
 /// Targets lines 1325-1466 in JsonElement.ObjectBuilder.cs.
 /// </summary>
-public static class ObjectBuilderCharSpanArrayCoverageTests
+[TestClass]
+public class ObjectBuilderCharSpanArrayCoverageTests
 {
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Long_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Long_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -26,12 +27,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[1,2,3]}""", json);
+        Assert.AreEqual("""{"items":[1,2,3]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Int_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Int_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -44,12 +45,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[10,20]}""", json);
+        Assert.AreEqual("""{"items":[10,20]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Short_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Short_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -62,12 +63,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[1,2]}""", json);
+        Assert.AreEqual("""{"items":[1,2]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Sbyte_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Sbyte_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -80,12 +81,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[1,-1]}""", json);
+        Assert.AreEqual("""{"items":[1,-1]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Ulong_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Ulong_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -98,12 +99,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[100,200]}""", json);
+        Assert.AreEqual("""{"items":[100,200]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Uint_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Uint_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -116,12 +117,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[5,6]}""", json);
+        Assert.AreEqual("""{"items":[5,6]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Ushort_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Ushort_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -134,12 +135,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[7,8]}""", json);
+        Assert.AreEqual("""{"items":[7,8]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Byte_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Byte_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -152,12 +153,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[0,255]}""", json);
+        Assert.AreEqual("""{"items":[0,255]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Decimal_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Decimal_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -171,12 +172,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[1.5,2.5]}""", json);
+        Assert.AreEqual("""{"items":[1.5,2.5]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Double_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Double_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -189,12 +190,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[1.1,2.2]}""", json);
+        Assert.AreEqual("""{"items":[1.1,2.2]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Float_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Float_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -207,14 +208,14 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[3.14,2.71]}""", json);
+        Assert.AreEqual("""{"items":[3.14,2.71]}""", json);
     }
 
 #if NET
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Int128_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Int128_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -228,12 +229,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[42,99]}""", json);
+        Assert.AreEqual("""{"items":[42,99]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_UInt128_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_UInt128_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -247,12 +248,12 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[1,2]}""", json);
+        Assert.AreEqual("""{"items":[1,2]}""", json);
     }
 
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void AddArrayValue_Half_CharPropertyName()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void AddArrayValue_Half_CharPropertyName()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("""{"a": 1}""");
         using var workspace = JsonWorkspace.Create();
@@ -266,7 +267,7 @@ public static class ObjectBuilderCharSpanArrayCoverageTests
         }));
 
         string json = root["arr"].ToString();
-        Assert.Equal("""{"items":[1,2]}""", json);
+        Assert.AreEqual("""{"items":[1,2]}""", json);
     }
 
 #endif

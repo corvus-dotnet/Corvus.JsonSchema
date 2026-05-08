@@ -5,15 +5,16 @@
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
+[TestClass]
 public class BigNumberMathematicalFunctionsTests
 {
     #region Pow Tests
 
-    [Fact]
+    [TestMethod]
     public void Pow_ToZero_ReturnsOne()
     {
         BigNumber value = new(123, -2);
@@ -23,7 +24,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(BigNumber.One);
     }
 
-    [Fact]
+    [TestMethod]
     public void Pow_ToOne_ReturnsSameValue()
     {
         BigNumber value = new(123, -2);
@@ -33,7 +34,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(value);
     }
 
-    [Fact]
+    [TestMethod]
     public void Pow_SquareSimpleNumber_ReturnsCorrectValue()
     {
         BigNumber value = new(10, 0);
@@ -43,7 +44,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(100, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Pow_CubeNumber_ReturnsCorrectValue()
     {
         BigNumber value = new(5, 0);
@@ -53,7 +54,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(125, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Pow_WithExponent_MultipliesExponents()
     {
         BigNumber value = new(10, 2);  // 1000
@@ -63,7 +64,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(1000, 6));
     }
 
-    [Fact]
+    [TestMethod]
     public void Pow_ZeroToAnyPower_ReturnsZero()
     {
         var result = BigNumber.Pow(BigNumber.Zero, 5);
@@ -71,7 +72,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Pow_NegativeExponent_ThrowsArgumentOutOfRangeException()
     {
         BigNumber value = new(10, 0);
@@ -83,7 +84,7 @@ public class BigNumberMathematicalFunctionsTests
 
     #region Sqrt Tests
 
-    [Fact]
+    [TestMethod]
     public void Sqrt_PerfectSquare_ReturnsExactValue()
     {
         BigNumber value = new(100, 0);
@@ -93,7 +94,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(10, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Sqrt_Four_ReturnsTwo()
     {
         BigNumber value = new(4, 0);
@@ -103,7 +104,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(2, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Sqrt_WithPrecision_ReturnsApproximation()
     {
         BigNumber value = new(2, 0);
@@ -115,7 +116,7 @@ public class BigNumberMathematicalFunctionsTests
         resultDouble.ShouldBe(Math.Sqrt(2), tolerance: 0.0000000001);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sqrt_Zero_ReturnsZero()
     {
         var result = BigNumber.Sqrt(BigNumber.Zero, 10);
@@ -123,7 +124,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sqrt_NegativeNumber_ThrowsArgumentException()
     {
         BigNumber negative = new(-100, 0);
@@ -131,7 +132,7 @@ public class BigNumberMathematicalFunctionsTests
         Should.Throw<ArgumentException>(() => BigNumber.Sqrt(negative, 10));
     }
 
-    [Fact]
+    [TestMethod]
     public void Sqrt_NegativePrecision_ThrowsArgumentOutOfRangeException()
     {
         BigNumber value = new(100, 0);
@@ -139,7 +140,7 @@ public class BigNumberMathematicalFunctionsTests
         Should.Throw<ArgumentOutOfRangeException>(() => BigNumber.Sqrt(value, -1));
     }
 
-    [Fact]
+    [TestMethod]
     public void Sqrt_LargeNumber_ReturnsCorrectValue()
     {
         BigNumber value = new(10000, 0);
@@ -153,7 +154,7 @@ public class BigNumberMathematicalFunctionsTests
 
     #region Round Tests
 
-    [Fact]
+    [TestMethod]
     public void Round_ToZeroDecimals_ReturnsInteger()
     {
         var value = BigNumber.Parse("123.456");
@@ -163,7 +164,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToTwoDecimals_RoundsCorrectly()
     {
         var value = BigNumber.Parse("123.456");
@@ -173,7 +174,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(BigNumber.Parse("123.46"));
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToEven_MidpointRoundsToEven()
     {
         var value1 = BigNumber.Parse("2.5");
@@ -186,7 +187,7 @@ public class BigNumberMathematicalFunctionsTests
         result2.ShouldBe(new BigNumber(4, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_AwayFromZero_MidpointRoundsAwayFromZero()
     {
         var value1 = BigNumber.Parse("2.5");
@@ -199,7 +200,7 @@ public class BigNumberMathematicalFunctionsTests
         result2.ShouldBe(new BigNumber(-3, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_NegativeDecimals_ThrowsArgumentOutOfRangeException()
     {
         BigNumber value = new(123, 0);
@@ -211,7 +212,7 @@ public class BigNumberMathematicalFunctionsTests
 
     #region Floor Tests
 
-    [Fact]
+    [TestMethod]
     public void Floor_PositiveDecimal_RoundsDown()
     {
         var value = BigNumber.Parse("123.9");
@@ -221,7 +222,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Floor_NegativeDecimal_RoundsDown()
     {
         var value = BigNumber.Parse("-123.1");
@@ -231,7 +232,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(-124, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Floor_Integer_ReturnsSame()
     {
         BigNumber value = new(100, 0);
@@ -241,7 +242,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(value);
     }
 
-    [Fact]
+    [TestMethod]
     public void Floor_Zero_ReturnsZero()
     {
         var result = BigNumber.Floor(BigNumber.Zero);
@@ -253,7 +254,7 @@ public class BigNumberMathematicalFunctionsTests
 
     #region Ceiling Tests
 
-    [Fact]
+    [TestMethod]
     public void Ceiling_PositiveDecimal_RoundsUp()
     {
         var value = BigNumber.Parse("123.1");
@@ -263,7 +264,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(124, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Ceiling_NegativeDecimal_RoundsUp()
     {
         var value = BigNumber.Parse("-123.9");
@@ -273,7 +274,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(-123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Ceiling_Integer_ReturnsSame()
     {
         BigNumber value = new(100, 0);
@@ -283,7 +284,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(value);
     }
 
-    [Fact]
+    [TestMethod]
     public void Ceiling_Zero_ReturnsZero()
     {
         var result = BigNumber.Ceiling(BigNumber.Zero);
@@ -295,7 +296,7 @@ public class BigNumberMathematicalFunctionsTests
 
     #region Truncate Tests
 
-    [Fact]
+    [TestMethod]
     public void Truncate_PositiveDecimal_RemovesFraction()
     {
         var value = BigNumber.Parse("123.9");
@@ -305,7 +306,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Truncate_NegativeDecimal_RemovesFraction()
     {
         var value = BigNumber.Parse("-123.9");
@@ -315,7 +316,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(new BigNumber(-123, 0));
     }
 
-    [Fact]
+    [TestMethod]
     public void Truncate_Integer_ReturnsSame()
     {
         BigNumber value = new(100, 0);
@@ -325,7 +326,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(value);
     }
 
-    [Fact]
+    [TestMethod]
     public void Truncate_Zero_ReturnsZero()
     {
         var result = BigNumber.Truncate(BigNumber.Zero);
@@ -337,7 +338,7 @@ public class BigNumberMathematicalFunctionsTests
 
     #region Edge Cases
 
-    [Fact]
+    [TestMethod]
     public void Pow_LargeExponent_ReturnsVeryLargeNumber()
     {
         BigNumber value = new(10, 0);
@@ -347,7 +348,7 @@ public class BigNumberMathematicalFunctionsTests
         result.Exponent.ShouldBe(50);
     }
 
-    [Fact]
+    [TestMethod]
     public void Sqrt_VerySmallNumber_ReturnsCorrectValue()
     {
         BigNumber value = new(1, -100);
@@ -358,7 +359,7 @@ public class BigNumberMathematicalFunctionsTests
         result.Exponent.ShouldBe(-50);
     }
 
-    [Fact]
+    [TestMethod]
     public void Floor_VerySmallPositive_ReturnsZero()
     {
         BigNumber value = new(1, -100);
@@ -368,7 +369,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(BigNumber.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Floor_VerySmallNegative_ReturnsMinusOne()
     {
         BigNumber value = new(-1, -100);
@@ -378,7 +379,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(BigNumber.MinusOne);
     }
 
-    [Fact]
+    [TestMethod]
     public void Ceiling_VerySmallPositive_ReturnsOne()
     {
         BigNumber value = new(1, -100);
@@ -388,7 +389,7 @@ public class BigNumberMathematicalFunctionsTests
         result.ShouldBe(BigNumber.One);
     }
 
-    [Fact]
+    [TestMethod]
     public void Ceiling_VerySmallNegative_ReturnsZero()
     {
         BigNumber value = new(-1, -100);

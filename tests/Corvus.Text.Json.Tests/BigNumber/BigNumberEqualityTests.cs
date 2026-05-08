@@ -3,16 +3,17 @@
 
 using System.Numerics;
 using Corvus.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for BigNumber equality operations, including Equals, GetHashCode, and operators.
 /// </summary>
+[TestClass]
 public class BigNumberEqualityTests
 {
-    [Fact]
+    [TestMethod]
     public void Equals_WithSameSignificandAndExponent_ShouldReturnTrue()
     {
         // Arrange
@@ -21,11 +22,11 @@ public class BigNumberEqualityTests
 
         // Act & Assert
         BigNumberTestData.AssertBigNumbersEqual(bigNumber1, bigNumber2);
-        Assert.True(bigNumber1.Equals(bigNumber2));
-        Assert.True(bigNumber2.Equals(bigNumber1));
+        Assert.IsTrue(bigNumber1.Equals(bigNumber2));
+        Assert.IsTrue(bigNumber2.Equals(bigNumber1));
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithDifferentSignificandSameExponent_ShouldReturnFalse()
     {
         // Arrange
@@ -34,11 +35,11 @@ public class BigNumberEqualityTests
 
         // Act & Assert
         BigNumberTestData.AssertBigNumbersNotEqual(bigNumber1, bigNumber2);
-        Assert.False(bigNumber1.Equals(bigNumber2));
-        Assert.False(bigNumber2.Equals(bigNumber1));
+        Assert.IsFalse(bigNumber1.Equals(bigNumber2));
+        Assert.IsFalse(bigNumber2.Equals(bigNumber1));
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithSameSignificandDifferentExponent_ShouldReturnFalse()
     {
         // Arrange
@@ -47,11 +48,11 @@ public class BigNumberEqualityTests
 
         // Act & Assert
         BigNumberTestData.AssertBigNumbersNotEqual(bigNumber1, bigNumber2);
-        Assert.False(bigNumber1.Equals(bigNumber2));
-        Assert.False(bigNumber2.Equals(bigNumber1));
+        Assert.IsFalse(bigNumber1.Equals(bigNumber2));
+        Assert.IsFalse(bigNumber2.Equals(bigNumber1));
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithDifferentSignificandAndExponent_ShouldReturnFalse()
     {
         // Arrange
@@ -60,11 +61,11 @@ public class BigNumberEqualityTests
 
         // Act & Assert
         BigNumberTestData.AssertBigNumbersNotEqual(bigNumber1, bigNumber2);
-        Assert.False(bigNumber1.Equals(bigNumber2));
-        Assert.False(bigNumber2.Equals(bigNumber1));
+        Assert.IsFalse(bigNumber1.Equals(bigNumber2));
+        Assert.IsFalse(bigNumber2.Equals(bigNumber1));
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithZeroValues_ShouldReturnTrue()
     {
         // Arrange
@@ -73,11 +74,11 @@ public class BigNumberEqualityTests
 
         // Act & Assert
         BigNumberTestData.AssertBigNumbersEqual(bigNumber1, bigNumber2);
-        Assert.True(bigNumber1.Equals(bigNumber2));
-        Assert.True(bigNumber2.Equals(bigNumber1));
+        Assert.IsTrue(bigNumber1.Equals(bigNumber2));
+        Assert.IsTrue(bigNumber2.Equals(bigNumber1));
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithZeroSignificandDifferentExponents_ShouldReturnTrue()
     {
         // Arrange
@@ -86,11 +87,11 @@ public class BigNumberEqualityTests
 
         // Act & Assert
         BigNumberTestData.AssertBigNumbersEqual(bigNumber1, bigNumber2);
-        Assert.True(bigNumber1.Equals(bigNumber2));
-        Assert.True(bigNumber2.Equals(bigNumber1));
+        Assert.IsTrue(bigNumber1.Equals(bigNumber2));
+        Assert.IsTrue(bigNumber2.Equals(bigNumber1));
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithNegativeSignificands_ShouldWorkCorrectly()
     {
         // Arrange
@@ -101,11 +102,11 @@ public class BigNumberEqualityTests
         // Act & Assert
         BigNumberTestData.AssertBigNumbersEqual(bigNumber1, bigNumber2);
         BigNumberTestData.AssertBigNumbersNotEqual(bigNumber1, bigNumber3);
-        Assert.True(bigNumber1.Equals(bigNumber2));
-        Assert.False(bigNumber1.Equals(bigNumber3));
+        Assert.IsTrue(bigNumber1.Equals(bigNumber2));
+        Assert.IsFalse(bigNumber1.Equals(bigNumber3));
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithNegativeExponents_ShouldWorkCorrectly()
     {
         // Arrange
@@ -116,11 +117,11 @@ public class BigNumberEqualityTests
         // Act & Assert
         BigNumberTestData.AssertBigNumbersEqual(bigNumber1, bigNumber2);
         BigNumberTestData.AssertBigNumbersNotEqual(bigNumber1, bigNumber3);
-        Assert.True(bigNumber1.Equals(bigNumber2));
-        Assert.False(bigNumber1.Equals(bigNumber3));
+        Assert.IsTrue(bigNumber1.Equals(bigNumber2));
+        Assert.IsFalse(bigNumber1.Equals(bigNumber3));
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithVeryLargeSignificands_ShouldWorkCorrectly()
     {
         // Arrange
@@ -132,11 +133,11 @@ public class BigNumberEqualityTests
         // Act & Assert
         BigNumberTestData.AssertBigNumbersEqual(bigNumber1, bigNumber2);
         BigNumberTestData.AssertBigNumbersNotEqual(bigNumber1, bigNumber3);
-        Assert.True(bigNumber1.Equals(bigNumber2));
-        Assert.False(bigNumber1.Equals(bigNumber3));
+        Assert.IsTrue(bigNumber1.Equals(bigNumber2));
+        Assert.IsFalse(bigNumber1.Equals(bigNumber3));
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithVeryLargeExponents_ShouldWorkCorrectly()
     {
         // Arrange
@@ -147,12 +148,12 @@ public class BigNumberEqualityTests
         // Act & Assert
         BigNumberTestData.AssertBigNumbersEqual(bigNumber1, bigNumber2);
         BigNumberTestData.AssertBigNumbersNotEqual(bigNumber1, bigNumber3);
-        Assert.True(bigNumber1.Equals(bigNumber2));
-        Assert.False(bigNumber1.Equals(bigNumber3));
+        Assert.IsTrue(bigNumber1.Equals(bigNumber2));
+        Assert.IsFalse(bigNumber1.Equals(bigNumber3));
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.EqualityData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.EqualityData), typeof(BigNumberTestData))]
     public void Equals_WithVariousInputs_ShouldWorkCorrectly(
         BigInteger significand1, int exponent1,
         BigInteger significand2, int exponent2,
@@ -163,8 +164,8 @@ public class BigNumberEqualityTests
         var bigNumber2 = new Corvus.Numerics.BigNumber(significand2, exponent2);
 
         // Act & Assert
-        Assert.Equal(expectedEqual, bigNumber1.Equals(bigNumber2));
-        Assert.Equal(expectedEqual, bigNumber2.Equals(bigNumber1));
+        Assert.AreEqual(expectedEqual, bigNumber1.Equals(bigNumber2));
+        Assert.AreEqual(expectedEqual, bigNumber2.Equals(bigNumber1));
 
         if (expectedEqual)
         {
@@ -176,7 +177,7 @@ public class BigNumberEqualityTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void Equals_WithObjectOverload_ShouldWorkCorrectly()
     {
         // Arrange
@@ -189,14 +190,14 @@ public class BigNumberEqualityTests
         object nonBigNumber = "not a BigNumber";
 
         // Act & Assert
-        Assert.True(bigNumber1.Equals(obj2));
-        Assert.True(bigNumber2.Equals(obj1));
-        Assert.False(bigNumber1.Equals(obj3));
-        Assert.False(bigNumber1.Equals(nonBigNumber));
-        Assert.False(bigNumber1.Equals(null));
+        Assert.IsTrue(bigNumber1.Equals(obj2));
+        Assert.IsTrue(bigNumber2.Equals(obj1));
+        Assert.IsFalse(bigNumber1.Equals(obj3));
+        Assert.IsFalse(bigNumber1.Equals(nonBigNumber));
+        Assert.IsFalse(bigNumber1.Equals(null));
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_WithEqualBigNumbers_ShouldReturnSameHashCode()
     {
         // Arrange
@@ -208,10 +209,10 @@ public class BigNumberEqualityTests
         int hashCode2 = bigNumber2.GetHashCode();
 
         // Assert
-        Assert.Equal(hashCode1, hashCode2);
+        Assert.AreEqual(hashCode1, hashCode2);
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_WithDifferentBigNumbers_ShouldReturnDifferentHashCodes()
     {
         // Arrange
@@ -226,11 +227,11 @@ public class BigNumberEqualityTests
 
         // Assert
         // Note: Different objects can have the same hash code, but it's very unlikely for these cases
-        Assert.NotEqual(hashCode1, hashCode2);
-        Assert.NotEqual(hashCode1, hashCode3);
+        Assert.AreNotEqual(hashCode1, hashCode2);
+        Assert.AreNotEqual(hashCode1, hashCode3);
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_WithZeroValues_ShouldBeConsistent()
     {
         // Arrange
@@ -242,10 +243,10 @@ public class BigNumberEqualityTests
         int hashCode2 = bigNumber2.GetHashCode();
 
         // Assert
-        Assert.Equal(hashCode1, hashCode2);
+        Assert.AreEqual(hashCode1, hashCode2);
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_WithNegativeValues_ShouldBeConsistent()
     {
         // Arrange
@@ -257,10 +258,10 @@ public class BigNumberEqualityTests
         int hashCode2 = bigNumber2.GetHashCode();
 
         // Assert
-        Assert.Equal(hashCode1, hashCode2);
+        Assert.AreEqual(hashCode1, hashCode2);
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_WithVeryLargeValues_ShouldBeConsistent()
     {
         // Arrange
@@ -273,10 +274,10 @@ public class BigNumberEqualityTests
         int hashCode2 = bigNumber2.GetHashCode();
 
         // Assert
-        Assert.Equal(hashCode1, hashCode2);
+        Assert.AreEqual(hashCode1, hashCode2);
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_MultipleCallsOnSameInstance_ShouldReturnSameValue()
     {
         // Arrange
@@ -288,11 +289,11 @@ public class BigNumberEqualityTests
         int hashCode3 = bigNumber.GetHashCode();
 
         // Assert
-        Assert.Equal(hashCode1, hashCode2);
-        Assert.Equal(hashCode2, hashCode3);
+        Assert.AreEqual(hashCode1, hashCode2);
+        Assert.AreEqual(hashCode2, hashCode3);
     }
 
-    [Fact]
+    [TestMethod]
     public void OperatorEquals_WithEqualBigNumbers_ShouldReturnTrue()
     {
         // Arrange
@@ -300,13 +301,13 @@ public class BigNumberEqualityTests
         var bigNumber2 = new Corvus.Numerics.BigNumber(new BigInteger(123), 5);
 
         // Act & Assert
-        Assert.True(bigNumber1 == bigNumber2);
-        Assert.True(bigNumber2 == bigNumber1);
-        Assert.False(bigNumber1 != bigNumber2);
-        Assert.False(bigNumber2 != bigNumber1);
+        Assert.IsTrue(bigNumber1 == bigNumber2);
+        Assert.IsTrue(bigNumber2 == bigNumber1);
+        Assert.IsFalse(bigNumber1 != bigNumber2);
+        Assert.IsFalse(bigNumber2 != bigNumber1);
     }
 
-    [Fact]
+    [TestMethod]
     public void OperatorEquals_WithDifferentBigNumbers_ShouldReturnFalse()
     {
         // Arrange
@@ -314,13 +315,13 @@ public class BigNumberEqualityTests
         var bigNumber2 = new Corvus.Numerics.BigNumber(new BigInteger(456), 5);
 
         // Act & Assert
-        Assert.False(bigNumber1 == bigNumber2);
-        Assert.False(bigNumber2 == bigNumber1);
-        Assert.True(bigNumber1 != bigNumber2);
-        Assert.True(bigNumber2 != bigNumber1);
+        Assert.IsFalse(bigNumber1 == bigNumber2);
+        Assert.IsFalse(bigNumber2 == bigNumber1);
+        Assert.IsTrue(bigNumber1 != bigNumber2);
+        Assert.IsTrue(bigNumber2 != bigNumber1);
     }
 
-    [Fact]
+    [TestMethod]
     public void OperatorNotEquals_WithEqualBigNumbers_ShouldReturnFalse()
     {
         // Arrange
@@ -328,11 +329,11 @@ public class BigNumberEqualityTests
         var bigNumber2 = new Corvus.Numerics.BigNumber(new BigInteger(123), 5);
 
         // Act & Assert
-        Assert.False(bigNumber1 != bigNumber2);
-        Assert.False(bigNumber2 != bigNumber1);
+        Assert.IsFalse(bigNumber1 != bigNumber2);
+        Assert.IsFalse(bigNumber2 != bigNumber1);
     }
 
-    [Fact]
+    [TestMethod]
     public void OperatorNotEquals_WithDifferentBigNumbers_ShouldReturnTrue()
     {
         // Arrange
@@ -340,11 +341,11 @@ public class BigNumberEqualityTests
         var bigNumber2 = new Corvus.Numerics.BigNumber(new BigInteger(456), 5);
 
         // Act & Assert
-        Assert.True(bigNumber1 != bigNumber2);
-        Assert.True(bigNumber2 != bigNumber1);
+        Assert.IsTrue(bigNumber1 != bigNumber2);
+        Assert.IsTrue(bigNumber2 != bigNumber1);
     }
 
-    [Fact]
+    [TestMethod]
     public void Equality_AfterNormalization_ShouldBeConsistent()
     {
         // Arrange
@@ -362,7 +363,7 @@ public class BigNumberEqualityTests
         BigNumberTestData.AssertBigNumbersEqual(bigNumber2, normalized2);
     }
 
-    [Fact]
+    [TestMethod]
     public void Equality_RoundTripThroughParsing_ShouldBeConsistent()
     {
         // Arrange
@@ -371,19 +372,19 @@ public class BigNumberEqualityTests
         // Format and parse back
         Span<char> buffer = stackalloc char[50];
         bool formatSuccess = originalBigNumber.TryFormat(buffer, out int charsWritten);
-        Assert.True(formatSuccess);
+        Assert.IsTrue(formatSuccess);
 
         bool parseSuccess = Corvus.Numerics.BigNumber.TryParse(Encoding.UTF8.GetBytes(buffer.Slice(0, charsWritten).ToString()), out BigNumber parsedBigNumber);
-        Assert.True(parseSuccess);
+        Assert.IsTrue(parseSuccess);
 
         // Act & Assert
         BigNumberTestData.AssertBigNumbersEqual(originalBigNumber, parsedBigNumber);
-        Assert.True(originalBigNumber == parsedBigNumber);
-        Assert.False(originalBigNumber != parsedBigNumber);
-        Assert.Equal(originalBigNumber.GetHashCode(), parsedBigNumber.GetHashCode());
+        Assert.IsTrue(originalBigNumber == parsedBigNumber);
+        Assert.IsFalse(originalBigNumber != parsedBigNumber);
+        Assert.AreEqual(originalBigNumber.GetHashCode(), parsedBigNumber.GetHashCode());
     }
 
-    [Fact]
+    [TestMethod]
     public void Equality_WithEquivalentButDifferentRepresentations_ShouldBeEqual()
     {
         // Arrange
@@ -395,12 +396,12 @@ public class BigNumberEqualityTests
 
         // Act & Assert
         BigNumberTestData.AssertBigNumbersEqual(bigNumber1, bigNumber2);
-        Assert.True(bigNumber1 == bigNumber2);
-        Assert.False(bigNumber1 != bigNumber2);
-        Assert.Equal(bigNumber1.GetHashCode(), bigNumber2.GetHashCode());
+        Assert.IsTrue(bigNumber1 == bigNumber2);
+        Assert.IsFalse(bigNumber1 != bigNumber2);
+        Assert.AreEqual(bigNumber1.GetHashCode(), bigNumber2.GetHashCode());
     }
 
-    [Fact]
+    [TestMethod]
     public void IEquatable_Implementation_ShouldWorkCorrectly()
     {
         // Arrange
@@ -410,7 +411,7 @@ public class BigNumberEqualityTests
 
         // Act & Assert
         IEquatable<Corvus.Numerics.BigNumber> equatable1 = bigNumber1;
-        Assert.True(equatable1.Equals(bigNumber2));
-        Assert.False(equatable1.Equals(bigNumber3));
+        Assert.IsTrue(equatable1.Equals(bigNumber2));
+        Assert.IsFalse(equatable1.Equals(bigNumber3));
     }
 }

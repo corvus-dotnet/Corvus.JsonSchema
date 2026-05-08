@@ -6,11 +6,12 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.NullableProperties;
 
-[Trait("spec", "NullableProperties")]
+[TestCategory("NullableProperties")]
+[TestClass]
 public class NullablePropertiesTests
 {
     private const string ObjectSchema = """
@@ -24,10 +25,10 @@ public class NullablePropertiesTests
         }
         """;
 
-    [Theory]
-    [InlineData("""{"foo": "p1", "bar": "p2" }""", "p1", "p2")]
-    [InlineData("""{"foo": "p1", "bar": null }""", "p1", "null")]
-    [InlineData("""{"foo": "p1" }""", "p1", "null")]
+    [TestMethod]
+    [DataRow("""{"foo": "p1", "bar": "p2" }""", "p1", "p2")]
+    [DataRow("""{"foo": "p1", "bar": null }""", "p1", "null")]
+    [DataRow("""{"foo": "p1" }""", "p1", "null")]
     public async Task CreateNullableOptionalProperties(string inputData, string fooValue, string barValue)
     {
         using var driver = DriverFactory.CreateDraft202012Driver();
@@ -43,14 +44,14 @@ public class NullablePropertiesTests
         using var doc = JsonDocument.Parse(inputData);
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement);
 
-        Assert.True(JsonSchemaBuilderDriver.CompareStringValue(generatedType, instance, "Foo", fooValue));
-        Assert.True(JsonSchemaBuilderDriver.CompareNullableStringValue(generatedType, instance, "Bar", barValue));
+        Assert.IsTrue(JsonSchemaBuilderDriver.CompareStringValue(generatedType, instance, "Foo", fooValue));
+        Assert.IsTrue(JsonSchemaBuilderDriver.CompareNullableStringValue(generatedType, instance, "Bar", barValue));
     }
 
-    [Theory]
-    [InlineData("""{"foo": "p1", "bar": "p2" }""", "p1", "p2")]
-    [InlineData("""{"foo": "p1", "bar": null }""", "p1", "Null")]
-    [InlineData("""{"foo": "p1" }""", "p1", "Undefined")]
+    [TestMethod]
+    [DataRow("""{"foo": "p1", "bar": "p2" }""", "p1", "p2")]
+    [DataRow("""{"foo": "p1", "bar": null }""", "p1", "Null")]
+    [DataRow("""{"foo": "p1" }""", "p1", "Undefined")]
     public async Task CreateNotNullableOptionalProperties(string inputData, string fooValue, string barValue)
     {
         using var driver = DriverFactory.CreateDraft202012Driver();
@@ -66,7 +67,7 @@ public class NullablePropertiesTests
         using var doc = JsonDocument.Parse(inputData);
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement);
 
-        Assert.True(JsonSchemaBuilderDriver.CompareStringValue(generatedType, instance, "Foo", fooValue));
-        Assert.True(JsonSchemaBuilderDriver.CompareNullableStringValue(generatedType, instance, "Bar", barValue));
+        Assert.IsTrue(JsonSchemaBuilderDriver.CompareStringValue(generatedType, instance, "Foo", fooValue));
+        Assert.IsTrue(JsonSchemaBuilderDriver.CompareNullableStringValue(generatedType, instance, "Bar", barValue));
     }
 }

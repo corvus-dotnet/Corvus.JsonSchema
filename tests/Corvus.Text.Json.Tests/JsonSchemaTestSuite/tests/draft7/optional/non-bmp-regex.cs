@@ -2,73 +2,81 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft7.Optional.NonBmpRegex;
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteProperUtf16SurrogatePairHandlingPattern : IClassFixture<SuiteProperUtf16SurrogatePairHandlingPattern.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteProperUtf16SurrogatePairHandlingPattern
 {
-    private readonly Fixture _fixture;
-    public SuiteProperUtf16SurrogatePairHandlingPattern(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatchesEmpty()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatchesSingle()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"🐲\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"🐲\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatchesTwo()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"🐲🐲\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"🐲🐲\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDoesnTMatchOne()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"🐉\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"🐉\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDoesnTMatchTwo()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"🐉🐉\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"🐉🐉\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDoesnTMatchOneAscii()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"D\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"D\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDoesnTMatchTwoAscii()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"DD\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"DD\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -87,55 +95,63 @@ public class SuiteProperUtf16SurrogatePairHandlingPattern : IClassFixture<SuiteP
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteProperUtf16SurrogatePairHandlingPatternProperties : IClassFixture<SuiteProperUtf16SurrogatePairHandlingPatternProperties.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteProperUtf16SurrogatePairHandlingPatternProperties
 {
-    private readonly Fixture _fixture;
-    public SuiteProperUtf16SurrogatePairHandlingPatternProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatchesEmpty()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"\": 1 }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"\": 1 }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatchesSingle()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"🐲\": 1 }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"🐲\": 1 }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatchesTwo()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"🐲🐲\": 1 }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"🐲🐲\": 1 }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDoesnTMatchOne()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"🐲\": \"hello\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"🐲\": \"hello\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestDoesnTMatchTwo()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"🐲🐲\": \"hello\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"🐲🐲\": \"hello\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

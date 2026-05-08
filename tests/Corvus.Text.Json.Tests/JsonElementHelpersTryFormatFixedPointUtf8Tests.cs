@@ -1,18 +1,19 @@
 using System.Globalization;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
+[TestClass]
 public class JsonElementHelpersTryFormatFixedPointUtf8Tests
 {
-    [Theory]
-    [InlineData("123.456", 2, "123.46")]
-    [InlineData("123.454", 2, "123.45")]
-    [InlineData("123.455", 2, "123.46")]
-    [InlineData("0.999", 2, "1.00")]
-    [InlineData("9.999", 2, "10.00")]
-    [InlineData("99.999", 2, "100.00")]
+    [TestMethod]
+    [DataRow("123.456", 2, "123.46")]
+    [DataRow("123.454", 2, "123.45")]
+    [DataRow("123.455", 2, "123.46")]
+    [DataRow("0.999", 2, "1.00")]
+    [DataRow("9.999", 2, "10.00")]
+    [DataRow("99.999", 2, "100.00")]
     public void TryFormatFixedPoint_RoundsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -37,16 +38,16 @@ public class JsonElementHelpersTryFormatFixedPointUtf8Tests
             ".",
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("123456", 2, "123456.00")]
-    [InlineData("123456", 0, "123456")]
-    [InlineData("1e5", 2, "100000.00")]
-    [InlineData("1.23e3", 2, "1230.00")]
+    [TestMethod]
+    [DataRow("123456", 2, "123456.00")]
+    [DataRow("123456", 0, "123456")]
+    [DataRow("1e5", 2, "100000.00")]
+    [DataRow("1.23e3", 2, "1230.00")]
     public void TryFormatFixedPoint_HandlesIntegersWithTrailingZeros(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -71,19 +72,19 @@ public class JsonElementHelpersTryFormatFixedPointUtf8Tests
             ".",
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("0.000123", 5, "0.00012")]
-    [InlineData("0.000123", 6, "0.000123")]
-    [InlineData("0.000123", 7, "0.0001230")]
-    [InlineData("0.000123", 3, "0.000")]
-    [InlineData("0.000128", 4, "0.0001")]
-    [InlineData("0.000128", 5, "0.00013")]
-    [InlineData("1.23e-5", 6, "0.000012")]
+    [TestMethod]
+    [DataRow("0.000123", 5, "0.00012")]
+    [DataRow("0.000123", 6, "0.000123")]
+    [DataRow("0.000123", 7, "0.0001230")]
+    [DataRow("0.000123", 3, "0.000")]
+    [DataRow("0.000128", 4, "0.0001")]
+    [DataRow("0.000128", 5, "0.00013")]
+    [DataRow("1.23e-5", 6, "0.000012")]
     public void TryFormatFixedPoint_HandlesSmallNumbers(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -108,16 +109,16 @@ public class JsonElementHelpersTryFormatFixedPointUtf8Tests
             ".",
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("-123.456", 2, "-123.46")]
-    [InlineData("-0.999", 2, "-1.00")]
-    [InlineData("-123456", 2, "-123456.00")]
-    [InlineData("-0.000123", 5, "-0.00012")]
+    [TestMethod]
+    [DataRow("-123.456", 2, "-123.46")]
+    [DataRow("-0.999", 2, "-1.00")]
+    [DataRow("-123456", 2, "-123456.00")]
+    [DataRow("-0.000123", 5, "-0.00012")]
     public void TryFormatFixedPoint_HandlesNegativeNumbers(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -142,16 +143,16 @@ public class JsonElementHelpersTryFormatFixedPointUtf8Tests
             ".",
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("0", 0, "0")]
-    [InlineData("0", 2, "0.00")]
-    [InlineData("0.0", 2, "0.00")]
-    [InlineData("0.00", 3, "0.000")]
+    [TestMethod]
+    [DataRow("0", 0, "0")]
+    [DataRow("0", 2, "0.00")]
+    [DataRow("0.0", 2, "0.00")]
+    [DataRow("0.00", 3, "0.000")]
     public void TryFormatFixedPoint_HandlesZero(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -176,12 +177,12 @@ public class JsonElementHelpersTryFormatFixedPointUtf8Tests
             ".",
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatFixedPoint_UsesCustomDecimalSeparator()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123.456");
@@ -206,12 +207,12 @@ public class JsonElementHelpersTryFormatFixedPointUtf8Tests
             ",",
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("123,46", result);
+        Assert.AreEqual("123,46", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatFixedPoint_UsesCustomNegativeSign()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-123.456");
@@ -236,12 +237,12 @@ public class JsonElementHelpersTryFormatFixedPointUtf8Tests
             ".",
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("~123.46", result);
+        Assert.AreEqual("~123.46", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatFixedPoint_ReturnsFalseWhenBufferTooSmall()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("123.456");
@@ -266,7 +267,7 @@ public class JsonElementHelpersTryFormatFixedPointUtf8Tests
             ".",
             formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 }

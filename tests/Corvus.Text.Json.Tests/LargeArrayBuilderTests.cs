@@ -3,7 +3,7 @@
 
 namespace Corvus.Text.Json.Tests;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 /// <summary>
 /// Tests for building large arrays via the CVB (ComplexValueBuilder) pattern,
@@ -18,13 +18,14 @@ using Xunit;
 /// exceed the default allocation.
 /// </para>
 /// </remarks>
+[TestClass]
 public class LargeArrayBuilderTests
 {
     /// <summary>
     /// Verifies that building an array of 1000 doubles via CVB produces the
     /// correct array length and values, exercising value buffer growth.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void CreateBuilder_LargeDoubleArray_1000Items()
     {
         const int count = 1000;
@@ -43,8 +44,8 @@ public class LargeArrayBuilderTests
             estimatedMemberCount: count + 2);
 
         JsonElement root = (JsonElement)doc.RootElement;
-        Assert.Equal(JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(count, root.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(count, root.GetArrayLength());
 
         // Spot-check first, last, and middle values
         int idx = 0;
@@ -52,20 +53,20 @@ public class LargeArrayBuilderTests
         {
             if (idx == 0 || idx == count / 2 || idx == count - 1)
             {
-                Assert.Equal((double)idx, item.GetDouble());
+                Assert.AreEqual((double)idx, item.GetDouble());
             }
 
             idx++;
         }
 
-        Assert.Equal(count, idx);
+        Assert.AreEqual(count, idx);
     }
 
     /// <summary>
     /// Verifies that building an array of 10000 doubles via CVB works correctly,
     /// well beyond the initial 16KB value buffer allocation.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void CreateBuilder_LargeDoubleArray_10000Items()
     {
         const int count = 10000;
@@ -84,25 +85,25 @@ public class LargeArrayBuilderTests
             estimatedMemberCount: count + 2);
 
         JsonElement root = (JsonElement)doc.RootElement;
-        Assert.Equal(JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(count, root.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(count, root.GetArrayLength());
 
         // Verify all values round-trip correctly
         int idx = 0;
         foreach (JsonElement item in root.EnumerateArray())
         {
-            Assert.Equal(idx * 1.5, item.GetDouble());
+            Assert.AreEqual(idx * 1.5, item.GetDouble());
             idx++;
         }
 
-        Assert.Equal(count, idx);
+        Assert.AreEqual(count, idx);
     }
 
     /// <summary>
     /// Verifies that building a large array of strings via CVB exercises
     /// value buffer growth for non-numeric values.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void CreateBuilder_LargeStringArray_1000Items()
     {
         const int count = 1000;
@@ -126,24 +127,24 @@ public class LargeArrayBuilderTests
             estimatedMemberCount: count + 2);
 
         JsonElement root = (JsonElement)doc.RootElement;
-        Assert.Equal(JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(count, root.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(count, root.GetArrayLength());
 
         int idx = 0;
         foreach (JsonElement item in root.EnumerateArray())
         {
-            Assert.Equal(values[idx], item.GetString());
+            Assert.AreEqual(values[idx], item.GetString());
             idx++;
         }
 
-        Assert.Equal(count, idx);
+        Assert.AreEqual(count, idx);
     }
 
     /// <summary>
     /// Verifies that building a large array of mixed types (doubles, booleans, strings)
     /// via CVB correctly handles value buffer growth across value types.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void CreateBuilder_LargeMixedArray_3000Items()
     {
         const int count = 3000;
@@ -173,8 +174,8 @@ public class LargeArrayBuilderTests
             estimatedMemberCount: count + 2);
 
         JsonElement root = (JsonElement)doc.RootElement;
-        Assert.Equal(JsonValueKind.Array, root.ValueKind);
-        Assert.Equal(count, root.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, root.ValueKind);
+        Assert.AreEqual(count, root.GetArrayLength());
 
         int idx = 0;
         foreach (JsonElement item in root.EnumerateArray())
@@ -182,19 +183,19 @@ public class LargeArrayBuilderTests
             switch (idx % 3)
             {
                 case 0:
-                    Assert.Equal((double)idx, item.GetDouble());
+                    Assert.AreEqual((double)idx, item.GetDouble());
                     break;
                 case 1:
-                    Assert.Equal(idx % 2 == 0, item.GetBoolean());
+                    Assert.AreEqual(idx % 2 == 0, item.GetBoolean());
                     break;
                 case 2:
-                    Assert.Equal($"s{idx}", item.GetString());
+                    Assert.AreEqual($"s{idx}", item.GetString());
                     break;
             }
 
             idx++;
         }
 
-        Assert.Equal(count, idx);
+        Assert.AreEqual(count, idx);
     }
 }

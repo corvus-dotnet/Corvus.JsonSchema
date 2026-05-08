@@ -3,14 +3,14 @@
 // </copyright>
 
 using System.Text;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonPath.SourceGenerator.Tests;
 
 /// <summary>
 /// Integration tests for the JSONPath source generator.
 /// </summary>
+[TestClass]
 public class SourceGeneratorTests
 {
     private static readonly string BookStoreJson = """
@@ -27,15 +27,8 @@ public class SourceGeneratorTests
         }
         """;
 
-    private readonly ITestOutputHelper output;
-
-    public SourceGeneratorTests(ITestOutputHelper output)
-    {
-        this.output = output;
-    }
-
-    [Fact]
-    [Trait("category", "sourcegen")]
+    [TestMethod]
+    [TestCategory("sourcegen")]
     public void BookAuthors_ReturnsAllAuthors()
     {
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(BookStoreJson));
@@ -44,19 +37,19 @@ public class SourceGeneratorTests
         JsonElement result = BookAuthors.Query(data, workspace);
 
         string resultJson = result.GetRawText();
-        this.output.WriteLine($"Result: {resultJson}");
+        Console.WriteLine($"Result: {resultJson}");
 
         using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(resultJson);
-        Assert.Equal(System.Text.Json.JsonValueKind.Array, doc.RootElement.ValueKind);
-        Assert.Equal(4, doc.RootElement.GetArrayLength());
-        Assert.Equal("Nigel Rees", doc.RootElement[0].GetString());
-        Assert.Equal("Evelyn Waugh", doc.RootElement[1].GetString());
-        Assert.Equal("Herman Melville", doc.RootElement[2].GetString());
-        Assert.Equal("J. R. R. Tolkien", doc.RootElement[3].GetString());
+        Assert.AreEqual(System.Text.Json.JsonValueKind.Array, doc.RootElement.ValueKind);
+        Assert.AreEqual(4, doc.RootElement.GetArrayLength());
+        Assert.AreEqual("Nigel Rees", doc.RootElement[0].GetString());
+        Assert.AreEqual("Evelyn Waugh", doc.RootElement[1].GetString());
+        Assert.AreEqual("Herman Melville", doc.RootElement[2].GetString());
+        Assert.AreEqual("J. R. R. Tolkien", doc.RootElement[3].GetString());
     }
 
-    [Fact]
-    [Trait("category", "sourcegen")]
+    [TestMethod]
+    [TestCategory("sourcegen")]
     public void CheapBooks_ReturnsBooksUnderTen()
     {
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(BookStoreJson));
@@ -65,17 +58,17 @@ public class SourceGeneratorTests
         JsonElement result = CheapBooks.Query(data, workspace);
 
         string resultJson = result.GetRawText();
-        this.output.WriteLine($"Result: {resultJson}");
+        Console.WriteLine($"Result: {resultJson}");
 
         using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(resultJson);
-        Assert.Equal(System.Text.Json.JsonValueKind.Array, doc.RootElement.ValueKind);
-        Assert.Equal(2, doc.RootElement.GetArrayLength());
-        Assert.Equal("Sayings of the Century", doc.RootElement[0].GetString());
-        Assert.Equal("Moby Dick", doc.RootElement[1].GetString());
+        Assert.AreEqual(System.Text.Json.JsonValueKind.Array, doc.RootElement.ValueKind);
+        Assert.AreEqual(2, doc.RootElement.GetArrayLength());
+        Assert.AreEqual("Sayings of the Century", doc.RootElement[0].GetString());
+        Assert.AreEqual("Moby Dick", doc.RootElement[1].GetString());
     }
 
-    [Fact]
-    [Trait("category", "sourcegen")]
+    [TestMethod]
+    [TestCategory("sourcegen")]
     public void AllPrices_ReturnsAllPricesViaRecursiveDescent()
     {
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(BookStoreJson));
@@ -84,12 +77,12 @@ public class SourceGeneratorTests
         JsonElement result = AllPrices.Query(data, workspace);
 
         string resultJson = result.GetRawText();
-        this.output.WriteLine($"Result: {resultJson}");
+        Console.WriteLine($"Result: {resultJson}");
 
         using System.Text.Json.JsonDocument doc = System.Text.Json.JsonDocument.Parse(resultJson);
-        Assert.Equal(System.Text.Json.JsonValueKind.Array, doc.RootElement.ValueKind);
+        Assert.AreEqual(System.Text.Json.JsonValueKind.Array, doc.RootElement.ValueKind);
 
         // Should find 5 prices: 4 books + 1 bicycle
-        Assert.Equal(5, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(5, doc.RootElement.GetArrayLength());
     }
 }

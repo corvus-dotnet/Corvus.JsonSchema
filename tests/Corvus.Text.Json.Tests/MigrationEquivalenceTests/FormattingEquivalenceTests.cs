@@ -4,7 +4,7 @@
 namespace Corvus.Text.Json.Tests.MigrationEquivalenceTests;
 
 using System.Globalization;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using V5 = MigrationModels.V5;
 
@@ -12,11 +12,12 @@ using V5 = MigrationModels.V5;
 /// Verifies that V5 generated types support IFormattable, ISpanFormattable, and IUtf8SpanFormattable.
 /// V4 types do not implement these interfaces, so these tests demonstrate V5-only capabilities.
 /// </summary>
+[TestClass]
 public class FormattingEquivalenceTests
 {
     private const string PersonJson = """{"name":"Jo","age":30,"email":"jo@example.com","isActive":true,"dateOfBirth":"1990-01-15"}""";
 
-    [Fact]
+    [TestMethod]
     public void V5_IFormattable_DateProperty_ShortDate()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -24,10 +25,10 @@ public class FormattingEquivalenceTests
 
         // IFormattable: format "d" produces short date
         string result = v5.DateOfBirth.ToString("d", CultureInfo.InvariantCulture);
-        Assert.Equal("01/15/1990", result);
+        Assert.AreEqual("01/15/1990", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_IFormattable_DateProperty_IsoFormat()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -35,10 +36,10 @@ public class FormattingEquivalenceTests
 
         // IFormattable: format "o" produces ISO 8601
         string result = v5.DateOfBirth.ToString("o", null);
-        Assert.Equal("1990-01-15", result);
+        Assert.AreEqual("1990-01-15", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_IFormattable_DateProperty_NullFormat_ReturnsCanonical()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -46,10 +47,10 @@ public class FormattingEquivalenceTests
 
         // Null format returns the canonical JSON value
         string result = v5.DateOfBirth.ToString(null, null);
-        Assert.Equal("1990-01-15", result);
+        Assert.AreEqual("1990-01-15", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_IFormattable_NumberProperty_GroupedFormat()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -57,10 +58,10 @@ public class FormattingEquivalenceTests
 
         // IFormattable: "N0" produces number with group separators
         string result = v5.Age.ToString("N0", CultureInfo.InvariantCulture);
-        Assert.Equal("30", result);
+        Assert.AreEqual("30", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_IFormattable_NumberProperty_LargeValue()
     {
         string json = """{"name":"Jo","age":123456,"email":"jo@example.com"}""";
@@ -68,10 +69,10 @@ public class FormattingEquivalenceTests
         V5.MigrationPerson v5 = parsedV5.RootElement;
 
         string result = v5.Age.ToString("N0", CultureInfo.InvariantCulture);
-        Assert.Equal("123,456", result);
+        Assert.AreEqual("123,456", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_IFormattable_StringProperty_NullFormat_ReturnsValue()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -79,11 +80,11 @@ public class FormattingEquivalenceTests
 
         // String properties: null format returns the string value
         string result = v5.Name.ToString(null, null);
-        Assert.Equal("Jo", result);
+        Assert.AreEqual("Jo", result);
     }
 
 #if NET
-    [Fact]
+    [TestMethod]
     public void V5_ISpanFormattable_NumberProperty()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -92,11 +93,11 @@ public class FormattingEquivalenceTests
         // ISpanFormattable: TryFormat to Span<char>
         Span<char> buffer = stackalloc char[64];
         bool success = v5.Age.TryFormat(buffer, out int charsWritten, "N0", CultureInfo.InvariantCulture);
-        Assert.True(success);
-        Assert.Equal("30", buffer[..charsWritten].ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual("30", buffer[..charsWritten].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_ISpanFormattable_DateProperty()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -105,11 +106,11 @@ public class FormattingEquivalenceTests
         // ISpanFormattable: TryFormat to Span<char> for a date
         Span<char> buffer = stackalloc char[64];
         bool success = v5.DateOfBirth.TryFormat(buffer, out int charsWritten, "d", CultureInfo.InvariantCulture);
-        Assert.True(success);
-        Assert.Equal("01/15/1990", buffer[..charsWritten].ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual("01/15/1990", buffer[..charsWritten].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_IUtf8SpanFormattable_NumberProperty()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -118,11 +119,11 @@ public class FormattingEquivalenceTests
         // IUtf8SpanFormattable: TryFormat to Span<byte> (UTF-8)
         Span<byte> buffer = stackalloc byte[64];
         bool success = v5.Age.TryFormat(buffer, out int bytesWritten, "N0", CultureInfo.InvariantCulture);
-        Assert.True(success);
-        Assert.Equal("30"u8, buffer[..bytesWritten]);
+        Assert.IsTrue(success);
+        Assert.IsTrue("30"u8.SequenceEqual(buffer[..bytesWritten]));
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_IUtf8SpanFormattable_DateProperty()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -131,11 +132,11 @@ public class FormattingEquivalenceTests
         // IUtf8SpanFormattable: TryFormat to Span<byte> (UTF-8) for a date
         Span<byte> buffer = stackalloc byte[64];
         bool success = v5.DateOfBirth.TryFormat(buffer, out int bytesWritten, "o", CultureInfo.InvariantCulture);
-        Assert.True(success);
-        Assert.Equal("1990-01-15"u8, buffer[..bytesWritten]);
+        Assert.IsTrue(success);
+        Assert.IsTrue("1990-01-15"u8.SequenceEqual(buffer[..bytesWritten]));
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_ISpanFormattable_StringProperty()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -144,11 +145,11 @@ public class FormattingEquivalenceTests
         // ISpanFormattable: TryFormat to Span<char> for a string property
         Span<char> buffer = stackalloc char[64];
         bool success = v5.Name.TryFormat(buffer, out int charsWritten, default, null);
-        Assert.True(success);
-        Assert.Equal("Jo", buffer[..charsWritten].ToString());
+        Assert.IsTrue(success);
+        Assert.AreEqual("Jo", buffer[..charsWritten].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_IUtf8SpanFormattable_StringProperty()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -157,11 +158,11 @@ public class FormattingEquivalenceTests
         // IUtf8SpanFormattable: TryFormat to Span<byte> for a string property
         Span<byte> buffer = stackalloc byte[64];
         bool success = v5.Name.TryFormat(buffer, out int bytesWritten, default, null);
-        Assert.True(success);
-        Assert.Equal("Jo"u8, buffer[..bytesWritten]);
+        Assert.IsTrue(success);
+        Assert.IsTrue("Jo"u8.SequenceEqual(buffer[..bytesWritten]));
     }
 
-    [Fact]
+    [TestMethod]
     public void V5_IFormattable_ConsistentWithTryFormat()
     {
         using var parsedV5 = ParsedJsonDocument<V5.MigrationPerson>.Parse(PersonJson);
@@ -172,9 +173,9 @@ public class FormattingEquivalenceTests
 
         Span<char> buffer = stackalloc char[64];
         bool success = v5.Age.TryFormat(buffer, out int charsWritten, "N0", CultureInfo.InvariantCulture);
-        Assert.True(success);
+        Assert.IsTrue(success);
 
-        Assert.Equal(fromToString, buffer[..charsWritten].ToString());
+        Assert.AreEqual(fromToString, buffer[..charsWritten].ToString());
     }
 #endif
 }

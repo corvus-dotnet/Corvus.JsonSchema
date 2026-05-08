@@ -1,7 +1,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -9,7 +9,8 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage batch 10: Numeric.Core.cs — TryParseNumber error paths,
 /// CompareNormalizedJsonNumbers, and GetDigitAtPosition/GetDecimalLength.
 /// </summary>
-public static class CoverageBatch10Tests
+[TestClass]
+public class CoverageBatch10Tests
 {
     #region TryParseNumber — error paths (lines 54-55, 96-101, 112-117, 138-143, 167-172, 187-192)
 
@@ -17,11 +18,11 @@ public static class CoverageBatch10Tests
     /// ParseNumber wraps TryParseNumber and throws on failure.
     /// Target: lines 54-55.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void ParseNumber_EmptySpan_Throws()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void ParseNumber_EmptySpan_Throws()
     {
-        Assert.Throws<FormatException>(() =>
+        Assert.ThrowsExactly<FormatException>(() =>
         {
             JsonElementHelpers.ParseNumber(
                 ReadOnlySpan<byte>.Empty,
@@ -36,9 +37,9 @@ public static class CoverageBatch10Tests
     /// TryParseNumber with empty span returns false.
     /// Target: lines 96-101.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void TryParseNumber_EmptySpan_ReturnsFalse()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void TryParseNumber_EmptySpan_ReturnsFalse()
     {
         bool result = JsonElementHelpers.TryParseNumber(
             ReadOnlySpan<byte>.Empty,
@@ -47,16 +48,16 @@ public static class CoverageBatch10Tests
             out ReadOnlySpan<byte> fractional,
             out int exponent);
 
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     /// <summary>
     /// TryParseNumber with non-digit, non-minus first char returns false.
     /// Target: lines 112-117.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void TryParseNumber_NonDigitFirstChar_ReturnsFalse()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void TryParseNumber_NonDigitFirstChar_ReturnsFalse()
     {
         bool result = JsonElementHelpers.TryParseNumber(
             "abc"u8,
@@ -65,16 +66,16 @@ public static class CoverageBatch10Tests
             out _,
             out _);
 
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     /// <summary>
     /// TryParseNumber with trailing dot (no fractional digits) returns false.
     /// Target: lines 138-143.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void TryParseNumber_TrailingDot_ReturnsFalse()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void TryParseNumber_TrailingDot_ReturnsFalse()
     {
         bool result = JsonElementHelpers.TryParseNumber(
             "1."u8,
@@ -83,7 +84,7 @@ public static class CoverageBatch10Tests
             out _,
             out _);
 
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     /// <summary>
@@ -91,9 +92,9 @@ public static class CoverageBatch10Tests
     /// This exercises the frac = span.Slice(0, i) path at line 154.
     /// Target: line 154-155.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void TryParseNumber_FractionalWithExponent_Parses()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void TryParseNumber_FractionalWithExponent_Parses()
     {
         bool result = JsonElementHelpers.TryParseNumber(
             "1.5e2"u8,
@@ -102,21 +103,21 @@ public static class CoverageBatch10Tests
             out ReadOnlySpan<byte> fractional,
             out int exponent);
 
-        Assert.True(result);
-        Assert.False(isNegative);
+        Assert.IsTrue(result);
+        Assert.IsFalse(isNegative);
 
         // Normal form: 1.5e2 = 15 * 10^1
         // integral="1", frac="5" -> significand = "15", exp = 2 - 1(frac.len) = 1
-        Assert.Equal(1, exponent);
+        Assert.AreEqual(1, exponent);
     }
 
     /// <summary>
     /// TryParseNumber with invalid exponent part returns false.
     /// Target: lines 167-172.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void TryParseNumber_InvalidExponent_ReturnsFalse()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void TryParseNumber_InvalidExponent_ReturnsFalse()
     {
         bool result = JsonElementHelpers.TryParseNumber(
             "1eXYZ"u8,
@@ -125,16 +126,16 @@ public static class CoverageBatch10Tests
             out _,
             out _);
 
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     /// <summary>
     /// TryParseNumber with leading zeros in integral part (e.g. "01") returns false.
     /// Target: lines 187-192.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void TryParseNumber_LeadingZeros_ReturnsFalse()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void TryParseNumber_LeadingZeros_ReturnsFalse()
     {
         bool result = JsonElementHelpers.TryParseNumber(
             "01"u8,
@@ -143,7 +144,7 @@ public static class CoverageBatch10Tests
             out _,
             out _);
 
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     #endregion
@@ -154,9 +155,9 @@ public static class CoverageBatch10Tests
     /// Different signs: left negative, right positive → -1.
     /// Target: lines 302-303.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void CompareNormalized_DifferentSigns_NegativeVsPositive()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void CompareNormalized_DifferentSigns_NegativeVsPositive()
     {
         int result = JsonElementHelpers.CompareNormalizedJsonNumbers(
             leftIsNegative: true,
@@ -168,16 +169,16 @@ public static class CoverageBatch10Tests
             rightFractional: default,
             rightExponent: 0);
 
-        Assert.Equal(-1, result);
+        Assert.AreEqual(-1, result);
     }
 
     /// <summary>
     /// Different signs: left positive, right negative → 1.
     /// Target: lines 302-303.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void CompareNormalized_DifferentSigns_PositiveVsNegative()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void CompareNormalized_DifferentSigns_PositiveVsNegative()
     {
         int result = JsonElementHelpers.CompareNormalizedJsonNumbers(
             leftIsNegative: false,
@@ -189,16 +190,16 @@ public static class CoverageBatch10Tests
             rightFractional: default,
             rightExponent: 0);
 
-        Assert.Equal(1, result);
+        Assert.AreEqual(1, result);
     }
 
     /// <summary>
     /// Equal numbers → 0.
     /// Target: line 347.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void CompareNormalized_EqualNumbers_ReturnsZero()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void CompareNormalized_EqualNumbers_ReturnsZero()
     {
         int result = JsonElementHelpers.CompareNormalizedJsonNumbers(
             leftIsNegative: false,
@@ -210,7 +211,7 @@ public static class CoverageBatch10Tests
             rightFractional: default,
             rightExponent: 0);
 
-        Assert.Equal(0, result);
+        Assert.AreEqual(0, result);
     }
 
     /// <summary>
@@ -218,9 +219,9 @@ public static class CoverageBatch10Tests
     /// exercising the digit-by-digit comparison into the fractional part.
     /// Target: lines 362, 364-365 (GetDigitAtPosition fractional branch).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void CompareNormalized_DifferentDigits_InFractionalPart()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void CompareNormalized_DifferentDigits_InFractionalPart()
     {
         // Left = 1.23 normalized: integral="1", frac="23", exp=-2
         // Right = 1.24 normalized: integral="1", frac="24", exp=-2
@@ -235,7 +236,7 @@ public static class CoverageBatch10Tests
             rightFractional: "24"u8,
             rightExponent: -2);
 
-        Assert.Equal(-1, result);
+        Assert.AreEqual(-1, result);
     }
 
     /// <summary>
@@ -243,9 +244,9 @@ public static class CoverageBatch10Tests
     /// GetDigitAtPosition path that returns '0' for out-of-range fractional indices.
     /// Target: lines 364-365 (fractionalIndex >= fractional.Length → '0').
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void CompareNormalized_UnequalFractionalLengths()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void CompareNormalized_UnequalFractionalLengths()
     {
         // Left = integral="1", frac="2", exp=-1  → 1.2
         // Right = integral="1", frac="20", exp=-2 → 1.20 (same value)
@@ -260,7 +261,7 @@ public static class CoverageBatch10Tests
             rightFractional: "20"u8,
             rightExponent: -2);
 
-        Assert.Equal(0, result);
+        Assert.AreEqual(0, result);
     }
 
     #endregion
@@ -273,9 +274,9 @@ public static class CoverageBatch10Tests
     /// Target: lines 374-377 (called via lines 312-313).
     /// This also hits the effectiveLength inequality at lines 315-317.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void CompareNormalized_DifferentEffectiveLengths()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void CompareNormalized_DifferentEffectiveLengths()
     {
         // Left = "1" with exp=2 → 100 (effectiveLength = 1+2 = 3)
         // Right = "1" with exp=0 → 1 (effectiveLength = 1+0 = 1)
@@ -289,16 +290,16 @@ public static class CoverageBatch10Tests
             rightFractional: default,
             rightExponent: 0);
 
-        Assert.Equal(1, result);
+        Assert.AreEqual(1, result);
     }
 
     /// <summary>
     /// Both negative, left has larger magnitude → left is more negative → returns -1.
     /// This exercises the signMultiplier=-1 path at line 306.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void CompareNormalized_BothNegative_DifferentMagnitude()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void CompareNormalized_BothNegative_DifferentMagnitude()
     {
         // Left = -100 (integral="1", exp=2), Right = -1 (integral="1", exp=0)
         // Both negative. Left has larger magnitude → left is "less than" right.
@@ -313,7 +314,7 @@ public static class CoverageBatch10Tests
             rightExponent: 0);
 
         // signMultiplier=-1 flips the comparison: 3 > 1 → 1 * -1 = -1
-        Assert.Equal(-1, result);
+        Assert.AreEqual(-1, result);
     }
 
     #endregion
@@ -324,9 +325,9 @@ public static class CoverageBatch10Tests
     /// TryFormatHexadecimal calls GetDecimalLength for non-negative integers.
     /// Target: lines 374-377.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void TryFormatHexadecimal_PositiveInteger_CallsGetDecimalLength()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void TryFormatHexadecimal_PositiveInteger_CallsGetDecimalLength()
     {
         Span<char> destination = stackalloc char[32];
 
@@ -341,8 +342,8 @@ public static class CoverageBatch10Tests
             precision: 0,
             lowercase: true);
 
-        Assert.True(result);
-        Assert.Equal("ff", destination.Slice(0, charsWritten).ToString());
+        Assert.IsTrue(result);
+        Assert.AreEqual("ff", destination.Slice(0, charsWritten).ToString());
     }
 
     #endregion

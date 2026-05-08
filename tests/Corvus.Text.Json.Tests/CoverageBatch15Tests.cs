@@ -2,7 +2,7 @@
 
 using System;
 using System.Buffers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -10,7 +10,8 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage batch 15: JsonWorkspace edge cases, Utf8JsonWriter Grow paths
 /// for Guid, Decimal, DateTime, DateTimeOffset, and Bytes value types.
 /// </summary>
-public static class CoverageBatch15Tests
+[TestClass]
+public class CoverageBatch15Tests
 {
     #region JsonWorkspace.GetDocument out-of-range (lines 236-237)
 
@@ -18,24 +19,24 @@ public static class CoverageBatch15Tests
     /// GetDocument with negative index throws ArgumentOutOfRangeException.
     /// Target: JsonWorkspace.cs lines 236-237.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonWorkspace_GetDocument_NegativeIndex_Throws()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonWorkspace_GetDocument_NegativeIndex_Throws()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        Assert.Throws<ArgumentOutOfRangeException>(() => workspace.GetDocument(-1));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => workspace.GetDocument(-1));
     }
 
     /// <summary>
     /// GetDocument with index beyond length throws ArgumentOutOfRangeException.
     /// Target: JsonWorkspace.cs lines 236-237.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonWorkspace_GetDocument_BeyondLength_Throws()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonWorkspace_GetDocument_BeyondLength_Throws()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        Assert.Throws<ArgumentOutOfRangeException>(() => workspace.GetDocument(0));
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => workspace.GetDocument(0));
     }
 
     #endregion
@@ -46,9 +47,9 @@ public static class CoverageBatch15Tests
     /// Reset with a larger capacity than current array triggers the resize path.
     /// Target: JsonWorkspace.cs lines 323-326.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonWorkspace_Reset_LargerCapacity_Resizes()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonWorkspace_Reset_LargerCapacity_Resizes()
     {
         // Create workspace, add a document, then reset with larger capacity
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -61,7 +62,7 @@ public static class CoverageBatch15Tests
         // Verify workspace is usable after reset
         using var doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"y":2}"""u8.ToArray());
         using var builder2 = doc2.RootElement.CreateBuilder(workspace);
-        Assert.Equal(JsonValueKind.Object, builder2.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, builder2.RootElement.ValueKind);
     }
 
     #endregion
@@ -72,9 +73,9 @@ public static class CoverageBatch15Tests
     /// Reset with same capacity when _length > 0 clears existing documents.
     /// Target: JsonWorkspace.cs lines 330-332.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void JsonWorkspace_Reset_SameCapacity_ClearsDocuments()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void JsonWorkspace_Reset_SameCapacity_ClearsDocuments()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         using var doc1 = ParsedJsonDocument<JsonElement>.Parse("""{"x":1}"""u8.ToArray());
@@ -86,7 +87,7 @@ public static class CoverageBatch15Tests
         // Verify workspace is usable after reset
         using var doc2 = ParsedJsonDocument<JsonElement>.Parse("""{"y":2}"""u8.ToArray());
         using var builder2 = doc2.RootElement.CreateBuilder(workspace);
-        Assert.Equal(JsonValueKind.Object, builder2.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, builder2.RootElement.ValueKind);
     }
 
     #endregion
@@ -97,9 +98,9 @@ public static class CoverageBatch15Tests
     /// Writing many Guid values triggers the buffer grow path in minimized mode.
     /// Target: Utf8JsonWriter.WriteValues.Guid.cs lines 93-95.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteGuidValue_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteGuidValue_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -130,9 +131,9 @@ public static class CoverageBatch15Tests
     /// Writing many decimal values triggers the buffer grow path in minimized mode.
     /// Target: Utf8JsonWriter.WriteValues.Decimal.cs lines 88-90.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDecimalValue_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDecimalValue_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -161,9 +162,9 @@ public static class CoverageBatch15Tests
     /// Writing many DateTime values triggers the buffer grow path in minimized mode.
     /// Target: Utf8JsonWriter.WriteValues.DateTime.cs lines 98-100.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimeValue_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimeValue_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -193,9 +194,9 @@ public static class CoverageBatch15Tests
     /// Writing many DateTimeOffset values triggers the buffer grow path in minimized mode.
     /// Target: Utf8JsonWriter.WriteValues.DateTimeOffset.cs lines 98-100.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimeOffsetValue_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimeOffsetValue_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -223,9 +224,9 @@ public static class CoverageBatch15Tests
     /// Writing two Base64 values in a minimized array triggers the list separator path.
     /// Target: Utf8JsonWriter.WriteValues.Bytes.cs lines 135-136 (list separator in minimized).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteBase64_ListSeparator()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteBase64_ListSeparator()
     {
         var bufferWriter = new ArrayBufferWriter<byte>();
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -237,7 +238,7 @@ public static class CoverageBatch15Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Equal("""["AQID","BAUG"]""", result);
+        Assert.AreEqual("""["AQID","BAUG"]""", result);
     }
 
     #endregion

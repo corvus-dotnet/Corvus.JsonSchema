@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.RegexOptimization;
 
@@ -14,8 +14,9 @@ namespace Corvus.Text.Json.Tests.RegexOptimization;
 /// Tests for non-empty regex pattern optimization with the <c>pattern</c> keyword.
 /// The pattern <c>.+</c> matches any non-empty string.
 /// </summary>
-[Trait("Optimization", "RegexNonEmpty")]
-public class NonEmptyPatternKeyword : IClassFixture<NonEmptyPatternKeyword.Fixture>
+[TestCategory("RegexNonEmpty")]
+[TestClass]
+public class NonEmptyPatternKeyword
 {
     private const string Schema = """
         {
@@ -25,45 +26,51 @@ public class NonEmptyPatternKeyword : IClassFixture<NonEmptyPatternKeyword.Fixtu
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public NonEmptyPatternKeyword(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"hello\"")]
-    [InlineData("\"x\"")]
-    [InlineData("\"a very long string with many characters\"")]
-    [InlineData("\"unicode: \\u00e9\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"hello\"")]
+    [DataRow("\"x\"")]
+    [DataRow("\"a very long string with many characters\"")]
+    [DataRow("\"unicode: \\u00e9\"")]
     public void NonEmptyStringIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyStringIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("\"\"");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("\"\"");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("42")]
-    [InlineData("null")]
+    [TestMethod]
+    [DataRow("42")]
+    [DataRow("null")]
     public void NonStringValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -85,8 +92,9 @@ public class NonEmptyPatternKeyword : IClassFixture<NonEmptyPatternKeyword.Fixtu
 /// <summary>
 /// Tests for non-empty regex optimization with anchored <c>^.+$</c> variant.
 /// </summary>
-[Trait("Optimization", "RegexNonEmpty")]
-public class NonEmptyPatternKeywordAnchored : IClassFixture<NonEmptyPatternKeywordAnchored.Fixture>
+[TestCategory("RegexNonEmpty")]
+[TestClass]
+public class NonEmptyPatternKeywordAnchored
 {
     private const string Schema = """
         {
@@ -96,34 +104,40 @@ public class NonEmptyPatternKeywordAnchored : IClassFixture<NonEmptyPatternKeywo
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public NonEmptyPatternKeywordAnchored(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"hello\"")]
-    [InlineData("\"x\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"hello\"")]
+    [DataRow("\"x\"")]
     public void NonEmptyStringIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyStringIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("\"\"");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("\"\"");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -146,8 +160,9 @@ public class NonEmptyPatternKeywordAnchored : IClassFixture<NonEmptyPatternKeywo
 /// Tests for non-empty regex optimization with the <c>patternProperties</c> keyword.
 /// A <c>.+</c> pattern property should match all non-empty property names.
 /// </summary>
-[Trait("Optimization", "RegexNonEmpty")]
-public class NonEmptyPatternProperties : IClassFixture<NonEmptyPatternProperties.Fixture>
+[TestCategory("RegexNonEmpty")]
+[TestClass]
+public class NonEmptyPatternProperties
 {
     private const string Schema = """
         {
@@ -160,37 +175,43 @@ public class NonEmptyPatternProperties : IClassFixture<NonEmptyPatternProperties
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public NonEmptyPatternProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"foo": 1}""")]
-    [InlineData("""{"a": 1, "b": 2}""")]
-    [InlineData("""{}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"foo": 1}""")]
+    [DataRow("""{"a": 1, "b": 2}""")]
+    [DataRow("""{}""")]
     public void ObjectWithAllNumberValuesIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"foo": "bar"}""")]
-    [InlineData("""{"a": 1, "b": "not a number"}""")]
+    [TestMethod]
+    [DataRow("""{"foo": "bar"}""")]
+    [DataRow("""{"a": 1, "b": "not a number"}""")]
     public void ObjectWithNonNumberValuesIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

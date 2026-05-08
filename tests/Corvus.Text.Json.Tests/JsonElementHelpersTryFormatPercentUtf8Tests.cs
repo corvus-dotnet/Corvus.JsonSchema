@@ -1,17 +1,18 @@
 using System.Globalization;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
+[TestClass]
 public class JsonElementHelpersTryFormatPercentUtf8Tests
 {
-    [Theory]
-    [InlineData("0.5", "50.00 %")]
-    [InlineData("0.25", "25.00 %")]
-    [InlineData("1", "100.00 %")]
-    [InlineData("1.5", "150.00 %")]
-    [InlineData("0.12345", "12.35 %")]
+    [TestMethod]
+    [DataRow("0.5", "50.00 %")]
+    [DataRow("0.25", "25.00 %")]
+    [DataRow("1", "100.00 %")]
+    [DataRow("1.5", "150.00 %")]
+    [DataRow("0.12345", "12.35 %")]
     public void TryFormatPercent_BasicValues_MultipliesBy100(string jsonNumber, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -35,17 +36,17 @@ public class JsonElementHelpersTryFormatPercentUtf8Tests
             -1, // Use default precision
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("0.12345", 0, "12 %")]
-    [InlineData("0.12345", 1, "12.3 %")]
-    [InlineData("0.12345", 2, "12.35 %")]
-    [InlineData("0.12345", 3, "12.345 %")]
-    [InlineData("0.12345", 4, "12.3450 %")]
+    [TestMethod]
+    [DataRow("0.12345", 0, "12 %")]
+    [DataRow("0.12345", 1, "12.3 %")]
+    [DataRow("0.12345", 2, "12.35 %")]
+    [DataRow("0.12345", 3, "12.345 %")]
+    [DataRow("0.12345", 4, "12.3450 %")]
     public void TryFormatPercent_WithPrecision_FormatsToSpecifiedDecimalPlaces(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -69,15 +70,15 @@ public class JsonElementHelpersTryFormatPercentUtf8Tests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("-0.5", "-50.00 %")]
-    [InlineData("-0.25", "-25.00 %")]
-    [InlineData("-1.5", "-150.00 %")]
+    [TestMethod]
+    [DataRow("-0.5", "-50.00 %")]
+    [DataRow("-0.25", "-25.00 %")]
+    [DataRow("-1.5", "-150.00 %")]
     public void TryFormatPercent_WithNegativeNumbers_IncludesNegativeSign(string jsonNumber, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -101,12 +102,12 @@ public class JsonElementHelpersTryFormatPercentUtf8Tests
             -1,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatPercent_WithGrouping_InsertsGroupSeparators()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("12.345");
@@ -137,12 +138,12 @@ public class JsonElementHelpersTryFormatPercentUtf8Tests
             -1,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("1,234.50 %", result);
+        Assert.AreEqual("1,234.50 %", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatPercent_UsesCustomPercentSymbol()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
@@ -172,16 +173,16 @@ public class JsonElementHelpersTryFormatPercentUtf8Tests
             -1,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal("50.00pct", result);
+        Assert.AreEqual("50.00pct", result);
     }
 
-    [Theory]
-    [InlineData(0, "50.00 %")]  // n %
-    [InlineData(1, "50.00%")]   // n%
-    [InlineData(2, "%50.00")]   // %n
-    [InlineData(3, "% 50.00")]  // % n
+    [TestMethod]
+    [DataRow(0, "50.00 %")]  // n %
+    [DataRow(1, "50.00%")]   // n%
+    [DataRow(2, "%50.00")]   // %n
+    [DataRow(3, "% 50.00")]  // % n
     public void TryFormatPercent_RespectsPositivePattern(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
@@ -210,24 +211,24 @@ public class JsonElementHelpersTryFormatPercentUtf8Tests
             -1,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData(0, "-50.00 %")]   // -n %
-    [InlineData(1, "-50.00%")]    // -n%
-    [InlineData(2, "-%50.00")]    // -%n
-    [InlineData(3, "%-50.00")]    // %-n
-    [InlineData(4, "%50.00-")]    // %n-
-    [InlineData(5, "50.00-%")]    // n-%
-    [InlineData(6, "50.00%-")]    // n%-
-    [InlineData(7, "-% 50.00")]   // -% n
-    [InlineData(8, "50.00 %-")]   // n %-
-    [InlineData(9, "% 50.00-")]   // % n-
-    [InlineData(10, "% -50.00")]  // % -n
-    [InlineData(11, "50.00- %")]  // n- %
+    [TestMethod]
+    [DataRow(0, "-50.00 %")]   // -n %
+    [DataRow(1, "-50.00%")]    // -n%
+    [DataRow(2, "-%50.00")]    // -%n
+    [DataRow(3, "%-50.00")]    // %-n
+    [DataRow(4, "%50.00-")]    // %n-
+    [DataRow(5, "50.00-%")]    // n-%
+    [DataRow(6, "50.00%-")]    // n%-
+    [DataRow(7, "-% 50.00")]   // -% n
+    [DataRow(8, "50.00 %-")]   // n %-
+    [DataRow(9, "% 50.00-")]   // % n-
+    [DataRow(10, "% -50.00")]  // % -n
+    [DataRow(11, "50.00- %")]  // n- %
     public void TryFormatPercent_RespectsNegativePattern(int pattern, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -256,12 +257,12 @@ public class JsonElementHelpersTryFormatPercentUtf8Tests
             -1,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatPercent_ReturnsFalseWhenBufferTooSmall()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
@@ -285,14 +286,14 @@ public class JsonElementHelpersTryFormatPercentUtf8Tests
             -1,
             formatInfo);
 
-        Assert.False(success);
-        Assert.Equal(0, bytesWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, bytesWritten);
     }
 
-    [Theory]
-    [InlineData("0.12995", 2, "13.00 %")]  // Rounds up
-    [InlineData("0.12994", 2, "12.99 %")]  // Rounds down
-    [InlineData("0.99995", 2, "100.00 %")] // Rounds to 100
+    [TestMethod]
+    [DataRow("0.12995", 2, "13.00 %")]  // Rounds up
+    [DataRow("0.12994", 2, "12.99 %")]  // Rounds down
+    [DataRow("0.99995", 2, "100.00 %")] // Rounds to 100
     public void TryFormatPercent_RoundsCorrectly(string jsonNumber, int precision, string expected)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes(jsonNumber);
@@ -316,8 +317,8 @@ public class JsonElementHelpersTryFormatPercentUtf8Tests
             precision,
             formatInfo);
 
-        Assert.True(success);
+        Assert.IsTrue(success);
         string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 }

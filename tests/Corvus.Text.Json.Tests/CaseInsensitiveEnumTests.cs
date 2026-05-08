@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.CaseInsensitiveEnumValidation;
 
@@ -14,59 +14,66 @@ namespace Corvus.Text.Json.Tests.CaseInsensitiveEnumValidation;
 /// Tests that enum schemas with values that differ only by casing (e.g. "Microsoft" and "microsoft")
 /// generate valid code with deduplicated EnumValues member names.
 /// </summary>
-[Trait("category", "CodeGen")]
-public class CaseInsensitiveEnumValues : IClassFixture<CaseInsensitiveEnumValues.Fixture>
+[TestCategory("CodeGen")]
+[TestClass]
+public class CaseInsensitiveEnumValues
 {
-    private readonly Fixture fixture;
-
-    public CaseInsensitiveEnumValues(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"Chromium\"")]
-    [InlineData("\"Google\"")]
-    [InlineData("\"Microsoft\"")]
-    [InlineData("\"chromium\"")]
-    [InlineData("\"google\"")]
-    [InlineData("\"microsoft\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"Chromium\"")]
+    [DataRow("\"Google\"")]
+    [DataRow("\"Microsoft\"")]
+    [DataRow("\"chromium\"")]
+    [DataRow("\"google\"")]
+    [DataRow("\"microsoft\"")]
     public void ValidEnumValueIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"CHROMIUM\"")]
-    [InlineData("\"GOOGLE\"")]
-    [InlineData("\"MICROSOFT\"")]
-    [InlineData("\"Chrome\"")]
-    [InlineData("\"unknown\"")]
-    [InlineData("\"\"")]
+    [TestMethod]
+    [DataRow("\"CHROMIUM\"")]
+    [DataRow("\"GOOGLE\"")]
+    [DataRow("\"MICROSOFT\"")]
+    [DataRow("\"Chrome\"")]
+    [DataRow("\"unknown\"")]
+    [DataRow("\"\"")]
     public void InvalidStringValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("42")]
-    [InlineData("true")]
-    [InlineData("null")]
-    [InlineData("[]")]
-    [InlineData("{}")]
+    [TestMethod]
+    [DataRow("42")]
+    [DataRow("true")]
+    [DataRow("null")]
+    [DataRow("[]")]
+    [DataRow("{}")]
     public void NonStringValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

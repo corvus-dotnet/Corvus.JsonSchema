@@ -2,7 +2,7 @@
 
 using System;
 using System.Buffers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -10,7 +10,8 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage batch 17: Utf8JsonWriter WriteProperties byte-overload Grow paths
 /// for Bytes, DateTime, DateTimeOffset, and indented Bytes/Decimal Grow.
 /// </summary>
-public static class CoverageBatch17Tests
+[TestClass]
+public class CoverageBatch17Tests
 {
     #region WriteProperties.Bytes byte overload Grow (lines 360-362)
 
@@ -18,9 +19,9 @@ public static class CoverageBatch17Tests
     /// Writing many pre-encoded property names with base64 values triggers byte overload Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Bytes.cs lines 360-362.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteBase64Property_ByteName_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteBase64Property_ByteName_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -42,7 +43,7 @@ public static class CoverageBatch17Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("b64_prop_0", result);
+        StringAssert.Contains(result, "b64_prop_0");
     }
 
     #endregion
@@ -53,9 +54,9 @@ public static class CoverageBatch17Tests
     /// Writing many pre-encoded property names with DateTime values triggers byte overload Grow.
     /// Target: Utf8JsonWriter.WriteProperties.DateTime.cs lines 359-361.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimeProperty_ByteName_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimeProperty_ByteName_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -77,7 +78,7 @@ public static class CoverageBatch17Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("dt_prop_0", result);
+        StringAssert.Contains(result, "dt_prop_0");
     }
 
     #endregion
@@ -88,9 +89,9 @@ public static class CoverageBatch17Tests
     /// Writing many pre-encoded property names with DateTimeOffset values triggers byte overload Grow.
     /// Target: Utf8JsonWriter.WriteProperties.DateTimeOffset.cs lines 358-360.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimeOffsetProperty_ByteName_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimeOffsetProperty_ByteName_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -112,7 +113,7 @@ public static class CoverageBatch17Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("dto_prop_0", result);
+        StringAssert.Contains(result, "dto_prop_0");
     }
 
     #endregion
@@ -123,9 +124,9 @@ public static class CoverageBatch17Tests
     /// Writing Base64 values in indented mode triggers the indented Grow path.
     /// Target: Utf8JsonWriter.WriteValues.Bytes.cs lines 77-79 (indented Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteBase64Indented_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteBase64Indented_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true, Indented = true });
@@ -148,9 +149,9 @@ public static class CoverageBatch17Tests
     /// Writing Base64 values in minimized mode triggers the minimized Grow path.
     /// Target: Utf8JsonWriter.WriteValues.Bytes.cs lines 127-129 (minimized Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteBase64Minimized_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteBase64Minimized_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -180,9 +181,9 @@ public static class CoverageBatch17Tests
     /// Writing decimal values in indented mode triggers the indented Grow path.
     /// Target: Utf8JsonWriter.WriteValues.Decimal.cs lines 76-78 (indented Grow).
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDecimalIndented_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDecimalIndented_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true, Indented = true });

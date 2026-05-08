@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.AsGenericAnalyzer,
@@ -26,6 +26,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ004: As&lt;T&gt;() migration to T.From(value).
 /// </summary>
+[TestClass]
 public class AsGenericAnalyzerTests
 {
     private const string V4InterfaceStubs = @"
@@ -35,7 +36,7 @@ namespace Corvus.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task AsGenericCall_TriggersCVJ004_AndCodeFixTransformsToFrom()
     {
         var test = new CodeFixTest
@@ -95,7 +96,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RegularGenericMethodCall_NoDiagnostic()
     {
         const string testCode = @"
@@ -119,7 +120,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AsGenericCall_OnNonJsonValueType_NoDiagnostic()
     {
         const string testCode = V4InterfaceStubs + @"

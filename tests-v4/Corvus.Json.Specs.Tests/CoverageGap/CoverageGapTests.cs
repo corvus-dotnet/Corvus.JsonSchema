@@ -7,13 +7,14 @@
 using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.CoverageGap;
 
+[TestClass]
 public class CoverageGapTests
 {
-    [Fact]
+    [TestMethod]
     public void AppendFragment_WhenReferenceHasNoHash_AddsHashAndFragment()
     {
         var baseRef = new JsonReference("http://example.com/path");
@@ -21,10 +22,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.AppendFragment(other);
 
-        Assert.Equal("http://example.com/path#/foo/bar", result.ToString());
+        Assert.AreEqual("http://example.com/path#/foo/bar", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendFragment_WhenReferenceHasHashButNoTrailingSlash_AppendsWithSlash()
     {
         var baseRef = new JsonReference("http://example.com/path#foo");
@@ -32,10 +33,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.AppendFragment(other);
 
-        Assert.Equal("http://example.com/path#foo/bar", result.ToString());
+        Assert.AreEqual("http://example.com/path#foo/bar", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AppendFragment_WhenOtherFragmentIsTooShort_ReturnsSelf()
     {
         var baseRef = new JsonReference("http://example.com/path#foo");
@@ -43,10 +44,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.AppendFragment(other);
 
-        Assert.Equal("http://example.com/path#foo", result.ToString());
+        Assert.AreEqual("http://example.com/path#foo", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_StrictFalse_MatchingSchemes_RemovesScheme()
     {
         var baseRef = new JsonReference("http://example.com/a/b");
@@ -54,10 +55,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(other, strict: false);
 
-        Assert.Equal("http://example.com/c/d", result.ToString());
+        Assert.AreEqual("http://example.com/c/d", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_OtherHasAuthorityButNoScheme()
     {
         var baseRef = new JsonReference("http://example.com/a/b");
@@ -65,10 +66,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(other);
 
-        Assert.Equal("http://other.com/c/d", result.ToString());
+        Assert.AreEqual("http://other.com/c/d", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_OtherHasEmptyPathButHasQuery()
     {
         var baseRef = new JsonReference("http://example.com/a/b?old=1");
@@ -76,13 +77,13 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(other);
 
-        Assert.Equal("http://example.com/a/b?new=2", result.ToString());
+        Assert.AreEqual("http://example.com/a/b?new=2", result.ToString());
     }
 
-    [Theory]
-    [InlineData("http://example.com/a/b/../c", "http://example.com/a/c")]
-    [InlineData("http://example.com/a/./b/c", "http://example.com/a/b/c")]
-    [InlineData("http://example.com/a/b/./c/../d", "http://example.com/a/b/d")]
+    [TestMethod]
+    [DataRow("http://example.com/a/b/../c", "http://example.com/a/c")]
+    [DataRow("http://example.com/a/./b/c", "http://example.com/a/b/c")]
+    [DataRow("http://example.com/a/b/./c/../d", "http://example.com/a/b/d")]
     public void Apply_WithDotSegments_ResolvesCorrectly(string other, string expected)
     {
         var baseRef = new JsonReference("http://example.com/");
@@ -90,15 +91,15 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(otherRef);
 
-        Assert.Equal(expected, result.ToString());
+        Assert.AreEqual(expected, result.ToString());
     }
 
-    [Theory]
-    [InlineData("/a/b/../c", "http://example.com/a/c")]
-    [InlineData("/a/./b/c", "http://example.com/a/b/c")]
-    [InlineData("/a/b/./c/../d", "http://example.com/a/b/d")]
-    [InlineData("/../path", "http://example.com/path")]
-    [InlineData("/./path", "http://example.com/path")]
+    [TestMethod]
+    [DataRow("/a/b/../c", "http://example.com/a/c")]
+    [DataRow("/a/./b/c", "http://example.com/a/b/c")]
+    [DataRow("/a/b/./c/../d", "http://example.com/a/b/d")]
+    [DataRow("/../path", "http://example.com/path")]
+    [DataRow("/./path", "http://example.com/path")]
     public void Apply_RelativePathWithDotSegments_ResolvesCorrectly(string other, string expected)
     {
         var baseRef = new JsonReference("http://example.com/base/file");
@@ -106,10 +107,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(otherRef);
 
-        Assert.Equal(expected, result.ToString());
+        Assert.AreEqual(expected, result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_DotAtEnd_RemovesDot()
     {
         var baseRef = new JsonReference("http://example.com/base/file");
@@ -117,10 +118,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(otherRef);
 
-        Assert.Equal("http://example.com/a/b/", result.ToString());
+        Assert.AreEqual("http://example.com/a/b/", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_DotDotAtEnd_RemovesLastSegment()
     {
         var baseRef = new JsonReference("http://example.com/base/file");
@@ -128,10 +129,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(otherRef);
 
-        Assert.Equal("http://example.com/a/", result.ToString());
+        Assert.AreEqual("http://example.com/a/", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void MakeRelative_NormalRelativePath()
     {
         var baseRef = new JsonReference("http://example.com/a/b/c");
@@ -139,10 +140,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.MakeRelative(targetRef);
 
-        Assert.Equal("../d/e", result.ToString());
+        Assert.AreEqual("../d/e", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void MakeRelative_SamePath_ReturnsDefault()
     {
         var baseRef = new JsonReference("http://example.com/a/b/c");
@@ -150,10 +151,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.MakeRelative(targetRef);
 
-        Assert.Equal(string.Empty, result.ToString());
+        Assert.AreEqual(string.Empty, result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void MakeRelative_PathDiffersByFile_ReturnsDotSlash()
     {
         var baseRef = new JsonReference("http://example.com/a/b/file.json");
@@ -161,28 +162,28 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.MakeRelative(targetRef);
 
-        Assert.Equal("./", result.ToString());
+        Assert.AreEqual("./", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void JsonReferenceBuilder_Port_WhenNoPort_ReturnsEmpty()
     {
         var reference = new JsonReference("http://example.com/path");
         JsonReferenceBuilder builder = reference.AsBuilder();
 
-        Assert.True(builder.Port.IsEmpty);
+        Assert.IsTrue(builder.Port.IsEmpty);
     }
 
-    [Fact]
+    [TestMethod]
     public void JsonReferenceBuilder_Port_WhenHasPort_ReturnsPort()
     {
         var reference = new JsonReference("http://example.com:8080/path");
         JsonReferenceBuilder builder = reference.AsBuilder();
 
-        Assert.Equal("8080", builder.Port.ToString());
+        Assert.AreEqual("8080", builder.Port.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidationContext_PushDocumentArrayIndex_WithStackEnabled()
     {
         Corvus.Json.ValidationContext context = Corvus.Json.ValidationContext.ValidContext
@@ -190,11 +191,11 @@ public class CoverageGapTests
 
         Corvus.Json.ValidationContext result = context.PushDocumentArrayIndex(3);
 
-        Assert.True(result.IsValid);
-        Assert.True(result.IsUsingStack);
+        Assert.IsTrue(result.IsValid);
+        Assert.IsTrue(result.IsUsingStack);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidationContext_PushValidationLocationProperty_WithStackEnabled()
     {
         Corvus.Json.ValidationContext context = Corvus.Json.ValidationContext.ValidContext
@@ -202,11 +203,11 @@ public class CoverageGapTests
 
         Corvus.Json.ValidationContext result = context.PushValidationLocationProperty("myProp");
 
-        Assert.True(result.IsValid);
-        Assert.True(result.IsUsingStack);
+        Assert.IsTrue(result.IsValid);
+        Assert.IsTrue(result.IsUsingStack);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidationContext_PushValidationLocationReducedPathModifier_WithStackEnabled()
     {
         Corvus.Json.ValidationContext context = Corvus.Json.ValidationContext.ValidContext
@@ -215,11 +216,11 @@ public class CoverageGapTests
         Corvus.Json.ValidationContext result = context.PushValidationLocationReducedPathModifier(
             new JsonReference("#/definitions/Foo"));
 
-        Assert.True(result.IsValid);
-        Assert.True(result.IsUsingStack);
+        Assert.IsTrue(result.IsValid);
+        Assert.IsTrue(result.IsUsingStack);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidationContext_ReplaceValidationLocationReducedPathModifier_WithStackEnabled()
     {
         Corvus.Json.ValidationContext context = Corvus.Json.ValidationContext.ValidContext
@@ -229,11 +230,11 @@ public class CoverageGapTests
         Corvus.Json.ValidationContext result = context.ReplaceValidationLocationReducedPathModifier(
             new JsonReference("#/defs/Second"));
 
-        Assert.True(result.IsValid);
-        Assert.True(result.IsUsingStack);
+        Assert.IsTrue(result.IsValid);
+        Assert.IsTrue(result.IsUsingStack);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidationContext_PushValidationLocationReducedPathModifierAndProperty_WithStackEnabled()
     {
         Corvus.Json.ValidationContext context = Corvus.Json.ValidationContext.ValidContext
@@ -243,22 +244,22 @@ public class CoverageGapTests
             new JsonReference("#/properties"),
             "name");
 
-        Assert.True(result.IsValid);
-        Assert.True(result.IsUsingStack);
+        Assert.IsTrue(result.IsValid);
+        Assert.IsTrue(result.IsUsingStack);
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidationContext_PushDocumentArrayIndex_WithoutStackEnabled_ReturnsSelf()
     {
         Corvus.Json.ValidationContext context = Corvus.Json.ValidationContext.ValidContext;
 
         Corvus.Json.ValidationContext result = context.PushDocumentArrayIndex(3);
 
-        Assert.True(result.IsValid);
-        Assert.False(result.IsUsingStack);
+        Assert.IsTrue(result.IsValid);
+        Assert.IsFalse(result.IsUsingStack);
     }
 
-    [Fact]
+    [TestMethod]
     public void TypeDecimal_WithOverflowNumber_ReturnsInvalid_DetailedLevel()
     {
         string json = "79228162514264337593543950336";
@@ -270,10 +271,10 @@ public class CoverageGapTests
             Corvus.Json.ValidationContext.ValidContext.UsingResults(),
             ValidationLevel.Detailed);
 
-        Assert.False(result.IsValid);
+        Assert.IsFalse(result.IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TypeDecimal_WithOverflowNumber_ReturnsInvalid_BasicLevel()
     {
         string json = "79228162514264337593543950336";
@@ -285,10 +286,10 @@ public class CoverageGapTests
             Corvus.Json.ValidationContext.ValidContext.UsingResults(),
             ValidationLevel.Basic);
 
-        Assert.False(result.IsValid);
+        Assert.IsFalse(result.IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TypeDecimal_WithOverflowNumber_ReturnsInvalid_FlagLevel()
     {
         string json = "79228162514264337593543950336";
@@ -300,10 +301,10 @@ public class CoverageGapTests
             Corvus.Json.ValidationContext.ValidContext,
             ValidationLevel.Flag);
 
-        Assert.False(result.IsValid);
+        Assert.IsFalse(result.IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void TypeDecimal_WithValidNumber_ReturnsValid()
     {
         string json = "123.456";
@@ -315,44 +316,44 @@ public class CoverageGapTests
             Corvus.Json.ValidationContext.ValidContext,
             ValidationLevel.Verbose);
 
-        Assert.True(result.IsValid);
+        Assert.IsTrue(result.IsValid);
     }
 
-    [Theory]
-    [InlineData("P1Y2M3D", 1, 2, 3)]
-    [InlineData("P0D", 0, 0, 0)]
-    [InlineData("P1Y", 1, 0, 0)]
-    [InlineData("P6M", 0, 6, 0)]
-    [InlineData("P10D", 0, 0, 10)]
+    [TestMethod]
+    [DataRow("P1Y2M3D", 1, 2, 3)]
+    [DataRow("P0D", 0, 0, 0)]
+    [DataRow("P1Y", 1, 0, 0)]
+    [DataRow("P6M", 0, 6, 0)]
+    [DataRow("P10D", 0, 0, 10)]
     public void Period_Parse_ValidDuration(string input, int years, int months, int days)
     {
         Period result = Period.Parse(input);
 
-        Assert.Equal(years, result.Years);
-        Assert.Equal(months, result.Months);
-        Assert.Equal(days, result.Days);
+        Assert.AreEqual(years, result.Years);
+        Assert.AreEqual(months, result.Months);
+        Assert.AreEqual(days, result.Days);
     }
 
-    [Theory]
-    [InlineData("PT1H2M3S", 1, 2, 3)]
-    [InlineData("PT0S", 0, 0, 0)]
+    [TestMethod]
+    [DataRow("PT1H2M3S", 1, 2, 3)]
+    [DataRow("PT0S", 0, 0, 0)]
     public void Period_Parse_WithTimeComponents(string input, int hours, int minutes, int seconds)
     {
         Period result = Period.Parse(input);
 
-        Assert.Equal(hours, result.Hours);
-        Assert.Equal(minutes, result.Minutes);
-        Assert.Equal(seconds, result.Seconds);
+        Assert.AreEqual(hours, result.Hours);
+        Assert.AreEqual(minutes, result.Minutes);
+        Assert.AreEqual(seconds, result.Seconds);
     }
 
-    [Fact]
+    [TestMethod]
     public void FileSystemDocumentResolver_Dispose_DoesNotThrow()
     {
         var resolver = new FileSystemDocumentResolver();
         resolver.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FileSystemDocumentResolver_Reset_ClearsDocuments()
     {
         var resolver = new FileSystemDocumentResolver();
@@ -366,7 +367,7 @@ public class CoverageGapTests
         {
             string uri = new Uri(testSchemaPath).AbsoluteUri;
             JsonElement? resolved = await resolver.TryResolve(new JsonReference(uri));
-            Assert.NotNull(resolved);
+            Assert.IsNotNull(resolved);
 
             resolver.Reset();
         }
@@ -374,7 +375,7 @@ public class CoverageGapTests
         resolver.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_RelativePathMergedWithBase()
     {
         var baseRef = new JsonReference("http://example.com/a/b/c");
@@ -382,10 +383,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(otherRef);
 
-        Assert.Equal("http://example.com/a/b/d", result.ToString());
+        Assert.AreEqual("http://example.com/a/b/d", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_RelativePathWithDotDot()
     {
         var baseRef = new JsonReference("http://example.com/a/b/c");
@@ -393,10 +394,10 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(otherRef);
 
-        Assert.Equal("http://example.com/a/d", result.ToString());
+        Assert.AreEqual("http://example.com/a/d", result.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Apply_EmptyPathEmptyQuery_UsesBasePathAndQuery()
     {
         var baseRef = new JsonReference("http://example.com/a/b?q=1");
@@ -404,6 +405,6 @@ public class CoverageGapTests
 
         JsonReference result = baseRef.Apply(otherRef);
 
-        Assert.Equal("http://example.com/a/b?q=1#frag", result.ToString());
+        Assert.AreEqual("http://example.com/a/b?q=1#frag", result.ToString());
     }
 }

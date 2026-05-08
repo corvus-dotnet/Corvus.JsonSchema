@@ -4,13 +4,14 @@
 
 using System.Text.Json;
 using Corvus.Text.Json.Patch;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Patch.Tests;
 
 /// <summary>
 /// Tests for RFC 6902 JSON Patch operations using the json-patch-tests test suite.
 /// </summary>
+[TestClass]
 public class JsonPatchTests
 {
     private static readonly Lazy<JsonDocument> TestsDocument = new(
@@ -39,29 +40,29 @@ public class JsonPatchTests
         return GetTestCases(SpecTestsDocument.Value, expectSuccess: false);
     }
 
-    [Theory]
-    [MemberData(nameof(SuccessTestData))]
+    [TestMethod]
+    [DynamicData(nameof(SuccessTestData))]
     public void SuccessTests(string comment, int index, string docJson, string patchJson, string expectedJson)
     {
         RunSuccessTest(docJson, patchJson, expectedJson);
     }
 
-    [Theory]
-    [MemberData(nameof(ErrorTestData))]
+    [TestMethod]
+    [DynamicData(nameof(ErrorTestData))]
     public void ErrorTests(string comment, int index, string docJson, string patchJson)
     {
         RunErrorTest(docJson, patchJson);
     }
 
-    [Theory]
-    [MemberData(nameof(SpecSuccessTestData))]
+    [TestMethod]
+    [DynamicData(nameof(SpecSuccessTestData))]
     public void SpecSuccessTests(string comment, int index, string docJson, string patchJson, string expectedJson)
     {
         RunSuccessTest(docJson, patchJson, expectedJson);
     }
 
-    [Theory]
-    [MemberData(nameof(SpecErrorTestData))]
+    [TestMethod]
+    [DynamicData(nameof(SpecErrorTestData))]
     public void SpecErrorTests(string comment, int index, string docJson, string patchJson)
     {
         RunErrorTest(docJson, patchJson);
@@ -82,11 +83,11 @@ public class JsonPatchTests
 
         bool result = JsonPatchExtensions.TryValidateAndApplyPatch(ref root, in patch);
 
-        Assert.True(result, "Patch validation and application should succeed.");
+        Assert.IsTrue(result, "Patch validation and application should succeed.");
 
         // Compare the result with the expected output.
         JsonElement expected = JsonElement.ParseValue(expectedJson);
-        Assert.True(
+        Assert.IsTrue(
             root.Equals(expected),
             $"Expected: {expectedJson}\nActual: {root}");
     }
@@ -106,7 +107,7 @@ public class JsonPatchTests
 
         bool result = JsonPatchExtensions.TryValidateAndApplyPatch(ref root, in patch);
 
-        Assert.False(result, "Patch validation or application should fail.");
+        Assert.IsFalse(result, "Patch validation or application should fail.");
     }
 
     private static IEnumerable<object[]> GetTestCases(JsonDocument document, bool expectSuccess)

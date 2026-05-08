@@ -6,7 +6,7 @@ using System.Text;
 using System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.JMESPath;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JMESPath.Tests;
 
@@ -16,6 +16,7 @@ namespace Corvus.Text.Json.JMESPath.Tests;
 /// or barrier (Sort, SortBy, Reverse) and fuses them into a single document materialization.
 /// These tests cover each stage combination to ensure the fused path produces correct results.
 /// </summary>
+[TestClass]
 public class PipeFusionTests
 {
     // Items: objects with n (name) and v (value) fields
@@ -33,7 +34,7 @@ public class PipeFusionTests
     // === Two streaming stages ===
 
     /// <summary>Filter | Project: filter then project field names.</summary>
-    [Fact]
+    [TestMethod]
     public void FilterThenProject()
     {
         // [?v > `1`] | [*].n → filter v>1 keeps A(3),C(2), then project .n
@@ -41,7 +42,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Flatten | Filter: flatten nested arrays then filter elements.</summary>
-    [Fact]
+    [TestMethod]
     public void FlattenThenFilter()
     {
         // [] | [?@ > `2`] → flatten to [5,1,3,4,2], filter >2
@@ -49,7 +50,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Flatten | Project: flatten nested object arrays then project field.</summary>
-    [Fact]
+    [TestMethod]
     public void FlattenThenProject()
     {
         // [] | [*].x → flatten to [{x:1},{x:2},{x:3}], project .x
@@ -57,7 +58,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Project | Filter: project values then filter them.</summary>
-    [Fact]
+    [TestMethod]
     public void ProjectThenFilter()
     {
         // [*].v | [?@ > `1`] → project .v to [3,1,2], filter >1
@@ -67,7 +68,7 @@ public class PipeFusionTests
     // === Streaming + Barrier ===
 
     /// <summary>Filter | SortBy: filter then sort by field.</summary>
-    [Fact]
+    [TestMethod]
     public void FilterThenSortBy()
     {
         // [?v > `1`] | sort_by(@, &v) → filter keeps A(3),C(2), sort by v → C(2),A(3)
@@ -75,7 +76,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Project | Sort: project values then sort them.</summary>
-    [Fact]
+    [TestMethod]
     public void ProjectThenSort()
     {
         // [*].v | sort(@) → [3,1,2] → [1,2,3]
@@ -83,7 +84,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Project | Reverse: project values then reverse them.</summary>
-    [Fact]
+    [TestMethod]
     public void ProjectThenReverse()
     {
         // [*].v | reverse(@) → [3,1,2] → [2,1,3]
@@ -91,7 +92,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Flatten | Sort: flatten nested arrays then sort.</summary>
-    [Fact]
+    [TestMethod]
     public void FlattenThenSort()
     {
         // [] | sort(@) → [5,1,3,4,2] → [1,2,3,4,5]
@@ -101,7 +102,7 @@ public class PipeFusionTests
     // === Barrier + Streaming ===
 
     /// <summary>SortBy | Project: sort objects then project field names.</summary>
-    [Fact]
+    [TestMethod]
     public void SortByThenProject()
     {
         // sort_by(@, &v) | [*].n → sort by v: B(1),C(2),A(3), then project .n
@@ -109,7 +110,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Sort | Filter: sort numbers then filter.</summary>
-    [Fact]
+    [TestMethod]
     public void SortThenFilter()
     {
         // sort(@) | [?@ > `2`] → [1,2,3,4,5] → [3,4,5]
@@ -117,7 +118,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Reverse | Project: reverse array then project field.</summary>
-    [Fact]
+    [TestMethod]
     public void ReverseThenProject()
     {
         // reverse(@) | [*].n → [C,B,A] → ["C","B","A"]
@@ -127,7 +128,7 @@ public class PipeFusionTests
     // === Barrier + Barrier ===
 
     /// <summary>Sort | Reverse: sort then reverse (descending sort).</summary>
-    [Fact]
+    [TestMethod]
     public void SortThenReverse()
     {
         // sort(@) | reverse(@) → [1,2,3,4,5] → [5,4,3,2,1]
@@ -135,7 +136,7 @@ public class PipeFusionTests
     }
 
     /// <summary>SortBy | Reverse: sort objects by field then reverse.</summary>
-    [Fact]
+    [TestMethod]
     public void SortByThenReverse()
     {
         // sort_by(@, &v) | reverse(@) → B(1),C(2),A(3) → A(3),C(2),B(1)
@@ -145,7 +146,7 @@ public class PipeFusionTests
     // === Three+ stages ===
 
     /// <summary>Filter | SortBy | HashProject: the ComplexQuery pattern.</summary>
-    [Fact]
+    [TestMethod]
     public void FilterSortByHashProject()
     {
         // [?v > `1`] | sort_by(@, &v) | [*].{name: n, value: v}
@@ -154,7 +155,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Project | Sort | Reverse: project, sort ascending, reverse to descending.</summary>
-    [Fact]
+    [TestMethod]
     public void ProjectSortReverse()
     {
         // [*].v | sort(@) | reverse(@) → [3,1,2] → [1,2,3] → [3,2,1]
@@ -162,7 +163,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Flatten | Filter | Sort: flatten, filter, then sort.</summary>
-    [Fact]
+    [TestMethod]
     public void FlattenFilterSort()
     {
         // [] | [?@ > `2`] | sort(@) → [5,1,3,4,2] → [5,3,4] → [3,4,5]
@@ -170,7 +171,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Filter | Reverse | Project: filter, reverse order, project names.</summary>
-    [Fact]
+    [TestMethod]
     public void FilterReverseProject()
     {
         // [?v > `1`] | reverse(@) | [*].n → A(3),C(2) → C(2),A(3) → ["C","A"]
@@ -178,7 +179,7 @@ public class PipeFusionTests
     }
 
     /// <summary>SortBy | Reverse | HashProject: sort, reverse, project to new objects.</summary>
-    [Fact]
+    [TestMethod]
     public void SortByReverseHashProject()
     {
         // sort_by(@, &v) | reverse(@) | [*].{name: n}
@@ -189,7 +190,7 @@ public class PipeFusionTests
     // === Terminal HashProject ===
 
     /// <summary>SortBy | HashProject: sort then project to new objects.</summary>
-    [Fact]
+    [TestMethod]
     public void SortByHashProject()
     {
         // sort_by(@, &v) | [*].{name: n, val: v}
@@ -198,7 +199,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Reverse | HashProject: reverse then project to new objects.</summary>
-    [Fact]
+    [TestMethod]
     public void ReverseHashProject()
     {
         // reverse(@) | [*].{name: n} → [C,B,A] → [{name:C},{name:B},{name:A}]
@@ -206,7 +207,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Filter | HashProject: filter then project to new objects.</summary>
-    [Fact]
+    [TestMethod]
     public void FilterHashProject()
     {
         // [?v > `1`] | [*].{name: n, val: v} → A(3),C(2) → [{name:A,val:3},{name:C,val:2}]
@@ -216,7 +217,7 @@ public class PipeFusionTests
     // === Non-terminal HashProject ===
 
     /// <summary>HashProject | Reverse: project to new objects then reverse (non-terminal hash).</summary>
-    [Fact]
+    [TestMethod]
     public void HashProjectReverse()
     {
         // [*].{name: n, val: v} | reverse(@) → [{name:A,val:3},{name:B,val:1},{name:C,val:2}] → reversed
@@ -226,7 +227,7 @@ public class PipeFusionTests
     // === MapExpr ===
 
     /// <summary>Map | Sort: map expression then sort results.</summary>
-    [Fact]
+    [TestMethod]
     public void MapThenSort()
     {
         // map(&v, @) | sort(@) → [3,1,2] → [1,2,3]
@@ -234,7 +235,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Map | Filter: map expression then filter results.</summary>
-    [Fact]
+    [TestMethod]
     public void MapThenFilter()
     {
         // map(&v, @) | [?@ > `1`] → [3,1,2] → [3,2]
@@ -244,7 +245,7 @@ public class PipeFusionTests
     // === Edge cases ===
 
     /// <summary>Empty array propagation through a 3-stage fused pipeline.</summary>
-    [Fact]
+    [TestMethod]
     public void EmptyThroughPipeline()
     {
         // [?v > `100`] | sort_by(@, &v) | [*].n → [] through entire pipeline
@@ -252,7 +253,7 @@ public class PipeFusionTests
     }
 
     /// <summary>Single element propagation through a 3-stage fused pipeline.</summary>
-    [Fact]
+    [TestMethod]
     public void SingleThroughPipeline()
     {
         // [?v > `2`] | sort_by(@, &v) | [*].n → single element [A(3)] through pipeline
@@ -265,7 +266,7 @@ public class PipeFusionTests
     /// Recursive fusion: outer pipe bails (IndexNode not fusible),
     /// but inner [*].v | sort(@) is recursively fused.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void RecursiveInnerFusion()
     {
         // [*].v | sort(@) | [-1] → project [3,1,2] → sort [1,2,3] → last element 3
@@ -288,7 +289,7 @@ public class PipeFusionTests
     {
         using JsonDocument expectedDoc = JsonDocument.Parse(expected);
         using JsonDocument actualDoc = JsonDocument.Parse(actual);
-        Assert.True(
+        Assert.IsTrue(
             JsonElementDeepEquals(expectedDoc.RootElement, actualDoc.RootElement),
             $"Expected: {expected}\nActual: {actual}");
     }

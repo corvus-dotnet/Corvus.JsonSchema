@@ -2,38 +2,46 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft6.Optional.Bignum;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteInteger : IClassFixture<SuiteInteger.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteInteger
 {
-    private readonly Fixture _fixture;
-    public SuiteInteger(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestABignumIsAnInteger()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("12345678910111213141516171819202122232425262728293031");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestANegativeBignumIsAnInteger()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-12345678910111213141516171819202122232425262728293031");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -49,34 +57,42 @@ public class SuiteInteger : IClassFixture<SuiteInteger.Fixture>
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteNumber : IClassFixture<SuiteNumber.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteNumber
 {
-    private readonly Fixture _fixture;
-    public SuiteNumber(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestABignumIsANumber()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("98249283749234923498293171823948729348710298301928331");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestANegativeBignumIsANumber()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-98249283749234923498293171823948729348710298301928331");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -92,27 +108,35 @@ public class SuiteNumber : IClassFixture<SuiteNumber.Fixture>
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteString : IClassFixture<SuiteString.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteString
 {
-    private readonly Fixture _fixture;
-    public SuiteString(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestABignumIsNotAString()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("98249283749234923498293171823948729348710298301928331");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -128,27 +152,35 @@ public class SuiteString : IClassFixture<SuiteString.Fixture>
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteMaximumIntegerComparison : IClassFixture<SuiteMaximumIntegerComparison.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteMaximumIntegerComparison
 {
-    private readonly Fixture _fixture;
-    public SuiteMaximumIntegerComparison(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForHighNumbers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("18446744073709551600");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -164,27 +196,35 @@ public class SuiteMaximumIntegerComparison : IClassFixture<SuiteMaximumIntegerCo
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteFloatComparisonWithHighPrecision : IClassFixture<SuiteFloatComparisonWithHighPrecision.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteFloatComparisonWithHighPrecision
 {
-    private readonly Fixture _fixture;
-    public SuiteFloatComparisonWithHighPrecision(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForHighNumbers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("972783798187987123879878123.188781371");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -200,27 +240,35 @@ public class SuiteFloatComparisonWithHighPrecision : IClassFixture<SuiteFloatCom
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteMinimumIntegerComparison : IClassFixture<SuiteMinimumIntegerComparison.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteMinimumIntegerComparison
 {
-    private readonly Fixture _fixture;
-    public SuiteMinimumIntegerComparison(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForVeryNegativeNumbers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-18446744073709551600");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -236,27 +284,35 @@ public class SuiteMinimumIntegerComparison : IClassFixture<SuiteMinimumIntegerCo
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers : IClassFixture<SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
 {
-    private readonly Fixture _fixture;
-    public SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForVeryNegativeNumbers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-972783798187987123879878123.188781371");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

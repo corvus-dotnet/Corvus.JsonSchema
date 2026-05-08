@@ -6,18 +6,19 @@ using System.Globalization;
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
 /// <summary>
 /// Tests to cover remaining difficult-to-reach branches.
 /// </summary>
+[TestClass]
 public class BigNumberDeepBranchCoverageTests
 {
     // ========== Currency Negative Patterns (0-15) ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern0_Parentheses()
     {
         // Pattern 0: ($n)
@@ -29,7 +30,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldBe("($123.45)");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern1_MinusSymbolFirst()
     {
         // Pattern 1: -$n
@@ -41,7 +42,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldBe("-$123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern2_CurrencyMinusValue()
     {
         // Pattern 2: $-n
@@ -53,7 +54,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldBe("$-123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern3_CurrencyValueMinus()
     {
         // Pattern 3: $n-
@@ -65,7 +66,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldEndWith("-");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern4_ParenthesesValueCurrency()
     {
         // Pattern 4: (n$)
@@ -79,7 +80,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain("$");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern5_MinusValueCurrency()
     {
         // Pattern 5: -n$
@@ -92,7 +93,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldEndWith("$");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern6_ValueMinusCurrency()
     {
         // Pattern 6: n-$
@@ -104,7 +105,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain("-$");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern7_ValueCurrencyMinus()
     {
         // Pattern 7: n$-
@@ -117,7 +118,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain("$");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern8_MinusValueSpaceCurrency()
     {
         // Pattern 8: -n $
@@ -130,7 +131,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain(" $");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern9_MinusCurrencySpaceValue()
     {
         // Pattern 9: -$ n
@@ -143,7 +144,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain(" ");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern10_ValueSpaceCurrencyMinus()
     {
         // Pattern 10: n $-
@@ -156,7 +157,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain(" $");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern11_CurrencySpaceValueMinus()
     {
         // Pattern 11: $ n-
@@ -170,7 +171,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain(" ");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern12_CurrencySpaceMinusValue()
     {
         // Pattern 12: $ -n
@@ -183,7 +184,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain(" -");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern13_ValueMinusSpaceCurrency()
     {
         // Pattern 13: n- $
@@ -195,7 +196,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain("- $");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern14_ParenthesesCurrencySpaceValue()
     {
         // Pattern 14: ($ n)
@@ -209,7 +210,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain(" ");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePattern15_ParenthesesValueSpaceCurrency()
     {
         // Pattern 15: (n $)
@@ -223,7 +224,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain(" ");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_NegativePatternDefault_UsesStandard()
     {
         // Pattern >15: use default
@@ -240,7 +241,7 @@ public class BigNumberDeepBranchCoverageTests
     // ========== Rounding Mode Edge Cases ==========
 
 #if NET
-    [Fact]
+    [TestMethod]
     public void Round_ToNegativeInfinity_WithPositiveRemainder_DoesNotRound()
     {
         // Line 553: ToNegativeInfinity with positive number
@@ -250,7 +251,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ToString("F2", CultureInfo.InvariantCulture).ShouldBe("12.34");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToNegativeInfinity_WithNegativeRemainder_RoundsDown()
     {
         // Line 553: ToNegativeInfinity with negative number
@@ -260,7 +261,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ToString("F2", CultureInfo.InvariantCulture).ShouldBe("-12.35");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToPositiveInfinity_WithNegativeRemainder_DoesNotRound()
     {
         // Line 556: ToPositiveInfinity with negative number
@@ -271,7 +272,7 @@ public class BigNumberDeepBranchCoverageTests
     }
 #endif
 
-    [Fact]
+    [TestMethod]
     public void Round_ToEven_WithExactHalfAndEvenQuotient_DoesNotRound()
     {
         // Line 543-544: ToEven with exact half and even quotient
@@ -282,7 +283,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.2");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_ToEven_WithExactHalfAndOddQuotient_RoundsUp()
     {
         // Line 543-544: ToEven with exact half and odd quotient
@@ -293,7 +294,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ToString("F1", CultureInfo.InvariantCulture).ShouldBe("1.4");
     }
 
-    [Fact]
+    [TestMethod]
     public void Round_AwayFromZero_WithExactHalf_RoundsAway()
     {
         // Line 547: AwayFromZero with exact half
@@ -309,7 +310,7 @@ public class BigNumberDeepBranchCoverageTests
 
     // ========== Number Formatting Edge Cases ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_ValueShorterThanPrecision_IntegerPartZero()
     {
         // Line 579-582: sigStr.Length <= precision, creating "0.00...sigStr"
@@ -319,7 +320,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldBe("0.0005");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatNumber_ValueEqualsPrecision_IntegerPartZero()
     {
         // Line 579-582: sigStr.Length == precision
@@ -331,7 +332,7 @@ public class BigNumberDeepBranchCoverageTests
 
     // ========== Exponential Formatting Edge Cases ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_ZeroWithZeroPrecision_NoDecimal()
     {
         // Line 609-612: zero with precision 0
@@ -341,7 +342,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldBe("0E+000");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_RoundingCausesDigitOverflow_IncrementsExponent()
     {
         // Line 639-643: rounding 9.99...9 causes overflow
@@ -353,7 +354,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain("E+001");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_PrecisionZeroNoRounding_SingleDigit()
     {
         // Line 652-654: precision == 0, no decimal point
@@ -363,7 +364,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldBe("7E+000");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_ShortSignificandPaddedWithZeros_AddsTrailingZeros()
     {
         // Line 661-664: Padding decimals when sigStr is shorter
@@ -373,7 +374,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain("3.0000");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatExponential_SingleDigitSignificand_PadsWithZeros()
     {
         // Line 667-670: sigStr.Length == 1
@@ -385,7 +386,7 @@ public class BigNumberDeepBranchCoverageTests
 
     // ========== Edge Conditions in Comparison ==========
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_SecondOperandZero_ReturnsThisSign()
     {
         // Line 256-257: other.Significand.IsZero branch
@@ -397,7 +398,7 @@ public class BigNumberDeepBranchCoverageTests
         negative.CompareTo(zero).ShouldBe(-1);
     }
 
-    [Fact]
+    [TestMethod]
     public void CompareTo_SameSignPositiveEffectiveDigitsDiffer_ComparesEffectiveDigits()
     {
         // Line 283: positive sign, different effective digits
@@ -410,7 +411,7 @@ public class BigNumberDeepBranchCoverageTests
 
     // ========== Uncovered FormatZero Branches ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_ExplicitNullFormat_ReturnsZero()
     {
         // Line 370-372: string.IsNullOrEmpty check
@@ -419,7 +420,7 @@ public class BigNumberDeepBranchCoverageTests
         zero.ToString(nullFormat, CultureInfo.InvariantCulture).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatZero_ExplicitEmptyFormat_ReturnsZero()
     {
         // Line 370-372: empty string check
@@ -429,7 +430,7 @@ public class BigNumberDeepBranchCoverageTests
 
     // ========== Percent Format Additional Coverage ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatPercent_NegativeNumber_UsesNegativePattern()
     {
         BigNumber num = new(-5, -3); // -0.005 = -0.5%
@@ -442,7 +443,7 @@ public class BigNumberDeepBranchCoverageTests
 
     // ========== Additional Currency Positive Pattern Coverage ==========
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_PositivePattern2_CurrencySpaceValue()
     {
         // Positive pattern 2: $ n
@@ -454,7 +455,7 @@ public class BigNumberDeepBranchCoverageTests
         result.ShouldContain("$ ");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatCurrency_PositivePattern3_ValueSpaceCurrency()
     {
         // Positive pattern 3: n $

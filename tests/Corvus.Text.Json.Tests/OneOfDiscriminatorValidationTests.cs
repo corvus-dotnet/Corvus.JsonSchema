@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.OneOfDiscriminatorValidation;
 
@@ -14,8 +14,9 @@ namespace Corvus.Text.Json.Tests.OneOfDiscriminatorValidation;
 /// Tests for oneOf discriminator-based short-circuiting with 5 branches (triggers EnumStringMap hash-based dispatch).
 /// Schema: oneOf with 5 branches, each requiring a "kind" property with a single distinct enum value.
 /// </summary>
-[Trait("Optimization", "OneOfDiscriminator")]
-public class OneOfDiscriminatorWith5Branches : IClassFixture<OneOfDiscriminatorWith5Branches.Fixture>
+[TestCategory("OneOfDiscriminator")]
+[TestClass]
+public class OneOfDiscriminatorWith5Branches
 {
     private const string Schema = """
         {
@@ -50,80 +51,86 @@ public class OneOfDiscriminatorWith5Branches : IClassFixture<OneOfDiscriminatorW
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public OneOfDiscriminatorWith5Branches(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"kind": "alpha", "value": 42}""")]
-    [InlineData("""{"kind": "bravo", "value": "hello"}""")]
-    [InlineData("""{"kind": "charlie", "value": true}""")]
-    [InlineData("""{"kind": "delta", "value": [1, 2]}""")]
-    [InlineData("""{"kind": "echo", "value": {"x": 1}}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"kind": "alpha", "value": 42}""")]
+    [DataRow("""{"kind": "bravo", "value": "hello"}""")]
+    [DataRow("""{"kind": "charlie", "value": true}""")]
+    [DataRow("""{"kind": "delta", "value": [1, 2]}""")]
+    [DataRow("""{"kind": "echo", "value": {"x": 1}}""")]
     public void MatchingDiscriminatorAndBranchIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"kind": "alpha", "value": "wrong"}""")]
-    [InlineData("""{"kind": "bravo", "value": 42}""")]
+    [TestMethod]
+    [DataRow("""{"kind": "alpha", "value": "wrong"}""")]
+    [DataRow("""{"kind": "bravo", "value": 42}""")]
     public void MatchingDiscriminatorButFailingBranchIsRejected(string json)
     {
         // The discriminator selects the right branch, but the branch validation fails
         // because 'value' has the wrong type. With discriminator dispatch, only the
         // matching branch is evaluated, and it fails → oneOf fails.
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"kind": "unknown"}""")]
-    [InlineData("""{"kind": "ALPHA"}""")]
-    [InlineData("""{"kind": ""}""")]
+    [TestMethod]
+    [DataRow("""{"kind": "unknown"}""")]
+    [DataRow("""{"kind": "ALPHA"}""")]
+    [DataRow("""{"kind": ""}""")]
     public void UnrecognizedDiscriminatorValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingDiscriminatorPropertyIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""{"value": 42}""");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""{"value": 42}""");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void NonStringDiscriminatorValueIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""{"kind": 123}""");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""{"kind": 123}""");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void NonObjectInstanceIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""42""");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""42""");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyObjectIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""{}""");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""{}""");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -145,8 +152,9 @@ public class OneOfDiscriminatorWith5Branches : IClassFixture<OneOfDiscriminatorW
 /// <summary>
 /// Tests for oneOf discriminator-based short-circuiting with 3 branches (uses SequenceEqual, below hash threshold).
 /// </summary>
-[Trait("Optimization", "OneOfDiscriminator")]
-public class OneOfDiscriminatorWith3Branches : IClassFixture<OneOfDiscriminatorWith3Branches.Fixture>
+[TestCategory("OneOfDiscriminator")]
+[TestClass]
+public class OneOfDiscriminatorWith3Branches
 {
     private const string Schema = """
         {
@@ -171,53 +179,59 @@ public class OneOfDiscriminatorWith3Branches : IClassFixture<OneOfDiscriminatorW
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public OneOfDiscriminatorWith3Branches(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"type": "point", "x": 1.0, "y": 2.0}""")]
-    [InlineData("""{"type": "line", "start": {}, "end": {}}""")]
-    [InlineData("""{"type": "circle", "center": {}, "radius": 5.0}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"type": "point", "x": 1.0, "y": 2.0}""")]
+    [DataRow("""{"type": "line", "start": {}, "end": {}}""")]
+    [DataRow("""{"type": "circle", "center": {}, "radius": 5.0}""")]
     public void MatchingDiscriminatorAndBranchIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"type": "point"}""")]
+    [TestMethod]
+    [DataRow("""{"type": "point"}""")]
     public void MatchingDiscriminatorButMissingRequiredFieldIsRejected(string json)
     {
         // Discriminator matches "point" branch, but x and y are missing
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"type": "rectangle"}""")]
-    [InlineData("""{"type": ""}""")]
+    [TestMethod]
+    [DataRow("""{"type": "rectangle"}""")]
+    [DataRow("""{"type": ""}""")]
     public void UnrecognizedDiscriminatorValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingDiscriminatorPropertyIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""{"x": 1, "y": 2}""");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""{"x": 1, "y": 2}""");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -239,8 +253,9 @@ public class OneOfDiscriminatorWith3Branches : IClassFixture<OneOfDiscriminatorW
 /// <summary>
 /// Tests for oneOf with 2 branches (minimum discriminator case).
 /// </summary>
-[Trait("Optimization", "OneOfDiscriminator")]
-public class OneOfDiscriminatorWith2Branches : IClassFixture<OneOfDiscriminatorWith2Branches.Fixture>
+[TestCategory("OneOfDiscriminator")]
+[TestClass]
+public class OneOfDiscriminatorWith2Branches
 {
     private const string Schema = """
         {
@@ -260,43 +275,49 @@ public class OneOfDiscriminatorWith2Branches : IClassFixture<OneOfDiscriminatorW
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public OneOfDiscriminatorWith2Branches(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"status": "active", "since": "2024-01-01"}""")]
-    [InlineData("""{"status": "inactive", "reason": "retired"}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"status": "active", "since": "2024-01-01"}""")]
+    [DataRow("""{"status": "inactive", "reason": "retired"}""")]
     public void MatchingDiscriminatorIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"status": "pending"}""")]
-    [InlineData("""{"status": ""}""")]
+    [TestMethod]
+    [DataRow("""{"status": "pending"}""")]
+    [DataRow("""{"status": ""}""")]
     public void UnrecognizedDiscriminatorValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingDiscriminatorIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""{"since": "2024-01-01"}""");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""{"since": "2024-01-01"}""");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -318,8 +339,9 @@ public class OneOfDiscriminatorWith2Branches : IClassFixture<OneOfDiscriminatorW
 /// <summary>
 /// Tests for oneOf where discriminator detection should NOT trigger (optional property, not required).
 /// </summary>
-[Trait("Optimization", "OneOfDiscriminator")]
-public class OneOfWithoutDiscriminator : IClassFixture<OneOfWithoutDiscriminator.Fixture>
+[TestCategory("OneOfDiscriminator")]
+[TestClass]
+public class OneOfWithoutDiscriminator
 {
     private const string Schema = """
         {
@@ -337,39 +359,45 @@ public class OneOfWithoutDiscriminator : IClassFixture<OneOfWithoutDiscriminator
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public OneOfWithoutDiscriminator(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"kind": "alpha", "value": 42}""")]
-    [InlineData("""{"kind": "bravo", "value": "hello"}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"kind": "alpha", "value": 42}""")]
+    [DataRow("""{"kind": "bravo", "value": "hello"}""")]
     public void MatchingBranchIsAccepted(string json)
     {
         // Without required, discriminator detection should not fire.
         // Both branches could match an object without 'kind', so standard oneOf applies.
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void ObjectWithoutKindMatchesBothBranches()
     {
         // Without 'kind' required, {"value": 42} matches branch 0 (value is number).
         // But does it match branch 1? "value" is string in branch 1, so 42 fails there.
         // So this should match exactly 1 branch → pass.
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""{"value": 42}""");
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""{"value": 42}""");
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -391,8 +419,9 @@ public class OneOfWithoutDiscriminator : IClassFixture<OneOfWithoutDiscriminator
 /// <summary>
 /// Tests for oneOf with GeoJSON-style discriminator (9 branches with "type" property, single-value enum).
 /// </summary>
-[Trait("Optimization", "OneOfDiscriminator")]
-public class OneOfGeoJsonStyleDiscriminator : IClassFixture<OneOfGeoJsonStyleDiscriminator.Fixture>
+[TestCategory("OneOfDiscriminator")]
+[TestClass]
+public class OneOfGeoJsonStyleDiscriminator
 {
     private const string Schema = """
         {
@@ -447,66 +476,72 @@ public class OneOfGeoJsonStyleDiscriminator : IClassFixture<OneOfGeoJsonStyleDis
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public OneOfGeoJsonStyleDiscriminator(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"type": "Point", "coordinates": [0, 0]}""")]
-    [InlineData("""{"type": "MultiPoint", "coordinates": [[0, 0]]}""")]
-    [InlineData("""{"type": "LineString", "coordinates": [[0, 0], [1, 1]]}""")]
-    [InlineData("""{"type": "MultiLineString", "coordinates": [[[0, 0], [1, 1]]]}""")]
-    [InlineData("""{"type": "Polygon", "coordinates": [[[0, 0], [1, 0], [1, 1], [0, 0]]]}""")]
-    [InlineData("""{"type": "MultiPolygon", "coordinates": [[[[0, 0], [1, 0], [1, 1], [0, 0]]]]}""")]
-    [InlineData("""{"type": "GeometryCollection", "geometries": []}""")]
-    [InlineData("""{"type": "Feature", "geometry": {}, "properties": {}}""")]
-    [InlineData("""{"type": "FeatureCollection", "features": []}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"type": "Point", "coordinates": [0, 0]}""")]
+    [DataRow("""{"type": "MultiPoint", "coordinates": [[0, 0]]}""")]
+    [DataRow("""{"type": "LineString", "coordinates": [[0, 0], [1, 1]]}""")]
+    [DataRow("""{"type": "MultiLineString", "coordinates": [[[0, 0], [1, 1]]]}""")]
+    [DataRow("""{"type": "Polygon", "coordinates": [[[0, 0], [1, 0], [1, 1], [0, 0]]]}""")]
+    [DataRow("""{"type": "MultiPolygon", "coordinates": [[[[0, 0], [1, 0], [1, 1], [0, 0]]]]}""")]
+    [DataRow("""{"type": "GeometryCollection", "geometries": []}""")]
+    [DataRow("""{"type": "Feature", "geometry": {}, "properties": {}}""")]
+    [DataRow("""{"type": "FeatureCollection", "features": []}""")]
     public void AllGeoJsonTypesAreAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"type": "Unknown", "coordinates": [0, 0]}""")]
-    [InlineData("""{"type": "point", "coordinates": [0, 0]}""")]
-    [InlineData("""{"type": "POINT", "coordinates": [0, 0]}""")]
+    [TestMethod]
+    [DataRow("""{"type": "Unknown", "coordinates": [0, 0]}""")]
+    [DataRow("""{"type": "point", "coordinates": [0, 0]}""")]
+    [DataRow("""{"type": "POINT", "coordinates": [0, 0]}""")]
     public void UnrecognizedTypeIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingTypePropertyIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""{"coordinates": [0, 0]}""");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""{"coordinates": [0, 0]}""");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void NonStringTypePropertyIsRejected()
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""{"type": 42, "coordinates": [0, 0]}""");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""{"type": 42, "coordinates": [0, 0]}""");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void MatchingTypeButMissingRequiredFieldIsRejected()
     {
         // Type is "Feature" but "geometry" and "properties" are missing
-        var instance = this.fixture.DynamicJsonType.ParseInstance("""{"type": "Feature"}""");
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance("""{"type": "Feature"}""");
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

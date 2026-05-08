@@ -4,8 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
 
@@ -24,6 +23,7 @@ namespace Corvus.Text.Json.Jsonata.Tests;
 /// nested <c>"error": { "code": "..." }</c> object.
 /// </para>
 /// </remarks>
+[TestClass]
 public class JsonataTestSuiteRunner
 {
     /// <summary>
@@ -37,16 +37,9 @@ public class JsonataTestSuiteRunner
 
     private static readonly string TestSuiteRoot = FindTestSuiteRoot();
     private static readonly JsonataEvaluator Evaluator = new();
-    private readonly ITestOutputHelper output;
-
-    public JsonataTestSuiteRunner(ITestOutputHelper output)
-    {
-        this.output = output;
-    }
-
-    [Theory]
-    [Trait("category", "testsuite")]
-    [MemberData(nameof(GetTestCases))]
+    [TestMethod]
+    [TestCategory("testsuite")]
+    [DynamicData(nameof(GetTestCases))]
     public void RunTestCase(string group, string caseName, string caseFilePath)
     {
         string caseJson = File.ReadAllText(caseFilePath);
@@ -90,13 +83,13 @@ public class JsonataTestSuiteRunner
             // bytes into a System.String, so the expression cannot be extracted here.
             // The underlying D3140 validation is covered by EncodeUrlSurrogateTests, which
             // constructs the invalid data directly and verifies both the RT and CG paths.
-            this.output.WriteLine("SKIP: Expression contains lone UTF-16 surrogate (tested in EncodeUrlSurrogateTests)");
+            Console.WriteLine("SKIP: Expression contains lone UTF-16 surrogate (tested in EncodeUrlSurrogateTests)");
             return;
         }
 
-        this.output.WriteLine($"Group:      {group}");
-        this.output.WriteLine($"Case:       {caseName}");
-        this.output.WriteLine($"Expression: {expr}");
+        Console.WriteLine($"Group:      {group}");
+        Console.WriteLine($"Case:       {caseName}");
+        Console.WriteLine($"Expression: {expr}");
 
         // Determine depth limit (from test case or default)
         int maxDepth = 500;
@@ -167,12 +160,12 @@ public class JsonataTestSuiteRunner
             if (expectedErrorCode is not null)
             {
                 RunErrorCase(expectedErrorCode, expr, inputData, hasData, bindings, maxDepth, timeLimitMs);
-                this.output.WriteLine($"Got expected error: {expectedErrorCode}");
+                Console.WriteLine($"Got expected error: {expectedErrorCode}");
             }
             else if (root.TryGetProperty("undefinedResult", out _))
             {
                 RunUndefinedCase(expr, inputData, hasData, bindings, maxDepth, timeLimitMs);
-                this.output.WriteLine("Got expected undefined result");
+                Console.WriteLine("Got expected undefined result");
             }
             else if (root.TryGetProperty("result", out var expectedResult))
             {
@@ -243,11 +236,11 @@ public class JsonataTestSuiteRunner
             caught = ex;
         }
 
-        Assert.NotNull(caught);
+        Assert.IsNotNull(caught);
 
         if (caught is JsonataException jex)
         {
-            Assert.Equal(expectedCode, jex.Code);
+            Assert.AreEqual(expectedCode, jex.Code);
         }
     }
 
@@ -259,7 +252,7 @@ public class JsonataTestSuiteRunner
             Assert.Fail($"Evaluation timed out after {TestTimeout.TotalSeconds}s");
         }
 
-        Assert.Equal(JsonValueKind.Undefined, task.Result.ValueKind);
+        Assert.AreEqual(JsonValueKind.Undefined, task.Result.ValueKind);
     }
 
     private void RunResultCase(JsonElement expectedResult, string expr, JsonElement inputData, bool hasData, Dictionary<string, JsonElement>? bindings, int maxDepth, int timeLimitMs)
@@ -275,10 +268,10 @@ public class JsonataTestSuiteRunner
         string expectedJson = expectedResult.GetRawText();
         string actualJson = result.ValueKind == JsonValueKind.Undefined ? "undefined" : result.GetRawText();
 
-        this.output.WriteLine($"Expected: {expectedJson}");
-        this.output.WriteLine($"Actual:   {actualJson}");
+        Console.WriteLine($"Expected: {expectedJson}");
+        Console.WriteLine($"Actual:   {actualJson}");
 
-        Assert.NotEqual(JsonValueKind.Undefined, result.ValueKind);
+        Assert.AreNotEqual(JsonValueKind.Undefined, result.ValueKind);
         AssertJsonEqual(expectedResult, result);
     }
 
@@ -306,7 +299,7 @@ public class JsonataTestSuiteRunner
         {
             double e = expected.GetDouble();
             double a = actual.GetDouble();
-            Assert.Equal(e, a, 10);
+            Assert.AreEqual(e, a, 10);
             return;
         }
 
@@ -319,7 +312,7 @@ public class JsonataTestSuiteRunner
         {
             int expectedLen = expected.GetArrayLength();
             int actualLen = actual.GetArrayLength();
-            Assert.Equal(expectedLen, actualLen);
+            Assert.AreEqual(expectedLen, actualLen);
             for (int i = 0; i < expectedLen; i++)
             {
                 AssertJsonEqual(expected[i], actual[i]);
@@ -342,10 +335,10 @@ public class JsonataTestSuiteRunner
                 actualProps[prop.Name] = prop.Value;
             }
 
-            Assert.Equal(expectedProps.Count, actualProps.Count);
+            Assert.AreEqual(expectedProps.Count, actualProps.Count);
             foreach (var kvp in expectedProps)
             {
-                Assert.True(actualProps.ContainsKey(kvp.Key), $"Missing property: {kvp.Key}");
+                Assert.IsTrue(actualProps.ContainsKey(kvp.Key), $"Missing property: {kvp.Key}");
                 AssertJsonEqual(kvp.Value, actualProps[kvp.Key]);
             }
 
@@ -355,10 +348,10 @@ public class JsonataTestSuiteRunner
         // Compare string values semantically, not raw text, so that "\ud83d\ude02" and "😂" are equal
         if (expected.ValueKind == JsonValueKind.String && actual.ValueKind == JsonValueKind.String)
         {
-            Assert.Equal(expected.GetString(), actual.GetString());
+            Assert.AreEqual(expected.GetString(), actual.GetString());
             return;
         }
 
-        Assert.Equal(expected.GetRawText(), actual.GetRawText());
+        Assert.AreEqual(expected.GetRawText(), actual.GetRawText());
     }
 }

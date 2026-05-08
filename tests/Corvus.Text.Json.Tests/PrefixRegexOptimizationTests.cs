@@ -6,7 +6,7 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.RegexOptimization;
 
@@ -14,8 +14,9 @@ namespace Corvus.Text.Json.Tests.RegexOptimization;
 /// Tests for prefix regex pattern optimization with the <c>pattern</c> keyword.
 /// The pattern <c>^x-</c> matches strings starting with "x-".
 /// </summary>
-[Trait("Optimization", "RegexPrefix")]
-public class PrefixPatternKeyword : IClassFixture<PrefixPatternKeyword.Fixture>
+[TestCategory("RegexPrefix")]
+[TestClass]
+public class PrefixPatternKeyword
 {
     private const string Schema = """
         {
@@ -25,48 +26,54 @@ public class PrefixPatternKeyword : IClassFixture<PrefixPatternKeyword.Fixture>
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public PrefixPatternKeyword(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"x-custom\"")]
-    [InlineData("\"x-\"")]
-    [InlineData("\"x-very-long-extension-name\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"x-custom\"")]
+    [DataRow("\"x-\"")]
+    [DataRow("\"x-very-long-extension-name\"")]
     public void StringWithMatchingPrefixIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"hello\"")]
-    [InlineData("\"\"")]
-    [InlineData("\"X-uppercase\"")]
-    [InlineData("\"y-wrong\"")]
+    [TestMethod]
+    [DataRow("\"hello\"")]
+    [DataRow("\"\"")]
+    [DataRow("\"X-uppercase\"")]
+    [DataRow("\"y-wrong\"")]
     public void StringWithoutMatchingPrefixIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("42")]
-    [InlineData("null")]
+    [TestMethod]
+    [DataRow("42")]
+    [DataRow("null")]
     public void NonStringValueIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -89,8 +96,9 @@ public class PrefixPatternKeyword : IClassFixture<PrefixPatternKeyword.Fixture>
 /// Tests for prefix regex optimization with the <c>patternProperties</c> keyword.
 /// A <c>^/</c> pattern property should match property names starting with "/".
 /// </summary>
-[Trait("Optimization", "RegexPrefix")]
-public class PrefixPatternProperties : IClassFixture<PrefixPatternProperties.Fixture>
+[TestCategory("RegexPrefix")]
+[TestClass]
+public class PrefixPatternProperties
 {
     private const string Schema = """
         {
@@ -106,37 +114,43 @@ public class PrefixPatternProperties : IClassFixture<PrefixPatternProperties.Fix
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public PrefixPatternProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("""{"name": "api", "/users": {}}""")]
-    [InlineData("""{"name": "api", "/users": {}, "/items": {}}""")]
-    [InlineData("""{"name": "api"}""")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("""{"name": "api", "/users": {}}""")]
+    [DataRow("""{"name": "api", "/users": {}, "/items": {}}""")]
+    [DataRow("""{"name": "api"}""")]
     public void ObjectWithPrefixMatchedPropertiesIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("""{"name": "api", "/users": "not-object"}""")]
-    [InlineData("""{"name": "api", "/users": 42}""")]
+    [TestMethod]
+    [DataRow("""{"name": "api", "/users": "not-object"}""")]
+    [DataRow("""{"name": "api", "/users": 42}""")]
     public void PrefixMatchedPropertyWithWrongTypeIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -158,8 +172,9 @@ public class PrefixPatternProperties : IClassFixture<PrefixPatternProperties.Fix
 /// <summary>
 /// Tests for prefix regex optimization with trailing <c>.*</c> (e.g. <c>^x-.*</c>).
 /// </summary>
-[Trait("Optimization", "RegexPrefix")]
-public class PrefixPatternWithTrailingDotStar : IClassFixture<PrefixPatternWithTrailingDotStar.Fixture>
+[TestCategory("RegexPrefix")]
+[TestClass]
+public class PrefixPatternWithTrailingDotStar
 {
     private const string Schema = """
         {
@@ -169,38 +184,44 @@ public class PrefixPatternWithTrailingDotStar : IClassFixture<PrefixPatternWithT
         }
         """;
 
-    private readonly Fixture fixture;
-
-    public PrefixPatternWithTrailingDotStar(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        this.fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Theory]
-    [InlineData("\"api/v1\"")]
-    [InlineData("\"api/v1/users\"")]
-    [InlineData("\"api/v1/items/123\"")]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    [DataRow("\"api/v1\"")]
+    [DataRow("\"api/v1/users\"")]
+    [DataRow("\"api/v1/items/123\"")]
     public void StringWithMatchingPrefixIsAccepted(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.True(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Theory]
-    [InlineData("\"api/v2\"")]
-    [InlineData("\"\"")]
-    [InlineData("\"other\"")]
+    [TestMethod]
+    [DataRow("\"api/v2\"")]
+    [DataRow("\"\"")]
+    [DataRow("\"other\"")]
     public void StringWithoutMatchingPrefixIsRejected(string json)
     {
-        var instance = this.fixture.DynamicJsonType.ParseInstance(json);
-        Assert.False(instance.EvaluateSchema());
+        var instance = s_fixture!.DynamicJsonType.ParseInstance(json);
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

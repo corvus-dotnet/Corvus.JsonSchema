@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.WithMutationAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ011 code fix: With*() to Set*() with unchaining and nested collapse.
 /// </summary>
+[TestClass]
 public class WithMutationCodeFixTests
 {
     private const string V4Stubs = @"
@@ -99,7 +100,7 @@ namespace TestApp
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task SimpleWith_RenamesAndDropsAssignment()
     {
         var test = new CodeFixTest
@@ -139,7 +140,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ChainedWith_UnchainsToSeparateStatements()
     {
         var test = new CodeFixTest
@@ -186,7 +187,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NestedExtractMutateReassign_CollapsesToDeepSetter()
     {
         var test = new CodeFixTest
@@ -232,7 +233,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task InlineNestedChain_UnchainsAndRenamesBoth()
     {
         var test = new CodeFixTest
@@ -279,7 +280,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task InlineNestedChainWithMultipleOuterCalls_UnchainsAll()
     {
         var test = new CodeFixTest
@@ -336,7 +337,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WithMutation_CommentsInChain_PreservesComments()
     {
         // Comments between chained With calls should be preserved
@@ -388,7 +389,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WithMutation_VarType_DoesNotRewriteType()
     {
         // var should remain var; the code fix should not try to
@@ -430,7 +431,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WithMutation_AlreadyMutable_NoDiagnostic()
     {
         // Person.Mutable doesn't implement IJsonValue, so no diagnostic fires
@@ -454,7 +455,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WithMutation_PropertyReceiver_NoTypeRewrite()
     {
         // When the receiver is a property/field access (not a local),
@@ -498,7 +499,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WithMutation_ExpressionLambda_RenamesOnly()
     {
         // Expression lambda: p => p.WithName("test")
@@ -542,7 +543,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task WithMutation_BlockLambda_RenamesAndUnchains()
     {
         // Block lambda with assignment: code fix should work within
@@ -594,7 +595,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SetProperty_DetectedAndUnchained()
     {
         var test = new CodeFixTest
@@ -634,7 +635,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RemoveProperty_DetectedAndUnchained()
     {
         var test = new CodeFixTest
@@ -674,7 +675,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SetProperty_ChainedWithWith_UnchainsAll()
     {
         var test = new CodeFixTest
@@ -721,7 +722,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task SetProperty_ChainedMultiple_UnchainsAll()
     {
         var test = new CodeFixTest

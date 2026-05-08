@@ -6,14 +6,15 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.SyncGenerator;
 
-[Trait("spec", "SyncGenerator")]
+[TestCategory("SyncGenerator")]
+[TestClass]
 public class SyncGeneratorTests
 {
-    [Fact]
+    [TestMethod]
     public void SynchronousTypeGenerationValidString()
     {
         string schema = """
@@ -34,10 +35,10 @@ public class SyncGeneratorTests
         using var doc = JsonDocument.Parse("\"hello\"");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement);
         ValidationContext result = instance.Validate(ValidationContext.ValidContext);
-        Assert.True(result.IsValid);
+        Assert.IsTrue(result.IsValid);
     }
 
-    [Fact]
+    [TestMethod]
     public void SynchronousTypeGenerationInvalidNumber()
     {
         string schema = """
@@ -58,6 +59,6 @@ public class SyncGeneratorTests
         using var doc = JsonDocument.Parse("33");
         IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(generatedType, doc.RootElement);
         ValidationContext result = instance.Validate(ValidationContext.ValidContext);
-        Assert.False(result.IsValid);
+        Assert.IsFalse(result.IsValid);
     }
 }

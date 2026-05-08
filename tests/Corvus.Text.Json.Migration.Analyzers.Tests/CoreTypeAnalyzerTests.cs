@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.CoreTypeAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ007 (JsonAny → JsonElement) and CVJ009 (typed core types).
 /// </summary>
+[TestClass]
 public class CoreTypeAnalyzerTests
 {
     private const string V4Stubs = @"
@@ -39,7 +40,7 @@ namespace Corvus.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task JsonAny_TriggersCVJ007_AndCodeFixReplacesWithJsonElement()
     {
         var test = new CodeFixTest
@@ -77,7 +78,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task JsonObject_TriggersCVJ009()
     {
         const string testCode = V4Stubs + @"
@@ -99,7 +100,7 @@ namespace TestApp
                 .WithArguments("JsonObject"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonCorvusJsonAny_NoDiagnostic()
     {
         const string testCode = @"
@@ -122,7 +123,7 @@ namespace TestApp
         await VerifyCVJ007.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task JsonAnyInsideUsingDirective_NoDiagnostic()
     {
         // CVJ001 handles using directives, not CVJ007

@@ -6,8 +6,7 @@ using System.Text;
 using global::System.Text.Json;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Yaml;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Yaml.Tests;
 
@@ -15,6 +14,7 @@ namespace Corvus.Text.Json.Yaml.Tests;
 /// Conformance tests driven by the yaml-test-suite (data branch).
 /// Each test case is a directory with in.yaml, optionally in.json (expected), and/or error.
 /// </summary>
+[TestClass]
 public class YamlConformanceTests
 {
     private static readonly string TestSuitePath = FindTestSuitePath();
@@ -37,31 +37,24 @@ public class YamlConformanceTests
             AppContext.BaseDirectory, "..", "..", "..", "..", "..", "yaml-test-suite"));
     }
 
-    private readonly ITestOutputHelper _output;
-
-    public YamlConformanceTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
-
-    [Fact]
+    [TestMethod]
     public void TestSuitePathIsValid()
     {
-        _output.WriteLine($"TestSuitePath: '{TestSuitePath}'");
-        _output.WriteLine($"Exists: {Directory.Exists(TestSuitePath)}");
+        Console.WriteLine($"TestSuitePath: '{TestSuitePath}'");
+        Console.WriteLine($"Exists: {Directory.Exists(TestSuitePath)}");
         if (Directory.Exists(TestSuitePath))
         {
-            _output.WriteLine($"Subdirs: {Directory.GetDirectories(TestSuitePath).Length}");
+            Console.WriteLine($"Subdirs: {Directory.GetDirectories(TestSuitePath).Length}");
         }
 
-        Assert.True(Directory.Exists(TestSuitePath), $"yaml-test-suite not found at '{TestSuitePath}'");
+        Assert.IsTrue(Directory.Exists(TestSuitePath), $"yaml-test-suite not found at '{TestSuitePath}'");
     }
 
     /// <summary>
     /// Valid test cases: parse in.yaml and compare to in.json.
     /// </summary>
-    [Theory]
-    [MemberData(nameof(ValidTestCases))]
+    [TestMethod]
+    [DynamicData(nameof(ValidTestCases))]
     public void ValidCase(string id, string name)
     {
         string dir = Path.Combine(TestSuitePath, id);
@@ -105,7 +98,7 @@ public class YamlConformanceTests
                     actualLength++;
                 }
 
-                Assert.Equal(expectedValues.Count, actualLength);
+                Assert.AreEqual(expectedValues.Count, actualLength);
 
                 // Compare each document
                 int i = 0;
@@ -118,7 +111,7 @@ public class YamlConformanceTests
             }
             catch (YamlException ex)
             {
-                _output.WriteLine($"[{id}] {name}: YamlException: {ex.Message}");
+                Console.WriteLine($"[{id}] {name}: YamlException: {ex.Message}");
                 throw;
             }
 
@@ -133,7 +126,7 @@ public class YamlConformanceTests
         }
         catch (YamlException ex)
         {
-            _output.WriteLine($"[{id}] {name}: YamlException: {ex.Message}");
+            Console.WriteLine($"[{id}] {name}: YamlException: {ex.Message}");
             throw;
         }
     }
@@ -141,8 +134,8 @@ public class YamlConformanceTests
     /// <summary>
     /// Error test cases: parsing in.yaml should throw <see cref="YamlException"/>.
     /// </summary>
-    [Theory]
-    [MemberData(nameof(ErrorTestCases))]
+    [TestMethod]
+    [DynamicData(nameof(ErrorTestCases))]
     public void ErrorCase(string id, string name)
     {
         string dir = Path.Combine(TestSuitePath, id);
@@ -152,7 +145,7 @@ public class YamlConformanceTests
         {
             using ParsedJsonDocument<Corvus.Text.Json.JsonElement> doc = YamlDocument.Parse<JsonElement>(yamlBytes);
             string rawText = doc.RootElement.GetRawText();
-            _output.WriteLine($"[{id}] {name}: Expected error but parsed OK: {rawText}");
+            Console.WriteLine($"[{id}] {name}: Expected error but parsed OK: {rawText}");
             Assert.Fail($"[{id}] {name}: Expected YamlException but parsed successfully: {rawText}");
         }
         catch (YamlException)
@@ -268,7 +261,7 @@ public class YamlConformanceTests
         using JsonDocument actualDoc = JsonDocument.Parse(actual);
 
         // Use deep comparison that is order-independent for object keys
-        Assert.True(
+        Assert.IsTrue(
             JsonElementDeepEquals(expectedDoc.RootElement, actualDoc.RootElement),
             $"[{id}] {name}:\n  Expected: {JsonSerializer.Serialize(expectedDoc.RootElement)}\n  Actual:   {JsonSerializer.Serialize(actualDoc.RootElement)}");
     }

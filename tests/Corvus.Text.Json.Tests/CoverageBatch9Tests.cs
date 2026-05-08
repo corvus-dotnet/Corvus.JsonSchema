@@ -6,7 +6,7 @@ using System;
 using System.Buffers;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -14,15 +14,16 @@ namespace Corvus.Text.Json.Tests;
 /// Coverage batch 9: targeting RawUtf8JsonString, Utf8UriDomainNameHelper,
 /// and JsonHelpers.ValidateInt32MaxArrayLength.
 /// </summary>
-public static class CoverageBatch9Tests
+[TestClass]
+public class CoverageBatch9Tests
 {
     #region RawUtf8JsonString — TakeOwnership (lines 56-59)
 
     /// <summary>
     /// Exercises <c>RawUtf8JsonString.TakeOwnership</c> with a rented buffer.
     /// </summary>
-    [Fact]
-    public static void RawUtf8JsonString_TakeOwnership_ReturnsRentedBuffer()
+    [TestMethod]
+    public void RawUtf8JsonString_TakeOwnership_ReturnsRentedBuffer()
     {
         byte[] rented = ArrayPool<byte>.Shared.Rent(64);
         rented.AsSpan(0, 5).Fill((byte)'A');
@@ -31,8 +32,8 @@ public static class CoverageBatch9Tests
 
         ReadOnlyMemory<byte> memory = raw.TakeOwnership(out byte[]? extraBytes);
 
-        Assert.Equal(5, memory.Length);
-        Assert.Same(rented, extraBytes);
+        Assert.AreEqual(5, memory.Length);
+        Assert.AreSame(rented, extraBytes);
 
         // Clean up
         if (extraBytes != null)
@@ -48,16 +49,16 @@ public static class CoverageBatch9Tests
     /// <summary>
     /// Exercises <c>RawUtf8JsonString.TakeOwnership</c> without a rented buffer.
     /// </summary>
-    [Fact]
-    public static void RawUtf8JsonString_TakeOwnership_NoRentedBuffer()
+    [TestMethod]
+    public void RawUtf8JsonString_TakeOwnership_NoRentedBuffer()
     {
         byte[] data = [1, 2, 3];
         RawUtf8JsonString raw = new(data.AsMemory());
 
         ReadOnlyMemory<byte> memory = raw.TakeOwnership(out byte[]? extraBytes);
 
-        Assert.Equal(3, memory.Length);
-        Assert.Null(extraBytes);
+        Assert.AreEqual(3, memory.Length);
+        Assert.IsNull(extraBytes);
     }
 
     #endregion
@@ -67,8 +68,8 @@ public static class CoverageBatch9Tests
     /// <summary>
     /// Exercises <c>RawUtf8JsonString.Dispose</c> with a rented buffer that gets returned.
     /// </summary>
-    [Fact]
-    public static void RawUtf8JsonString_Dispose_ReturnsRentedBuffer()
+    [TestMethod]
+    public void RawUtf8JsonString_Dispose_ReturnsRentedBuffer()
     {
         byte[] rented = ArrayPool<byte>.Shared.Rent(64);
         rented.AsSpan(0, 10).Fill((byte)'X');
@@ -82,7 +83,7 @@ public static class CoverageBatch9Tests
         try
         {
             // The first 10 bytes should have been cleared by Dispose
-            Assert.Equal(0, secondRent[0]);
+            Assert.AreEqual(0, secondRent[0]);
         }
         finally
         {
@@ -97,8 +98,8 @@ public static class CoverageBatch9Tests
     /// <summary>
     /// Exercises <c>RawUtf8JsonString.Dispose</c> called twice — should be safe.
     /// </summary>
-    [Fact]
-    public static void RawUtf8JsonString_DoubleDispose_NoThrow()
+    [TestMethod]
+    public void RawUtf8JsonString_DoubleDispose_NoThrow()
     {
         byte[] rented = ArrayPool<byte>.Shared.Rent(64);
         RawUtf8JsonString raw = new(rented.AsMemory(0, 5), rented);
@@ -113,13 +114,13 @@ public static class CoverageBatch9Tests
     /// <summary>
     /// A hostname that is empty after delimiter trimming fails validation (lines 86-87).
     /// </summary>
-    [Fact]
-    public static void DomainNameHelper_EmptyHostname_ReturnsFalse()
+    [TestMethod]
+    public void DomainNameHelper_EmptyHostname_ReturnsFalse()
     {
         // Empty hostname — length == 0 path
         bool result = Utf8UriDomainNameHelper.IsValid(ReadOnlySpan<byte>.Empty, iri: false, notImplicitFile: true, out int length);
-        Assert.False(result);
-        Assert.Equal(0, length);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, length);
     }
 
     #endregion
@@ -129,12 +130,12 @@ public static class CoverageBatch9Tests
     /// <summary>
     /// A hostname starting with a non-alphanumeric character (e.g. dot) fails validation (lines 100-101).
     /// </summary>
-    [Fact]
-    public static void DomainNameHelper_DotFirstChar_ReturnsFalse()
+    [TestMethod]
+    public void DomainNameHelper_DotFirstChar_ReturnsFalse()
     {
         // A label starting with '.' — not alphanumeric, triggers lines 100-101
         bool result = Utf8UriDomainNameHelper.IsValid(".example.com"u8, iri: false, notImplicitFile: true, out int length);
-        Assert.False(result);
+        Assert.IsFalse(result);
     }
 
     #endregion
@@ -144,13 +145,13 @@ public static class CoverageBatch9Tests
     /// <summary>
     /// A hostname ending with a dot is a valid FQDN (lines 142-145).
     /// </summary>
-    [Fact]
-    public static void DomainNameHelper_TrailingDot_ReturnsTrue()
+    [TestMethod]
+    public void DomainNameHelper_TrailingDot_ReturnsTrue()
     {
         // "example.com." — valid FQDN with trailing dot
         bool result = Utf8UriDomainNameHelper.IsValid("example.com."u8, iri: false, notImplicitFile: true, out int length);
-        Assert.True(result);
-        Assert.Equal(12, length); // "example.com." = 12 bytes
+        Assert.IsTrue(result);
+        Assert.AreEqual(12, length); // "example.com." = 12 bytes
     }
 
     #endregion
@@ -164,15 +165,15 @@ public static class CoverageBatch9Tests
     /// multi-byte dot width, so IsValid returns false for multi-byte IRI dots.
     /// This test verifies the current (buggy) behavior while exercising the code path.
     /// </summary>
-    [Fact]
-    public static void DomainNameHelper_IriUnicodeFullStop_ExercisesIndexOfIriDot()
+    [TestMethod]
+    public void DomainNameHelper_IriUnicodeFullStop_ExercisesIndexOfIriDot()
     {
         // "example" + \u3002 (E3 80 82 in UTF-8) + "com"
         // IndexOfIriDot finds the dot at position 7 (lines 203-204 HIT),
         // but Slice(7+1) incorrectly leaves 0x80 as first char of next label → false
         byte[] hostname = System.Text.Encoding.UTF8.GetBytes("example\u3002com");
         bool result = Utf8UriDomainNameHelper.IsValid(hostname, iri: true, notImplicitFile: true, out int length);
-        Assert.False(result); // BUG: should be true, but line 140 slicing is wrong
+        Assert.IsFalse(result); // BUG: should be true, but line 140 slicing is wrong
     }
 
     #endregion
@@ -183,11 +184,11 @@ public static class CoverageBatch9Tests
     /// Exercises <c>JsonHelpers.ValidateInt32MaxArrayLength</c> with a value exceeding
     /// the maximum allowed array length, causing OutOfMemoryException (lines 115-116).
     /// </summary>
-    [Fact]
-    public static void JsonHelpers_ValidateInt32MaxArrayLength_ThrowsOnOverflow()
+    [TestMethod]
+    public void JsonHelpers_ValidateInt32MaxArrayLength_ThrowsOnOverflow()
     {
         // 0x7FEFFFFF is the max; anything above should throw
-        Assert.Throws<OutOfMemoryException>(() => JsonHelpers.ValidateInt32MaxArrayLength(0x7FF00000));
+        Assert.ThrowsExactly<OutOfMemoryException>(() => JsonHelpers.ValidateInt32MaxArrayLength(0x7FF00000));
     }
 
     #endregion

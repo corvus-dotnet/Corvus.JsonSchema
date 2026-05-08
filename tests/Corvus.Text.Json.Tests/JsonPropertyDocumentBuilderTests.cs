@@ -4,14 +4,15 @@
 using System.Buffers;
 using System.Linq;
 using Corvus.Runtime.InteropServices;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
-public static class JsonPropertyDocumentBuilderTests
+[TestClass]
+public class JsonPropertyDocumentBuilderTests
 {
-    [Fact]
-    public static void CheckByPassingNullWriter()
+    [TestMethod]
+    public void CheckByPassingNullWriter()
     {
         using (var workspace = JsonWorkspace.Create())
         using (var parsedDoc = ParsedJsonDocument<JsonElement>.Parse("{\"First\":1}", default))
@@ -19,15 +20,15 @@ public static class JsonPropertyDocumentBuilderTests
         {
             foreach (JsonProperty<JsonElement.Mutable> property in doc.RootElement.EnumerateObject())
             {
-                AssertExtensions.Throws<ArgumentNullException>("writer", () => property.WriteTo(null));
+                AssertEx.ThrowsExactly<ArgumentNullException>("writer", () => property.WriteTo(null));
             }
         }
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public static void WriteObjectValidations(bool skipValidation)
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void WriteObjectValidations(bool skipValidation)
     {
         var buffer = new ArrayBufferWriter<byte>(1024);
         using (var workspace = JsonWorkspace.Create())
@@ -53,7 +54,7 @@ public static class JsonPropertyDocumentBuilderTests
             {
                 foreach (JsonProperty<JsonElement.Mutable> property in root.EnumerateObject())
                 {
-                    Assert.Throws<InvalidOperationException>(() =>
+                    Assert.ThrowsExactly<InvalidOperationException>(() =>
                     {
                         property.WriteTo(writer);
                     });
@@ -64,8 +65,8 @@ public static class JsonPropertyDocumentBuilderTests
         }
     }
 
-    [Fact]
-    public static void WriteSimpleObject()
+    [TestMethod]
+    public void WriteSimpleObject()
     {
         var buffer = new ArrayBufferWriter<byte>(1024);
         using (var workspace = JsonWorkspace.Create())
@@ -87,7 +88,7 @@ public static class JsonPropertyDocumentBuilderTests
 
     private static void AssertContents(string expectedValue, ArrayBufferWriter<byte> buffer)
     {
-        Assert.Equal(
+        Assert.AreEqual(
             expectedValue,
             Encoding.UTF8.GetString(
                 buffer.WrittenSpan
@@ -97,12 +98,12 @@ public static class JsonPropertyDocumentBuilderTests
                 ));
     }
 
-    [Theory]
-    [InlineData("conne\\u0063tionId", "connectionId")]
-    [InlineData("connectionId", "connectionId")]
-    [InlineData("123", "123")]
-    [InlineData("My name is \\\"Ahson\\\"", "My name is \"Ahson\"")]
-    public static void NameEquals_UseGoodMatches_True(string propertyName, string otherText)
+    [TestMethod]
+    [DataRow("conne\\u0063tionId", "connectionId")]
+    [DataRow("connectionId", "connectionId")]
+    [DataRow("123", "123")]
+    [DataRow("My name is \\\"Ahson\\\"", "My name is \"Ahson\"")]
+    public void NameEquals_UseGoodMatches_True(string propertyName, string otherText)
     {
         string jsonString = $"{{ \"{propertyName}\" : \"itsValue\" }}";
         using (var workspace = JsonWorkspace.Create())
@@ -112,18 +113,18 @@ public static class JsonPropertyDocumentBuilderTests
             JsonElement.Mutable jElement = doc.RootElement;
             JsonProperty<JsonElement.Mutable> property = jElement.EnumerateObject().First();
             byte[] expectedGetBytes = Encoding.UTF8.GetBytes(otherText);
-            Assert.True(property.NameEquals(otherText));
-            Assert.True(property.NameEquals(otherText.AsSpan()));
-            Assert.True(property.NameEquals(expectedGetBytes));
+            Assert.IsTrue(property.NameEquals(otherText));
+            Assert.IsTrue(property.NameEquals(otherText.AsSpan()));
+            Assert.IsTrue(property.NameEquals(expectedGetBytes));
         }
     }
 
-    [Theory]
-    [InlineData("conne\\u0063tionId", "conne\\u0063tionId")]
-    [InlineData("connectionId", "connectionId")]
-    [InlineData("123", "123")]
-    [InlineData("My name is \\\"Ahson\\\"", "My name is \\\"Ahson\\\"")]
-    public static void JsonMarshal_GetRawUtf8PropertyName_UseGoodMatches_True(string propertyName, string otherText)
+    [TestMethod]
+    [DataRow("conne\\u0063tionId", "conne\\u0063tionId")]
+    [DataRow("connectionId", "connectionId")]
+    [DataRow("123", "123")]
+    [DataRow("My name is \\\"Ahson\\\"", "My name is \\\"Ahson\\\"")]
+    public void JsonMarshal_GetRawUtf8PropertyName_UseGoodMatches_True(string propertyName, string otherText)
     {
         string jsonString = $"{{ \"{propertyName}\" : \"itsValue\" }}";
         using (var workspace = JsonWorkspace.Create())
@@ -133,12 +134,12 @@ public static class JsonPropertyDocumentBuilderTests
             JsonElement.Mutable jElement = doc.RootElement;
             JsonProperty<JsonElement.Mutable> property = jElement.EnumerateObject().First();
             byte[] expectedGetBytes = Encoding.UTF8.GetBytes(otherText);
-            Assert.True(JsonMarshal.GetRawUtf8PropertyName(property).SequenceEqual(expectedGetBytes));
+            Assert.IsTrue(JsonMarshal.GetRawUtf8PropertyName(property).SequenceEqual(expectedGetBytes));
         }
     }
 
-    [Fact]
-    public static void NameEquals_GivenPropertyAndValue_TrueForPropertyName()
+    [TestMethod]
+    public void NameEquals_GivenPropertyAndValue_TrueForPropertyName()
     {
         string jsonString = $"{{ \"aPropertyName\" : \"itsValue\" }}";
         using (var workspace = JsonWorkspace.Create())
@@ -150,15 +151,15 @@ public static class JsonPropertyDocumentBuilderTests
 
             string text = "aPropertyName";
             byte[] expectedGetBytes = Encoding.UTF8.GetBytes(text);
-            Assert.True(property.NameEquals(text));
-            Assert.True(property.NameEquals(text.AsSpan()));
-            Assert.True(property.NameEquals(expectedGetBytes));
+            Assert.IsTrue(property.NameEquals(text));
+            Assert.IsTrue(property.NameEquals(text.AsSpan()));
+            Assert.IsTrue(property.NameEquals(expectedGetBytes));
 
             text = "itsValue";
             expectedGetBytes = Encoding.UTF8.GetBytes(text);
-            Assert.False(property.NameEquals(text));
-            Assert.False(property.NameEquals(text.AsSpan()));
-            Assert.False(property.NameEquals(expectedGetBytes));
+            Assert.IsFalse(property.NameEquals(text));
+            Assert.IsFalse(property.NameEquals(text.AsSpan()));
+            Assert.IsFalse(property.NameEquals(expectedGetBytes));
         }
     }
 }

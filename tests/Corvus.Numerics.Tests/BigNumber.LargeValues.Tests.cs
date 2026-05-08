@@ -5,15 +5,16 @@
 using System.Numerics;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
+[TestClass]
 public class BigNumberLargeValuesTests
 {
     #region Values Beyond Decimal Range
 
-    [Fact]
+    [TestMethod]
     public void Constructor_WithValueBeyondDecimalMax_Succeeds()
     {
         // decimal.MaxValue is approximately 7.9 × 10^28
@@ -25,7 +26,7 @@ public class BigNumberLargeValuesTests
         huge.Exponent.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void Constructor_WithValueBeyondDecimalMin_Succeeds()
     {
         // Create a value smaller than decimal can represent
@@ -35,7 +36,7 @@ public class BigNumberLargeValuesTests
         tiny.Exponent.ShouldBe(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Addition_LargeNumbers_BeyondDecimalRange_Succeeds()
     {
         // Create numbers beyond decimal.MaxValue
@@ -53,7 +54,7 @@ public class BigNumberLargeValuesTests
         sum.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Subtraction_LargeNumbers_BeyondDecimalRange_Succeeds()
     {
         BigNumber large1 = new(BigInteger.Parse("99999999999999999999999999999999999999"), 0);
@@ -64,7 +65,7 @@ public class BigNumberLargeValuesTests
         diff.Significand.ShouldBe(BigInteger.Parse("88888888888888888888888888888888888888"));
     }
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_LargeNumbers_BeyondDecimalRange_Succeeds()
     {
         // Multiply large numbers
@@ -79,7 +80,7 @@ public class BigNumberLargeValuesTests
         product.Significand.ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_LargeNumbers_BeyondDecimalRange_Succeeds()
     {
         BigNumber large1 = new(BigInteger.Parse("999999999999999999999999999999"), 0);
@@ -91,7 +92,7 @@ public class BigNumberLargeValuesTests
         quotient.Significand.ShouldNotBe(BigInteger.Zero);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_VeryLargeNumber_Succeeds()
     {
         string largeNumber = "123456789012345678901234567890123456789012345678901234567890";
@@ -101,7 +102,7 @@ public class BigNumberLargeValuesTests
         parsed.Exponent.ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_VerySmallNumber_Succeeds()
     {
         // A number with 100 decimal places
@@ -114,7 +115,7 @@ public class BigNumberLargeValuesTests
         normalized.Exponent.ShouldBe(-108);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ScientificNotation_LargeExponent_Succeeds()
     {
         var parsed = BigNumber.Parse("1.23E+100");
@@ -124,7 +125,7 @@ public class BigNumberLargeValuesTests
         normalized.Exponent.ShouldBe(98);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_ScientificNotation_LargeNegativeExponent_Succeeds()
     {
         var parsed = BigNumber.Parse("1.23E-100");
@@ -138,7 +139,7 @@ public class BigNumberLargeValuesTests
 
     #region Comparison of Large Values
 
-    [Fact]
+    [TestMethod]
     public void Comparison_VeryLargeNumbers_WorksCorrectly()
     {
         BigNumber huge1 = new(BigInteger.Parse("999999999999999999999999999999999999999"), 50);
@@ -149,7 +150,7 @@ public class BigNumberLargeValuesTests
         (huge1 != huge2).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Comparison_DifferentMagnitudes_WorksCorrectly()
     {
         BigNumber huge = new(1, 100);      // 10^100
@@ -159,7 +160,7 @@ public class BigNumberLargeValuesTests
         (normal < huge).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Comparison_VerySmallNumbers_WorksCorrectly()
     {
         BigNumber tiny1 = new(123, -100);  // 123 × 10^-100
@@ -173,7 +174,7 @@ public class BigNumberLargeValuesTests
 
     #region Edge Cases with Exponents
 
-    [Fact]
+    [TestMethod]
     public void Exponent_MaxLongValue_HandledCorrectly()
     {
         // Use close to max long value for exponent
@@ -183,7 +184,7 @@ public class BigNumberLargeValuesTests
         value.Significand.ShouldBe(new BigInteger(123));
     }
 
-    [Fact]
+    [TestMethod]
     public void Exponent_MinLongValue_HandledCorrectly()
     {
         // Use close to min long value for exponent
@@ -193,7 +194,7 @@ public class BigNumberLargeValuesTests
         value.Significand.ShouldBe(new BigInteger(123));
     }
 
-    [Fact]
+    [TestMethod]
     public void Addition_WithExtremeExponents_WorksCorrectly()
     {
         // When exponents are vastly different, the smaller value becomes negligible
@@ -218,7 +219,7 @@ public class BigNumberLargeValuesTests
 
     #region 100+ Digit Numbers
 
-    [Fact]
+    [TestMethod]
     public void Parse_100DigitInteger_Succeeds()
     {
         // Create a 100-digit number
@@ -229,7 +230,7 @@ public class BigNumberLargeValuesTests
         parsed.Exponent.ShouldBe(1);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_100DigitDecimal_Succeeds()
     {
         // Create a number with 100 decimal places
@@ -243,7 +244,7 @@ public class BigNumberLargeValuesTests
         normalized.Exponent.ShouldBeGreaterThanOrEqualTo(-100);
     }
 
-    [Fact]
+    [TestMethod]
     public void Arithmetic_With100DigitNumbers_Succeeds()
     {
         string num1Str = string.Concat(Enumerable.Range(1, 10).Select(i => "9999999999"));
@@ -266,7 +267,7 @@ public class BigNumberLargeValuesTests
 
     #region Precision Tests
 
-    [Fact]
+    [TestMethod]
     public void Division_HighPrecision_Maintains150Digits()
     {
         BigNumber a = 10;
@@ -279,7 +280,7 @@ public class BigNumberLargeValuesTests
         resultStr.Length.ShouldBeGreaterThanOrEqualTo(150);
     }
 
-    [Fact]
+    [TestMethod]
     public void Division_VeryHighPrecision_200Digits_Succeeds()
     {
         BigNumber a = 22;
@@ -296,7 +297,7 @@ public class BigNumberLargeValuesTests
 
     #region Formatting Large Values
 
-    [Fact]
+    [TestMethod]
     public void ToString_VeryLargeNumber_Succeeds()
     {
         BigNumber huge = new(BigInteger.Parse("999999999999999999999999999999"), 50);
@@ -307,7 +308,7 @@ public class BigNumberLargeValuesTests
         str.ShouldContain("E", Case.Insensitive);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_VerySmallNumber_Succeeds()
     {
         BigNumber tiny = new(123, -50);
@@ -317,7 +318,7 @@ public class BigNumberLargeValuesTests
         str.ShouldNotBeNullOrEmpty();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_VeryLargeNumber_Succeeds()
     {
         BigNumber huge = new(BigInteger.Parse("999999999999999999999999999999"), 0);
@@ -333,7 +334,7 @@ public class BigNumberLargeValuesTests
 
     #region Special Value Combinations
 
-    [Fact]
+    [TestMethod]
     public void Multiplication_ByHugeExponent_Succeeds()
     {
         BigNumber num = new(123, 50);
@@ -345,7 +346,7 @@ public class BigNumberLargeValuesTests
         product.Significand.ShouldBe(new BigInteger(123 * 456));
     }
 
-    [Fact]
+    [TestMethod]
     public void Addition_MixedMagnitudes_BeyondDecimal_Succeeds()
     {
         // One very large, one very small
@@ -363,7 +364,7 @@ public class BigNumberLargeValuesTests
         (sum > huge).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_LargeNumberWithTrailingZeros_RemovesZeros()
     {
         // Create a large number with many trailing zeros
@@ -382,7 +383,7 @@ public class BigNumberLargeValuesTests
 
     #region Conversion Edge Cases
 
-    [Fact]
+    [TestMethod]
     public void ExplicitConversion_ToDecimal_LargeValueBeyondRange_ThrowsOverflow()
     {
         // This is beyond decimal range, conversion should throw
@@ -392,7 +393,7 @@ public class BigNumberLargeValuesTests
         Should.Throw<OverflowException>(() => (decimal)huge);
     }
 
-    [Fact]
+    [TestMethod]
     public void ExplicitConversion_ToDouble_VeryLargeNumber_BecomesInfinity()
     {
         // Create number beyond double range
@@ -404,7 +405,7 @@ public class BigNumberLargeValuesTests
         double.IsInfinity(result).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void ExplicitConversion_ToDouble_VerySmallNumber_BecomesZero()
     {
         // Create number smaller than double can represent
@@ -420,7 +421,7 @@ public class BigNumberLargeValuesTests
 
     #region Real-World Scenarios
 
-    [Fact]
+    [TestMethod]
     public void ScientificComputation_AvogadroNumber_Succeeds()
     {
         // Avogadro's number: 6.022 × 10^23
@@ -430,7 +431,7 @@ public class BigNumberLargeValuesTests
         avogadro.Exponent.ShouldBe(20);
     }
 
-    [Fact]
+    [TestMethod]
     public void ScientificComputation_PlancksConstant_Succeeds()
     {
         // Planck's constant: 6.626 × 10^-34 J⋅s
@@ -441,7 +442,7 @@ public class BigNumberLargeValuesTests
         normalized.Exponent.ShouldBe(-37);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cryptography_2048BitNumber_Succeeds()
     {
         // Simulate a 2048-bit number (approximately 617 decimal digits)
@@ -455,7 +456,7 @@ public class BigNumberLargeValuesTests
         prime.Significand.ToString().Length.ShouldBeGreaterThan(250);
     }
 
-    [Fact]
+    [TestMethod]
     public void Financial_NationalDebtCalculation_Succeeds()
     {
         // US National Debt is over 31 trillion dollars

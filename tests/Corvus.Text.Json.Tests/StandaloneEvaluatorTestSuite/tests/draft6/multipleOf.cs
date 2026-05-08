@@ -2,45 +2,53 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace StandaloneEvaluatorTestSuite.Draft6.MultipleOf;
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteByInt : IClassFixture<SuiteByInt.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteByInt
 {
-    private readonly Fixture _fixture;
-    public SuiteByInt(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestIntByInt()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("10");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIntByIntFail()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("7");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void TestIgnoresNonNumbers()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("\"foo\"");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -56,48 +64,56 @@ public class SuiteByInt : IClassFixture<SuiteByInt.Fixture>
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteByNumber
 {
-    private readonly Fixture _fixture;
-    public SuiteByNumber(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestZeroIsMultipleOfAnything()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("0");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void Test45IsMultipleOf15()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("4.5");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void Test45IsMultipleOf151()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("-4.5");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void Test35IsNotMultipleOf15()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("35");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -113,34 +129,42 @@ public class SuiteByNumber : IClassFixture<SuiteByNumber.Fixture>
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteBySmallNumber : IClassFixture<SuiteBySmallNumber.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteBySmallNumber
 {
-    private readonly Fixture _fixture;
-    public SuiteBySmallNumber(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test00075IsMultipleOf00001()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("0.0075");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    [Fact]
+    [TestMethod]
     public void Test000751IsNotMultipleOf00001()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("0.00751");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -156,27 +180,35 @@ public class SuiteBySmallNumber : IClassFixture<SuiteBySmallNumber.Fixture>
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteFloatDivisionInf : IClassFixture<SuiteFloatDivisionInf.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteFloatDivisionInf
 {
-    private readonly Fixture _fixture;
-    public SuiteFloatDivisionInf(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAlwaysInvalidButNaiveImplementationsMayRaiseAnOverflowError()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("1e308");
-        Assert.False(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -192,27 +224,35 @@ public class SuiteFloatDivisionInf : IClassFixture<SuiteFloatDivisionInf.Fixture
     }
 }
 
-[Trait("StandaloneEvaluatorTestSuite", "Draft6")]
-public class SuiteSmallMultipleOfLargeInteger : IClassFixture<SuiteSmallMultipleOfLargeInteger.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteSmallMultipleOfLargeInteger
 {
-    private readonly Fixture _fixture;
-    public SuiteSmallMultipleOfLargeInteger(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAnyIntegerIsAMultipleOf1e8()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("12391239123");
-        Assert.True(_fixture.Evaluator.Evaluate(doc.RootElement));
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

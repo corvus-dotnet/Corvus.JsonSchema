@@ -2,7 +2,7 @@
 
 using System;
 using System.Buffers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -11,7 +11,8 @@ namespace Corvus.Text.Json.Tests;
 /// WriteProperties byte-overload minimized Grow for remaining types,
 /// WriteProperties.Helpers all 3 Grow paths, and WriteValues.Double minimized Grow.
 /// </summary>
-public static class CoverageBatch18Tests
+[TestClass]
+public class CoverageBatch18Tests
 {
     #region WriteValues.Double minimized Grow (lines 57-59)
 
@@ -19,9 +20,9 @@ public static class CoverageBatch18Tests
     /// Writing many doubles in minimized array mode triggers minimized Grow.
     /// Target: Utf8JsonWriter.WriteValues.Double.cs lines 57-59.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDoubleMinimized_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDoubleMinimized_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -50,9 +51,9 @@ public static class CoverageBatch18Tests
     /// Triggers WritePropertyNameIndented(ReadOnlySpan&lt;byte&gt;, token) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Helpers.cs lines 99-102.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteStartObjectByteIndented_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteStartObjectByteIndented_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true, Indented = true });
@@ -74,16 +75,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("object_prop_0", result);
+        StringAssert.Contains(result, "object_prop_0");
     }
 
     /// <summary>
     /// Triggers WritePropertyNameMinimized(ReadOnlySpan&lt;byte&gt;, token) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Helpers.cs lines 184-187.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteStartObjectByteMinimized_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteStartObjectByteMinimized_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -105,16 +106,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("object_prop_0", result);
+        StringAssert.Contains(result, "object_prop_0");
     }
 
     /// <summary>
     /// Triggers WritePropertyNameMinimized(ReadOnlySpan&lt;char&gt;, token) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Helpers.cs lines 214-217.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteStartObjectCharMinimized_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteStartObjectCharMinimized_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -130,7 +131,7 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("object_prop_0", result);
+        StringAssert.Contains(result, "object_prop_0");
     }
 
     #endregion
@@ -141,9 +142,9 @@ public static class CoverageBatch18Tests
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;char&gt;, decimal) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Decimal.cs lines 318-321, 326-328.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDecimalPropertyChar_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDecimalPropertyChar_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -158,16 +159,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("decimal_prop_0", result);
+        StringAssert.Contains(result, "decimal_prop_0");
     }
 
     /// <summary>
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;char&gt;, double) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Double.cs lines 322-324, 329-331.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDoublePropertyChar_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDoublePropertyChar_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -182,16 +183,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("double_prop_0", result);
+        StringAssert.Contains(result, "double_prop_0");
     }
 
     /// <summary>
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;char&gt;, float) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Float.cs lines 322-324, 329-331.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteFloatPropertyChar_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteFloatPropertyChar_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -206,16 +207,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("float_prop_0", result);
+        StringAssert.Contains(result, "float_prop_0");
     }
 
     /// <summary>
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;char&gt;, long) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.SignedNumber.cs lines 391-394, 399-401.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteSignedNumberPropertyChar_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteSignedNumberPropertyChar_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -230,16 +231,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("signed_prop_0", result);
+        StringAssert.Contains(result, "signed_prop_0");
     }
 
     /// <summary>
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;char&gt;, ulong) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.UnsignedNumber.cs lines 400-403, 408-410.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteUnsignedNumberPropertyChar_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteUnsignedNumberPropertyChar_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -254,16 +255,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("unsigned_prop_0", result);
+        StringAssert.Contains(result, "unsigned_prop_0");
     }
 
     /// <summary>
     /// Triggers WriteStringMinimized(ReadOnlySpan&lt;char&gt; name, Guid) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Guid.cs lines 327-329, 334-336.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteGuidPropertyChar_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteGuidPropertyChar_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -278,16 +279,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("guid_prop_0", result);
+        StringAssert.Contains(result, "guid_prop_0");
     }
 
     /// <summary>
     /// Triggers WriteBase64Minimized(ReadOnlySpan&lt;char&gt; name, bytes) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Bytes.cs lines 323-326, 331-333.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteBytesPropertyChar_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteBytesPropertyChar_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -303,16 +304,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("bytes_prop_0", result);
+        StringAssert.Contains(result, "bytes_prop_0");
     }
 
     /// <summary>
     /// Triggers WriteStringMinimized(ReadOnlySpan&lt;char&gt; name, DateTime) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.DateTime.cs lines 325-327, 332-334.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimePropertyChar_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimePropertyChar_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -328,16 +329,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("datetime_prop_0", result);
+        StringAssert.Contains(result, "datetime_prop_0");
     }
 
     /// <summary>
     /// Triggers WriteStringMinimized(ReadOnlySpan&lt;char&gt; name, DateTimeOffset) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.DateTimeOffset.cs lines 324-326, 331-333.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDateTimeOffsetPropertyChar_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDateTimeOffsetPropertyChar_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -353,7 +354,7 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("dtoffset_prop_0", result);
+        StringAssert.Contains(result, "dtoffset_prop_0");
     }
 
     #endregion
@@ -364,9 +365,9 @@ public static class CoverageBatch18Tests
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;byte&gt;, decimal) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Decimal.cs lines 349-352.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDecimalPropertyByte_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDecimalPropertyByte_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -387,16 +388,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("dec_byte_0", result);
+        StringAssert.Contains(result, "dec_byte_0");
     }
 
     /// <summary>
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;byte&gt;, double) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Double.cs lines 353-355.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteDoublePropertyByte_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteDoublePropertyByte_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -417,16 +418,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("dbl_byte_0", result);
+        StringAssert.Contains(result, "dbl_byte_0");
     }
 
     /// <summary>
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;byte&gt;, float) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Float.cs lines 353-355.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteFloatPropertyByte_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteFloatPropertyByte_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -447,16 +448,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("flt_byte_0", result);
+        StringAssert.Contains(result, "flt_byte_0");
     }
 
     /// <summary>
     /// Triggers WriteStringMinimized(ReadOnlySpan&lt;byte&gt;, Guid) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.Guid.cs lines 362-364.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteGuidPropertyByte_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteGuidPropertyByte_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -477,16 +478,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("guid_byte_0", result);
+        StringAssert.Contains(result, "guid_byte_0");
     }
 
     /// <summary>
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;byte&gt;, long) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.SignedNumber.cs lines 422-425.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteSignedNumberPropertyByte_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteSignedNumberPropertyByte_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -507,16 +508,16 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("signed_byte_0", result);
+        StringAssert.Contains(result, "signed_byte_0");
     }
 
     /// <summary>
     /// Triggers WriteNumberMinimized(ReadOnlySpan&lt;byte&gt;, ulong) Grow.
     /// Target: Utf8JsonWriter.WriteProperties.UnsignedNumber.cs lines 431-434.
     /// </summary>
-    [Fact]
-    [Trait("category", "coverage")]
-    public static void Utf8JsonWriter_WriteUnsignedNumberPropertyByte_TriggersGrow()
+    [TestMethod]
+    [TestCategory("coverage")]
+    public void Utf8JsonWriter_WriteUnsignedNumberPropertyByte_TriggersGrow()
     {
         var bufferWriter = new ArrayBufferWriter<byte>(initialCapacity: 16);
         using var writer = new Utf8JsonWriter(bufferWriter, new JsonWriterOptions { SkipValidation = true });
@@ -537,7 +538,7 @@ public static class CoverageBatch18Tests
         writer.Flush();
 
         string result = System.Text.Encoding.UTF8.GetString(bufferWriter.WrittenMemory.ToArray());
-        Assert.Contains("unsigned_byte_0", result);
+        StringAssert.Contains(result, "unsigned_byte_0");
     }
 
     #endregion

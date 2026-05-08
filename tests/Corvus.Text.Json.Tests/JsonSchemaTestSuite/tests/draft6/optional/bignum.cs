@@ -2,38 +2,46 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft6.Optional.Bignum;
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteInteger : IClassFixture<SuiteInteger.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteInteger
 {
-    private readonly Fixture _fixture;
-    public SuiteInteger(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestABignumIsAnInteger()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("12345678910111213141516171819202122232425262728293031");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12345678910111213141516171819202122232425262728293031");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestANegativeBignumIsAnInteger()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("-12345678910111213141516171819202122232425262728293031");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("-12345678910111213141516171819202122232425262728293031");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -52,34 +60,42 @@ public class SuiteInteger : IClassFixture<SuiteInteger.Fixture>
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteNumber : IClassFixture<SuiteNumber.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteNumber
 {
-    private readonly Fixture _fixture;
-    public SuiteNumber(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestABignumIsANumber()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("98249283749234923498293171823948729348710298301928331");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("98249283749234923498293171823948729348710298301928331");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestANegativeBignumIsANumber()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("-98249283749234923498293171823948729348710298301928331");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("-98249283749234923498293171823948729348710298301928331");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -98,27 +114,35 @@ public class SuiteNumber : IClassFixture<SuiteNumber.Fixture>
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteString : IClassFixture<SuiteString.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteString
 {
-    private readonly Fixture _fixture;
-    public SuiteString(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestABignumIsNotAString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("98249283749234923498293171823948729348710298301928331");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("98249283749234923498293171823948729348710298301928331");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -137,27 +161,35 @@ public class SuiteString : IClassFixture<SuiteString.Fixture>
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteMaximumIntegerComparison : IClassFixture<SuiteMaximumIntegerComparison.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteMaximumIntegerComparison
 {
-    private readonly Fixture _fixture;
-    public SuiteMaximumIntegerComparison(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForHighNumbers()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("18446744073709551600");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("18446744073709551600");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -176,27 +208,35 @@ public class SuiteMaximumIntegerComparison : IClassFixture<SuiteMaximumIntegerCo
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteFloatComparisonWithHighPrecision : IClassFixture<SuiteFloatComparisonWithHighPrecision.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteFloatComparisonWithHighPrecision
 {
-    private readonly Fixture _fixture;
-    public SuiteFloatComparisonWithHighPrecision(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForHighNumbers()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("972783798187987123879878123.188781371");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("972783798187987123879878123.188781371");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -215,27 +255,35 @@ public class SuiteFloatComparisonWithHighPrecision : IClassFixture<SuiteFloatCom
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteMinimumIntegerComparison : IClassFixture<SuiteMinimumIntegerComparison.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteMinimumIntegerComparison
 {
-    private readonly Fixture _fixture;
-    public SuiteMinimumIntegerComparison(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForVeryNegativeNumbers()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("-18446744073709551600");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("-18446744073709551600");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -254,27 +302,35 @@ public class SuiteMinimumIntegerComparison : IClassFixture<SuiteMinimumIntegerCo
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft6")]
-public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers : IClassFixture<SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers
 {
-    private readonly Fixture _fixture;
-    public SuiteFloatComparisonWithHighPrecisionOnNegativeNumbers(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestComparisonWorksForVeryNegativeNumbers()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("-972783798187987123879878123.188781371");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("-972783798187987123879878123.188781371");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

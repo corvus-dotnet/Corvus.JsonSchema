@@ -3,267 +3,268 @@
 
 using NodaTime;
 using NodaTime.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
-public static class JsonElementSourceCoverageTests
+[TestClass]
+public class JsonElementSourceCoverageTests
 {
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Byte()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Byte()
     {
         using var workspace = JsonWorkspace.Create();
         byte value = 42;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetByte());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetByte());
         
         // Validate JSON string representation
         string json = doc.RootElement.GetRawText();
-        Assert.Equal("42", json);
+        Assert.AreEqual("42", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_SByte()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_SByte()
     {
         using var workspace = JsonWorkspace.Create();
         sbyte value = -42;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetSByte());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetSByte());
         
         string json = doc.RootElement.GetRawText();
-        Assert.Equal("-42", json);
+        Assert.AreEqual("-42", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Short()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Short()
     {
         using var workspace = JsonWorkspace.Create();
         short value = -1234;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetInt16());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetInt16());
         
         string json = doc.RootElement.GetRawText();
-        Assert.Equal("-1234", json);
+        Assert.AreEqual("-1234", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_UShort()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_UShort()
     {
         using var workspace = JsonWorkspace.Create();
         ushort value = 12345;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetUInt16());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetUInt16());
         
         string json = doc.RootElement.GetRawText();
-        Assert.Equal("12345", json);
+        Assert.AreEqual("12345", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Int()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Int()
     {
         using var workspace = JsonWorkspace.Create();
         int value = -123456;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetInt32());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetInt32());
         
         string json = doc.RootElement.GetRawText();
-        Assert.Equal("-123456", json);
+        Assert.AreEqual("-123456", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_UInt()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_UInt()
     {
         using var workspace = JsonWorkspace.Create();
         uint value = 123456u;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetUInt32());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetUInt32());
         
         string json = doc.RootElement.GetRawText();
-        Assert.Equal("123456", json);
+        Assert.AreEqual("123456", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Long()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Long()
     {
         using var workspace = JsonWorkspace.Create();
         long value = -123456789012345L;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetInt64());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetInt64());
         
         string json = doc.RootElement.GetRawText();
-        Assert.Equal("-123456789012345", json);
+        Assert.AreEqual("-123456789012345", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_ULong()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_ULong()
     {
         using var workspace = JsonWorkspace.Create();
         ulong value = 123456789012345UL;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetUInt64());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetUInt64());
         
         string json = doc.RootElement.GetRawText();
-        Assert.Equal("123456789012345", json);
+        Assert.AreEqual("123456789012345", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Float()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Float()
     {
         using var workspace = JsonWorkspace.Create();
         float value = 3.14159f;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetSingle());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetSingle());
         
         // Validate the number was written
         string json = doc.RootElement.GetRawText();
-        Assert.False(string.IsNullOrEmpty(json));
-        Assert.True(float.TryParse(json, out float parsed));
-        Assert.Equal(value, parsed);
+        Assert.IsFalse(string.IsNullOrEmpty(json));
+        Assert.IsTrue(float.TryParse(json, out float parsed));
+        Assert.AreEqual(value, parsed);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Double()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Double()
     {
         using var workspace = JsonWorkspace.Create();
         double value = 3.141592653589793;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetDouble(), precision: 10);
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetDouble(), Math.Pow(10, -10));
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Decimal()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Decimal()
     {
         using var workspace = JsonWorkspace.Create();
         decimal value = 123456.789m;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetDecimal());
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetDecimal());
         
         string json = doc.RootElement.GetRawText();
-        Assert.False(string.IsNullOrEmpty(json));
-        Assert.True(decimal.TryParse(json, out decimal parsed));
-        Assert.Equal(value, parsed);
+        Assert.IsFalse(string.IsNullOrEmpty(json));
+        Assert.IsTrue(decimal.TryParse(json, out decimal parsed));
+        Assert.AreEqual(value, parsed);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_DateTime()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_DateTime()
     {
         using var workspace = JsonWorkspace.Create();
         var value = new DateTime(2023, 7, 15, 10, 30, 45, DateTimeKind.Utc);
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetString();
-        Assert.False(string.IsNullOrEmpty(json));
+        Assert.IsFalse(string.IsNullOrEmpty(json));
         // Parse and validate the DateTime value - verify it round-trips correctly
         // Note: DateTime.ToString() may convert to local time, so we verify the serialization
         // is valid and contains the expected date components
         var parsed = DateTime.Parse(json, System.Globalization.CultureInfo.InvariantCulture);
-        Assert.Equal(2023, parsed.Year);
-        Assert.Equal(7, parsed.Month);
-        Assert.Equal(15, parsed.Day);
+        Assert.AreEqual(2023, parsed.Year);
+        Assert.AreEqual(7, parsed.Month);
+        Assert.AreEqual(15, parsed.Day);
         // Time components: verify hour/minute/second are present (may be in local timezone)
-        Assert.True(parsed.Hour >= 0 && parsed.Hour < 24);
-        Assert.Equal(30, parsed.Minute);
-        Assert.Equal(45, parsed.Second);
+        Assert.IsTrue(parsed.Hour >= 0 && parsed.Hour < 24);
+        Assert.AreEqual(30, parsed.Minute);
+        Assert.AreEqual(45, parsed.Second);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_DateTimeOffset()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_DateTimeOffset()
     {
         using var workspace = JsonWorkspace.Create();
         var value = new DateTimeOffset(2023, 7, 15, 10, 30, 45, TimeSpan.FromHours(2));
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetString();
-        Assert.False(string.IsNullOrEmpty(json));
+        Assert.IsFalse(string.IsNullOrEmpty(json));
         // Parse and validate the full DateTimeOffset value using invariant culture
         var parsed = DateTimeOffset.Parse(json, System.Globalization.CultureInfo.InvariantCulture);
-        Assert.Equal(value.Year, parsed.Year);
-        Assert.Equal(value.Month, parsed.Month);
-        Assert.Equal(value.Day, parsed.Day);
-        Assert.Equal(value.Hour, parsed.Hour);
-        Assert.Equal(value.Minute, parsed.Minute);
-        Assert.Equal(value.Second, parsed.Second);
-        Assert.Equal(value.Offset, parsed.Offset);
+        Assert.AreEqual(value.Year, parsed.Year);
+        Assert.AreEqual(value.Month, parsed.Month);
+        Assert.AreEqual(value.Day, parsed.Day);
+        Assert.AreEqual(value.Hour, parsed.Hour);
+        Assert.AreEqual(value.Minute, parsed.Minute);
+        Assert.AreEqual(value.Second, parsed.Second);
+        Assert.AreEqual(value.Offset, parsed.Offset);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Guid()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Guid()
     {
         using var workspace = JsonWorkspace.Create();
         var value = Guid.Parse("12345678-1234-1234-1234-123456789012");
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
-        Assert.Equal(value, doc.RootElement.GetGuid());
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(value, doc.RootElement.GetGuid());
         
         string json = doc.RootElement.GetString();
-        Assert.Equal("12345678-1234-1234-1234-123456789012", json);
+        Assert.AreEqual("12345678-1234-1234-1234-123456789012", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Uri()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Uri()
     {
         using var workspace = JsonWorkspace.Create();
         var value = new Uri("https://example.com/path?query=value");
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         string result = doc.RootElement.GetString();
-        Assert.Equal("https://example.com/path?query=value", result);
+        Assert.AreEqual("https://example.com/path?query=value", result);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_String()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_String()
     {
         using var workspace = JsonWorkspace.Create();
         string value = "Hello, World!";
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         string result = doc.RootElement.GetString();
-        Assert.Equal(value, result);
+        Assert.AreEqual(value, result);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_ReadOnlySpanChar()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_ReadOnlySpanChar()
     {
         using var workspace = JsonWorkspace.Create();
         string expectedValue = "Test String";
         ReadOnlySpan<char> value = expectedValue.AsSpan();
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         string result = doc.RootElement.GetString();
-        Assert.Equal(expectedValue, result);
+        Assert.AreEqual(expectedValue, result);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_OffsetDateTime()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_OffsetDateTime()
     {
         using var workspace = JsonWorkspace.Create();
         var value = new OffsetDateTime(
@@ -271,26 +272,26 @@ public static class JsonElementSourceCoverageTests
             Offset.FromHours(2));
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetString();
-        Assert.False(string.IsNullOrEmpty(json));
+        Assert.IsFalse(string.IsNullOrEmpty(json));
         // Parse and validate the full OffsetDateTime value
         OffsetDateTimePattern pattern = NodaTime.Text.OffsetDateTimePattern.ExtendedIso;
         ParseResult<OffsetDateTime> parseResult = pattern.Parse(json);
-        Assert.True(parseResult.Success, $"Failed to parse: {json}");
+        Assert.IsTrue(parseResult.Success, $"Failed to parse: {json}");
         OffsetDateTime parsed = parseResult.Value;
-        Assert.Equal(value.Year, parsed.Year);
-        Assert.Equal(value.Month, parsed.Month);
-        Assert.Equal(value.Day, parsed.Day);
-        Assert.Equal(value.Hour, parsed.Hour);
-        Assert.Equal(value.Minute, parsed.Minute);
-        Assert.Equal(value.Second, parsed.Second);
-        Assert.Equal(value.Offset, parsed.Offset);
+        Assert.AreEqual(value.Year, parsed.Year);
+        Assert.AreEqual(value.Month, parsed.Month);
+        Assert.AreEqual(value.Day, parsed.Day);
+        Assert.AreEqual(value.Hour, parsed.Hour);
+        Assert.AreEqual(value.Minute, parsed.Minute);
+        Assert.AreEqual(value.Second, parsed.Second);
+        Assert.AreEqual(value.Offset, parsed.Offset);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_OffsetDate()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_OffsetDate()
     {
         using var workspace = JsonWorkspace.Create();
         var value = new OffsetDate(
@@ -298,23 +299,23 @@ public static class JsonElementSourceCoverageTests
             Offset.FromHours(2));
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetString();
-        Assert.False(string.IsNullOrEmpty(json));
+        Assert.IsFalse(string.IsNullOrEmpty(json));
         // Parse and validate the full OffsetDate value
         OffsetDatePattern pattern = NodaTime.Text.OffsetDatePattern.GeneralIso;
         ParseResult<OffsetDate> parseResult = pattern.Parse(json);
-        Assert.True(parseResult.Success, $"Failed to parse: {json}");
+        Assert.IsTrue(parseResult.Success, $"Failed to parse: {json}");
         OffsetDate parsed = parseResult.Value;
-        Assert.Equal(value.Year, parsed.Year);
-        Assert.Equal(value.Month, parsed.Month);
-        Assert.Equal(value.Day, parsed.Day);
-        Assert.Equal(value.Offset, parsed.Offset);
+        Assert.AreEqual(value.Year, parsed.Year);
+        Assert.AreEqual(value.Month, parsed.Month);
+        Assert.AreEqual(value.Day, parsed.Day);
+        Assert.AreEqual(value.Offset, parsed.Offset);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_OffsetTime()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_OffsetTime()
     {
         using var workspace = JsonWorkspace.Create();
         var value = new OffsetTime(
@@ -322,99 +323,99 @@ public static class JsonElementSourceCoverageTests
             Offset.FromHours(2));
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetString();
-        Assert.False(string.IsNullOrEmpty(json));
+        Assert.IsFalse(string.IsNullOrEmpty(json));
         // Parse and validate the full OffsetTime value
         OffsetTimePattern pattern = NodaTime.Text.OffsetTimePattern.ExtendedIso;
         ParseResult<OffsetTime> parseResult = pattern.Parse(json);
-        Assert.True(parseResult.Success, $"Failed to parse: {json}");
+        Assert.IsTrue(parseResult.Success, $"Failed to parse: {json}");
         OffsetTime parsed = parseResult.Value;
-        Assert.Equal(value.Hour, parsed.Hour);
-        Assert.Equal(value.Minute, parsed.Minute);
-        Assert.Equal(value.Second, parsed.Second);
-        Assert.Equal(value.Offset, parsed.Offset);
+        Assert.AreEqual(value.Hour, parsed.Hour);
+        Assert.AreEqual(value.Minute, parsed.Minute);
+        Assert.AreEqual(value.Second, parsed.Second);
+        Assert.AreEqual(value.Offset, parsed.Offset);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_LocalDate()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_LocalDate()
     {
         using var workspace = JsonWorkspace.Create();
         var value = new LocalDate(2023, 7, 15);
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetString();
-        Assert.False(string.IsNullOrEmpty(json));
-        Assert.Equal("2023-07-15", json);
+        Assert.IsFalse(string.IsNullOrEmpty(json));
+        Assert.AreEqual("2023-07-15", json);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Period()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Period()
     {
         using var workspace = JsonWorkspace.Create();
         Period value = Period.FromYears(1) + Period.FromMonths(2) + Period.FromDays(3);
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.String, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetString();
-        Assert.False(string.IsNullOrEmpty(json));
-        Assert.Equal("P1Y2M3D", json);
+        Assert.IsFalse(string.IsNullOrEmpty(json));
+        Assert.AreEqual("P1Y2M3D", json);
     }
 
 #if NET
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Int128()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Int128()
     {
         using var workspace = JsonWorkspace.Create();
         var value = new Int128(0, 123456789012345678UL);
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetRawText();
-        Assert.False(string.IsNullOrEmpty(json));
-        Assert.True(Int128.TryParse(json, out Int128 parsed));
-        Assert.Equal(value, parsed);
+        Assert.IsFalse(string.IsNullOrEmpty(json));
+        Assert.IsTrue(Int128.TryParse(json, out Int128 parsed));
+        Assert.AreEqual(value, parsed);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_UInt128()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_UInt128()
     {
         using var workspace = JsonWorkspace.Create();
         var value = new UInt128(0, 123456789012345678UL);
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetRawText();
-        Assert.False(string.IsNullOrEmpty(json));
-        Assert.True(UInt128.TryParse(json, out UInt128 parsed));
-        Assert.Equal(value, parsed);
+        Assert.IsFalse(string.IsNullOrEmpty(json));
+        Assert.IsTrue(UInt128.TryParse(json, out UInt128 parsed));
+        Assert.AreEqual(value, parsed);
     }
 
-    [Fact]
-    public static void SourceConstructorAndImplicitOperator_Half()
+    [TestMethod]
+    public void SourceConstructorAndImplicitOperator_Half()
     {
         using var workspace = JsonWorkspace.Create();
         var value = (Half)3.14;
         
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, value);
-        Assert.Equal(JsonValueKind.Number, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, doc.RootElement.ValueKind);
         
         string json = doc.RootElement.GetRawText();
-        Assert.False(string.IsNullOrEmpty(json));
-        Assert.True(Half.TryParse(json, out Half parsed));
+        Assert.IsFalse(string.IsNullOrEmpty(json));
+        Assert.IsTrue(Half.TryParse(json, out Half parsed));
         // Use approximate comparison for floating point
-        Assert.True(Math.Abs((double)(value - parsed)) < 0.01);
+        Assert.IsTrue(Math.Abs((double)(value - parsed)) < 0.01);
     }
 #endif
 
-    [Fact]
-    public static void SourceAddAsProperty_WithUtf8Name_AllTypes()
+    [TestMethod]
+    public void SourceAddAsProperty_WithUtf8Name_AllTypes()
     {
         using var workspace = JsonWorkspace.Create();
         
@@ -449,117 +450,117 @@ public static class JsonElementSourceCoverageTests
 
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, source);
         
-        Assert.Equal(JsonValueKind.Object, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.ValueKind);
         
         // Validate each property exists and has the correct value
-        Assert.True(doc.RootElement.TryGetProperty("byte"u8, out JsonElement.Mutable byteProp));
-        Assert.Equal(42, byteProp.GetByte());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("byte"u8, out JsonElement.Mutable byteProp));
+        Assert.AreEqual(42, byteProp.GetByte());
         
-        Assert.True(doc.RootElement.TryGetProperty("sbyte"u8, out JsonElement.Mutable sbyteProp));
-        Assert.Equal(-42, sbyteProp.GetSByte());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("sbyte"u8, out JsonElement.Mutable sbyteProp));
+        Assert.AreEqual(-42, sbyteProp.GetSByte());
         
-        Assert.True(doc.RootElement.TryGetProperty("short"u8, out JsonElement.Mutable shortProp));
-        Assert.Equal(-1234, shortProp.GetInt16());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("short"u8, out JsonElement.Mutable shortProp));
+        Assert.AreEqual(-1234, shortProp.GetInt16());
         
-        Assert.True(doc.RootElement.TryGetProperty("int"u8, out JsonElement.Mutable intProp));
-        Assert.Equal(-123456, intProp.GetInt32());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("int"u8, out JsonElement.Mutable intProp));
+        Assert.AreEqual(-123456, intProp.GetInt32());
         
-        Assert.True(doc.RootElement.TryGetProperty("uint"u8, out JsonElement.Mutable uintProp));
-        Assert.Equal(123456u, uintProp.GetUInt32());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("uint"u8, out JsonElement.Mutable uintProp));
+        Assert.AreEqual(123456u, uintProp.GetUInt32());
         
-        Assert.True(doc.RootElement.TryGetProperty("long"u8, out JsonElement.Mutable longProp));
-        Assert.Equal(-123456789L, longProp.GetInt64());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("long"u8, out JsonElement.Mutable longProp));
+        Assert.AreEqual(-123456789L, longProp.GetInt64());
         
-        Assert.True(doc.RootElement.TryGetProperty("ulong"u8, out JsonElement.Mutable ulongProp));
-        Assert.Equal(123456789UL, ulongProp.GetUInt64());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("ulong"u8, out JsonElement.Mutable ulongProp));
+        Assert.AreEqual(123456789UL, ulongProp.GetUInt64());
         
-        Assert.True(doc.RootElement.TryGetProperty("ushort"u8, out JsonElement.Mutable ushortProp));
-        Assert.Equal(1234, ushortProp.GetUInt16());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("ushort"u8, out JsonElement.Mutable ushortProp));
+        Assert.AreEqual(1234, ushortProp.GetUInt16());
         
-        Assert.True(doc.RootElement.TryGetProperty("float"u8, out JsonElement.Mutable floatProp));
-        Assert.Equal(3.14f, floatProp.GetSingle());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("float"u8, out JsonElement.Mutable floatProp));
+        Assert.AreEqual(3.14f, floatProp.GetSingle());
         
-        Assert.True(doc.RootElement.TryGetProperty("double"u8, out JsonElement.Mutable doubleProp));
-        Assert.Equal(3.14159, doubleProp.GetDouble(), precision: 10);
+        Assert.IsTrue(doc.RootElement.TryGetProperty("double"u8, out JsonElement.Mutable doubleProp));
+        Assert.AreEqual(3.14159, doubleProp.GetDouble(), Math.Pow(10, -10));
         
-        Assert.True(doc.RootElement.TryGetProperty("decimal"u8, out JsonElement.Mutable decimalProp));
-        Assert.Equal(123.456m, decimalProp.GetDecimal());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("decimal"u8, out JsonElement.Mutable decimalProp));
+        Assert.AreEqual(123.456m, decimalProp.GetDecimal());
         
-        Assert.True(doc.RootElement.TryGetProperty("guid"u8, out JsonElement.Mutable guidProp));
-        Assert.Equal(guidValue, guidProp.GetGuid());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("guid"u8, out JsonElement.Mutable guidProp));
+        Assert.AreEqual(guidValue, guidProp.GetGuid());
         
-        Assert.True(doc.RootElement.TryGetProperty("datetime"u8, out JsonElement.Mutable dateTimeProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("datetime"u8, out JsonElement.Mutable dateTimeProp));
         string dateTimeStr = dateTimeProp.GetString();
-        Assert.False(string.IsNullOrEmpty(dateTimeStr));
+        Assert.IsFalse(string.IsNullOrEmpty(dateTimeStr));
         var parsedDateTime = DateTime.Parse(dateTimeStr, System.Globalization.CultureInfo.InvariantCulture);
         // DateTime serialization may use local timezone - verify date and time components
-        Assert.Equal(2023, parsedDateTime.Year);
-        Assert.Equal(7, parsedDateTime.Month);
-        Assert.Equal(15, parsedDateTime.Day);
-        Assert.True(parsedDateTime.Hour >= 0 && parsedDateTime.Hour < 24);
-        Assert.Equal(30, parsedDateTime.Minute);
-        Assert.Equal(45, parsedDateTime.Second);
+        Assert.AreEqual(2023, parsedDateTime.Year);
+        Assert.AreEqual(7, parsedDateTime.Month);
+        Assert.AreEqual(15, parsedDateTime.Day);
+        Assert.IsTrue(parsedDateTime.Hour >= 0 && parsedDateTime.Hour < 24);
+        Assert.AreEqual(30, parsedDateTime.Minute);
+        Assert.AreEqual(45, parsedDateTime.Second);
         
-        Assert.True(doc.RootElement.TryGetProperty("datetimeoffset"u8, out JsonElement.Mutable dateTimeOffsetProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("datetimeoffset"u8, out JsonElement.Mutable dateTimeOffsetProp));
         string dateTimeOffsetStr = dateTimeOffsetProp.GetString();
-        Assert.False(string.IsNullOrEmpty(dateTimeOffsetStr));
+        Assert.IsFalse(string.IsNullOrEmpty(dateTimeOffsetStr));
         var parsedDateTimeOffset = DateTimeOffset.Parse(dateTimeOffsetStr, System.Globalization.CultureInfo.InvariantCulture);
-        Assert.Equal(dateTimeOffsetValue.Year, parsedDateTimeOffset.Year);
-        Assert.Equal(dateTimeOffsetValue.Month, parsedDateTimeOffset.Month);
-        Assert.Equal(dateTimeOffsetValue.Day, parsedDateTimeOffset.Day);
-        Assert.Equal(dateTimeOffsetValue.Hour, parsedDateTimeOffset.Hour);
-        Assert.Equal(dateTimeOffsetValue.Minute, parsedDateTimeOffset.Minute);
-        Assert.Equal(dateTimeOffsetValue.Second, parsedDateTimeOffset.Second);
-        Assert.Equal(dateTimeOffsetValue.Offset, parsedDateTimeOffset.Offset);
+        Assert.AreEqual(dateTimeOffsetValue.Year, parsedDateTimeOffset.Year);
+        Assert.AreEqual(dateTimeOffsetValue.Month, parsedDateTimeOffset.Month);
+        Assert.AreEqual(dateTimeOffsetValue.Day, parsedDateTimeOffset.Day);
+        Assert.AreEqual(dateTimeOffsetValue.Hour, parsedDateTimeOffset.Hour);
+        Assert.AreEqual(dateTimeOffsetValue.Minute, parsedDateTimeOffset.Minute);
+        Assert.AreEqual(dateTimeOffsetValue.Second, parsedDateTimeOffset.Second);
+        Assert.AreEqual(dateTimeOffsetValue.Offset, parsedDateTimeOffset.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("localdate"u8, out JsonElement.Mutable localDateProp));
-        Assert.Equal("2023-07-15", localDateProp.GetString());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("localdate"u8, out JsonElement.Mutable localDateProp));
+        Assert.AreEqual("2023-07-15", localDateProp.GetString());
         
-        Assert.True(doc.RootElement.TryGetProperty("offsetdate"u8, out JsonElement.Mutable offsetDateProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("offsetdate"u8, out JsonElement.Mutable offsetDateProp));
         string offsetDateStr = offsetDateProp.GetString();
-        Assert.False(string.IsNullOrEmpty(offsetDateStr));
+        Assert.IsFalse(string.IsNullOrEmpty(offsetDateStr));
         OffsetDatePattern offsetDatePattern = NodaTime.Text.OffsetDatePattern.GeneralIso;
         ParseResult<OffsetDate> offsetDateResult = offsetDatePattern.Parse(offsetDateStr);
-        Assert.True(offsetDateResult.Success, $"Failed to parse OffsetDate: {offsetDateStr}");
+        Assert.IsTrue(offsetDateResult.Success, $"Failed to parse OffsetDate: {offsetDateStr}");
         OffsetDate parsedOffsetDate = offsetDateResult.Value;
-        Assert.Equal(2023, parsedOffsetDate.Year);
-        Assert.Equal(7, parsedOffsetDate.Month);
-        Assert.Equal(15, parsedOffsetDate.Day);
-        Assert.Equal(Offset.FromHours(2), parsedOffsetDate.Offset);
+        Assert.AreEqual(2023, parsedOffsetDate.Year);
+        Assert.AreEqual(7, parsedOffsetDate.Month);
+        Assert.AreEqual(15, parsedOffsetDate.Day);
+        Assert.AreEqual(Offset.FromHours(2), parsedOffsetDate.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("offsettime"u8, out JsonElement.Mutable offsetTimeProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("offsettime"u8, out JsonElement.Mutable offsetTimeProp));
         string offsetTimeStr = offsetTimeProp.GetString();
-        Assert.False(string.IsNullOrEmpty(offsetTimeStr));
+        Assert.IsFalse(string.IsNullOrEmpty(offsetTimeStr));
         OffsetTimePattern offsetTimePattern = NodaTime.Text.OffsetTimePattern.ExtendedIso;
         ParseResult<OffsetTime> offsetTimeResult = offsetTimePattern.Parse(offsetTimeStr);
-        Assert.True(offsetTimeResult.Success, $"Failed to parse OffsetTime: {offsetTimeStr}");
+        Assert.IsTrue(offsetTimeResult.Success, $"Failed to parse OffsetTime: {offsetTimeStr}");
         OffsetTime parsedOffsetTime = offsetTimeResult.Value;
-        Assert.Equal(10, parsedOffsetTime.Hour);
-        Assert.Equal(30, parsedOffsetTime.Minute);
-        Assert.Equal(0, parsedOffsetTime.Second);
-        Assert.Equal(Offset.FromHours(2), parsedOffsetTime.Offset);
+        Assert.AreEqual(10, parsedOffsetTime.Hour);
+        Assert.AreEqual(30, parsedOffsetTime.Minute);
+        Assert.AreEqual(0, parsedOffsetTime.Second);
+        Assert.AreEqual(Offset.FromHours(2), parsedOffsetTime.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("offsetdatetime"u8, out JsonElement.Mutable offsetDateTimeProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("offsetdatetime"u8, out JsonElement.Mutable offsetDateTimeProp));
         string offsetDateTimeStr = offsetDateTimeProp.GetString();
-        Assert.False(string.IsNullOrEmpty(offsetDateTimeStr));
+        Assert.IsFalse(string.IsNullOrEmpty(offsetDateTimeStr));
         OffsetDateTimePattern offsetDateTimePattern = NodaTime.Text.OffsetDateTimePattern.ExtendedIso;
         ParseResult<OffsetDateTime> offsetDateTimeResult = offsetDateTimePattern.Parse(offsetDateTimeStr);
-        Assert.True(offsetDateTimeResult.Success, $"Failed to parse OffsetDateTime: {offsetDateTimeStr}");
+        Assert.IsTrue(offsetDateTimeResult.Success, $"Failed to parse OffsetDateTime: {offsetDateTimeStr}");
         OffsetDateTime parsedOffsetDateTime = offsetDateTimeResult.Value;
-        Assert.Equal(2023, parsedOffsetDateTime.Year);
-        Assert.Equal(7, parsedOffsetDateTime.Month);
-        Assert.Equal(15, parsedOffsetDateTime.Day);
-        Assert.Equal(10, parsedOffsetDateTime.Hour);
-        Assert.Equal(30, parsedOffsetDateTime.Minute);
-        Assert.Equal(0, parsedOffsetDateTime.Second);
-        Assert.Equal(Offset.FromHours(2), parsedOffsetDateTime.Offset);
+        Assert.AreEqual(2023, parsedOffsetDateTime.Year);
+        Assert.AreEqual(7, parsedOffsetDateTime.Month);
+        Assert.AreEqual(15, parsedOffsetDateTime.Day);
+        Assert.AreEqual(10, parsedOffsetDateTime.Hour);
+        Assert.AreEqual(30, parsedOffsetDateTime.Minute);
+        Assert.AreEqual(0, parsedOffsetDateTime.Second);
+        Assert.AreEqual(Offset.FromHours(2), parsedOffsetDateTime.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("period"u8, out JsonElement.Mutable periodProp));
-        Assert.Equal("P1Y2M0D", periodProp.GetString());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("period"u8, out JsonElement.Mutable periodProp));
+        Assert.AreEqual("P1Y2M0D", periodProp.GetString());
     }
 
-    [Fact]
-    public static void SourceAddAsProperty_WithStringName_AllTypes()
+    [TestMethod]
+    public void SourceAddAsProperty_WithStringName_AllTypes()
     {
         using var workspace = JsonWorkspace.Create();
         
@@ -594,117 +595,117 @@ public static class JsonElementSourceCoverageTests
 
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, source);
         
-        Assert.Equal(JsonValueKind.Object, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.ValueKind);
         
         // Validate all properties with correct values
-        Assert.True(doc.RootElement.TryGetProperty("byte", out JsonElement.Mutable byteProp));
-        Assert.Equal(42, byteProp.GetByte());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("byte", out JsonElement.Mutable byteProp));
+        Assert.AreEqual(42, byteProp.GetByte());
         
-        Assert.True(doc.RootElement.TryGetProperty("sbyte", out JsonElement.Mutable sbyteProp));
-        Assert.Equal(-42, sbyteProp.GetSByte());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("sbyte", out JsonElement.Mutable sbyteProp));
+        Assert.AreEqual(-42, sbyteProp.GetSByte());
         
-        Assert.True(doc.RootElement.TryGetProperty("int", out JsonElement.Mutable intProp));
-        Assert.Equal(-123456, intProp.GetInt32());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("int", out JsonElement.Mutable intProp));
+        Assert.AreEqual(-123456, intProp.GetInt32());
         
-        Assert.True(doc.RootElement.TryGetProperty("uint", out JsonElement.Mutable uintProp));
-        Assert.Equal(123456u, uintProp.GetUInt32());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("uint", out JsonElement.Mutable uintProp));
+        Assert.AreEqual(123456u, uintProp.GetUInt32());
         
-        Assert.True(doc.RootElement.TryGetProperty("decimal", out JsonElement.Mutable decimalProp));
-        Assert.Equal(123.456m, decimalProp.GetDecimal());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("decimal", out JsonElement.Mutable decimalProp));
+        Assert.AreEqual(123.456m, decimalProp.GetDecimal());
         
-        Assert.True(doc.RootElement.TryGetProperty("long", out JsonElement.Mutable longProp));
-        Assert.Equal(-123456789L, longProp.GetInt64());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("long", out JsonElement.Mutable longProp));
+        Assert.AreEqual(-123456789L, longProp.GetInt64());
         
-        Assert.True(doc.RootElement.TryGetProperty("ulong", out JsonElement.Mutable ulongProp));
-        Assert.Equal(123456789UL, ulongProp.GetUInt64());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("ulong", out JsonElement.Mutable ulongProp));
+        Assert.AreEqual(123456789UL, ulongProp.GetUInt64());
         
-        Assert.True(doc.RootElement.TryGetProperty("short", out JsonElement.Mutable shortProp));
-        Assert.Equal(-1234, shortProp.GetInt16());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("short", out JsonElement.Mutable shortProp));
+        Assert.AreEqual(-1234, shortProp.GetInt16());
         
-        Assert.True(doc.RootElement.TryGetProperty("ushort", out JsonElement.Mutable ushortProp));
-        Assert.Equal(1234, ushortProp.GetUInt16());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("ushort", out JsonElement.Mutable ushortProp));
+        Assert.AreEqual(1234, ushortProp.GetUInt16());
         
-        Assert.True(doc.RootElement.TryGetProperty("float", out JsonElement.Mutable floatProp));
-        Assert.Equal(3.14f, floatProp.GetSingle());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("float", out JsonElement.Mutable floatProp));
+        Assert.AreEqual(3.14f, floatProp.GetSingle());
         
-        Assert.True(doc.RootElement.TryGetProperty("double", out JsonElement.Mutable doubleProp));
-        Assert.Equal(3.14159, doubleProp.GetDouble(), precision: 10);
+        Assert.IsTrue(doc.RootElement.TryGetProperty("double", out JsonElement.Mutable doubleProp));
+        Assert.AreEqual(3.14159, doubleProp.GetDouble(), Math.Pow(10, -10));
         
-        Assert.True(doc.RootElement.TryGetProperty("guid", out JsonElement.Mutable guidProp));
-        Assert.Equal(guidValue, guidProp.GetGuid());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("guid", out JsonElement.Mutable guidProp));
+        Assert.AreEqual(guidValue, guidProp.GetGuid());
         
-        Assert.True(doc.RootElement.TryGetProperty("datetime", out JsonElement.Mutable dateTimeProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("datetime", out JsonElement.Mutable dateTimeProp));
         string dateTimeStr = dateTimeProp.GetString();
-        Assert.False(string.IsNullOrEmpty(dateTimeStr));
+        Assert.IsFalse(string.IsNullOrEmpty(dateTimeStr));
         var parsedDateTime = DateTime.Parse(dateTimeStr, System.Globalization.CultureInfo.InvariantCulture);
         // DateTime serialization may use local timezone - verify date and time components
-        Assert.Equal(2023, parsedDateTime.Year);
-        Assert.Equal(7, parsedDateTime.Month);
-        Assert.Equal(15, parsedDateTime.Day);
-        Assert.True(parsedDateTime.Hour >= 0 && parsedDateTime.Hour < 24);
-        Assert.Equal(30, parsedDateTime.Minute);
-        Assert.Equal(45, parsedDateTime.Second);
+        Assert.AreEqual(2023, parsedDateTime.Year);
+        Assert.AreEqual(7, parsedDateTime.Month);
+        Assert.AreEqual(15, parsedDateTime.Day);
+        Assert.IsTrue(parsedDateTime.Hour >= 0 && parsedDateTime.Hour < 24);
+        Assert.AreEqual(30, parsedDateTime.Minute);
+        Assert.AreEqual(45, parsedDateTime.Second);
         
-        Assert.True(doc.RootElement.TryGetProperty("datetimeoffset", out JsonElement.Mutable dateTimeOffsetProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("datetimeoffset", out JsonElement.Mutable dateTimeOffsetProp));
         string dateTimeOffsetStr = dateTimeOffsetProp.GetString();
-        Assert.False(string.IsNullOrEmpty(dateTimeOffsetStr));
+        Assert.IsFalse(string.IsNullOrEmpty(dateTimeOffsetStr));
         var parsedDateTimeOffset = DateTimeOffset.Parse(dateTimeOffsetStr, System.Globalization.CultureInfo.InvariantCulture);
-        Assert.Equal(dateTimeOffsetValue.Year, parsedDateTimeOffset.Year);
-        Assert.Equal(dateTimeOffsetValue.Month, parsedDateTimeOffset.Month);
-        Assert.Equal(dateTimeOffsetValue.Day, parsedDateTimeOffset.Day);
-        Assert.Equal(dateTimeOffsetValue.Hour, parsedDateTimeOffset.Hour);
-        Assert.Equal(dateTimeOffsetValue.Minute, parsedDateTimeOffset.Minute);
-        Assert.Equal(dateTimeOffsetValue.Second, parsedDateTimeOffset.Second);
-        Assert.Equal(dateTimeOffsetValue.Offset, parsedDateTimeOffset.Offset);
+        Assert.AreEqual(dateTimeOffsetValue.Year, parsedDateTimeOffset.Year);
+        Assert.AreEqual(dateTimeOffsetValue.Month, parsedDateTimeOffset.Month);
+        Assert.AreEqual(dateTimeOffsetValue.Day, parsedDateTimeOffset.Day);
+        Assert.AreEqual(dateTimeOffsetValue.Hour, parsedDateTimeOffset.Hour);
+        Assert.AreEqual(dateTimeOffsetValue.Minute, parsedDateTimeOffset.Minute);
+        Assert.AreEqual(dateTimeOffsetValue.Second, parsedDateTimeOffset.Second);
+        Assert.AreEqual(dateTimeOffsetValue.Offset, parsedDateTimeOffset.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("localdate", out JsonElement.Mutable localDateProp));
-        Assert.Equal("2023-07-15", localDateProp.GetString());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("localdate", out JsonElement.Mutable localDateProp));
+        Assert.AreEqual("2023-07-15", localDateProp.GetString());
         
-        Assert.True(doc.RootElement.TryGetProperty("offsetdate", out JsonElement.Mutable offsetDateProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("offsetdate", out JsonElement.Mutable offsetDateProp));
         string offsetDateStr = offsetDateProp.GetString();
-        Assert.False(string.IsNullOrEmpty(offsetDateStr));
+        Assert.IsFalse(string.IsNullOrEmpty(offsetDateStr));
         OffsetDatePattern offsetDatePattern = NodaTime.Text.OffsetDatePattern.GeneralIso;
         ParseResult<OffsetDate> offsetDateResult = offsetDatePattern.Parse(offsetDateStr);
-        Assert.True(offsetDateResult.Success, $"Failed to parse OffsetDate: {offsetDateStr}");
+        Assert.IsTrue(offsetDateResult.Success, $"Failed to parse OffsetDate: {offsetDateStr}");
         OffsetDate parsedOffsetDate = offsetDateResult.Value;
-        Assert.Equal(2023, parsedOffsetDate.Year);
-        Assert.Equal(7, parsedOffsetDate.Month);
-        Assert.Equal(15, parsedOffsetDate.Day);
-        Assert.Equal(Offset.FromHours(2), parsedOffsetDate.Offset);
+        Assert.AreEqual(2023, parsedOffsetDate.Year);
+        Assert.AreEqual(7, parsedOffsetDate.Month);
+        Assert.AreEqual(15, parsedOffsetDate.Day);
+        Assert.AreEqual(Offset.FromHours(2), parsedOffsetDate.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("offsettime", out JsonElement.Mutable offsetTimeProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("offsettime", out JsonElement.Mutable offsetTimeProp));
         string offsetTimeStr = offsetTimeProp.GetString();
-        Assert.False(string.IsNullOrEmpty(offsetTimeStr));
+        Assert.IsFalse(string.IsNullOrEmpty(offsetTimeStr));
         OffsetTimePattern offsetTimePattern = NodaTime.Text.OffsetTimePattern.ExtendedIso;
         ParseResult<OffsetTime> offsetTimeResult = offsetTimePattern.Parse(offsetTimeStr);
-        Assert.True(offsetTimeResult.Success, $"Failed to parse OffsetTime: {offsetTimeStr}");
+        Assert.IsTrue(offsetTimeResult.Success, $"Failed to parse OffsetTime: {offsetTimeStr}");
         OffsetTime parsedOffsetTime = offsetTimeResult.Value;
-        Assert.Equal(10, parsedOffsetTime.Hour);
-        Assert.Equal(30, parsedOffsetTime.Minute);
-        Assert.Equal(0, parsedOffsetTime.Second);
-        Assert.Equal(Offset.FromHours(2), parsedOffsetTime.Offset);
+        Assert.AreEqual(10, parsedOffsetTime.Hour);
+        Assert.AreEqual(30, parsedOffsetTime.Minute);
+        Assert.AreEqual(0, parsedOffsetTime.Second);
+        Assert.AreEqual(Offset.FromHours(2), parsedOffsetTime.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("offsetdatetime", out JsonElement.Mutable offsetDateTimeProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("offsetdatetime", out JsonElement.Mutable offsetDateTimeProp));
         string offsetDateTimeStr = offsetDateTimeProp.GetString();
-        Assert.False(string.IsNullOrEmpty(offsetDateTimeStr));
+        Assert.IsFalse(string.IsNullOrEmpty(offsetDateTimeStr));
         OffsetDateTimePattern offsetDateTimePattern = NodaTime.Text.OffsetDateTimePattern.ExtendedIso;
         ParseResult<OffsetDateTime> offsetDateTimeResult = offsetDateTimePattern.Parse(offsetDateTimeStr);
-        Assert.True(offsetDateTimeResult.Success, $"Failed to parse OffsetDateTime: {offsetDateTimeStr}");
+        Assert.IsTrue(offsetDateTimeResult.Success, $"Failed to parse OffsetDateTime: {offsetDateTimeStr}");
         OffsetDateTime parsedOffsetDateTime = offsetDateTimeResult.Value;
-        Assert.Equal(2023, parsedOffsetDateTime.Year);
-        Assert.Equal(7, parsedOffsetDateTime.Month);
-        Assert.Equal(15, parsedOffsetDateTime.Day);
-        Assert.Equal(10, parsedOffsetDateTime.Hour);
-        Assert.Equal(30, parsedOffsetDateTime.Minute);
-        Assert.Equal(0, parsedOffsetDateTime.Second);
-        Assert.Equal(Offset.FromHours(2), parsedOffsetDateTime.Offset);
+        Assert.AreEqual(2023, parsedOffsetDateTime.Year);
+        Assert.AreEqual(7, parsedOffsetDateTime.Month);
+        Assert.AreEqual(15, parsedOffsetDateTime.Day);
+        Assert.AreEqual(10, parsedOffsetDateTime.Hour);
+        Assert.AreEqual(30, parsedOffsetDateTime.Minute);
+        Assert.AreEqual(0, parsedOffsetDateTime.Second);
+        Assert.AreEqual(Offset.FromHours(2), parsedOffsetDateTime.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("period", out JsonElement.Mutable periodProp));
-        Assert.Equal("P1Y2M0D", periodProp.GetString());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("period", out JsonElement.Mutable periodProp));
+        Assert.AreEqual("P1Y2M0D", periodProp.GetString());
     }
 
-    [Fact]
-    public static void SourceAddAsProperty_WithReadOnlySpanChar_AllTypes()
+    [TestMethod]
+    public void SourceAddAsProperty_WithReadOnlySpanChar_AllTypes()
     {
         using var workspace = JsonWorkspace.Create();
         
@@ -739,111 +740,111 @@ public static class JsonElementSourceCoverageTests
 
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, source);
         
-        Assert.Equal(JsonValueKind.Object, doc.RootElement.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, doc.RootElement.ValueKind);
         
         // Validate all properties with correct values
-        Assert.True(doc.RootElement.TryGetProperty("byte", out JsonElement.Mutable byteProp));
-        Assert.Equal(42, byteProp.GetByte());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("byte", out JsonElement.Mutable byteProp));
+        Assert.AreEqual(42, byteProp.GetByte());
         
-        Assert.True(doc.RootElement.TryGetProperty("sbyte", out JsonElement.Mutable sbyteProp));
-        Assert.Equal(-42, sbyteProp.GetSByte());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("sbyte", out JsonElement.Mutable sbyteProp));
+        Assert.AreEqual(-42, sbyteProp.GetSByte());
         
-        Assert.True(doc.RootElement.TryGetProperty("int", out JsonElement.Mutable intProp));
-        Assert.Equal(-123456, intProp.GetInt32());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("int", out JsonElement.Mutable intProp));
+        Assert.AreEqual(-123456, intProp.GetInt32());
         
-        Assert.True(doc.RootElement.TryGetProperty("uint", out JsonElement.Mutable uintProp));
-        Assert.Equal(123456u, uintProp.GetUInt32());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("uint", out JsonElement.Mutable uintProp));
+        Assert.AreEqual(123456u, uintProp.GetUInt32());
         
-        Assert.True(doc.RootElement.TryGetProperty("decimal", out JsonElement.Mutable decimalProp));
-        Assert.Equal(123.456m, decimalProp.GetDecimal());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("decimal", out JsonElement.Mutable decimalProp));
+        Assert.AreEqual(123.456m, decimalProp.GetDecimal());
         
-        Assert.True(doc.RootElement.TryGetProperty("long", out JsonElement.Mutable longProp));
-        Assert.Equal(-123456789L, longProp.GetInt64());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("long", out JsonElement.Mutable longProp));
+        Assert.AreEqual(-123456789L, longProp.GetInt64());
         
-        Assert.True(doc.RootElement.TryGetProperty("ulong", out JsonElement.Mutable ulongProp));
-        Assert.Equal(123456789UL, ulongProp.GetUInt64());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("ulong", out JsonElement.Mutable ulongProp));
+        Assert.AreEqual(123456789UL, ulongProp.GetUInt64());
         
-        Assert.True(doc.RootElement.TryGetProperty("short", out JsonElement.Mutable shortProp));
-        Assert.Equal(-1234, shortProp.GetInt16());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("short", out JsonElement.Mutable shortProp));
+        Assert.AreEqual(-1234, shortProp.GetInt16());
         
-        Assert.True(doc.RootElement.TryGetProperty("ushort", out JsonElement.Mutable ushortProp));
-        Assert.Equal(1234, ushortProp.GetUInt16());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("ushort", out JsonElement.Mutable ushortProp));
+        Assert.AreEqual(1234, ushortProp.GetUInt16());
         
-        Assert.True(doc.RootElement.TryGetProperty("float", out JsonElement.Mutable floatProp));
-        Assert.Equal(3.14f, floatProp.GetSingle());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("float", out JsonElement.Mutable floatProp));
+        Assert.AreEqual(3.14f, floatProp.GetSingle());
         
-        Assert.True(doc.RootElement.TryGetProperty("double", out JsonElement.Mutable doubleProp));
-        Assert.Equal(3.14159, doubleProp.GetDouble(), precision: 10);
+        Assert.IsTrue(doc.RootElement.TryGetProperty("double", out JsonElement.Mutable doubleProp));
+        Assert.AreEqual(3.14159, doubleProp.GetDouble(), Math.Pow(10, -10));
         
-        Assert.True(doc.RootElement.TryGetProperty("guid", out JsonElement.Mutable guidProp));
-        Assert.Equal(guidValue, guidProp.GetGuid());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("guid", out JsonElement.Mutable guidProp));
+        Assert.AreEqual(guidValue, guidProp.GetGuid());
         
-        Assert.True(doc.RootElement.TryGetProperty("datetime", out JsonElement.Mutable dateTimeProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("datetime", out JsonElement.Mutable dateTimeProp));
         string dateTimeStr = dateTimeProp.GetString();
-        Assert.False(string.IsNullOrEmpty(dateTimeStr));
+        Assert.IsFalse(string.IsNullOrEmpty(dateTimeStr));
         var parsedDateTime = DateTime.Parse(dateTimeStr, System.Globalization.CultureInfo.InvariantCulture);
-        Assert.Equal(2023, parsedDateTime.Year);
-        Assert.Equal(7, parsedDateTime.Month);
-        Assert.Equal(15, parsedDateTime.Day);
-        Assert.True(parsedDateTime.Hour >= 0 && parsedDateTime.Hour < 24);
-        Assert.Equal(30, parsedDateTime.Minute);
-        Assert.Equal(45, parsedDateTime.Second);
+        Assert.AreEqual(2023, parsedDateTime.Year);
+        Assert.AreEqual(7, parsedDateTime.Month);
+        Assert.AreEqual(15, parsedDateTime.Day);
+        Assert.IsTrue(parsedDateTime.Hour >= 0 && parsedDateTime.Hour < 24);
+        Assert.AreEqual(30, parsedDateTime.Minute);
+        Assert.AreEqual(45, parsedDateTime.Second);
         
-        Assert.True(doc.RootElement.TryGetProperty("datetimeoffset", out JsonElement.Mutable dateTimeOffsetProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("datetimeoffset", out JsonElement.Mutable dateTimeOffsetProp));
         string dateTimeOffsetStr = dateTimeOffsetProp.GetString();
-        Assert.False(string.IsNullOrEmpty(dateTimeOffsetStr));
+        Assert.IsFalse(string.IsNullOrEmpty(dateTimeOffsetStr));
         var parsedDateTimeOffset = DateTimeOffset.Parse(dateTimeOffsetStr, System.Globalization.CultureInfo.InvariantCulture);
-        Assert.Equal(dateTimeOffsetValue.Year, parsedDateTimeOffset.Year);
-        Assert.Equal(dateTimeOffsetValue.Month, parsedDateTimeOffset.Month);
-        Assert.Equal(dateTimeOffsetValue.Day, parsedDateTimeOffset.Day);
-        Assert.Equal(dateTimeOffsetValue.Hour, parsedDateTimeOffset.Hour);
-        Assert.Equal(dateTimeOffsetValue.Minute, parsedDateTimeOffset.Minute);
-        Assert.Equal(dateTimeOffsetValue.Second, parsedDateTimeOffset.Second);
-        Assert.Equal(dateTimeOffsetValue.Offset, parsedDateTimeOffset.Offset);
+        Assert.AreEqual(dateTimeOffsetValue.Year, parsedDateTimeOffset.Year);
+        Assert.AreEqual(dateTimeOffsetValue.Month, parsedDateTimeOffset.Month);
+        Assert.AreEqual(dateTimeOffsetValue.Day, parsedDateTimeOffset.Day);
+        Assert.AreEqual(dateTimeOffsetValue.Hour, parsedDateTimeOffset.Hour);
+        Assert.AreEqual(dateTimeOffsetValue.Minute, parsedDateTimeOffset.Minute);
+        Assert.AreEqual(dateTimeOffsetValue.Second, parsedDateTimeOffset.Second);
+        Assert.AreEqual(dateTimeOffsetValue.Offset, parsedDateTimeOffset.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("localdate", out JsonElement.Mutable localDateProp));
-        Assert.Equal("2023-07-15", localDateProp.GetString());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("localdate", out JsonElement.Mutable localDateProp));
+        Assert.AreEqual("2023-07-15", localDateProp.GetString());
         
-        Assert.True(doc.RootElement.TryGetProperty("offsetdate", out JsonElement.Mutable offsetDateProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("offsetdate", out JsonElement.Mutable offsetDateProp));
         string offsetDateStr = offsetDateProp.GetString();
-        Assert.False(string.IsNullOrEmpty(offsetDateStr));
+        Assert.IsFalse(string.IsNullOrEmpty(offsetDateStr));
         OffsetDatePattern offsetDatePattern = NodaTime.Text.OffsetDatePattern.GeneralIso;
         ParseResult<OffsetDate> offsetDateResult = offsetDatePattern.Parse(offsetDateStr);
-        Assert.True(offsetDateResult.Success, $"Failed to parse OffsetDate: {offsetDateStr}");
+        Assert.IsTrue(offsetDateResult.Success, $"Failed to parse OffsetDate: {offsetDateStr}");
         OffsetDate parsedOffsetDate = offsetDateResult.Value;
-        Assert.Equal(2023, parsedOffsetDate.Year);
-        Assert.Equal(7, parsedOffsetDate.Month);
-        Assert.Equal(15, parsedOffsetDate.Day);
-        Assert.Equal(Offset.FromHours(2), parsedOffsetDate.Offset);
+        Assert.AreEqual(2023, parsedOffsetDate.Year);
+        Assert.AreEqual(7, parsedOffsetDate.Month);
+        Assert.AreEqual(15, parsedOffsetDate.Day);
+        Assert.AreEqual(Offset.FromHours(2), parsedOffsetDate.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("offsettime", out JsonElement.Mutable offsetTimeProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("offsettime", out JsonElement.Mutable offsetTimeProp));
         string offsetTimeStr = offsetTimeProp.GetString();
-        Assert.False(string.IsNullOrEmpty(offsetTimeStr));
+        Assert.IsFalse(string.IsNullOrEmpty(offsetTimeStr));
         OffsetTimePattern offsetTimePattern = NodaTime.Text.OffsetTimePattern.ExtendedIso;
         ParseResult<OffsetTime> offsetTimeResult = offsetTimePattern.Parse(offsetTimeStr);
-        Assert.True(offsetTimeResult.Success, $"Failed to parse OffsetTime: {offsetTimeStr}");
+        Assert.IsTrue(offsetTimeResult.Success, $"Failed to parse OffsetTime: {offsetTimeStr}");
         OffsetTime parsedOffsetTime = offsetTimeResult.Value;
-        Assert.Equal(10, parsedOffsetTime.Hour);
-        Assert.Equal(30, parsedOffsetTime.Minute);
-        Assert.Equal(0, parsedOffsetTime.Second);
-        Assert.Equal(Offset.FromHours(2), parsedOffsetTime.Offset);
+        Assert.AreEqual(10, parsedOffsetTime.Hour);
+        Assert.AreEqual(30, parsedOffsetTime.Minute);
+        Assert.AreEqual(0, parsedOffsetTime.Second);
+        Assert.AreEqual(Offset.FromHours(2), parsedOffsetTime.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("offsetdatetime", out JsonElement.Mutable offsetDateTimeProp));
+        Assert.IsTrue(doc.RootElement.TryGetProperty("offsetdatetime", out JsonElement.Mutable offsetDateTimeProp));
         string offsetDateTimeStr = offsetDateTimeProp.GetString();
-        Assert.False(string.IsNullOrEmpty(offsetDateTimeStr));
+        Assert.IsFalse(string.IsNullOrEmpty(offsetDateTimeStr));
         OffsetDateTimePattern offsetDateTimePattern = NodaTime.Text.OffsetDateTimePattern.ExtendedIso;
         ParseResult<OffsetDateTime> offsetDateTimeResult = offsetDateTimePattern.Parse(offsetDateTimeStr);
-        Assert.True(offsetDateTimeResult.Success, $"Failed to parse OffsetDateTime: {offsetDateTimeStr}");
+        Assert.IsTrue(offsetDateTimeResult.Success, $"Failed to parse OffsetDateTime: {offsetDateTimeStr}");
         OffsetDateTime parsedOffsetDateTime = offsetDateTimeResult.Value;
-        Assert.Equal(2023, parsedOffsetDateTime.Year);
-        Assert.Equal(7, parsedOffsetDateTime.Month);
-        Assert.Equal(15, parsedOffsetDateTime.Day);
-        Assert.Equal(10, parsedOffsetDateTime.Hour);
-        Assert.Equal(30, parsedOffsetDateTime.Minute);
-        Assert.Equal(0, parsedOffsetDateTime.Second);
-        Assert.Equal(Offset.FromHours(2), parsedOffsetDateTime.Offset);
+        Assert.AreEqual(2023, parsedOffsetDateTime.Year);
+        Assert.AreEqual(7, parsedOffsetDateTime.Month);
+        Assert.AreEqual(15, parsedOffsetDateTime.Day);
+        Assert.AreEqual(10, parsedOffsetDateTime.Hour);
+        Assert.AreEqual(30, parsedOffsetDateTime.Minute);
+        Assert.AreEqual(0, parsedOffsetDateTime.Second);
+        Assert.AreEqual(Offset.FromHours(2), parsedOffsetDateTime.Offset);
         
-        Assert.True(doc.RootElement.TryGetProperty("period", out JsonElement.Mutable periodProp));
-        Assert.Equal("P1Y2M0D", periodProp.GetString());
+        Assert.IsTrue(doc.RootElement.TryGetProperty("period", out JsonElement.Mutable periodProp));
+        Assert.AreEqual("P1Y2M0D", periodProp.GetString());
     }
 }

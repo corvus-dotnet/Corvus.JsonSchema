@@ -5,7 +5,7 @@
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.JsonPath;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonPath.Tests;
 
@@ -13,31 +13,32 @@ namespace Corvus.Text.Json.JsonPath.Tests;
 /// Coverage tests targeting uncovered parser/interpreter paths in the JSONPath evaluator,
 /// including filter expressions, recursive descent, slicing, unicode, and logical operators.
 /// </summary>
+[TestClass]
 public class JsonPathCoverageTests
 {
     // ─── Filter Expressions with Escape Sequences (Parser lines 760-778) ──
 
-    [Fact]
+    [TestMethod]
     public void Filter_StringWithEscapedNewline()
     {
         string json = """{"items": [{"text": "hello\nworld"}, {"text": "no newline"}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?@.text == 'hello\\nworld']", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_StringWithEscapedTab()
     {
         string json = """{"items": [{"text": "col1\tcol2"}, {"text": "plain"}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?@.text == 'col1\\tcol2']", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_StringWithEscapedBackslash()
     {
         // Test escaped unicode in filter string comparison
@@ -45,145 +46,145 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?@.code == 'A']", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal("A", result[0].GetProperty("code").GetString());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("A", result[0].GetProperty("code").GetString());
     }
 
     // ─── Recursive Descent with Filters (PlanInterpreter lines 879-918) ──
 
-    [Fact]
+    [TestMethod]
     public void RecursiveDescent_WithFilter()
     {
         string json = """{"a": {"b": [{"c": 1}, {"c": 2}], "d": {"b": [{"c": 3}]}}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = JsonPathEvaluator.Default.Query("$..b[?@.c > 1]", data, workspace);
-        Assert.Equal(JsonValueKind.Array, result.ValueKind);
-        Assert.True(result.GetArrayLength() >= 1);
+        Assert.AreEqual(JsonValueKind.Array, result.ValueKind);
+        Assert.IsTrue(result.GetArrayLength() >= 1);
     }
 
-    [Fact]
+    [TestMethod]
     public void RecursiveDescent_AllProperties()
     {
         string json = """{"a": {"x": 1}, "b": {"x": 2}, "c": {"d": {"x": 3}}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = JsonPathEvaluator.Default.Query("$..x", data, workspace);
-        Assert.Equal(JsonValueKind.Array, result.ValueKind);
-        Assert.Equal(3, result.GetArrayLength());
+        Assert.AreEqual(JsonValueKind.Array, result.ValueKind);
+        Assert.AreEqual(3, result.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void RecursiveDescent_WildcardOnNestedArrays()
     {
         string json = """{"a": [1, 2], "b": {"c": [3, 4]}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = JsonPathEvaluator.Default.Query("$..*", data, workspace);
-        Assert.Equal(JsonValueKind.Array, result.ValueKind);
-        Assert.True(result.GetArrayLength() > 4);
+        Assert.AreEqual(JsonValueKind.Array, result.ValueKind);
+        Assert.IsTrue(result.GetArrayLength() > 4);
     }
 
     // ─── Array Slice Operations ──────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void Slice_WithStep()
     {
         string json = """[0,1,2,3,4,5,6,7,8,9]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[::2]", data);
-        Assert.Equal(5, result.Count);
-        Assert.Equal(0, result[0].GetInt32());
-        Assert.Equal(2, result[1].GetInt32());
-        Assert.Equal(4, result[2].GetInt32());
+        Assert.AreEqual(5, result.Count);
+        Assert.AreEqual(0, result[0].GetInt32());
+        Assert.AreEqual(2, result[1].GetInt32());
+        Assert.AreEqual(4, result[2].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Slice_NegativeStep()
     {
         string json = """[0,1,2,3,4]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[::-1]", data);
-        Assert.Equal(5, result.Count);
-        Assert.Equal(4, result[0].GetInt32());
-        Assert.Equal(0, result[4].GetInt32());
+        Assert.AreEqual(5, result.Count);
+        Assert.AreEqual(4, result[0].GetInt32());
+        Assert.AreEqual(0, result[4].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Slice_NegativeIndices()
     {
         string json = """[0,1,2,3,4,5]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[-3:]", data);
-        Assert.Equal(3, result.Count);
-        Assert.Equal(3, result[0].GetInt32());
-        Assert.Equal(4, result[1].GetInt32());
-        Assert.Equal(5, result[2].GetInt32());
+        Assert.AreEqual(3, result.Count);
+        Assert.AreEqual(3, result[0].GetInt32());
+        Assert.AreEqual(4, result[1].GetInt32());
+        Assert.AreEqual(5, result[2].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Slice_StartAndEnd()
     {
         string json = """[0,1,2,3,4,5,6,7,8,9]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[2:5]", data);
-        Assert.Equal(3, result.Count);
-        Assert.Equal(2, result[0].GetInt32());
-        Assert.Equal(3, result[1].GetInt32());
-        Assert.Equal(4, result[2].GetInt32());
+        Assert.AreEqual(3, result.Count);
+        Assert.AreEqual(2, result[0].GetInt32());
+        Assert.AreEqual(3, result[1].GetInt32());
+        Assert.AreEqual(4, result[2].GetInt32());
     }
 
     // ─── Complex Filter Expressions ──────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void Filter_GreaterThan()
     {
         string json = """{"items": [{"v":1},{"v":5},{"v":10},{"v":15}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.items[?@.v > 5]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_LessThanOrEqual()
     {
         string json = """{"items": [{"v":1},{"v":5},{"v":10},{"v":15}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.items[?@.v <= 5]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_NotEqual()
     {
         string json = """{"items": [{"v":1},{"v":5},{"v":10}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.items[?@.v != 5]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_LogicalAnd()
     {
         string json = """{"items": [{"a":1,"b":2},{"a":3,"b":4},{"a":5,"b":6}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?@.a > 1 && @.b < 6]", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal(3, result[0].GetProperty("a").GetInt32());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(3, result[0].GetProperty("a").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_LogicalOr()
     {
         string json = """{"items": [{"a":1},{"a":5},{"a":10}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?@.a < 2 || @.a > 8]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_LogicalNot()
     {
         // In RFC 9535, @.active is an existence test — items missing the property match !@.active
@@ -191,337 +192,337 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?!@.active]", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal(2, result[0].GetProperty("v").GetInt32());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(2, result[0].GetProperty("v").GetInt32());
     }
 
     // ─── Unicode Property Names ──────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void PropertyAccess_UnicodeKey()
     {
         string json = "{\"\\u540D\\u524D\": \"\\u592A\\u90CE\", \"\\u5E74\\u9F62\": 25}";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.\u540D\u524D", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal("\u592A\u90CE", result[0].GetString());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("\u592A\u90CE", result[0].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PropertyAccess_BracketNotationUnicode()
     {
         string json = "{\"\\u540D\\u524D\": \"\\u592A\\u90CE\"}";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$['\u540D\u524D']", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal("\u592A\u90CE", result[0].GetString());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("\u592A\u90CE", result[0].GetString());
     }
 
     // ─── Existence Checks in Filters ─────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void Filter_ExistenceCheck()
     {
         string json = """{"items": [{"a":1,"b":2},{"a":3},{"a":5,"b":6}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?@.b]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_NonExistence()
     {
         string json = """{"items": [{"a":1,"b":2},{"a":3},{"a":5,"b":6}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?!@.b]", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal(3, result[0].GetProperty("a").GetInt32());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(3, result[0].GetProperty("a").GetInt32());
     }
 
     // ─── Wildcard and index combinations ─────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void Wildcard_ObjectProperties()
     {
         string json = """{"a": 1, "b": 2, "c": 3}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.*", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Wildcard_ArrayElements()
     {
         string json = """[10, 20, 30, 40]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[*]", data);
-        Assert.Equal(4, result.Count);
+        Assert.AreEqual(4, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void MultipleIndices()
     {
         string json = """["a","b","c","d","e"]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[0,2,4]", data);
-        Assert.Equal(3, result.Count);
-        Assert.Equal("a", result[0].GetString());
-        Assert.Equal("c", result[1].GetString());
-        Assert.Equal("e", result[2].GetString());
+        Assert.AreEqual(3, result.Count);
+        Assert.AreEqual("a", result[0].GetString());
+        Assert.AreEqual("c", result[1].GetString());
+        Assert.AreEqual("e", result[2].GetString());
     }
 
     // ─── Built-in functions in filters ───────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void Filter_LengthFunction()
     {
         string json = """{"items": [{"name": "ab"}, {"name": "abcde"}, {"name": "a"}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?length(@.name) > 2]", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal("abcde", result[0].GetProperty("name").GetString());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("abcde", result[0].GetProperty("name").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_LengthFunctionOnArray()
     {
         string json = """{"groups": [{"items": [1,2,3]}, {"items": [1]}, {"items": [1,2,3,4,5]}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.groups[?length(@.items) >= 3]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
     // ─── Nested path access ──────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void DeepNestedAccess()
     {
         string json = """{"a": {"b": {"c": {"d": {"e": 42}}}}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.a.b.c.d.e", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal(42, result[0].GetInt32());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(42, result[0].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void BracketNotation_WithDots()
     {
         string json = """{"a.b": {"c.d": 99}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['a.b']['c.d']", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal(99, result[0].GetInt32());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(99, result[0].GetInt32());
     }
 
     // ─── Empty results ───────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void NoMatch_ReturnsEmpty()
     {
         string json = """{"a": 1}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.nonexistent", data);
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_NoMatch_ReturnsEmpty()
     {
         string json = """{"items": [{"v":1},{"v":2}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?@.v > 100]", data);
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
     // ─── Root access ─────────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void RootOnly_ReturnsWholeDocument()
     {
         string json = """{"a": 1, "b": 2}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal(JsonValueKind.Object, result[0].ValueKind);
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(JsonValueKind.Object, result[0].ValueKind);
     }
 
     // ─── Filter with string comparison ───────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void Filter_StringEquality()
     {
         string json = """{"items": [{"name":"alice"},{"name":"bob"},{"name":"charlie"}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?@.name == 'bob']", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal("bob", result[0].GetProperty("name").GetString());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual("bob", result[0].GetProperty("name").GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_StringNotEqual()
     {
         string json = """{"items": [{"name":"alice"},{"name":"bob"},{"name":"charlie"}]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$.items[?@.name != 'bob']", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
     // ─── NameDispatchTable: hash code paths for various key lengths (L292-313) ──
 
-    [Fact]
+    [TestMethod]
     public void NameSet_EmptyKeyLength()
     {
         // HashName case length == 0
         string json = """{"":1,"a":2,"bb":3}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['','a','bb']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void NameSet_Length1Key()
     {
         // HashName case length == 1
         string json = """{"x":10,"y":20,"z":30}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['x','y','z']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void NameSet_Length2Key()
     {
         // HashName case length == 2
         string json = """{"ab":1,"cd":2,"ef":3}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['ab','cd','ef']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void NameSet_Length3Key()
     {
         // HashName case length == 3
         string json = """{"abc":1,"def":2,"ghi":3}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['abc','def','ghi']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void NameSet_Length4Key()
     {
         // HashName case length == 4
         string json = """{"abcd":1,"efgh":2,"ijkl":3}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['abcd','efgh','ijkl']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void NameSet_Length5Key()
     {
         // HashName case length == 5
         string json = """{"abcde":1,"fghij":2,"klmno":3}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['abcde','fghij','klmno']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void NameSet_Length6Key()
     {
         // HashName case length == 6
         string json = """{"abcdef":1,"ghijkl":2,"mnopqr":3}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['abcdef','ghijkl','mnopqr']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void NameSet_Length7Key()
     {
         // HashName case length == 7
         string json = """{"abcdefg":1,"hijklmn":2,"opqrstu":3}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['abcdefg','hijklmn','opqrstu']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void NameSet_Length8PlusKey()
     {
         // HashName default case (length > 7)
         string json = """{"abcdefgh":1,"ijklmnop":2,"qrstuvwx":3}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['abcdefgh','ijklmnop','qrstuvwx']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void NameSet_MissedLookup_ReturnsFalse()
     {
         // L278-279: TryGetSlotIndex returns false (name not in table)
         string json = """{"a":1,"b":2,"c":3,"extra":4}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['a','b','c']", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
     // ─── JsonPathSequenceBuilder: Grow path (L107-116) ──
 
-    [Fact]
+    [TestMethod]
     public void ManyResults_TriggersGrow()
     {
         // Initial capacity is 8, so >8 results triggers Grow
         string json = """[1,2,3,4,5,6,7,8,9,10,11,12]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[*]", data);
-        Assert.Equal(12, result.Count);
+        Assert.AreEqual(12, result.Count);
     }
 
     // ─── PlanInterpreter: SingletonChain non-object/non-array ──
 
-    [Fact]
+    [TestMethod]
     public void SingletonChain_NameOnNonObject()
     {
         // SingletonChain: name nav on non-object (L146-148)
         string json = """{"a":"hello"}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.a.b.c", data);
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void SingletonChain_NameMissing()
     {
         // SingletonChain: TryGetProperty fails (L151-153)
         string json = """{"a":{"x":1}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.a.b.c", data);
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void SingletonChain_IndexOnNonArray()
     {
         // SingletonChain: index nav on non-array (L158-160)
         string json = """{"a":{"b":"text"}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.a.b[0][1]", data);
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void SingletonChain_IndexOutOfBounds()
     {
         // SingletonChain: resolved index out of bounds (L165-167)
@@ -529,43 +530,43 @@ public class JsonPathCoverageTests
         string json = """{"a":[[10,20],30]}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.a[0][99]", data);
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
     // ─── PlanInterpreter: NameSet on non-object (L180-182) ──
 
-    [Fact]
+    [TestMethod]
     public void NameSet_OnNonObject()
     {
         string json = """[1,2,3]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['a','b','c']", data);
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
     // ─── PlanInterpreter: filter paths ──
 
-    [Fact]
+    [TestMethod]
     public void Filter_SingularNumericComparison_NavigationFails()
     {
         // EvalSingularNumericComparison: TryNavigateSingularPath fails (L599-601)
         string json = """[{"a":1},{"b":2}]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?@.a != 5]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_SingularNumericComparison_NonNumber()
     {
         // EvalSingularNumericComparison: node is not a number (L604-606)
         string json = """[{"a":"text"},{"a":3}]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?@.a == 3]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_AbsoluteSingularNumericComparison_NavigationFails()
     {
         // EvalSingularNumericComparison non-fused path (absolute query): L599-601
@@ -575,10 +576,10 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?$.missing != 5]", data);
         // $.missing doesn't exist → op is NotEqual → true for all elements
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_AbsoluteSingularNumericComparison_NonNumber()
     {
         // EvalSingularNumericComparison non-fused: absolute path resolves to non-number (L604-606)
@@ -586,12 +587,12 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.items[?$.val == 5]", data);
         // $.val is "text" (string), not a number → != 5 would be true
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
     // ─── Custom function with NodesType argument (L870-918) ──
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_NodesTypeArg_GeneralQuery()
     {
         // EvalNodesTypeArg: FilterGeneralQueryPlan path (L870-877)
@@ -602,10 +603,10 @@ public class JsonPathCoverageTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?node_count($.items[*]) == 3]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_NodesTypeArg_SingularQuery()
     {
         // EvalNodesTypeArg: FilterSingularQueryPlan path (L879-892)
@@ -616,10 +617,10 @@ public class JsonPathCoverageTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?node_count(@.x) == 1]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_NodesTypeArg_SingularQuery_Missing()
     {
         // EvalNodesTypeArg: FilterSingularQueryPlan with missing property (L889-892)
@@ -631,10 +632,10 @@ public class JsonPathCoverageTests
 
         using JsonPathResult result = evaluator.QueryNodes("$[?node_count(@.x) == 0]", data);
         // Second element has no "x" → nodes count is 0
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_NodesTypeArg_EmptyQuery()
     {
         // EvalNodesTypeArg: FilterEmptyQueryPlan path (L894-901)
@@ -646,25 +647,25 @@ public class JsonPathCoverageTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?node_count(@) == 1]", data);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
     // ─── Planner: paren-wrapped comparison (L308-310) ──
 
-    [Fact]
+    [TestMethod]
     public void Filter_ParenWrappedNumericComparison()
     {
         // TryPlanSpecializedComparison: ParenExpression unwrapping (L307-310)
         string json = """[{"x":5},{"x":15}]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?(@.x) < 10]", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal(5, result[0].GetProperty("x").GetInt32());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(5, result[0].GetProperty("x").GetInt32());
     }
 
     // ─── Planner: CompileRegex failure (L580-582) ──
 
-    [Fact]
+    [TestMethod]
     public void Filter_Match_InvalidStaticPattern_ReturnsNothing()
     {
         // CompileRegex: ArgumentException → returns null (L580-582)
@@ -673,12 +674,12 @@ public class JsonPathCoverageTests
         string json = """[{"s":"abc"},{"s":"xyz"}]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("""$[?match(@.s, '[invalid')]""", data);
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
     // ─── Parser: filter query with empty segments (L374-376) ──
 
-    [Fact]
+    [TestMethod]
     public void Filter_EmptyQuery_Self()
     {
         // PlanFilterQuery: empty segments (L374-376) → FilterEmptyQueryPlan
@@ -687,21 +688,21 @@ public class JsonPathCoverageTests
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?@]", data);
         // RFC 9535: @. with no segments selects current node as a node list
         // Existence test: non-null values are truthy
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
     // ─── Planner: custom function not found (L418-419) ──
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_UnknownName_Throws()
     {
         // PlanCustomFunctionCall: function not in dict (L418-419)
         JsonElement data = JsonElement.ParseValue("1"u8);
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?nonexistent(@)]", data));
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_CountFunction_OnNodeList()
     {
         // Exercises count() with a proper nodes argument — count returns # of nodes
@@ -709,20 +710,20 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?count($[*]) == 3]", data);
         // count($[*]) == 3 is true → all 3 items selected
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_ValueFunction_SingleNode()
     {
         // Exercises value() with a single-node nodes argument
         string json = """[{"a":10},{"a":20}]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?value(@.a) == 10]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_Match_DynamicPattern_InvalidRegex()
     {
         // EvalMatchFunction: dynamic regex fails to compile → NothingResult (L766-768)
@@ -730,41 +731,41 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?match(@.s, @.p)]", data);
         // First: regex fails → Nothing (not truthy). Second: "x" matches "x" → true
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
     // ─── Parser error paths ──
 
-    [Fact]
+    [TestMethod]
     public void Parser_LeadingWhitespace_Throws()
     {
         // Parser L64-68: leading whitespace not allowed
         JsonElement data = JsonElement.ParseValue("1"u8);
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes(" $.a", data));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parser_NoRootToken_Throws()
     {
         // Parser L73-75: must start with $
         JsonElement data = JsonElement.ParseValue("1"u8);
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes(".a", data));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parser_TrailingGarbage_Throws()
     {
         // Parser L81-84: unexpected token after expression
         JsonElement data = JsonElement.ParseValue("1"u8);
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$ garbage", data));
     }
 
     // ─── JsonPathEvaluator: error wrapping (L78-81, L111-114, L152-153) ──
 
-    [Fact]
+    [TestMethod]
     public void QueryNodes_ThrowingCustomFunction_WrapsInJsonPathException()
     {
         // L78-81: non-JsonPathException during execution → wrapped
@@ -774,13 +775,13 @@ public class JsonPathCoverageTests
             ["bomb"] = new ThrowingFunction(),
         });
 
-        JsonPathException ex = Assert.Throws<JsonPathException>(() =>
+        JsonPathException ex = Assert.ThrowsExactly<JsonPathException>(() =>
             evaluator.QueryNodes("$[?bomb(@.x)]", data));
-        Assert.Contains("Error evaluating", ex.Message);
-        Assert.IsType<InvalidOperationException>(ex.InnerException);
+        StringAssert.Contains(ex.Message, "Error evaluating");
+        Assert.IsInstanceOfType<InvalidOperationException>(ex.InnerException);
     }
 
-    [Fact]
+    [TestMethod]
     public void QueryNodes_WithBuffer_ThrowingCustomFunction_WrapsInJsonPathException()
     {
         // L111-114: same as above but with initialBuffer overload
@@ -801,22 +802,22 @@ public class JsonPathCoverageTests
             caught = ex;
         }
 
-        Assert.NotNull(caught);
-        Assert.Contains("Error evaluating", caught!.Message);
+        Assert.IsNotNull(caught);
+        StringAssert.Contains(caught!.Message, "Error evaluating");
     }
 
-    [Fact]
+    [TestMethod]
     public void GetOrCompile_CompilationError_ThrowsJsonPathException()
     {
         // L152-153: non-JsonPathException during compilation (defensive path)
         JsonElement data = JsonElement.ParseValue("1"u8);
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?unknown_function()]", data));
     }
 
     // ─── JsonPathFunctionResult factory methods (L53, L62, L70, L78) ──
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_ReturnsFromValueInt()
     {
         // Exercises JsonPathFunctionResult.FromValue(int, workspace) - L53
@@ -827,10 +828,10 @@ public class JsonPathCoverageTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?dbl(@.x) == 10]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_ReturnsFromValueDouble()
     {
         // Exercises JsonPathFunctionResult.FromValue(double, workspace) - L62
@@ -841,10 +842,10 @@ public class JsonPathCoverageTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?half(@.x) == 1.25]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_ReturnsFromValueString()
     {
         // Exercises JsonPathFunctionResult.FromValue(string) - L70
@@ -855,10 +856,10 @@ public class JsonPathCoverageTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?upper(@.x) == 'HI']", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_ReturnsFromValueBool()
     {
         // Exercises JsonPathFunctionResult.FromValueBool(bool) - L78
@@ -869,10 +870,10 @@ public class JsonPathCoverageTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?is_even_val(@.x) == true]", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_ReturnsNothing()
     {
         // Exercises L835: custom function returning Nothing → NothingResult
@@ -883,10 +884,10 @@ public class JsonPathCoverageTests
         });
 
         using JsonPathResult result = evaluator.QueryNodes("$[?nothing(@.x)]", data);
-        Assert.Equal(0, result.Count);
+        Assert.AreEqual(0, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void CustomFunction_LogicalTypeArg()
     {
         // Exercises L807-808: LogicalType argument dispatch
@@ -898,12 +899,12 @@ public class JsonPathCoverageTests
 
         using JsonPathResult result = evaluator.QueryNodes("$[?negate(@.x == 1)]", data);
         // negate(true) → false, negate(false) → true → second item selected
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
     // ─── Planner: comparison with literal on LEFT (L296-300, FlipOp L561-568) ──
 
-    [Fact]
+    [TestMethod]
     public void Filter_LiteralOnLeft_FlipsLessThan()
     {
         // TryPlanSpecializedComparison: literal on left side (L296-300)
@@ -911,44 +912,44 @@ public class JsonPathCoverageTests
         string json = """[{"x":5},{"x":15}]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?10 < @.x]", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal(15, result[0].GetProperty("x").GetInt32());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(15, result[0].GetProperty("x").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_LiteralOnLeft_FlipsGreaterThan()
     {
         // FlipOp: GreaterThan → LessThan
         string json = """[{"x":5},{"x":15}]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?10 > @.x]", data);
-        Assert.Equal(1, result.Count);
-        Assert.Equal(5, result[0].GetProperty("x").GetInt32());
+        Assert.AreEqual(1, result.Count);
+        Assert.AreEqual(5, result[0].GetProperty("x").GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_LiteralOnLeft_FlipsLessThanOrEqual()
     {
         // FlipOp: LessThanOrEqual → GreaterThanOrEqual
         string json = """[{"x":5},{"x":10},{"x":15}]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?10 <= @.x]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Filter_LiteralOnLeft_FlipsGreaterThanOrEqual()
     {
         // FlipOp: GreaterThanOrEqual → LessThanOrEqual
         string json = """[{"x":5},{"x":10},{"x":15}]""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[?10 >= @.x]", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
     // ─── Planner: duplicate name selector (AllUniqueNames → false, L484-486) ──
 
-    [Fact]
+    [TestMethod]
     public void DuplicateNameSelector_FallsBackToMultiSelector()
     {
         // When selectors have duplicate names, AllUniqueNames returns false
@@ -956,135 +957,135 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$['a','a','b']", data);
         // RFC 9535: duplicate selectors produce duplicate results
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
     // ─── Planner: CountSingletonRun with non-singleton segments (L499-511) ──
 
-    [Fact]
+    [TestMethod]
     public void MixedSegments_BreaksSingletonChain()
     {
         // CountSingletonRun: wildcard breaks the singleton run
         string json = """{"a":{"b":[{"c":1},{"c":2}]}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.a.b[*].c", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void MultiSelectorSegment_BreaksSingletonChain()
     {
         // CountSingletonRun: multi-selector segment breaks chain
         string json = """{"a":{"b":1,"c":2,"d":{"e":3}}}""";
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$.a['b','c']", data);
-        Assert.Equal(2, result.Count);
+        Assert.AreEqual(2, result.Count);
     }
 
     // ─── QueryNodes with initial buffer ──
 
-    [Fact]
+    [TestMethod]
     public void QueryNodes_WithInitialBuffer_ReturnsResults()
     {
         // L102-116: QueryNodes with caller-provided Span buffer
         JsonElement data = JsonElement.ParseValue("""[1,2,3]"""u8);
         JsonElement[] buffer = new JsonElement[8];
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes("$[*]", data, buffer);
-        Assert.Equal(3, result.Count);
+        Assert.AreEqual(3, result.Count);
     }
 
     // ─── Parser Error Branch Tests (targeting uncovered throw paths) ──
 
-    [Fact]
+    [TestMethod]
     public void Parse_Utf8Overload_Works()
     {
         // L32-34: Exercises the Parse(ReadOnlySpan<byte>) overload directly
         ReadOnlySpan<byte> utf8Expr = "$[0]"u8;
         QueryNode node = Parser.Parse(utf8Expr);
-        Assert.NotNull(node);
+        Assert.IsNotNull(node);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_MissingCloseParen_InFilter_Throws()
     {
         // L374-376: Expected ')' in parenthesized filter expression
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?(@.a == 1]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_MissingOpenParen_AfterFunction_Throws()
     {
         // L454-456: Expected '(' after function name
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?length]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_MissingCloseParen_AfterFunctionArgs_Throws()
     {
         // L474-476: Expected ')' after function arguments
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?length(@.a]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_LeadingZeros_InInteger_Throws()
     {
         // L516-517: Leading zeros not allowed
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[01]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_NegativeZero_InInteger_Throws()
     {
         // L509-511: -0 is not a valid JSONPath integer
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[-0]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_LogicalAnd_AsComparable_Throws()
     {
         // L808-809: AND cannot be used as a comparable value
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?(@.a && @.b) == true]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_LogicalOr_AsComparable_Throws()
     {
         // L818-819: OR cannot be used as a comparable value
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?(@.a || @.b) == true]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_LogicalNot_AsComparable_Throws()
     {
         // L828-829: NOT cannot be used as a comparable value
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?!@.a == true]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_Comparison_AsComparable_Throws()
     {
         // L838-839: Comparison cannot be used as a comparable value
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?(@.a > 1) == true]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_UnknownFunction_Throws()
     {
         // L956: Unknown function name
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             JsonPathEvaluator.Default.QueryNodes("$[?unknownfn(@)]", JsonElement.ParseValue("[]"u8)));
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_UnicodeEscape_TwoByteRange()
     {
         // L696-700: 2-byte UTF-8 encoding for code points 0x80-0x7FF (e.g., \u00E9 = é)
@@ -1092,10 +1093,10 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$[?@.name == 'caf\\u00E9']", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_UnicodeEscape_OneByteRange()
     {
         // L691-693: 1-byte UTF-8 encoding for code points ≤ 0x7F (e.g., \u0041 = 'A')
@@ -1103,10 +1104,10 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$[?@.code == '\\u0041']", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_StringLiteral_WithBackspace()
     {
         // L759-761: \b escape in string literal → EscapeJsonString hits backspace case
@@ -1114,10 +1115,10 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$[?@.x == 'a\\bb']", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_StringLiteral_WithFormfeed()
     {
         // L762-764: \f escape in string literal → EscapeJsonString hits formfeed case
@@ -1125,10 +1126,10 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$[?@.x == 'a\\fb']", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_StringLiteral_WithControlChar()
     {
         // L776-778: Control char < 0x20 in EscapeJsonString (via \u0001)
@@ -1136,10 +1137,10 @@ public class JsonPathCoverageTests
         JsonElement data = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
         using JsonPathResult result = JsonPathEvaluator.Default.QueryNodes(
             "$[?@.x == 'a\\u0001b']", data);
-        Assert.Equal(1, result.Count);
+        Assert.AreEqual(1, result.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void Parse_NodesTypeFunction_InComparison_Throws()
     {
         // L887-890: Custom function returning NodesType used in comparable context
@@ -1149,7 +1150,7 @@ public class JsonPathCoverageTests
             ["nodesfn"] = new NodesReturnFunction(),
         });
 
-        Assert.Throws<JsonPathException>(() =>
+        Assert.ThrowsExactly<JsonPathException>(() =>
             evaluator.QueryNodes("$[?nodesfn(@.x) == 1]", data));
     }
 

@@ -8,8 +8,7 @@ using Corvus.Yaml;
 #else
 using Corvus.Text.Json.Yaml;
 #endif
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 #if STJ
 namespace Corvus.Yaml.SystemTextJson.Tests;
@@ -22,16 +21,10 @@ namespace Corvus.Text.Json.Yaml.Tests;
 /// <c>test.event</c> files. Each test case directory contains an <c>in.yaml</c>
 /// and a <c>test.event</c> file describing the expected parse events.
 /// </summary>
+[TestClass]
 public class YamlEventConformanceTests
 {
     private static readonly string TestSuitePath = FindTestSuitePath();
-
-    private readonly ITestOutputHelper _output;
-
-    public YamlEventConformanceTests(ITestOutputHelper output)
-    {
-        _output = output;
-    }
 
     /// <summary>
     /// Gets the valid test case IDs (directories with test.event and NO error file).
@@ -80,8 +73,8 @@ public class YamlEventConformanceTests
         }
     }
 
-    [Theory]
-    [MemberData(nameof(ValidEventTestCases))]
+    [TestMethod]
+    [DynamicData(nameof(ValidEventTestCases))]
     public void ValidEventTest(string testId)
     {
         string dir = Path.Combine(TestSuitePath, testId);
@@ -100,28 +93,28 @@ public class YamlEventConformanceTests
 
         string actualEvents = string.Join("\n", eventLines);
 
-        _output.WriteLine($"Test: {testId}");
-        _output.WriteLine($"Expected:\n{expectedEvents}");
-        _output.WriteLine($"Actual:\n{actualEvents}");
+        Console.WriteLine($"Test: {testId}");
+        Console.WriteLine($"Expected:\n{expectedEvents}");
+        Console.WriteLine($"Actual:\n{actualEvents}");
 
-        Assert.Equal(
+        Assert.AreEqual(
             NormalizeEventString(expectedEvents),
             NormalizeEventString(actualEvents));
     }
 
-    [Theory]
-    [MemberData(nameof(ErrorEventTestCases))]
+    [TestMethod]
+    [DynamicData(nameof(ErrorEventTestCases))]
     public void ErrorEventTest(string testId)
     {
         string dir = Path.Combine(TestSuitePath, testId);
         byte[] yaml = File.ReadAllBytes(Path.Combine(dir, "in.yaml"));
 
-        _output.WriteLine($"Test: {testId}");
+        Console.WriteLine($"Test: {testId}");
 
         // Error test cases should cause the parser to throw YamlException.
         // Some may parse partially before the error, but the parser should
         // eventually throw.
-        Assert.Throws<YamlException>(() =>
+        Assert.ThrowsExactly<YamlException>(() =>
         {
             YamlDocument.EnumerateEvents(
                 yaml,

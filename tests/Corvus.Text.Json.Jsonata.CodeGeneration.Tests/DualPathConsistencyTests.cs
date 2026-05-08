@@ -6,8 +6,7 @@ using System.Reflection;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 
@@ -24,16 +23,23 @@ namespace Corvus.Text.Json.Jsonata.CodeGeneration.Tests;
 /// same serialized JSON.
 /// </para>
 /// </remarks>
-public class DualPathConsistencyTests : IClassFixture<CodeGenConformanceFixture>
+[TestClass]
+public class DualPathConsistencyTests
 {
     private static readonly JsonataEvaluator Evaluator = JsonataEvaluator.Default;
-    private readonly CodeGenConformanceFixture fixture;
-    private readonly ITestOutputHelper output;
+    private static CodeGenConformanceFixture? s_fixture;
 
-    public DualPathConsistencyTests(CodeGenConformanceFixture fixture, ITestOutputHelper output)
+    [ClassInitialize]
+    public static void ClassInit(TestContext _)
     {
-        this.fixture = fixture;
-        this.output = output;
+        s_fixture = new CodeGenConformanceFixture();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
     }
 
     /// <summary>
@@ -190,14 +196,14 @@ public class DualPathConsistencyTests : IClassFixture<CodeGenConformanceFixture>
         yield return ["""$ + 1""", "42", "simple-arithmetic"];
     }
 
-    [Theory]
-    [Trait("category", "dual-path")]
-    [MemberData(nameof(GetTestCases))]
+    [TestMethod]
+    [TestCategory("dual-path")]
+    [DynamicData(nameof(GetTestCases))]
     public void CgAndRtProduceSameResult(string expression, string data, string description)
     {
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Data:       {data}");
-        this.output.WriteLine($"Test:       {description}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Data:       {data}");
+        Console.WriteLine($"Test:       {description}");
 
         // ── RT path ──
         string? rtResult = null;
@@ -214,7 +220,7 @@ public class DualPathConsistencyTests : IClassFixture<CodeGenConformanceFixture>
         // ── CG path ──
         string? cgResult = null;
         string? cgErrorCode = null;
-        CompiledExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledExpression compiled = s_fixture!.GetOrCompile(expression);
 
         if (compiled.Method is null)
         {
@@ -223,17 +229,17 @@ public class DualPathConsistencyTests : IClassFixture<CodeGenConformanceFixture>
             if (cgErrorCode is null)
             {
                 // Non-parse CG failure — log and check if RT also fails
-                this.output.WriteLine($"CG compile failed: {compiled.Error}");
+                Console.WriteLine($"CG compile failed: {compiled.Error}");
                 if (rtErrorCode is not null)
                 {
                     // Both fail — acceptable (CG can't handle some expressions)
-                    this.output.WriteLine($"Both paths error: RT={rtErrorCode}");
+                    Console.WriteLine($"Both paths error: RT={rtErrorCode}");
                     return;
                 }
 
                 // RT succeeds but CG fails to compile — this is a known CG limitation for some expressions.
                 // Log it as a warning but don't fail the test (CG doesn't support all expressions).
-                this.output.WriteLine($"WARNING: RT succeeded ({rtResult}) but CG failed to compile");
+                Console.WriteLine($"WARNING: RT succeeded ({rtResult}) but CG failed to compile");
                 return;
             }
         }
@@ -253,19 +259,19 @@ public class DualPathConsistencyTests : IClassFixture<CodeGenConformanceFixture>
             }
         }
 
-        this.output.WriteLine($"RT: {(rtErrorCode is not null ? $"ERROR {rtErrorCode}" : rtResult ?? "undefined")}");
-        this.output.WriteLine($"CG: {(cgErrorCode is not null ? $"ERROR {cgErrorCode}" : cgResult ?? "undefined")}");
+        Console.WriteLine($"RT: {(rtErrorCode is not null ? $"ERROR {rtErrorCode}" : rtResult ?? "undefined")}");
+        Console.WriteLine($"CG: {(cgErrorCode is not null ? $"ERROR {cgErrorCode}" : cgResult ?? "undefined")}");
 
         // ── Assert consistency ──
         if (rtErrorCode is not null || cgErrorCode is not null)
         {
             // At least one threw — both must throw the same code
-            Assert.Equal(rtErrorCode, cgErrorCode);
+            Assert.AreEqual(rtErrorCode, cgErrorCode);
         }
         else
         {
             // Both returned values — compare
-            Assert.Equal(rtResult, cgResult);
+            Assert.AreEqual(rtResult, cgResult);
         }
     }
 

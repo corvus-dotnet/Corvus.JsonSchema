@@ -6,8 +6,7 @@ using System.Reflection;
 using System.Text;
 using System.Text.Json;
 using Corvus.Text.Json.JMESPath;
-using Xunit;
-using Xunit.Abstractions;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JMESPath.CodeGeneration.Tests;
 
@@ -15,39 +14,46 @@ namespace Corvus.Text.Json.JMESPath.CodeGeneration.Tests;
 /// Runs the official JMESPath compliance test suite through the code generator pipeline:
 /// generate C# → compile → execute → compare with expected result.
 /// </summary>
-public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
+[TestClass]
+public class CodeGenConformanceTests
 {
     private static readonly TimeSpan TestTimeout = TimeSpan.FromSeconds(30);
     private static readonly string TestSuiteRoot = FindTestSuiteRoot();
 
-    private readonly CodeGenConformanceFixture fixture;
-    private readonly ITestOutputHelper output;
+    private static CodeGenConformanceFixture? s_fixture;
 
-    public CodeGenConformanceTests(CodeGenConformanceFixture fixture, ITestOutputHelper output)
+    [ClassInitialize]
+    public static void ClassInit(TestContext _)
     {
-        this.fixture = fixture;
-        this.output = output;
+        s_fixture = new CodeGenConformanceFixture();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
     }
 
     /// <summary>
     /// Tests that expect a successful result.
     /// </summary>
-    [Theory]
-    [Trait("category", "codegen-conformance")]
-    [MemberData(nameof(GetSuccessCases))]
+    [TestMethod]
+    [TestCategory("codegen-conformance")]
+    [DynamicData(nameof(GetSuccessCases))]
     public void SuccessCase(string file, int group, int caseIndex, string expression)
     {
         (string givenJson, string expectedJson) = LoadCase(file, group, caseIndex);
 
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Given: {(givenJson.Length > 200 ? givenJson[..200] + "..." : givenJson)}");
-        this.output.WriteLine($"Expected: {expectedJson}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Given: {(givenJson.Length > 200 ? givenJson[..200] + "..." : givenJson)}");
+        Console.WriteLine($"Expected: {expectedJson}");
 
-        CompiledJMESPathExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledJMESPathExpression compiled = s_fixture!.GetOrCompile(expression);
 
         if (compiled.GeneratedCode is not null)
         {
-            this.output.WriteLine($"Generated code length: {compiled.GeneratedCode.Length}");
+            Console.WriteLine($"Generated code length: {compiled.GeneratedCode.Length}");
         }
 
         if (compiled.Method is null)
@@ -70,7 +76,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
 
         string resultJson = result.IsUndefined() ? "null" : result.GetRawText();
 
-        this.output.WriteLine($"Result: {resultJson}");
+        Console.WriteLine($"Result: {resultJson}");
 
         AssertJsonEqual(expectedJson, resultJson);
     }
@@ -78,27 +84,27 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
     /// <summary>
     /// Tests that expect a syntax/parse error.
     /// </summary>
-    [Theory]
-    [Trait("category", "codegen-conformance")]
-    [MemberData(nameof(GetErrorCases))]
+    [TestMethod]
+    [TestCategory("codegen-conformance")]
+    [DynamicData(nameof(GetErrorCases))]
     public void ErrorCase(string file, int group, int caseIndex, string expression, string errorType)
     {
-        this.output.WriteLine($"Expression: {expression}");
-        this.output.WriteLine($"Expected error: {errorType}");
+        Console.WriteLine($"Expression: {expression}");
+        Console.WriteLine($"Expected error: {errorType}");
 
-        CompiledJMESPathExpression compiled = this.fixture.GetOrCompile(expression);
+        CompiledJMESPathExpression compiled = s_fixture!.GetOrCompile(expression);
 
         // If the expression failed at parse/codegen time, that's the expected error.
         if (compiled.Method is null && compiled.IsParseError)
         {
-            this.output.WriteLine($"Got expected parse error: {compiled.Error}");
+            Console.WriteLine($"Got expected parse error: {compiled.Error}");
             return;
         }
 
         if (compiled.Method is null)
         {
             // Compilation failed for non-parse reasons — still an error, accept it.
-            this.output.WriteLine($"Got compilation error: {compiled.Error}");
+            Console.WriteLine($"Got compilation error: {compiled.Error}");
             return;
         }
 
@@ -122,7 +128,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
             // For JMESPath, some "error" test cases (like invalid-type) are runtime errors.
             // If the CG produces a result instead of throwing, that may be acceptable
             // depending on the error type — but we should flag it.
-            this.output.WriteLine($"WARNING: Expected error '{errorType}' but evaluation succeeded with: {(task.Result.IsUndefined() ? "undefined" : task.Result.GetRawText())}");
+            Console.WriteLine($"WARNING: Expected error '{errorType}' but evaluation succeeded with: {(task.Result.IsUndefined() ? "undefined" : task.Result.GetRawText())}");
         }
         catch (AggregateException ae) when (ae.InnerException is not null)
         {
@@ -143,7 +149,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
 
         if (caught is not null)
         {
-            this.output.WriteLine($"Got expected error: {caught.GetType().Name}: {caught.Message}");
+            Console.WriteLine($"Got expected error: {caught.GetType().Name}: {caught.Message}");
         }
     }
 
@@ -239,7 +245,7 @@ public class CodeGenConformanceTests : IClassFixture<CodeGenConformanceFixture>
     {
         using JsonDocument expectedDoc = JsonDocument.Parse(expected);
         using JsonDocument actualDoc = JsonDocument.Parse(actual);
-        Assert.True(
+        Assert.IsTrue(
             JsonElementDeepEquals(expectedDoc.RootElement, actualDoc.RootElement),
             $"Expected: {expected}\nActual: {actual}");
     }

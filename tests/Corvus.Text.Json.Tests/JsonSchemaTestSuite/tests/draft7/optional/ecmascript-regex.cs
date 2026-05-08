@@ -2,38 +2,46 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json.Validator;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace JsonSchemaTestSuite.Draft7.Optional.EcmascriptRegex;
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262RegexDoesNotMatchTrailingNewline : IClassFixture<SuiteEcma262RegexDoesNotMatchTrailingNewline.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262RegexDoesNotMatchTrailingNewline
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262RegexDoesNotMatchTrailingNewline(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestMatchesInPythonButNotInEcma262()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"abc\\\\n\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"abc\\\\n\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"abc\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"abc\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -52,34 +60,42 @@ public class SuiteEcma262RegexDoesNotMatchTrailingNewline : IClassFixture<SuiteE
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262RegexConvertsTToHorizontalTab : IClassFixture<SuiteEcma262RegexConvertsTToHorizontalTab.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262RegexConvertsTToHorizontalTab
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262RegexConvertsTToHorizontalTab(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\\\t\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\\\t\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u0009\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u0009\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -98,34 +114,42 @@ public class SuiteEcma262RegexConvertsTToHorizontalTab : IClassFixture<SuiteEcma
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter : IClassFixture<SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\\\cC\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\\\cC\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u0003\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u0003\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -144,34 +168,42 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndUpperLetter : IClassFix
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter : IClassFixture<SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\\\cc\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\\\cc\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u0003\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u0003\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -190,41 +222,49 @@ public class SuiteEcma262RegexEscapesControlCodesWithCAndLowerLetter : IClassFix
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262DMatchesAsciiDigitsOnly : IClassFixture<SuiteEcma262DMatchesAsciiDigitsOnly.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262DMatchesAsciiDigitsOnly
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262DMatchesAsciiDigitsOnly(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiZeroMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"0\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNkoDigitZeroDoesNotMatchUnlikeEGPython()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"߀\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"߀\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNkoDigitZeroAsUEscapeDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u07c0\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u07c0\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -243,41 +283,49 @@ public class SuiteEcma262DMatchesAsciiDigitsOnly : IClassFixture<SuiteEcma262DMa
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262DMatchesEverythingButAsciiDigits : IClassFixture<SuiteEcma262DMatchesEverythingButAsciiDigits.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262DMatchesEverythingButAsciiDigits
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262DMatchesEverythingButAsciiDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiZeroDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"0\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"0\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNkoDigitZeroMatchesUnlikeEGPython()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"߀\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"߀\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNkoDigitZeroAsUEscapeMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u07c0\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u07c0\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -296,34 +344,42 @@ public class SuiteEcma262DMatchesEverythingButAsciiDigits : IClassFixture<SuiteE
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262WMatchesAsciiLettersOnly : IClassFixture<SuiteEcma262WMatchesAsciiLettersOnly.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262WMatchesAsciiLettersOnly
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262WMatchesAsciiLettersOnly(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiAMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"a\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"a\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLatin1EAcuteDoesNotMatchUnlikeEGPython()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"é\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"é\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -342,34 +398,42 @@ public class SuiteEcma262WMatchesAsciiLettersOnly : IClassFixture<SuiteEcma262WM
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262WMatchesEverythingButAsciiLetters : IClassFixture<SuiteEcma262WMatchesEverythingButAsciiLetters.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262WMatchesEverythingButAsciiLetters
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262WMatchesEverythingButAsciiLetters(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiADoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"a\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"a\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLatin1EAcuteMatchesUnlikeEGPython()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"é\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"é\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -388,97 +452,105 @@ public class SuiteEcma262WMatchesEverythingButAsciiLetters : IClassFixture<Suite
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262SMatchesWhitespace : IClassFixture<SuiteEcma262SMatchesWhitespace.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262SMatchesWhitespace
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262SMatchesWhitespace(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiSpaceMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\" \"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\" \"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestCharacterTabulationMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\t\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\t\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLineTabulationMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u000b\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u000b\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFormFeedMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u000c\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u000c\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLatin1NonBreakingSpaceMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u00a0\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u00a0\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroWidthWhitespaceMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\ufeff\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\ufeff\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLineFeedMatchesLineTerminator()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u000a\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u000a\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestParagraphSeparatorMatchesLineTerminator()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u2029\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u2029\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEmSpaceMatchesSpaceSeparator()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u2003\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u2003\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonWhitespaceControlDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u0001\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u0001\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonWhitespaceDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u2013\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u2013\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -497,97 +569,105 @@ public class SuiteEcma262SMatchesWhitespace : IClassFixture<SuiteEcma262SMatches
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteEcma262SMatchesEverythingButWhitespace : IClassFixture<SuiteEcma262SMatchesEverythingButWhitespace.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteEcma262SMatchesEverythingButWhitespace
 {
-    private readonly Fixture _fixture;
-    public SuiteEcma262SMatchesEverythingButWhitespace(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiSpaceDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\" \"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\" \"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestCharacterTabulationDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\t\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\t\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLineTabulationDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u000b\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u000b\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestFormFeedDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u000c\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u000c\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLatin1NonBreakingSpaceDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u00a0\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u00a0\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestZeroWidthWhitespaceDoesNotMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\ufeff\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\ufeff\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLineFeedDoesNotMatchLineTerminator()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u000a\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u000a\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestParagraphSeparatorDoesNotMatchLineTerminator()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u2029\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u2029\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestEmSpaceDoesNotMatchSpaceSeparator()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u2003\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u2003\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonWhitespaceControlMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u0001\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u0001\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonWhitespaceMatches()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"\\u2013\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"\\u2013\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -606,48 +686,56 @@ public class SuiteEcma262SMatchesEverythingButWhitespace : IClassFixture<SuiteEc
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern : IClassFixture<SuitePatternsAlwaysUseUnicodeSemanticsWithPattern.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern
 {
-    private readonly Fixture _fixture;
-    public SuitePatternsAlwaysUseUnicodeSemanticsWithPattern(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeMatchingIsCaseSensitive()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"LES HIVERS DE MON ENFANCE ÉTAIENT DES SAISONS LONGUES, LONGUES. NOUS VIVIONS EN TROIS LIEUX: L'ÉCOLE, L'ÉGLISE ET LA PATINOIRE; MAIS LA VRAIE VIE ÉTAIT SUR LA PATINOIRE.\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"LES HIVERS DE MON ENFANCE ÉTAIENT DES SAISONS LONGUES, LONGUES. NOUS VIVIONS EN TROIS LIEUX: L'ÉCOLE, L'ÉGLISE ET LA PATINOIRE; MAIS LA VRAIE VIE ÉTAIT SUR LA PATINOIRE.\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -666,48 +754,56 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPattern : IClassFixture<S
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters : IClassFixture<SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters
 {
-    private readonly Fixture _fixture;
-    public SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeMatchingIsCaseSensitive()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"LES HIVERS DE MON ENFANCE ÉTAIENT DES SAISONS LONGUES, LONGUES. NOUS VIVIONS EN TROIS LIEUX: L'ÉCOLE, L'ÉGLISE ET LA PATINOIRE; MAIS LA VRAIE VIE ÉTAIT SUR LA PATINOIRE.\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"LES HIVERS DE MON ENFANCE ÉTAIENT DES SAISONS LONGUES, LONGUES. NOUS VIVIONS EN TROIS LIEUX: L'ÉCOLE, L'ÉGLISE ET LA PATINOIRE; MAIS LA VRAIE VIE ÉTAIT SUR LA PATINOIRE.\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -726,41 +822,49 @@ public class SuiteWInPatternsMatchesAZaZ09NotUnicodeLetters : IClassFixture<Suit
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuitePatternWithAsciiRanges : IClassFixture<SuitePatternWithAsciiRanges.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuitePatternWithAsciiRanges
 {
-    private readonly Fixture _fixture;
-    public SuitePatternWithAsciiRanges(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'école, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance étaient des saisons longues, longues. Nous vivions en trois lieux: l'\\u00e9cole, l'église et la patinoire; mais la vraie vie était sur la patinoire.\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiCharactersMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"Les hivers de mon enfance etaient des saisons longues, longues. Nous vivions en trois lieux: l'ecole, l'eglise et la patinoire; mais la vraie vie etait sur la patinoire.\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -779,41 +883,49 @@ public class SuitePatternWithAsciiRanges : IClassFixture<SuitePatternWithAsciiRa
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteDInPatternMatches09NotUnicodeDigits : IClassFixture<SuiteDInPatternMatches09NotUnicodeDigits.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteDInPatternMatches09NotUnicodeDigits
 {
-    private readonly Fixture _fixture;
-    public SuiteDInPatternMatches09NotUnicodeDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiDigits()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"42\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"42\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiNonDigits()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"-%#\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"-%#\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonAsciiDigitsBengaliDigitFourBengaliDigitTwo()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"৪২\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"৪২\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -832,41 +944,49 @@ public class SuiteDInPatternMatches09NotUnicodeDigits : IClassFixture<SuiteDInPa
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuitePatternWithNonAsciiDigits : IClassFixture<SuitePatternWithNonAsciiDigits.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuitePatternWithNonAsciiDigits
 {
-    private readonly Fixture _fixture;
-    public SuitePatternWithNonAsciiDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiDigits()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"42\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"42\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiNonDigits()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"-%#\"");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"-%#\"");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonAsciiDigitsBengaliDigitFourBengaliDigitTwo()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("\"৪২\"");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("\"৪২\"");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -885,48 +1005,56 @@ public class SuitePatternWithNonAsciiDigits : IClassFixture<SuitePatternWithNonA
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties : IClassFixture<SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties
 {
-    private readonly Fixture _fixture;
-    public SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"l'ecole\": \"pas de vraie vie\" }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'ecole\": \"pas de vraie vie\" }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"l'école\": \"pas de vraie vie\" }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'école\": \"pas de vraie vie\" }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeMatchingIsCaseSensitive()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"L'ÉCOLE\": \"PAS DE VRAIE VIE\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"L'ÉCOLE\": \"PAS DE VRAIE VIE\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -945,48 +1073,56 @@ public class SuitePatternsAlwaysUseUnicodeSemanticsWithPatternProperties : IClas
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters : IClassFixture<SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters
 {
-    private readonly Fixture _fixture;
-    public SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"l'ecole\": \"pas de vraie vie\" }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'ecole\": \"pas de vraie vie\" }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"l'école\": \"pas de vraie vie\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'école\": \"pas de vraie vie\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeMatchingIsCaseSensitive()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"L'ÉCOLE\": \"PAS DE VRAIE VIE\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"L'ÉCOLE\": \"PAS DE VRAIE VIE\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -1005,41 +1141,49 @@ public class SuiteWInPatternPropertiesMatchesAZaZ09NotUnicodeLetters : IClassFix
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuitePatternPropertiesWithAsciiRanges : IClassFixture<SuitePatternPropertiesWithAsciiRanges.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuitePatternPropertiesWithAsciiRanges
 {
-    private readonly Fixture _fixture;
-    public SuitePatternPropertiesWithAsciiRanges(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestLiteralUnicodeCharacterInJsonString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"l'école\": \"pas de vraie vie\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'école\": \"pas de vraie vie\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestUnicodeCharacterInHexFormatInString()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'\\u00e9cole\": \"pas de vraie vie\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiCharactersMatch()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"l'ecole\": \"pas de vraie vie\" }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"l'ecole\": \"pas de vraie vie\" }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -1058,41 +1202,49 @@ public class SuitePatternPropertiesWithAsciiRanges : IClassFixture<SuitePatternP
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits : IClassFixture<SuiteDInPatternPropertiesMatches09NotUnicodeDigits.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits
 {
-    private readonly Fixture _fixture;
-    public SuiteDInPatternPropertiesMatches09NotUnicodeDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiDigits()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"42\": \"life, the universe, and everything\" }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"42\": \"life, the universe, and everything\" }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiNonDigits()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"-%#\": \"spending the year dead for tax reasons\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"-%#\": \"spending the year dead for tax reasons\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonAsciiDigitsBengaliDigitFourBengaliDigitTwo()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"৪২\": \"khajit has wares if you have coin\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"৪২\": \"khajit has wares if you have coin\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -1111,41 +1263,49 @@ public class SuiteDInPatternPropertiesMatches09NotUnicodeDigits : IClassFixture<
     }
 }
 
-[Trait("JsonSchemaTestSuite", "Draft7")]
-public class SuitePatternPropertiesWithNonAsciiDigits : IClassFixture<SuitePatternPropertiesWithNonAsciiDigits.Fixture>
+[TestCategory("Draft7")]
+[TestClass]
+public class SuitePatternPropertiesWithNonAsciiDigits
 {
-    private readonly Fixture _fixture;
-    public SuitePatternPropertiesWithNonAsciiDigits(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void TestAsciiDigits()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"42\": \"life, the universe, and everything\" }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"42\": \"life, the universe, and everything\" }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestAsciiNonDigits()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"-%#\": \"spending the year dead for tax reasons\" }");
-        Assert.False(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"-%#\": \"spending the year dead for tax reasons\" }");
+        Assert.IsFalse(dynamicInstance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void TestNonAsciiDigitsBengaliDigitFourBengaliDigitTwo()
     {
-        var dynamicInstance = _fixture.DynamicJsonType.ParseInstance("{ \"৪২\": \"khajit has wares if you have coin\" }");
-        Assert.True(dynamicInstance.EvaluateSchema());
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{ \"৪২\": \"khajit has wares if you have coin\" }");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public DynamicJsonType DynamicJsonType { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

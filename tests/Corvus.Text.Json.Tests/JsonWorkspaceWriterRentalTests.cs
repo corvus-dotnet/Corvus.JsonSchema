@@ -3,14 +3,15 @@
 // </copyright>
 
 using System.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
-public static class JsonWorkspaceWriterRentalTests
+[TestClass]
+public class JsonWorkspaceWriterRentalTests
 {
-    [Fact]
-    public static void RentWriterAndBuffer_UsesWorkspaceOptions()
+    [TestMethod]
+    public void RentWriterAndBuffer_UsesWorkspaceOptions()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
         Utf8JsonWriter writer = workspace.RentWriterAndBuffer(256, out IByteBufferWriter bufferWriter);
@@ -24,7 +25,7 @@ public static class JsonWorkspaceWriterRentalTests
             string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan.ToArray());
 
             // Default workspace options are compact (Indented = false)
-            Assert.Equal("""{"key":"value"}""", json);
+            Assert.AreEqual("""{"key":"value"}""", json);
         }
         finally
         {
@@ -32,8 +33,8 @@ public static class JsonWorkspaceWriterRentalTests
         }
     }
 
-    [Fact]
-    public static void RentWriterAndBuffer_WithExplicitCompactOptions_ProducesCompactOutput()
+    [TestMethod]
+    public void RentWriterAndBuffer_WithExplicitCompactOptions_ProducesCompactOutput()
     {
         // Create workspace with indented options
         JsonWriterOptions indentedOptions = new() { Indented = true };
@@ -52,7 +53,7 @@ public static class JsonWorkspaceWriterRentalTests
             string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan.ToArray());
 
             // Must be compact despite workspace being configured for indented
-            Assert.Equal("""{"key":"value"}""", json);
+            Assert.AreEqual("""{"key":"value"}""", json);
         }
         finally
         {
@@ -60,8 +61,8 @@ public static class JsonWorkspaceWriterRentalTests
         }
     }
 
-    [Fact]
-    public static void RentWriterAndBuffer_WithExplicitIndentedOptions_ProducesIndentedOutput()
+    [TestMethod]
+    public void RentWriterAndBuffer_WithExplicitIndentedOptions_ProducesIndentedOutput()
     {
         // Create workspace with default (compact) options
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -79,8 +80,8 @@ public static class JsonWorkspaceWriterRentalTests
             string json = Encoding.UTF8.GetString(bufferWriter.WrittenSpan.ToArray());
 
             // Must be indented despite workspace being configured for compact
-            Assert.Contains("\n", json);
-            Assert.Contains("\"key\"", json);
+            StringAssert.Contains(json, "\n");
+            StringAssert.Contains(json, "\"key\"");
         }
         finally
         {
@@ -88,8 +89,8 @@ public static class JsonWorkspaceWriterRentalTests
         }
     }
 
-    [Fact]
-    public static void RentWriterAndBuffer_WithOptionsOverride_DoesNotAffectSubsequentDefaultRent()
+    [TestMethod]
+    public void RentWriterAndBuffer_WithOptionsOverride_DoesNotAffectSubsequentDefaultRent()
     {
         JsonWriterOptions indentedOptions = new() { Indented = true };
         using JsonWorkspace workspace = JsonWorkspace.Create(options: indentedOptions);
@@ -103,7 +104,7 @@ public static class JsonWorkspaceWriterRentalTests
             writer1.WriteNumberValue(1);
             writer1.WriteEndArray();
             writer1.Flush();
-            Assert.Equal("[1]", Encoding.UTF8.GetString(buffer1.WrittenSpan.ToArray()));
+            Assert.AreEqual("[1]", Encoding.UTF8.GetString(buffer1.WrittenSpan.ToArray()));
         }
         finally
         {
@@ -121,7 +122,7 @@ public static class JsonWorkspaceWriterRentalTests
             string json2 = Encoding.UTF8.GetString(buffer2.WrittenSpan.ToArray());
 
             // Workspace options are indented, so this should contain newlines
-            Assert.Contains("\n", json2);
+            StringAssert.Contains(json2, "\n");
         }
         finally
         {

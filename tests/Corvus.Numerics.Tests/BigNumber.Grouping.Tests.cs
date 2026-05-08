@@ -5,15 +5,16 @@
 using System.Globalization;
 using System.Text;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
+[TestClass]
 public class BigNumberGroupingTests
 {
     #region Number Format with Grouping
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_ThousandsSeparator_InvariantCulture()
     {
         BigNumber value = new(123456789, -2); // 1234567.89
@@ -26,7 +27,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("1,234,567.89");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_ThousandsSeparator_USCulture()
     {
         BigNumber value = new(1234567890, -2); // 12345678.90
@@ -39,7 +40,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("12,345,678.90");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_ThousandsSeparator_GermanCulture()
     {
         BigNumber value = new(1234567890, -2); // 12345678.90
@@ -52,7 +53,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("12.345.678,90"); // German uses . for thousands and , for decimal
     }
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_SmallNumber_NoGrouping()
     {
         BigNumber value = new(12345, -2); // 123.45
@@ -65,7 +66,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_NegativeNumber_WithGrouping()
     {
         BigNumber value = new(-1234567890, -2); // -12345678.90
@@ -78,7 +79,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("-12,345,678.90");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_VeryLargeNumber_MultipleGroups()
     {
         BigNumber value = new(1234567890123456L, 0);
@@ -95,7 +96,7 @@ public class BigNumberGroupingTests
 
     #region Currency Format with Grouping
 
-    [Fact]
+    [TestMethod]
     public void CurrencyFormat_ThousandsSeparator_USCulture()
     {
         BigNumber value = new(123456, -2); // 1234.56
@@ -108,7 +109,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("$1,234.56");
     }
 
-    [Fact]
+    [TestMethod]
     public void CurrencyFormat_ThousandsSeparator_LargeAmount()
     {
         BigNumber value = new(1234567890, -2); // 12345678.90
@@ -121,7 +122,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("$12,345,678.90");
     }
 
-    [Fact]
+    [TestMethod]
     public void CurrencyFormat_NegativeAmount_WithGrouping()
     {
         BigNumber value = new(-123456, -2); // -1234.56
@@ -142,7 +143,7 @@ public class BigNumberGroupingTests
         result.ShouldContain("1,234.56");
     }
 
-    [Fact]
+    [TestMethod]
     public void CurrencyFormat_EuroCulture_WithGrouping()
     {
         BigNumber value = new(1234567, -2); // 12345.67
@@ -161,7 +162,7 @@ public class BigNumberGroupingTests
 
     #region UTF-8 with Grouping
 
-    [Fact]
+    [TestMethod]
     public void Utf8_NumberFormat_WithGrouping()
     {
         BigNumber value = new(1234567890, -2);
@@ -174,7 +175,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("12,345,678.90");
     }
 
-    [Fact]
+    [TestMethod]
     public void Utf8_CurrencyFormat_WithGrouping()
     {
         BigNumber value = new(123456, -2);
@@ -191,7 +192,7 @@ public class BigNumberGroupingTests
 
     #region Edge Cases
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_ExactlyOneGroup_NoSeparator()
     {
         BigNumber value = new(999, 0);
@@ -204,7 +205,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("999");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_JustOverOneGroup_OneSeparator()
     {
         BigNumber value = new(1000, 0);
@@ -217,7 +218,7 @@ public class BigNumberGroupingTests
         result.ShouldBe("1,000");
     }
 
-    [Fact]
+    [TestMethod]
     public void NumberFormat_Zero_NoGrouping()
     {
         BigNumber value = BigNumber.Zero;
@@ -238,7 +239,7 @@ public class BigNumberGroupingTests
     // They are commented out for now as they can be flaky in CI/CD environments
 
     /*
-    [Fact]
+    [TestMethod]
     public void NumberFormat_ZeroAllocation_Verification()
     {
         // This test verifies that the grouping implementation doesn't allocate
@@ -267,7 +268,7 @@ public class BigNumberGroupingTests
         (gen0After - gen0Before).ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void CurrencyFormat_ZeroAllocation_Verification()
     {
         BigNumber value = new(123456, -2);

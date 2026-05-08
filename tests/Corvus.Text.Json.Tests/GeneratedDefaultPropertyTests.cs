@@ -3,7 +3,7 @@
 
 using System.Text.Json;
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -11,9 +11,10 @@ namespace Corvus.Text.Json.Tests;
 /// Tests that verify strongly-typed property getters return schema default values
 /// when the property is not present in the JSON document.
 /// </summary>
+[TestClass]
 public class GeneratedDefaultPropertyTests
 {
-    [Fact]
+    [TestMethod]
     public void MissingStringPropertyWithDefault_ReturnsDefaultValue()
     {
         using var doc =
@@ -22,12 +23,12 @@ public class GeneratedDefaultPropertyTests
         ObjectWithDefaultProperties instance = doc.RootElement;
         ObjectWithDefaultProperties.StatusEntity status = instance.Status;
 
-        Assert.True(status.IsNotUndefined());
-        Assert.Equal(JsonValueKind.String, status.ValueKind);
-        Assert.Equal("active", (string)status);
+        Assert.IsTrue(status.IsNotUndefined());
+        Assert.AreEqual(JsonValueKind.String, status.ValueKind);
+        Assert.AreEqual("active", (string)status);
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingIntegerPropertyWithDefault_ReturnsDefaultValue()
     {
         using var doc =
@@ -36,12 +37,12 @@ public class GeneratedDefaultPropertyTests
         ObjectWithDefaultProperties instance = doc.RootElement;
         ObjectWithDefaultProperties.CountEntity count = instance.Count;
 
-        Assert.True(count.IsNotUndefined());
-        Assert.Equal(JsonValueKind.Number, count.ValueKind);
-        Assert.Equal(0, (int)count);
+        Assert.IsTrue(count.IsNotUndefined());
+        Assert.AreEqual(JsonValueKind.Number, count.ValueKind);
+        Assert.AreEqual(0, (int)count);
     }
 
-    [Fact]
+    [TestMethod]
     public void PresentStringPropertyWithDefault_ReturnsActualValue()
     {
         using var doc =
@@ -50,11 +51,11 @@ public class GeneratedDefaultPropertyTests
         ObjectWithDefaultProperties instance = doc.RootElement;
         ObjectWithDefaultProperties.StatusEntity status = instance.Status;
 
-        Assert.True(status.IsNotUndefined());
-        Assert.Equal("inactive", (string)status);
+        Assert.IsTrue(status.IsNotUndefined());
+        Assert.AreEqual("inactive", (string)status);
     }
 
-    [Fact]
+    [TestMethod]
     public void PresentIntegerPropertyWithDefault_ReturnsActualValue()
     {
         using var doc =
@@ -63,11 +64,11 @@ public class GeneratedDefaultPropertyTests
         ObjectWithDefaultProperties instance = doc.RootElement;
         ObjectWithDefaultProperties.CountEntity count = instance.Count;
 
-        Assert.True(count.IsNotUndefined());
-        Assert.Equal(42, (int)count);
+        Assert.IsTrue(count.IsNotUndefined());
+        Assert.AreEqual(42, (int)count);
     }
 
-    [Fact]
+    [TestMethod]
     public void MissingPropertyWithoutDefault_ReturnsNull()
     {
         using var doc =
@@ -76,10 +77,10 @@ public class GeneratedDefaultPropertyTests
         ObjectWithDefaultProperties instance = doc.RootElement;
         JsonString label = instance.Label;
 
-        Assert.True(label.IsUndefined());
+        Assert.IsTrue(label.IsUndefined());
     }
 
-    [Fact]
+    [TestMethod]
     public void PresentPropertyWithoutDefault_ReturnsActualValue()
     {
         using var doc =
@@ -88,11 +89,11 @@ public class GeneratedDefaultPropertyTests
         ObjectWithDefaultProperties instance = doc.RootElement;
         JsonString label = instance.Label;
 
-        Assert.True(label.IsNotUndefined());
-        Assert.Equal("hello", (string)label);
+        Assert.IsTrue(label.IsNotUndefined());
+        Assert.AreEqual("hello", (string)label);
     }
 
-    [Fact]
+    [TestMethod]
     public void RequiredPropertyPresent_ReturnsActualValue()
     {
         using var doc =
@@ -101,11 +102,11 @@ public class GeneratedDefaultPropertyTests
         ObjectWithDefaultProperties instance = doc.RootElement;
         JsonString name = instance.Name;
 
-        Assert.Equal(JsonValueKind.String, name.ValueKind);
-        Assert.Equal("test", (string)name);
+        Assert.AreEqual(JsonValueKind.String, name.ValueKind);
+        Assert.AreEqual("test", (string)name);
     }
 
-    [Fact]
+    [TestMethod]
     public void AllPropertiesPresent_ReturnsActualValues()
     {
         using var doc =
@@ -113,9 +114,9 @@ public class GeneratedDefaultPropertyTests
 
         ObjectWithDefaultProperties instance = doc.RootElement;
 
-        Assert.Equal("Alice", (string)instance.Name);
-        Assert.Equal("pending", (string)instance.Status);
-        Assert.Equal(5, (int)instance.Count);
-        Assert.Equal("important", (string)instance.Label);
+        Assert.AreEqual("Alice", (string)instance.Name);
+        Assert.AreEqual("pending", (string)instance.Status);
+        Assert.AreEqual(5, (int)instance.Count);
+        Assert.AreEqual("important", (string)instance.Label);
     }
 }

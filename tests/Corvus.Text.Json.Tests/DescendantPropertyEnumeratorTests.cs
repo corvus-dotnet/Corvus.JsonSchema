@@ -3,7 +3,7 @@
 // </copyright>
 
 using System.Collections.Generic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -11,7 +11,8 @@ namespace Corvus.Text.Json.Tests;
 /// Tests for <see cref="DescendantPropertyEnumerator"/> and
 /// <see cref="JsonElement.EnumerateDescendantProperties(System.ReadOnlySpan{byte})"/>.
 /// </summary>
-public static class DescendantPropertyEnumeratorTests
+[TestClass]
+public class DescendantPropertyEnumeratorTests
 {
     private const string BookstoreJson = """
         {
@@ -52,8 +53,8 @@ public static class DescendantPropertyEnumeratorTests
         }
         """;
 
-    [Fact]
-    public static void SingleMatchAtTopLevel()
+    [TestMethod]
+    public void SingleMatchAtTopLevel()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{"name": "Alice", "age": 30}""");
@@ -64,12 +65,12 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value.GetString());
         }
 
-        Assert.Single(results);
-        Assert.Equal("Alice", results[0]);
+        Assert.AreEqual(1, (results).Count);
+        Assert.AreEqual("Alice", results[0]);
     }
 
-    [Fact]
-    public static void MultipleMatchesAtSameLevel()
+    [TestMethod]
+    public void MultipleMatchesAtSameLevel()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{"a": {"x": 1}, "b": {"x": 2}}""");
@@ -80,13 +81,13 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value.GetInt32());
         }
 
-        Assert.Equal(2, results.Count);
-        Assert.Equal(1, results[0]);
-        Assert.Equal(2, results[1]);
+        Assert.AreEqual(2, results.Count);
+        Assert.AreEqual(1, results[0]);
+        Assert.AreEqual(2, results[1]);
     }
 
-    [Fact]
-    public static void NestedMatchAtMultipleDepths()
+    [TestMethod]
+    public void NestedMatchAtMultipleDepths()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{"v": 1, "inner": {"v": 2}}""");
@@ -97,13 +98,13 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value.GetInt32());
         }
 
-        Assert.Equal(2, results.Count);
-        Assert.Equal(1, results[0]);
-        Assert.Equal(2, results[1]);
+        Assert.AreEqual(2, results.Count);
+        Assert.AreEqual(1, results[0]);
+        Assert.AreEqual(2, results[1]);
     }
 
-    [Fact]
-    public static void DeeplyNestedMatch()
+    [TestMethod]
+    public void DeeplyNestedMatch()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{"a": {"b": {"c": {"target": "found"}}}}""");
@@ -114,12 +115,12 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value.GetString());
         }
 
-        Assert.Single(results);
-        Assert.Equal("found", results[0]);
+        Assert.AreEqual(1, (results).Count);
+        Assert.AreEqual("found", results[0]);
     }
 
-    [Fact]
-    public static void ArrayContainingObjects()
+    [TestMethod]
+    public void ArrayContainingObjects()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """[{"name": "a"}, {"name": "b"}, {"other": "c"}]""");
@@ -130,13 +131,13 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value.GetString());
         }
 
-        Assert.Equal(2, results.Count);
-        Assert.Equal("a", results[0]);
-        Assert.Equal("b", results[1]);
+        Assert.AreEqual(2, results.Count);
+        Assert.AreEqual("a", results[0]);
+        Assert.AreEqual("b", results[1]);
     }
 
-    [Fact]
-    public static void NoMatches()
+    [TestMethod]
+    public void NoMatches()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{"a": 1, "b": {"c": 2}}""");
@@ -147,11 +148,11 @@ public static class DescendantPropertyEnumeratorTests
             count++;
         }
 
-        Assert.Equal(0, count);
+        Assert.AreEqual(0, count);
     }
 
-    [Fact]
-    public static void EmptyObject()
+    [TestMethod]
+    public void EmptyObject()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("{}");
 
@@ -161,11 +162,11 @@ public static class DescendantPropertyEnumeratorTests
             count++;
         }
 
-        Assert.Equal(0, count);
+        Assert.AreEqual(0, count);
     }
 
-    [Fact]
-    public static void EmptyArray()
+    [TestMethod]
+    public void EmptyArray()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("[]");
 
@@ -175,11 +176,11 @@ public static class DescendantPropertyEnumeratorTests
             count++;
         }
 
-        Assert.Equal(0, count);
+        Assert.AreEqual(0, count);
     }
 
-    [Fact]
-    public static void ScalarElement()
+    [TestMethod]
+    public void ScalarElement()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{"key": "value"}""");
@@ -192,11 +193,11 @@ public static class DescendantPropertyEnumeratorTests
             count++;
         }
 
-        Assert.Equal(0, count);
+        Assert.AreEqual(0, count);
     }
 
-    [Fact]
-    public static void BookstoreAuthors()
+    [TestMethod]
+    public void BookstoreAuthors()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(BookstoreJson);
 
@@ -206,15 +207,15 @@ public static class DescendantPropertyEnumeratorTests
             authors.Add(value.GetString());
         }
 
-        Assert.Equal(4, authors.Count);
-        Assert.Equal("Nigel Rees", authors[0]);
-        Assert.Equal("Evelyn Waugh", authors[1]);
-        Assert.Equal("Herman Melville", authors[2]);
-        Assert.Equal("J. R. R. Tolkien", authors[3]);
+        Assert.AreEqual(4, authors.Count);
+        Assert.AreEqual("Nigel Rees", authors[0]);
+        Assert.AreEqual("Evelyn Waugh", authors[1]);
+        Assert.AreEqual("Herman Melville", authors[2]);
+        Assert.AreEqual("J. R. R. Tolkien", authors[3]);
     }
 
-    [Fact]
-    public static void BookstorePrices()
+    [TestMethod]
+    public void BookstorePrices()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(BookstoreJson);
 
@@ -224,16 +225,16 @@ public static class DescendantPropertyEnumeratorTests
             prices.Add(value.GetDecimal());
         }
 
-        Assert.Equal(5, prices.Count);
-        Assert.Equal(8.95m, prices[0]);
-        Assert.Equal(12.99m, prices[1]);
-        Assert.Equal(8.99m, prices[2]);
-        Assert.Equal(22.99m, prices[3]);
-        Assert.Equal(399m, prices[4]);
+        Assert.AreEqual(5, prices.Count);
+        Assert.AreEqual(8.95m, prices[0]);
+        Assert.AreEqual(12.99m, prices[1]);
+        Assert.AreEqual(8.99m, prices[2]);
+        Assert.AreEqual(22.99m, prices[3]);
+        Assert.AreEqual(399m, prices[4]);
     }
 
-    [Fact]
-    public static void MatchedValueIsObject()
+    [TestMethod]
+    public void MatchedValueIsObject()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{"data": {"nested": {"inner": true}}}""");
@@ -244,13 +245,13 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value);
         }
 
-        Assert.Single(results);
-        Assert.Equal(JsonValueKind.Object, results[0].ValueKind);
-        Assert.True(results[0].GetProperty("inner"u8).GetBoolean());
+        Assert.AreEqual(1, (results).Count);
+        Assert.AreEqual(JsonValueKind.Object, results[0].ValueKind);
+        Assert.IsTrue(results[0].GetProperty("inner"u8).GetBoolean());
     }
 
-    [Fact]
-    public static void MatchedValueIsArray()
+    [TestMethod]
+    public void MatchedValueIsArray()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{"items": [1, 2, 3]}""");
@@ -261,13 +262,13 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value);
         }
 
-        Assert.Single(results);
-        Assert.Equal(JsonValueKind.Array, results[0].ValueKind);
-        Assert.Equal(3, results[0].GetArrayLength());
+        Assert.AreEqual(1, (results).Count);
+        Assert.AreEqual(JsonValueKind.Array, results[0].ValueKind);
+        Assert.AreEqual(3, results[0].GetArrayLength());
     }
 
-    [Fact]
-    public static void EscapedPropertyName()
+    [TestMethod]
+    public void EscapedPropertyName()
     {
         // JSON property name with escape: "na\u006De" is "name" unescaped
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
@@ -279,12 +280,12 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value.GetString());
         }
 
-        Assert.Single(results);
-        Assert.Equal("escaped", results[0]);
+        Assert.AreEqual(1, (results).Count);
+        Assert.AreEqual("escaped", results[0]);
     }
 
-    [Fact]
-    public static void SubtreeSearch()
+    [TestMethod]
+    public void SubtreeSearch()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(BookstoreJson);
 
@@ -296,11 +297,11 @@ public static class DescendantPropertyEnumeratorTests
             authors.Add(value.GetString());
         }
 
-        Assert.Equal(4, authors.Count);
+        Assert.AreEqual(4, authors.Count);
     }
 
-    [Fact]
-    public static void SameNameAtDifferentNestingLevels()
+    [TestMethod]
+    public void SameNameAtDifferentNestingLevels()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """{"x": 0, "a": {"x": 1, "b": {"x": 2}}}""");
@@ -311,14 +312,14 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value.GetInt32());
         }
 
-        Assert.Equal(3, results.Count);
-        Assert.Equal(0, results[0]);
-        Assert.Equal(1, results[1]);
-        Assert.Equal(2, results[2]);
+        Assert.AreEqual(3, results.Count);
+        Assert.AreEqual(0, results[0]);
+        Assert.AreEqual(1, results[1]);
+        Assert.AreEqual(2, results[2]);
     }
 
-    [Fact]
-    public static void ObjectInsideArray()
+    [TestMethod]
+    public void ObjectInsideArray()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(
             """[[{"k": 1}], [{"k": 2}, {"k": 3}]]""");
@@ -329,9 +330,9 @@ public static class DescendantPropertyEnumeratorTests
             results.Add(value.GetInt32());
         }
 
-        Assert.Equal(3, results.Count);
-        Assert.Equal(1, results[0]);
-        Assert.Equal(2, results[1]);
-        Assert.Equal(3, results[2]);
+        Assert.AreEqual(3, results.Count);
+        Assert.AreEqual(1, results[0]);
+        Assert.AreEqual(2, results[1]);
+        Assert.AreEqual(3, results[2]);
     }
 }

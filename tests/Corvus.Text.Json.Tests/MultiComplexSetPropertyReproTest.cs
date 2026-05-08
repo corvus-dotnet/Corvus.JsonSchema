@@ -4,7 +4,7 @@
 
 using System.Collections.Generic;
 using Corvus.Text.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -17,12 +17,13 @@ namespace Corvus.Text.Json.Tests;
 /// The backward search reads NumberOfRows to skip past complex values, but for external rows
 /// this field contains the workspace doc index instead of the actual row count.
 /// </summary>
+[TestClass]
 public class MultiComplexSetPropertyReproTest
 {
     /// <summary>
     /// Basic: two array-builder values set as distinct properties on an object builder.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void SetProperty_MultipleComplexValuesFromBuilders_Basic()
     {
         using var workspace = JsonWorkspace.Create();
@@ -37,15 +38,15 @@ public class MultiComplexSetPropertyReproTest
         objRoot.SetProperty("b"u8, (JsonElement)arrDoc2.RootElement);
 
         JsonElement result = objRoot.Freeze();
-        Assert.Equal("[1,2]", result.GetProperty("a").GetRawText());
-        Assert.Equal("[3,4]", result.GetProperty("b").GetRawText());
+        Assert.AreEqual("[1,2]", result.GetProperty("a").GetRawText());
+        Assert.AreEqual("[3,4]", result.GetProperty("b").GetRawText());
     }
 
     /// <summary>
     /// Items come from a parsed document (simulates JSONata group-by where
     /// grouped elements originate in the input JSON).
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void SetProperty_MultipleArraysWithItemsFromParsedDocument()
     {
         using var workspace = JsonWorkspace.Create();
@@ -79,15 +80,15 @@ public class MultiComplexSetPropertyReproTest
         objRoot.SetProperty("b"u8, (JsonElement)arrB.RootElement);
 
         JsonElement result = objRoot.Freeze();
-        Assert.Equal("[1,2]", result.GetProperty("a").GetRawText());
-        Assert.Equal("[3,4]", result.GetProperty("b").GetRawText());
+        Assert.AreEqual("[1,2]", result.GetProperty("a").GetRawText());
+        Assert.AreEqual("[3,4]", result.GetProperty("b").GetRawText());
     }
 
     /// <summary>
     /// Three or more distinct properties with complex values, exercising
     /// the backward metadata search across multiple complex entries.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void SetProperty_ThreeComplexValuesInLoop()
     {
         using var workspace = JsonWorkspace.Create();
@@ -112,16 +113,16 @@ public class MultiComplexSetPropertyReproTest
         }
 
         JsonElement result = objRoot.Freeze();
-        Assert.Equal("[10,20]", result.GetProperty("x").GetRawText());
-        Assert.Equal("[30,40]", result.GetProperty("y").GetRawText());
-        Assert.Equal("[50,60]", result.GetProperty("z").GetRawText());
+        Assert.AreEqual("[10,20]", result.GetProperty("x").GetRawText());
+        Assert.AreEqual("[30,40]", result.GetProperty("y").GetRawText());
+        Assert.AreEqual("[50,60]", result.GetProperty("z").GetRawText());
     }
 
     /// <summary>
     /// Nested builders: object properties whose values are objects built from
     /// yet other builders, creating multi-level cross-builder chains.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void SetProperty_NestedObjectBuildersAsValues()
     {
         using var workspace = JsonWorkspace.Create();
@@ -136,14 +137,14 @@ public class MultiComplexSetPropertyReproTest
         outer.RootElement.SetProperty("second"u8, (JsonElement)inner2.RootElement);
 
         JsonElement result = outer.RootElement.Freeze();
-        Assert.Equal("""{"value":1}""", result.GetProperty("first").GetRawText());
-        Assert.Equal("""{"value":2}""", result.GetProperty("second").GetRawText());
+        Assert.AreEqual("""{"value":1}""", result.GetProperty("first").GetRawText());
+        Assert.AreEqual("""{"value":2}""", result.GetProperty("second").GetRawText());
     }
 
     /// <summary>
     /// Mix of simple and complex values — complex first, then simple, then complex again.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void SetProperty_MixedSimpleAndComplexValues()
     {
         using var workspace = JsonWorkspace.Create();
@@ -159,15 +160,15 @@ public class MultiComplexSetPropertyReproTest
         objRoot.SetProperty("arr2"u8, (JsonElement)arr2.RootElement);
 
         JsonElement result = objRoot.Freeze();
-        Assert.Equal("""["hello"]""", result.GetProperty("arr1").GetRawText());
-        Assert.Equal("42", result.GetProperty("simple").GetRawText());
-        Assert.Equal("""["world"]""", result.GetProperty("arr2").GetRawText());
+        Assert.AreEqual("""["hello"]""", result.GetProperty("arr1").GetRawText());
+        Assert.AreEqual("42", result.GetProperty("simple").GetRawText());
+        Assert.AreEqual("""["world"]""", result.GetProperty("arr2").GetRawText());
     }
 
     /// <summary>
     /// Exact reproduction of JSONata group-by pattern using string keys.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void SetProperty_JsonataGroupByExactPattern()
     {
         using var workspace = JsonWorkspace.Create();
@@ -211,8 +212,8 @@ public class MultiComplexSetPropertyReproTest
         }
 
         JsonElement result = objRoot.Freeze();
-        Assert.Equal("""["Bowler Hat","Trilby hat"]""", result.GetProperty("order103").GetRawText());
-        Assert.Equal("""["Bowler Hat","Cloak"]""", result.GetProperty("order104").GetRawText());
+        Assert.AreEqual("""["Bowler Hat","Trilby hat"]""", result.GetProperty("order103").GetRawText());
+        Assert.AreEqual("""["Bowler Hat","Cloak"]""", result.GetProperty("order104").GetRawText());
     }
 
     /// <summary>
@@ -221,7 +222,7 @@ public class MultiComplexSetPropertyReproTest
     /// exits the loop — the search returns false (property not found) which is correct
     /// for new-property insertion but masks the underlying bug.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void SetProperty_MultipleComplexValues_LargeWorkspaceDocIndex()
     {
         using var workspace = JsonWorkspace.Create();
@@ -265,8 +266,8 @@ public class MultiComplexSetPropertyReproTest
         }
 
         JsonElement result = objRoot.Freeze();
-        Assert.Equal("[1,2]", result.GetProperty("a").GetRawText());
-        Assert.Equal("[3,4]", result.GetProperty("b").GetRawText());
+        Assert.AreEqual("[1,2]", result.GetProperty("a").GetRawText());
+        Assert.AreEqual("[3,4]", result.GetProperty("b").GetRawText());
     }
 
     /// <summary>
@@ -274,7 +275,7 @@ public class MultiComplexSetPropertyReproTest
     /// external EndArray/EndObject rows is small enough that the backward skip lands
     /// on a wrong row WITHIN the object, triggering Debug.Assert(row.TokenType == PropertyName).
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void SetProperty_MultipleComplexValues_SmallWorkspaceDocIndex()
     {
         using var workspace = JsonWorkspace.Create();
@@ -316,7 +317,7 @@ public class MultiComplexSetPropertyReproTest
         }
 
         JsonElement result = objRoot.Freeze();
-        Assert.Equal("[1,2]", result.GetProperty("a").GetRawText());
-        Assert.Equal("[3,4]", result.GetProperty("b").GetRawText());
+        Assert.AreEqual("[1,2]", result.GetProperty("a").GetRawText());
+        Assert.AreEqual("[3,4]", result.GetProperty("b").GetRawText());
     }
 }

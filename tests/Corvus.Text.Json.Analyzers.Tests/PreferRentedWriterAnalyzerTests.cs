@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using AnalyzerTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<
     Corvus.Text.Json.Analyzers.PreferRentedWriterAnalyzer,
@@ -23,6 +23,7 @@ namespace Corvus.Text.Json.Analyzers.Tests;
 /// <summary>
 /// Tests for CTJ009: Prefer renting Utf8JsonWriter from workspace.
 /// </summary>
+[TestClass]
 public class PreferRentedWriterAnalyzerTests
 {
     private const string Stubs = @"
@@ -47,7 +48,7 @@ namespace Corvus.Text.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task NewUtf8JsonWriter_WithWorkspaceInScope_FiresCTJ009()
     {
         const string testCode = Stubs + @"
@@ -74,7 +75,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NewUtf8JsonWriter_WithWorkspaceAsParameter_FiresCTJ009()
     {
         const string testCode = Stubs + @"
@@ -100,7 +101,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NewUtf8JsonWriter_WithoutWorkspace_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -121,7 +122,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task RentWriter_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -143,7 +144,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonCorvusUtf8JsonWriter_NoDiagnostic()
     {
         const string testCode = @"
@@ -182,7 +183,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NewUtf8JsonWriter_WorkspaceDeclaredAfter_NoDiagnostic()
     {
         const string testCode = Stubs + @"

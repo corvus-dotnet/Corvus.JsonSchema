@@ -11,7 +11,7 @@ using System.Threading.Tasks;
 
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using AnalyzerTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<
     Corvus.Text.Json.Migration.Analyzers.NamespaceMigrationAnalyzer,
@@ -29,9 +29,10 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ001: namespace migration from Corvus.Json to Corvus.Text.Json.
 /// </summary>
+[TestClass]
 public class NamespaceMigrationTests
 {
-    [Fact]
+    [TestMethod]
     public async Task UsingCorvusJson_TriggersCVJ001_AndCodeFixReplacesWithCorvusTextJson()
     {
         var test = new CodeFixTest
@@ -51,7 +52,7 @@ class C { }",
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UsingCorvusJsonInternal_TriggersCVJ001_AndCodeFixReplacesWithCorvusTextJsonInternal()
     {
         var test = new CodeFixTest
@@ -71,7 +72,7 @@ class C { }",
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UsingSystemTextJson_NoDiagnostic()
     {
         const string testCode = @"using System.Text.Json;
@@ -80,7 +81,7 @@ class C { }";
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UsingCorvusTextJson_NoDiagnostic()
     {
         var test = new AnalyzerTest
@@ -93,7 +94,7 @@ class C { }",
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UsingCorvusJsonCodeGeneration_NoDiagnostic()
     {
         var test = new AnalyzerTest

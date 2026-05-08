@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Migration.Analyzers.ParsedValueAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 /// <summary>
 /// Tests for CVJ002: ParsedValue to ParsedJsonDocument migration.
 /// </summary>
+[TestClass]
 public class ParsedValueAnalyzerTests
 {
     private const string V4Stubs = @"
@@ -58,7 +59,7 @@ namespace Corvus.Json
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task ParsedValueGenericName_TriggersCVJ002_AndCodeFixReplaces()
     {
         var test = new CodeFixTest
@@ -96,7 +97,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task InstanceProperty_TriggersCVJ002()
     {
         const string testCode = $@"{V4Stubs}
@@ -119,7 +120,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(0));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonParsedValueType_NoDiagnosticOnInstance()
     {
         const string testCode = @"
@@ -143,7 +144,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task UsingDeclarationWithParsedValue_TriggersCVJ002()
     {
         const string testCode = V4Stubs + @"

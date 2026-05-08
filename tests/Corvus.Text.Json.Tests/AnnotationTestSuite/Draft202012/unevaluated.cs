@@ -3,46 +3,54 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnnotationTestSuite.Draft202012.Unevaluated;
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesAlone : IClassFixture<SuiteUnevaluatedPropertiesAlone.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesAlone
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesAlone(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -58,42 +66,50 @@ public class SuiteUnevaluatedPropertiesAlone : IClassFixture<SuiteUnevaluatedPro
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesWithProperties : IClassFixture<SuiteUnevaluatedPropertiesWithProperties.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesWithProperties
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
             "{\r\n                \"#/properties/foo\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -109,42 +125,50 @@ public class SuiteUnevaluatedPropertiesWithProperties : IClassFixture<SuiteUneva
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesWithPatternProperties : IClassFixture<SuiteUnevaluatedPropertiesWithPatternProperties.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesWithPatternProperties
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithPatternProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleAppleAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"apple\": 42, \"bar\": 24 }",
             "/apple",
             "title",
             "{\r\n                \"#/patternProperties/%5Ea\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"apple\": 42, \"bar\": 24 }",
             "/bar",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -160,42 +184,50 @@ public class SuiteUnevaluatedPropertiesWithPatternProperties : IClassFixture<Sui
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesWithAdditionalProperties : IClassFixture<SuiteUnevaluatedPropertiesWithAdditionalProperties.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesWithAdditionalProperties
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithAdditionalProperties(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
             "{\r\n                \"#/additionalProperties\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
             "{\r\n                \"#/additionalProperties\": \"Evaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -211,42 +243,50 @@ public class SuiteUnevaluatedPropertiesWithAdditionalProperties : IClassFixture<
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesWithDependentSchemas : IClassFixture<SuiteUnevaluatedPropertiesWithDependentSchemas.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesWithDependentSchemas
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithDependentSchemas(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
             "{\r\n                \"#/dependentSchemas/foo/properties/bar\": \"Evaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -262,64 +302,72 @@ public class SuiteUnevaluatedPropertiesWithDependentSchemas : IClassFixture<Suit
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesWithIfThenAndElse : IClassFixture<SuiteUnevaluatedPropertiesWithIfThenAndElse.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesWithIfThenAndElse
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithIfThenAndElse(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": \"\", \"bar\": 42 }",
             "/foo",
             "title",
             "{\r\n                \"#/then/properties/foo\": \"Then\",\r\n                \"#/if/properties/foo\": \"If\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": \"\", \"bar\": 42 }",
             "/bar",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": \"\" }",
             "/foo",
             "title",
             "{\r\n                \"#/else/properties/foo\": \"Else\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": \"\" }",
             "/bar",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -335,42 +383,50 @@ public class SuiteUnevaluatedPropertiesWithIfThenAndElse : IClassFixture<SuiteUn
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesWithAllOf : IClassFixture<SuiteUnevaluatedPropertiesWithAllOf.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesWithAllOf
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithAllOf(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
             "{\r\n                \"#/allOf/0/properties/foo\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -386,42 +442,50 @@ public class SuiteUnevaluatedPropertiesWithAllOf : IClassFixture<SuiteUnevaluate
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesWithAnyOf : IClassFixture<SuiteUnevaluatedPropertiesWithAnyOf.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesWithAnyOf
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithAnyOf(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
             "{\r\n                \"#/anyOf/0/properties/foo\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -437,42 +501,50 @@ public class SuiteUnevaluatedPropertiesWithAnyOf : IClassFixture<SuiteUnevaluate
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesWithOneOf : IClassFixture<SuiteUnevaluatedPropertiesWithOneOf.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesWithOneOf
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithOneOf(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
             "{\r\n                \"#/oneOf/0/properties/foo\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -488,42 +560,50 @@ public class SuiteUnevaluatedPropertiesWithOneOf : IClassFixture<SuiteUnevaluate
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedPropertiesWithNot : IClassFixture<SuiteUnevaluatedPropertiesWithNot.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedPropertiesWithNot
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedPropertiesWithNot(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0TitleFooAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/foo",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0TitleBarAssertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "{ \"foo\": 42, \"bar\": 24 }",
             "/bar",
             "title",
             "{\r\n                \"#/unevaluatedProperties\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -539,42 +619,50 @@ public class SuiteUnevaluatedPropertiesWithNot : IClassFixture<SuiteUnevaluatedP
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedItemsAlone : IClassFixture<SuiteUnevaluatedItemsAlone.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedItemsAlone
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedItemsAlone(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0Title0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/0",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0Title1Assertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/1",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -590,42 +678,50 @@ public class SuiteUnevaluatedItemsAlone : IClassFixture<SuiteUnevaluatedItemsAlo
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedItemsWithPrefixItems : IClassFixture<SuiteUnevaluatedItemsWithPrefixItems.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedItemsWithPrefixItems
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedItemsWithPrefixItems(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0Title0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/0",
             "title",
             "{\r\n                \"#/prefixItems/0\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0Title1Assertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/1",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -641,42 +737,50 @@ public class SuiteUnevaluatedItemsWithPrefixItems : IClassFixture<SuiteUnevaluat
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedItemsWithContains : IClassFixture<SuiteUnevaluatedItemsWithContains.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedItemsWithContains
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedItemsWithContains(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0Title0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[\"foo\", 42]",
             "/0",
             "title",
             "{\r\n                \"#/contains\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0Title1Assertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[\"foo\", 42]",
             "/1",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -692,64 +796,72 @@ public class SuiteUnevaluatedItemsWithContains : IClassFixture<SuiteUnevaluatedI
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedItemsWithIfThenAndElse : IClassFixture<SuiteUnevaluatedItemsWithIfThenAndElse.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedItemsWithIfThenAndElse
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedItemsWithIfThenAndElse(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0Title0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[\"\", 42]",
             "/0",
             "title",
             "{\r\n                \"#/then/prefixItems/0\": \"Then\",\r\n                \"#/if/prefixItems/0\": \"If\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0Title1Assertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[\"\", 42]",
             "/1",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1Title0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, \"\"]",
             "/0",
             "title",
             "{\r\n                \"#/else/prefixItems/0\": \"Else\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test1Title1Assertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, \"\"]",
             "/1",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -765,42 +877,50 @@ public class SuiteUnevaluatedItemsWithIfThenAndElse : IClassFixture<SuiteUnevalu
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedItemsWithAllOf : IClassFixture<SuiteUnevaluatedItemsWithAllOf.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedItemsWithAllOf
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedItemsWithAllOf(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0Title0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/0",
             "title",
             "{\r\n                \"#/allOf/0/prefixItems/0\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0Title1Assertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/1",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -816,42 +936,50 @@ public class SuiteUnevaluatedItemsWithAllOf : IClassFixture<SuiteUnevaluatedItem
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedItemsWithAnyOf : IClassFixture<SuiteUnevaluatedItemsWithAnyOf.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedItemsWithAnyOf
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedItemsWithAnyOf(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0Title0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/0",
             "title",
             "{\r\n                \"#/anyOf/0/prefixItems/0\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0Title1Assertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/1",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -867,42 +995,50 @@ public class SuiteUnevaluatedItemsWithAnyOf : IClassFixture<SuiteUnevaluatedItem
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedItemsWithOneOf : IClassFixture<SuiteUnevaluatedItemsWithOneOf.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedItemsWithOneOf
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedItemsWithOneOf(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0Title0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/0",
             "title",
             "{\r\n                \"#/oneOf/0/prefixItems/0\": \"Evaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0Title1Assertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/1",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {
@@ -918,42 +1054,50 @@ public class SuiteUnevaluatedItemsWithOneOf : IClassFixture<SuiteUnevaluatedItem
     }
 }
 
-[Trait("AnnotationTestSuite", "Draft202012")]
-public class SuiteUnevaluatedItemsWithNot : IClassFixture<SuiteUnevaluatedItemsWithNot.Fixture>
+[TestCategory("Draft202012")]
+[TestClass]
+public class SuiteUnevaluatedItemsWithNot
 {
-    private readonly Fixture _fixture;
-    public SuiteUnevaluatedItemsWithNot(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0Title0Assertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/0",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    [Fact]
+    [TestMethod]
     public void Test0Title1Assertion1()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "[42, 24]",
             "/1",
             "title",
             "{\r\n                \"#/unevaluatedItems\": \"Unevaluated\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

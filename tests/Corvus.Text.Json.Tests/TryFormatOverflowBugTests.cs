@@ -5,7 +5,7 @@
 using System.Globalization;
 using System.Text;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -14,6 +14,7 @@ namespace Corvus.Text.Json.Tests;
 /// CopyTo calls throw instead of returning false when the buffer is too small.
 /// A Try* method must NEVER throw — it must return false on insufficient buffer.
 /// </summary>
+[TestClass]
 public class TryFormatOverflowBugTests
 {
     // ═══════════════════════════════════════════════════════════════════════════
@@ -22,15 +23,15 @@ public class TryFormatOverflowBugTests
     // Buffer size 0 triggers the first CopyTo immediately.
     // ═══════════════════════════════════════════════════════════════════════════
 
-    [Theory]
-    [InlineData(0)]  // -n %  → negSign.CopyTo first (line 455)
-    [InlineData(1)]  // -n%   → negSign.CopyTo first (line 476)
-    [InlineData(2)]  // -%n   → negSign.CopyTo first (line 496)
-    [InlineData(3)]  // %-n   → percentSym.CopyTo first (line 510)
-    [InlineData(4)]  // %n-   → percentSym.CopyTo first (line 524)
-    [InlineData(7)]  // -% n  → negSign.CopyTo first (line 584)
-    [InlineData(9)]  // % n-  → percentSym.CopyTo first (line 626)
-    [InlineData(10)] // % -n  → percentSym.CopyTo first (line 653)
+    [TestMethod]
+    [DataRow(0)]  // -n %  → negSign.CopyTo first (line 455)
+    [DataRow(1)]  // -n%   → negSign.CopyTo first (line 476)
+    [DataRow(2)]  // -%n   → negSign.CopyTo first (line 496)
+    [DataRow(3)]  // %-n   → percentSym.CopyTo first (line 510)
+    [DataRow(4)]  // %n-   → percentSym.CopyTo first (line 524)
+    [DataRow(7)]  // -% n  → negSign.CopyTo first (line 584)
+    [DataRow(9)]  // % n-  → percentSym.CopyTo first (line 626)
+    [DataRow(10)] // % -n  → percentSym.CopyTo first (line 653)
     public void TryFormatPercent_NegativePattern_EmptyBuffer_MustReturnFalse(int pattern)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -48,14 +49,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 2 (-%n): negSign fits (buffer=1) but percentSym.CopyTo throws at line 498.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatPercent_NegativePattern2_SecondPrefixCopyTo_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -74,14 +75,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 3 (%-n): percentSym fits (buffer=1) but negSign.CopyTo throws at line 512.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatPercent_NegativePattern3_SecondPrefixCopyTo_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -100,14 +101,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 7 (-% n): negSign fits (buffer=1) but percentSym.CopyTo throws at line 586.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatPercent_NegativePattern7_SecondPrefixCopyTo_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -126,8 +127,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
@@ -136,7 +137,7 @@ public class TryFormatOverflowBugTests
     /// Wait, "%" is 1, space guard checks pos+1>dest.Length → 2>3 → false. Space written at pos 2, pos=3.
     /// Then negSign "-" CopyTo into destination.Slice(3) = empty → throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatPercent_NegativePattern10_NegSignAfterSpace_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-0.5");
@@ -155,8 +156,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -164,9 +165,9 @@ public class TryFormatOverflowBugTests
     // Patterns 2, 3 have unguarded percentSym.CopyTo at the start.
     // ═══════════════════════════════════════════════════════════════════════════
 
-    [Theory]
-    [InlineData(2)] // %n  → percentSym.CopyTo first (line 745)
-    [InlineData(3)] // % n → percentSym.CopyTo first (line 757)
+    [TestMethod]
+    [DataRow(2)] // %n  → percentSym.CopyTo first (line 745)
+    [DataRow(3)] // % n → percentSym.CopyTo first (line 757)
     public void TryFormatPercent_PositivePattern_EmptyBuffer_MustReturnFalse(int pattern)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("0.5");
@@ -184,8 +185,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -193,15 +194,15 @@ public class TryFormatOverflowBugTests
     // Patterns with unguarded CopyTo before the number.
     // ═══════════════════════════════════════════════════════════════════════════
 
-    [Theory]
-    [InlineData(1)]  // -$n   → negSign.CopyTo first (line 1467)
-    [InlineData(2)]  // $-n   → currSym.CopyTo first (line 1481)
-    [InlineData(3)]  // $n-   → currSym.CopyTo first (line 1495)
-    [InlineData(5)]  // -n$   → negSign.CopyTo first (line 1535)
-    [InlineData(8)]  // -n $  → negSign.CopyTo first (line 1577)
-    [InlineData(9)]  // -$ n  → negSign.CopyTo first (line 1598)
-    [InlineData(11)] // $ n-  → currSym.CopyTo first (line 1640)
-    [InlineData(12)] // $ -n  → currSym.CopyTo first (line 1661)
+    [TestMethod]
+    [DataRow(1)]  // -$n   → negSign.CopyTo first (line 1467)
+    [DataRow(2)]  // $-n   → currSym.CopyTo first (line 1481)
+    [DataRow(3)]  // $n-   → currSym.CopyTo first (line 1495)
+    [DataRow(5)]  // -n$   → negSign.CopyTo first (line 1535)
+    [DataRow(8)]  // -n $  → negSign.CopyTo first (line 1577)
+    [DataRow(9)]  // -$ n  → negSign.CopyTo first (line 1598)
+    [DataRow(11)] // $ n-  → currSym.CopyTo first (line 1640)
+    [DataRow(12)] // $ -n  → currSym.CopyTo first (line 1661)
     public void TryFormatCurrency_NegativePattern_EmptyBuffer_MustReturnFalse(int pattern)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -219,15 +220,15 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 0 (($n)): has '(' guard, but then currSym.CopyTo at line 1448 is unguarded.
     /// Buffer 2 lets '(' succeed (guard passes: 0+1>2 → false), then "$" CopyTo into slice of 1.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern0_CurrSymAfterParen_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -249,14 +250,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 14 (($ n)): has '(' guard, then currSym.CopyTo at line 1710 is unguarded.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern14_CurrSymAfterParen_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -276,14 +277,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 1 (-$n): negSign fits (buffer=1) but currSym.CopyTo at line 1469 throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern1_SecondPrefix_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -302,14 +303,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 2 ($-n): currSym fits (buffer=1) but negSign.CopyTo at line 1483 throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern2_SecondPrefix_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -328,14 +329,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 9 (-$ n): negSign fits (buffer=1) but currSym.CopyTo at line 1600 throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern9_SecondPrefix_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -353,8 +354,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
@@ -364,10 +365,10 @@ public class TryFormatOverflowBugTests
     // then suffix CopyTo into empty slice throws.
     // ═══════════════════════════════════════════════════════════════════════════
 
-    [Theory]
-    [InlineData(3)]  // $n-  → negSign.CopyTo at line 1504 after number
-    [InlineData(6)]  // n-$  → negSign.CopyTo at line 1556 after number
-    [InlineData(7)]  // n$-  → currSym.CopyTo at line 1570 after number
+    [TestMethod]
+    [DataRow(3)]  // $n-  → negSign.CopyTo at line 1504 after number
+    [DataRow(6)]  // n-$  → negSign.CopyTo at line 1556 after number
+    [DataRow(7)]  // n$-  → currSym.CopyTo at line 1570 after number
     public void TryFormatCurrency_NegativePattern_SuffixAfterNumber_MustReturnFalse(int pattern)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -397,14 +398,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 4 ((n$)): '(' + number (8) = 9 chars, then currSym.CopyTo at line 1523 throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern4_CurrSymAfterNumber_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -423,14 +424,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 5 (-n$): "-" (1) + number (8) = 9, then "$" CopyTo at line 1544 throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern5_CurrSymSuffix_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -449,14 +450,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 6 (n-$): number (8) + "-" (1) = 9, then "$" CopyTo at line 1558 throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern6_SecondSuffix_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -475,14 +476,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 7 (n$-): number (8) + "$" (1) = 9, then "-" CopyTo at line 1572 throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern7_SecondSuffix_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -501,8 +502,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
@@ -513,7 +514,7 @@ public class TryFormatOverflowBugTests
     /// space guard: 9+1>10 → 10>10 → false, space at pos 9, pos=10.
     /// "$" CopyTo into Slice(10) of length 10 = empty → throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern8_CurrSymAfterSpace_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -533,8 +534,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
@@ -546,7 +547,7 @@ public class TryFormatOverflowBugTests
     /// Space written, pos=9. "$" CopyTo into Slice(9) = 1 char → fits! pos=10.
     /// "-" CopyTo into Slice(10) = empty → throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern10_NegSignAfterCurrSym_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -565,8 +566,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
@@ -577,7 +578,7 @@ public class TryFormatOverflowBugTests
     /// "$" (1) + space (1) + number needs Slice(2) = 8 chars → exactly 10. pos=10. 
     /// Then "-" into Slice(10) of buffer 10 = empty → throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern11_NegSignSuffix_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -597,8 +598,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
@@ -607,7 +608,7 @@ public class TryFormatOverflowBugTests
     /// Buffer 2: "$" (1) + space guard (1+1>2 → 2>2 → false) + space at pos 1, pos=2.
     /// "-" CopyTo into Slice(2) of buffer 2 = empty → throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern12_NegSignAfterSpace_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -631,14 +632,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 13 (n- $): number (8) + negSign.CopyTo at line 1689 throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern13_NegSignAfterNumber_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -657,8 +658,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
@@ -672,7 +673,7 @@ public class TryFormatOverflowBugTests
     /// Space guard: 9+1>10 → 10>10 → false. Space written, pos=10.
     /// "$" CopyTo into Slice(10) of buffer 10 = empty → throws!
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern15_CurrSymAfterSpace_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -690,8 +691,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
@@ -700,7 +701,7 @@ public class TryFormatOverflowBugTests
     /// pos=9. Space guard: 9+1>10 → 10>10 → false. Space at pos 9, pos=10.
     /// "$" CopyTo into Slice(10) = empty → throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_NegativePattern13_CurrSymAfterSpace_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("-1234.56");
@@ -720,17 +721,17 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
     // CURRENCY POSITIVE — BUGS
     // ═══════════════════════════════════════════════════════════════════════════
 
-    [Theory]
-    [InlineData(0)] // $n  → currSym.CopyTo first (line 1779)
-    [InlineData(2)] // $ n → currSym.CopyTo first (line 1803)
+    [TestMethod]
+    [DataRow(0)] // $n  → currSym.CopyTo first (line 1779)
+    [DataRow(2)] // $ n → currSym.CopyTo first (line 1803)
     public void TryFormatCurrency_PositivePattern_EmptyBuffer_MustReturnFalse(int pattern)
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
@@ -748,14 +749,14 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
     /// Pattern 1 (n$): number (8) + currSym.CopyTo at line 1798.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_PositivePattern1_CurrSymSuffix_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
@@ -774,8 +775,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     /// <summary>
@@ -783,7 +784,7 @@ public class TryFormatOverflowBugTests
     /// Buffer 9: number (8, pos=8). Space guard: 8+1>9 → 9>9 → false. Space at pos 8, pos=9.
     /// "$" CopyTo into Slice(9) of buffer 9 = empty → throws.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void TryFormatCurrency_PositivePattern3_CurrSymAfterSpace_MustReturnFalse()
     {
         byte[] utf8 = Encoding.UTF8.GetBytes("1234.56");
@@ -802,8 +803,8 @@ public class TryFormatOverflowBugTests
             isNegative, integral, fractional, exponent,
             destination, out int charsWritten, 2, formatInfo);
 
-        Assert.False(result);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, charsWritten);
     }
 
     // ═══════════════════════════════════════════════════════════════════════════

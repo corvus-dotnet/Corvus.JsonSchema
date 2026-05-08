@@ -1,11 +1,11 @@
-﻿// Derived from code licensed to the .NET Foundation under one or more agreements.
+// Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Immutable;
 using System.Linq;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Serialization.Tests;
 
@@ -119,10 +119,10 @@ public struct SimpleStructWithSimpleClass : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(32, MyInt32);
-        Assert.Equal(32, MyInt32Array[0]);
-        Assert.Equal("Hello", MySimpleClass.MyString);
-        Assert.Equal(3.14, MySimpleClass.MyDouble);
+        Assert.AreEqual(32, MyInt32);
+        Assert.AreEqual(32, MyInt32Array[0]);
+        Assert.AreEqual("Hello", MySimpleClass.MyString);
+        Assert.AreEqual(3.14, MySimpleClass.MyDouble);
     }
 }
 
@@ -139,7 +139,7 @@ public class TestClassWithNull
 
     public void Verify()
     {
-        Assert.Null(MyString);
+        Assert.IsNull(MyString);
     }
 }
 
@@ -224,7 +224,7 @@ public class TestClassWithNestedObjectInner : ITestClass
 
     public void Verify()
     {
-        Assert.NotNull(MyData);
+        Assert.IsNotNull(MyData);
         MyData.Verify();
     }
 }
@@ -246,7 +246,7 @@ public class TestClassWithNestedObjectOuter : ITestClass
 
     public void Verify()
     {
-        Assert.NotNull(MyData);
+        Assert.IsNotNull(MyData);
         MyData.Verify();
     }
 }
@@ -285,9 +285,9 @@ public class TestClassWithObjectList : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(3, MyData.Count);
+        Assert.AreEqual(3, MyData.Count);
         MyData[0].Verify();
-        Assert.Null(MyData[1]);
+        Assert.IsNull(MyData[1]);
         MyData[2].Verify();
     }
 }
@@ -319,7 +319,7 @@ public class TestClassWithObjectArray : ITestClass
     {
         MyData[0].Verify();
         MyData[1].Verify();
-        Assert.Equal(2, MyData.Length);
+        Assert.AreEqual(2, MyData.Length);
     }
 }
 
@@ -356,7 +356,7 @@ public class TestClassWithObjectIEnumerableT : ITestClass
             count++;
         }
 
-        Assert.Equal(2, count);
+        Assert.AreEqual(2, count);
     }
 }
 
@@ -391,7 +391,7 @@ public class TestClassWithObjectIListT : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
         MyData[0].Verify();
         MyData[1].Verify();
     }
@@ -428,7 +428,7 @@ public class TestClassWithObjectICollectionT : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
 
         foreach (SimpleTestClass data in MyData)
         {
@@ -480,7 +480,7 @@ public class TestClassWithObjectIEnumerable : ITestClass
         ////                }
         ////                count++;
         ////            }
-        ////            Assert.Equal(2, count);
+        ////            Assert.AreEqual(2, count);
 
         Assert.Fail();
     }
@@ -535,7 +535,7 @@ public class TestClassWithObjectIList : ITestClass
         ////                }
         ////                count++;
         ////            }
-        ////            Assert.Equal(2, count);
+        ////            Assert.AreEqual(2, count);
         Assert.Fail();
     }
 }
@@ -591,7 +591,7 @@ public class TestClassWithObjectICollection : ITestClass
         ////                }
         ////                count++;
         ////            }
-        ////            Assert.Equal(2, count);
+        ////            Assert.AreEqual(2, count);
         Assert.Fail();
     }
 }
@@ -621,7 +621,7 @@ public class TestClassWithObjectIReadOnlyCollectionT : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
 
         foreach (SimpleTestClass data in MyData)
         {
@@ -655,7 +655,7 @@ public class TestClassWithObjectIReadOnlyListT : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
         MyData[0].Verify();
         MyData[1].Verify();
     }
@@ -686,7 +686,7 @@ public class TestClassWithObjectISetT : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
 
         foreach (SimpleTestClass obj in MyData)
         {
@@ -740,9 +740,9 @@ public class TestClassWithStringArray : ITestClass
 
     public void Verify()
     {
-        Assert.Equal("Hello", MyData[0]);
-        Assert.Equal("World", MyData[1]);
-        Assert.Equal(2, MyData.Length);
+        Assert.AreEqual("Hello", MyData[0]);
+        Assert.AreEqual("World", MyData[1]);
+        Assert.AreEqual(2, MyData.Length);
     }
 }
 
@@ -765,14 +765,14 @@ public class TestClassWithGenericList : ITestClass
             "Hello",
             "World"
         ];
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 
     public void Verify()
     {
-        Assert.Equal("Hello", MyData[0]);
-        Assert.Equal("World", MyData[1]);
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual("Hello", MyData[0]);
+        Assert.AreEqual("World", MyData[1]);
+        Assert.AreEqual(2, MyData.Count);
     }
 }
 
@@ -801,7 +801,7 @@ public class TestClassWithGenericIEnumerable : ITestClass
         {
             count++;
         }
-        Assert.Equal(2, count);
+        Assert.AreEqual(2, count);
     }
 
     public void Verify()
@@ -812,15 +812,15 @@ public class TestClassWithGenericIEnumerable : ITestClass
         {
             if (data is JsonElement element)
             {
-                Assert.Equal(expected[count], element.GetString());
+                Assert.AreEqual(expected[count], element.GetString());
             }
             else
             {
-                Assert.Equal(expected[count], (string)data);
+                Assert.AreEqual(expected[count], (string)data);
             }
             count++;
         }
-        Assert.Equal(2, count);
+        Assert.AreEqual(2, count);
     }
 }
 
@@ -843,7 +843,7 @@ public class TestClassWithGenericIList : ITestClass
             "Hello",
             "World"
         };
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 
     public void Verify()
@@ -854,15 +854,15 @@ public class TestClassWithGenericIList : ITestClass
         {
             if (data is JsonElement element)
             {
-                Assert.Equal(expected[count], element.GetString());
+                Assert.AreEqual(expected[count], element.GetString());
             }
             else
             {
-                Assert.Equal(expected[count], (string)data);
+                Assert.AreEqual(expected[count], (string)data);
             }
             count++;
         }
-        Assert.Equal(2, count);
+        Assert.AreEqual(2, count);
     }
 }
 
@@ -885,7 +885,7 @@ public class TestClassWithGenericICollection : ITestClass
             "Hello",
             "World"
         };
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 
     public void Verify()
@@ -896,15 +896,15 @@ public class TestClassWithGenericICollection : ITestClass
         {
             if (data is JsonElement element)
             {
-                Assert.Equal(expected[count], element.GetString());
+                Assert.AreEqual(expected[count], element.GetString());
             }
             else
             {
-                Assert.Equal(expected[count], (string)data);
+                Assert.AreEqual(expected[count], (string)data);
             }
             count++;
         }
-        Assert.Equal(2, count);
+        Assert.AreEqual(2, count);
     }
 }
 
@@ -933,7 +933,7 @@ public class TestClassWithGenericIEnumerableT : ITestClass
         {
             count++;
         }
-        Assert.Equal(2, count);
+        Assert.AreEqual(2, count);
     }
 
     public void Verify()
@@ -943,11 +943,11 @@ public class TestClassWithGenericIEnumerableT : ITestClass
 
         foreach (string data in MyData)
         {
-            Assert.Equal(expected[count], data);
+            Assert.AreEqual(expected[count], data);
             count++;
         }
 
-        Assert.Equal(2, count);
+        Assert.AreEqual(2, count);
     }
 }
 
@@ -970,14 +970,14 @@ public class TestClassWithGenericIListT : ITestClass
             "Hello",
             "World"
         ];
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 
     public void Verify()
     {
-        Assert.Equal("Hello", MyData[0]);
-        Assert.Equal("World", MyData[1]);
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual("Hello", MyData[0]);
+        Assert.AreEqual("World", MyData[1]);
+        Assert.AreEqual(2, MyData.Count);
     }
 }
 
@@ -1000,7 +1000,7 @@ public class TestClassWithGenericICollectionT : ITestClass
             "Hello",
             "World"
         ];
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 
     public void Verify()
@@ -1010,10 +1010,10 @@ public class TestClassWithGenericICollectionT : ITestClass
 
         foreach (string data in MyData)
         {
-            Assert.Equal(expected[i++], data);
+            Assert.AreEqual(expected[i++], data);
         }
 
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 }
 
@@ -1036,7 +1036,7 @@ public class TestClassWithGenericIReadOnlyCollectionT : ITestClass
             "Hello",
             "World"
         };
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 
     public void Verify()
@@ -1046,10 +1046,10 @@ public class TestClassWithGenericIReadOnlyCollectionT : ITestClass
 
         foreach (string data in MyData)
         {
-            Assert.Equal(expected[i++], data);
+            Assert.AreEqual(expected[i++], data);
         }
 
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 }
 
@@ -1072,14 +1072,14 @@ public class TestClassWithGenericIReadOnlyListT : ITestClass
             "Hello",
             "World"
         };
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 
     public void Verify()
     {
-        Assert.Equal("Hello", MyData[0]);
-        Assert.Equal("World", MyData[1]);
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual("Hello", MyData[0]);
+        Assert.AreEqual("World", MyData[1]);
+        Assert.AreEqual(2, MyData.Count);
     }
 }
 
@@ -1102,12 +1102,12 @@ public class TestClassWithGenericISetT : ITestClass
             "Hello",
             "World"
         };
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
     }
 
     public void Verify()
     {
-        Assert.Equal(2, MyData.Count);
+        Assert.AreEqual(2, MyData.Count);
 
         bool helloSeen = false;
         bool worldSeen = false;
@@ -1124,7 +1124,7 @@ public class TestClassWithGenericISetT : ITestClass
             }
         }
 
-        Assert.True(helloSeen && worldSeen);
+        Assert.IsTrue(helloSeen && worldSeen);
     }
 }
 
@@ -1233,65 +1233,65 @@ public class TestClassWithStringToPrimitiveDictionary : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(1, MyInt32Dict["key1"]);
-        Assert.Equal(2, MyInt32Dict["key2"]);
-        Assert.Equal(2, MyInt32Dict.Count);
+        Assert.AreEqual(1, MyInt32Dict["key1"]);
+        Assert.AreEqual(2, MyInt32Dict["key2"]);
+        Assert.AreEqual(2, MyInt32Dict.Count);
 
-        Assert.True(MyBooleanDict["key1"]);
-        Assert.False(MyBooleanDict["key2"]);
-        Assert.Equal(2, MyBooleanDict.Count);
+        Assert.IsTrue(MyBooleanDict["key1"]);
+        Assert.IsFalse(MyBooleanDict["key2"]);
+        Assert.AreEqual(2, MyBooleanDict.Count);
 
-        Assert.Equal(1.1f, MySingleDict["key1"]);
-        Assert.Equal(2.2f, MySingleDict["key2"]);
-        Assert.Equal(2, MySingleDict.Count);
+        Assert.AreEqual(1.1f, MySingleDict["key1"]);
+        Assert.AreEqual(2.2f, MySingleDict["key2"]);
+        Assert.AreEqual(2, MySingleDict.Count);
 
-        Assert.Equal(3.3d, MyDoubleDict["key1"]);
-        Assert.Equal(4.4d, MyDoubleDict["key2"]);
-        Assert.Equal(2, MyDoubleDict.Count);
+        Assert.AreEqual(3.3d, MyDoubleDict["key1"]);
+        Assert.AreEqual(4.4d, MyDoubleDict["key2"]);
+        Assert.AreEqual(2, MyDoubleDict.Count);
 
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2), MyDateTimeDict["key1"]);
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeDict["key2"]);
-        Assert.Equal(2, MyDateTimeDict.Count);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2), MyDateTimeDict["key1"]);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeDict["key2"]);
+        Assert.AreEqual(2, MyDateTimeDict.Count);
 
-        Assert.Equal(1, MyInt32IDict["key1"]);
-        Assert.Equal(2, MyInt32IDict["key2"]);
-        Assert.Equal(2, MyInt32IDict.Count);
+        Assert.AreEqual(1, MyInt32IDict["key1"]);
+        Assert.AreEqual(2, MyInt32IDict["key2"]);
+        Assert.AreEqual(2, MyInt32IDict.Count);
 
-        Assert.True(MyBooleanIDict["key1"]);
-        Assert.False(MyBooleanIDict["key2"]);
-        Assert.Equal(2, MyBooleanIDict.Count);
+        Assert.IsTrue(MyBooleanIDict["key1"]);
+        Assert.IsFalse(MyBooleanIDict["key2"]);
+        Assert.AreEqual(2, MyBooleanIDict.Count);
 
-        Assert.Equal(1.1f, MySingleIDict["key1"]);
-        Assert.Equal(2.2f, MySingleIDict["key2"]);
-        Assert.Equal(2, MySingleIDict.Count);
+        Assert.AreEqual(1.1f, MySingleIDict["key1"]);
+        Assert.AreEqual(2.2f, MySingleIDict["key2"]);
+        Assert.AreEqual(2, MySingleIDict.Count);
 
-        Assert.Equal(3.3d, MyDoubleIDict["key1"]);
-        Assert.Equal(4.4d, MyDoubleIDict["key2"]);
-        Assert.Equal(2, MyDoubleIDict.Count);
+        Assert.AreEqual(3.3d, MyDoubleIDict["key1"]);
+        Assert.AreEqual(4.4d, MyDoubleIDict["key2"]);
+        Assert.AreEqual(2, MyDoubleIDict.Count);
 
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2), MyDateTimeIDict["key1"]);
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeIDict["key2"]);
-        Assert.Equal(2, MyDateTimeIDict.Count);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2), MyDateTimeIDict["key1"]);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeIDict["key2"]);
+        Assert.AreEqual(2, MyDateTimeIDict.Count);
 
-        Assert.Equal(1, MyInt32IReadOnlyDict["key1"]);
-        Assert.Equal(2, MyInt32IReadOnlyDict["key2"]);
-        Assert.Equal(2, MyInt32IReadOnlyDict.Count);
+        Assert.AreEqual(1, MyInt32IReadOnlyDict["key1"]);
+        Assert.AreEqual(2, MyInt32IReadOnlyDict["key2"]);
+        Assert.AreEqual(2, MyInt32IReadOnlyDict.Count);
 
-        Assert.True(MyBooleanIReadOnlyDict["key1"]);
-        Assert.False(MyBooleanIReadOnlyDict["key2"]);
-        Assert.Equal(2, MyBooleanIReadOnlyDict.Count);
+        Assert.IsTrue(MyBooleanIReadOnlyDict["key1"]);
+        Assert.IsFalse(MyBooleanIReadOnlyDict["key2"]);
+        Assert.AreEqual(2, MyBooleanIReadOnlyDict.Count);
 
-        Assert.Equal(1.1f, MySingleIReadOnlyDict["key1"]);
-        Assert.Equal(2.2f, MySingleIReadOnlyDict["key2"]);
-        Assert.Equal(2, MySingleIReadOnlyDict.Count);
+        Assert.AreEqual(1.1f, MySingleIReadOnlyDict["key1"]);
+        Assert.AreEqual(2.2f, MySingleIReadOnlyDict["key2"]);
+        Assert.AreEqual(2, MySingleIReadOnlyDict.Count);
 
-        Assert.Equal(3.3d, MyDoubleIReadOnlyDict["key1"]);
-        Assert.Equal(4.4d, MyDoubleIReadOnlyDict["key2"]);
-        Assert.Equal(2, MyDoubleIReadOnlyDict.Count);
+        Assert.AreEqual(3.3d, MyDoubleIReadOnlyDict["key1"]);
+        Assert.AreEqual(4.4d, MyDoubleIReadOnlyDict["key2"]);
+        Assert.AreEqual(2, MyDoubleIReadOnlyDict.Count);
 
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2), MyDateTimeIReadOnlyDict["key1"]);
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeIReadOnlyDict["key2"]);
-        Assert.Equal(2, MyDateTimeIReadOnlyDict.Count);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2), MyDateTimeIReadOnlyDict["key1"]);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeIReadOnlyDict["key2"]);
+        Assert.AreEqual(2, MyDateTimeIReadOnlyDict.Count);
     }
 }
 
@@ -1375,25 +1375,25 @@ public class TestClassWithObjectIEnumerableConstructibleTypes : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(2, MyStack.Count);
+        Assert.AreEqual(2, MyStack.Count);
         foreach (SimpleTestClass data in MyStack)
         {
             data.Verify();
         }
 
-        Assert.Equal(2, MyQueue.Count);
+        Assert.AreEqual(2, MyQueue.Count);
         foreach (SimpleTestClass data in MyQueue)
         {
             data.Verify();
         }
 
-        Assert.Equal(2, MyHashSet.Count);
+        Assert.AreEqual(2, MyHashSet.Count);
         foreach (SimpleTestClass data in MyHashSet)
         {
             data.Verify();
         }
 
-        Assert.Equal(2, MyLinkedList.Count);
+        Assert.AreEqual(2, MyLinkedList.Count);
         foreach (SimpleTestClass data in MyLinkedList)
         {
             data.Verify();
@@ -1540,13 +1540,13 @@ public class TestClassWithObjectImmutableTypes : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(2, MyImmutableArray.Length);
+        Assert.AreEqual(2, MyImmutableArray.Length);
         foreach (SimpleTestClass data in MyImmutableArray)
         {
             data.Verify();
         }
 
-        Assert.Equal(2, MyIImmutableList.Count);
+        Assert.AreEqual(2, MyIImmutableList.Count);
         foreach (SimpleTestClass data in MyIImmutableList)
         {
             data.Verify();
@@ -1558,7 +1558,7 @@ public class TestClassWithObjectImmutableTypes : ITestClass
             data.Verify();
             i++;
         }
-        Assert.Equal(2, i);
+        Assert.AreEqual(2, i);
 
         i = 0;
         foreach (SimpleTestClass data in MyIImmutableQueue)
@@ -1566,21 +1566,21 @@ public class TestClassWithObjectImmutableTypes : ITestClass
             data.Verify();
             i++;
         }
-        Assert.Equal(2, i);
+        Assert.AreEqual(2, i);
 
-        Assert.Equal(2, MyIImmutableSet.Count);
+        Assert.AreEqual(2, MyIImmutableSet.Count);
         foreach (SimpleTestClass data in MyIImmutableSet)
         {
             data.Verify();
         }
 
-        Assert.Equal(2, MyImmutableHashSet.Count);
+        Assert.AreEqual(2, MyImmutableHashSet.Count);
         foreach (SimpleTestClass data in MyImmutableHashSet)
         {
             data.Verify();
         }
 
-        Assert.Equal(2, MyImmutableList.Count);
+        Assert.AreEqual(2, MyImmutableList.Count);
         foreach (SimpleTestClass data in MyImmutableList)
         {
             data.Verify();
@@ -1592,7 +1592,7 @@ public class TestClassWithObjectImmutableTypes : ITestClass
             data.Verify();
             i++;
         }
-        Assert.Equal(2, i);
+        Assert.AreEqual(2, i);
 
         i = 0;
         foreach (SimpleTestClass data in MyImmutableQueue)
@@ -1600,7 +1600,7 @@ public class TestClassWithObjectImmutableTypes : ITestClass
             data.Verify();
             i++;
         }
-        Assert.Equal(2, i);
+        Assert.AreEqual(2, i);
     }
 }
 
@@ -1649,23 +1649,23 @@ public class LargeDataTestClass : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(MyStringLength, MyString.Length);
-        Assert.Equal('1', MyString[0]);
-        Assert.Equal('1', MyString[MyStringLength - 1]);
+        Assert.AreEqual(MyStringLength, MyString.Length);
+        Assert.AreEqual('1', MyString[0]);
+        Assert.AreEqual('1', MyString[MyStringLength - 1]);
 
-        Assert.Equal(ChildrenCount, Children.Count);
+        Assert.AreEqual(ChildrenCount, Children.Count);
         for (int i = 0; i < ChildrenCount; i++)
         {
             LargeDataChildTestClass child = Children[i];
-            Assert.Equal(LargeDataChildTestClass.MyStringLength, child.MyString.Length);
-            Assert.Equal('2', child.MyString[0]);
-            Assert.Equal('2', child.MyString[LargeDataChildTestClass.MyStringLength - 1]);
+            Assert.AreEqual(LargeDataChildTestClass.MyStringLength, child.MyString.Length);
+            Assert.AreEqual('2', child.MyString[0]);
+            Assert.AreEqual('2', child.MyString[LargeDataChildTestClass.MyStringLength - 1]);
 
-            Assert.Equal(LargeDataChildTestClass.MyStringArrayArrayCount, child.MyStringArray.Length);
+            Assert.AreEqual(LargeDataChildTestClass.MyStringArrayArrayCount, child.MyStringArray.Length);
             for (int j = 0; j < LargeDataChildTestClass.MyStringArrayArrayCount; j++)
             {
-                Assert.Equal('3', child.MyStringArray[j][0]);
-                Assert.Equal('3', child.MyStringArray[j][LargeDataChildTestClass.MyStringArrayElementStringLength - 1]);
+                Assert.AreEqual('3', child.MyStringArray[j][0]);
+                Assert.AreEqual('3', child.MyStringArray[j][LargeDataChildTestClass.MyStringArrayElementStringLength - 1]);
             }
         }
     }
@@ -1708,14 +1708,14 @@ public class BasicPerson : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(30, age);
-        Assert.Equal("John", first);
-        Assert.Equal("Smith", last);
-        Assert.Equal("425-000-0000", phoneNumbers[0]);
-        Assert.Equal("425-000-0001", phoneNumbers[1]);
-        Assert.Equal("1 Microsoft Way", address.street);
-        Assert.Equal("Redmond", address.city);
-        Assert.Equal(98052, address.zip);
+        Assert.AreEqual(30, age);
+        Assert.AreEqual("John", first);
+        Assert.AreEqual("Smith", last);
+        Assert.AreEqual("425-000-0000", phoneNumbers[0]);
+        Assert.AreEqual("425-000-0001", phoneNumbers[1]);
+        Assert.AreEqual("1 Microsoft Way", address.street);
+        Assert.AreEqual("Redmond", address.city);
+        Assert.AreEqual(98052, address.zip);
     }
 
     public static readonly byte[] s_data = Encoding.UTF8.GetBytes(
@@ -1799,16 +1799,16 @@ public class BasicCompany : ITestClass
 
     public void Verify()
     {
-        Assert.Equal("Microsoft", name);
-        Assert.Equal("1 Lone Tree Rd S", sites[0].street);
-        Assert.Equal("Fargo", sites[0].city);
-        Assert.Equal(58104, sites[0].zip);
-        Assert.Equal("8055 Microsoft Way", sites[1].street);
-        Assert.Equal("Charlotte", sites[1].city);
-        Assert.Equal(28273, sites[1].zip);
-        Assert.Equal("1 Microsoft Way", mainSite.street);
-        Assert.Equal("Redmond", mainSite.city);
-        Assert.Equal(98052, mainSite.zip);
+        Assert.AreEqual("Microsoft", name);
+        Assert.AreEqual("1 Lone Tree Rd S", sites[0].street);
+        Assert.AreEqual("Fargo", sites[0].city);
+        Assert.AreEqual(58104, sites[0].zip);
+        Assert.AreEqual("8055 Microsoft Way", sites[1].street);
+        Assert.AreEqual("Charlotte", sites[1].city);
+        Assert.AreEqual(28273, sites[1].zip);
+        Assert.AreEqual("1 Microsoft Way", mainSite.street);
+        Assert.AreEqual("Redmond", mainSite.city);
+        Assert.AreEqual(98052, mainSite.zip);
     }
 }
 
@@ -1859,7 +1859,7 @@ public class TestClassWithNestedObjectCommentsInner : ITestClass
 
     public void Verify()
     {
-        Assert.NotNull(MyData);
+        Assert.IsNotNull(MyData);
         MyData.Verify();
     }
 }
@@ -1883,7 +1883,7 @@ public class TestClassWithNestedObjectCommentsOuter : ITestClass
 
     public void Verify()
     {
-        Assert.NotNull(MyData);
+        Assert.IsNotNull(MyData);
         MyData.Verify();
     }
 }
@@ -2064,28 +2064,28 @@ public class JsonElementClass : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(JsonValueKind.Number, Number.ValueKind);
-        Assert.Equal("1", Number.ToString());
-        Assert.Equal(JsonValueKind.True, True.ValueKind);
-        Assert.Equal("True", True.ToString());
-        Assert.Equal(JsonValueKind.False, False.ValueKind);
-        Assert.Equal("False", False.ToString());
-        Assert.Equal(JsonValueKind.String, String.ValueKind);
-        Assert.Equal("Hello", String.ToString());
-        Assert.Equal(JsonValueKind.Array, Array.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, Number.ValueKind);
+        Assert.AreEqual("1", Number.ToString());
+        Assert.AreEqual(JsonValueKind.True, True.ValueKind);
+        Assert.AreEqual("True", True.ToString());
+        Assert.AreEqual(JsonValueKind.False, False.ValueKind);
+        Assert.AreEqual("False", False.ToString());
+        Assert.AreEqual(JsonValueKind.String, String.ValueKind);
+        Assert.AreEqual("Hello", String.ToString());
+        Assert.AreEqual(JsonValueKind.Array, Array.ValueKind);
         JsonElement[] elements = Array.EnumerateArray().ToArray();
-        Assert.Equal(JsonValueKind.Number, elements[0].ValueKind);
-        Assert.Equal("2", elements[0].ToString());
-        Assert.Equal(JsonValueKind.False, elements[1].ValueKind);
-        Assert.Equal("False", elements[1].ToString());
-        Assert.Equal(JsonValueKind.True, elements[2].ValueKind);
-        Assert.Equal("True", elements[2].ToString());
-        Assert.Equal(JsonValueKind.String, elements[3].ValueKind);
-        Assert.Equal("Goodbye", elements[3].ToString());
-        Assert.Equal(JsonValueKind.Object, Object.ValueKind);
-        Assert.Equal("{}", Object.ToString());
-        Assert.Equal(JsonValueKind.Null, Null.ValueKind);
-        Assert.Equal("", Null.ToString()); // JsonElement returns empty string for null.
+        Assert.AreEqual(JsonValueKind.Number, elements[0].ValueKind);
+        Assert.AreEqual("2", elements[0].ToString());
+        Assert.AreEqual(JsonValueKind.False, elements[1].ValueKind);
+        Assert.AreEqual("False", elements[1].ToString());
+        Assert.AreEqual(JsonValueKind.True, elements[2].ValueKind);
+        Assert.AreEqual("True", elements[2].ToString());
+        Assert.AreEqual(JsonValueKind.String, elements[3].ValueKind);
+        Assert.AreEqual("Goodbye", elements[3].ToString());
+        Assert.AreEqual(JsonValueKind.Object, Object.ValueKind);
+        Assert.AreEqual("{}", Object.ToString());
+        Assert.AreEqual(JsonValueKind.Null, Null.ValueKind);
+        Assert.AreEqual("", Null.ToString()); // JsonElement returns empty string for null.
     }
 }
 
@@ -2119,14 +2119,14 @@ public class JsonElementArrayClass : ITestClass
 
     public void Verify()
     {
-        Assert.Equal(JsonValueKind.Number, Array[0].ValueKind);
-        Assert.Equal("1", Array[0].ToString());
-        Assert.Equal(JsonValueKind.True, Array[1].ValueKind);
-        Assert.Equal("True", Array[1].ToString());
-        Assert.Equal(JsonValueKind.False, Array[2].ValueKind);
-        Assert.Equal("False", Array[2].ToString());
-        Assert.Equal(JsonValueKind.String, Array[3].ValueKind);
-        Assert.Equal("Hello", Array[3].ToString());
+        Assert.AreEqual(JsonValueKind.Number, Array[0].ValueKind);
+        Assert.AreEqual("1", Array[0].ToString());
+        Assert.AreEqual(JsonValueKind.True, Array[1].ValueKind);
+        Assert.AreEqual("True", Array[1].ToString());
+        Assert.AreEqual(JsonValueKind.False, Array[2].ValueKind);
+        Assert.AreEqual("False", Array[2].ToString());
+        Assert.AreEqual(JsonValueKind.String, Array[3].ValueKind);
+        Assert.AreEqual("Hello", Array[3].ToString());
     }
 }
 
@@ -2169,30 +2169,30 @@ public class ClassWithComplexObjects : ITestClass
 
     public void Verify()
     {
-        Assert.IsType<JsonElement>(Array);
+        AssertEx.IsType<JsonElement>(Array);
         ValidateArray((JsonElement)Array);
-        Assert.IsType<JsonElement>(Object);
+        AssertEx.IsType<JsonElement>(Object);
         var jsonObject = (JsonElement)Object;
-        Assert.Equal(JsonValueKind.Object, jsonObject.ValueKind);
+        Assert.AreEqual(JsonValueKind.Object, jsonObject.ValueKind);
         ObjectEnumerator<JsonElement> enumerator = jsonObject.EnumerateObject();
         JsonProperty<JsonElement> property = enumerator.First();
-        Assert.Equal("NestedArray", property.Name);
-        Assert.True(property.NameEquals("NestedArray"));
+        Assert.AreEqual("NestedArray", property.Name);
+        Assert.IsTrue(property.NameEquals("NestedArray"));
         ValidateArray(property.Value);
 
         static void ValidateArray(JsonElement element)
         {
-            Assert.Equal(JsonValueKind.Array, element.ValueKind);
+            Assert.AreEqual(JsonValueKind.Array, element.ValueKind);
             JsonElement[] elements = element.EnumerateArray().ToArray();
 
-            Assert.Equal(JsonValueKind.Number, elements[0].ValueKind);
-            Assert.Equal("1", elements[0].ToString());
-            Assert.Equal(JsonValueKind.String, elements[1].ValueKind);
-            Assert.Equal("Hello", elements[1].ToString());
-            Assert.Equal(JsonValueKind.True, elements[2].ValueKind);
-            Assert.True(elements[2].GetBoolean());
-            Assert.Equal(JsonValueKind.False, elements[3].ValueKind);
-            Assert.False(elements[3].GetBoolean());
+            Assert.AreEqual(JsonValueKind.Number, elements[0].ValueKind);
+            Assert.AreEqual("1", elements[0].ToString());
+            Assert.AreEqual(JsonValueKind.String, elements[1].ValueKind);
+            Assert.AreEqual("Hello", elements[1].ToString());
+            Assert.AreEqual(JsonValueKind.True, elements[2].ValueKind);
+            Assert.IsTrue(elements[2].GetBoolean());
+            Assert.AreEqual(JsonValueKind.False, elements[3].ValueKind);
+            Assert.IsFalse(elements[3].GetBoolean());
         }
     }
 }
@@ -2229,28 +2229,28 @@ public class ParsedJsonDocumentClass : ITestClass, IDisposable
         JsonElement objectType = Document.RootElement.GetProperty("Object");
         JsonElement nullType = Document.RootElement.GetProperty("Null");
 
-        Assert.Equal(JsonValueKind.Number, number.ValueKind);
-        Assert.Equal("1", number.ToString());
-        Assert.Equal(JsonValueKind.True, trueBool.ValueKind);
-        Assert.Equal("True", true.ToString());
-        Assert.Equal(JsonValueKind.False, falseBool.ValueKind);
-        Assert.Equal("False", false.ToString());
-        Assert.Equal(JsonValueKind.String, stringType.ValueKind);
-        Assert.Equal("Hello", stringType.ToString());
-        Assert.Equal(JsonValueKind.Array, arrayType.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, number.ValueKind);
+        Assert.AreEqual("1", number.ToString());
+        Assert.AreEqual(JsonValueKind.True, trueBool.ValueKind);
+        Assert.AreEqual("True", true.ToString());
+        Assert.AreEqual(JsonValueKind.False, falseBool.ValueKind);
+        Assert.AreEqual("False", false.ToString());
+        Assert.AreEqual(JsonValueKind.String, stringType.ValueKind);
+        Assert.AreEqual("Hello", stringType.ToString());
+        Assert.AreEqual(JsonValueKind.Array, arrayType.ValueKind);
         JsonElement[] elements = arrayType.EnumerateArray().ToArray();
-        Assert.Equal(JsonValueKind.Number, elements[0].ValueKind);
-        Assert.Equal("2", elements[0].ToString());
-        Assert.Equal(JsonValueKind.False, elements[1].ValueKind);
-        Assert.Equal("False", elements[1].ToString());
-        Assert.Equal(JsonValueKind.True, elements[2].ValueKind);
-        Assert.Equal("True", elements[2].ToString());
-        Assert.Equal(JsonValueKind.String, elements[3].ValueKind);
-        Assert.Equal("Goodbye", elements[3].ToString());
-        Assert.Equal(JsonValueKind.Object, objectType.ValueKind);
-        Assert.Equal("{}", objectType.ToString());
-        Assert.Equal(JsonValueKind.Null, nullType.ValueKind);
-        Assert.Equal("", nullType.ToString()); // JsonElement returns empty string for null.
+        Assert.AreEqual(JsonValueKind.Number, elements[0].ValueKind);
+        Assert.AreEqual("2", elements[0].ToString());
+        Assert.AreEqual(JsonValueKind.False, elements[1].ValueKind);
+        Assert.AreEqual("False", elements[1].ToString());
+        Assert.AreEqual(JsonValueKind.True, elements[2].ValueKind);
+        Assert.AreEqual("True", elements[2].ToString());
+        Assert.AreEqual(JsonValueKind.String, elements[3].ValueKind);
+        Assert.AreEqual("Goodbye", elements[3].ToString());
+        Assert.AreEqual(JsonValueKind.Object, objectType.ValueKind);
+        Assert.AreEqual("{}", objectType.ToString());
+        Assert.AreEqual(JsonValueKind.Null, nullType.ValueKind);
+        Assert.AreEqual("", nullType.ToString()); // JsonElement returns empty string for null.
     }
 
     public void Dispose()
@@ -2286,14 +2286,14 @@ public class ParsedJsonDocumentArrayClass : ITestClass, IDisposable
     {
         JsonElement[] array = Document.RootElement.GetProperty("Array").EnumerateArray().ToArray();
 
-        Assert.Equal(JsonValueKind.Number, array[0].ValueKind);
-        Assert.Equal("1", array[0].ToString());
-        Assert.Equal(JsonValueKind.True, array[1].ValueKind);
-        Assert.Equal("True", array[1].ToString());
-        Assert.Equal(JsonValueKind.False, array[2].ValueKind);
-        Assert.Equal("False", array[2].ToString());
-        Assert.Equal(JsonValueKind.String, array[3].ValueKind);
-        Assert.Equal("Hello", array[3].ToString());
+        Assert.AreEqual(JsonValueKind.Number, array[0].ValueKind);
+        Assert.AreEqual("1", array[0].ToString());
+        Assert.AreEqual(JsonValueKind.True, array[1].ValueKind);
+        Assert.AreEqual("True", array[1].ToString());
+        Assert.AreEqual(JsonValueKind.False, array[2].ValueKind);
+        Assert.AreEqual("False", array[2].ToString());
+        Assert.AreEqual(JsonValueKind.String, array[3].ValueKind);
+        Assert.AreEqual("Hello", array[3].ToString());
     }
 
     public void Dispose()

@@ -3,7 +3,7 @@
 
 using System.Collections.Generic;
 using System.Linq;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Serialization.Tests;
 
@@ -165,54 +165,54 @@ public struct SimpleTestStruct : ITestClass
 
     public void Verify()
     {
-        Assert.Equal((short)1, MyInt16);
-        Assert.Equal((int)2, MyInt32);
-        Assert.Equal((long)3, MyInt64);
-        Assert.Equal((ushort)4, MyUInt16);
-        Assert.Equal((uint)5, MyUInt32);
-        Assert.Equal((ulong)6, MyUInt64);
-        Assert.Equal((byte)7, MyByte);
-        Assert.Equal((sbyte)8, MySByte);
-        Assert.Equal('a', MyChar);
-        Assert.Equal("Hello", MyString);
-        Assert.Equal(3.3m, MyDecimal);
-        Assert.False(MyBooleanFalse);
-        Assert.True(MyBooleanTrue);
-        Assert.Equal(1.1f, MySingle);
-        Assert.Equal(2.2d, MyDouble);
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTime);
-        Assert.Equal(new DateTimeOffset(2019, 1, 30, 12, 1, 2, new TimeSpan(1, 0, 0)), MyDateTimeOffset);
-        Assert.Equal(SampleEnum.Two, MyEnum);
-        Assert.Equal(SampleEnumInt64.MinNegative, MyInt64Enum);
-        Assert.Equal(SampleEnumUInt64.Max, MyUInt64Enum);
-        Assert.Equal(11, MySimpleStruct.One);
-        Assert.Equal(1.9999, MySimpleStruct.Two);
+        Assert.AreEqual((short)1, MyInt16);
+        Assert.AreEqual((int)2, MyInt32);
+        Assert.AreEqual((long)3, MyInt64);
+        Assert.AreEqual((ushort)4, MyUInt16);
+        Assert.AreEqual((uint)5, MyUInt32);
+        Assert.AreEqual((ulong)6, MyUInt64);
+        Assert.AreEqual((byte)7, MyByte);
+        Assert.AreEqual((sbyte)8, MySByte);
+        Assert.AreEqual('a', MyChar);
+        Assert.AreEqual("Hello", MyString);
+        Assert.AreEqual(3.3m, MyDecimal);
+        Assert.IsFalse(MyBooleanFalse);
+        Assert.IsTrue(MyBooleanTrue);
+        Assert.AreEqual(1.1f, MySingle);
+        Assert.AreEqual(2.2d, MyDouble);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTime);
+        Assert.AreEqual(new DateTimeOffset(2019, 1, 30, 12, 1, 2, new TimeSpan(1, 0, 0)), MyDateTimeOffset);
+        Assert.AreEqual(SampleEnum.Two, MyEnum);
+        Assert.AreEqual(SampleEnumInt64.MinNegative, MyInt64Enum);
+        Assert.AreEqual(SampleEnumUInt64.Max, MyUInt64Enum);
+        Assert.AreEqual(11, MySimpleStruct.One);
+        Assert.AreEqual(1.9999, MySimpleStruct.Two);
 
-        Assert.Equal((short)1, MyInt16Array[0]);
-        Assert.Equal((int)2, MyInt32Array[0]);
-        Assert.Equal((long)3, MyInt64Array[0]);
-        Assert.Equal((ushort)4, MyUInt16Array[0]);
-        Assert.Equal((uint)5, MyUInt32Array[0]);
-        Assert.Equal((ulong)6, MyUInt64Array[0]);
-        Assert.Equal((byte)7, MyByteArray[0]);
-        Assert.Equal((sbyte)8, MySByteArray[0]);
-        Assert.Equal('a', MyCharArray[0]);
-        Assert.Equal("Hello", MyStringArray[0]);
-        Assert.Equal(3.3m, MyDecimalArray[0]);
-        Assert.False(MyBooleanFalseArray[0]);
-        Assert.True(MyBooleanTrueArray[0]);
-        Assert.Equal(1.1f, MySingleArray[0]);
-        Assert.Equal(2.2d, MyDoubleArray[0]);
-        Assert.Equal(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeArray[0]);
-        Assert.Equal(new DateTimeOffset(2019, 1, 30, 12, 1, 2, new TimeSpan(1, 0, 0)), MyDateTimeOffsetArray[0]);
-        Assert.Equal(SampleEnum.Two, MyEnumArray[0]);
+        Assert.AreEqual((short)1, MyInt16Array[0]);
+        Assert.AreEqual((int)2, MyInt32Array[0]);
+        Assert.AreEqual((long)3, MyInt64Array[0]);
+        Assert.AreEqual((ushort)4, MyUInt16Array[0]);
+        Assert.AreEqual((uint)5, MyUInt32Array[0]);
+        Assert.AreEqual((ulong)6, MyUInt64Array[0]);
+        Assert.AreEqual((byte)7, MyByteArray[0]);
+        Assert.AreEqual((sbyte)8, MySByteArray[0]);
+        Assert.AreEqual('a', MyCharArray[0]);
+        Assert.AreEqual("Hello", MyStringArray[0]);
+        Assert.AreEqual(3.3m, MyDecimalArray[0]);
+        Assert.IsFalse(MyBooleanFalseArray[0]);
+        Assert.IsTrue(MyBooleanTrueArray[0]);
+        Assert.AreEqual(1.1f, MySingleArray[0]);
+        Assert.AreEqual(2.2d, MyDoubleArray[0]);
+        Assert.AreEqual(new DateTime(2019, 1, 30, 12, 1, 2, DateTimeKind.Utc), MyDateTimeArray[0]);
+        Assert.AreEqual(new DateTimeOffset(2019, 1, 30, 12, 1, 2, new TimeSpan(1, 0, 0)), MyDateTimeOffsetArray[0]);
+        Assert.AreEqual(SampleEnum.Two, MyEnumArray[0]);
 
-        Assert.Equal("Hello", MyStringList[0]);
-        Assert.Equal("Hello", MyStringIEnumerableT.First());
-        Assert.Equal("Hello", MyStringIListT[0]);
-        Assert.Equal("Hello", MyStringICollectionT.First());
-        Assert.Equal("Hello", MyStringIReadOnlyCollectionT.First());
-        Assert.Equal("Hello", MyStringIReadOnlyListT[0]);
-        Assert.Equal("Hello", MyStringISetT.First());
+        Assert.AreEqual("Hello", MyStringList[0]);
+        Assert.AreEqual("Hello", MyStringIEnumerableT.First());
+        Assert.AreEqual("Hello", MyStringIListT[0]);
+        Assert.AreEqual("Hello", MyStringICollectionT.First());
+        Assert.AreEqual("Hello", MyStringIReadOnlyCollectionT.First());
+        Assert.AreEqual("Hello", MyStringIReadOnlyListT[0]);
+        Assert.AreEqual("Hello", MyStringISetT.First());
     }
 }

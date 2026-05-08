@@ -6,18 +6,19 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
 /// <summary>
 /// Tests targeting uncovered lines in <see cref="JsonSchemaResultsCollector"/>.
 /// </summary>
+[TestClass]
 public class JsonSchemaResultsCollectorCoverageTests
 {
     #region IEnumerator Non-Generic Interface (Lines 656, 665-668, 688)
 
-    [Fact]
+    [TestMethod]
     public void ResultsEnumerator_NonGenericCurrent_ReturnsBoxedResult()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -33,14 +34,14 @@ public class JsonSchemaResultsCollectorCoverageTests
 
         // Cast to non-generic IEnumerator to exercise the explicit interface implementation
         IEnumerator nonGenericEnumerator = enumerator;
-        Assert.True(nonGenericEnumerator.MoveNext());
+        Assert.IsTrue(nonGenericEnumerator.MoveNext());
         object current = nonGenericEnumerator.Current;
-        Assert.IsType<JsonSchemaResultsCollector.Result>(current);
+        Assert.IsInstanceOfType<JsonSchemaResultsCollector.Result>(current);
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void ResultsEnumerator_Reset_ResetsEnumerationPosition()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -57,20 +58,20 @@ public class JsonSchemaResultsCollectorCoverageTests
         JsonSchemaResultsCollector.ResultsEnumerator enumerator = collector.EnumerateResults();
 
         // Advance past first item
-        Assert.True(enumerator.MoveNext());
+        Assert.IsTrue(enumerator.MoveNext());
         string firstMessage = enumerator.Current.GetMessageText();
 
         // Reset and re-enumerate
         enumerator.Reset();
-        Assert.True(enumerator.MoveNext());
+        Assert.IsTrue(enumerator.MoveNext());
         string firstMessageAfterReset = enumerator.Current.GetMessageText();
 
-        Assert.Equal(firstMessage, firstMessageAfterReset);
+        Assert.AreEqual(firstMessage, firstMessageAfterReset);
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void ResultsEnumerator_NonGenericGetEnumerator_ReturnsSelf()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -88,12 +89,12 @@ public class JsonSchemaResultsCollectorCoverageTests
         IEnumerator fromNonGeneric = nonGenericEnumerable.GetEnumerator();
 
         // Should still be able to enumerate
-        Assert.True(fromNonGeneric.MoveNext());
+        Assert.IsTrue(fromNonGeneric.MoveNext());
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void ResultsEnumerator_Foreach_UsesIEnumerableGeneric()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -108,10 +109,10 @@ public class JsonSchemaResultsCollectorCoverageTests
         foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
         {
             count++;
-            Assert.False(result.IsMatch);
+            Assert.IsFalse(result.IsMatch);
         }
 
-        Assert.True(count > 0);
+        Assert.IsTrue(count > 0);
 
         collector.Dispose();
     }
@@ -120,10 +121,10 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region BeginChildContext with itemIndex (Lines 1635-1679)
 
-    [Theory]
-    [InlineData(JsonSchemaResultsLevel.Basic)]
-    [InlineData(JsonSchemaResultsLevel.Detailed)]
-    [InlineData(JsonSchemaResultsLevel.Verbose)]
+    [TestMethod]
+    [DataRow(JsonSchemaResultsLevel.Basic)]
+    [DataRow(JsonSchemaResultsLevel.Detailed)]
+    [DataRow(JsonSchemaResultsLevel.Verbose)]
     public void BeginChildContext_ItemIndex_SetsDocumentLocationToIndex(JsonSchemaResultsLevel level)
     {
         var collector = JsonSchemaResultsCollector.Create(level);
@@ -133,18 +134,18 @@ public class JsonSchemaResultsCollectorCoverageTests
             JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("#/items"), buffer, out written));
 
         int seq = c.BeginChildContext(parent, 0);
-        Assert.Equal("/0", collector.DocumentLocation);
+        Assert.AreEqual("/0", collector.DocumentLocation);
 
         c.PopChildContext(seq);
 
         int seq2 = c.BeginChildContext(parent, 42);
-        Assert.Equal("/42", collector.DocumentLocation);
+        Assert.AreEqual("/42", collector.DocumentLocation);
 
         c.PopChildContext(seq2);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_ItemIndex_WithEvaluationAndSchemaPath()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -161,15 +162,15 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("#/items/type"), buffer, out written));
 
-        Assert.Equal("/5", collector.DocumentLocation);
-        Assert.Equal("items/type", collector.SchemaLocation);
-        Assert.Equal("/items", collector.EvaluationLocation);
+        Assert.AreEqual("/5", collector.DocumentLocation);
+        Assert.AreEqual("items/type", collector.SchemaLocation);
+        Assert.AreEqual("/items", collector.EvaluationLocation);
 
         c.PopChildContext(seq);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_ItemIndex_ParallelPath_UsesParentAsBase()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -185,22 +186,22 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("array"), buffer, out written));
 
-        Assert.Equal("/array", collector.DocumentLocation);
+        Assert.AreEqual("/array", collector.DocumentLocation);
 
         // Create first child with item index (sequential)
         int child1 = c.BeginChildContext(parent, 0);
-        Assert.Equal("/array/0", collector.DocumentLocation);
+        Assert.AreEqual("/array/0", collector.DocumentLocation);
 
         // Create second child at same level (parallel - sequenceOffset > 0)
         int child2 = c.BeginChildContext(parent, 1);
-        Assert.Equal("/array/1", collector.DocumentLocation);
+        Assert.AreEqual("/array/1", collector.DocumentLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_ItemIndex_ParallelPath_WithEvalPath()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -213,7 +214,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             null,
             null);
 
-        Assert.Equal("/root", collector.EvaluationLocation);
+        Assert.AreEqual("/root", collector.EvaluationLocation);
 
         // First child - sequential
         int child1 = c.BeginChildContext(
@@ -223,7 +224,7 @@ public class JsonSchemaResultsCollectorCoverageTests
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("items"), buffer, out written),
             null);
 
-        Assert.Equal("/root/items", collector.EvaluationLocation);
+        Assert.AreEqual("/root/items", collector.EvaluationLocation);
 
         // Second child from same parent - parallel (exercises AppendParallelEvaluationPath)
         int child2 = c.BeginChildContext(
@@ -233,7 +234,7 @@ public class JsonSchemaResultsCollectorCoverageTests
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("items"), buffer, out written),
             null);
 
-        Assert.Equal("/root/items", collector.EvaluationLocation);
+        Assert.AreEqual("/root/items", collector.EvaluationLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
@@ -244,7 +245,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region Parallel Escaped/Unescaped Property Paths (Lines 1709-1716, 1755-1762)
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_EscapedProperty_ParallelPath()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -256,24 +257,24 @@ public class JsonSchemaResultsCollectorCoverageTests
             documentEvaluationPath: static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("root"), buffer, out written));
 
-        Assert.Equal("/root", collector.DocumentLocation);
+        Assert.AreEqual("/root", collector.DocumentLocation);
 
         // First child with escaped property (sequential)
         byte[] prop1 = Encoding.UTF8.GetBytes("prop1");
         int child1 = c.BeginChildContext(parent, escapedPropertyName: prop1);
-        Assert.Equal("/root/prop1", collector.DocumentLocation);
+        Assert.AreEqual("/root/prop1", collector.DocumentLocation);
 
         // Second child with escaped property from same parent (parallel)
         byte[] prop2 = Encoding.UTF8.GetBytes("prop2");
         int child2 = c.BeginChildContext(parent, escapedPropertyName: prop2);
-        Assert.Equal("/root/prop2", collector.DocumentLocation);
+        Assert.AreEqual("/root/prop2", collector.DocumentLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_EscapedProperty_ParallelPath_WithSpecialChars()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -293,14 +294,14 @@ public class JsonSchemaResultsCollectorCoverageTests
         // "he\\u006Clo" represents "hello" with escape sequence
         byte[] escapedProp = Encoding.UTF8.GetBytes("he\\u006Clo");
         int child2 = c.BeginChildContext(parent, escapedPropertyName: escapedProp);
-        Assert.Equal("/root/hello", collector.DocumentLocation);
+        Assert.AreEqual("/root/hello", collector.DocumentLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContextUnescaped_ParallelPath()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -312,24 +313,24 @@ public class JsonSchemaResultsCollectorCoverageTests
             documentEvaluationPath: static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("root"), buffer, out written));
 
-        Assert.Equal("/root", collector.DocumentLocation);
+        Assert.AreEqual("/root", collector.DocumentLocation);
 
         // First child with unescaped property (sequential)
         byte[] prop1 = Encoding.UTF8.GetBytes("first");
         int child1 = c.BeginChildContextUnescaped(parent, prop1);
-        Assert.Equal("/root/first", collector.DocumentLocation);
+        Assert.AreEqual("/root/first", collector.DocumentLocation);
 
         // Second child with unescaped property from same parent (parallel)
         byte[] prop2 = Encoding.UTF8.GetBytes("second");
         int child2 = c.BeginChildContextUnescaped(parent, prop2);
-        Assert.Equal("/root/second", collector.DocumentLocation);
+        Assert.AreEqual("/root/second", collector.DocumentLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContextUnescaped_ParallelPath_WithSpecialChars()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -349,7 +350,7 @@ public class JsonSchemaResultsCollectorCoverageTests
         byte[] specialProp = Encoding.UTF8.GetBytes("a/b~c");
         int child2 = c.BeginChildContextUnescaped(parent, specialProp);
         // '/' encodes as ~1, '~' encodes as ~0
-        Assert.Equal("/obj/a~1b~0c", collector.DocumentLocation);
+        Assert.AreEqual("/obj/a~1b~0c", collector.DocumentLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
@@ -360,7 +361,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region Parallel EvaluationPath for Escaped/Unescaped with evaluationPath provider
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_EscapedProperty_ParallelPath_WithEvalPath()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -373,7 +374,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             null,
             null);
 
-        Assert.Equal("/root", collector.EvaluationLocation);
+        Assert.AreEqual("/root", collector.EvaluationLocation);
 
         // First child
         byte[] prop1 = Encoding.UTF8.GetBytes("a");
@@ -383,7 +384,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("pathA"), buffer, out written));
 
-        Assert.Equal("/root/pathA", collector.EvaluationLocation);
+        Assert.AreEqual("/root/pathA", collector.EvaluationLocation);
 
         // Parallel child from same parent
         byte[] prop2 = Encoding.UTF8.GetBytes("b");
@@ -393,14 +394,14 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("pathB"), buffer, out written));
 
-        Assert.Equal("/root/pathB", collector.EvaluationLocation);
+        Assert.AreEqual("/root/pathB", collector.EvaluationLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContextUnescaped_ParallelPath_WithEvalPath()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -413,7 +414,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             null,
             null);
 
-        Assert.Equal("/root", collector.EvaluationLocation);
+        Assert.AreEqual("/root", collector.EvaluationLocation);
 
         // First child
         byte[] prop1 = Encoding.UTF8.GetBytes("x");
@@ -423,7 +424,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("pathX"), buffer, out written));
 
-        Assert.Equal("/root/pathX", collector.EvaluationLocation);
+        Assert.AreEqual("/root/pathX", collector.EvaluationLocation);
 
         // Parallel child from same parent
         byte[] prop2 = Encoding.UTF8.GetBytes("y");
@@ -433,7 +434,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("pathY"), buffer, out written));
 
-        Assert.Equal("/root/pathY", collector.EvaluationLocation);
+        Assert.AreEqual("/root/pathY", collector.EvaluationLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
@@ -444,7 +445,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region Buffer Enlarge Paths (Lines 1190-1192, 1208-1210, etc.)
 
-    [Fact]
+    [TestMethod]
     public void BufferEnlarge_TriggeredBySmallCapacityAndLargePaths()
     {
         // Use a very small estimated capacity to create small buffers
@@ -513,11 +514,11 @@ public class JsonSchemaResultsCollectorCoverageTests
             });
         }
 
-        Assert.True(collector.GetResultCount() > 0);
+        Assert.IsTrue(collector.GetResultCount() > 0);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BufferEnlarge_EvaluationPath_TriggeredByManyNestedContexts()
     {
         var collector = JsonSchemaResultsCollector.CreateUnrented(JsonSchemaResultsLevel.Verbose, estimatedCapacity: 1);
@@ -546,7 +547,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
         // The evaluation location should contain all nested segments
         string evalLocation = collector.EvaluationLocation;
-        Assert.Contains("/segment", evalLocation);
+        StringAssert.Contains(evalLocation, "/segment");
 
         // Pop all contexts
         for (int i = depth - 1; i >= 0; i--)
@@ -557,7 +558,7 @@ public class JsonSchemaResultsCollectorCoverageTests
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BufferEnlarge_DocumentPath_TriggeredByManyItemIndices()
     {
         var collector = JsonSchemaResultsCollector.CreateUnrented(JsonSchemaResultsLevel.Verbose, estimatedCapacity: 1);
@@ -575,7 +576,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
         // The document location should contain nested indices
         string docLocation = collector.DocumentLocation;
-        Assert.Contains("/0", docLocation);
+        StringAssert.Contains(docLocation, "/0");
 
         // Pop all contexts
         for (int i = depth - 1; i >= 0; i--)
@@ -587,7 +588,7 @@ public class JsonSchemaResultsCollectorCoverageTests
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BufferEnlarge_SchemaPath_TriggeredByRepeatedSet()
     {
         var collector = JsonSchemaResultsCollector.CreateUnrented(JsonSchemaResultsLevel.Verbose, estimatedCapacity: 1);
@@ -606,7 +607,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             });
 
         string schemaLoc = collector.SchemaLocation;
-        Assert.Contains("#/$defs/", schemaLoc);
+        StringAssert.Contains(schemaLoc, "#/$defs/");
 
         c.PopChildContext(parent);
         collector.Dispose();
@@ -616,7 +617,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region Generic BeginChildContext Parallel Paths (Lines 1597-1624)
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_Generic_ParallelPath_ExercisesAllProviders()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -648,9 +649,9 @@ public class JsonSchemaResultsCollectorCoverageTests
                 return true;
             });
 
-        Assert.Equal("/eval1", collector.EvaluationLocation);
-        Assert.Equal("#/schema1", collector.SchemaLocation);
-        Assert.Equal("/doc1", collector.DocumentLocation);
+        Assert.AreEqual("/eval1", collector.EvaluationLocation);
+        Assert.AreEqual("#/schema1", collector.SchemaLocation);
+        Assert.AreEqual("/doc1", collector.DocumentLocation);
 
         // Second context from same parent (parallel, sequenceOffset > 0)
         int child2 = c.BeginChildContext(
@@ -679,16 +680,16 @@ public class JsonSchemaResultsCollectorCoverageTests
             });
 
         // Parallel from root, so uses root as base (empty)
-        Assert.Equal("/eval2", collector.EvaluationLocation);
-        Assert.Equal("#/schema2", collector.SchemaLocation);
-        Assert.Equal("/doc2", collector.DocumentLocation);
+        Assert.AreEqual("/eval2", collector.EvaluationLocation);
+        Assert.AreEqual("#/schema2", collector.SchemaLocation);
+        Assert.AreEqual("/doc2", collector.DocumentLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(parent);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_Generic_ParallelPath_WithNonRootParent()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -714,8 +715,8 @@ public class JsonSchemaResultsCollectorCoverageTests
                 return true;
             });
 
-        Assert.Equal("/root", collector.EvaluationLocation);
-        Assert.Equal("/base", collector.DocumentLocation);
+        Assert.AreEqual("/root", collector.EvaluationLocation);
+        Assert.AreEqual("/base", collector.DocumentLocation);
 
         // First child (sequential from root)
         int child1 = c.BeginChildContext(
@@ -737,8 +738,8 @@ public class JsonSchemaResultsCollectorCoverageTests
                 return true;
             });
 
-        Assert.Equal("/root/childA", collector.EvaluationLocation);
-        Assert.Equal("/base/docA", collector.DocumentLocation);
+        Assert.AreEqual("/root/childA", collector.EvaluationLocation);
+        Assert.AreEqual("/base/docA", collector.DocumentLocation);
 
         // Second child from same parent (parallel from root, sequenceOffset > 0)
         int child2 = c.BeginChildContext(
@@ -760,8 +761,8 @@ public class JsonSchemaResultsCollectorCoverageTests
                 return true;
             });
 
-        Assert.Equal("/root/childB", collector.EvaluationLocation);
-        Assert.Equal("/base/docB", collector.DocumentLocation);
+        Assert.AreEqual("/root/childB", collector.EvaluationLocation);
+        Assert.AreEqual("/base/docB", collector.DocumentLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
@@ -773,7 +774,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region CommitChildContext Verbose Paths and Level Interactions
 
-    [Fact]
+    [TestMethod]
     public void CommitChildContext_ParentIsMatch_Verbose_WritesResult()
     {
         // In Verbose mode, results are written even when parentIsMatch is true
@@ -784,18 +785,18 @@ public class JsonSchemaResultsCollectorCoverageTests
         c.CommitChildContext(seq, parentIsMatch: true, childIsMatch: true, static (buffer, out written) =>
             JsonSchemaEvaluation.TryCopyMessage(Encoding.UTF8.GetBytes("verbose result"), buffer, out written));
 
-        Assert.Equal(1, collector.GetResultCount());
+        Assert.AreEqual(1, collector.GetResultCount());
 
         // Verify the result is accessible
         var enumerator = collector.EnumerateResults();
-        Assert.True(enumerator.MoveNext());
-        Assert.True(enumerator.Current.IsMatch);
-        Assert.Equal("verbose result", enumerator.Current.GetMessageText());
+        Assert.IsTrue(enumerator.MoveNext());
+        Assert.IsTrue(enumerator.Current.IsMatch);
+        Assert.AreEqual("verbose result", enumerator.Current.GetMessageText());
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void CommitChildContext_ParentIsMatch_Basic_DoesNotWriteResult()
     {
         // In Basic mode, results are NOT written when parentIsMatch is true
@@ -806,12 +807,12 @@ public class JsonSchemaResultsCollectorCoverageTests
         c.CommitChildContext(seq, parentIsMatch: true, childIsMatch: true, static (buffer, out written) =>
             JsonSchemaEvaluation.TryCopyMessage(Encoding.UTF8.GetBytes("should not appear"), buffer, out written));
 
-        Assert.Equal(0, collector.GetResultCount());
+        Assert.AreEqual(0, collector.GetResultCount());
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void CommitChildContext_ParentIsNotMatch_Basic_WritesResult()
     {
         // In Basic mode, results ARE written when parentIsMatch is false
@@ -822,12 +823,12 @@ public class JsonSchemaResultsCollectorCoverageTests
         c.CommitChildContext(seq, parentIsMatch: false, childIsMatch: false, static (buffer, out written) =>
             JsonSchemaEvaluation.TryCopyMessage(Encoding.UTF8.GetBytes("failure message"), buffer, out written));
 
-        Assert.Equal(1, collector.GetResultCount());
+        Assert.AreEqual(1, collector.GetResultCount());
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void CommitChildContext_Generic_ParentIsMatch_Verbose_WritesResult()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -838,11 +839,11 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (int ctx, Span<byte> buffer, out int written) =>
                 JsonSchemaEvaluation.TryCopyMessage(Encoding.UTF8.GetBytes("generic verbose"), buffer, out written));
 
-        Assert.Equal(1, collector.GetResultCount());
+        Assert.AreEqual(1, collector.GetResultCount());
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void CommitChildContext_Generic_ParentIsMatch_Basic_DoesNotWriteResult()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Basic);
@@ -853,7 +854,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (int ctx, Span<byte> buffer, out int written) =>
                 JsonSchemaEvaluation.TryCopyMessage(Encoding.UTF8.GetBytes("should not appear"), buffer, out written));
 
-        Assert.Equal(0, collector.GetResultCount());
+        Assert.AreEqual(0, collector.GetResultCount());
         collector.Dispose();
     }
 
@@ -861,7 +862,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region EnsureCapacityForResult - Different Level/Match Combos (Lines 1132-1151)
 
-    [Fact]
+    [TestMethod]
     public void EnsureCapacity_Detailed_MatchTrue_NoMessage()
     {
         // Detailed level with match=true should not write messages
@@ -875,12 +876,12 @@ public class JsonSchemaResultsCollectorCoverageTests
 
         // In Detailed, match=true results are not recorded
         // Only the commit result should be present
-        Assert.Equal(1, collector.GetResultCount());
+        Assert.AreEqual(1, collector.GetResultCount());
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void EnsureCapacity_Detailed_MatchFalse_WritesMessage()
     {
         // Detailed level with match=false should write messages
@@ -893,7 +894,7 @@ public class JsonSchemaResultsCollectorCoverageTests
         c.CommitChildContext(seq, false, false, static (buffer, out written) =>
             JsonSchemaEvaluation.TryCopyMessage(Encoding.UTF8.GetBytes("commit"), buffer, out written));
 
-        Assert.True(collector.GetResultCount() >= 2);
+        Assert.IsTrue(collector.GetResultCount() >= 2);
 
         // Verify the failure message is present
         bool found = false;
@@ -902,11 +903,11 @@ public class JsonSchemaResultsCollectorCoverageTests
             if (result.GetMessageText() == "failure detail")
             {
                 found = true;
-                Assert.False(result.IsMatch);
+                Assert.IsFalse(result.IsMatch);
             }
         }
 
-        Assert.True(found);
+        Assert.IsTrue(found);
 
         collector.Dispose();
     }
@@ -915,7 +916,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region Result Properties Coverage
 
-    [Fact]
+    [TestMethod]
     public void Result_AllProperties_ReturnsCorrectValues()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -934,48 +935,48 @@ public class JsonSchemaResultsCollectorCoverageTests
             JsonSchemaEvaluation.TryCopyMessage(Encoding.UTF8.GetBytes("validation failed"), buffer, out written));
 
         var enumerator = collector.EnumerateResults();
-        Assert.True(enumerator.MoveNext());
+        Assert.IsTrue(enumerator.MoveNext());
 
         var result = enumerator.Current;
-        Assert.False(result.IsMatch);
-        Assert.Equal("validation failed", result.GetMessageText());
-        Assert.Equal("/evalPath", result.GetEvaluationLocationText());
-        Assert.Equal("schema/path", result.GetSchemaEvaluationLocationText());
-        Assert.Equal("/docPath", result.GetDocumentEvaluationLocationText());
+        Assert.IsFalse(result.IsMatch);
+        Assert.AreEqual("validation failed", result.GetMessageText());
+        Assert.AreEqual("/evalPath", result.GetEvaluationLocationText());
+        Assert.AreEqual("schema/path", result.GetSchemaEvaluationLocationText());
+        Assert.AreEqual("/docPath", result.GetDocumentEvaluationLocationText());
 
         // Verify UTF-8 span accessors
-        Assert.True(result.Message.Length > 0);
-        Assert.True(result.EvaluationLocation.Length > 0);
-        Assert.True(result.SchemaEvaluationLocation.Length > 0);
-        Assert.True(result.DocumentEvaluationLocation.Length > 0);
+        Assert.IsTrue(result.Message.Length > 0);
+        Assert.IsTrue(result.EvaluationLocation.Length > 0);
+        Assert.IsTrue(result.SchemaEvaluationLocation.Length > 0);
+        Assert.IsTrue(result.DocumentEvaluationLocation.Length > 0);
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void Result_Default_HasEmptySpans()
     {
         // Default result should have empty spans and not throw
         JsonSchemaResultsCollector.Result defaultResult = default;
-        Assert.False(defaultResult.IsMatch);
+        Assert.IsFalse(defaultResult.IsMatch);
     }
 
     #endregion
 
     #region Enumerator Edge Cases
 
-    [Fact]
+    [TestMethod]
     public void ResultsEnumerator_EmptyCollector_MoveNextReturnsFalse()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
 
         var enumerator = collector.EnumerateResults();
-        Assert.False(enumerator.MoveNext());
+        Assert.IsFalse(enumerator.MoveNext());
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void ResultsEnumerator_Current_BeforeMoveNext_ReturnsDefault()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -988,12 +989,12 @@ public class JsonSchemaResultsCollectorCoverageTests
 
         // Current before MoveNext should be default
         var current = enumerator.Current;
-        Assert.False(current.IsMatch);
+        Assert.IsFalse(current.IsMatch);
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void ResultsEnumerator_Dispose_PreventsEnumeration()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -1008,12 +1009,12 @@ public class JsonSchemaResultsCollectorCoverageTests
         enumerator.Dispose();
 
         // After dispose, MoveNext should return false (endResultIdx set to -1)
-        Assert.False(enumerator.MoveNext());
+        Assert.IsFalse(enumerator.MoveNext());
 
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void ResultsEnumerator_MultipleResults_EnumeratesAll()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -1036,7 +1037,7 @@ public class JsonSchemaResultsCollectorCoverageTests
         }
 
         // Verbose captures all evaluations plus the commit
-        Assert.Equal(4, count);
+        Assert.AreEqual(4, count);
 
         collector.Dispose();
     }
@@ -1045,7 +1046,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region CreateUnrented with Zero Capacity
 
-    [Fact]
+    [TestMethod]
     public void CreateUnrented_ZeroCapacity_UsesDefaultCapacity()
     {
         // Zero or negative capacity should default to 30
@@ -1056,11 +1057,11 @@ public class JsonSchemaResultsCollectorCoverageTests
         c.CommitChildContext(seq, false, false, static (buffer, out written) =>
             JsonSchemaEvaluation.TryCopyMessage(Encoding.UTF8.GetBytes("works"), buffer, out written));
 
-        Assert.Equal(1, collector.GetResultCount());
+        Assert.AreEqual(1, collector.GetResultCount());
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateUnrented_NegativeCapacity_UsesDefaultCapacity()
     {
         var collector = JsonSchemaResultsCollector.CreateUnrented(JsonSchemaResultsLevel.Verbose, -5);
@@ -1069,7 +1070,7 @@ public class JsonSchemaResultsCollectorCoverageTests
         int seq = c.BeginChildContext(0);
         c.CommitChildContext(seq, false, false, null);
 
-        Assert.Equal(1, collector.GetResultCount());
+        Assert.AreEqual(1, collector.GetResultCount());
         collector.Dispose();
     }
 
@@ -1077,7 +1078,7 @@ public class JsonSchemaResultsCollectorCoverageTests
 
     #region BeginChildContext with schemaEvaluationPath in itemIndex and property overloads
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_ItemIndex_WithSchemaPath_ParallelSetsSchemaLocation()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -1093,7 +1094,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("#/items/0"), buffer, out written));
 
-        Assert.Equal("items/0", collector.SchemaLocation);
+        Assert.AreEqual("items/0", collector.SchemaLocation);
 
         // Second child from same parent (parallel) with different schema path
         int child2 = c.BeginChildContext(
@@ -1103,14 +1104,14 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("#/items/1"), buffer, out written));
 
-        Assert.Equal("items/1", collector.SchemaLocation);
+        Assert.AreEqual("items/1", collector.SchemaLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContext_EscapedProperty_WithSchemaPath_ParallelSetsSchemaLocation()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -1127,7 +1128,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("#/properties/name"), buffer, out written));
 
-        Assert.Equal("properties/name", collector.SchemaLocation);
+        Assert.AreEqual("properties/name", collector.SchemaLocation);
 
         // Second child from same parent (parallel) with different schema path
         byte[] prop2 = Encoding.UTF8.GetBytes("age");
@@ -1138,14 +1139,14 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("#/properties/age"), buffer, out written));
 
-        Assert.Equal("properties/age", collector.SchemaLocation);
+        Assert.AreEqual("properties/age", collector.SchemaLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);
         collector.Dispose();
     }
 
-    [Fact]
+    [TestMethod]
     public void BeginChildContextUnescaped_WithSchemaPath_ParallelSetsSchemaLocation()
     {
         var collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
@@ -1162,7 +1163,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("#/properties/foo"), buffer, out written));
 
-        Assert.Equal("properties/foo", collector.SchemaLocation);
+        Assert.AreEqual("properties/foo", collector.SchemaLocation);
 
         // Second child from same parent (parallel)
         byte[] prop2 = Encoding.UTF8.GetBytes("bar");
@@ -1173,7 +1174,7 @@ public class JsonSchemaResultsCollectorCoverageTests
             static (buffer, out written) =>
                 JsonSchemaEvaluation.TryCopyPath(Encoding.UTF8.GetBytes("#/properties/bar"), buffer, out written));
 
-        Assert.Equal("properties/bar", collector.SchemaLocation);
+        Assert.AreEqual("properties/bar", collector.SchemaLocation);
 
         c.PopChildContext(child2);
         c.PopChildContext(child1);

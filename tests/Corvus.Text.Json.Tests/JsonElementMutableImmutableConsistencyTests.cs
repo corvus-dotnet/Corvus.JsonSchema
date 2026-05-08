@@ -2,18 +2,19 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Collections.Generic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 /// <summary>
 /// Tests for mutable/immutable consistency in JsonElement Get*() methods.
 /// </summary>
+[TestClass]
 public class JsonElementMutableImmutableConsistencyTests
 {
     #region Numeric Consistency Tests
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetByte_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -25,7 +26,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare byte values (if in range)
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -34,19 +35,19 @@ public class JsonElementMutableImmutableConsistencyTests
             {
                 byte immutableResult = immutableElement.GetByte();
                 byte mutableResult = mutableElement.GetByte();
-                Assert.Equal(immutableResult, mutableResult);
+                Assert.AreEqual(immutableResult, mutableResult);
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetByte());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetByte());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetSByte_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -58,7 +59,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare sbyte values (if in range)
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -67,19 +68,19 @@ public class JsonElementMutableImmutableConsistencyTests
             {
                 sbyte immutableResult = immutableElement.GetSByte();
                 sbyte mutableResult = mutableElement.GetSByte();
-                Assert.Equal(immutableResult, mutableResult);
+                Assert.AreEqual(immutableResult, mutableResult);
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetSByte());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetSByte());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetInt16_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -91,7 +92,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare int16 values (if in range)
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -100,19 +101,19 @@ public class JsonElementMutableImmutableConsistencyTests
             {
                 short immutableResult = immutableElement.GetInt16();
                 short mutableResult = mutableElement.GetInt16();
-                Assert.Equal(immutableResult, mutableResult);
+                Assert.AreEqual(immutableResult, mutableResult);
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetInt16());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetInt16());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetUInt16_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -124,7 +125,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare uint16 values (if in range)
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -133,19 +134,19 @@ public class JsonElementMutableImmutableConsistencyTests
             {
                 ushort immutableResult = immutableElement.GetUInt16();
                 ushort mutableResult = mutableElement.GetUInt16();
-                Assert.Equal(immutableResult, mutableResult);
+                Assert.AreEqual(immutableResult, mutableResult);
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetUInt16());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetUInt16());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetInt32_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -157,7 +158,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare int32 values (if in range)
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -166,19 +167,19 @@ public class JsonElementMutableImmutableConsistencyTests
             {
                 int immutableResult = immutableElement.GetInt32();
                 int mutableResult = mutableElement.GetInt32();
-                Assert.Equal(immutableResult, mutableResult);
+                Assert.AreEqual(immutableResult, mutableResult);
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetInt32());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetInt32());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetUInt32_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -190,7 +191,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare uint32 values (if in range)
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -199,19 +200,19 @@ public class JsonElementMutableImmutableConsistencyTests
             {
                 uint immutableResult = immutableElement.GetUInt32();
                 uint mutableResult = mutableElement.GetUInt32();
-                Assert.Equal(immutableResult, mutableResult);
+                Assert.AreEqual(immutableResult, mutableResult);
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetUInt32());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetUInt32());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetInt64_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -223,7 +224,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare int64 values (if in range)
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -232,19 +233,19 @@ public class JsonElementMutableImmutableConsistencyTests
             {
                 long immutableResult = immutableElement.GetInt64();
                 long mutableResult = mutableElement.GetInt64();
-                Assert.Equal(immutableResult, mutableResult);
+                Assert.AreEqual(immutableResult, mutableResult);
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetInt64());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetInt64());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetUInt64_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -256,7 +257,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare uint64 values (if in range)
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -265,19 +266,19 @@ public class JsonElementMutableImmutableConsistencyTests
             {
                 ulong immutableResult = immutableElement.GetUInt64();
                 ulong mutableResult = mutableElement.GetUInt64();
-                Assert.Equal(immutableResult, mutableResult);
+                Assert.AreEqual(immutableResult, mutableResult);
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetUInt64());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetUInt64());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetSingle_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -289,7 +290,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare single values
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -302,28 +303,28 @@ public class JsonElementMutableImmutableConsistencyTests
                 // Handle special float values
                 if (float.IsNaN(immutableResult))
                 {
-                    Assert.True(float.IsNaN(mutableResult));
+                    Assert.IsTrue(float.IsNaN(mutableResult));
                 }
                 else if (float.IsInfinity(immutableResult))
                 {
-                    Assert.Equal(immutableResult, mutableResult);
+                    Assert.AreEqual(immutableResult, mutableResult);
                 }
                 else
                 {
-                    Assert.Equal(immutableResult, mutableResult);
+                    Assert.AreEqual(immutableResult, mutableResult);
                 }
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetSingle());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetSingle());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetDouble_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -335,7 +336,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare double values
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -348,28 +349,28 @@ public class JsonElementMutableImmutableConsistencyTests
                 // Handle special double values
                 if (double.IsNaN(immutableResult))
                 {
-                    Assert.True(double.IsNaN(mutableResult));
+                    Assert.IsTrue(double.IsNaN(mutableResult));
                 }
                 else if (double.IsInfinity(immutableResult))
                 {
-                    Assert.Equal(immutableResult, mutableResult);
+                    Assert.AreEqual(immutableResult, mutableResult);
                 }
                 else
                 {
-                    Assert.Equal(immutableResult, mutableResult);
+                    Assert.AreEqual(immutableResult, mutableResult);
                 }
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetDouble());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetDouble());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetNumericTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetNumericTestValues))]
     public void GetDecimal_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -381,7 +382,7 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         // If numeric, compare decimal values
         if (immutableElement.ValueKind == JsonValueKind.Number)
@@ -390,13 +391,13 @@ public class JsonElementMutableImmutableConsistencyTests
             {
                 decimal immutableResult = immutableElement.GetDecimal();
                 decimal mutableResult = mutableElement.GetDecimal();
-                Assert.Equal(immutableResult, mutableResult);
+                Assert.AreEqual(immutableResult, mutableResult);
             }
             catch (Exception immutableEx)
             {
                 // If immutable throws, mutable should throw same type
-                Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetDecimal());
-                Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+                Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetDecimal());
+                Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
             }
         }
     }
@@ -405,8 +406,8 @@ public class JsonElementMutableImmutableConsistencyTests
 
     #region Boolean Consistency Tests
 
-    [Theory]
-    [MemberData(nameof(GetBooleanTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetBooleanTestValues))]
     public void GetBoolean_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -418,19 +419,19 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         try
         {
             bool immutableResult = immutableElement.GetBoolean();
             bool mutableResult = mutableElement.GetBoolean();
-            Assert.Equal(immutableResult, mutableResult);
+            Assert.AreEqual(immutableResult, mutableResult);
         }
         catch (Exception immutableEx)
         {
             // If immutable throws, mutable should throw same type
-            Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetBoolean());
-            Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+            Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetBoolean());
+            Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
         }
     }
 
@@ -438,8 +439,8 @@ public class JsonElementMutableImmutableConsistencyTests
 
     #region String Consistency Tests
 
-    [Theory]
-    [MemberData(nameof(GetStringTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetStringTestValues))]
     public void GetString_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -451,24 +452,24 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         try
         {
             string immutableResult = immutableElement.GetString();
             string mutableResult = mutableElement.GetString();
-            Assert.Equal(immutableResult, mutableResult);
+            Assert.AreEqual(immutableResult, mutableResult);
         }
         catch (Exception immutableEx)
         {
             // If immutable throws, mutable should throw same type
-            Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetString());
-            Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+            Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetString());
+            Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetDateTimeTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetDateTimeTestValues))]
     public void GetDateTimeOffset_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -480,24 +481,24 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         try
         {
             DateTimeOffset immutableResult = immutableElement.GetDateTimeOffset();
             DateTimeOffset mutableResult = mutableElement.GetDateTimeOffset();
-            Assert.Equal(immutableResult, mutableResult);
+            Assert.AreEqual(immutableResult, mutableResult);
         }
         catch (Exception immutableEx)
         {
             // If immutable throws, mutable should throw same type
-            Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetDateTimeOffset());
-            Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+            Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetDateTimeOffset());
+            Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetGuidTestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetGuidTestValues))]
     public void GetGuid_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -509,24 +510,24 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         try
         {
             Guid immutableResult = immutableElement.GetGuid();
             Guid mutableResult = mutableElement.GetGuid();
-            Assert.Equal(immutableResult, mutableResult);
+            Assert.AreEqual(immutableResult, mutableResult);
         }
         catch (Exception immutableEx)
         {
             // If immutable throws, mutable should throw same type
-            Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetGuid());
-            Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+            Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetGuid());
+            Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
         }
     }
 
-    [Theory]
-    [MemberData(nameof(GetBase64TestValues))]
+    [TestMethod]
+    [DynamicData(nameof(GetBase64TestValues))]
     public void GetBytesFromBase64_MutableImmutableConsistency(string json)
     {
         // Immutable version
@@ -538,19 +539,19 @@ public class JsonElementMutableImmutableConsistencyTests
         JsonElement.Mutable mutableElement = mutableDoc.RootElement;
         
         // Both should have same value kind
-        Assert.Equal(immutableElement.ValueKind, mutableElement.ValueKind);
+        Assert.AreEqual(immutableElement.ValueKind, mutableElement.ValueKind);
         
         try
         {
             byte[] immutableResult = immutableElement.GetBytesFromBase64();
             byte[] mutableResult = mutableElement.GetBytesFromBase64();
-            Assert.Equal(immutableResult, mutableResult);
+            CollectionAssert.AreEqual(immutableResult, mutableResult);
         }
         catch (Exception immutableEx)
         {
             // If immutable throws, mutable should throw same type
-            Exception mutableEx = Assert.ThrowsAny<Exception>(() => mutableElement.GetBytesFromBase64());
-            Assert.Equal(immutableEx.GetType(), mutableEx.GetType());
+            Exception mutableEx = Assert.Throws<Exception>(() => mutableElement.GetBytesFromBase64());
+            Assert.AreEqual(immutableEx.GetType(), mutableEx.GetType());
         }
     }
 

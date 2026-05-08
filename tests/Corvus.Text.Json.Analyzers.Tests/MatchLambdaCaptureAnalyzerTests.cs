@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
     Corvus.Text.Json.Analyzers.MatchLambdaCaptureAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Analyzers.Tests;
 /// <summary>
 /// Tests for CTJ003: Match lambda should be static.
 /// </summary>
+[TestClass]
 public class MatchLambdaCaptureAnalyzerTests
 {
     private const string Stubs = @"
@@ -61,7 +62,7 @@ namespace TestLib
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task NonStaticNonCapturingLambdas_FiresCTJ003()
     {
         const string testCode = Stubs + @"
@@ -87,7 +88,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(2).WithArguments("consider adding the 'static' modifier"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task AlreadyStaticLambdas_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -109,7 +110,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CapturingLambda_FiresCTJ003WithCaptureMessage()
     {
         const string testCode = Stubs + @"
@@ -136,7 +137,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(2).WithArguments("consider adding the 'static' modifier"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task BlockBodyCapturingLambda_FiresCTJ003WithCaptureMessage()
     {
         const string testCode = Stubs + @"
@@ -163,7 +164,7 @@ namespace TestApp
             Verify.Diagnostic().WithLocation(2).WithArguments("consider adding the 'static' modifier"));
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CodeFix_AddsStaticToNonCapturingLambdas()
     {
         var test = new CodeFixTest
@@ -207,7 +208,7 @@ namespace TestApp
         await test.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ContextOverload_NoDiagnostic()
     {
         // Using Match<TIn, TOut> with context — no diagnostic since it already has context.
@@ -232,7 +233,7 @@ namespace TestApp
         await Verify.VerifyAnalyzerAsync(testCode);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonMatchMethod_NoDiagnostic()
     {
         // A non-Match method with lambda args should not trigger.

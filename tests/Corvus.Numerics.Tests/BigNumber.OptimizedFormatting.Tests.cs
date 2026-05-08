@@ -7,13 +7,14 @@ using System.Numerics;
 using System.Text;
 using Corvus.Numerics;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
+[TestClass]
 public class BigNumberOptimizedFormattingTests
 {
-    [Fact]
+    [TestMethod]
     public void TryFormatOptimized_SimpleInteger_ZeroAllocation()
     {
         BigNumber value = new(12345, 0);
@@ -27,7 +28,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("12345");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatOptimized_WithPositiveExponent_ZeroAllocation()
     {
         BigNumber value = new(123, 5);
@@ -40,7 +41,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("123E5");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatOptimized_WithNegativeExponent_ZeroAllocation()
     {
         BigNumber value = new(456, -10);
@@ -53,7 +54,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("456E-10");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatOptimized_NegativeNumber_ZeroAllocation()
     {
         BigNumber value = new(-789, 0);
@@ -66,7 +67,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("-789");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatOptimized_Zero_ZeroAllocation()
     {
         BigNumber value = BigNumber.Zero;
@@ -79,7 +80,7 @@ public class BigNumberOptimizedFormattingTests
         buffer[0].ShouldBe('0');
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatOptimized_LargeNumber_ZeroAllocation()
     {
         BigNumber value = new(BigInteger.Parse("123456789012345678901234567890"), 0);
@@ -93,7 +94,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("12345678901234567890123456789E1");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatOptimized_InsufficientBuffer_ReturnsFalse()
     {
         BigNumber value = new(BigInteger.Parse("999999999999999999999999999999"), 0);
@@ -105,7 +106,7 @@ public class BigNumberOptimizedFormattingTests
         charsWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_SimpleInteger_ZeroAllocation()
     {
         BigNumber value = new(98765, 0);
@@ -119,7 +120,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("98765");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_WithPositiveExponent_ZeroAllocation()
     {
         BigNumber value = new(321, 15);
@@ -132,7 +133,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("321E15");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_WithNegativeExponent_ZeroAllocation()
     {
         BigNumber value = new(654, -99);
@@ -145,7 +146,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("654E-99");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_NegativeNumber_ZeroAllocation()
     {
         BigNumber value = new(-888, 0);
@@ -158,7 +159,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("-888");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_Zero_ZeroAllocation()
     {
         BigNumber value = BigNumber.Zero;
@@ -171,7 +172,7 @@ public class BigNumberOptimizedFormattingTests
         buffer[0].ShouldBe((byte)'0');
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_LargeNumber_ZeroAllocation()
     {
         BigNumber value = new(BigInteger.Parse("987654321098765432109876543210"), 0);
@@ -184,7 +185,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("98765432109876543210987654321E1");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_InsufficientBuffer_ReturnsFalse()
     {
         BigNumber value = new(BigInteger.Parse("999999999999999999999999999999"), 0);
@@ -196,7 +197,7 @@ public class BigNumberOptimizedFormattingTests
         bytesWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_ConsistencyWithStandardFormatting_SimpleInteger()
     {
         BigNumber value = new(123456, 0);
@@ -212,7 +213,7 @@ public class BigNumberOptimizedFormattingTests
         optimized.ShouldBe(standard);
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_ConsistencyWithStandardFormatting_WithExponent()
     {
         BigNumber value = new(12345, 10);
@@ -226,7 +227,7 @@ public class BigNumberOptimizedFormattingTests
         optimized.ShouldBe(standard);
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_Utf8ConsistencyWithUtf16_SimpleInteger()
     {
         BigNumber value = new(123456, 0);
@@ -245,7 +246,7 @@ public class BigNumberOptimizedFormattingTests
         bytesWritten.ShouldBe(charsWritten); // ASCII characters
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_Utf8ConsistencyWithUtf16_NegativeWithExponent()
     {
         BigNumber value = new(-246, 12);
@@ -262,7 +263,7 @@ public class BigNumberOptimizedFormattingTests
         utf8.ShouldBe("-246E12");
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_GeneralFormat_WithPrecision()
     {
         BigNumber value = new(123456789, 0);
@@ -276,7 +277,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("1.2346E+8");// Rounded
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_FixedPointFormat_WithPrecision()
     {
         BigNumber value = new(12345, -2); // 123.45
@@ -289,7 +290,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("123.45");
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_ExponentialFormat_WithPrecision()
     {
         BigNumber value = new(12345, 0);
@@ -303,7 +304,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldContain("1.");
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_EdgeCases_VeryLargeExponent()
     {
         BigNumber value = new(123, int.MaxValue / 2);
@@ -316,7 +317,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldStartWith("123E");
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_EdgeCases_VerySmallExponent()
     {
         BigNumber value = new(456, int.MinValue / 2);
@@ -329,7 +330,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldStartWith("456E-");
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_Normalization_TrailingZeros()
     {
         BigNumber value = new(12300, 0);
@@ -343,7 +344,7 @@ public class BigNumberOptimizedFormattingTests
         result.ShouldBe("123E2");
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_SequentialCalls_NoInterference()
     {
         BigNumber value1 = new(111, 1);
@@ -360,7 +361,7 @@ public class BigNumberOptimizedFormattingTests
         result2.ShouldBe("222E2");
     }
 
-    [Fact]
+    [TestMethod]
     public void OptimizedFormatting_Utf8_SequentialCalls_NoInterference()
     {
         BigNumber value1 = new(333, 3);
@@ -377,7 +378,7 @@ public class BigNumberOptimizedFormattingTests
         result2.ShouldBe("444E4");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_BufferExactlySignificandSize_ReturnsFalse()
     {
         // BigNumber(123, 5) formats as "123E5" (5 bytes).
@@ -392,7 +393,7 @@ public class BigNumberOptimizedFormattingTests
         bytesWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_BufferOneLessThanNeeded_ReturnsFalse()
     {
         // BigNumber(99, -3) formats as "99E-3" (5 bytes).
@@ -406,7 +407,7 @@ public class BigNumberOptimizedFormattingTests
         bytesWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_ZeroBufferTooSmall_ReturnsFalse()
     {
         // BigNumber(0, 0) formats as "0" (1 byte).
@@ -420,7 +421,7 @@ public class BigNumberOptimizedFormattingTests
         bytesWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatUtf8Optimized_ZeroWithAdequateBuffer_Succeeds()
     {
         // BigNumber(0, 0) formats as "0" (1 byte).

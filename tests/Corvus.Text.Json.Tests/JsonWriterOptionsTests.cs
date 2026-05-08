@@ -1,18 +1,19 @@
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
-public static partial class JsonWriterOptionsTests
+[TestClass]
+public partial class JsonWriterOptionsTests
 {
-    [Theory]
-    [InlineData(true, '\t', 1, true, 0, "\n")]
-    [InlineData(true, ' ', 127, false, 1, "\r\n")]
-    [InlineData(false, ' ', 0, true, 1024, "\n")]
-    [InlineData(false, ' ', 4, false, 1024 * 1024, "\r\n")]
-    public static void JsonWriterOptions(bool indented, char indentCharacter, int indentSize, bool skipValidation, int maxDepth, string newLine)
+    [TestMethod]
+    [DataRow(true, '\t', 1, true, 0, "\n")]
+    [DataRow(true, ' ', 127, false, 1, "\r\n")]
+    [DataRow(false, ' ', 0, true, 1024, "\n")]
+    [DataRow(false, ' ', 4, false, 1024 * 1024, "\r\n")]
+    public void JsonWriterOptions(bool indented, char indentCharacter, int indentSize, bool skipValidation, int maxDepth, string newLine)
     {
         var options = new JsonWriterOptions
         {
@@ -33,56 +34,56 @@ public static partial class JsonWriterOptionsTests
             MaxDepth = maxDepth,
             NewLine = newLine,
         };
-        Assert.Equal(expectedOption, options);
+        Assert.AreEqual(expectedOption, options);
     }
 
-    [Fact]
-    public static void JsonWriterOptions_DefaultValues()
+    [TestMethod]
+    public void JsonWriterOptions_DefaultValues()
     {
         JsonWriterOptions options = default;
 
-        Assert.False(options.Indented);
-        Assert.Equal(' ', options.IndentCharacter);
-        Assert.Equal(2, options.IndentSize);
-        Assert.False(options.SkipValidation);
-        Assert.Equal(0, options.MaxDepth);
-        Assert.Equal(Environment.NewLine, options.NewLine);
+        Assert.IsFalse(options.Indented);
+        Assert.AreEqual(' ', options.IndentCharacter);
+        Assert.AreEqual(2, options.IndentSize);
+        Assert.IsFalse(options.SkipValidation);
+        Assert.AreEqual(0, options.MaxDepth);
+        Assert.AreEqual(Environment.NewLine, options.NewLine);
     }
 
-    [Theory]
-    [InlineData('\f')]
-    [InlineData('\n')]
-    [InlineData('\r')]
-    [InlineData('\0')]
-    [InlineData('a')]
-    public static void JsonWriterOptions_IndentCharacter_InvalidCharacter(char character)
+    [TestMethod]
+    [DataRow('\f')]
+    [DataRow('\n')]
+    [DataRow('\r')]
+    [DataRow('\0')]
+    [DataRow('a')]
+    public void JsonWriterOptions_IndentCharacter_InvalidCharacter(char character)
     {
         var options = new JsonWriterOptions();
-        Assert.Throws<ArgumentOutOfRangeException>(() => options.IndentCharacter = character);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.IndentCharacter = character);
     }
 
-    [Theory]
-    [InlineData(-1)]
-    [InlineData(128)]
-    [InlineData(int.MinValue)]
-    [InlineData(int.MaxValue)]
-    public static void JsonWriterOptions_IndentSize_OutOfRange(int size)
+    [TestMethod]
+    [DataRow(-1)]
+    [DataRow(128)]
+    [DataRow(int.MinValue)]
+    [DataRow(int.MaxValue)]
+    public void JsonWriterOptions_IndentSize_OutOfRange(int size)
     {
         var options = new JsonWriterOptions();
-        Assert.Throws<ArgumentOutOfRangeException>(() => options.IndentSize = size);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.IndentSize = size);
     }
 
-    [Theory]
-    [InlineData(-1)]
-    [InlineData(-100)]
-    public static void JsonWriterOptions_MaxDepth_InvalidParameters(int maxDepth)
+    [TestMethod]
+    [DataRow(-1)]
+    [DataRow(-100)]
+    public void JsonWriterOptions_MaxDepth_InvalidParameters(int maxDepth)
     {
         var options = new JsonWriterOptions();
-        Assert.Throws<ArgumentOutOfRangeException>(() => options.MaxDepth = maxDepth);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.MaxDepth = maxDepth);
     }
 
-    [Fact]
-    public static void JsonWriterOptions_MultipleValues()
+    [TestMethod]
+    public void JsonWriterOptions_MultipleValues()
     {
         JsonWriterOptions defaultOptions = default;
         var options = new JsonWriterOptions
@@ -90,62 +91,62 @@ public static partial class JsonWriterOptionsTests
             Indented = true
         };
         options.Indented = defaultOptions.Indented;
-        Assert.Equal(defaultOptions.Indented, options.Indented);
+        Assert.AreEqual(defaultOptions.Indented, options.Indented);
 
         options.IndentCharacter = '\t';
         options.IndentCharacter = defaultOptions.IndentCharacter;
-        Assert.Equal(defaultOptions.IndentCharacter, options.IndentCharacter);
+        Assert.AreEqual(defaultOptions.IndentCharacter, options.IndentCharacter);
 
         options.IndentSize = 127;
         options.IndentSize = defaultOptions.IndentSize;
-        Assert.Equal(defaultOptions.IndentSize, options.IndentSize);
+        Assert.AreEqual(defaultOptions.IndentSize, options.IndentSize);
 
         options.SkipValidation = true;
         options.SkipValidation = defaultOptions.SkipValidation;
-        Assert.Equal(defaultOptions.SkipValidation, options.SkipValidation);
+        Assert.AreEqual(defaultOptions.SkipValidation, options.SkipValidation);
 
         options.MaxDepth = 1024 * 1024;
         options.MaxDepth = defaultOptions.MaxDepth;
-        Assert.Equal(defaultOptions.MaxDepth, options.MaxDepth);
+        Assert.AreEqual(defaultOptions.MaxDepth, options.MaxDepth);
 
         options.NewLine = Environment.NewLine.Length == 1 ? "\r\n" : "\n";
         options.NewLine = defaultOptions.NewLine;
-        Assert.Equal(defaultOptions.NewLine, options.NewLine);
+        Assert.AreEqual(defaultOptions.NewLine, options.NewLine);
 
-        Assert.Equal(defaultOptions, options);
+        Assert.AreEqual(defaultOptions, options);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData("\r")]
-    [InlineData("\n\n")]
-    [InlineData("\r\n\r\n")]
-    [InlineData("0")]
-    [InlineData("a")]
-    [InlineData("foo")]
-    [InlineData("$")]
-    [InlineData(".")]
-    [InlineData("\u03b1")]
-    public static void JsonWriterOptions_NewLine_InvalidNewLine(string value)
+    [TestMethod]
+    [DataRow("")]
+    [DataRow(" ")]
+    [DataRow("\r")]
+    [DataRow("\n\n")]
+    [DataRow("\r\n\r\n")]
+    [DataRow("0")]
+    [DataRow("a")]
+    [DataRow("foo")]
+    [DataRow("$")]
+    [DataRow(".")]
+    [DataRow("\u03b1")]
+    public void JsonWriterOptions_NewLine_InvalidNewLine(string value)
     {
         var options = new JsonWriterOptions();
-        Assert.Throws<ArgumentOutOfRangeException>(() => options.NewLine = value);
+        Assert.ThrowsExactly<ArgumentOutOfRangeException>(() => options.NewLine = value);
     }
 
-    [Fact]
-    public static void JsonWriterOptions_NewLine_Null_Throws()
+    [TestMethod]
+    public void JsonWriterOptions_NewLine_Null_Throws()
     {
         var options = new JsonWriterOptions();
-        Assert.Throws<ArgumentNullException>(() => options.NewLine = null);
+        Assert.ThrowsExactly<ArgumentNullException>(() => options.NewLine = null);
     }
 
-    [Theory]
-    [InlineData(true, '\t', 1, true, 0, "\n")]
-    [InlineData(true, ' ', 127, false, 1, "\r\n")]
-    [InlineData(false, ' ', 0, true, 1024, "\n")]
-    [InlineData(false, ' ', 4, false, 1024 * 1024, "\r\n")]
-    public static void JsonWriterOptions_Properties(bool indented, char indentCharacter, int indentSize, bool skipValidation, int maxDepth, string newLine)
+    [TestMethod]
+    [DataRow(true, '\t', 1, true, 0, "\n")]
+    [DataRow(true, ' ', 127, false, 1, "\r\n")]
+    [DataRow(false, ' ', 0, true, 1024, "\n")]
+    [DataRow(false, ' ', 4, false, 1024 * 1024, "\r\n")]
+    public void JsonWriterOptions_Properties(bool indented, char indentCharacter, int indentSize, bool skipValidation, int maxDepth, string newLine)
     {
         var options = new JsonWriterOptions
         {
@@ -157,16 +158,16 @@ public static partial class JsonWriterOptionsTests
             NewLine = newLine
         };
 
-        Assert.Equal(indented, options.Indented);
-        Assert.Equal(indentCharacter, options.IndentCharacter);
-        Assert.Equal(indentSize, options.IndentSize);
-        Assert.Equal(skipValidation, options.SkipValidation);
-        Assert.Equal(maxDepth, options.MaxDepth);
-        Assert.Equal(newLine, options.NewLine);
+        Assert.AreEqual(indented, options.Indented);
+        Assert.AreEqual(indentCharacter, options.IndentCharacter);
+        Assert.AreEqual(indentSize, options.IndentSize);
+        Assert.AreEqual(skipValidation, options.SkipValidation);
+        Assert.AreEqual(maxDepth, options.MaxDepth);
+        Assert.AreEqual(newLine, options.NewLine);
     }
 
-    [Fact]
-    public static void JsonWriterOptionsCtor()
+    [TestMethod]
+    public void JsonWriterOptionsCtor()
     {
         var options = new JsonWriterOptions();
 
@@ -179,11 +180,11 @@ public static partial class JsonWriterOptionsTests
             MaxDepth = 0,
             NewLine = Environment.NewLine,
         };
-        Assert.Equal(expectedOption, options);
+        Assert.AreEqual(expectedOption, options);
     }
 
-    [Fact]
-    public static void JsonWriterOptionsDefaultCtor()
+    [TestMethod]
+    public void JsonWriterOptionsDefaultCtor()
     {
         JsonWriterOptions options = default;
 
@@ -196,6 +197,6 @@ public static partial class JsonWriterOptionsTests
             MaxDepth = 0,
             NewLine = Environment.NewLine,
         };
-        Assert.Equal(expectedOption, options);
+        Assert.AreEqual(expectedOption, options);
     }
 }

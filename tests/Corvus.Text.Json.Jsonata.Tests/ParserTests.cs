@@ -3,403 +3,404 @@
 // </copyright>
 
 using Corvus.Text.Json.Jsonata.Ast;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
 
+[TestClass]
 public class ParserTests
 {
-    [Fact]
+    [TestMethod]
     public void SimpleFieldAccess()
     {
         var ast = Parser.Parse("foo");
-        var path = Assert.IsType<PathNode>(ast);
-        Assert.Single(path.Steps);
-        var name = Assert.IsType<NameNode>(path.Steps[0]);
-        Assert.Equal("foo", name.Value);
+        var path = Assert.IsInstanceOfType<PathNode>(ast);
+        Assert.AreEqual(1, (path.Steps).Count());
+        var name = Assert.IsInstanceOfType<NameNode>(path.Steps[0]);
+        Assert.AreEqual("foo", name.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void DottedPath()
     {
         var ast = Parser.Parse("Account.Order.Product");
-        var path = Assert.IsType<PathNode>(ast);
-        Assert.Equal(3, path.Steps.Count);
-        Assert.Equal("Account", ((NameNode)path.Steps[0]).Value);
-        Assert.Equal("Order", ((NameNode)path.Steps[1]).Value);
-        Assert.Equal("Product", ((NameNode)path.Steps[2]).Value);
+        var path = Assert.IsInstanceOfType<PathNode>(ast);
+        Assert.AreEqual(3, path.Steps.Count);
+        Assert.AreEqual("Account", ((NameNode)path.Steps[0]).Value);
+        Assert.AreEqual("Order", ((NameNode)path.Steps[1]).Value);
+        Assert.AreEqual("Product", ((NameNode)path.Steps[2]).Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void NumericLiteral()
     {
         var ast = Parser.Parse("42");
-        var num = Assert.IsType<NumberNode>(ast);
-        Assert.Equal(42.0, num.Value);
+        var num = Assert.IsInstanceOfType<NumberNode>(ast);
+        Assert.AreEqual(42.0, num.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void StringLiteral()
     {
         var ast = Parser.Parse("\"hello\"");
-        var str = Assert.IsType<StringNode>(ast);
-        Assert.Equal("hello", str.Value);
+        var str = Assert.IsInstanceOfType<StringNode>(ast);
+        Assert.AreEqual("hello", str.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void BooleanLiteral()
     {
         var ast = Parser.Parse("true");
-        var val = Assert.IsType<ValueNode>(ast);
-        Assert.Equal("true", val.Value);
+        var val = Assert.IsInstanceOfType<ValueNode>(ast);
+        Assert.AreEqual("true", val.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void NullLiteral()
     {
         var ast = Parser.Parse("null");
-        var val = Assert.IsType<ValueNode>(ast);
-        Assert.Equal("null", val.Value);
+        var val = Assert.IsInstanceOfType<ValueNode>(ast);
+        Assert.AreEqual("null", val.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void VariableReference()
     {
         var ast = Parser.Parse("$x");
-        var variable = Assert.IsType<VariableNode>(ast);
-        Assert.Equal("x", variable.Name);
+        var variable = Assert.IsInstanceOfType<VariableNode>(ast);
+        Assert.AreEqual("x", variable.Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void ContextVariable()
     {
         var ast = Parser.Parse("$");
-        var variable = Assert.IsType<VariableNode>(ast);
-        Assert.Equal("", variable.Name);
+        var variable = Assert.IsInstanceOfType<VariableNode>(ast);
+        Assert.AreEqual("", variable.Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void Addition()
     {
         var ast = Parser.Parse("1 + 2");
-        var binary = Assert.IsType<BinaryNode>(ast);
-        Assert.Equal("+", binary.Operator);
-        Assert.Equal(1.0, ((NumberNode)binary.Lhs).Value);
-        Assert.Equal(2.0, ((NumberNode)binary.Rhs).Value);
+        var binary = Assert.IsInstanceOfType<BinaryNode>(ast);
+        Assert.AreEqual("+", binary.Operator);
+        Assert.AreEqual(1.0, ((NumberNode)binary.Lhs).Value);
+        Assert.AreEqual(2.0, ((NumberNode)binary.Rhs).Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void OperatorPrecedence()
     {
         // 1 + 2 * 3 should parse as 1 + (2 * 3) due to precedence
         var ast = Parser.Parse("1 + 2 * 3");
-        var add = Assert.IsType<BinaryNode>(ast);
-        Assert.Equal("+", add.Operator);
-        Assert.Equal(1.0, ((NumberNode)add.Lhs).Value);
-        var mul = Assert.IsType<BinaryNode>(add.Rhs);
-        Assert.Equal("*", mul.Operator);
-        Assert.Equal(2.0, ((NumberNode)mul.Lhs).Value);
-        Assert.Equal(3.0, ((NumberNode)mul.Rhs).Value);
+        var add = Assert.IsInstanceOfType<BinaryNode>(ast);
+        Assert.AreEqual("+", add.Operator);
+        Assert.AreEqual(1.0, ((NumberNode)add.Lhs).Value);
+        var mul = Assert.IsInstanceOfType<BinaryNode>(add.Rhs);
+        Assert.AreEqual("*", mul.Operator);
+        Assert.AreEqual(2.0, ((NumberNode)mul.Lhs).Value);
+        Assert.AreEqual(3.0, ((NumberNode)mul.Rhs).Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void ComparisonOperator()
     {
         var ast = Parser.Parse("x > 5");
-        var binary = Assert.IsType<BinaryNode>(ast);
-        Assert.Equal(">", binary.Operator);
+        var binary = Assert.IsInstanceOfType<BinaryNode>(ast);
+        Assert.AreEqual(">", binary.Operator);
     }
 
-    [Fact]
+    [TestMethod]
     public void BooleanOperators()
     {
         var ast = Parser.Parse("a and b or c");
 
         // 'and' (30) binds tighter than 'or' (25), so: (a and b) or c
-        var orNode = Assert.IsType<BinaryNode>(ast);
-        Assert.Equal("or", orNode.Operator);
-        var andNode = Assert.IsType<BinaryNode>(orNode.Lhs);
-        Assert.Equal("and", andNode.Operator);
+        var orNode = Assert.IsInstanceOfType<BinaryNode>(ast);
+        Assert.AreEqual("or", orNode.Operator);
+        var andNode = Assert.IsInstanceOfType<BinaryNode>(orNode.Lhs);
+        Assert.AreEqual("and", andNode.Operator);
     }
 
-    [Fact]
+    [TestMethod]
     public void StringConcatenation()
     {
         var ast = Parser.Parse("\"hello\" & \" \" & \"world\"");
-        var binary = Assert.IsType<BinaryNode>(ast);
-        Assert.Equal("&", binary.Operator);
+        var binary = Assert.IsInstanceOfType<BinaryNode>(ast);
+        Assert.AreEqual("&", binary.Operator);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnaryMinus()
     {
         // Unary minus on a literal gets folded into the number
         var ast = Parser.Parse("-5");
-        var num = Assert.IsType<NumberNode>(ast);
-        Assert.Equal(-5.0, num.Value);
+        var num = Assert.IsInstanceOfType<NumberNode>(ast);
+        Assert.AreEqual(-5.0, num.Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnaryMinusOnExpression()
     {
         var ast = Parser.Parse("-x");
-        var unary = Assert.IsType<UnaryNode>(ast);
-        Assert.Equal("-", unary.Operator);
+        var unary = Assert.IsInstanceOfType<UnaryNode>(ast);
+        Assert.AreEqual("-", unary.Operator);
     }
 
-    [Fact]
+    [TestMethod]
     public void Wildcard()
     {
         var ast = Parser.Parse("Account.*");
-        var path = Assert.IsType<PathNode>(ast);
-        Assert.Equal(2, path.Steps.Count);
-        Assert.IsType<NameNode>(path.Steps[0]);
-        Assert.IsType<WildcardNode>(path.Steps[1]);
+        var path = Assert.IsInstanceOfType<PathNode>(ast);
+        Assert.AreEqual(2, path.Steps.Count);
+        Assert.IsInstanceOfType<NameNode>(path.Steps[0]);
+        Assert.IsInstanceOfType<WildcardNode>(path.Steps[1]);
     }
 
-    [Fact]
+    [TestMethod]
     public void DescendantWildcard()
     {
         var ast = Parser.Parse("**.Price");
-        var path = Assert.IsType<PathNode>(ast);
-        Assert.IsType<DescendantNode>(path.Steps[0]);
-        Assert.IsType<NameNode>(path.Steps[1]);
+        var path = Assert.IsInstanceOfType<PathNode>(ast);
+        Assert.IsInstanceOfType<DescendantNode>(path.Steps[0]);
+        Assert.IsInstanceOfType<NameNode>(path.Steps[1]);
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayConstructor()
     {
         var ast = Parser.Parse("[1, 2, 3]");
-        var arr = Assert.IsType<ArrayConstructorNode>(ast);
-        Assert.Equal(3, arr.Expressions.Count);
+        var arr = Assert.IsInstanceOfType<ArrayConstructorNode>(ast);
+        Assert.AreEqual(3, arr.Expressions.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void ObjectConstructor()
     {
         var ast = Parser.Parse("{\"name\": \"John\", \"age\": 30}");
-        var obj = Assert.IsType<ObjectConstructorNode>(ast);
-        Assert.Equal(2, obj.Pairs.Count);
+        var obj = Assert.IsInstanceOfType<ObjectConstructorNode>(ast);
+        Assert.AreEqual(2, obj.Pairs.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void FunctionCallSimple()
     {
         var ast = Parser.Parse("$sum(prices)");
-        var func = Assert.IsType<FunctionCallNode>(ast);
-        Assert.IsType<VariableNode>(func.Procedure);
-        Assert.Equal("sum", ((VariableNode)func.Procedure).Name);
-        Assert.Single(func.Arguments);
-        Assert.IsType<PathNode>(func.Arguments[0]);
+        var func = Assert.IsInstanceOfType<FunctionCallNode>(ast);
+        Assert.IsInstanceOfType<VariableNode>(func.Procedure);
+        Assert.AreEqual("sum", ((VariableNode)func.Procedure).Name);
+        Assert.AreEqual(1, (func.Arguments).Count());
+        Assert.IsInstanceOfType<PathNode>(func.Arguments[0]);
     }
 
-    [Fact]
+    [TestMethod]
     public void FunctionCallOnPath()
     {
         var ast = Parser.Parse("$count(Account.Order)");
-        Assert.IsType<FunctionCallNode>(ast);
+        Assert.IsInstanceOfType<FunctionCallNode>(ast);
         var func = (FunctionCallNode)ast;
-        Assert.IsType<VariableNode>(func.Procedure);
-        Assert.Equal("count", ((VariableNode)func.Procedure).Name);
-        Assert.Single(func.Arguments);
+        Assert.IsInstanceOfType<VariableNode>(func.Procedure);
+        Assert.AreEqual("count", ((VariableNode)func.Procedure).Name);
+        Assert.AreEqual(1, (func.Arguments).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void LambdaDefinition()
     {
         var ast = Parser.Parse("function($x, $y){ $x + $y }");
-        var lambda = Assert.IsType<LambdaNode>(ast);
-        Assert.Equal(2, lambda.Parameters.Count);
-        Assert.Equal("x", lambda.Parameters[0]);
-        Assert.Equal("y", lambda.Parameters[1]);
-        Assert.IsType<BinaryNode>(lambda.Body);
+        var lambda = Assert.IsInstanceOfType<LambdaNode>(ast);
+        Assert.AreEqual(2, lambda.Parameters.Count);
+        Assert.AreEqual("x", lambda.Parameters[0]);
+        Assert.AreEqual("y", lambda.Parameters[1]);
+        Assert.IsInstanceOfType<BinaryNode>(lambda.Body);
     }
 
-    [Fact]
+    [TestMethod]
     public void TernaryCondition()
     {
         var ast = Parser.Parse("x > 0 ? \"positive\" : \"non-positive\"");
-        var cond = Assert.IsType<ConditionNode>(ast);
-        Assert.IsType<BinaryNode>(cond.Condition);
-        Assert.IsType<StringNode>(cond.Then);
-        Assert.IsType<StringNode>(cond.Else);
+        var cond = Assert.IsInstanceOfType<ConditionNode>(ast);
+        Assert.IsInstanceOfType<BinaryNode>(cond.Condition);
+        Assert.IsInstanceOfType<StringNode>(cond.Then);
+        Assert.IsInstanceOfType<StringNode>(cond.Else);
     }
 
-    [Fact]
+    [TestMethod]
     public void TernaryWithoutElse()
     {
         var ast = Parser.Parse("x > 0 ? \"positive\"");
-        var cond = Assert.IsType<ConditionNode>(ast);
-        Assert.NotNull(cond.Then);
-        Assert.Null(cond.Else);
+        var cond = Assert.IsInstanceOfType<ConditionNode>(ast);
+        Assert.IsNotNull(cond.Then);
+        Assert.IsNull(cond.Else);
     }
 
-    [Fact]
+    [TestMethod]
     public void VariableBinding()
     {
         var ast = Parser.Parse("$x := 42");
-        var bind = Assert.IsType<BindNode>(ast);
-        Assert.IsType<VariableNode>(bind.Lhs);
-        Assert.IsType<NumberNode>(bind.Rhs);
+        var bind = Assert.IsInstanceOfType<BindNode>(ast);
+        Assert.IsInstanceOfType<VariableNode>(bind.Lhs);
+        Assert.IsInstanceOfType<NumberNode>(bind.Rhs);
     }
 
-    [Fact]
+    [TestMethod]
     public void BlockExpression()
     {
         var ast = Parser.Parse("($x := 1; $y := 2; $x + $y)");
-        var block = Assert.IsType<BlockNode>(ast);
-        Assert.Equal(3, block.Expressions.Count);
+        var block = Assert.IsInstanceOfType<BlockNode>(ast);
+        Assert.AreEqual(3, block.Expressions.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void ChainOperator()
     {
         var ast = Parser.Parse("Account.Order ~> $sum");
-        var apply = Assert.IsType<ApplyNode>(ast);
-        Assert.IsType<PathNode>(apply.Lhs);
-        Assert.IsType<VariableNode>(apply.Rhs);
+        var apply = Assert.IsInstanceOfType<ApplyNode>(ast);
+        Assert.IsInstanceOfType<PathNode>(apply.Lhs);
+        Assert.IsInstanceOfType<VariableNode>(apply.Rhs);
     }
 
-    [Fact]
+    [TestMethod]
     public void SortExpression()
     {
         var ast = Parser.Parse("Account.Order^(>Price)");
-        var path = Assert.IsType<PathNode>(ast);
-        Assert.True(path.Steps.Count >= 2);
-        Assert.IsType<SortNode>(path.Steps[path.Steps.Count - 1]);
+        var path = Assert.IsInstanceOfType<PathNode>(ast);
+        Assert.IsTrue(path.Steps.Count >= 2);
+        Assert.IsInstanceOfType<SortNode>(path.Steps[path.Steps.Count - 1]);
         var sort = (SortNode)path.Steps[path.Steps.Count - 1];
-        Assert.Single(sort.Terms);
-        Assert.True(sort.Terms[0].Descending);
+        Assert.AreEqual(1, (sort.Terms).Count());
+        Assert.IsTrue(sort.Terms[0].Descending);
     }
 
-    [Fact]
+    [TestMethod]
     public void TransformExpression()
     {
         var ast = Parser.Parse("|Account|{\"name\": \"new\"}|");
-        var transform = Assert.IsType<TransformNode>(ast);
-        Assert.NotNull(transform.Pattern);
-        Assert.NotNull(transform.Update);
-        Assert.Null(transform.Delete);
+        var transform = Assert.IsInstanceOfType<TransformNode>(ast);
+        Assert.IsNotNull(transform.Pattern);
+        Assert.IsNotNull(transform.Update);
+        Assert.IsNull(transform.Delete);
     }
 
-    [Fact]
+    [TestMethod]
     public void TransformWithDelete()
     {
         var ast = Parser.Parse("|Account|{\"name\": \"new\"}, [\"old\"]|");
-        var transform = Assert.IsType<TransformNode>(ast);
-        Assert.NotNull(transform.Delete);
+        var transform = Assert.IsInstanceOfType<TransformNode>(ast);
+        Assert.IsNotNull(transform.Delete);
     }
 
-    [Fact]
+    [TestMethod]
     public void RangeOperator()
     {
         var ast = Parser.Parse("[1..5]");
-        var arr = Assert.IsType<ArrayConstructorNode>(ast);
-        Assert.Single(arr.Expressions);
-        var range = Assert.IsType<BinaryNode>(arr.Expressions[0]);
-        Assert.Equal("..", range.Operator);
+        var arr = Assert.IsInstanceOfType<ArrayConstructorNode>(ast);
+        Assert.AreEqual(1, (arr.Expressions).Count());
+        var range = Assert.IsInstanceOfType<BinaryNode>(arr.Expressions[0]);
+        Assert.AreEqual("..", range.Operator);
     }
 
-    [Fact]
+    [TestMethod]
     public void PartialApplication()
     {
         var ast = Parser.Parse("$add(?, 5)");
-        var partial = Assert.IsType<PartialNode>(ast);
-        Assert.Equal(2, partial.Arguments.Count);
-        Assert.IsType<PlaceholderNode>(partial.Arguments[0]);
+        var partial = Assert.IsInstanceOfType<PartialNode>(ast);
+        Assert.AreEqual(2, partial.Arguments.Count);
+        Assert.IsInstanceOfType<PlaceholderNode>(partial.Arguments[0]);
     }
 
-    [Fact]
+    [TestMethod]
     public void InOperator()
     {
         var ast = Parser.Parse("\"a\" in [\"a\", \"b\"]");
-        var binary = Assert.IsType<BinaryNode>(ast);
-        Assert.Equal("in", binary.Operator);
+        var binary = Assert.IsInstanceOfType<BinaryNode>(ast);
+        Assert.AreEqual("in", binary.Operator);
     }
 
-    [Fact]
+    [TestMethod]
     public void KeepArrayModifier()
     {
         var ast = Parser.Parse("Account.Order.Product[]");
-        var path = Assert.IsType<PathNode>(ast);
-        Assert.True(path.KeepSingletonArray);
+        var path = Assert.IsInstanceOfType<PathNode>(ast);
+        Assert.IsTrue(path.KeepSingletonArray);
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedFunctionCalls()
     {
         var ast = Parser.Parse("$sum($map(Account.Order.Product.Price, $v))");
-        var func = Assert.IsType<FunctionCallNode>(ast);
-        Assert.Equal("sum", ((VariableNode)func.Procedure).Name);
+        var func = Assert.IsInstanceOfType<FunctionCallNode>(ast);
+        Assert.AreEqual("sum", ((VariableNode)func.Procedure).Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void UnexpectedTokenThrows()
     {
-        var ex = Assert.Throws<JsonataException>(() => Parser.Parse("1 + + 2"));
-        Assert.NotNull(ex);
+        var ex = Assert.ThrowsExactly<JsonataException>(() => Parser.Parse("1 + + 2"));
+        Assert.IsNotNull(ex);
     }
 
-    [Fact]
+    [TestMethod]
     public void EmptyExpression()
     {
-        var ex = Assert.Throws<JsonataException>(() => Parser.Parse(""));
-        Assert.NotNull(ex);
+        var ex = Assert.ThrowsExactly<JsonataException>(() => Parser.Parse(""));
+        Assert.IsNotNull(ex);
     }
 
-    [Fact]
+    [TestMethod]
     public void NonVariableOnLeftOfBind()
     {
-        var ex = Assert.Throws<JsonataException>(() => Parser.Parse("foo := 42"));
-        Assert.Equal("S0212", ex.Code);
+        var ex = Assert.ThrowsExactly<JsonataException>(() => Parser.Parse("foo := 42"));
+        Assert.AreEqual("S0212", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void RegexLiteral()
     {
         var ast = Parser.Parse("$match(str, /[a-z]+/i)");
-        var func = Assert.IsType<FunctionCallNode>(ast);
-        Assert.Equal(2, func.Arguments.Count);
-        var regex = Assert.IsType<RegexNode>(func.Arguments[1]);
-        Assert.Equal("[a-z]+", regex.Pattern);
-        Assert.Equal("i", regex.Flags);
+        var func = Assert.IsInstanceOfType<FunctionCallNode>(ast);
+        Assert.AreEqual(2, func.Arguments.Count);
+        var regex = Assert.IsInstanceOfType<RegexNode>(func.Arguments[1]);
+        Assert.AreEqual("[a-z]+", regex.Pattern);
+        Assert.AreEqual("i", regex.Flags);
     }
 
-    [Fact]
+    [TestMethod]
     public void CommentSkipping()
     {
         var ast = Parser.Parse("/* select price */ Account.Order.Price");
-        var path = Assert.IsType<PathNode>(ast);
-        Assert.Equal(3, path.Steps.Count);
+        var path = Assert.IsInstanceOfType<PathNode>(ast);
+        Assert.AreEqual(3, path.Steps.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void BacktickQuotedFieldInPath()
     {
         var ast = Parser.Parse("Account.`Order Date`.Year");
-        var path = Assert.IsType<PathNode>(ast);
-        Assert.Equal(3, path.Steps.Count);
-        Assert.Equal("Order Date", ((NameNode)path.Steps[1]).Value);
+        var path = Assert.IsInstanceOfType<PathNode>(ast);
+        Assert.AreEqual(3, path.Steps.Count);
+        Assert.AreEqual("Order Date", ((NameNode)path.Steps[1]).Value);
     }
 
-    [Fact]
+    [TestMethod]
     public void ElvisOperator()
     {
         var ast = Parser.Parse("x ?: \"default\"");
-        var cond = Assert.IsType<ConditionNode>(ast);
+        var cond = Assert.IsInstanceOfType<ConditionNode>(ast);
 
         // Elvis desugars to: x ? x : "default"
-        Assert.NotNull(cond.Then);
-        Assert.NotNull(cond.Else);
+        Assert.IsNotNull(cond.Then);
+        Assert.IsNotNull(cond.Else);
     }
 
-    [Fact]
+    [TestMethod]
     public void NullCoalesceOperator()
     {
         var ast = Parser.Parse("x ?? \"fallback\"");
-        var cond = Assert.IsType<ConditionNode>(ast);
+        var cond = Assert.IsInstanceOfType<ConditionNode>(ast);
 
         // Desugars to: $exists(x) ? x : "fallback"
-        Assert.IsType<FunctionCallNode>(cond.Condition);
+        Assert.IsInstanceOfType<FunctionCallNode>(cond.Condition);
     }
 }

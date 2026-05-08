@@ -8,7 +8,8 @@ using Corvus.Text.Json.Jsonata.SourceGenerator;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+using System.Linq;
 
 namespace Corvus.Text.Json.Jsonata.SourceGenerator.Tests;
 
@@ -16,6 +17,7 @@ namespace Corvus.Text.Json.Jsonata.SourceGenerator.Tests;
 /// Tests that the JSONata source generator reports the correct diagnostics
 /// (JASG001–JASG004) for error conditions.
 /// </summary>
+[TestClass]
 public class SourceGeneratorDiagnosticTests
 {
     private const string SourceWithAttribute = """
@@ -31,69 +33,69 @@ public class SourceGeneratorDiagnosticTests
 
     // ----- JASG001: Expression file not found -----
 
-    [Fact]
+    [TestMethod]
     public void JASG001_WhenExpressionFileNotInAdditionalFiles()
     {
         GeneratorDriverRunResult result = RunGenerator(SourceWithAttribute);
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JASG001");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
-        Assert.Contains("test.jsonata", diag.GetMessage());
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JASG001");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
+        StringAssert.Contains(diag.GetMessage(), "test.jsonata");
     }
 
     // ----- JASG002: Empty expression file -----
 
-    [Fact]
+    [TestMethod]
     public void JASG002_WhenExpressionFileIsEmpty()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonataFiles: [new InMemoryAdditionalText("test.jsonata", string.Empty)]);
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JASG002");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
-        Assert.Contains("test.jsonata", diag.GetMessage());
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JASG002");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
+        StringAssert.Contains(diag.GetMessage(), "test.jsonata");
     }
 
-    [Fact]
+    [TestMethod]
     public void JASG002_WhenExpressionFileIsWhitespaceOnly()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonataFiles: [new InMemoryAdditionalText("test.jsonata", "   \n  \t  ")]);
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JASG002");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JASG002");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
     }
 
     // ----- JASG003: Code generation failed -----
 
-    [Fact]
+    [TestMethod]
     public void JASG003_WhenExpressionIsInvalid()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonataFiles: [new InMemoryAdditionalText("test.jsonata", "###invalid")]);
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JASG003");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
-        Assert.Contains("test.jsonata", diag.GetMessage());
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JASG003");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
+        StringAssert.Contains(diag.GetMessage(), "test.jsonata");
     }
 
-    [Fact]
+    [TestMethod]
     public void JASG003_WhenExpressionHasUnterminatedString()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonataFiles: [new InMemoryAdditionalText("test.jsonata", "\"unterminated")]);
 
-        Diagnostic diag = Assert.Single(result.Diagnostics, d => d.Id == "JASG003");
-        Assert.Equal(DiagnosticSeverity.Error, diag.Severity);
+        Diagnostic diag = (result.Diagnostics).Single(d => d.Id == "JASG003");
+        Assert.AreEqual(DiagnosticSeverity.Error, diag.Severity);
     }
 
     // ----- JASG004: Custom function parse error -----
 
-    [Fact]
+    [TestMethod]
     public void JASG004_WhenJfnFileIsMalformed()
     {
         GeneratorDriverRunResult result = RunGenerator(
@@ -107,31 +109,31 @@ public class SourceGeneratorDiagnosticTests
 
         // Either the invalid jfn triggers JASG004, or the expression compiles
         // (possibly with JASG003 if codegen fails)
-        Assert.True(
+        Assert.IsTrue(
             hasJasg004 || result.Diagnostics.IsEmpty || hasJasg003,
             $"Unexpected diagnostics: {string.Join(", ", result.Diagnostics.Select(d => d.Id))}");
     }
 
     // ----- No diagnostics for valid expression -----
 
-    [Fact]
+    [TestMethod]
     public void NoDiagnostics_WhenExpressionIsValid()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonataFiles: [new InMemoryAdditionalText("test.jsonata", "x + y")]);
 
-        Assert.Empty(result.Diagnostics);
+        Assert.AreEqual(0, (result.Diagnostics).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void NoDiagnostics_WhenExpressionIsComplex()
     {
         GeneratorDriverRunResult result = RunGenerator(
             SourceWithAttribute,
             jsonataFiles: [new InMemoryAdditionalText("test.jsonata", "$sum(items.(price * quantity))")]);
 
-        Assert.Empty(result.Diagnostics);
+        Assert.AreEqual(0, (result.Diagnostics).Count());
     }
 
     // ----- Helpers -----

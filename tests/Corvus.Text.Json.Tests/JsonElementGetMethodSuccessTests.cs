@@ -2,30 +2,31 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Collections.Generic;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 /// <summary>
 /// Tests for successful value retrieval in JsonElement Get*() methods.
 /// </summary>
+[TestClass]
 public class JsonElementGetMethodSuccessTests
 {
     #region Numeric Success Tests
 
-    [Theory]
-    [MemberData(nameof(GetByteTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetByteTestData))]
     public void GetByte_ValidValues_ReturnsExpected(byte expected)
     {
         string json = expected.ToString();
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         byte result = element.GetByte();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetByteTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetByteTestData))]
     public void GetByte_Mutable_ValidValues_ReturnsExpected(byte expected)
     {
         string json = expected.ToString();
@@ -33,25 +34,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         byte result = element.GetByte();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetSByteTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetSByteTestData))]
     public void GetSByte_ValidValues_ReturnsExpected(sbyte expected)
     {
         string json = expected.ToString();
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         sbyte result = element.GetSByte();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetSByteTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetSByteTestData))]
     public void GetSByte_Mutable_ValidValues_ReturnsExpected(sbyte expected)
     {
         string json = expected.ToString();
@@ -59,25 +60,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         sbyte result = element.GetSByte();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetInt16TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt16TestData))]
     public void GetInt16_ValidValues_ReturnsExpected(short expected)
     {
         string json = expected.ToString();
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         short result = element.GetInt16();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetInt16TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt16TestData))]
     public void GetInt16_Mutable_ValidValues_ReturnsExpected(short expected)
     {
         string json = expected.ToString();
@@ -85,25 +86,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         short result = element.GetInt16();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt16TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt16TestData))]
     public void GetUInt16_ValidValues_ReturnsExpected(ushort expected)
     {
         string json = expected.ToString();
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         ushort result = element.GetUInt16();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt16TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt16TestData))]
     public void GetUInt16_Mutable_ValidValues_ReturnsExpected(ushort expected)
     {
         string json = expected.ToString();
@@ -111,25 +112,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         ushort result = element.GetUInt16();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetInt32TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt32TestData))]
     public void GetInt32_ValidValues_ReturnsExpected(int expected)
     {
         string json = expected.ToString();
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         int result = element.GetInt32();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetInt32TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt32TestData))]
     public void GetInt32_Mutable_ValidValues_ReturnsExpected(int expected)
     {
         string json = expected.ToString();
@@ -137,25 +138,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         int result = element.GetInt32();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt32TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt32TestData))]
     public void GetUInt32_ValidValues_ReturnsExpected(uint expected)
     {
         string json = expected.ToString();
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         uint result = element.GetUInt32();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt32TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt32TestData))]
     public void GetUInt32_Mutable_ValidValues_ReturnsExpected(uint expected)
     {
         string json = expected.ToString();
@@ -163,25 +164,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         uint result = element.GetUInt32();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetInt64TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt64TestData))]
     public void GetInt64_ValidValues_ReturnsExpected(long expected)
     {
         string json = expected.ToString();
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         long result = element.GetInt64();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetInt64TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt64TestData))]
     public void GetInt64_Mutable_ValidValues_ReturnsExpected(long expected)
     {
         string json = expected.ToString();
@@ -189,25 +190,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         long result = element.GetInt64();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt64TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt64TestData))]
     public void GetUInt64_ValidValues_ReturnsExpected(ulong expected)
     {
         string json = expected.ToString();
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         ulong result = element.GetUInt64();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt64TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt64TestData))]
     public void GetUInt64_Mutable_ValidValues_ReturnsExpected(ulong expected)
     {
         string json = expected.ToString();
@@ -215,25 +216,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         ulong result = element.GetUInt64();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetSingleTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetSingleTestData))]
     public void GetSingle_ValidValues_ReturnsExpected(float expected)
     {
         string json = expected.ToString("R");
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         float result = element.GetSingle();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetSingleTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetSingleTestData))]
     public void GetSingle_Mutable_ValidValues_ReturnsExpected(float expected)
     {
         string json = expected.ToString("R");
@@ -241,25 +242,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         float result = element.GetSingle();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetDoubleTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetDoubleTestData))]
     public void GetDouble_ValidValues_ReturnsExpected(double expected)
     {
         string json = expected.ToString("R");
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         double result = element.GetDouble();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetDoubleTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetDoubleTestData))]
     public void GetDouble_Mutable_ValidValues_ReturnsExpected(double expected)
     {
         string json = expected.ToString("R");
@@ -267,25 +268,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         double result = element.GetDouble();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetDecimalTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetDecimalTestData))]
     public void GetDecimal_ValidValues_ReturnsExpected(decimal expected)
     {
         string json = expected.ToString();
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         decimal result = element.GetDecimal();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetDecimalTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetDecimalTestData))]
     public void GetDecimal_Mutable_ValidValues_ReturnsExpected(decimal expected)
     {
         string json = expected.ToString();
@@ -293,9 +294,9 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         decimal result = element.GetDecimal();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
@@ -303,20 +304,20 @@ public class JsonElementGetMethodSuccessTests
 #if NET
     #region Int128/UInt128/Half Success Tests
 
-    [Theory]
-    [MemberData(nameof(GetInt128TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt128TestData))]
     public void GetInt128_ValidValues_ReturnsExpected(string json, string expectedStr)
     {
         var expected = Int128.Parse(expectedStr);
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         Int128 result = element.GetInt128();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetInt128TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt128TestData))]
     public void GetInt128_Mutable_ValidValues_ReturnsExpected(string json, string expectedStr)
     {
         var expected = Int128.Parse(expectedStr);
@@ -324,25 +325,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         Int128 result = element.GetInt128();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetInt128TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt128TestData))]
     public void TryGetInt128_ValidValues_ReturnsTrue(string json, string expectedStr)
     {
         var expected = Int128.Parse(expectedStr);
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
-        Assert.True(element.TryGetInt128(out Int128 result));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
+        Assert.IsTrue(element.TryGetInt128(out Int128 result));
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetInt128TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetInt128TestData))]
     public void TryGetInt128_Mutable_ValidValues_ReturnsTrue(string json, string expectedStr)
     {
         var expected = Int128.Parse(expectedStr);
@@ -350,25 +351,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
-        Assert.True(element.TryGetInt128(out Int128 result));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
+        Assert.IsTrue(element.TryGetInt128(out Int128 result));
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt128TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt128TestData))]
     public void GetUInt128_ValidValues_ReturnsExpected(string json, string expectedStr)
     {
         var expected = UInt128.Parse(expectedStr);
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         UInt128 result = element.GetUInt128();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt128TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt128TestData))]
     public void GetUInt128_Mutable_ValidValues_ReturnsExpected(string json, string expectedStr)
     {
         var expected = UInt128.Parse(expectedStr);
@@ -376,25 +377,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         UInt128 result = element.GetUInt128();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt128TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt128TestData))]
     public void TryGetUInt128_ValidValues_ReturnsTrue(string json, string expectedStr)
     {
         var expected = UInt128.Parse(expectedStr);
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
-        Assert.True(element.TryGetUInt128(out UInt128 result));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
+        Assert.IsTrue(element.TryGetUInt128(out UInt128 result));
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetUInt128TestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetUInt128TestData))]
     public void TryGetUInt128_Mutable_ValidValues_ReturnsTrue(string json, string expectedStr)
     {
         var expected = UInt128.Parse(expectedStr);
@@ -402,25 +403,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
-        Assert.True(element.TryGetUInt128(out UInt128 result));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
+        Assert.IsTrue(element.TryGetUInt128(out UInt128 result));
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetHalfTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetHalfTestData))]
     public void GetHalf_ValidValues_ReturnsExpected(string json, double expectedDouble)
     {
         var expected = (Half)expectedDouble;
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         Half result = element.GetHalf();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetHalfTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetHalfTestData))]
     public void GetHalf_Mutable_ValidValues_ReturnsExpected(string json, double expectedDouble)
     {
         var expected = (Half)expectedDouble;
@@ -428,25 +429,25 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
         Half result = element.GetHalf();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetHalfTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetHalfTestData))]
     public void TryGetHalf_ValidValues_ReturnsTrue(string json, double expectedDouble)
     {
         var expected = (Half)expectedDouble;
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
-        Assert.True(element.TryGetHalf(out Half result));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
+        Assert.IsTrue(element.TryGetHalf(out Half result));
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [MemberData(nameof(GetHalfTestData))]
+    [TestMethod]
+    [DynamicData(nameof(GetHalfTestData))]
     public void TryGetHalf_Mutable_ValidValues_ReturnsTrue(string json, double expectedDouble)
     {
         var expected = (Half)expectedDouble;
@@ -454,9 +455,9 @@ public class JsonElementGetMethodSuccessTests
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Number, element.ValueKind);
-        Assert.True(element.TryGetHalf(out Half result));
-        Assert.Equal(expected, result);
+        Assert.AreEqual(JsonValueKind.Number, element.ValueKind);
+        Assert.IsTrue(element.TryGetHalf(out Half result));
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
@@ -464,20 +465,20 @@ public class JsonElementGetMethodSuccessTests
 
     #region Boolean Success Tests
 
-    [Theory]
-    [InlineData("true", true)]
-    [InlineData("false", false)]
+    [TestMethod]
+    [DataRow("true", true)]
+    [DataRow("false", false)]
     public void GetBoolean_ValidValues_ReturnsExpected(string json, bool expected)
     {
         var element = JsonElement.ParseValue(json);
 
         bool result = element.GetBoolean();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("true", true)]
-    [InlineData("false", false)]
+    [TestMethod]
+    [DataRow("true", true)]
+    [DataRow("false", false)]
     public void GetBoolean_Mutable_ValidValues_ReturnsExpected(string json, bool expected)
     {
         using var workspace = JsonWorkspace.Create();
@@ -485,39 +486,39 @@ public class JsonElementGetMethodSuccessTests
         JsonElement.Mutable element = doc.RootElement;
 
         bool result = element.GetBoolean();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region String Success Tests
 
-    [Theory]
-    [InlineData("\"\"", "")]
-    [InlineData("\"Hello World\"", "Hello World")]
-    [InlineData("\"\\u0048\\u0065\\u006C\\u006C\\u006F\"", "Hello")]
-    [InlineData("\"Line1\\nLine2\"", "Line1\nLine2")]
-    [InlineData("\"Tab\\tSeparated\"", "Tab\tSeparated")]
-    [InlineData("\"Quote: \\\"Hello\\\"\"", "Quote: \"Hello\"")]
-    [InlineData("\"Backslash: \\\\\"", "Backslash: \\")]
-    [InlineData("null", null)]
+    [TestMethod]
+    [DataRow("\"\"", "")]
+    [DataRow("\"Hello World\"", "Hello World")]
+    [DataRow("\"\\u0048\\u0065\\u006C\\u006C\\u006F\"", "Hello")]
+    [DataRow("\"Line1\\nLine2\"", "Line1\nLine2")]
+    [DataRow("\"Tab\\tSeparated\"", "Tab\tSeparated")]
+    [DataRow("\"Quote: \\\"Hello\\\"\"", "Quote: \"Hello\"")]
+    [DataRow("\"Backslash: \\\\\"", "Backslash: \\")]
+    [DataRow("null", null)]
     public void GetString_ValidValues_ReturnsExpected(string json, string expected)
     {
         var element = JsonElement.ParseValue(json);
 
         string result = element.GetString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("\"\"", "")]
-    [InlineData("\"Hello World\"", "Hello World")]
-    [InlineData("\"\\u0048\\u0065\\u006C\\u006C\\u006F\"", "Hello")]
-    [InlineData("\"Line1\\nLine2\"", "Line1\nLine2")]
-    [InlineData("\"Tab\\tSeparated\"", "Tab\tSeparated")]
-    [InlineData("\"Quote: \\\"Hello\\\"\"", "Quote: \"Hello\"")]
-    [InlineData("\"Backslash: \\\\\"", "Backslash: \\")]
-    [InlineData("null", null)]
+    [TestMethod]
+    [DataRow("\"\"", "")]
+    [DataRow("\"Hello World\"", "Hello World")]
+    [DataRow("\"\\u0048\\u0065\\u006C\\u006C\\u006F\"", "Hello")]
+    [DataRow("\"Line1\\nLine2\"", "Line1\nLine2")]
+    [DataRow("\"Tab\\tSeparated\"", "Tab\tSeparated")]
+    [DataRow("\"Quote: \\\"Hello\\\"\"", "Quote: \"Hello\"")]
+    [DataRow("\"Backslash: \\\\\"", "Backslash: \\")]
+    [DataRow("null", null)]
     public void GetString_Mutable_ValidValues_ReturnsExpected(string json, string expected)
     {
         using var workspace = JsonWorkspace.Create();
@@ -525,127 +526,127 @@ public class JsonElementGetMethodSuccessTests
         JsonElement.Mutable element = doc.RootElement;
 
         string result = element.GetString();
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region DateTime Success Tests
 
-    [Theory]
-    [InlineData("\"2024-01-01T00:00:00Z\"")]
-    [InlineData("\"2024-12-31T23:59:59.999Z\"")]
-    [InlineData("\"2024-06-15T12:30:45.123+05:30\"")]
-    [InlineData("\"2024-06-15T12:30:45.123-08:00\"")]
-    [InlineData("\"1997-07-16T19:20:30.4555555Z\"")]
+    [TestMethod]
+    [DataRow("\"2024-01-01T00:00:00Z\"")]
+    [DataRow("\"2024-12-31T23:59:59.999Z\"")]
+    [DataRow("\"2024-06-15T12:30:45.123+05:30\"")]
+    [DataRow("\"2024-06-15T12:30:45.123-08:00\"")]
+    [DataRow("\"1997-07-16T19:20:30.4555555Z\"")]
     public void GetDateTimeOffset_ValidValues_ReturnsExpected(string json)
     {
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.String, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, element.ValueKind);
         DateTimeOffset result = element.GetDateTimeOffset();
 
         // Verify it parses successfully
-        Assert.True(DateTimeOffset.TryParse(json.Trim('"'), out DateTimeOffset expected));
+        Assert.IsTrue(DateTimeOffset.TryParse(json.Trim('"'), out DateTimeOffset expected));
         // Allow for some precision differences in fractional seconds
-        Assert.True(Math.Abs((result - expected).TotalMilliseconds) < 1);
+        Assert.IsTrue(Math.Abs((result - expected).TotalMilliseconds) < 1);
     }
 
-    [Theory]
-    [InlineData("\"2024-01-01T00:00:00Z\"")]
-    [InlineData("\"2024-12-31T23:59:59.999Z\"")]
-    [InlineData("\"2024-06-15T12:30:45.123+05:30\"")]
-    [InlineData("\"2024-06-15T12:30:45.123-08:00\"")]
-    [InlineData("\"1997-07-16T19:20:30.4555555Z\"")]
+    [TestMethod]
+    [DataRow("\"2024-01-01T00:00:00Z\"")]
+    [DataRow("\"2024-12-31T23:59:59.999Z\"")]
+    [DataRow("\"2024-06-15T12:30:45.123+05:30\"")]
+    [DataRow("\"2024-06-15T12:30:45.123-08:00\"")]
+    [DataRow("\"1997-07-16T19:20:30.4555555Z\"")]
     public void GetDateTimeOffset_Mutable_ValidValues_ReturnsExpected(string json)
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.String, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, element.ValueKind);
         DateTimeOffset result = element.GetDateTimeOffset();
 
         // Verify it parses successfully
-        Assert.True(DateTimeOffset.TryParse(json.Trim('"'), out DateTimeOffset expected));
+        Assert.IsTrue(DateTimeOffset.TryParse(json.Trim('"'), out DateTimeOffset expected));
         // Allow for some precision differences in fractional seconds
-        Assert.True(Math.Abs((result - expected).TotalMilliseconds) < 1);
+        Assert.IsTrue(Math.Abs((result - expected).TotalMilliseconds) < 1);
     }
 
     #endregion
 
     #region Guid Success Tests
 
-    [Theory]
-    [InlineData("\"12345678-1234-1234-1234-123456789012\"")]
-    [InlineData("\"00000000-0000-0000-0000-000000000000\"")]
-    [InlineData("\"FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF\"")]
-    [InlineData("\"550e8400-e29b-41d4-a716-446655440000\"")]
+    [TestMethod]
+    [DataRow("\"12345678-1234-1234-1234-123456789012\"")]
+    [DataRow("\"00000000-0000-0000-0000-000000000000\"")]
+    [DataRow("\"FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF\"")]
+    [DataRow("\"550e8400-e29b-41d4-a716-446655440000\"")]
     public void GetGuid_ValidValues_ReturnsExpected(string json)
     {
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.String, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, element.ValueKind);
         Guid result = element.GetGuid();
 
         // Verify it parses successfully
         string guidString = json.Trim('"');
-        Assert.True(Guid.TryParse(guidString, out Guid expected));
-        Assert.Equal(expected, result);
+        Assert.IsTrue(Guid.TryParse(guidString, out Guid expected));
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("\"12345678-1234-1234-1234-123456789012\"")]
-    [InlineData("\"00000000-0000-0000-0000-000000000000\"")]
-    [InlineData("\"FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF\"")]
-    [InlineData("\"550e8400-e29b-41d4-a716-446655440000\"")]
+    [TestMethod]
+    [DataRow("\"12345678-1234-1234-1234-123456789012\"")]
+    [DataRow("\"00000000-0000-0000-0000-000000000000\"")]
+    [DataRow("\"FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF\"")]
+    [DataRow("\"550e8400-e29b-41d4-a716-446655440000\"")]
     public void GetGuid_Mutable_ValidValues_ReturnsExpected(string json)
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.String, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, element.ValueKind);
         Guid result = element.GetGuid();
 
         // Verify it parses successfully
         string guidString = json.Trim('"');
-        Assert.True(Guid.TryParse(guidString, out Guid expected));
-        Assert.Equal(expected, result);
+        Assert.IsTrue(Guid.TryParse(guidString, out Guid expected));
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region Base64 Success Tests
 
-    [Theory]
-    [InlineData("\"\"", new byte[0])]
-    [InlineData("\"SGVsbG8=\"", new byte[] { 72, 101, 108, 108, 111 })] // "Hello"
-    [InlineData("\"AQID\"", new byte[] { 1, 2, 3 })]
-    [InlineData("\"QWxhZGRpbjpvcGVuIHNlc2FtZQ==\"", new byte[] { 65, 108, 97, 100, 100, 105, 110, 58, 111, 112, 101, 110, 32, 115, 101, 115, 97, 109, 101 })] // "Aladdin:open sesame"
+    [TestMethod]
+    [DataRow("\"\"", new byte[0])]
+    [DataRow("\"SGVsbG8=\"", new byte[] { 72, 101, 108, 108, 111 })] // "Hello"
+    [DataRow("\"AQID\"", new byte[] { 1, 2, 3 })]
+    [DataRow("\"QWxhZGRpbjpvcGVuIHNlc2FtZQ==\"", new byte[] { 65, 108, 97, 100, 100, 105, 110, 58, 111, 112, 101, 110, 32, 115, 101, 115, 97, 109, 101 })] // "Aladdin:open sesame"
     public void GetBytesFromBase64_ValidValues_ReturnsExpected(string json, byte[] expected)
     {
         var element = JsonElement.ParseValue(json);
 
-        Assert.Equal(JsonValueKind.String, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, element.ValueKind);
         byte[] result = element.GetBytesFromBase64();
-        Assert.Equal(expected, result);
+        CollectionAssert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("\"\"", new byte[0])]
-    [InlineData("\"SGVsbG8=\"", new byte[] { 72, 101, 108, 108, 111 })] // "Hello"
-    [InlineData("\"AQID\"", new byte[] { 1, 2, 3 })]
-    [InlineData("\"QWxhZGRpbjpvcGVuIHNlc2FtZQ==\"", new byte[] { 65, 108, 97, 100, 100, 105, 110, 58, 111, 112, 101, 110, 32, 115, 101, 115, 97, 109, 101 })] // "Aladdin:open sesame"
+    [TestMethod]
+    [DataRow("\"\"", new byte[0])]
+    [DataRow("\"SGVsbG8=\"", new byte[] { 72, 101, 108, 108, 111 })] // "Hello"
+    [DataRow("\"AQID\"", new byte[] { 1, 2, 3 })]
+    [DataRow("\"QWxhZGRpbjpvcGVuIHNlc2FtZQ==\"", new byte[] { 65, 108, 97, 100, 100, 105, 110, 58, 111, 112, 101, 110, 32, 115, 101, 115, 97, 109, 101 })] // "Aladdin:open sesame"
     public void GetBytesFromBase64_Mutable_ValidValues_ReturnsExpected(string json, byte[] expected)
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<JsonElement.Mutable> doc = JsonElement.CreateBuilder(workspace, JsonElement.ParseValue(json));
         JsonElement.Mutable element = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.String, element.ValueKind);
+        Assert.AreEqual(JsonValueKind.String, element.ValueKind);
         byte[] result = element.GetBytesFromBase64();
-        Assert.Equal(expected, result);
+        CollectionAssert.AreEqual(expected, result);
     }
 
     #endregion

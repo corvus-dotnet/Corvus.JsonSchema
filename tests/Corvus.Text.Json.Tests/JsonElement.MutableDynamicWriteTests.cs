@@ -4,18 +4,19 @@
 using System.Buffers;
 using System.IO;
 using System.Text.Encodings.Web;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
+[TestClass]
 public sealed class JsonDocumentBuilderDynamicWriteTests : JsonDomDocumentBuilderDynamicWriteTests
 {
-    [Fact]
-    public static void CheckByPassingNullWriter()
+    [TestMethod]
+    public void CheckByPassingNullWriter()
     {
         using (var doc = ParsedJsonDocument<JsonElement>.Parse("true", default))
         {
-            AssertExtensions.Throws<ArgumentNullException>("writer", () => doc.WriteTo(null));
+            AssertEx.ThrowsExactly<ArgumentNullException>("writer", () => doc.WriteTo(null));
         }
     }
 
@@ -44,9 +45,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             CommentHandling = JsonCommentHandling.Skip,
         };
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void ReadWriteEscapedPropertyNames(bool indented)
     {
         const string jsonIn = " { \"p\\u0069zza\": 1, \"hello\\u003c\\u003e\": 2, \"normal\": 3 }";
@@ -62,17 +63,17 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{\"pizza\":1,\"hello\\u003c\\u003e\":2,\"normal\":3}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteAsciiString(bool indented)
     {
         WriteSimpleValue(indented, "\"pizza\"");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteAsciiStringAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -85,31 +86,31 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{\"dinner\":\"pizza\"}");
     }
 
-    [Theory]
-    [InlineData("6.022e+23", "6,022e+23")]
-    [InlineData("6.022e+23", "6.022f+23")]
-    [InlineData("6.022e+23", "6.022e+ 3")]
-    [InlineData("6.022e+23", "6e022e+23")]
-    [InlineData("6.022e+23", "6.022e+f3")]
-    [InlineData("1", "-")]
-    [InlineData("12", "+2")]
-    [InlineData("12", "1e")]
-    [InlineData("12", "1.")]
-    [InlineData("12", "02")]
-    [InlineData("123", "1e+")]
-    [InlineData("123", "1e-")]
-    [InlineData("0.12", "0.1e")]
-    [InlineData("0.123", "0.1e+")]
-    [InlineData("0.123", "0.1e-")]
-    [InlineData("10", "+0")]
-    [InlineData("101", "-01")]
-    [InlineData("12", "1a")]
-    [InlineData("10", "00")]
-    [InlineData("11", "01")]
-    [InlineData("10.5e-012", "10.5e-0.2")]
-    [InlineData("10.5e012", "10.5.012")]
-    [InlineData("0.123", "0.-23")]
-    [InlineData("12345", "hello")]
+    [TestMethod]
+    [DataRow("6.022e+23", "6,022e+23")]
+    [DataRow("6.022e+23", "6.022f+23")]
+    [DataRow("6.022e+23", "6.022e+ 3")]
+    [DataRow("6.022e+23", "6e022e+23")]
+    [DataRow("6.022e+23", "6.022e+f3")]
+    [DataRow("1", "-")]
+    [DataRow("12", "+2")]
+    [DataRow("12", "1e")]
+    [DataRow("12", "1.")]
+    [DataRow("12", "02")]
+    [DataRow("123", "1e+")]
+    [DataRow("123", "1e-")]
+    [DataRow("0.12", "0.1e")]
+    [DataRow("0.123", "0.1e+")]
+    [DataRow("0.123", "0.1e-")]
+    [DataRow("10", "+0")]
+    [DataRow("101", "-01")]
+    [DataRow("12", "1a")]
+    [DataRow("10", "00")]
+    [DataRow("11", "01")]
+    [DataRow("10.5e-012", "10.5e-0.2")]
+    [DataRow("10.5e012", "10.5.012")]
+    [DataRow("0.123", "0.-23")]
+    [DataRow("12345", "hello")]
     public void WriteCorruptedNumber(string parseJson, string overwriteJson)
     {
         if (overwriteJson.Length != parseJson.Length)
@@ -132,7 +133,7 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
                 {
                     // Overwrite the number in the memory buffer still referenced by the document.
                     // If it doesn't hit a 100% overlap then we're not testing what we thought we were.
-                    Assert.Equal(
+                    Assert.AreEqual(
                         utf8Data.Length,
                         Encoding.UTF8.GetBytes(inputPtr, overwriteJson.Length, dataPtr, utf8Data.Length));
                 }
@@ -140,15 +141,15 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
 
             // We build the mutable document having corrupted the source data.
             // This throws because we validate the number during the build
-            AssertExtensions.Throws<ArgumentException>(
+            AssertEx.ThrowsExactly<ArgumentException>(
                 "utf8FormattedNumber",
                 () => parsedDocument.RootElement.BuildDynamicDocument(workspace).Dispose());
         }
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEmptyArray(bool indented)
     {
         WriteComplexValue(
@@ -158,9 +159,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "[]");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEmptyArrayAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -173,9 +174,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{\"arr\":[]}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEmptyCommentedArray(bool indented)
     {
         WriteComplexValue(
@@ -185,9 +186,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "[]");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEmptyCommentedArrayAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -200,9 +201,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{\"arr\":[]}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEmptyCommentedObject(bool indented)
     {
         WriteComplexValue(
@@ -212,9 +213,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEmptyCommentedObjectAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -227,9 +228,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{\"obj\":{}}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEmptyObject(bool indented)
     {
         WriteComplexValue(
@@ -239,9 +240,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEmptyObjectAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -254,9 +255,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{\"obj\":{}}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEscapedNonAsciiString(bool indented)
     {
         // In the JSON input the U+00ED (lowercase i, acute) is a literal char,
@@ -273,9 +274,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
         WriteSimpleValue(indented, "\"p\u00cdz\\u007Aa\"", "\"p\\u00CDzza\"");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEscapedNonAsciiStringAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -288,17 +289,17 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{\"lunch\":\"p\\u00CDzza\"}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEscapedString(bool indented)
     {
         WriteSimpleValue(indented, "\"p\\u0069zza\"", "\"pizza\"");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEscapedStringAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -311,9 +312,9 @@ public abstract class JsonDomDocumentBuilderDynamicWriteTests
             "{\"dinner\":\"pizza\"}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEverythingArray(bool indented)
     {
         WriteComplexValue(
@@ -394,9 +395,9 @@ null,
                 "\"second property\":null}]");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEverythingArrayAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -481,9 +482,9 @@ null,
                 "\"second property\":null}]}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEverythingObject(bool indented)
     {
         WriteComplexValue(
@@ -535,9 +536,9 @@ null,
                 "\"obj\":{\"arr\":[1,3,5,7,11]}}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteEverythingObjectAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -593,17 +594,17 @@ null,
                 "\"obj\":{\"arr\":[1,3,5,7,11]}}}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteFalse(bool indented)
     {
         WriteSimpleValue(indented, "false");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteFalseAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -616,7 +617,7 @@ null,
             "{\" boolean \":false}");
     }
 
-    [Fact]
+    [TestMethod]
     public void WriteIncredibleDepth()
     {
         const int TargetDepth = 500;
@@ -647,15 +648,15 @@ null,
 
             ReadOnlySpan<byte> formatted = buffer.WrittenSpan;
 
-            Assert.Equal(TargetDepth + TargetDepth, formatted.Length);
-            Assert.True(formatted.Slice(0, TargetDepth).SequenceEqual(openBrackets), "OpenBrackets match");
-            Assert.True(formatted.Slice(TargetDepth).SequenceEqual(closeBrackets), "CloseBrackets match");
+            Assert.AreEqual(TargetDepth + TargetDepth, formatted.Length);
+            Assert.IsTrue(formatted.Slice(0, TargetDepth).SequenceEqual(openBrackets), "OpenBrackets match");
+            Assert.IsTrue(formatted.Slice(TargetDepth).SequenceEqual(closeBrackets), "CloseBrackets match");
         }
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNonAsciiString(bool indented)
     {
         // In the JSON input the U+00ED (lowercase i, acute) is a literal char,
@@ -669,9 +670,9 @@ null,
         WriteSimpleValue(indented, "\"p\u00cdzza\"", "\"p\\u00CDzza\"");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNonAsciiStringAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -684,17 +685,17 @@ null,
             "{\"lunch\":\"p\\u00CDzza\"}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNull(bool indented)
     {
         WriteSimpleValue(indented, "null");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNullAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -707,17 +708,17 @@ null,
             "{\"someProp\":null}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNumber(bool indented)
     {
         WriteSimpleValue(indented, "42");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNumberAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -730,9 +731,9 @@ null,
             "{\"ectoplasm\":42}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNumberAsPropertyWithLargeName(bool indented)
     {
         char[] charArray = new char[300];
@@ -750,28 +751,28 @@ null,
             $"{{\"\\u00EA{propertyName.Substring(1)}\":42}}");
     }
 
-    [Theory]
-    [InlineData("1.2E+3", false)]
-    [InlineData("5.012e-20", false)]
-    [InlineData("5.012e-20", true)]
-    [InlineData("5.012e20", false)]
-    [InlineData("5.012e20", true)]
-    [InlineData("5.012e+20", false)]
-    [InlineData("5.012e+20", true)]
-    [InlineData("-5.012e-20", false)]
-    [InlineData("-5.012e-20", true)]
-    [InlineData("-5.012e20", false)]
-    [InlineData("-5.012e20", true)]
-    [InlineData("-5.012e+20", false)]
-    [InlineData("-5.012e+20", true)]
+    [TestMethod]
+    [DataRow("1.2E+3", false)]
+    [DataRow("5.012e-20", false)]
+    [DataRow("5.012e-20", true)]
+    [DataRow("5.012e20", false)]
+    [DataRow("5.012e20", true)]
+    [DataRow("5.012e+20", false)]
+    [DataRow("5.012e+20", true)]
+    [DataRow("-5.012e-20", false)]
+    [DataRow("-5.012e-20", true)]
+    [DataRow("-5.012e20", false)]
+    [DataRow("-5.012e20", true)]
+    [DataRow("-5.012e+20", false)]
+    [DataRow("-5.012e+20", true)]
     public void WriteNumberDecimalScientific(string value, bool indented)
     {
         WriteSimpleValue(indented, value);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNumberOverprecise(bool indented)
     {
         // This value is a reference "potential interoperability problem" from
@@ -782,14 +783,14 @@ null,
         // confirm the printing precision of double, like
         //
         //double precisePi = double.Parse(PrecisePi);
-        //Assert.NotEqual(PrecisePi, precisePi.ToString(JsonTestHelper.DoubleFormatString));
+        //Assert.AreNotEqual(PrecisePi, precisePi.ToString(JsonTestHelper.DoubleFormatString));
 
         WriteSimpleValue(indented, PrecisePi);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNumberOverpreciseAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -802,28 +803,28 @@ null,
             "{\"test property\":3.141592653589793238462643383279}");
     }
 
-    [Theory]
-    [InlineData("12E-3", false)]
-    [InlineData("1e6", false)]
-    [InlineData("1e6", true)]
-    [InlineData("1e+6", false)]
-    [InlineData("1e+6", true)]
-    [InlineData("1e-6", false)]
-    [InlineData("1e-6", true)]
-    [InlineData("-1e6", false)]
-    [InlineData("-1e6", true)]
-    [InlineData("-1e+6", false)]
-    [InlineData("-1e+6", true)]
-    [InlineData("-1e-6", false)]
-    [InlineData("-1e-6", true)]
+    [TestMethod]
+    [DataRow("12E-3", false)]
+    [DataRow("1e6", false)]
+    [DataRow("1e6", true)]
+    [DataRow("1e+6", false)]
+    [DataRow("1e+6", true)]
+    [DataRow("1e-6", false)]
+    [DataRow("1e-6", true)]
+    [DataRow("-1e6", false)]
+    [DataRow("-1e6", true)]
+    [DataRow("-1e+6", false)]
+    [DataRow("-1e+6", true)]
+    [DataRow("-1e-6", false)]
+    [DataRow("-1e-6", true)]
     public void WriteNumberScientific(string value, bool indented)
     {
         WriteSimpleValue(indented, value);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNumberScientificAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -836,9 +837,9 @@ null,
             "{\"m\\u00EAl\\u00E9e\":1e6}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNumberTooLargeAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -852,9 +853,9 @@ null,
             "{\"\\u0643\\u0628\\u064A\\u0631\":1e400}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteNumberTooLargeScientific(bool indented)
     {
         // This value is a reference "potential interoperability problem" from
@@ -868,9 +869,9 @@ null,
         WriteSimpleValue(indented, OneQuarticGoogol);
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteSimpleArray(bool indented)
     {
         WriteComplexValue(
@@ -889,9 +890,9 @@ null,
             "[2,4,6,0,1]");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteSimpleArrayAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -910,9 +911,9 @@ null,
             "{\"valjean\":[2,4,6,0,1]}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteSimpleObject(bool indented)
     {
         WriteComplexValue(
@@ -929,9 +930,9 @@ null,
             "{\"r\":2,\"d\":2}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteSimpleObjectAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -951,9 +952,9 @@ null,
             "{\"bestMinorCharacter\":{\"r\":2,\"d\":2}}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteSimpleObjectNeedsEscaping(bool indented)
     {
         WriteComplexValue(
@@ -969,17 +970,17 @@ null,
             "{\"prop\\u003E\\u003Certy\":3,\"\\u003E This is one long \\u0026 unusual property name. \\u003C\":4}");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteTrue(bool indented)
     {
         WriteSimpleValue(indented, "true");
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteTrueAsProperty(bool indented)
     {
         WritePropertyValueBothForms(
@@ -992,7 +993,7 @@ null,
             "{\" boolean \":true}");
     }
 
-    [Fact]
+    [TestMethod]
     public void WriteValueSurrogatesEscapeString()
     {
         string unicodeString = "\uD800\uDC00\uD803\uDE6D \uD834\uDD1E\uDBFF\uDFFF";
@@ -1012,13 +1013,13 @@ null,
         }
     }
 
-    [Theory]
-    [InlineData(false, "\"message\"", "\"message\"", true)]
-    [InlineData(true, "\"message\"", "\"message\"", true)]
-    [InlineData(false, "\">><++>>>\\\">>\\\\>>&>>>\u6f22\u5B57>>>\"", "\">><++>>>\\\">>\\\\>>&>>>\u6f22\u5B57>>>\"", false)]
-    [InlineData(true, "\">><++>>>\\\">>\\\\>>&>>>\u6f22\u5B57>>>\"", "\">><++>>>\\\">>\\\\>>&>>>\u6f22\u5B57>>>\"", false)]
-    [InlineData(false, "\"mess\\r\\nage\\u0008\\u0001!\"", "\"mess\\r\\nage\\b\\u0001!\"", true)]
-    [InlineData(true, "\"mess\\r\\nage\\u0008\\u0001!\"", "\"mess\\r\\nage\\b\\u0001!\"", true)]
+    [TestMethod]
+    [DataRow(false, "\"message\"", "\"message\"", true)]
+    [DataRow(true, "\"message\"", "\"message\"", true)]
+    [DataRow(false, "\">><++>>>\\\">>\\\\>>&>>>\u6f22\u5B57>>>\"", "\">><++>>>\\\">>\\\\>>&>>>\u6f22\u5B57>>>\"", false)]
+    [DataRow(true, "\">><++>>>\\\">>\\\\>>&>>>\u6f22\u5B57>>>\"", "\">><++>>>\\\">>\\\\>>&>>>\u6f22\u5B57>>>\"", false)]
+    [DataRow(false, "\"mess\\r\\nage\\u0008\\u0001!\"", "\"mess\\r\\nage\\b\\u0001!\"", true)]
+    [DataRow(true, "\"mess\\r\\nage\\u0008\\u0001!\"", "\"mess\\r\\nage\\b\\u0001!\"", true)]
     public void WriteWithRelaxedEscaper(bool indented, string jsonIn, string jsonOut, bool matchesRelaxedEscaping)
     {
         var buffer = new ArrayBufferWriter<byte>(1024);
@@ -1113,7 +1114,7 @@ null,
                 }
             }
 
-            Assert.True(buffer.WrittenSpan.SequenceEqual(bufferOutput));
+            Assert.IsTrue(buffer.WrittenSpan.SequenceEqual(bufferOutput));
         }
     }
 
@@ -1291,21 +1292,22 @@ null,
     }
 }
 
+[TestClass]
 public sealed class JsonElementMutableDynamicWriteTests : JsonDomDocumentBuilderDynamicWriteTests
 {
-    [Fact]
+    [TestMethod]
     public void CheckByPassingNullWriter()
     {
         using (var doc = ParsedJsonDocument<JsonElement>.Parse("true", default))
         {
             JsonElement root = doc.RootElement;
-            AssertExtensions.Throws<ArgumentNullException>("writer", () => root.WriteTo(null));
+            AssertEx.ThrowsExactly<ArgumentNullException>("writer", () => root.WriteTo(null));
         }
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WritePropertyOutsideObject(bool skipValidation)
     {
         var buffer = new ArrayBufferWriter<byte>(1024);
@@ -1348,10 +1350,10 @@ public sealed class JsonElementMutableDynamicWriteTests : JsonDomDocumentBuilder
             }
             else
             {
-                Assert.Throws<InvalidOperationException>(() => writer.WritePropertyName(CharLabel));
-                Assert.Throws<InvalidOperationException>(() => writer.WritePropertyName(CharLabel.AsSpan()));
-                Assert.Throws<InvalidOperationException>(() => writer.WritePropertyName("byte"u8));
-                Assert.Throws<InvalidOperationException>(() => writer.WritePropertyName(JsonEncodedText.Encode(CharLabel)));
+                Assert.ThrowsExactly<InvalidOperationException>(() => writer.WritePropertyName(CharLabel));
+                Assert.ThrowsExactly<InvalidOperationException>(() => writer.WritePropertyName(CharLabel.AsSpan()));
+                Assert.ThrowsExactly<InvalidOperationException>(() => writer.WritePropertyName("byte"u8));
+                Assert.ThrowsExactly<InvalidOperationException>(() => writer.WritePropertyName(JsonEncodedText.Encode(CharLabel)));
 
                 writer.Flush();
 
@@ -1360,9 +1362,9 @@ public sealed class JsonElementMutableDynamicWriteTests : JsonDomDocumentBuilder
         }
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
     public void WriteValueInsideObject(bool skipValidation)
     {
         var buffer = new ArrayBufferWriter<byte>(1024);
@@ -1395,7 +1397,7 @@ public sealed class JsonElementMutableDynamicWriteTests : JsonDomDocumentBuilder
             {
                 foreach (JsonElement val in root.EnumerateArray())
                 {
-                    Assert.Throws<InvalidOperationException>(() => val.WriteTo(writer));
+                    Assert.ThrowsExactly<InvalidOperationException>(() => val.WriteTo(writer));
                 }
 
                 writer.WriteEndObject();

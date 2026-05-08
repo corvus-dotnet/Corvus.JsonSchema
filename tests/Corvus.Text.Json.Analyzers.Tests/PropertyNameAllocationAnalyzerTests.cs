@@ -12,7 +12,7 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 using AnalyzerTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<
     Corvus.Text.Json.Analyzers.PropertyNameAllocationAnalyzer,
@@ -27,6 +27,7 @@ namespace Corvus.Text.Json.Analyzers.Tests;
 /// <summary>
 /// Tests for CTJ008: Prefer non-allocating property name accessors.
 /// </summary>
+[TestClass]
 public class PropertyNameAllocationAnalyzerTests
 {
     private const string Stubs = @"
@@ -52,7 +53,7 @@ namespace Corvus.Text.Json
     // ========================
     // Positive: == comparison
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task PropertyName_EqualityComparison_FiresCTJ008()
     {
         const string testCode = Stubs + @"
@@ -81,7 +82,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PropertyName_InequalityComparison_FiresCTJ008()
     {
         const string testCode = Stubs + @"
@@ -110,7 +111,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PropertyName_ReversedComparison_FiresCTJ008()
     {
         const string testCode = Stubs + @"
@@ -142,7 +143,7 @@ namespace TestApp
     // ========================
     // Positive: .Equals() call
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task PropertyName_InstanceEquals_FiresCTJ008()
     {
         const string testCode = Stubs + @"
@@ -171,7 +172,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PropertyName_StringEquals_FiresCTJ008()
     {
         const string testCode = Stubs + @"
@@ -203,7 +204,7 @@ namespace TestApp
     // ========================
     // Code fix tests
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task CodeFix_EqualityToNameEquals()
     {
         const string testCode = Stubs + @"
@@ -247,7 +248,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CodeFix_InequalityToNegatedNameEquals()
     {
         const string testCode = Stubs + @"
@@ -291,7 +292,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CodeFix_InstanceEqualsToNameEquals()
     {
         const string testCode = Stubs + @"
@@ -338,7 +339,7 @@ namespace TestApp
     // ========================
     // Negative tests
     // ========================
-    [Fact]
+    [TestMethod]
     public async Task PropertyName_ComparedToVariable_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -361,7 +362,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonJsonProperty_NameComparison_NoDiagnostic()
     {
         const string testCode = @"
@@ -392,7 +393,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PropertyName_UsedAsVariable_NoDiagnostic()
     {
         const string testCode = Stubs + @"
@@ -413,7 +414,7 @@ namespace TestApp
         }.RunAsync();
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NameEquals_AlreadyUsed_NoDiagnostic()
     {
         const string testCode = Stubs + @"

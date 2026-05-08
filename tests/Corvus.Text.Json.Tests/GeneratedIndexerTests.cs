@@ -3,7 +3,7 @@
 
 using System.Text.Json;
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -12,11 +12,12 @@ namespace Corvus.Text.Json.Tests;
 /// Covers: array this[int] (immutable + mutable), object this[string] / this[ReadOnlySpan&lt;byte&gt;] /
 /// this[ReadOnlySpan&lt;char&gt;] (immutable + mutable), and missing-property-returns-default.
 /// </summary>
+[TestClass]
 public class GeneratedIndexerTests
 {
     #region Array immutable indexer — this[int]
 
-    [Fact]
+    [TestMethod]
     public void ArrayOfItems_ImmutableIndexer_ReturnsTypedElements()
     {
         using var doc =
@@ -24,15 +25,15 @@ public class GeneratedIndexerTests
 
         ArrayOfItems root = doc.RootElement;
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, (int)root[0].Id);
-        Assert.Equal("first", (string)root[0].Label);
-        Assert.Equal(2, (int)root[1].Id);
-        Assert.Equal("second", (string)root[1].Label);
-        Assert.Equal(3, (int)root[2].Id);
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, (int)root[0].Id);
+        Assert.AreEqual("first", (string)root[0].Label);
+        Assert.AreEqual(2, (int)root[1].Id);
+        Assert.AreEqual("second", (string)root[1].Label);
+        Assert.AreEqual(3, (int)root[2].Id);
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfArrayWithItems_ImmutableIndexer_ReturnsStringElements()
     {
         using var doc =
@@ -40,13 +41,13 @@ public class GeneratedIndexerTests
 
         AllOfArrayWithItems root = doc.RootElement;
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("hello", root[0].GetString());
-        Assert.Equal("world", root[1].GetString());
-        Assert.Equal("test", root[2].GetString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].GetString());
+        Assert.AreEqual("world", root[1].GetString());
+        Assert.AreEqual("test", root[2].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefArrayWithItems_ImmutableIndexer_ReturnsStringElements()
     {
         using var doc =
@@ -54,16 +55,16 @@ public class GeneratedIndexerTests
 
         RefArrayWithItems root = doc.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("alpha", root[0].GetString());
-        Assert.Equal("beta", root[1].GetString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("alpha", root[0].GetString());
+        Assert.AreEqual("beta", root[1].GetString());
     }
 
     #endregion
 
     #region Array mutable indexer — this[int]
 
-    [Fact]
+    [TestMethod]
     public void ArrayOfItems_MutableIndexer_ReturnsTypedMutableElements()
     {
         using var workspace = JsonWorkspace.Create();
@@ -73,14 +74,14 @@ public class GeneratedIndexerTests
 
         ArrayOfItems.Mutable root = builder.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal(10, (int)root[0].Id);
-        Assert.Equal("a", (string)root[0].Label);
-        Assert.Equal(20, (int)root[1].Id);
-        Assert.Equal("b", (string)root[1].Label);
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual(10, (int)root[0].Id);
+        Assert.AreEqual("a", (string)root[0].Label);
+        Assert.AreEqual(20, (int)root[1].Id);
+        Assert.AreEqual("b", (string)root[1].Label);
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfArrayWithItems_MutableIndexer_ReturnsStringMutableElements()
     {
         using var workspace = JsonWorkspace.Create();
@@ -90,12 +91,12 @@ public class GeneratedIndexerTests
 
         AllOfArrayWithItems.Mutable root = builder.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("foo", root[0].GetString());
-        Assert.Equal("bar", root[1].GetString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("foo", root[0].GetString());
+        Assert.AreEqual("bar", root[1].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefArrayWithItems_MutableIndexer_ReturnsStringMutableElements()
     {
         using var workspace = JsonWorkspace.Create();
@@ -105,17 +106,17 @@ public class GeneratedIndexerTests
 
         RefArrayWithItems.Mutable root = builder.RootElement;
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("x", root[0].GetString());
-        Assert.Equal("y", root[1].GetString());
-        Assert.Equal("z", root[2].GetString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("x", root[0].GetString());
+        Assert.AreEqual("y", root[1].GetString());
+        Assert.AreEqual("z", root[2].GetString());
     }
 
     #endregion
 
     #region Object immutable indexer — this[string]
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_StringIndexer_ReturnsPropertyValues()
     {
         using var doc =
@@ -123,12 +124,12 @@ public class GeneratedIndexerTests
 
         AllOfObjectWithProperties root = doc.RootElement;
 
-        Assert.Equal("Alice", root["name"].GetString());
-        Assert.Equal(30, root["age"].GetInt32());
-        Assert.Equal("a@b.com", root["email"].GetString());
+        Assert.AreEqual("Alice", root["name"].GetString());
+        Assert.AreEqual(30, root["age"].GetInt32());
+        Assert.AreEqual("a@b.com", root["email"].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefObjectWithProperties_StringIndexer_ReturnsPropertyValues()
     {
         using var doc =
@@ -136,12 +137,12 @@ public class GeneratedIndexerTests
 
         RefObjectWithProperties root = doc.RootElement;
 
-        Assert.Equal("Bob", root["name"].GetString());
-        Assert.Equal(25, root["age"].GetInt32());
-        Assert.Equal("bob@test.com", root["email"].GetString());
+        Assert.AreEqual("Bob", root["name"].GetString());
+        Assert.AreEqual(25, root["age"].GetInt32());
+        Assert.AreEqual("bob@test.com", root["email"].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedObject_StringIndexer_ReturnsPropertyValues()
     {
         using var doc =
@@ -149,11 +150,11 @@ public class GeneratedIndexerTests
 
         NestedObject root = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Object, root["address"].ValueKind);
-        Assert.Equal("test", root["notes"].GetString());
+        Assert.AreEqual(JsonValueKind.Object, root["address"].ValueKind);
+        Assert.AreEqual("test", root["notes"].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_StringIndexer_MissingProperty_ReturnsDefault()
     {
         using var doc =
@@ -162,14 +163,14 @@ public class GeneratedIndexerTests
         AllOfObjectWithProperties root = doc.RootElement;
 
         JsonElement missing = root["nonexistent"];
-        Assert.Equal(JsonValueKind.Undefined, missing.ValueKind);
+        Assert.AreEqual(JsonValueKind.Undefined, missing.ValueKind);
     }
 
     #endregion
 
     #region Object immutable indexer — this[ReadOnlySpan<byte>] (UTF-8)
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_Utf8Indexer_ReturnsPropertyValues()
     {
         using var doc =
@@ -177,11 +178,11 @@ public class GeneratedIndexerTests
 
         AllOfObjectWithProperties root = doc.RootElement;
 
-        Assert.Equal("Alice", root["name"u8].GetString());
-        Assert.Equal(30, root["age"u8].GetInt32());
+        Assert.AreEqual("Alice", root["name"u8].GetString());
+        Assert.AreEqual(30, root["age"u8].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefObjectWithProperties_Utf8Indexer_ReturnsPropertyValues()
     {
         using var doc =
@@ -189,11 +190,11 @@ public class GeneratedIndexerTests
 
         RefObjectWithProperties root = doc.RootElement;
 
-        Assert.Equal("Carol", root["name"u8].GetString());
-        Assert.Equal("c@d.com", root["email"u8].GetString());
+        Assert.AreEqual("Carol", root["name"u8].GetString());
+        Assert.AreEqual("c@d.com", root["email"u8].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedObject_Utf8Indexer_ReturnsPropertyValues()
     {
         using var doc =
@@ -201,11 +202,11 @@ public class GeneratedIndexerTests
 
         NestedObject root = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Object, root["address"u8].ValueKind);
-        Assert.Equal("info", root["notes"u8].GetString());
+        Assert.AreEqual(JsonValueKind.Object, root["address"u8].ValueKind);
+        Assert.AreEqual("info", root["notes"u8].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_Utf8Indexer_MissingProperty_ReturnsDefault()
     {
         using var doc =
@@ -214,14 +215,14 @@ public class GeneratedIndexerTests
         AllOfObjectWithProperties root = doc.RootElement;
 
         JsonElement missing = root["nonexistent"u8];
-        Assert.Equal(JsonValueKind.Undefined, missing.ValueKind);
+        Assert.AreEqual(JsonValueKind.Undefined, missing.ValueKind);
     }
 
     #endregion
 
     #region Object immutable indexer — this[ReadOnlySpan<char>]
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_CharSpanIndexer_ReturnsPropertyValues()
     {
         using var doc =
@@ -229,11 +230,11 @@ public class GeneratedIndexerTests
 
         AllOfObjectWithProperties root = doc.RootElement;
 
-        Assert.Equal("Alice", root["name".AsSpan()].GetString());
-        Assert.Equal(30, root["age".AsSpan()].GetInt32());
+        Assert.AreEqual("Alice", root["name".AsSpan()].GetString());
+        Assert.AreEqual(30, root["age".AsSpan()].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void RefObjectWithProperties_CharSpanIndexer_ReturnsPropertyValues()
     {
         using var doc =
@@ -241,11 +242,11 @@ public class GeneratedIndexerTests
 
         RefObjectWithProperties root = doc.RootElement;
 
-        Assert.Equal("Dave", root["name".AsSpan()].GetString());
-        Assert.Equal("d@e.com", root["email".AsSpan()].GetString());
+        Assert.AreEqual("Dave", root["name".AsSpan()].GetString());
+        Assert.AreEqual("d@e.com", root["email".AsSpan()].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedObject_CharSpanIndexer_ReturnsPropertyValues()
     {
         using var doc =
@@ -253,11 +254,11 @@ public class GeneratedIndexerTests
 
         NestedObject root = doc.RootElement;
 
-        Assert.Equal(JsonValueKind.Object, root["address".AsSpan()].ValueKind);
-        Assert.Equal("memo", root["notes".AsSpan()].GetString());
+        Assert.AreEqual(JsonValueKind.Object, root["address".AsSpan()].ValueKind);
+        Assert.AreEqual("memo", root["notes".AsSpan()].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_CharSpanIndexer_MissingProperty_ReturnsDefault()
     {
         using var doc =
@@ -266,14 +267,14 @@ public class GeneratedIndexerTests
         AllOfObjectWithProperties root = doc.RootElement;
 
         JsonElement missing = root["nonexistent".AsSpan()];
-        Assert.Equal(JsonValueKind.Undefined, missing.ValueKind);
+        Assert.AreEqual(JsonValueKind.Undefined, missing.ValueKind);
     }
 
     #endregion
 
     #region Object mutable indexer — all three overloads
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_MutableStringIndexer_ReturnsPropertyValues()
     {
         using var workspace = JsonWorkspace.Create();
@@ -283,12 +284,12 @@ public class GeneratedIndexerTests
 
         AllOfObjectWithProperties.Mutable root = builder.RootElement;
 
-        Assert.Equal("Eve", root["name"].GetString());
-        Assert.Equal(40, root["age"].GetInt32());
-        Assert.Equal("eve@f.com", root["email"].GetString());
+        Assert.AreEqual("Eve", root["name"].GetString());
+        Assert.AreEqual(40, root["age"].GetInt32());
+        Assert.AreEqual("eve@f.com", root["email"].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_MutableUtf8Indexer_ReturnsPropertyValues()
     {
         using var workspace = JsonWorkspace.Create();
@@ -298,11 +299,11 @@ public class GeneratedIndexerTests
 
         AllOfObjectWithProperties.Mutable root = builder.RootElement;
 
-        Assert.Equal("Frank", root["name"u8].GetString());
-        Assert.Equal(50, root["age"u8].GetInt32());
+        Assert.AreEqual("Frank", root["name"u8].GetString());
+        Assert.AreEqual(50, root["age"u8].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_MutableCharSpanIndexer_ReturnsPropertyValues()
     {
         using var workspace = JsonWorkspace.Create();
@@ -312,11 +313,11 @@ public class GeneratedIndexerTests
 
         AllOfObjectWithProperties.Mutable root = builder.RootElement;
 
-        Assert.Equal("Grace", root["name".AsSpan()].GetString());
-        Assert.Equal(60, root["age".AsSpan()].GetInt32());
+        Assert.AreEqual("Grace", root["name".AsSpan()].GetString());
+        Assert.AreEqual(60, root["age".AsSpan()].GetInt32());
     }
 
-    [Fact]
+    [TestMethod]
     public void AllOfObjectWithProperties_MutableStringIndexer_MissingProperty_ReturnsDefault()
     {
         using var workspace = JsonWorkspace.Create();
@@ -327,10 +328,10 @@ public class GeneratedIndexerTests
         AllOfObjectWithProperties.Mutable root = builder.RootElement;
 
         JsonElement.Mutable missing = root["nonexistent"];
-        Assert.Equal(JsonValueKind.Undefined, missing.ValueKind);
+        Assert.AreEqual(JsonValueKind.Undefined, missing.ValueKind);
     }
 
-    [Fact]
+    [TestMethod]
     public void RefObjectWithProperties_MutableStringIndexer_ReturnsPropertyValues()
     {
         using var workspace = JsonWorkspace.Create();
@@ -340,12 +341,12 @@ public class GeneratedIndexerTests
 
         RefObjectWithProperties.Mutable root = builder.RootElement;
 
-        Assert.Equal("Hank", root["name"].GetString());
-        Assert.Equal(35, root["age"].GetInt32());
-        Assert.Equal("h@i.com", root["email"].GetString());
+        Assert.AreEqual("Hank", root["name"].GetString());
+        Assert.AreEqual(35, root["age"].GetInt32());
+        Assert.AreEqual("h@i.com", root["email"].GetString());
     }
 
-    [Fact]
+    [TestMethod]
     public void NestedObject_MutableStringIndexer_ReturnsPropertyValues()
     {
         using var workspace = JsonWorkspace.Create();
@@ -355,8 +356,8 @@ public class GeneratedIndexerTests
 
         NestedObject.Mutable root = builder.RootElement;
 
-        Assert.Equal(JsonValueKind.Object, root["address"].ValueKind);
-        Assert.Equal("ok", root["notes"].GetString());
+        Assert.AreEqual(JsonValueKind.Object, root["address"].ValueKind);
+        Assert.AreEqual("ok", root["notes"].GetString());
     }
 
     #endregion

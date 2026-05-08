@@ -4,86 +4,87 @@
 
 using System.Text;
 using Corvus.Globalization;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
 /// <summary>
 /// Coverage tests for <see cref="IdnMapping"/> UTF-8 punycode decoding error paths.
 /// </summary>
+[TestClass]
 public class IdnMappingCoverageTests
 {
     // L50-52: index < 0
-    [Fact]
+    [TestMethod]
     public void GetUnicode_NegativeIndex_ReturnsFalse()
     {
         IdnMapping mapping = new();
         Span<byte> output = stackalloc byte[256];
         bool result = mapping.GetUnicode("example.com"u8, output, -1, 5, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L56-58: count < 0
-    [Fact]
+    [TestMethod]
     public void GetUnicode_NegativeCount_ReturnsFalse()
     {
         IdnMapping mapping = new();
         Span<byte> output = stackalloc byte[256];
         bool result = mapping.GetUnicode("example.com"u8, output, 0, -1, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L62-64: index > ascii.Length
-    [Fact]
+    [TestMethod]
     public void GetUnicode_IndexBeyondLength_ReturnsFalse()
     {
         IdnMapping mapping = new();
         Span<byte> output = stackalloc byte[256];
         bool result = mapping.GetUnicode("abc"u8, output, 10, 1, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L68-70: index > ascii.Length - count
-    [Fact]
+    [TestMethod]
     public void GetUnicode_IndexPlusCountBeyondLength_ReturnsFalse()
     {
         IdnMapping mapping = new();
         Span<byte> output = stackalloc byte[256];
         bool result = mapping.GetUnicode("abc"u8, output, 1, 5, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L80-82: last character is null terminator
-    [Fact]
+    [TestMethod]
     public void GetUnicode_NullTerminatedInput_ReturnsFalse()
     {
         IdnMapping mapping = new();
         Span<byte> output = stackalloc byte[256];
         byte[] input = [.. "abc"u8, 0x00];
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L575, L577-578: GetUnicodeInvariant slicing with non-zero index
-    [Fact]
+    [TestMethod]
     public void GetUnicode_NonZeroIndex_Works()
     {
         IdnMapping mapping = new();
         Span<byte> output = stackalloc byte[256];
         byte[] input = "xx.example.com"u8.ToArray();
         bool result = mapping.GetUnicode(input, output, 3, input.Length - 3, out int written);
-        Assert.True(result);
-        Assert.True(written > 0);
-        Assert.Equal("example.com", Encoding.UTF8.GetString(output.Slice(0, written).ToArray()));
+        Assert.IsTrue(result);
+        Assert.IsTrue(written > 0);
+        Assert.AreEqual("example.com", Encoding.UTF8.GetString(output.Slice(0, written).ToArray()));
     }
 
     // L265-267: Input too long (> 255 chars including dots)
-    [Fact]
+    [TestMethod]
     public void GetUnicode_InputTooLong_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -92,12 +93,12 @@ public class IdnMappingCoverageTests
         string longDomain = string.Join(".", Enumerable.Repeat("abcdefghijklmnop", 17));
         byte[] input = Encoding.UTF8.GetBytes(longDomain);
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L310-312: Single label too long (> 63 runes)
-    [Fact]
+    [TestMethod]
     public void GetUnicode_LabelTooLong_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -105,24 +106,24 @@ public class IdnMappingCoverageTests
         string longLabel = new('a', 64);
         byte[] input = Encoding.UTF8.GetBytes(longLabel);
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L342-344: Trailing dash in ACE segment
-    [Fact]
+    [TestMethod]
     public void GetUnicode_AcePrefixTrailingDash_ReturnsFalse()
     {
         IdnMapping mapping = new();
         Span<byte> output = stackalloc byte[256];
         byte[] input = "xn---"u8.ToArray();
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L360-362: Unicode byte > 0x7f in basic code points section
-    [Fact]
+    [TestMethod]
     public void GetUnicode_NonAsciiInBasicCodePoints_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -130,12 +131,12 @@ public class IdnMappingCoverageTests
         // "xn--" prefix + basic code points containing 0x80 + "-" delimiter + punycode suffix
         byte[] input = [.. "xn--"u8, 0x80, (byte)'-', (byte)'a'];
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L414-416: DecodeDigit fails on invalid character in main decode loop
-    [Fact]
+    [TestMethod]
     public void GetUnicode_InvalidDigitInPunycode_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -143,12 +144,12 @@ public class IdnMappingCoverageTests
         // "xn--!" - ACE prefix followed by invalid punycode digit '!'
         byte[] input = "xn--!"u8.ToArray();
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // Valid punycode decode sanity check
-    [Fact]
+    [TestMethod]
     public void GetUnicode_ValidPunycode_Succeeds()
     {
         IdnMapping mapping = new();
@@ -156,24 +157,24 @@ public class IdnMappingCoverageTests
         // "xn--nxasmq6b" = "βόλος" (Greek city name)
         byte[] input = "xn--nxasmq6b"u8.ToArray();
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.True(result);
-        Assert.True(written > 0);
+        Assert.IsTrue(result);
+        Assert.IsTrue(written > 0);
     }
 
     // L322, L324-325: Output buffer too small for ASCII copy
-    [Fact]
+    [TestMethod]
     public void GetUnicode_OutputBufferTooSmallForAscii_ReturnsFalse()
     {
         IdnMapping mapping = new();
         Span<byte> output = stackalloc byte[3]; // too small for "example"
         byte[] input = "example"u8.ToArray();
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L366, L368-369: Output buffer too small during basic code point copy in ACE segment
-    [Fact]
+    [TestMethod]
     public void GetUnicode_OutputBufferTooSmallForAceBasicCodePoints_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -181,12 +182,12 @@ public class IdnMappingCoverageTests
         // "xn--abc-def" has basic code points "abc" before delimiter "-"
         byte[] input = "xn--abc-def"u8.ToArray();
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L487-488: ConvertFromUtf32AndInsert fails (output buffer overflow)
-    [Fact]
+    [TestMethod]
     public void GetUnicode_OutputBufferTooSmallForDecodedChar_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -199,12 +200,12 @@ public class IdnMappingCoverageTests
         // Let's use an even smaller buffer
         Span<byte> tinyOutput = stackalloc byte[2];
         result = mapping.GetUnicode(input, tinyOutput, 0, input.Length, out written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L537-539: Decoded label exceeds c_labelLimit (63) after punycode decode
-    [Fact]
+    [TestMethod]
     public void GetUnicode_DecodedLabelExceedsLimit_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -214,8 +215,8 @@ public class IdnMappingCoverageTests
         // "xn--" + 60 basic chars + "-" + punycode digits = 60 basic + decoded > 63 total
         byte[] fullInput = Encoding.UTF8.GetBytes("xn--" + new string('a', 60) + "-aaaa");
         bool result = mapping.GetUnicode(fullInput, output, 0, fullInput.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L552-554: Total output length exceeds c_defaultNameLimit (255)
@@ -225,7 +226,7 @@ public class IdnMappingCoverageTests
     // crafted test vectors beyond simple construction.
 
     // L421-423: digit > (maxint - i) / w overflow
-    [Fact]
+    [TestMethod]
     public void GetUnicode_PunycodeIntegerOverflow_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -234,12 +235,12 @@ public class IdnMappingCoverageTests
         // After several iterations where digit > t, i += digit*w grows past maxint.
         byte[] input = [.. "xn--"u8, .. Encoding.UTF8.GetBytes(new string('9', 30))];
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L432-434: w > maxint / (base - t) overflow
-    [Fact]
+    [TestMethod]
     public void GetUnicode_PunycodeWOverflow_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -248,12 +249,12 @@ public class IdnMappingCoverageTests
         // After ~6-7 iterations w exceeds maxint/(base-t).
         byte[] input = [.. "xn--"u8, .. Encoding.UTF8.GetBytes(new string('9', 15))];
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L447-449: n overflow (i / (outputLength + 1) > maxint - n)
-    [Fact]
+    [TestMethod]
     public void GetUnicode_PunycodeNOverflow_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -262,12 +263,12 @@ public class IdnMappingCoverageTests
         // Use sequence that produces a valid first char then overflows
         byte[] input = "xn--a999999999999"u8.ToArray();
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L457-459: n < 0 or n > 0x10ffff or n in surrogate range
-    [Fact]
+    [TestMethod]
     public void GetUnicode_InvalidCodePoint_ReturnsFalse()
     {
         IdnMapping mapping = new();
@@ -277,8 +278,8 @@ public class IdnMappingCoverageTests
         // produces values > 0x10ffff or wraps to negative
         byte[] input = "xn--zzzzzzzzzzz"u8.ToArray();
         bool result = mapping.GetUnicode(input, output, 0, input.Length, out int written);
-        Assert.False(result);
-        Assert.Equal(0, written);
+        Assert.IsFalse(result);
+        Assert.AreEqual(0, written);
     }
 
     // L144-145: DecodeDigit returns false for non-alphanumeric char

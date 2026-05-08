@@ -5,28 +5,40 @@ using System.Text.Json;
 using Corvus.Json;
 using Corvus.Json.Specs.Tests.Infrastructure;
 using Drivers;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AdditionalSchemaTests.AdditionalDraft7.Repro478;
 
-[Trait("JsonSchemaTestSuite", "AdditionalDraft7")]
-public class SuiteGenerationErrorWithRegularExpressions : IClassFixture<SuiteGenerationErrorWithRegularExpressions.Fixture>
+[TestCategory("AdditionalDraft7")]
+[TestClass]
+public class SuiteGenerationErrorWithRegularExpressions
 {
-    private readonly Fixture _fixture;
-    public SuiteGenerationErrorWithRegularExpressions(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext context)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture!.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static async Task ClassCleanup()
+    {
+        if (s_fixture is not null)
+        {
+            await s_fixture!.DisposeAsync();
+        }
+    }
+
+    [TestMethod]
     public void TestDataVersion02LanguageEnWordsAesEc()
     {
         using var doc = JsonDocument.Parse("{\r\n          \"version\": \"0.2\",\r\n          \"language\": \"en\",\r\n          \"words\": [\r\n            \"aes\",\r\n            \"ecies\",\r\n            \"eciespy\",\r\n            \"fastapi\",\r\n            \"secp256k1\",\r\n            \"Spacefile\",\r\n            \"uvicorn\"\r\n          ],\r\n          \"flagWords\": [\r\n            \"hte\"\r\n          ],\r\n          \"ignorePaths\": [\r\n            \".git\",\r\n            \".github\",\r\n            \".gitignore\",\r\n            \".cspell.jsonc\",\r\n            \".pre-commit-config.yaml\",\r\n            \"LICENSE\",\r\n            \"poetry.lock\"\r\n          ]\r\n        }");
-        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(_fixture.GeneratedType, doc.RootElement);
-        Assert.True(instance.Validate(ValidationContext.ValidContext).IsValid);
+        IJsonValue instance = JsonSchemaBuilderDriver.CreateInstance(s_fixture!.GeneratedType, doc.RootElement);
+        Assert.IsTrue(instance.Validate(ValidationContext.ValidContext).IsValid);
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         private JsonSchemaBuilderDriver? _driver;
 

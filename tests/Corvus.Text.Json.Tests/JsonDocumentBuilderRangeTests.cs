@@ -7,15 +7,16 @@
 // https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
 // </licensing>
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
-public static class JsonDocumentBuilderRangeTests
+[TestClass]
+public class JsonDocumentBuilderRangeTests
 {
     #region InsertRange Tests
 
-    [Fact]
-    public static void InsertRange_AtBeginning_InsertsItems()
+    [TestMethod]
+    public void InsertRange_AtBeginning_InsertsItems()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         using var workspace = JsonWorkspace.Create();
@@ -28,16 +29,16 @@ public static class JsonDocumentBuilderRangeTests
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(10, root[0].GetInt32());
-        Assert.Equal(20, root[1].GetInt32());
-        Assert.Equal(1, root[2].GetInt32());
-        Assert.Equal(2, root[3].GetInt32());
-        Assert.Equal(3, root[4].GetInt32());
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(10, root[0].GetInt32());
+        Assert.AreEqual(20, root[1].GetInt32());
+        Assert.AreEqual(1, root[2].GetInt32());
+        Assert.AreEqual(2, root[3].GetInt32());
+        Assert.AreEqual(3, root[4].GetInt32());
     }
 
-    [Fact]
-    public static void InsertRange_InMiddle_InsertsItems()
+    [TestMethod]
+    public void InsertRange_InMiddle_InsertsItems()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         using var workspace = JsonWorkspace.Create();
@@ -50,16 +51,16 @@ public static class JsonDocumentBuilderRangeTests
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(10, root[1].GetInt32());
-        Assert.Equal(20, root[2].GetInt32());
-        Assert.Equal(2, root[3].GetInt32());
-        Assert.Equal(3, root[4].GetInt32());
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(10, root[1].GetInt32());
+        Assert.AreEqual(20, root[2].GetInt32());
+        Assert.AreEqual(2, root[3].GetInt32());
+        Assert.AreEqual(3, root[4].GetInt32());
     }
 
-    [Fact]
-    public static void InsertRange_AtEnd_InsertsItems()
+    [TestMethod]
+    public void InsertRange_AtEnd_InsertsItems()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         using var workspace = JsonWorkspace.Create();
@@ -72,16 +73,16 @@ public static class JsonDocumentBuilderRangeTests
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
-        Assert.Equal(10, root[3].GetInt32());
-        Assert.Equal(20, root[4].GetInt32());
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
+        Assert.AreEqual(10, root[3].GetInt32());
+        Assert.AreEqual(20, root[4].GetInt32());
     }
 
-    [Fact]
-    public static void InsertRange_EmptyRange_IsNoOp()
+    [TestMethod]
+    public void InsertRange_EmptyRange_IsNoOp()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         using var workspace = JsonWorkspace.Create();
@@ -92,12 +93,12 @@ public static class JsonDocumentBuilderRangeTests
             // No items added.
         });
 
-        Assert.Equal(3, builderDoc.RootElement.GetArrayLength());
-        Assert.Equal("[1,2,3]", builderDoc.RootElement.ToString());
+        Assert.AreEqual(3, builderDoc.RootElement.GetArrayLength());
+        Assert.AreEqual("[1,2,3]", builderDoc.RootElement.ToString());
     }
 
-    [Fact]
-    public static void InsertRange_MixedTypes_InsertsCorrectly()
+    [TestMethod]
+    public void InsertRange_MixedTypes_InsertsCorrectly()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1]");
         using var workspace = JsonWorkspace.Create();
@@ -112,16 +113,16 @@ public static class JsonDocumentBuilderRangeTests
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(5, root.GetArrayLength());
-        Assert.Equal("hello", root[0].GetString());
-        Assert.True(root[1].GetBoolean());
-        Assert.Equal(JsonValueKind.Null, root[2].ValueKind);
-        Assert.Equal(42.5, root[3].GetDouble());
-        Assert.Equal(1, root[4].GetInt32());
+        Assert.AreEqual(5, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].GetString());
+        Assert.IsTrue(root[1].GetBoolean());
+        Assert.AreEqual(JsonValueKind.Null, root[2].ValueKind);
+        Assert.AreEqual(42.5, root[3].GetDouble());
+        Assert.AreEqual(1, root[4].GetInt32());
     }
 
-    [Fact]
-    public static void InsertRange_WithObjects_InsertsCorrectly()
+    [TestMethod]
+    public void InsertRange_WithObjects_InsertsCorrectly()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
         using var workspace = JsonWorkspace.Create();
@@ -140,13 +141,13 @@ public static class JsonDocumentBuilderRangeTests
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("{\"name\":\"Alice\"}", root[0].ToString());
-        Assert.Equal("{\"name\":\"Bob\"}", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("{\"name\":\"Alice\"}", root[0].ToString());
+        Assert.AreEqual("{\"name\":\"Bob\"}", root[1].ToString());
     }
 
-    [Fact]
-    public static void InsertRange_WithContext_InsertsItems()
+    [TestMethod]
+    public void InsertRange_WithContext_InsertsItems()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         using var workspace = JsonWorkspace.Create();
@@ -165,21 +166,21 @@ public static class JsonDocumentBuilderRangeTests
             });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(6, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(10, root[1].GetInt32());
-        Assert.Equal(20, root[2].GetInt32());
-        Assert.Equal(30, root[3].GetInt32());
-        Assert.Equal(2, root[4].GetInt32());
-        Assert.Equal(3, root[5].GetInt32());
+        Assert.AreEqual(6, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(10, root[1].GetInt32());
+        Assert.AreEqual(20, root[2].GetInt32());
+        Assert.AreEqual(30, root[3].GetInt32());
+        Assert.AreEqual(2, root[4].GetInt32());
+        Assert.AreEqual(3, root[5].GetInt32());
     }
 
     #endregion
 
     #region AddRange Tests
 
-    [Fact]
-    public static void AddRange_AppendsToEnd()
+    [TestMethod]
+    public void AddRange_AppendsToEnd()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2]");
         using var workspace = JsonWorkspace.Create();
@@ -192,15 +193,15 @@ public static class JsonDocumentBuilderRangeTests
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
-        Assert.Equal(4, root[3].GetInt32());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
+        Assert.AreEqual(4, root[3].GetInt32());
     }
 
-    [Fact]
-    public static void AddRange_ToEmptyArray_AddsItems()
+    [TestMethod]
+    public void AddRange_ToEmptyArray_AddsItems()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
         using var workspace = JsonWorkspace.Create();
@@ -214,14 +215,14 @@ public static class JsonDocumentBuilderRangeTests
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
     }
 
-    [Fact]
-    public static void AddRange_EmptyRange_IsNoOp()
+    [TestMethod]
+    public void AddRange_EmptyRange_IsNoOp()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1, 2, 3]");
         using var workspace = JsonWorkspace.Create();
@@ -232,12 +233,12 @@ public static class JsonDocumentBuilderRangeTests
             // No items added.
         });
 
-        Assert.Equal(3, builderDoc.RootElement.GetArrayLength());
-        Assert.Equal("[1,2,3]", builderDoc.RootElement.ToString());
+        Assert.AreEqual(3, builderDoc.RootElement.GetArrayLength());
+        Assert.AreEqual("[1,2,3]", builderDoc.RootElement.ToString());
     }
 
-    [Fact]
-    public static void AddRange_WithContext_AppendsItems()
+    [TestMethod]
+    public void AddRange_WithContext_AppendsItems()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[1]");
         using var workspace = JsonWorkspace.Create();
@@ -255,15 +256,15 @@ public static class JsonDocumentBuilderRangeTests
             });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
-        Assert.Equal(4, root[3].GetInt32());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
+        Assert.AreEqual(4, root[3].GetInt32());
     }
 
-    [Fact]
-    public static void AddRange_MultipleCallsPreserveOrder()
+    [TestMethod]
+    public void AddRange_MultipleCallsPreserveOrder()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[]");
         using var workspace = JsonWorkspace.Create();
@@ -282,15 +283,15 @@ public static class JsonDocumentBuilderRangeTests
         });
 
         JsonElement.Mutable root = builderDoc.RootElement;
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal(1, root[0].GetInt32());
-        Assert.Equal(2, root[1].GetInt32());
-        Assert.Equal(3, root[2].GetInt32());
-        Assert.Equal(4, root[3].GetInt32());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual(1, root[0].GetInt32());
+        Assert.AreEqual(2, root[1].GetInt32());
+        Assert.AreEqual(3, root[2].GetInt32());
+        Assert.AreEqual(4, root[3].GetInt32());
     }
 
-    [Fact]
-    public static void InsertRange_ThenSerialize_ProducesValidJson()
+    [TestMethod]
+    public void InsertRange_ThenSerialize_ProducesValidJson()
     {
         using var doc = ParsedJsonDocument<JsonElement>.Parse("[\"a\", \"d\"]");
         using var workspace = JsonWorkspace.Create();
@@ -303,7 +304,7 @@ public static class JsonDocumentBuilderRangeTests
         });
 
         string result = builderDoc.RootElement.ToString();
-        Assert.Equal("[\"a\",\"b\",\"c\",\"d\"]", result);
+        Assert.AreEqual("[\"a\",\"b\",\"c\",\"d\"]", result);
     }
 
     #endregion

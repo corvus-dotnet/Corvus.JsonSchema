@@ -2,7 +2,7 @@
 // Licensed under the MIT license. See LICENSE file in the project root for full license information.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -17,28 +17,29 @@ namespace Corvus.Text.Json.Tests;
 /// Pattern property values fail validation because they are treated as
 /// additional properties by the root schema.
 /// </summary>
+[TestClass]
 public class GeneratedRefPatternPropertiesTests
 {
     // -------------------------------------------------------
     // Valid instances (required properties only)
     // -------------------------------------------------------
 
-    [Fact]
+    [TestMethod]
     public void ValidInstance_WithRequiredNameOnly_PassesValidation()
     {
         var instance =
             ObjectWithRefPatternProperties.ParseValue("""{"name":"Alice"}""");
 
-        Assert.True(instance.EvaluateSchema());
+        Assert.IsTrue(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void ValidInstance_AccessNameProperty_ReturnsExpectedValue()
     {
         var instance =
             ObjectWithRefPatternProperties.ParseValue("""{"name":"Alice"}""");
 
-        Assert.True(instance.Name.ValueEquals("Alice"));
+        Assert.IsTrue(instance.Name.ValueEquals("Alice"));
     }
 
     // -------------------------------------------------------
@@ -47,87 +48,87 @@ public class GeneratedRefPatternPropertiesTests
     //  means the root schema does not see them as evaluated)
     // -------------------------------------------------------
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_StringPatternPropertyTreatedAsAdditional_FailsValidation()
     {
         var instance =
             ObjectWithRefPatternProperties.ParseValue("""{"name":"Alice","S_color":"blue"}""");
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_IntegerPatternPropertyTreatedAsAdditional_FailsValidation()
     {
         var instance =
             ObjectWithRefPatternProperties.ParseValue("""{"name":"Alice","I_count":42}""");
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_MixedPatternPropertiesTreatedAsAdditional_FailsValidation()
     {
         var instance =
             ObjectWithRefPatternProperties.ParseValue(
                 """{"name":"Alice","S_color":"blue","I_count":42}""");
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
     // -------------------------------------------------------
     // Invalid: missing required property
     // -------------------------------------------------------
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_MissingRequiredName_FailsValidation()
     {
         var instance =
             ObjectWithRefPatternProperties.ParseValue("""{"S_color":"blue"}""");
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
     // -------------------------------------------------------
     // Invalid: additional properties that don't match any pattern
     // -------------------------------------------------------
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_UnknownAdditionalProperty_FailsValidation()
     {
         var instance =
             ObjectWithRefPatternProperties.ParseValue("""{"name":"Alice","unknown":"value"}""");
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
     // -------------------------------------------------------
     // Invalid: wrong type for pattern (also additional at root)
     // -------------------------------------------------------
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_StringPatternWithIntegerValue_FailsValidation()
     {
         var instance =
             ObjectWithRefPatternProperties.ParseValue("""{"name":"Alice","S_color":99}""");
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void InvalidInstance_IntegerPatternWithStringValue_FailsValidation()
     {
         var instance =
             ObjectWithRefPatternProperties.ParseValue("""{"name":"Alice","I_count":"not a number"}""");
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
     // -------------------------------------------------------
     // Builder: create instances with required properties only
     // -------------------------------------------------------
 
-    [Fact]
+    [TestMethod]
     public void Builder_WithRequiredNameOnly_ProducesValidInstance()
     {
         using var workspace = JsonWorkspace.Create();
@@ -137,11 +138,11 @@ public class GeneratedRefPatternPropertiesTests
                 static (ref b) => b.Create("Alice"));
 
         ObjectWithRefPatternProperties.Mutable root = builder.RootElement;
-        Assert.True(root.EvaluateSchema());
-        Assert.True(root.Name.ValueEquals("Alice"));
+        Assert.IsTrue(root.EvaluateSchema());
+        Assert.IsTrue(root.Name.ValueEquals("Alice"));
     }
 
-    [Fact]
+    [TestMethod]
     public void Build_ViaSourceBuild_RoundTrips()
     {
         ObjectWithRefPatternProperties.Source source =
@@ -153,15 +154,15 @@ public class GeneratedRefPatternPropertiesTests
             ObjectWithRefPatternProperties.CreateBuilder(workspace, source);
 
         ObjectWithRefPatternProperties.Mutable root = builder.RootElement;
-        Assert.True(root.Name.ValueEquals("Carol"));
-        Assert.True(root.EvaluateSchema());
+        Assert.IsTrue(root.Name.ValueEquals("Carol"));
+        Assert.IsTrue(root.EvaluateSchema());
     }
 
     // -------------------------------------------------------
     // Mutable: SetName (typed property) still works
     // -------------------------------------------------------
 
-    [Fact]
+    [TestMethod]
     public void Mutable_SetName_UpdatesValue()
     {
         var instance = ObjectWithRefPatternProperties.ParseValue("""{"name":"Alice"}""");
@@ -172,15 +173,15 @@ public class GeneratedRefPatternPropertiesTests
 
         ObjectWithRefPatternProperties.Mutable root = builder.RootElement;
         root.SetName("Bob");
-        Assert.True(root.Name.ValueEquals("Bob"));
-        Assert.True(root.EvaluateSchema());
+        Assert.IsTrue(root.Name.ValueEquals("Bob"));
+        Assert.IsTrue(root.EvaluateSchema());
     }
 
     // -------------------------------------------------------
     // Non-object values
     // -------------------------------------------------------
 
-    [Fact]
+    [TestMethod]
     public void NonObjectValue_FailsValidation()
     {
         var instance = ObjectWithRefPatternProperties.ParseValue(
@@ -188,14 +189,14 @@ public class GeneratedRefPatternPropertiesTests
             "not an object"
             """);
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 
-    [Fact]
+    [TestMethod]
     public void ArrayValue_FailsValidation()
     {
         var instance = ObjectWithRefPatternProperties.ParseValue("""[1, 2, 3]""");
 
-        Assert.False(instance.EvaluateSchema());
+        Assert.IsFalse(instance.EvaluateSchema());
     }
 }

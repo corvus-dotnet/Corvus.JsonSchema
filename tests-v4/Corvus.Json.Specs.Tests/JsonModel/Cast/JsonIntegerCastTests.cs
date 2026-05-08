@@ -10,2028 +10,2029 @@ using System.Text.RegularExpressions;
 using Corvus.Json;
 using NodaTime;
 using NodaTime.Text;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonModel.Cast;
 
 /// <summary>
 /// Tests for JsonIntegerCast.
 /// </summary>
+[TestClass]
 public class JsonIntegerCastTests
 {
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonAny_for_dotnet_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (JsonAny)sut;
-        Assert.Equal(JsonAny.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonAny.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_dotnet_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_dotnet_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_dotnet_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_dotnet_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_dotnet_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_dotnet_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_dotnet_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_dotnet_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_JsonNumber_for_dotnet_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (JsonNumber)sut;
-        Assert.Equal(JsonNumber.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonNumber.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_dotnet_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_dotnet_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_dotnet_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_dotnet_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_dotnet_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_dotnet_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_dotnet_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_dotnet_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_long_for_dotnet_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (long)sut;
-        Assert.Equal(12L, result);
+        Assert.AreEqual(12L, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_long_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         long sut = 12L;
         var result = (JsonInteger)sut;
-        Assert.Equal(JsonInteger.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInteger.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_long_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         long sut = 12L;
         var result = (JsonInt64)sut;
-        Assert.Equal(JsonInt64.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt64.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_long_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         long sut = 12L;
         var result = (JsonInt32)sut;
-        Assert.Equal(JsonInt32.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt32.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_long_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         long sut = 12L;
         var result = (JsonInt16)sut;
-        Assert.Equal(JsonInt16.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt16.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_long_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         long sut = 12L;
         var result = (JsonSByte)sut;
-        Assert.Equal(JsonSByte.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonSByte.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_long_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         long sut = 12L;
         var result = (JsonUInt64)sut;
-        Assert.Equal(JsonUInt64.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt64.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_long_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         long sut = 12L;
         var result = (JsonUInt32)sut;
-        Assert.Equal(JsonUInt32.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt32.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_long_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         long sut = 12L;
         var result = (JsonUInt16)sut;
-        Assert.Equal(JsonUInt16.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt16.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_long_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         long sut = 12L;
         var result = (JsonByte)sut;
-        Assert.Equal(JsonByte.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonByte.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_dotnet_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_dotnet_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_dotnet_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_dotnet_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_dotnet_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_dotnet_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_dotnet_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_dotnet_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_double_for_dotnet_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (double)sut;
-        Assert.Equal(12.0d, result, 5);
+        Assert.AreEqual(12.0d, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_double_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         double sut = 12.0;
         var result = (JsonInteger)sut;
-        Assert.Equal(JsonInteger.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInteger.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_double_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         double sut = 12.0;
         var result = (JsonInt64)sut;
-        Assert.Equal(JsonInt64.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt64.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_double_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         double sut = 12.0;
         var result = (JsonInt32)sut;
-        Assert.Equal(JsonInt32.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt32.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_double_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         double sut = 12.0;
         var result = (JsonInt16)sut;
-        Assert.Equal(JsonInt16.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt16.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_double_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         double sut = 12.0;
         var result = (JsonSByte)sut;
-        Assert.Equal(JsonSByte.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonSByte.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_double_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         double sut = 12.0;
         var result = (JsonUInt64)sut;
-        Assert.Equal(JsonUInt64.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt64.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_double_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         double sut = 12.0;
         var result = (JsonUInt32)sut;
-        Assert.Equal(JsonUInt32.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt32.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_double_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         double sut = 12.0;
         var result = (JsonUInt16)sut;
-        Assert.Equal(JsonUInt16.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt16.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_double_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         double sut = 12.0;
         var result = (JsonByte)sut;
-        Assert.Equal(JsonByte.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonByte.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_dotnet_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_dotnet_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_dotnet_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_dotnet_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_dotnet_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_dotnet_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_dotnet_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_dotnet_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_int_for_dotnet_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (int)sut;
-        Assert.Equal(12, result);
+        Assert.AreEqual(12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_int_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         int sut = 12;
         var result = (JsonInteger)sut;
-        Assert.Equal(JsonInteger.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInteger.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_int_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         int sut = 12;
         var result = (JsonInt64)sut;
-        Assert.Equal(JsonInt64.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt64.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_int_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         int sut = 12;
         var result = (JsonInt32)sut;
-        Assert.Equal(JsonInt32.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt32.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_int_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         int sut = 12;
         var result = (JsonInt16)sut;
-        Assert.Equal(JsonInt16.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt16.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_int_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         int sut = 12;
         var result = (JsonSByte)sut;
-        Assert.Equal(JsonSByte.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonSByte.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_int_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         int sut = 12;
         var result = (JsonUInt64)sut;
-        Assert.Equal(JsonUInt64.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt64.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_int_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         int sut = 12;
         var result = (JsonUInt32)sut;
-        Assert.Equal(JsonUInt32.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt32.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_int_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         int sut = 12;
         var result = (JsonUInt16)sut;
-        Assert.Equal(JsonUInt16.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt16.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_int_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         int sut = 12;
         var result = (JsonByte)sut;
-        Assert.Equal(JsonByte.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonByte.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_dotnet_backed_value_as_a_integer_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_dotnet_backed_value_as_a_integer_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_dotnet_backed_value_as_a_integer_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_dotnet_backed_value_as_a_integer_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_dotnet_backed_value_as_a_integer_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_dotnet_backed_value_as_a_integer_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_dotnet_backed_value_as_a_integer_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_dotnet_backed_value_as_a_integer_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_float_for_dotnet_backed_value_as_a_integer_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (float)sut;
-        Assert.Equal(12.0f, result, 5);
+        Assert.AreEqual(12.0f, result, 5);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_float_for_json_element_backed_value_as_a_integer_JsonInteger()
     {
         float sut = 12f;
         var result = (JsonInteger)sut;
-        Assert.Equal(JsonInteger.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInteger.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_float_for_json_element_backed_value_as_a_integer_JsonInt64()
     {
         float sut = 12f;
         var result = (JsonInt64)sut;
-        Assert.Equal(JsonInt64.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt64.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_float_for_json_element_backed_value_as_a_integer_JsonInt32()
     {
         float sut = 12f;
         var result = (JsonInt32)sut;
-        Assert.Equal(JsonInt32.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt32.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_float_for_json_element_backed_value_as_a_integer_JsonInt16()
     {
         float sut = 12f;
         var result = (JsonInt16)sut;
-        Assert.Equal(JsonInt16.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonInt16.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_float_for_json_element_backed_value_as_a_integer_JsonSByte()
     {
         float sut = 12f;
         var result = (JsonSByte)sut;
-        Assert.Equal(JsonSByte.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonSByte.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_float_for_json_element_backed_value_as_a_integer_JsonUInt64()
     {
         float sut = 12f;
         var result = (JsonUInt64)sut;
-        Assert.Equal(JsonUInt64.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt64.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_float_for_json_element_backed_value_as_a_integer_JsonUInt32()
     {
         float sut = 12f;
         var result = (JsonUInt32)sut;
-        Assert.Equal(JsonUInt32.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt32.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_float_for_json_element_backed_value_as_a_integer_JsonUInt16()
     {
         float sut = 12f;
         var result = (JsonUInt16)sut;
-        Assert.Equal(JsonUInt16.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonUInt16.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_from_float_for_json_element_backed_value_as_a_integer_JsonByte()
     {
         float sut = 12f;
         var result = (JsonByte)sut;
-        Assert.Equal(JsonByte.ParseValue("12".AsSpan()), result);
+        Assert.AreEqual(JsonByte.ParseValue("12".AsSpan()), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_json_element_backed_value_as_a_shorteger_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_json_element_backed_value_as_a_shorteger_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_json_element_backed_value_as_a_shorteger_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_json_element_backed_value_as_a_shorteger_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_json_element_backed_value_as_a_shorteger_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_json_element_backed_value_as_a_shorteger_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_json_element_backed_value_as_a_shorteger_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_json_element_backed_value_as_a_shorteger_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_json_element_backed_value_as_a_shorteger_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_dotnet_backed_value_as_a_shorteger_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_dotnet_backed_value_as_a_shorteger_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_dotnet_backed_value_as_a_shorteger_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_dotnet_backed_value_as_a_shorteger_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_dotnet_backed_value_as_a_shorteger_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_dotnet_backed_value_as_a_shorteger_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_dotnet_backed_value_as_a_shorteger_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_dotnet_backed_value_as_a_shorteger_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_short_for_dotnet_backed_value_as_a_shorteger_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (short)sut;
-        Assert.Equal((short)12, result);
+        Assert.AreEqual((short)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_json_element_backed_value_as_a_ushorteger_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_json_element_backed_value_as_a_ushorteger_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_json_element_backed_value_as_a_ushorteger_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_json_element_backed_value_as_a_ushorteger_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_json_element_backed_value_as_a_ushorteger_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_json_element_backed_value_as_a_ushorteger_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_json_element_backed_value_as_a_ushorteger_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_json_element_backed_value_as_a_ushorteger_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_json_element_backed_value_as_a_ushorteger_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_dotnet_backed_value_as_a_ushorteger_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_dotnet_backed_value_as_a_ushorteger_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_dotnet_backed_value_as_a_ushorteger_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_dotnet_backed_value_as_a_ushorteger_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_dotnet_backed_value_as_a_ushorteger_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_dotnet_backed_value_as_a_ushorteger_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_dotnet_backed_value_as_a_ushorteger_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_dotnet_backed_value_as_a_ushorteger_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ushort_for_dotnet_backed_value_as_a_ushorteger_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (ushort)sut;
-        Assert.Equal((ushort)12, result);
+        Assert.AreEqual((ushort)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_json_element_backed_value_as_a_byteeger_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_json_element_backed_value_as_a_byteeger_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_json_element_backed_value_as_a_byteeger_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_json_element_backed_value_as_a_byteeger_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_json_element_backed_value_as_a_byteeger_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_json_element_backed_value_as_a_byteeger_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_json_element_backed_value_as_a_byteeger_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_json_element_backed_value_as_a_byteeger_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_json_element_backed_value_as_a_byteeger_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_dotnet_backed_value_as_a_byteeger_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_dotnet_backed_value_as_a_byteeger_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_dotnet_backed_value_as_a_byteeger_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_dotnet_backed_value_as_a_byteeger_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_dotnet_backed_value_as_a_byteeger_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_dotnet_backed_value_as_a_byteeger_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_dotnet_backed_value_as_a_byteeger_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_dotnet_backed_value_as_a_byteeger_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_byte_for_dotnet_backed_value_as_a_byteeger_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (byte)sut;
-        Assert.Equal((byte)12, result);
+        Assert.AreEqual((byte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_json_element_backed_value_as_a_sbyteeger_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_json_element_backed_value_as_a_sbyteeger_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_json_element_backed_value_as_a_sbyteeger_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_json_element_backed_value_as_a_sbyteeger_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_json_element_backed_value_as_a_sbyteeger_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_json_element_backed_value_as_a_sbyteeger_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_json_element_backed_value_as_a_sbyteeger_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_json_element_backed_value_as_a_sbyteeger_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_json_element_backed_value_as_a_sbyteeger_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_dotnet_backed_value_as_a_sbyteeger_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_dotnet_backed_value_as_a_sbyteeger_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_dotnet_backed_value_as_a_sbyteeger_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_dotnet_backed_value_as_a_sbyteeger_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_dotnet_backed_value_as_a_sbyteeger_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_dotnet_backed_value_as_a_sbyteeger_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_dotnet_backed_value_as_a_sbyteeger_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_dotnet_backed_value_as_a_sbyteeger_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_sbyte_for_dotnet_backed_value_as_a_sbyteeger_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (sbyte)sut;
-        Assert.Equal((sbyte)12, result);
+        Assert.AreEqual((sbyte)12, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_json_element_backed_value_as_a_uinteger_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_json_element_backed_value_as_a_uinteger_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_json_element_backed_value_as_a_uinteger_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_json_element_backed_value_as_a_uinteger_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_json_element_backed_value_as_a_uinteger_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_json_element_backed_value_as_a_uinteger_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_json_element_backed_value_as_a_uinteger_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_json_element_backed_value_as_a_uinteger_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_json_element_backed_value_as_a_uinteger_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_dotnet_backed_value_as_a_uinteger_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_dotnet_backed_value_as_a_uinteger_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_dotnet_backed_value_as_a_uinteger_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_dotnet_backed_value_as_a_uinteger_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_dotnet_backed_value_as_a_uinteger_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_dotnet_backed_value_as_a_uinteger_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_dotnet_backed_value_as_a_uinteger_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_dotnet_backed_value_as_a_uinteger_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_uint_for_dotnet_backed_value_as_a_uinteger_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (uint)sut;
-        Assert.Equal(12U, result);
+        Assert.AreEqual(12U, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_json_element_backed_value_as_a_ulongeger_JsonInteger()
     {
         var sut = JsonInteger.ParseValue("12".AsSpan());
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_json_element_backed_value_as_a_ulongeger_JsonInt64()
     {
         var sut = JsonInt64.ParseValue("12".AsSpan());
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_json_element_backed_value_as_a_ulongeger_JsonInt32()
     {
         var sut = JsonInt32.ParseValue("12".AsSpan());
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_json_element_backed_value_as_a_ulongeger_JsonInt16()
     {
         var sut = JsonInt16.ParseValue("12".AsSpan());
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_json_element_backed_value_as_a_ulongeger_JsonSByte()
     {
         var sut = JsonSByte.ParseValue("12".AsSpan());
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_json_element_backed_value_as_a_ulongeger_JsonUInt64()
     {
         var sut = JsonUInt64.ParseValue("12".AsSpan());
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_json_element_backed_value_as_a_ulongeger_JsonUInt32()
     {
         var sut = JsonUInt32.ParseValue("12".AsSpan());
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_json_element_backed_value_as_a_ulongeger_JsonUInt16()
     {
         var sut = JsonUInt16.ParseValue("12".AsSpan());
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_json_element_backed_value_as_a_ulongeger_JsonByte()
     {
         var sut = JsonByte.ParseValue("12".AsSpan());
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_dotnet_backed_value_as_a_ulongeger_JsonInteger()
     {
         var sut = JsonInteger.Parse("12").AsDotnetBackedValue();
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_dotnet_backed_value_as_a_ulongeger_JsonInt64()
     {
         var sut = JsonInt64.Parse("12").AsDotnetBackedValue();
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_dotnet_backed_value_as_a_ulongeger_JsonInt32()
     {
         var sut = JsonInt32.Parse("12").AsDotnetBackedValue();
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_dotnet_backed_value_as_a_ulongeger_JsonInt16()
     {
         var sut = JsonInt16.Parse("12").AsDotnetBackedValue();
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_dotnet_backed_value_as_a_ulongeger_JsonSByte()
     {
         var sut = JsonSByte.Parse("12").AsDotnetBackedValue();
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_dotnet_backed_value_as_a_ulongeger_JsonUInt64()
     {
         var sut = JsonUInt64.Parse("12").AsDotnetBackedValue();
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_dotnet_backed_value_as_a_ulongeger_JsonUInt32()
     {
         var sut = JsonUInt32.Parse("12").AsDotnetBackedValue();
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_dotnet_backed_value_as_a_ulongeger_JsonUInt16()
     {
         var sut = JsonUInt16.Parse("12").AsDotnetBackedValue();
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Cast_to_ulong_for_dotnet_backed_value_as_a_ulongeger_JsonByte()
     {
         var sut = JsonByte.Parse("12").AsDotnetBackedValue();
         var result = (ulong)sut;
-        Assert.Equal(12UL, result);
+        Assert.AreEqual(12UL, result);
     }
 }

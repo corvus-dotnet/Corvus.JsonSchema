@@ -203,7 +203,6 @@ internal class DummyDocument : IJsonDocument
 
 #endif
 
-
     public bool ValueIsEscaped(int index, bool isPropertyName)
     { return false; }
 

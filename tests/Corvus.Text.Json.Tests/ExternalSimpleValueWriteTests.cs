@@ -4,7 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json.Internal;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -26,13 +26,14 @@ namespace Corvus.Text.Json.Tests;
 /// and adds them to builder arrays and objects.
 /// </para>
 /// </remarks>
+[TestClass]
 public class ExternalSimpleValueWriteTests
 {
     /// <summary>
     /// Verifies that a string from an external FixedJsonValueDocument is serialized without
     /// extra quote characters when it appears as an array item in a builder.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteArrayItem_StringFromExternalDocument_NoExtraQuotes()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -48,14 +49,14 @@ public class ExternalSimpleValueWriteTests
         builder.RootElement.AddItem((JsonElement)stringDoc.RootElement);
 
         JsonElement result = builder.RootElement.Freeze();
-        Assert.Equal("[\"HELLO\"]", result.GetRawText());
+        Assert.AreEqual("[\"HELLO\"]", result.GetRawText());
     }
 
     /// <summary>
     /// Verifies that multiple strings from external documents are serialized correctly
     /// when they appear as items in a builder array.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteArrayItems_MultipleStringsFromExternalDocuments_NoExtraQuotes()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -74,14 +75,14 @@ public class ExternalSimpleValueWriteTests
         builder.RootElement.AddItem((JsonElement)doc2.RootElement);
 
         JsonElement result = builder.RootElement.Freeze();
-        Assert.Equal("[\"HELLO\",\"WORLD\"]", result.GetRawText());
+        Assert.AreEqual("[\"HELLO\",\"WORLD\"]", result.GetRawText());
     }
 
     /// <summary>
     /// Verifies that a string from an external FixedJsonValueDocument is serialized correctly
     /// when it appears as a property value in a builder object.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WritePropertyValue_StringFromExternalDocument_NoExtraQuotes()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -95,14 +96,14 @@ public class ExternalSimpleValueWriteTests
         builder.RootElement.SetProperty("greeting"u8, (JsonElement)stringDoc.RootElement);
 
         JsonElement result = builder.RootElement.Freeze();
-        Assert.Equal("\"hello world\"", result.GetProperty("greeting").GetRawText());
+        Assert.AreEqual("\"hello world\"", result.GetProperty("greeting").GetRawText());
     }
 
     /// <summary>
     /// Verifies that a number from an external FixedJsonValueDocument is serialized correctly
     /// when it appears as an array item in a builder.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteArrayItem_NumberFromExternalDocument_CorrectValue()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -116,14 +117,14 @@ public class ExternalSimpleValueWriteTests
         builder.RootElement.AddItem((JsonElement)numberDoc.RootElement);
 
         JsonElement result = builder.RootElement.Freeze();
-        Assert.Equal("[42]", result.GetRawText());
+        Assert.AreEqual("[42]", result.GetRawText());
     }
 
     /// <summary>
     /// Verifies that a number from an external FixedJsonValueDocument is serialized correctly
     /// when it appears as a property value in a builder object.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WritePropertyValue_NumberFromExternalDocument_CorrectValue()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -137,14 +138,14 @@ public class ExternalSimpleValueWriteTests
         builder.RootElement.SetProperty("value"u8, (JsonElement)numberDoc.RootElement);
 
         JsonElement result = builder.RootElement.Freeze();
-        Assert.Equal("3.14", result.GetProperty("value").GetRawText());
+        Assert.AreEqual("3.14", result.GetProperty("value").GetRawText());
     }
 
     /// <summary>
     /// Verifies that a mix of external string and number values in a nested structure
     /// serializes correctly — the pattern used by JSONata group-by operations.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteMixedExternalValues_NestedStructure_CorrectOutput()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -165,8 +166,8 @@ public class ExternalSimpleValueWriteTests
         builder.RootElement.SetProperty("age"u8, (JsonElement)ageDoc.RootElement);
 
         JsonElement result = builder.RootElement.Freeze();
-        Assert.Equal("\"Alice\"", result.GetProperty("name").GetRawText());
-        Assert.Equal("30", result.GetProperty("age").GetRawText());
+        Assert.AreEqual("\"Alice\"", result.GetProperty("name").GetRawText());
+        Assert.AreEqual("30", result.GetProperty("age").GetRawText());
     }
 
     /// <summary>
@@ -174,7 +175,7 @@ public class ExternalSimpleValueWriteTests
     /// a builder array that is itself set as a property of an object builder —
     /// the exact pattern used by JSONata group-by results.
     /// </summary>
-    [Fact]
+    [TestMethod]
     public void WriteExternalStringsInArrayProperty_JsonataPattern()
     {
         using JsonWorkspace workspace = JsonWorkspace.Create();
@@ -200,6 +201,6 @@ public class ExternalSimpleValueWriteTests
         objBuilder.RootElement.SetProperty("items"u8, (JsonElement)arrBuilder.RootElement);
 
         JsonElement result = objBuilder.RootElement.Freeze();
-        Assert.Equal("{\"items\":[\"FOO\",\"BAR\"]}", result.GetRawText());
+        Assert.AreEqual("{\"items\":[\"FOO\",\"BAR\"]}", result.GetRawText());
     }
 }

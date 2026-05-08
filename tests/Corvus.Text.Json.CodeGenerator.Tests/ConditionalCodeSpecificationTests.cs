@@ -11,7 +11,8 @@ namespace Corvus.Text.Json.CodeGenerator.Tests;
 /// Tests for <see cref="ConditionalCodeSpecification"/> covering conditional code emission,
 /// grouping blocks, and ordering.
 /// </summary>
-public static class ConditionalCodeSpecificationTests
+[TestClass]
+    public class ConditionalCodeSpecificationTests
 {
     private static CG CreateGenerator()
     {
@@ -20,8 +21,8 @@ public static class ConditionalCodeSpecificationTests
 
     #region AppendConditional
 
-    [Fact]
-    public static void AppendConditional_NotEmitted_EmitsNothing()
+    [TestMethod]
+    public void AppendConditional_NotEmitted_EmitsNothing()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification.AppendConditional(
@@ -29,11 +30,11 @@ public static class ConditionalCodeSpecificationTests
             g => g.Append("should not appear"),
             FrameworkType.NotEmitted);
 
-        Assert.Equal(string.Empty, gen.ToString());
+        Assert.AreEqual(string.Empty, gen.ToString());
     }
 
-    [Fact]
-    public static void AppendConditional_All_EmitsWithoutPreprocessor()
+    [TestMethod]
+    public void AppendConditional_All_EmitsWithoutPreprocessor()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification.AppendConditional(
@@ -42,12 +43,12 @@ public static class ConditionalCodeSpecificationTests
             FrameworkType.All);
 
         string output = gen.ToString();
-        Assert.Contains("code here", output);
+        StringAssert.Contains(output, "code here");
         Assert.DoesNotContain("#if", output);
     }
 
-    [Fact]
-    public static void AppendConditional_Net80OrGreater_WrapsInPreprocessor()
+    [TestMethod]
+    public void AppendConditional_Net80OrGreater_WrapsInPreprocessor()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification.AppendConditional(
@@ -56,13 +57,13 @@ public static class ConditionalCodeSpecificationTests
             FrameworkType.Net80OrGreater);
 
         string output = gen.ToString();
-        Assert.Contains("#if NET8_0_OR_GREATER", output);
-        Assert.Contains("net80+ code", output);
-        Assert.Contains("#endif", output);
+        StringAssert.Contains(output, "#if NET8_0_OR_GREATER");
+        StringAssert.Contains(output, "net80+ code");
+        StringAssert.Contains(output, "#endif");
     }
 
-    [Fact]
-    public static void AppendConditional_PreNet80_WrapsWithNotNet80()
+    [TestMethod]
+    public void AppendConditional_PreNet80_WrapsWithNotNet80()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification.AppendConditional(
@@ -71,13 +72,13 @@ public static class ConditionalCodeSpecificationTests
             FrameworkType.PreNet80);
 
         string output = gen.ToString();
-        Assert.Contains("#if !NET8_0_OR_GREATER", output);
-        Assert.Contains("pre-net80 code", output);
-        Assert.Contains("#endif", output);
+        StringAssert.Contains(output, "#if !NET8_0_OR_GREATER");
+        StringAssert.Contains(output, "pre-net80 code");
+        StringAssert.Contains(output, "#endif");
     }
 
-    [Fact]
-    public static void AppendConditional_Net80_WrapsWithNet80()
+    [TestMethod]
+    public void AppendConditional_Net80_WrapsWithNet80()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification.AppendConditional(
@@ -86,17 +87,17 @@ public static class ConditionalCodeSpecificationTests
             FrameworkType.Net80);
 
         string output = gen.ToString();
-        Assert.Contains("#if NET8_0", output);
-        Assert.Contains("net80 specific", output);
-        Assert.Contains("#endif", output);
+        StringAssert.Contains(output, "#if NET8_0");
+        StringAssert.Contains(output, "net80 specific");
+        StringAssert.Contains(output, "#endif");
     }
 
     #endregion
 
     #region Constructor and Append
 
-    [Fact]
-    public static void ActionConstructor_InvokesFunction()
+    [TestMethod]
+    public void ActionConstructor_InvokesFunction()
     {
         var spec = new ConditionalCodeSpecification(
             g => g.Append("action content"),
@@ -105,48 +106,48 @@ public static class ConditionalCodeSpecificationTests
         CG gen = CreateGenerator();
         spec.Append(gen);
 
-        Assert.Contains("action content", gen.ToString());
+        StringAssert.Contains(gen.ToString(), "action content");
     }
 
-    [Fact]
-    public static void StringConstructor_AppendsString()
+    [TestMethod]
+    public void StringConstructor_AppendsString()
     {
         var spec = new ConditionalCodeSpecification("IDisposable", FrameworkType.Net80OrGreater);
 
         CG gen = CreateGenerator();
         spec.Append(gen);
 
-        Assert.Contains("IDisposable", gen.ToString());
+        StringAssert.Contains(gen.ToString(), "IDisposable");
     }
 
-    [Fact]
-    public static void ImplicitStringConversion_CreatesAllCondition()
+    [TestMethod]
+    public void ImplicitStringConversion_CreatesAllCondition()
     {
         ConditionalCodeSpecification spec = "IEnumerable";
 
         CG gen = CreateGenerator();
         spec.Append(gen);
 
-        Assert.Contains("IEnumerable", gen.ToString());
+        StringAssert.Contains(gen.ToString(), "IEnumerable");
     }
 
-    [Fact]
-    public static void DoNotEmit_AppendsNothing()
+    [TestMethod]
+    public void DoNotEmit_AppendsNothing()
     {
         ConditionalCodeSpecification spec = ConditionalCodeSpecification.DoNotEmit;
 
         CG gen = CreateGenerator();
         spec.Append(gen);
 
-        Assert.Equal(string.Empty, gen.ToString());
+        Assert.AreEqual(string.Empty, gen.ToString());
     }
 
     #endregion
 
     #region AppendConditionalsGroupingBlocks
 
-    [Fact]
-    public static void GroupingBlocks_EmptyArray_EmitsNothing()
+    [TestMethod]
+    public void GroupingBlocks_EmptyArray_EmitsNothing()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification.AppendConditionalsGroupingBlocks(
@@ -154,11 +155,11 @@ public static class ConditionalCodeSpecificationTests
             [],
             (g, append, i) => append(g));
 
-        Assert.Equal(string.Empty, gen.ToString());
+        Assert.AreEqual(string.Empty, gen.ToString());
     }
 
-    [Fact]
-    public static void GroupingBlocks_AllItems_NoConditional()
+    [TestMethod]
+    public void GroupingBlocks_AllItems_NoConditional()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification[] specs =
@@ -181,13 +182,13 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("IFoo", output);
-        Assert.Contains("IBar", output);
+        StringAssert.Contains(output, "IFoo");
+        StringAssert.Contains(output, "IBar");
         Assert.DoesNotContain("#if", output);
     }
 
-    [Fact]
-    public static void GroupingBlocks_Net80OrGreater_EmitsConditionalBlock()
+    [TestMethod]
+    public void GroupingBlocks_Net80OrGreater_EmitsConditionalBlock()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification[] specs =
@@ -210,14 +211,14 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("#if NET8_0_OR_GREATER", output);
-        Assert.Contains("IFoo", output);
-        Assert.Contains("INet80Interface", output);
-        Assert.Contains("#endif", output);
+        StringAssert.Contains(output, "#if NET8_0_OR_GREATER");
+        StringAssert.Contains(output, "IFoo");
+        StringAssert.Contains(output, "INet80Interface");
+        StringAssert.Contains(output, "#endif");
     }
 
-    [Fact]
-    public static void GroupingBlocks_PreNet80_EmitsElseBlock()
+    [TestMethod]
+    public void GroupingBlocks_PreNet80_EmitsElseBlock()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification[] specs =
@@ -241,15 +242,15 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("#if NET8_0_OR_GREATER", output);
-        Assert.Contains("INet80Interface", output);
-        Assert.Contains("ILegacyInterface", output);
-        Assert.Contains("#else", output);
-        Assert.Contains("#endif", output);
+        StringAssert.Contains(output, "#if NET8_0_OR_GREATER");
+        StringAssert.Contains(output, "INet80Interface");
+        StringAssert.Contains(output, "ILegacyInterface");
+        StringAssert.Contains(output, "#else");
+        StringAssert.Contains(output, "#endif");
     }
 
-    [Fact]
-    public static void GroupingBlocks_Net80Only_EmitsNet80Conditional()
+    [TestMethod]
+    public void GroupingBlocks_Net80Only_EmitsNet80Conditional()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification[] specs =
@@ -272,13 +273,13 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("#if NET8_0", output);
-        Assert.Contains("INet80Only", output);
-        Assert.Contains("#endif", output);
+        StringAssert.Contains(output, "#if NET8_0");
+        StringAssert.Contains(output, "INet80Only");
+        StringAssert.Contains(output, "#endif");
     }
 
-    [Fact]
-    public static void GroupingBlocks_AllThreeGroups_EmitsFullConditional()
+    [TestMethod]
+    public void GroupingBlocks_AllThreeGroups_EmitsFullConditional()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification[] specs =
@@ -303,16 +304,16 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("#if NET8_0_OR_GREATER", output);
-        Assert.Contains("IModern", output);
-        Assert.Contains("INet80", output);
-        Assert.Contains("ILegacy", output);
-        Assert.Contains("ICommon", output);
-        Assert.Contains("#endif", output);
+        StringAssert.Contains(output, "#if NET8_0_OR_GREATER");
+        StringAssert.Contains(output, "IModern");
+        StringAssert.Contains(output, "INet80");
+        StringAssert.Contains(output, "ILegacy");
+        StringAssert.Contains(output, "ICommon");
+        StringAssert.Contains(output, "#endif");
     }
 
-    [Fact]
-    public static void GroupingBlocks_NotEmittedItems_AreSkipped()
+    [TestMethod]
+    public void GroupingBlocks_NotEmittedItems_AreSkipped()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification[] specs =
@@ -336,12 +337,12 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("IFoo", output);
-        Assert.Contains("IBar", output);
+        StringAssert.Contains(output, "IFoo");
+        StringAssert.Contains(output, "IBar");
     }
 
-    [Fact]
-    public static void GroupingBlocks_PreNet80WithoutNet80OrGreater_EmitsNotNet80()
+    [TestMethod]
+    public void GroupingBlocks_PreNet80WithoutNet80OrGreater_EmitsNotNet80()
     {
         // When only preNet80 is specified (no net80OrGreater), it uses #if !NET8_0_OR_GREATER
         CG gen = CreateGenerator();
@@ -365,13 +366,13 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("#if !NET8_0_OR_GREATER", output);
-        Assert.Contains("ILegacy", output);
-        Assert.Contains("#endif", output);
+        StringAssert.Contains(output, "#if !NET8_0_OR_GREATER");
+        StringAssert.Contains(output, "ILegacy");
+        StringAssert.Contains(output, "#endif");
     }
 
-    [Fact]
-    public static void GroupingBlocks_Net80OnlyWithPreNet80_EmitsElifNotNet80()
+    [TestMethod]
+    public void GroupingBlocks_Net80OnlyWithPreNet80_EmitsElifNotNet80()
     {
         // Net80 solo + preNet80 (no net80OrGreater) — emits #if NET8_0 then #elif !NET8_0_OR_GREATER
         CG gen = CreateGenerator();
@@ -396,18 +397,18 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("#if NET8_0", output);
-        Assert.Contains("INet80Only", output);
-        Assert.Contains("ILegacy", output);
-        Assert.Contains("#endif", output);
+        StringAssert.Contains(output, "#if NET8_0");
+        StringAssert.Contains(output, "INet80Only");
+        StringAssert.Contains(output, "ILegacy");
+        StringAssert.Contains(output, "#endif");
     }
 
     #endregion
 
     #region AppendConditionalsInOrder
 
-    [Fact]
-    public static void InOrder_AllItems_NoConditional()
+    [TestMethod]
+    public void InOrder_AllItems_NoConditional()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification[] specs =
@@ -426,13 +427,13 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("using System;", output);
-        Assert.Contains("using System.Collections.Generic;", output);
+        StringAssert.Contains(output, "using System;");
+        StringAssert.Contains(output, "using System.Collections.Generic;");
         Assert.DoesNotContain("#if", output);
     }
 
-    [Fact]
-    public static void InOrder_MixedConditions_EmitsPreprocessorDirectives()
+    [TestMethod]
+    public void InOrder_MixedConditions_EmitsPreprocessorDirectives()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification[] specs =
@@ -452,14 +453,14 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("using System;", output);
-        Assert.Contains("#if NET8_0_OR_GREATER", output);
-        Assert.Contains("using System.Buffers;", output);
-        Assert.Contains("using System.Buffers.Binary;", output);
+        StringAssert.Contains(output, "using System;");
+        StringAssert.Contains(output, "#if NET8_0_OR_GREATER");
+        StringAssert.Contains(output, "using System.Buffers;");
+        StringAssert.Contains(output, "using System.Buffers.Binary;");
     }
 
-    [Fact]
-    public static void InOrder_NotEmittedItems_AreSkipped()
+    [TestMethod]
+    public void InOrder_NotEmittedItems_AreSkipped()
     {
         CG gen = CreateGenerator();
         ConditionalCodeSpecification[] specs =
@@ -479,12 +480,12 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("using System;", output);
-        Assert.Contains("using System.Text;", output);
+        StringAssert.Contains(output, "using System;");
+        StringAssert.Contains(output, "using System.Text;");
     }
 
-    [Fact]
-    public static void InOrder_ConditionChange_ClosesAndOpensBlocks()
+    [TestMethod]
+    public void InOrder_ConditionChange_ClosesAndOpensBlocks()
     {
         CG gen = CreateGenerator();
 
@@ -507,12 +508,12 @@ public static class ConditionalCodeSpecificationTests
             });
 
         string output = gen.ToString();
-        Assert.Contains("using System;", output);
-        Assert.Contains("#if !NET8_0_OR_GREATER", output);
-        Assert.Contains("using Legacy;", output);
-        Assert.Contains("#endif", output);
-        Assert.Contains("#if NET8_0_OR_GREATER", output);
-        Assert.Contains("using Modern;", output);
+        StringAssert.Contains(output, "using System;");
+        StringAssert.Contains(output, "#if !NET8_0_OR_GREATER");
+        StringAssert.Contains(output, "using Legacy;");
+        StringAssert.Contains(output, "#endif");
+        StringAssert.Contains(output, "#if NET8_0_OR_GREATER");
+        StringAssert.Contains(output, "using Modern;");
     }
 
     #endregion

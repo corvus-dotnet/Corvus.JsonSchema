@@ -5,16 +5,17 @@
 using System.Globalization;
 using System.Text;
 using Shouldly;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Numerics.Tests;
 
 /// <summary>
 /// Tests for the highly-optimized JSON UTF-8 formatting fast path.
 /// </summary>
+[TestClass]
 public class JsonUtf8FormattingTests
 {
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_Zero_ReturnsZero()
     {
         BigNumber value = BigNumber.Zero;
@@ -26,7 +27,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("0");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_PositiveInteger_NoExponent()
     {
         var value = new BigNumber(1234, 0);
@@ -38,7 +39,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("1234");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_NegativeInteger_NoExponent()
     {
         var value = new BigNumber(-1234, 0);
@@ -50,7 +51,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("-1234");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_PositiveWithNegativeExponent()
     {
         var value = new BigNumber(1234, -3);
@@ -62,7 +63,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("1234E-3");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_PositiveWithPositiveExponent()
     {
         var value = new BigNumber(1234, 2);
@@ -74,7 +75,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("1234E2");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_NegativeWithNegativeExponent()
     {
         var value = new BigNumber(-1234, -3);
@@ -86,7 +87,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("-1234E-3");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_NegativeWithPositiveExponent()
     {
         var value = new BigNumber(-1234, 2);
@@ -98,7 +99,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("-1234E2");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_WithGFormat_DifferentThanEmpty()
     {
         var value = new BigNumber(1234, -3);
@@ -118,7 +119,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer2.Slice(0, bytes2)).ShouldBe("1.234");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_WithLowercaseG_DifferentThanEmpty()
     {
         var value = new BigNumber(1234, -3);
@@ -138,7 +139,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer2.Slice(0, bytes2)).ShouldBe("1.234");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_WithNullProvider_SameAsInvariant()
     {
         var value = new BigNumber(1234, -3);
@@ -154,7 +155,7 @@ public class JsonUtf8FormattingTests
         buffer1.Slice(0, bytes1).SequenceEqual(buffer2.Slice(0, bytes2)).ShouldBeTrue();
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_LargeNumber()
     {
         var value = new BigNumber(123456789012345678, 10);
@@ -166,7 +167,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("123456789012345678E10");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_VeryLargeExponent()
     {
         var value = new BigNumber(123, 12345);
@@ -178,7 +179,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("123E12345");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_VeryNegativeExponent()
     {
         var value = new BigNumber(123, -12345);
@@ -190,7 +191,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("123E-12345");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_Normalization_RemovesTrailingZeros()
     {
         var value = new BigNumber(12340, -2); // Should normalize to 1234E-1
@@ -202,7 +203,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("1234E-1");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_BufferTooSmall_ReturnsFalse()
     {
         var value = new BigNumber(1234567890, 100);
@@ -214,7 +215,7 @@ public class JsonUtf8FormattingTests
         bytesWritten.ShouldBe(0);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_ExactBufferSize_Succeeds()
     {
         var value = new BigNumber(123, 0);
@@ -227,20 +228,20 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe("123");
     }
 
-    [Theory]
-    [InlineData(0L, 0, "0")]
-    [InlineData(1L, 0, "1")]
-    [InlineData(-1L, 0, "-1")]
-    [InlineData(12L, 0, "12")]
-    [InlineData(123L, 0, "123")]
-    [InlineData(1234L, 0, "1234")]
-    [InlineData(12345L, 0, "12345")]
-    [InlineData(1L, 1, "1E1")]
-    [InlineData(1L, -1, "1E-1")]
-    [InlineData(12L, 5, "12E5")]
-    [InlineData(12L, -5, "12E-5")]
-    [InlineData(-12L, 5, "-12E5")]
-    [InlineData(-12L, -5, "-12E-5")]
+    [TestMethod]
+    [DataRow(0L, 0, "0")]
+    [DataRow(1L, 0, "1")]
+    [DataRow(-1L, 0, "-1")]
+    [DataRow(12L, 0, "12")]
+    [DataRow(123L, 0, "123")]
+    [DataRow(1234L, 0, "1234")]
+    [DataRow(12345L, 0, "12345")]
+    [DataRow(1L, 1, "1E1")]
+    [DataRow(1L, -1, "1E-1")]
+    [DataRow(12L, 5, "12E5")]
+    [DataRow(12L, -5, "12E-5")]
+    [DataRow(-12L, 5, "-12E5")]
+    [DataRow(-12L, -5, "-12E-5")]
     public void TryFormatJsonUtf8_VariousValues_CorrectOutput(long significand, int exponent, string expected)
     {
         var value = new BigNumber(significand, exponent);
@@ -252,7 +253,7 @@ public class JsonUtf8FormattingTests
         StringFromSpan.CreateFromUtf8(buffer.Slice(0, bytesWritten)).ShouldBe(expected);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_ConsistentWithCharFormatting()
     {
         var value = new BigNumber(1234567, -5);
@@ -272,7 +273,7 @@ public class JsonUtf8FormattingTests
         utf8String.ShouldBe(charString);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_DecimalNumber()
     {
         var value = BigNumber.Parse("123.456", CultureInfo.InvariantCulture);
@@ -288,7 +289,7 @@ public class JsonUtf8FormattingTests
         result.ShouldContain("E");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormatJsonUtf8_VerySmallNumber()
     {
         var value = BigNumber.Parse("0.000001", CultureInfo.InvariantCulture);

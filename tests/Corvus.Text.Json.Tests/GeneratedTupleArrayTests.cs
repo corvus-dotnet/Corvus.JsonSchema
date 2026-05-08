@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -12,61 +12,62 @@ namespace Corvus.Text.Json.Tests;
 /// positional type access, indexer, enumeration, Builder.Build pattern,
 /// and mutator methods on tuples with additional items.
 /// </summary>
+[TestClass]
 public class GeneratedTupleArrayTests
 {
     #region Pure tuple — parse, access, enumerate
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_ParseValid_Succeeds()
     {
         using var doc =
             ParsedJsonDocument<PureTuple>.Parse("""["hello",42,true]""");
 
-        Assert.Equal(3, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(3, doc.RootElement.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_IndexAccess_ReturnsCorrectTypes()
     {
         using var doc =
             ParsedJsonDocument<PureTuple>.Parse("""["hello",42,true]""");
 
-        Assert.Equal("hello", doc.RootElement[0].ToString());
-        Assert.Equal("42", doc.RootElement[1].ToString());
-        Assert.Equal("True", doc.RootElement[2].ToString());
+        Assert.AreEqual("hello", doc.RootElement[0].ToString());
+        Assert.AreEqual("42", doc.RootElement[1].ToString());
+        Assert.AreEqual("True", doc.RootElement[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_PrefixItem0_IsStringType()
     {
         using var doc =
             ParsedJsonDocument<PureTuple>.Parse("""["hello",42,true]""");
 
         var item0 = JsonString.From(doc.RootElement[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_PrefixItem1_IsInt32Type()
     {
         using var doc =
             ParsedJsonDocument<PureTuple>.Parse("""["hello",42,true]""");
 
         var item1 = JsonInt32.From(doc.RootElement[1]);
-        Assert.Equal(42, (int)item1);
+        Assert.AreEqual(42, (int)item1);
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_PrefixItem2_IsBooleanType()
     {
         using var doc =
             ParsedJsonDocument<PureTuple>.Parse("""["hello",42,true]""");
 
         var item2 = JsonBoolean.From(doc.RootElement[2]);
-        Assert.True((bool)item2);
+        Assert.IsTrue((bool)item2);
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_EnumerateArray_IteratesAllItems()
     {
         using var doc =
@@ -78,10 +79,10 @@ public class GeneratedTupleArrayTests
             count++;
         }
 
-        Assert.Equal(3, count);
+        Assert.AreEqual(3, count);
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_Mutable_IndexAccess()
     {
         using var workspace = JsonWorkspace.Create();
@@ -90,13 +91,13 @@ public class GeneratedTupleArrayTests
         using JsonDocumentBuilder<PureTuple.Mutable> builder = doc.RootElement.CreateBuilder(workspace);
 
         PureTuple.Mutable root = builder.RootElement;
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("42", root[1].ToString());
-        Assert.Equal("True", root[2].ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("42", root[1].ToString());
+        Assert.AreEqual("True", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_Mutable_EnumerateArray()
     {
         using var workspace = JsonWorkspace.Create();
@@ -111,10 +112,10 @@ public class GeneratedTupleArrayTests
             count++;
         }
 
-        Assert.Equal(3, count);
+        Assert.AreEqual(3, count);
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_RoundTrip_PreservesValues()
     {
         using var doc =
@@ -123,33 +124,33 @@ public class GeneratedTupleArrayTests
         string json = doc.RootElement.ToString();
 
         using var roundTrip = ParsedJsonDocument<PureTuple>.Parse(json);
-        Assert.Equal(3, roundTrip.RootElement.GetArrayLength());
-        Assert.Equal("hello", roundTrip.RootElement[0].ToString());
+        Assert.AreEqual(3, roundTrip.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", roundTrip.RootElement[0].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_SchemaValidation_ValidTuplePassesValidation()
     {
         using var doc =
             ParsedJsonDocument<PureTuple>.Parse("""["hello",42,true]""");
 
-        Assert.True(doc.RootElement.EvaluateSchema());
+        Assert.IsTrue(doc.RootElement.EvaluateSchema());
     }
 
     #endregion
 
     #region Tuple with additional items — parse, typed access, additional items
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_ParseValid_Succeeds()
     {
         using var doc =
             ParsedJsonDocument<TupleWithAdditionalItems>.Parse("""["hello",42,true,false]""");
 
-        Assert.Equal(4, doc.RootElement.GetArrayLength());
+        Assert.AreEqual(4, doc.RootElement.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_PrefixItems_HaveCorrectTypes()
     {
         using var doc =
@@ -157,14 +158,14 @@ public class GeneratedTupleArrayTests
 
         var item0 =
             JsonString.From(doc.RootElement[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
 
         var item1 =
             JsonInt32.From(doc.RootElement[1]);
-        Assert.Equal(42, (int)item1);
+        Assert.AreEqual(42, (int)item1);
     }
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_AdditionalItem_IsBooleanType()
     {
         using var doc =
@@ -173,18 +174,18 @@ public class GeneratedTupleArrayTests
         // Index 2 and 3 are additional items (boolean type)
         var item2 =
             JsonBoolean.From(doc.RootElement[2]);
-        Assert.True((bool)item2);
+        Assert.IsTrue((bool)item2);
 
         var item3 =
             JsonBoolean.From(doc.RootElement[3]);
-        Assert.False((bool)item3);
+        Assert.IsFalse((bool)item3);
     }
 
     #endregion
 
     #region Tuple with additional items — mutable operations
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_Mutable_SetItem_ReplacesAdditionalItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -194,11 +195,11 @@ public class GeneratedTupleArrayTests
 
         TupleWithAdditionalItems.Mutable root = builder.RootElement;
         root.SetItem(3, true);
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal("True", root[3].ToString());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual("True", root[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_Mutable_InsertItem_InsertsAdditionalItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -208,10 +209,10 @@ public class GeneratedTupleArrayTests
 
         TupleWithAdditionalItems.Mutable root = builder.RootElement;
         root.InsertItem(3, false);
-        Assert.Equal(4, root.GetArrayLength());
+        Assert.AreEqual(4, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_Mutable_SetItemUndefined_RemovesItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -221,10 +222,10 @@ public class GeneratedTupleArrayTests
 
         TupleWithAdditionalItems.Mutable root = builder.RootElement;
         root.SetItem(3, default);
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_Mutable_InsertItemUndefined_IsNoOp()
     {
         using var workspace = JsonWorkspace.Create();
@@ -234,10 +235,10 @@ public class GeneratedTupleArrayTests
 
         TupleWithAdditionalItems.Mutable root = builder.RootElement;
         root.InsertItem(3, default);
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_Mutable_Remove_RemovesItem()
     {
         using var workspace = JsonWorkspace.Create();
@@ -247,10 +248,10 @@ public class GeneratedTupleArrayTests
 
         TupleWithAdditionalItems.Mutable root = builder.RootElement;
         root.RemoveAt(3);
-        Assert.Equal(3, root.GetArrayLength());
+        Assert.AreEqual(3, root.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_Mutable_RemoveWhere_RemovesMatchingItems()
     {
         using var workspace = JsonWorkspace.Create();
@@ -262,14 +263,14 @@ public class GeneratedTupleArrayTests
         root.RemoveWhere(static (in item) => item.ToString() == "False");
         // Original: ["hello", 42, true, false, true]
         // After removing false items: ["hello", 42, true, true]
-        Assert.Equal(4, root.GetArrayLength());
+        Assert.AreEqual(4, root.GetArrayLength());
     }
 
     #endregion
 
     #region Pure tuple — Builder.CreateTuple pattern
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_Build_CreateTuple_CreatesValidSource()
     {
         using var workspace = JsonWorkspace.Create();
@@ -283,13 +284,13 @@ public class GeneratedTupleArrayTests
         using JsonDocumentBuilder<PureTuple.Mutable> builder = PureTuple.CreateBuilder(workspace, source);
         PureTuple.Mutable root = builder.RootElement;
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("99", root[1].ToString());
-        Assert.Equal("False", root[2].ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("99", root[1].ToString());
+        Assert.AreEqual("False", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_Build_CreateTuple_MaterializesRoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -305,16 +306,16 @@ public class GeneratedTupleArrayTests
         PureTuple.Mutable root = builder.RootElement;
 
         string json = root.ToString();
-        Assert.Contains("world", json);
-        Assert.Contains("99", json);
-        Assert.Contains("false", json);
+        StringAssert.Contains(json, "world");
+        StringAssert.Contains(json, "99");
+        StringAssert.Contains(json, "false");
 
         // Re-parse the JSON and verify structure
         using var reparsed = ParsedJsonDocument<PureTuple>.Parse(json);
-        Assert.Equal(3, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual(3, reparsed.RootElement.GetArrayLength());
     }
 
-    [Fact]
+    [TestMethod]
     public void CreateBuilder_WithContext_CreatesValidDocument()
     {
         using var workspace = JsonWorkspace.Create();
@@ -330,16 +331,16 @@ public class GeneratedTupleArrayTests
                 });
 
         ObjectWithMixedProperties.Mutable root = builder.RootElement;
-        Assert.Equal("contextValue", root.Name.ToString());
-        Assert.Equal("77", root.Age.ToString());
-        Assert.Equal("True", root.IsActive.ToString());
+        Assert.AreEqual("contextValue", root.Name.ToString());
+        Assert.AreEqual("77", root.Age.ToString());
+        Assert.AreEqual("True", root.IsActive.ToString());
     }
 
     #endregion
 
     #region Tuple with additional items — Builder.Build pattern
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_Build_AddBeforeCreateTuple_Throws()
     {
         using var workspace = JsonWorkspace.Create();
@@ -363,7 +364,7 @@ public class GeneratedTupleArrayTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_Build_CreateTupleThenAdd()
     {
         using var workspace = JsonWorkspace.Create();
@@ -380,14 +381,14 @@ public class GeneratedTupleArrayTests
             TupleWithAdditionalItems.CreateBuilder(workspace, source);
         TupleWithAdditionalItems.Mutable root = builder.RootElement;
 
-        Assert.Equal(4, root.GetArrayLength());
-        Assert.Equal("hello", root[0].ToString());
-        Assert.Equal("42", root[1].ToString());
-        Assert.Equal("True", root[2].ToString());
-        Assert.Equal("False", root[3].ToString());
+        Assert.AreEqual(4, root.GetArrayLength());
+        Assert.AreEqual("hello", root[0].ToString());
+        Assert.AreEqual("42", root[1].ToString());
+        Assert.AreEqual("True", root[2].ToString());
+        Assert.AreEqual("False", root[3].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_Build_CreateTupleOnly()
     {
         using var workspace = JsonWorkspace.Create();
@@ -402,16 +403,16 @@ public class GeneratedTupleArrayTests
             TupleWithAdditionalItems.CreateBuilder(workspace, source);
         TupleWithAdditionalItems.Mutable root = builder.RootElement;
 
-        Assert.Equal(2, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("99", root[1].ToString());
+        Assert.AreEqual(2, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("99", root[1].ToString());
     }
 
     #endregion
 
     #region Tuple with additional items — round-trip
 
-    [Fact]
+    [TestMethod]
     public void TupleWithAdditional_RoundTrip_PreservesAllItems()
     {
         using var doc =
@@ -421,15 +422,15 @@ public class GeneratedTupleArrayTests
 
         using var roundTrip =
             ParsedJsonDocument<TupleWithAdditionalItems>.Parse(json);
-        Assert.Equal(4, roundTrip.RootElement.GetArrayLength());
-        Assert.Equal("hello", roundTrip.RootElement[0].ToString());
+        Assert.AreEqual(4, roundTrip.RootElement.GetArrayLength());
+        Assert.AreEqual("hello", roundTrip.RootElement[0].ToString());
     }
 
     #endregion
 
     #region Pure tuple — Build from positional sources
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_BuildFromSources_CreatesValidSource()
     {
         using var workspace = JsonWorkspace.Create();
@@ -439,13 +440,13 @@ public class GeneratedTupleArrayTests
         using JsonDocumentBuilder<PureTuple.Mutable> builder = PureTuple.CreateBuilder(workspace, source);
         PureTuple.Mutable root = builder.RootElement;
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("99", root[1].ToString());
-        Assert.Equal("False", root[2].ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("99", root[1].ToString());
+        Assert.AreEqual("False", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_BuildFromSources_RoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -456,19 +457,19 @@ public class GeneratedTupleArrayTests
         string json = builder.RootElement.ToString();
 
         using var reparsed = ParsedJsonDocument<PureTuple>.Parse(json);
-        Assert.Equal(3, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual(3, reparsed.RootElement.GetArrayLength());
 
         var item0 = JsonString.From(reparsed.RootElement[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
 
         var item1 = JsonInt32.From(reparsed.RootElement[1]);
-        Assert.Equal(42, (int)item1);
+        Assert.AreEqual(42, (int)item1);
 
         var item2 = JsonBoolean.From(reparsed.RootElement[2]);
-        Assert.True((bool)item2);
+        Assert.IsTrue((bool)item2);
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_BuildFromSources_MatchesBuildCreateTuple()
     {
         using var workspace = JsonWorkspace.Create();
@@ -487,10 +488,10 @@ public class GeneratedTupleArrayTests
         using JsonDocumentBuilder<PureTuple.Mutable> buildBuilder = PureTuple.CreateBuilder(workspace, buildSource);
         string buildJson = buildBuilder.RootElement.ToString();
 
-        Assert.Equal(buildJson, tupleJson);
+        Assert.AreEqual(buildJson, tupleJson);
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_BuildFromSources_UsedAsPropertyValue()
     {
         // Verify that a Build(sources) Source can be used as a property in an object builder
@@ -502,14 +503,14 @@ public class GeneratedTupleArrayTests
         // We can verify the Source is usable by materializing it in isolation
         using JsonDocumentBuilder<PureTuple.Mutable> builder = PureTuple.CreateBuilder(workspace, tupleSource);
         string json = builder.RootElement.ToString();
-        Assert.Equal("""["nested",7,true]""", json);
+        Assert.AreEqual("""["nested",7,true]""", json);
     }
 
     #endregion
 
     #region Pure tuple — CreateBuilder convenience
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_CreateBuilderFromSources()
     {
         using var workspace = JsonWorkspace.Create();
@@ -518,13 +519,13 @@ public class GeneratedTupleArrayTests
             PureTuple.CreateBuilder(workspace, "world", 99, false);
         PureTuple.Mutable root = builder.RootElement;
 
-        Assert.Equal(3, root.GetArrayLength());
-        Assert.Equal("world", root[0].ToString());
-        Assert.Equal("99", root[1].ToString());
-        Assert.Equal("False", root[2].ToString());
+        Assert.AreEqual(3, root.GetArrayLength());
+        Assert.AreEqual("world", root[0].ToString());
+        Assert.AreEqual("99", root[1].ToString());
+        Assert.AreEqual("False", root[2].ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void PureTuple_CreateBuilderFromSources_RoundTrip()
     {
         using var workspace = JsonWorkspace.Create();
@@ -535,16 +536,16 @@ public class GeneratedTupleArrayTests
         string json = builder.RootElement.ToString();
 
         using var reparsed = ParsedJsonDocument<PureTuple>.Parse(json);
-        Assert.Equal(3, reparsed.RootElement.GetArrayLength());
+        Assert.AreEqual(3, reparsed.RootElement.GetArrayLength());
 
         var item0 = JsonString.From(reparsed.RootElement[0]);
-        Assert.Equal("hello", (string)item0);
+        Assert.AreEqual("hello", (string)item0);
 
         var item1 = JsonInt32.From(reparsed.RootElement[1]);
-        Assert.Equal(42, (int)item1);
+        Assert.AreEqual(42, (int)item1);
 
         var item2 = JsonBoolean.From(reparsed.RootElement[2]);
-        Assert.True((bool)item2);
+        Assert.IsTrue((bool)item2);
     }
 
     #endregion

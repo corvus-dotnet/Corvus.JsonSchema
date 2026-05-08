@@ -9,7 +9,7 @@ using Microsoft.CodeAnalysis.CSharp;
 namespace Corvus.JsonSchemaTestSuite.CodeGenerator;
 
 /// <summary>
-/// Generates xUnit test classes for the JSON Schema annotation test suite,
+/// Generates MSTest test classes for the JSON Schema annotation test suite,
 /// using the standalone evaluator infrastructure.
 /// </summary>
 internal static class AnnotationTestCaseGenerator
@@ -72,7 +72,7 @@ internal static class AnnotationTestCaseGenerator
                     .AppendLine("using System.Threading.Tasks;")
                     .AppendLine("using Corvus.Text.Json;")
                     .AppendLine("using TestUtilities;")
-                    .AppendLine("using Xunit;")
+                    .AppendLine("using Microsoft.VisualStudio.TestTools.UnitTesting;")
                     .AppendLine()
                     .AppendLine($"namespace AnnotationTestSuite.{draftName}.{pascalFileName};");
 
@@ -95,13 +95,23 @@ internal static class AnnotationTestCaseGenerator
 
                     builder
                         .AppendLine()
-                        .AppendLine($"[Trait(\"AnnotationTestSuite\", \"{draftName}\")]")
-                        .AppendLine($"public class Suite{pascalSuiteName} : IClassFixture<Suite{pascalSuiteName}.Fixture>")
+                        .AppendLine($"[TestCategory(\"{draftName}\")]")
+                        .AppendLine("[TestClass]")
+                        .AppendLine($"public class Suite{pascalSuiteName}")
                         .AppendLine("{")
-                        .AppendLine("    private readonly Fixture _fixture;")
-                        .AppendLine($"    public Suite{pascalSuiteName}(Fixture fixture)")
+                        .AppendLine($"    private static Fixture? s_fixture;")
+                        .AppendLine()
+                        .AppendLine("    [ClassInitialize]")
+                        .AppendLine($"    public static async Task ClassInit(TestContext _)")
                         .AppendLine("    {")
-                        .AppendLine("        _fixture = fixture;")
+                        .AppendLine("        s_fixture = new Fixture();")
+                        .AppendLine("        await s_fixture.InitializeAsync();")
+                        .AppendLine("    }")
+                        .AppendLine()
+                        .AppendLine("    [ClassCleanup]")
+                        .AppendLine("    public static void ClassCleanupMethod()")
+                        .AppendLine("    {")
+                        .AppendLine("        s_fixture = null;")
                         .AppendLine("    }");
 
                     HashSet<string> testNames = [];
@@ -125,11 +135,11 @@ internal static class AnnotationTestCaseGenerator
 
                             builder
                                 .AppendLine()
-                                .AppendLine("    [Fact]")
+                                .AppendLine("    [TestMethod]")
                                 .AppendLine($"    public void {testName}()")
                                 .AppendLine("    {")
                                 .AppendLine($"        AnnotationTestHelper.AssertAnnotations(")
-                                .AppendLine($"            _fixture.Evaluator,")
+                                .AppendLine($"            s_fixture!.Evaluator,")
                                 .AppendLine($"            {SymbolDisplay.FormatLiteral(instanceJson, true)},")
                                 .AppendLine($"            {SymbolDisplay.FormatLiteral(location, true)},")
                                 .AppendLine($"            {SymbolDisplay.FormatLiteral(keyword, true)},")
@@ -144,11 +154,9 @@ internal static class AnnotationTestCaseGenerator
 
                     builder
                         .AppendLine()
-                        .AppendLine("    public class Fixture : IAsyncLifetime")
+                        .AppendLine("    public class Fixture")
                         .AppendLine("    {")
                         .AppendLine("        public CompiledEvaluator Evaluator { get; private set; }")
-                        .AppendLine()
-                        .AppendLine("        public Task DisposeAsync() => Task.CompletedTask;")
                         .AppendLine()
                         .AppendLine("        public async Task InitializeAsync()")
                         .AppendLine("        {")

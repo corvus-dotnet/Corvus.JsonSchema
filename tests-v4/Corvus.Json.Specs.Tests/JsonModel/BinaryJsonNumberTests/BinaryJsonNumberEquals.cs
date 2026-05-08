@@ -1,13 +1,14 @@
-﻿// <copyright file="BinaryJsonNumberEquals.cs" company="Endjin Limited">
+// <copyright file="BinaryJsonNumberEquals.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 using System.Text.Json;
 using Corvus.Json;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Json.Specs.Tests.JsonModel.BinaryJsonNumberTests;
 
+[TestClass]
 public class BinaryJsonNumberEquals
 {
     /// <summary>
@@ -1148,67 +1149,67 @@ public class BinaryJsonNumberEquals
         Exception,
     }
 
-    [Theory]
-    [MemberData(nameof(ZeroEqualsExpectationsSByte))]
-    [MemberData(nameof(ZeroEqualsExpectationsInt16))]
-    [MemberData(nameof(ZeroEqualsExpectationsInt32))]
-    [MemberData(nameof(ZeroEqualsExpectationsInt64))]
+    [TestMethod]
+    [DynamicData(nameof(ZeroEqualsExpectationsSByte))]
+    [DynamicData(nameof(ZeroEqualsExpectationsInt16))]
+    [DynamicData(nameof(ZeroEqualsExpectationsInt32))]
+    [DynamicData(nameof(ZeroEqualsExpectationsInt64))]
 #if NET8_0_OR_GREATER
-    [MemberData(nameof(ZeroEqualsExpectationsInt128))]
+    [DynamicData(nameof(ZeroEqualsExpectationsInt128))]
 #endif
-    [MemberData(nameof(ZeroEqualsExpectationsByte))]
-    [MemberData(nameof(ZeroEqualsExpectationsUInt16))]
-    [MemberData(nameof(ZeroEqualsExpectationsUInt32))]
-    [MemberData(nameof(ZeroEqualsExpectationsUInt64))]
+    [DynamicData(nameof(ZeroEqualsExpectationsByte))]
+    [DynamicData(nameof(ZeroEqualsExpectationsUInt16))]
+    [DynamicData(nameof(ZeroEqualsExpectationsUInt32))]
+    [DynamicData(nameof(ZeroEqualsExpectationsUInt64))]
 #if NET8_0_OR_GREATER
-    [MemberData(nameof(ZeroEqualsExpectationsUInt128))]
-    [MemberData(nameof(ZeroEqualsExpectationsHalf))]
+    [DynamicData(nameof(ZeroEqualsExpectationsUInt128))]
+    [DynamicData(nameof(ZeroEqualsExpectationsHalf))]
 #endif
-    [MemberData(nameof(ZeroEqualsExpectationsSingle))]
-    [MemberData(nameof(ZeroEqualsExpectationsDecimal))]
-    [MemberData(nameof(ZeroEqualsExpectationsDouble))]
+    [DynamicData(nameof(ZeroEqualsExpectationsSingle))]
+    [DynamicData(nameof(ZeroEqualsExpectationsDecimal))]
+    [DynamicData(nameof(ZeroEqualsExpectationsDouble))]
 
-    [MemberData(nameof(SameEqualsExpectationsSByte))]
-    [MemberData(nameof(SameEqualsExpectationsInt16))]
-    [MemberData(nameof(SameEqualsExpectationsInt32))]
-    [MemberData(nameof(SameEqualsExpectationsInt64))]
+    [DynamicData(nameof(SameEqualsExpectationsSByte))]
+    [DynamicData(nameof(SameEqualsExpectationsInt16))]
+    [DynamicData(nameof(SameEqualsExpectationsInt32))]
+    [DynamicData(nameof(SameEqualsExpectationsInt64))]
 #if NET8_0_OR_GREATER
-    [MemberData(nameof(SameEqualsExpectationsInt128))]
+    [DynamicData(nameof(SameEqualsExpectationsInt128))]
 #endif
-    [MemberData(nameof(SameEqualsExpectationsByte))]
-    [MemberData(nameof(SameEqualsExpectationsUInt16))]
-    [MemberData(nameof(SameEqualsExpectationsUInt32))]
-    [MemberData(nameof(SameEqualsExpectationsUInt64))]
+    [DynamicData(nameof(SameEqualsExpectationsByte))]
+    [DynamicData(nameof(SameEqualsExpectationsUInt16))]
+    [DynamicData(nameof(SameEqualsExpectationsUInt32))]
+    [DynamicData(nameof(SameEqualsExpectationsUInt64))]
 #if NET8_0_OR_GREATER
-    [MemberData(nameof(SameEqualsExpectationsUInt128))]
-    [MemberData(nameof(SameEqualsExpectationsHalf))]
+    [DynamicData(nameof(SameEqualsExpectationsUInt128))]
+    [DynamicData(nameof(SameEqualsExpectationsHalf))]
 #endif
-    [MemberData(nameof(SameEqualsExpectationsSingle))]
-    [MemberData(nameof(SameEqualsExpectationsDecimal))]
-    [MemberData(nameof(SameEqualsExpectationsDouble))]
+    [DynamicData(nameof(SameEqualsExpectationsSingle))]
+    [DynamicData(nameof(SameEqualsExpectationsDecimal))]
+    [DynamicData(nameof(SameEqualsExpectationsDouble))]
 
-    [MemberData(nameof(DifferentNotEqualsExpectationsSByte))]
-    [MemberData(nameof(DifferentNotEqualsExpectationsInt16))]
-    [MemberData(nameof(DifferentNotEqualsExpectationsInt32))]
-    [MemberData(nameof(DifferentNotEqualsExpectationsInt64))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsSByte))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsInt16))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsInt32))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsInt64))]
 #if NET8_0_OR_GREATER
-    [MemberData(nameof(DifferentNotEqualsExpectationsInt128))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsInt128))]
 #endif
-    [MemberData(nameof(DifferentNotEqualsExpectationsByte))]
-    [MemberData(nameof(DifferentNotEqualsExpectationsUInt16))]
-    [MemberData(nameof(DifferentNotEqualsExpectationsUInt32))]
-    [MemberData(nameof(DifferentNotEqualsExpectationsUInt64))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsByte))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsUInt16))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsUInt32))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsUInt64))]
 #if NET8_0_OR_GREATER
-    [MemberData(nameof(DifferentNotEqualsExpectationsUInt128))]
-    [MemberData(nameof(DifferentNotEqualsExpectationsHalf))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsUInt128))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsHalf))]
 #endif
-    [MemberData(nameof(DifferentNotEqualsExpectationsSingle))]
-    [MemberData(nameof(DifferentNotEqualsExpectationsDecimal))]
-    [MemberData(nameof(DifferentNotEqualsExpectationsDouble))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsSingle))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsDecimal))]
+    [DynamicData(nameof(DifferentNotEqualsExpectationsDouble))]
 
-    [MemberData(nameof(AwkwardDecimalExpectations))]
-    [MemberData(nameof(AwkwardFloatExpectations))]
-    [MemberData(nameof(AwkwardDoubleExpectations))]
+    [DynamicData(nameof(AwkwardDecimalExpectations))]
+    [DynamicData(nameof(AwkwardFloatExpectations))]
+    [DynamicData(nameof(AwkwardDoubleExpectations))]
     public void ValuesEqual(object lhs, object rhs, Expectation expected)
     {
         BinaryJsonNumber number1 = GetBinaryJsonNumberFor(lhs);
@@ -1218,25 +1219,25 @@ public class BinaryJsonNumberEquals
             switch (expected)
             {
                 case Expectation.False:
-                    Assert.False(number1.Equals(jsonElement));
-                    Assert.False(number1 == jsonElement);
-                    Assert.True(number1 != jsonElement);
-                    Assert.False(jsonElement == number1);
-                    Assert.True(jsonElement != number1);
+                    Assert.IsFalse(number1.Equals(jsonElement));
+                    Assert.IsFalse(number1 == jsonElement);
+                    Assert.IsTrue(number1 != jsonElement);
+                    Assert.IsFalse(jsonElement == number1);
+                    Assert.IsTrue(jsonElement != number1);
                     break;
                 case Expectation.True:
-                    Assert.True(number1.Equals(jsonElement));
-                    Assert.True(number1 == jsonElement);
-                    Assert.False(number1 != jsonElement);
-                    Assert.True(jsonElement == number1);
-                    Assert.False(jsonElement != number1);
+                    Assert.IsTrue(number1.Equals(jsonElement));
+                    Assert.IsTrue(number1 == jsonElement);
+                    Assert.IsFalse(number1 != jsonElement);
+                    Assert.IsTrue(jsonElement == number1);
+                    Assert.IsFalse(jsonElement != number1);
                     break;
                 case Expectation.Exception:
-                    Assert.ThrowsAny<Exception>(() => number1.Equals(jsonElement));
-                    Assert.ThrowsAny<Exception>(() => _ = number1 == jsonElement);
-                    Assert.ThrowsAny<Exception>(() => _ = number1 != jsonElement);
-                    Assert.ThrowsAny<Exception>(() => _ = jsonElement == number1);
-                    Assert.ThrowsAny<Exception>(() => _ = jsonElement != number1);
+                    Assert.Throws<Exception>(() => number1.Equals(jsonElement));
+                    Assert.Throws<Exception>(() => _ = number1 == jsonElement);
+                    Assert.Throws<Exception>(() => _ = number1 != jsonElement);
+                    Assert.Throws<Exception>(() => _ = jsonElement == number1);
+                    Assert.Throws<Exception>(() => _ = jsonElement != number1);
                     break;
             }
         }
@@ -1247,19 +1248,19 @@ public class BinaryJsonNumberEquals
             switch (expected)
             {
                 case Expectation.False:
-                    Assert.False(number1.Equals(number2));
-                    Assert.False(number1 == number2);
-                    Assert.True(number1 != number2);
+                    Assert.IsFalse(number1.Equals(number2));
+                    Assert.IsFalse(number1 == number2);
+                    Assert.IsTrue(number1 != number2);
                     break;
                 case Expectation.True:
-                    Assert.True(number1.Equals(number2));
-                    Assert.True(number1 == number2);
-                    Assert.False(number1 != number2);
+                    Assert.IsTrue(number1.Equals(number2));
+                    Assert.IsTrue(number1 == number2);
+                    Assert.IsFalse(number1 != number2);
                     break;
                 case Expectation.Exception:
-                    Assert.ThrowsAny<Exception>(() => number1.Equals(number2));
-                    Assert.ThrowsAny<Exception>(() => _ = number1 == number2);
-                    Assert.ThrowsAny<Exception>(() => _ = number1 != number2);
+                    Assert.Throws<Exception>(() => number1.Equals(number2));
+                    Assert.Throws<Exception>(() => _ = number1 == number2);
+                    Assert.Throws<Exception>(() => _ = number1 != number2);
                     break;
             }
         }

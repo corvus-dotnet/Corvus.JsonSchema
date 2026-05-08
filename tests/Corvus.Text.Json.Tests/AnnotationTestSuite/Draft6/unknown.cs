@@ -3,35 +3,43 @@ using System.Reflection;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace AnnotationTestSuite.Draft6.Unknown;
 
-[Trait("AnnotationTestSuite", "Draft6")]
-public class SuiteUnknownKeywordIsAnAnnotation : IClassFixture<SuiteUnknownKeywordIsAnAnnotation.Fixture>
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteUnknownKeywordIsAnAnnotation
 {
-    private readonly Fixture _fixture;
-    public SuiteUnknownKeywordIsAnAnnotation(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void Test0XUnknownKeywordRootAssertion0()
     {
         AnnotationTestHelper.AssertAnnotations(
-            _fixture.Evaluator,
+            s_fixture!.Evaluator,
             "42",
             "",
             "x-unknownKeyword",
             "{\r\n                \"#\": \"Foo\"\r\n              }");
     }
 
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         public CompiledEvaluator Evaluator { get; private set; }
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

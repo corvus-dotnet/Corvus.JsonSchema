@@ -2,18 +2,20 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Numerics;
+using System.Linq;
 using System.Threading.Tasks;
 using Corvus.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for BigNumber edge cases, boundary conditions, and extreme values.
 /// </summary>
+[TestClass]
 public class BigNumberEdgeCaseTests
 {
-    [Fact]
+    [TestMethod]
     public void Constructor_WithMinMaxExponentValues_ShouldWork()
     {
         // Arrange & Act
@@ -21,13 +23,13 @@ public class BigNumberEdgeCaseTests
         var maxExponentBigNumber = new Corvus.Numerics.BigNumber(BigInteger.One, int.MaxValue);
 
         // Assert
-        Assert.Equal(BigInteger.One, BigNumberTestData.GetSignificand(minExponentBigNumber));
-        Assert.Equal(int.MinValue, BigNumberTestData.GetExponent(minExponentBigNumber));
-        Assert.Equal(BigInteger.One, BigNumberTestData.GetSignificand(maxExponentBigNumber));
-        Assert.Equal(int.MaxValue, BigNumberTestData.GetExponent(maxExponentBigNumber));
+        Assert.AreEqual(BigInteger.One, BigNumberTestData.GetSignificand(minExponentBigNumber));
+        Assert.AreEqual(int.MinValue, BigNumberTestData.GetExponent(minExponentBigNumber));
+        Assert.AreEqual(BigInteger.One, BigNumberTestData.GetSignificand(maxExponentBigNumber));
+        Assert.AreEqual(int.MaxValue, BigNumberTestData.GetExponent(maxExponentBigNumber));
     }
 
-    [Fact]
+    [TestMethod]
     public void Constructor_WithVeryLargePositiveSignificand_ShouldWork()
     {
         // Arrange
@@ -37,11 +39,11 @@ public class BigNumberEdgeCaseTests
         var bigNumber = new Corvus.Numerics.BigNumber(veryLargeSignificand, 0);
 
         // Assert
-        Assert.Equal(veryLargeSignificand, BigNumberTestData.GetSignificand(bigNumber));
-        Assert.Equal(0, BigNumberTestData.GetExponent(bigNumber));
+        Assert.AreEqual(veryLargeSignificand, BigNumberTestData.GetSignificand(bigNumber));
+        Assert.AreEqual(0, BigNumberTestData.GetExponent(bigNumber));
     }
 
-    [Fact]
+    [TestMethod]
     public void Constructor_WithVeryLargeNegativeSignificand_ShouldWork()
     {
         // Arrange
@@ -51,23 +53,23 @@ public class BigNumberEdgeCaseTests
         var bigNumber = new Corvus.Numerics.BigNumber(veryLargeNegativeSignificand, 0);
 
         // Assert
-        Assert.Equal(veryLargeNegativeSignificand, BigNumberTestData.GetSignificand(bigNumber));
-        Assert.Equal(0, BigNumberTestData.GetExponent(bigNumber));
+        Assert.AreEqual(veryLargeNegativeSignificand, BigNumberTestData.GetSignificand(bigNumber));
+        Assert.AreEqual(0, BigNumberTestData.GetExponent(bigNumber));
     }
 
-    [Fact]
+    [TestMethod]
     public void DefaultConstructor_ShouldCreateZeroBigNumber()
     {
         // Arrange & Act
         var bigNumber = default(Corvus.Numerics.BigNumber);
 
         // Assert
-        Assert.Equal(BigInteger.Zero, BigNumberTestData.GetSignificand(bigNumber));
-        Assert.Equal(0, BigNumberTestData.GetExponent(bigNumber));
-        Assert.Equal("0", bigNumber.ToString());
+        Assert.AreEqual(BigInteger.Zero, BigNumberTestData.GetSignificand(bigNumber));
+        Assert.AreEqual(0, BigNumberTestData.GetExponent(bigNumber));
+        Assert.AreEqual("0", bigNumber.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_WithExtremelyLargeNumber_ShouldHandleGracefully()
     {
         // Arrange
@@ -79,14 +81,14 @@ public class BigNumberEdgeCaseTests
         bool success = bigNumber.TryFormat(buffer, out int charsWritten);
 
         // Assert
-        Assert.True(success);
-        Assert.True(charsWritten > 10000);
+        Assert.IsTrue(success);
+        Assert.IsTrue(charsWritten > 10000);
         string result = buffer.Slice(0, charsWritten).ToString();
         Assert.StartsWith(new string('9', 10000), result);
-        Assert.Contains($"E{int.MaxValue}", result);
+        StringAssert.Contains(result, $"E{int.MaxValue}");
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_WithExtremelySmallBuffer_ShouldReturnFalse()
     {
         // Arrange
@@ -97,11 +99,11 @@ public class BigNumberEdgeCaseTests
         bool success = bigNumber.TryFormat(buffer, out int charsWritten);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(0, charsWritten);
+        Assert.IsFalse(success);
+        Assert.AreEqual(0, charsWritten);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithExtremelyLongValidString_ShouldWork()
     {
         // Arrange
@@ -112,13 +114,13 @@ public class BigNumberEdgeCaseTests
         bool success = Corvus.Numerics.BigNumber.TryParse(input, out BigNumber result);
 
         // Assert
-        Assert.True(success);
+        Assert.IsTrue(success);
         string resultString = result.ToString();
-        Assert.Contains(new string('1', 5000), resultString);
-        Assert.Contains("E" + new string('9', 9), resultString);
+        StringAssert.Contains(resultString, new string('1', 5000));
+        StringAssert.Contains(resultString, "E" + new string('9', 9));
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithExtremelyLongValidStringButInvalidExponent_ShouldReturnFalse()
     {
         // Arrange
@@ -129,12 +131,12 @@ public class BigNumberEdgeCaseTests
         bool success = Corvus.Numerics.BigNumber.TryParse(input, out BigNumber result);
 
         // Assert
-        Assert.False(success);
+        Assert.IsFalse(success);
         _ = result.ToString();
-        Assert.Equal(default, result);
+        Assert.AreEqual(default, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithExtremelyLongInvalidString_ShouldReturnFalse()
     {
         // Arrange
@@ -145,11 +147,11 @@ public class BigNumberEdgeCaseTests
         bool success = Corvus.Numerics.BigNumber.TryParse(input, out BigNumber result);
 
         // Assert
-        Assert.False(success);
-        Assert.Equal(default, result);
+        Assert.IsFalse(success);
+        Assert.AreEqual(default, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithZeroSignificand_ShouldHandleGracefully()
     {
         // Arrange
@@ -159,11 +161,11 @@ public class BigNumberEdgeCaseTests
         BigNumber normalized = bigNumber.Normalize();
 
         // Assert
-        Assert.Equal(BigInteger.Zero, BigNumberTestData.GetSignificand(normalized));
+        Assert.AreEqual(BigInteger.Zero, BigNumberTestData.GetSignificand(normalized));
         // The exponent behavior with zero significand depends on implementation
     }
 
-    [Fact]
+    [TestMethod]
     public void Normalize_WithExtremeExponentValues_ShouldHandleGracefully()
     {
         // Arrange
@@ -175,10 +177,10 @@ public class BigNumberEdgeCaseTests
         _ = maxExponentBigNumber.Normalize();
 
         // Value types cannot be null, so we just verify they normalized successfully
-        Assert.True(true, "Normalization completed without exceptions");
+        Assert.IsTrue(true, "Normalization completed without exceptions");
     }
 
-    [Fact]
+    [TestMethod]
     public void Equality_WithExtremeValues_ShouldWorkCorrectly()
     {
         // Arrange
@@ -191,7 +193,7 @@ public class BigNumberEdgeCaseTests
         BigNumberTestData.AssertBigNumbersNotEqual(bigNumber1, bigNumber3);
     }
 
-    [Fact]
+    [TestMethod]
     public void GetHashCode_WithExtremeValues_ShouldBeConsistent()
     {
         // Arrange
@@ -203,10 +205,10 @@ public class BigNumberEdgeCaseTests
         int hashCode2 = bigNumber2.GetHashCode();
 
         // Assert
-        Assert.Equal(hashCode1, hashCode2);
+        Assert.AreEqual(hashCode1, hashCode2);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithExtremeValues_ShouldNotThrow()
     {
         // Arrange
@@ -216,13 +218,13 @@ public class BigNumberEdgeCaseTests
 
         // Act & Assert - Should not throw
         string result = extremeBigNumber.ToString();
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        Assert.IsNotNull(result);
+        Assert.IsTrue((result).Any());
         Assert.StartsWith("-" + new string('9', 5000), result);
-        Assert.Contains($"E{int.MinValue}", result);
+        StringAssert.Contains(result, $"E{int.MinValue}");
     }
 
-    [Fact]
+    [TestMethod]
     public void RoundTrip_WithExtremeValues_ShouldBeConsistent()
     {
         // Arrange
@@ -237,11 +239,11 @@ public class BigNumberEdgeCaseTests
         originalBigNumber = originalBigNumber.Normalize();
 
         // Assert
-        Assert.True(parseSuccess);
+        Assert.IsTrue(parseSuccess);
         BigNumberTestData.AssertBigNumbersEqual(originalBigNumber, parsedBigNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public void TryFormat_WithExactBoundaryConditions_ShouldWork()
     {
         // Test various exact boundary conditions for buffer sizes
@@ -272,14 +274,14 @@ public class BigNumberEdgeCaseTests
             bool tooSmallSuccess = bigNumber.TryFormat(tooSmallBufferSlice, out int tooSmallCharsWritten);
 
             // Assert
-            Assert.True(exactSuccess, $"Should succeed with exact buffer size for {significand}E{exponent}");
-            Assert.Equal(expectedLength, exactCharsWritten);
-            Assert.False(tooSmallSuccess, $"Should fail with too small buffer for {significand}E{exponent}");
-            Assert.Equal(0, tooSmallCharsWritten);
+            Assert.IsTrue(exactSuccess, $"Should succeed with exact buffer size for {significand}E{exponent}");
+            Assert.AreEqual(expectedLength, exactCharsWritten);
+            Assert.IsFalse(tooSmallSuccess, $"Should fail with too small buffer for {significand}E{exponent}");
+            Assert.AreEqual(0, tooSmallCharsWritten);
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void TryParse_WithBoundaryNumericValues_ShouldWork()
     {
         // Test parsing at various numeric boundaries
@@ -316,17 +318,17 @@ public class BigNumberEdgeCaseTests
             bool success = Corvus.Numerics.BigNumber.TryParse(Encoding.UTF8.GetBytes(testCase), out BigNumber result);
 
             // Assert
-            Assert.True(success, $"Should successfully parse '{testCase}'");
+            Assert.IsTrue(success, $"Should successfully parse '{testCase}'");
 
             // Round trip test
             string roundTrip = result.ToString();
             bool roundTripSuccess = Corvus.Numerics.BigNumber.TryParse(Encoding.UTF8.GetBytes(roundTrip), out BigNumber roundTripResult);
-            Assert.True(roundTripSuccess, $"Should successfully parse round trip for '{testCase}'");
+            Assert.IsTrue(roundTripSuccess, $"Should successfully parse round trip for '{testCase}'");
             BigNumberTestData.AssertBigNumbersEqual(result, roundTripResult);
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void MemoryConstraints_WithLargeOperations_ShouldNotExceedReasonableLimits()
     {
         // This test ensures that operations with large numbers don't consume excessive memory
@@ -336,21 +338,21 @@ public class BigNumberEdgeCaseTests
 
         // Act & Assert - These operations should complete without excessive memory usage
         string stringResult = bigNumber.ToString();
-        Assert.NotNull(stringResult);
+        Assert.IsNotNull(stringResult);
 
         BigNumber normalizedResult = bigNumber.Normalize();
-        Assert.NotEqual(default, normalizedResult);
+        Assert.AreNotEqual(default, normalizedResult);
 
         int hashCode = bigNumber.GetHashCode();
-        Assert.NotEqual(0, hashCode); // Very unlikely to be zero for such a large number
+        Assert.AreNotEqual(0, hashCode); // Very unlikely to be zero for such a large number
 
         Span<char> buffer = stackalloc char[5000];
         bool formatSuccess = bigNumber.TryFormat(buffer, out int charsWritten);
-        Assert.True(formatSuccess);
-        Assert.True(charsWritten > 1000);
+        Assert.IsTrue(formatSuccess);
+        Assert.IsTrue(charsWritten > 1000);
     }
 
-    [Fact]
+    [TestMethod]
     public void SpecialNumbers_BigIntegerEdgeCases_ShouldWork()
     {
         // Test with BigInteger edge cases
@@ -375,18 +377,18 @@ public class BigNumberEdgeCaseTests
                 // Act & Assert - Should not throw
                 var bigNumber = new Corvus.Numerics.BigNumber(significand, exponent);
                 string stringResult = bigNumber.ToString();
-                Assert.NotNull(stringResult);
+                Assert.IsNotNull(stringResult);
                 bigNumber = bigNumber.Normalize();
 
                 // Parsing round trip
                 bool parseSuccess = Corvus.Numerics.BigNumber.TryParse(Encoding.UTF8.GetBytes(stringResult), out BigNumber parsedResult);
-                Assert.True(parseSuccess, $"Failed to parse: {stringResult}");
+                Assert.IsTrue(parseSuccess, $"Failed to parse: {stringResult}");
                 BigNumberTestData.AssertBigNumbersEqual(bigNumber, parsedResult);
             }
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void ConcurrentOperations_ShouldBeThreadSafe()
     {
         // BigNumber should be immutable and thread-safe
@@ -417,9 +419,9 @@ public class BigNumberEdgeCaseTests
                         bool formatSuccess = bigNumber.TryFormat(buffer, out int charsWritten);
 
                         // Verify consistency
-                        Assert.Equal("12345E678", str);
-                        Assert.True(equals);
-                        Assert.True(formatSuccess);
+                        Assert.AreEqual("12345E678", str);
+                        Assert.IsTrue(equals);
+                        Assert.IsTrue(formatSuccess);
                     }
                     results[threadIndex] = true;
                 }
@@ -434,6 +436,6 @@ public class BigNumberEdgeCaseTests
         Task.WaitAll(tasks);
 
         // Assert all threads succeeded
-        Assert.All(results, result => Assert.True(result, "All concurrent operations should succeed"));
+        AssertEx.All(results, result => Assert.IsTrue(result, "All concurrent operations should succeed"));
     }
 }

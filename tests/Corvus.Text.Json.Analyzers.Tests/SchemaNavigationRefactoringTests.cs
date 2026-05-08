@@ -21,13 +21,14 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.CodeAnalysis.Text;
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Analyzers.Tests;
 
 /// <summary>
 /// Tests for CTJ-NAV: Navigate to JSON Schema source.
 /// </summary>
+[TestClass]
 public class SchemaNavigationRefactoringTests
 {
     private const string SimpleSchemaJson = @"{
@@ -81,7 +82,7 @@ namespace Corvus.Text.Json.Internal
 }
 ";
 
-    [Fact]
+    [TestMethod]
     public async Task TypeDeclarationWithSchemaAttribute_OffersNavigation()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -108,11 +109,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TypeWithoutSchemaAttribute_DoesNotOfferNavigation()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -134,10 +135,10 @@ namespace TestApp
             "PlainType",
             useLastIdentifier: true);
 
-        Assert.Empty(actions);
+        Assert.AreEqual(0, (actions).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TypeWithSchemaLocation_ShowsPointerInTitle()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -171,11 +172,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("#/properties/name", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "#/properties/name");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TopLevelType_NoPointerInTitle()
     {
         // Top-level types have SchemaLocation like "widget.json" with no pointer fragment.
@@ -207,71 +208,71 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("widget.json", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "widget.json");
         Assert.DoesNotContain("#", actions[0].Title);
     }
 
-    [Theory]
-    [InlineData("/properties/name", 4)]
-    [InlineData("/properties/address", 5)]
-    [InlineData("/properties/address/properties/city", 8)]
-    [InlineData("/properties/address/properties/zipCode", 9)]
+    [TestMethod]
+    [DataRow("/properties/name", 4)]
+    [DataRow("/properties/address", 5)]
+    [DataRow("/properties/address/properties/city", 8)]
+    [DataRow("/properties/address/properties/zipCode", 9)]
     public void ResolveJsonPointer_FindsCorrectLine(string pointer, int expectedLine)
     {
         (int Line, int Column)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(SimpleSchemaJson, pointer);
-        Assert.NotNull(pos);
-        Assert.Equal(expectedLine, pos!.Value.Line);
+        Assert.IsNotNull(pos);
+        Assert.AreEqual(expectedLine, pos!.Value.Line);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_FindsCorrectColumn()
     {
         // In SimpleSchemaJson, "name" on line 4 is at column 4 (after 4 spaces of indent).
         (int Line, int Column)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(SimpleSchemaJson, "/properties/name");
-        Assert.NotNull(pos);
-        Assert.Equal(4, pos!.Value.Column);
+        Assert.IsNotNull(pos);
+        Assert.AreEqual(4, pos!.Value.Column);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_SingleLineJson_FindsCorrectColumn()
     {
         const string singleLine = @"{""properties"":{""name"":{""type"":""string""},""age"":{""type"":""integer""}}}";
         (int Line, int Column)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(singleLine, "/properties/name");
-        Assert.NotNull(pos);
-        Assert.Equal(0, pos!.Value.Line);
-        Assert.Equal(15, pos!.Value.Column); // position of "name" in the single line
+        Assert.IsNotNull(pos);
+        Assert.AreEqual(0, pos!.Value.Line);
+        Assert.AreEqual(15, pos!.Value.Column); // position of "name" in the single line
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_NullPointer_ReturnsNull()
     {
         (int, int)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(SimpleSchemaJson, null!);
-        Assert.Null(pos);
+        Assert.IsNull(pos);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_EmptyPointer_ReturnsNull()
     {
         (int, int)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(SimpleSchemaJson, "");
-        Assert.Null(pos);
+        Assert.IsNull(pos);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_RootSlash_ReturnsNull()
     {
         (int, int)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(SimpleSchemaJson, "/");
-        Assert.Null(pos);
+        Assert.IsNull(pos);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_NonExistentProperty_ReturnsNull()
     {
         (int, int)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(SimpleSchemaJson, "/properties/nonExistent");
-        Assert.Null(pos);
+        Assert.IsNull(pos);
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IJsonElementVariable_OffersNavigation()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -299,11 +300,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IMutableJsonElementVariable_OffersNavigation()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -330,11 +331,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task NonGenericIJsonElement_DoesNotOfferNavigation()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -354,10 +355,10 @@ namespace TestApp
             "IJsonElement",
             useLastIdentifier: true);
 
-        Assert.Empty(actions);
+        Assert.AreEqual(0, (actions).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task IJsonElementParameter_OffersNavigation()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -384,11 +385,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PropertyAccessOnGlobalType_FallsBackToContainingTypeSchema()
     {
         // When a property returns a project-global type (like JsonString) that has
@@ -427,11 +428,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("#/properties/name", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "#/properties/name");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PropertyAccessOnNestedType_FallsBackWithPointerSuffix()
     {
         // When the containing type has a SchemaLocation with a pointer fragment,
@@ -472,11 +473,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("#/properties/address/properties/city", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "#/properties/address/properties/city");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task PropertyAccessOnSchemaGeneratedType_OffersBothTypeAndPropertyActions()
     {
         // When a property's type IS a schema-generated entity (e.g., Widget.Address
@@ -522,13 +523,13 @@ namespace TestApp
             additionalFileContent: SimpleSchemaJson);
 
         // Should get two actions: type navigation + property declaration.
-        Assert.Equal(2, actions.Count);
-        Assert.Contains("Go to schema type", actions[0].Title);
-        Assert.Contains("Go to property declaration", actions[1].Title);
-        Assert.Contains("#/properties/address", actions[1].Title);
+        Assert.AreEqual(2, actions.Count);
+        StringAssert.Contains(actions[0].Title, "Go to schema type");
+        StringAssert.Contains(actions[1].Title, "Go to property declaration");
+        StringAssert.Contains(actions[1].Title, "#/properties/address");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task VariableDeclarator_OffersNavigation()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -556,11 +557,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task ParameterSyntax_OffersNavigation()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -588,11 +589,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FieldDeclaration_OffersNavigation()
     {
         const string code = AttributeAndInterfaceStubs + @"
@@ -617,11 +618,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task FieldType_OffersNavigation()
     {
         // Cursor on the type name in a field declaration.
@@ -646,11 +647,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task MethodReturnType_OffersNavigation()
     {
         // Cursor on a method name whose return type is schema-generated.
@@ -679,11 +680,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenericTypeArgument_CursorOnWidgetInGeneric_OffersNavigation()
     {
         // Cursor on Widget inside a generic type argument like List<Widget>.
@@ -713,11 +714,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task GenericTypeArgument_CursorOnListNotWidget_DoesNotOfferNavigation()
     {
         // Cursor on List (not Widget) — List is not a schema type, no action.
@@ -745,10 +746,10 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.Empty(actions);
+        Assert.AreEqual(0, (actions).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task LocalVariableUsage_OffersNavigation()
     {
         // Cursor on a local variable usage (not its declaration).
@@ -786,11 +787,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CastExpression_TypeName_OffersNavigation()
     {
         // Cursor on the type name in a cast expression.
@@ -819,11 +820,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: SimpleSchemaJson);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("Go to schema", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "Go to schema");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CliGeneratedType_NoAttribute_NoSchemaFile_ReturnsNoActions()
     {
         // CLI-generated types have SchemaLocation but no [JsonSchemaTypeGenerator]
@@ -853,10 +854,10 @@ namespace TestApp
             "Widget",
             useLastIdentifier: false);
 
-        Assert.Empty(actions);
+        Assert.AreEqual(0, (actions).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public async Task CliGeneratedType_NoAttribute_SchemaInAdditionalFiles_ResolvesViaId()
     {
         // CLI-generated type with no attribute, but the schema file IS in
@@ -896,11 +897,11 @@ namespace TestApp
             additionalFilePath: "Schemas/widget.json",
             additionalFileContent: schemaWithId);
 
-        Assert.NotEmpty(actions);
-        Assert.Contains("#/properties/name", actions[0].Title);
+        Assert.IsTrue((actions).Any());
+        StringAssert.Contains(actions[0].Title, "#/properties/name");
     }
 
-    [Fact]
+    [TestMethod]
     public async Task TypeWithAttribute_SchemaFileMissing_ReturnsNoActions()
     {
         // Attribute points to a file path, but no matching AdditionalFile exists.
@@ -932,29 +933,29 @@ namespace TestApp
             "Widget",
             useLastIdentifier: false);
 
-        Assert.Empty(actions);
+        Assert.AreEqual(0, (actions).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_MalformedJson_ReturnsNull()
     {
         // Malformed JSON should not throw — just return null.
         const string malformed = @"{ ""properties"": { not valid json";
         (int, int)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(
             malformed, "/properties/name");
-        Assert.Null(pos);
+        Assert.IsNull(pos);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_PartiallyResolvablePointer_ReturnsNull()
     {
         // First segment resolves, second doesn't.
         (int, int)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(
             SimpleSchemaJson, "/properties/name/nonexistent");
-        Assert.Null(pos);
+        Assert.IsNull(pos);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_EscapedTilde_Resolves()
     {
         // ~0 decodes to ~ in JSON Pointer.
@@ -966,11 +967,11 @@ namespace TestApp
 }";
         (int Line, int Column)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(
             schemaWithTilde, "/properties/has~0tilde");
-        Assert.NotNull(pos);
-        Assert.Equal(3, pos!.Value.Line);
+        Assert.IsNotNull(pos);
+        Assert.AreEqual(3, pos!.Value.Line);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_EscapedSlash_Resolves()
     {
         // ~1 decodes to / in JSON Pointer.
@@ -982,38 +983,38 @@ namespace TestApp
 }";
         (int Line, int Column)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(
             schemaWithSlash, "/properties/has~1slash");
-        Assert.NotNull(pos);
-        Assert.Equal(3, pos!.Value.Line);
+        Assert.IsNotNull(pos);
+        Assert.AreEqual(3, pos!.Value.Line);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_ArrayIndex_Resolves()
     {
         (int Line, int Column)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(
             SimpleSchemaJson, "/allOf/0/properties/extra");
-        Assert.NotNull(pos);
+        Assert.IsNotNull(pos);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_ArrayIndexOutOfBounds_ReturnsNull()
     {
         // allOf has only 1 element (index 0); index 5 is out of bounds.
         (int, int)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(
             SimpleSchemaJson, "/allOf/5");
-        Assert.Null(pos);
+        Assert.IsNull(pos);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_FragmentWithHash_Resolves()
     {
         // JSON Pointer with leading # (URI fragment syntax) should still work.
         (int Line, int Column)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(
             SimpleSchemaJson, "#/properties/name");
-        Assert.NotNull(pos);
-        Assert.Equal(4, pos!.Value.Line);
+        Assert.IsNotNull(pos);
+        Assert.AreEqual(4, pos!.Value.Line);
     }
 
-    [Fact]
+    [TestMethod]
     public void ResolveJsonPointer_PropertyInsideStringValue_NotConfused()
     {
         // Ensure the resolver doesn't match a property name that appears inside
@@ -1027,8 +1028,8 @@ namespace TestApp
 }";
         (int Line, int Column)? pos = SchemaNavigationRefactoring.ResolveJsonPointerToPosition(
             schemaWithStringValue, "/properties/target");
-        Assert.NotNull(pos);
-        Assert.Equal(4, pos!.Value.Line);
+        Assert.IsNotNull(pos);
+        Assert.AreEqual(4, pos!.Value.Line);
     }
 
     private static async Task<List<CodeAction>> GetRefactoringsForIdentifier(
@@ -1048,7 +1049,7 @@ namespace TestApp
                         (n is GenericNameSyntax gn && gn.Identifier.Text == identifierName))
                     .ToList();
 
-                Assert.NotEmpty(candidates);
+                Assert.IsTrue((candidates).Any());
                 return useLastIdentifier ? candidates.Last() : candidates.First();
             },
             additionalFilePath,

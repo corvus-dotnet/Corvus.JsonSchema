@@ -4,34 +4,35 @@
 
 using System.Text.Json;
 using Corvus.Text.Json.JsonPath.CodeGeneration;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonPath.Tests;
 
 /// <summary>
 /// Tests for the code generation pipeline with custom functions.
 /// </summary>
+[TestClass]
 public class CustomFunctionCodeGenTests
 {
     // ── JpfnParser tests ────────────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_ParsesExpressionForm()
     {
         string content = """fn ceil(value x) : value => (int)Math.Ceiling(x.GetDouble());""";
         IReadOnlyList<CustomFunction> fns = JpfnParser.Parse(content);
 
-        Assert.Single(fns);
-        Assert.Equal("ceil", fns[0].Name);
-        Assert.True(fns[0].IsExpression);
-        Assert.Equal(FunctionParamType.Value, fns[0].ReturnType);
-        Assert.Single(fns[0].Parameters);
-        Assert.Equal("x", fns[0].Parameters[0].Name);
-        Assert.Equal(FunctionParamType.Value, fns[0].Parameters[0].Type);
-        Assert.Contains("Math.Ceiling", fns[0].Body);
+        Assert.AreEqual(1, (fns).Count());
+        Assert.AreEqual("ceil", fns[0].Name);
+        Assert.IsTrue(fns[0].IsExpression);
+        Assert.AreEqual(FunctionParamType.Value, fns[0].ReturnType);
+        Assert.AreEqual(1, (fns[0].Parameters).Count());
+        Assert.AreEqual("x", fns[0].Parameters[0].Name);
+        Assert.AreEqual(FunctionParamType.Value, fns[0].Parameters[0].Type);
+        StringAssert.Contains(fns[0].Body, "Math.Ceiling");
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_ParsesBlockForm()
     {
         string content = """
@@ -44,27 +45,27 @@ public class CustomFunctionCodeGenTests
 
         IReadOnlyList<CustomFunction> fns = JpfnParser.Parse(content);
 
-        Assert.Single(fns);
-        Assert.Equal("is_isbn", fns[0].Name);
-        Assert.False(fns[0].IsExpression);
-        Assert.Equal(FunctionParamType.Logical, fns[0].ReturnType);
-        Assert.Contains("s.Length == 10", fns[0].Body);
+        Assert.AreEqual(1, (fns).Count());
+        Assert.AreEqual("is_isbn", fns[0].Name);
+        Assert.IsFalse(fns[0].IsExpression);
+        Assert.AreEqual(FunctionParamType.Logical, fns[0].ReturnType);
+        StringAssert.Contains(fns[0].Body, "s.Length == 10");
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_ParsesNodesParameter()
     {
         string content = """fn sum(nodes items) : value => items.Sum(x => x.GetDouble());""";
         IReadOnlyList<CustomFunction> fns = JpfnParser.Parse(content);
 
-        Assert.Single(fns);
-        Assert.Equal("sum", fns[0].Name);
-        Assert.Single(fns[0].Parameters);
-        Assert.Equal(FunctionParamType.Nodes, fns[0].Parameters[0].Type);
-        Assert.Equal("items", fns[0].Parameters[0].Name);
+        Assert.AreEqual(1, (fns).Count());
+        Assert.AreEqual("sum", fns[0].Name);
+        Assert.AreEqual(1, (fns[0].Parameters).Count());
+        Assert.AreEqual(FunctionParamType.Nodes, fns[0].Parameters[0].Type);
+        Assert.AreEqual("items", fns[0].Parameters[0].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_ParsesMultipleFunctions()
     {
         string content = """
@@ -74,12 +75,12 @@ public class CustomFunctionCodeGenTests
 
         IReadOnlyList<CustomFunction> fns = JpfnParser.Parse(content);
 
-        Assert.Equal(2, fns.Count);
-        Assert.Equal("ceil", fns[0].Name);
-        Assert.Equal("floor", fns[1].Name);
+        Assert.AreEqual(2, fns.Count);
+        Assert.AreEqual("ceil", fns[0].Name);
+        Assert.AreEqual("floor", fns[1].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_SkipsCommentsAndBlankLines()
     {
         string content = """
@@ -93,66 +94,66 @@ public class CustomFunctionCodeGenTests
 
         IReadOnlyList<CustomFunction> fns = JpfnParser.Parse(content);
 
-        Assert.Equal(2, fns.Count);
+        Assert.AreEqual(2, fns.Count);
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_ParsesMultiArgFunction()
     {
         string content = """fn add(value a, value b) : value => JsonPathCodeGenHelpers.IntToElement(a.GetInt32() + b.GetInt32());""";
         IReadOnlyList<CustomFunction> fns = JpfnParser.Parse(content);
 
-        Assert.Single(fns);
-        Assert.Equal(2, fns[0].Parameters.Length);
-        Assert.Equal("a", fns[0].Parameters[0].Name);
-        Assert.Equal("b", fns[0].Parameters[1].Name);
+        Assert.AreEqual(1, (fns).Count());
+        Assert.AreEqual(2, fns[0].Parameters.Length);
+        Assert.AreEqual("a", fns[0].Parameters[0].Name);
+        Assert.AreEqual("b", fns[0].Parameters[1].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_DefaultsParameterTypeToValue()
     {
         string content = """fn identity(x) : value => x;""";
         IReadOnlyList<CustomFunction> fns = JpfnParser.Parse(content);
 
-        Assert.Single(fns);
-        Assert.Equal(FunctionParamType.Value, fns[0].Parameters[0].Type);
-        Assert.Equal("x", fns[0].Parameters[0].Name);
+        Assert.AreEqual(1, (fns).Count());
+        Assert.AreEqual(FunctionParamType.Value, fns[0].Parameters[0].Type);
+        Assert.AreEqual("x", fns[0].Parameters[0].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_ThrowsOnMissingFnKeyword()
     {
         string content = """ceil(value x) : value => x;""";
-        Assert.Throws<FormatException>(() => JpfnParser.Parse(content));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse(content));
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_ThrowsOnMissingReturnType()
     {
         string content = """fn ceil(value x) => x;""";
-        Assert.Throws<FormatException>(() => JpfnParser.Parse(content));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse(content));
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_ThrowsOnUnknownParameterType()
     {
         string content = """fn ceil(blah x) : value => x;""";
-        Assert.Throws<FormatException>(() => JpfnParser.Parse(content));
+        Assert.ThrowsExactly<FormatException>(() => JpfnParser.Parse(content));
     }
 
-    [Fact]
+    [TestMethod]
     public void JpfnParser_ParsesZeroArgFunction()
     {
         string content = """fn zero() : value => JsonPathCodeGenHelpers.IntToElement(0);""";
         IReadOnlyList<CustomFunction> fns = JpfnParser.Parse(content);
 
-        Assert.Single(fns);
-        Assert.Empty(fns[0].Parameters);
+        Assert.AreEqual(1, (fns).Count());
+        Assert.AreEqual(0, (fns[0].Parameters).Count());
     }
 
     // ── Code generator integration tests ────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void CodeGenerator_WithCustomFunction_CompilesToValidCode()
     {
         CustomFunction[] fns = [
@@ -171,12 +172,12 @@ public class CustomFunctionCodeGenTests
             customFunctions: fns);
 
         // The generated code should contain our custom function helper
-        Assert.Contains("CustomFn_ceil", code);
-        Assert.Contains("Math.Ceiling", code);
-        Assert.Contains("private static JsonElement CustomFn_ceil(JsonElement x, JsonWorkspace workspace)", code);
+        StringAssert.Contains(code, "CustomFn_ceil");
+        StringAssert.Contains(code, "Math.Ceiling");
+        StringAssert.Contains(code, "private static JsonElement CustomFn_ceil(JsonElement x, JsonWorkspace workspace)");
     }
 
-    [Fact]
+    [TestMethod]
     public void CodeGenerator_WithLogicalCustomFunction_CompilesToValidCode()
     {
         CustomFunction[] fns = [
@@ -194,11 +195,11 @@ public class CustomFunctionCodeGenTests
             "TestNamespace",
             customFunctions: fns);
 
-        Assert.Contains("CustomFn_is_even", code);
-        Assert.Contains("private static bool CustomFn_is_even(JsonElement x, JsonWorkspace workspace)", code);
+        StringAssert.Contains(code, "CustomFn_is_even");
+        StringAssert.Contains(code, "private static bool CustomFn_is_even(JsonElement x, JsonWorkspace workspace)");
     }
 
-    [Fact]
+    [TestMethod]
     public void CodeGenerator_WithNodesParam_EmitsPooledResult()
     {
         CustomFunction[] fns = [
@@ -217,13 +218,13 @@ public class CustomFunctionCodeGenTests
             customFunctions: fns);
 
         // Should emit a pooled JsonPathResult for the nodes arg
-        Assert.Contains("JsonPathResult", code);
-        Assert.Contains("CreatePooled", code);
-        Assert.Contains("CustomFn_sum", code);
-        Assert.Contains("ReadOnlySpan<JsonElement> items", code);
+        StringAssert.Contains(code, "JsonPathResult");
+        StringAssert.Contains(code, "CreatePooled");
+        StringAssert.Contains(code, "CustomFn_sum");
+        StringAssert.Contains(code, "ReadOnlySpan<JsonElement> items");
     }
 
-    [Fact]
+    [TestMethod]
     public void CodeGenerator_WithBlockCustomFunction_EmitsBlock()
     {
         CustomFunction[] fns = [
@@ -241,11 +242,11 @@ public class CustomFunctionCodeGenTests
             "TestNamespace",
             customFunctions: fns);
 
-        Assert.Contains("CustomFn_clamp", code);
-        Assert.Contains("double v = x.GetDouble()", code);
+        StringAssert.Contains(code, "CustomFn_clamp");
+        StringAssert.Contains(code, "double v = x.GetDouble()");
     }
 
-    [Fact]
+    [TestMethod]
     public void CodeGenerator_HelperEmittedOnlyOnce_ForRepeatedUse()
     {
         CustomFunction[] fns = [
@@ -273,6 +274,6 @@ public class CustomFunctionCodeGenTests
             idx++;
         }
 
-        Assert.Equal(1, count);
+        Assert.AreEqual(1, count);
     }
 }

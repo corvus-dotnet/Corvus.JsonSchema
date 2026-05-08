@@ -4,28 +4,29 @@
 using System.Buffers;
 using System.Linq;
 using Corvus.Runtime.InteropServices;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
-public static class JsonPropertyTests
+[TestClass]
+public class JsonPropertyTests
 {
-    [Fact]
-    public static void CheckByPassingNullWriter()
+    [TestMethod]
+    public void CheckByPassingNullWriter()
     {
         using (var doc = ParsedJsonDocument<JsonElement>.Parse("{\"First\":1}", default))
         {
             foreach (JsonProperty<JsonElement> property in doc.RootElement.EnumerateObject())
             {
-                AssertExtensions.Throws<ArgumentNullException>("writer", () => property.WriteTo(null));
+                AssertEx.ThrowsExactly<ArgumentNullException>("writer", () => property.WriteTo(null));
             }
         }
     }
 
-    [Theory]
-    [InlineData(false)]
-    [InlineData(true)]
-    public static void WriteObjectValidations(bool skipValidation)
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void WriteObjectValidations(bool skipValidation)
     {
         var buffer = new ArrayBufferWriter<byte>(1024);
         using (var doc = ParsedJsonDocument<JsonElement>.Parse("{\"First\":1}", default))
@@ -49,7 +50,7 @@ public static class JsonPropertyTests
             {
                 foreach (JsonProperty<JsonElement> property in root.EnumerateObject())
                 {
-                    Assert.Throws<InvalidOperationException>(() =>
+                    Assert.ThrowsExactly<InvalidOperationException>(() =>
                     {
                         property.WriteTo(writer);
                     });
@@ -60,8 +61,8 @@ public static class JsonPropertyTests
         }
     }
 
-    [Fact]
-    public static void WriteSimpleObject()
+    [TestMethod]
+    public void WriteSimpleObject()
     {
         var buffer = new ArrayBufferWriter<byte>(1024);
         using (var doc = ParsedJsonDocument<JsonElement>.Parse("{\"First\":1, \"Number\":1e400}"))
@@ -81,7 +82,7 @@ public static class JsonPropertyTests
 
     private static void AssertContents(string expectedValue, ArrayBufferWriter<byte> buffer)
     {
-        Assert.Equal(
+        Assert.AreEqual(
             expectedValue,
             Encoding.UTF8.GetString(
                 buffer.WrittenSpan
@@ -91,34 +92,34 @@ public static class JsonPropertyTests
                 ));
     }
 
-    [Theory]
-    [InlineData("hello")]
-    [InlineData("")]
-    [InlineData(null)]
-    public static void NameEquals_InvalidInstance_Throws(string text)
+    [TestMethod]
+    [DataRow("hello")]
+    [DataRow("")]
+    [DataRow(null)]
+    public void NameEquals_InvalidInstance_Throws(string text)
     {
         string ErrorMessage = new InvalidOperationException().Message;
         JsonProperty<JsonElement> prop = default;
-        AssertExtensions.Throws<InvalidOperationException>(() => prop.NameEquals(text), ErrorMessage);
-        AssertExtensions.Throws<InvalidOperationException>(() => prop.NameEquals(text.AsSpan()), ErrorMessage);
+        Assert.ThrowsExactly<InvalidOperationException>(() => prop.NameEquals(text), ErrorMessage);
+        Assert.ThrowsExactly<InvalidOperationException>(() => prop.NameEquals(text.AsSpan()), ErrorMessage);
         byte[] expectedGetBytes = text == null ? null : Encoding.UTF8.GetBytes(text);
-        AssertExtensions.Throws<InvalidOperationException>(() => prop.NameEquals(expectedGetBytes), ErrorMessage);
+        Assert.ThrowsExactly<InvalidOperationException>(() => prop.NameEquals(expectedGetBytes), ErrorMessage);
     }
 
-    [Fact]
-    public static void JsonMarshal_GetRawUtf8PropertyName_InvalidInstance_Throws()
+    [TestMethod]
+    public void JsonMarshal_GetRawUtf8PropertyName_InvalidInstance_Throws()
     {
         string ErrorMessage = new InvalidOperationException().Message;
         JsonProperty<JsonElement> prop = default;
-        AssertExtensions.Throws<InvalidOperationException>(() => JsonMarshal.GetRawUtf8PropertyName(prop), ErrorMessage);
+        Assert.ThrowsExactly<InvalidOperationException>(() => JsonMarshal.GetRawUtf8PropertyName(prop), ErrorMessage);
     }
 
-    [Theory]
-    [InlineData("conne\\u0063tionId", "connectionId")]
-    [InlineData("connectionId", "connectionId")]
-    [InlineData("123", "123")]
-    [InlineData("My name is \\\"Ahson\\\"", "My name is \"Ahson\"")]
-    public static void NameEquals_UseGoodMatches_True(string propertyName, string otherText)
+    [TestMethod]
+    [DataRow("conne\\u0063tionId", "connectionId")]
+    [DataRow("connectionId", "connectionId")]
+    [DataRow("123", "123")]
+    [DataRow("My name is \\\"Ahson\\\"", "My name is \"Ahson\"")]
+    public void NameEquals_UseGoodMatches_True(string propertyName, string otherText)
     {
         string jsonString = $"{{ \"{propertyName}\" : \"itsValue\" }}";
         using (var doc = ParsedJsonDocument<JsonElement>.Parse(jsonString))
@@ -126,18 +127,18 @@ public static class JsonPropertyTests
             JsonElement jElement = doc.RootElement;
             JsonProperty<JsonElement> property = jElement.EnumerateObject().First();
             byte[] expectedGetBytes = Encoding.UTF8.GetBytes(otherText);
-            Assert.True(property.NameEquals(otherText));
-            Assert.True(property.NameEquals(otherText.AsSpan()));
-            Assert.True(property.NameEquals(expectedGetBytes));
+            Assert.IsTrue(property.NameEquals(otherText));
+            Assert.IsTrue(property.NameEquals(otherText.AsSpan()));
+            Assert.IsTrue(property.NameEquals(expectedGetBytes));
         }
     }
 
-    [Theory]
-    [InlineData("conne\\u0063tionId", "conne\\u0063tionId")]
-    [InlineData("connectionId", "connectionId")]
-    [InlineData("123", "123")]
-    [InlineData("My name is \\\"Ahson\\\"", "My name is \\\"Ahson\\\"")]
-    public static void JsonMarshal_GetRawUtf8PropertyName_UseGoodMatches_True(string propertyName, string otherText)
+    [TestMethod]
+    [DataRow("conne\\u0063tionId", "conne\\u0063tionId")]
+    [DataRow("connectionId", "connectionId")]
+    [DataRow("123", "123")]
+    [DataRow("My name is \\\"Ahson\\\"", "My name is \\\"Ahson\\\"")]
+    public void JsonMarshal_GetRawUtf8PropertyName_UseGoodMatches_True(string propertyName, string otherText)
     {
         string jsonString = $"{{ \"{propertyName}\" : \"itsValue\" }}";
         using (var doc = ParsedJsonDocument<JsonElement>.Parse(jsonString))
@@ -145,12 +146,12 @@ public static class JsonPropertyTests
             JsonElement jElement = doc.RootElement;
             JsonProperty<JsonElement> property = jElement.EnumerateObject().First();
             byte[] expectedGetBytes = Encoding.UTF8.GetBytes(otherText);
-            Assert.True(JsonMarshal.GetRawUtf8PropertyName(property).SequenceEqual(expectedGetBytes));
+            Assert.IsTrue(JsonMarshal.GetRawUtf8PropertyName(property).SequenceEqual(expectedGetBytes));
         }
     }
 
-    [Fact]
-    public static void NameEquals_GivenPropertyAndValue_TrueForPropertyName()
+    [TestMethod]
+    public void NameEquals_GivenPropertyAndValue_TrueForPropertyName()
     {
         string jsonString = $"{{ \"aPropertyName\" : \"itsValue\" }}";
         using (var doc = ParsedJsonDocument<JsonElement>.Parse(jsonString))
@@ -160,15 +161,15 @@ public static class JsonPropertyTests
 
             string text = "aPropertyName";
             byte[] expectedGetBytes = Encoding.UTF8.GetBytes(text);
-            Assert.True(property.NameEquals(text));
-            Assert.True(property.NameEquals(text.AsSpan()));
-            Assert.True(property.NameEquals(expectedGetBytes));
+            Assert.IsTrue(property.NameEquals(text));
+            Assert.IsTrue(property.NameEquals(text.AsSpan()));
+            Assert.IsTrue(property.NameEquals(expectedGetBytes));
 
             text = "itsValue";
             expectedGetBytes = Encoding.UTF8.GetBytes(text);
-            Assert.False(property.NameEquals(text));
-            Assert.False(property.NameEquals(text.AsSpan()));
-            Assert.False(property.NameEquals(expectedGetBytes));
+            Assert.IsFalse(property.NameEquals(text));
+            Assert.IsFalse(property.NameEquals(text.AsSpan()));
+            Assert.IsFalse(property.NameEquals(expectedGetBytes));
         }
     }
 }

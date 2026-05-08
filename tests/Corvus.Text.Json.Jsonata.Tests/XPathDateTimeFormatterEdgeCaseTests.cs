@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
 
@@ -12,721 +12,722 @@ namespace Corvus.Text.Json.Jsonata.Tests;
 /// built-in functions. Covers Roman numerals, word formats, ordinal suffixes, alphabetic encoding,
 /// decimal digit patterns, picture string parsing, width modifiers, and datetime formatting.
 /// </summary>
+[TestClass]
 public class XPathDateTimeFormatterEdgeCaseTests
 {
     private static readonly JsonataEvaluator Evaluator = JsonataEvaluator.Default;
 
     #region FormatInteger — Roman numerals
 
-    [Theory]
-    [InlineData(1, "\"I\"")]
-    [InlineData(4, "\"IV\"")]
-    [InlineData(9, "\"IX\"")]
-    [InlineData(14, "\"XIV\"")]
-    [InlineData(40, "\"XL\"")]
-    [InlineData(90, "\"XC\"")]
-    [InlineData(400, "\"CD\"")]
-    [InlineData(900, "\"CM\"")]
-    [InlineData(1999, "\"MCMXCIX\"")]
-    [InlineData(3999, "\"MMMCMXCIX\"")]
+    [TestMethod]
+    [DataRow(1, "\"I\"")]
+    [DataRow(4, "\"IV\"")]
+    [DataRow(9, "\"IX\"")]
+    [DataRow(14, "\"XIV\"")]
+    [DataRow(40, "\"XL\"")]
+    [DataRow(90, "\"XC\"")]
+    [DataRow(400, "\"CD\"")]
+    [DataRow(900, "\"CM\"")]
+    [DataRow(1999, "\"MCMXCIX\"")]
+    [DataRow(3999, "\"MMMCMXCIX\"")]
     public void FormatInteger_UpperRoman(int value, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, 'I')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData(1, "\"i\"")]
-    [InlineData(4, "\"iv\"")]
-    [InlineData(2024, "\"mmxxiv\"")]
+    [TestMethod]
+    [DataRow(1, "\"i\"")]
+    [DataRow(4, "\"iv\"")]
+    [DataRow(2024, "\"mmxxiv\"")]
     public void FormatInteger_LowerRoman(int value, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, 'i')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatInteger_RomanZero_ReturnsEmpty()
     {
         string? result = Evaluator.EvaluateToString("$formatInteger(0, 'I')", "{}");
-        Assert.Equal("\"\"", result);
+        Assert.AreEqual("\"\"", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatInteger_RomanNegative_ReturnsEmpty()
     {
         string? result = Evaluator.EvaluateToString("$formatInteger(-5, 'I')", "{}");
-        Assert.Equal("\"\"", result);
+        Assert.AreEqual("\"\"", result);
     }
 
     #endregion
 
     #region ParseInteger — Roman numerals
 
-    [Theory]
-    [InlineData("I", 1)]
-    [InlineData("IV", 4)]
-    [InlineData("IX", 9)]
-    [InlineData("XIV", 14)]
-    [InlineData("XL", 40)]
-    [InlineData("XC", 90)]
-    [InlineData("CD", 400)]
-    [InlineData("CM", 900)]
-    [InlineData("MCMXCIX", 1999)]
+    [TestMethod]
+    [DataRow("I", 1)]
+    [DataRow("IV", 4)]
+    [DataRow("IX", 9)]
+    [DataRow("XIV", 14)]
+    [DataRow("XL", 40)]
+    [DataRow("XC", 90)]
+    [DataRow("CD", 400)]
+    [DataRow("CM", 900)]
+    [DataRow("MCMXCIX", 1999)]
     public void ParseInteger_UpperRoman(string input, int expected)
     {
         string? result = Evaluator.EvaluateToString($"$parseInteger('{input}', 'I')", "{}");
-        Assert.Equal(expected.ToString(), result);
+        Assert.AreEqual(expected.ToString(), result);
     }
 
-    [Theory]
-    [InlineData("iv", 4)]
-    [InlineData("mmxxiv", 2024)]
+    [TestMethod]
+    [DataRow("iv", 4)]
+    [DataRow("mmxxiv", 2024)]
     public void ParseInteger_LowerRoman(string input, int expected)
     {
         string? result = Evaluator.EvaluateToString($"$parseInteger('{input}', 'i')", "{}");
-        Assert.Equal(expected.ToString(), result);
+        Assert.AreEqual(expected.ToString(), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseInteger_RomanEmpty_ReturnsZero()
     {
         string? result = Evaluator.EvaluateToString("$parseInteger('', 'I')", "{}");
-        Assert.Equal("0", result);
+        Assert.AreEqual("0", result);
     }
 
     #endregion
 
     #region FormatInteger — Words
 
-    [Theory]
-    [InlineData(0, "w", "\"zero\"")]
-    [InlineData(1, "w", "\"one\"")]
-    [InlineData(13, "w", "\"thirteen\"")]
-    [InlineData(20, "w", "\"twenty\"")]
-    [InlineData(21, "w", "\"twenty-one\"")]
-    [InlineData(100, "w", "\"one hundred\"")]
-    [InlineData(123, "w", "\"one hundred and twenty-three\"")]
-    [InlineData(1000, "w", "\"one thousand\"")]
-    [InlineData(1001, "w", "\"one thousand and one\"")]
-    [InlineData(1234, "w", "\"one thousand, two hundred and thirty-four\"")]
-    [InlineData(-5, "w", "\"minus five\"")]
+    [TestMethod]
+    [DataRow(0, "w", "\"zero\"")]
+    [DataRow(1, "w", "\"one\"")]
+    [DataRow(13, "w", "\"thirteen\"")]
+    [DataRow(20, "w", "\"twenty\"")]
+    [DataRow(21, "w", "\"twenty-one\"")]
+    [DataRow(100, "w", "\"one hundred\"")]
+    [DataRow(123, "w", "\"one hundred and twenty-three\"")]
+    [DataRow(1000, "w", "\"one thousand\"")]
+    [DataRow(1001, "w", "\"one thousand and one\"")]
+    [DataRow(1234, "w", "\"one thousand, two hundred and thirty-four\"")]
+    [DataRow(-5, "w", "\"minus five\"")]
     public void FormatInteger_Words_Lowercase(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData(5, "W", "\"FIVE\"")]
-    [InlineData(21, "W", "\"TWENTY-ONE\"")]
+    [TestMethod]
+    [DataRow(5, "W", "\"FIVE\"")]
+    [DataRow(21, "W", "\"TWENTY-ONE\"")]
     public void FormatInteger_Words_Uppercase(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData(5, "Ww", "\"Five\"")]
-    [InlineData(21, "Ww", "\"Twenty-One\"")]
-    [InlineData(100, "Ww", "\"One Hundred\"")]
+    [TestMethod]
+    [DataRow(5, "Ww", "\"Five\"")]
+    [DataRow(21, "Ww", "\"Twenty-One\"")]
+    [DataRow(100, "Ww", "\"One Hundred\"")]
     public void FormatInteger_Words_TitleCase(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region FormatInteger — Ordinal words
 
-    [Theory]
-    [InlineData(1, "\"first\"")]
-    [InlineData(2, "\"second\"")]
-    [InlineData(3, "\"third\"")]
-    [InlineData(5, "\"fifth\"")]
-    [InlineData(8, "\"eighth\"")]
-    [InlineData(9, "\"ninth\"")]
-    [InlineData(12, "\"twelfth\"")]
-    [InlineData(20, "\"twentieth\"")]
-    [InlineData(21, "\"twenty-first\"")]
-    [InlineData(100, "\"one hundredth\"")]
-    [InlineData(101, "\"one hundred and first\"")]
+    [TestMethod]
+    [DataRow(1, "\"first\"")]
+    [DataRow(2, "\"second\"")]
+    [DataRow(3, "\"third\"")]
+    [DataRow(5, "\"fifth\"")]
+    [DataRow(8, "\"eighth\"")]
+    [DataRow(9, "\"ninth\"")]
+    [DataRow(12, "\"twelfth\"")]
+    [DataRow(20, "\"twentieth\"")]
+    [DataRow(21, "\"twenty-first\"")]
+    [DataRow(100, "\"one hundredth\"")]
+    [DataRow(101, "\"one hundred and first\"")]
     public void FormatInteger_OrdinalWords(int value, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, 'w;o')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region ParseInteger — Words
 
-    [Theory]
-    [InlineData("zero", 0)]
-    [InlineData("one", 1)]
-    [InlineData("thirteen", 13)]
-    [InlineData("twenty", 20)]
-    [InlineData("twenty-one", 21)]
-    [InlineData("one hundred", 100)]
-    [InlineData("one hundred and twenty-three", 123)]
-    [InlineData("one thousand, two hundred and thirty-four", 1234)]
+    [TestMethod]
+    [DataRow("zero", 0)]
+    [DataRow("one", 1)]
+    [DataRow("thirteen", 13)]
+    [DataRow("twenty", 20)]
+    [DataRow("twenty-one", 21)]
+    [DataRow("one hundred", 100)]
+    [DataRow("one hundred and twenty-three", 123)]
+    [DataRow("one thousand, two hundred and thirty-four", 1234)]
     public void ParseInteger_Words(string input, int expected)
     {
         string? result = Evaluator.EvaluateToString($"$parseInteger('{input}', 'w')", "{}");
-        Assert.Equal(expected.ToString(), result);
+        Assert.AreEqual(expected.ToString(), result);
     }
 
-    [Theory]
-    [InlineData("first", 1)]
-    [InlineData("second", 2)]
-    [InlineData("third", 3)]
-    [InlineData("twelfth", 12)]
-    [InlineData("twentieth", 20)]
-    [InlineData("twenty-first", 21)]
+    [TestMethod]
+    [DataRow("first", 1)]
+    [DataRow("second", 2)]
+    [DataRow("third", 3)]
+    [DataRow("twelfth", 12)]
+    [DataRow("twentieth", 20)]
+    [DataRow("twenty-first", 21)]
     public void ParseInteger_OrdinalWords(string input, int expected)
     {
         string? result = Evaluator.EvaluateToString($"$parseInteger('{input}', 'w;o')", "{}");
-        Assert.Equal(expected.ToString(), result);
+        Assert.AreEqual(expected.ToString(), result);
     }
 
     #endregion
 
     #region FormatInteger — Alphabetic
 
-    [Theory]
-    [InlineData(1, "A", "\"A\"")]
-    [InlineData(26, "A", "\"Z\"")]
-    [InlineData(27, "A", "\"AA\"")]
-    [InlineData(1, "a", "\"a\"")]
-    [InlineData(26, "a", "\"z\"")]
-    [InlineData(27, "a", "\"aa\"")]
+    [TestMethod]
+    [DataRow(1, "A", "\"A\"")]
+    [DataRow(26, "A", "\"Z\"")]
+    [DataRow(27, "A", "\"AA\"")]
+    [DataRow(1, "a", "\"a\"")]
+    [DataRow(26, "a", "\"z\"")]
+    [DataRow(27, "a", "\"aa\"")]
     public void FormatInteger_Alphabetic(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatInteger_AlphabeticZero_ReturnsEmpty()
     {
         string? result = Evaluator.EvaluateToString("$formatInteger(0, 'A')", "{}");
-        Assert.Equal("\"\"", result);
+        Assert.AreEqual("\"\"", result);
     }
 
     #endregion
 
     #region ParseInteger — Alphabetic
 
-    [Theory]
-    [InlineData("A", "A", 1)]
-    [InlineData("Z", "A", 26)]
-    [InlineData("AA", "A", 27)]
-    [InlineData("a", "a", 1)]
-    [InlineData("z", "a", 26)]
+    [TestMethod]
+    [DataRow("A", "A", 1)]
+    [DataRow("Z", "A", 26)]
+    [DataRow("AA", "A", 27)]
+    [DataRow("a", "a", 1)]
+    [DataRow("z", "a", 26)]
     public void ParseInteger_Alphabetic(string input, string picture, int expected)
     {
         string? result = Evaluator.EvaluateToString($"$parseInteger('{input}', '{picture}')", "{}");
-        Assert.Equal(expected.ToString(), result);
+        Assert.AreEqual(expected.ToString(), result);
     }
 
     #endregion
 
     #region FormatInteger — Decimal digit patterns
 
-    [Theory]
-    [InlineData(42, "0", "\"42\"")]
-    [InlineData(42, "00", "\"42\"")]
-    [InlineData(42, "000", "\"042\"")]
-    [InlineData(42, "0000", "\"0042\"")]
-    [InlineData(7, "01", "\"07\"")]
-    [InlineData(7, "1", "\"7\"")]
+    [TestMethod]
+    [DataRow(42, "0", "\"42\"")]
+    [DataRow(42, "00", "\"42\"")]
+    [DataRow(42, "000", "\"042\"")]
+    [DataRow(42, "0000", "\"0042\"")]
+    [DataRow(7, "01", "\"07\"")]
+    [DataRow(7, "1", "\"7\"")]
     public void FormatInteger_DecimalPattern_ZeroPadding(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData(1, "0;o", "\"1st\"")]
-    [InlineData(2, "0;o", "\"2nd\"")]
-    [InlineData(3, "0;o", "\"3rd\"")]
-    [InlineData(4, "0;o", "\"4th\"")]
-    [InlineData(11, "0;o", "\"11th\"")]
-    [InlineData(12, "0;o", "\"12th\"")]
-    [InlineData(13, "0;o", "\"13th\"")]
-    [InlineData(21, "0;o", "\"21st\"")]
-    [InlineData(22, "0;o", "\"22nd\"")]
-    [InlineData(23, "0;o", "\"23rd\"")]
-    [InlineData(111, "0;o", "\"111th\"")]
-    [InlineData(112, "0;o", "\"112th\"")]
-    [InlineData(113, "0;o", "\"113th\"")]
+    [TestMethod]
+    [DataRow(1, "0;o", "\"1st\"")]
+    [DataRow(2, "0;o", "\"2nd\"")]
+    [DataRow(3, "0;o", "\"3rd\"")]
+    [DataRow(4, "0;o", "\"4th\"")]
+    [DataRow(11, "0;o", "\"11th\"")]
+    [DataRow(12, "0;o", "\"12th\"")]
+    [DataRow(13, "0;o", "\"13th\"")]
+    [DataRow(21, "0;o", "\"21st\"")]
+    [DataRow(22, "0;o", "\"22nd\"")]
+    [DataRow(23, "0;o", "\"23rd\"")]
+    [DataRow(111, "0;o", "\"111th\"")]
+    [DataRow(112, "0;o", "\"112th\"")]
+    [DataRow(113, "0;o", "\"113th\"")]
     public void FormatInteger_OrdinalDecimal(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData(1234567, "0,000", "\"1,234,567\"")]
-    [InlineData(1234, "0,000", "\"1,234\"")]
-    [InlineData(123, "0,000", "\"0,123\"")]
+    [TestMethod]
+    [DataRow(1234567, "0,000", "\"1,234,567\"")]
+    [DataRow(1234, "0,000", "\"1,234\"")]
+    [DataRow(123, "0,000", "\"0,123\"")]
     public void FormatInteger_GroupingSeparator(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region ParseInteger — Decimal patterns
 
-    [Theory]
-    [InlineData("042", "000", 42)]
-    [InlineData("0042", "0000", 42)]
-    [InlineData("7", "0", 7)]
+    [TestMethod]
+    [DataRow("042", "000", 42)]
+    [DataRow("0042", "0000", 42)]
+    [DataRow("7", "0", 7)]
     public void ParseInteger_DecimalPattern(string input, string picture, int expected)
     {
         string? result = Evaluator.EvaluateToString($"$parseInteger('{input}', '{picture}')", "{}");
-        Assert.Equal(expected.ToString(), result);
+        Assert.AreEqual(expected.ToString(), result);
     }
 
-    [Theory]
-    [InlineData("1st", "0;o", 1)]
-    [InlineData("2nd", "0;o", 2)]
-    [InlineData("3rd", "0;o", 3)]
-    [InlineData("11th", "0;o", 11)]
-    [InlineData("21st", "0;o", 21)]
+    [TestMethod]
+    [DataRow("1st", "0;o", 1)]
+    [DataRow("2nd", "0;o", 2)]
+    [DataRow("3rd", "0;o", 3)]
+    [DataRow("11th", "0;o", 11)]
+    [DataRow("21st", "0;o", 21)]
     public void ParseInteger_OrdinalDecimal(string input, string picture, int expected)
     {
         string? result = Evaluator.EvaluateToString($"$parseInteger('{input}', '{picture}')", "{}");
-        Assert.Equal(expected.ToString(), result);
+        Assert.AreEqual(expected.ToString(), result);
     }
 
-    [Theory]
-    [InlineData("1,234,567", "0,000", 1234567)]
-    [InlineData("1,234", "0,000", 1234)]
+    [TestMethod]
+    [DataRow("1,234,567", "0,000", 1234567)]
+    [DataRow("1,234", "0,000", 1234)]
     public void ParseInteger_GroupingSeparator(string input, string picture, int expected)
     {
         string? result = Evaluator.EvaluateToString($"$parseInteger('{input}', '{picture}')", "{}");
-        Assert.Equal(expected.ToString(), result);
+        Assert.AreEqual(expected.ToString(), result);
     }
 
     #endregion
 
     #region FormatInteger — Empty picture / fallback
 
-    [Fact]
+    [TestMethod]
     public void FormatInteger_EmptyPicture_DefaultsToDecimal()
     {
         // Empty primary format (";o") throws D3130 — reference behavior.
-        var ex = Assert.Throws<JsonataException>(() =>
+        var ex = Assert.ThrowsExactly<JsonataException>(() =>
             Evaluator.EvaluateToString("$formatInteger(42, ';o')", "{}"));
-        Assert.Equal("D3130", ex.Code);
+        Assert.AreEqual("D3130", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatInteger_SingleDigitPicture()
     {
         string? result = Evaluator.EvaluateToString("$formatInteger(5, '1')", "{}");
-        Assert.Equal("\"5\"", result);
+        Assert.AreEqual("\"5\"", result);
     }
 
     #endregion
 
     #region FormatInteger — Large values (double path)
 
-    [Fact]
+    [TestMethod]
     public void FormatInteger_LargeDoubleAsWords()
     {
         // 1e18 fits in a long — formatter uses scale words up to "trillion"
         string? result = Evaluator.EvaluateToString("$formatInteger(1e18, 'w')", "{}");
-        Assert.NotNull(result);
-        Assert.Contains("trillion", result);
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "trillion");
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatInteger_LargeDoubleAsDecimal()
     {
         // 1e18 fits in a long, so output is the full decimal representation
         string? result = Evaluator.EvaluateToString("$formatInteger(1e18, '0')", "{}");
-        Assert.Equal("\"1000000000000000000\"", result);
+        Assert.AreEqual("\"1000000000000000000\"", result);
     }
 
     #endregion
 
     #region FormatDateTime — Picture string edge cases
 
-    [Theory]
-    [InlineData("[Y0001]-[M01]-[D01]", "\"2021-04-07\"")]
-    [InlineData("[Y]-[M]-[D]", "\"2021-4-7\"")]
+    [TestMethod]
+    [DataRow("[Y0001]-[M01]-[D01]", "\"2021-04-07\"")]
+    [DataRow("[Y]-[M]-[D]", "\"2021-4-7\"")]
     public void FormatDateTime_DatePictures(string picture, string expected)
     {
         // 2021-04-07T22:00:00.000Z = 1617836400000; pass explicit UTC timezone
         string? result = Evaluator.EvaluateToString($"$fromMillis(1617836400000, '{picture}', '+0000')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatDateTime_TimePicture_WithTimezone()
     {
         // Use $fromMillis with explicit timezone offset
         // 1970-01-01T12:30:45.000Z = 45045000
         string? result = Evaluator.EvaluateToString("$fromMillis(45045000, '[H01]:[m01]:[s01]', '+0000')", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         // The result should contain a valid HH:MM:SS time
-        Assert.Matches("^\"\\d{2}:\\d{2}:\\d{2}\"$", result);
+        StringAssert.Matches(result, new System.Text.RegularExpressions.Regex("^\"\\d{2}:\\d{2}:\\d{2}\"$"));
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatDateTime_LiteralText()
     {
         // Text between brackets is a component; text outside is literal
         string? result = Evaluator.EvaluateToString("$fromMillis(1617836400000, 'Date: [D01]/[M01]/[Y0001]', '+0000')", "{}");
-        Assert.Equal("\"Date: 07/04/2021\"", result);
+        Assert.AreEqual("\"Date: 07/04/2021\"", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatDateTime_EscapedBrackets()
     {
         // [[ and ]] are escaped brackets
         string? result = Evaluator.EvaluateToString("$fromMillis(1617836400000, '[[Year [Y0001]]]', '+0000')", "{}");
-        Assert.Equal("\"[Year 2021]\"", result);
+        Assert.AreEqual("\"[Year 2021]\"", result);
     }
 
-    [Theory]
-    [InlineData("[MNn]", "\"April\"")]
-    [InlineData("[MN]", "\"APRIL\"")]
-    [InlineData("[Mn]", "\"april\"")]
+    [TestMethod]
+    [DataRow("[MNn]", "\"April\"")]
+    [DataRow("[MN]", "\"APRIL\"")]
+    [DataRow("[Mn]", "\"april\"")]
     public void FormatDateTime_MonthName_Casing(string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$fromMillis(1617836400000, '{picture}', '+0000')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData("[FNn]", "\"Wednesday\"")]
-    [InlineData("[FN]", "\"WEDNESDAY\"")]
-    [InlineData("[Fn]", "\"wednesday\"")]
+    [TestMethod]
+    [DataRow("[FNn]", "\"Wednesday\"")]
+    [DataRow("[FN]", "\"WEDNESDAY\"")]
+    [DataRow("[Fn]", "\"wednesday\"")]
     public void FormatDateTime_DayOfWeekName_Casing(string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$fromMillis(1617836400000, '{picture}', '+0000')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatDateTime_InternalWhitespace_InPicture()
     {
         // Picture markers with internal whitespace should have whitespace stripped
         // [f0  01] is equivalent to [f001] — the standard requires stripping all whitespace
         // from the format token
         string? result = Evaluator.EvaluateToString("$fromMillis(1617836400000, '[Y 0001]-[M 01]-[D 01]', '+0000')", "{}");
-        Assert.Equal("\"2021-04-07\"", result);
+        Assert.AreEqual("\"2021-04-07\"", result);
     }
 
     #endregion
 
     #region FormatDateTime — Width modifiers
 
-    [Theory]
-    [InlineData("[MNn,3-3]", "\"Apr\"")]
-    [InlineData("[MNn,*-3]", "\"Apr\"")]
-    [InlineData("[Y,4-4]", "\"2021\"")]
+    [TestMethod]
+    [DataRow("[MNn,3-3]", "\"Apr\"")]
+    [DataRow("[MNn,*-3]", "\"Apr\"")]
+    [DataRow("[Y,4-4]", "\"2021\"")]
     public void FormatDateTime_WidthModifiers(string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$fromMillis(1617836400000, '{picture}', '+0000')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region $toMillis — Parse round-trip
 
-    [Theory]
-    [InlineData("2000-01-01T00:00:00.000Z", 946684800000)]
-    [InlineData("1970-01-01T00:00:00.000Z", 0)]
+    [TestMethod]
+    [DataRow("2000-01-01T00:00:00.000Z", 946684800000)]
+    [DataRow("1970-01-01T00:00:00.000Z", 0)]
     public void ToMillis_ISO8601(string timestamp, long expectedMillis)
     {
         string? result = Evaluator.EvaluateToString($"$toMillis('{timestamp}')", "{}");
-        Assert.Equal(expectedMillis.ToString(), result);
+        Assert.AreEqual(expectedMillis.ToString(), result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatDateTime_FromMillis_RoundTrip()
     {
         // Format then parse back with explicit UTC timezone — should round-trip
         string? result = Evaluator.EvaluateToString(
             "$toMillis($fromMillis(946684800000, '[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01].[f001]Z', '+0000'), '[Y0001]-[M01]-[D01]T[H01]:[m01]:[s01].[f001]Z')",
             "{}");
-        Assert.Equal("946684800000", result);
+        Assert.AreEqual("946684800000", result);
     }
 
     #endregion
 
     #region $toMillis — Custom picture parse
 
-    [Fact]
+    [TestMethod]
     public void ToMillis_CustomPicture()
     {
         // Use a date-only format (no timezone ambiguity for midnight UTC)
         string? result = Evaluator.EvaluateToString(
             "$toMillis('01/01/2000', '[D01]/[M01]/[Y0001]')",
             "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         // Parse returned a valid number
-        Assert.True(long.TryParse(result, out _));
+        Assert.IsTrue(long.TryParse(result, out _));
     }
 
     #endregion
 
     #region Error cases
 
-    [Fact]
+    [TestMethod]
     public void FormatInteger_InvalidPicture_ThrowsD3130()
     {
-        Assert.Throws<JsonataException>(() => Evaluator.EvaluateToString("$formatInteger(42, '#')", "{}"));
+        Assert.ThrowsExactly<JsonataException>(() => Evaluator.EvaluateToString("$formatInteger(42, '#')", "{}"));
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatInteger_NamePresentation_ThrowsD3133()
     {
         // N/n/Nn presentations are invalid for $formatInteger
-        Assert.Throws<JsonataException>(() => Evaluator.EvaluateToString("$formatInteger(42, 'N')", "{}"));
+        Assert.ThrowsExactly<JsonataException>(() => Evaluator.EvaluateToString("$formatInteger(42, 'N')", "{}"));
     }
 
-    [Fact]
+    [TestMethod]
     public void FormatDateTime_UnmatchedBracket_ThrowsD3135()
     {
-        Assert.Throws<JsonataException>(() => Evaluator.EvaluateToString("$fromMillis(1617836400000, '[Y0001')", "{}"));
+        Assert.ThrowsExactly<JsonataException>(() => Evaluator.EvaluateToString("$fromMillis(1617836400000, '[Y0001')", "{}"));
     }
 
     #endregion
 
     #region Negative and zero values
 
-    [Theory]
-    [InlineData(0, "0", "\"0\"")]
-    [InlineData(-1, "0", "\"-1\"")]
-    [InlineData(-42, "0", "\"-42\"")]
-    [InlineData(-123, "000", "\"-123\"")]
+    [TestMethod]
+    [DataRow(0, "0", "\"0\"")]
+    [DataRow(-1, "0", "\"-1\"")]
+    [DataRow(-42, "0", "\"-42\"")]
+    [DataRow(-123, "000", "\"-123\"")]
     public void FormatInteger_NegativeAndZero(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Theory]
-    [InlineData(0, "w", "\"zero\"")]
-    [InlineData(-1, "w", "\"minus one\"")]
-    [InlineData(-100, "w", "\"minus one hundred\"")]
+    [TestMethod]
+    [DataRow(0, "w", "\"zero\"")]
+    [DataRow(-1, "w", "\"minus one\"")]
+    [DataRow(-100, "w", "\"minus one hundred\"")]
     public void FormatInteger_NegativeWords(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region Boundary values
 
-    [Theory]
-    [InlineData(999999999, "w")]
-    [InlineData(1000000, "w")]
-    [InlineData(1000000000, "w")]
+    [TestMethod]
+    [DataRow(999999999, "w")]
+    [DataRow(1000000, "w")]
+    [DataRow(1000000000, "w")]
     public void FormatInteger_LargeWordValues_DoNotThrow(int value, string picture)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         Assert.StartsWith("\"", result);
     }
 
-    [Theory]
-    [InlineData(1, "0", "\"1\"")]
-    [InlineData(9, "0", "\"9\"")]
-    [InlineData(10, "0", "\"10\"")]
-    [InlineData(99, "0", "\"99\"")]
-    [InlineData(100, "0", "\"100\"")]
-    [InlineData(999, "0", "\"999\"")]
+    [TestMethod]
+    [DataRow(1, "0", "\"1\"")]
+    [DataRow(9, "0", "\"9\"")]
+    [DataRow(10, "0", "\"10\"")]
+    [DataRow(99, "0", "\"99\"")]
+    [DataRow(100, "0", "\"100\"")]
+    [DataRow(999, "0", "\"999\"")]
     public void FormatInteger_PowerOf10Boundaries(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
     #endregion
 
     #region Unicode digits with grouping separators (lines 1618-1637)
 
-    [Theory]
-    [InlineData(12345, "\u0661,\u0660\u0660\u0660", "\u0661\u0662,\u0663\u0664\u0665")]  // Arabic-Indic digits ١٢,٣٤٥
-    [InlineData(1000, "\u0661,\u0660\u0660\u0660", "\u0661,\u0660\u0660\u0660")]            // Arabic-Indic digits ١,٠٠٠
+    [TestMethod]
+    [DataRow(12345, "\u0661,\u0660\u0660\u0660", "\u0661\u0662,\u0663\u0664\u0665")]  // Arabic-Indic digits ١٢,٣٤٥
+    [DataRow(1000, "\u0661,\u0660\u0660\u0660", "\u0661,\u0660\u0660\u0660")]            // Arabic-Indic digits ١,٠٠٠
     public void FormatInteger_UnicodeDigitsWithGrouping(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal($"\"{expected}\"", result);
+        Assert.AreEqual($"\"{expected}\"", result);
     }
 
-    [Theory]
-    [InlineData(42, "\u0661", "\u0664\u0662")]                        // Arabic-Indic digits without grouping
-    [InlineData(0, "\u0661", "\u0660")]                                // Zero in Arabic-Indic
+    [TestMethod]
+    [DataRow(42, "\u0661", "\u0664\u0662")]                        // Arabic-Indic digits without grouping
+    [DataRow(0, "\u0661", "\u0660")]                                // Zero in Arabic-Indic
     public void FormatInteger_UnicodeDigitsNoGrouping(int value, string picture, string expected)
     {
         string? result = Evaluator.EvaluateToString($"$formatInteger({value}, '{picture}')", "{}");
-        Assert.Equal($"\"{expected}\"", result);
+        Assert.AreEqual($"\"{expected}\"", result);
     }
 
     #endregion
 
     #region ParseInteger with grouping separators (lines 2675-2689)
 
-    [Fact]
+    [TestMethod]
     public void ParseInteger_WithGroupingSeparators()
     {
         // $parseInteger("1,234", "#,##0") should return 1234
         string? result = Evaluator.EvaluateToString("""$parseInteger("1,234", "#,##0")""", "{}");
-        Assert.Equal("1234", result);
+        Assert.AreEqual("1234", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ParseInteger_NegativeWithGrouping()
     {
         string? result = Evaluator.EvaluateToString("""$parseInteger("-1,234", "#,##0")""", "{}");
-        Assert.Equal("-1234", result);
+        Assert.AreEqual("-1234", result);
     }
 
     #endregion
 
     #region Timezone format variations (XPathDateTimeFormatter lines 1079-1089)
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_TimezoneWithTModifier_EmptyPAfterStrip()
     {
         // [Zt] means: use Z for UTC, else +HH:MM. With non-UTC timezone, "t" is stripped leaving empty p.
         // Exercises line 1079-1083 (p.Length == 0 after stripping 't')
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Zt]", "+0530")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         // Should format with colon since p.Length == 0 → useColon=true, digits=2
-        Assert.Contains("+05:30", result);
+        StringAssert.Contains(result, "+05:30");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_TimezoneWithTModifier_Utc()
     {
         // [Zt] with UTC should produce "Z"
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Zt]")""", "{}");
-        Assert.NotNull(result);
-        Assert.Contains("Z", result);
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "Z");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_TimezoneWithTwoDigitsNoColon()
     {
         // [Z01] → presentation is "01", length 2, no colon → hits else branch (lines 1085-1088)
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Z01]", "+0530")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         // Should format without colon: +0530
-        Assert.Contains("+0530", result);
+        StringAssert.Contains(result, "+0530");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_TimezoneMinimalFormat()
     {
         // [Z0] → presentation is "0", length 1 → minimal format (digits=0, no leading zero)
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Z0]", "+0530")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         // Should format as "5:30" (minimal, no leading zero on hour, minutes if non-zero)
-        Assert.Contains("+5:30", result);
+        StringAssert.Contains(result, "+5:30");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_TimezoneNoColonFourDigits()
     {
         // [Z0101] → presentation is "0101", length 4 → no colon, 2 digits
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Z0101]", "+0530")""", "{}");
-        Assert.NotNull(result);
-        Assert.Contains("+0530", result);
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "+0530");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_NegativeTimezone()
     {
         // Verify negative timezone offset formatting
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Z01:01]", "-0800")""", "{}");
-        Assert.NotNull(result);
-        Assert.Contains("-08:00", result);
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "-08:00");
     }
 
     #endregion
 
     #region Escaped bracket in picture string (XPathDateTimeFormatter lines 2989-3001)
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_EscapedClosingBracket()
     {
         // ]] in picture string = literal ']'
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]-[M01]-[D01]]]")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         Assert.EndsWith("]", result!.Trim('"'));
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_EscapedClosingBracketInMiddle()
     {
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]]][M01]")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         // Should have ']' between year and month
-        Assert.Contains("]", result!.Trim('"'));
+        StringAssert.Contains(result!.Trim('"'), "]");
     }
 
     #endregion
 
     #region $toMillis with era/calendar name (XPathDateTimeFormatter SkipWord lines 3515-3528)
 
-    [Fact]
+    [TestMethod]
     public void ToMillis_WithEraComponent()
     {
         // [E] = Era component — parsing calls SkipWord to skip "AD"/"CE"/etc.
         string? result = Evaluator.EvaluateToString(
             """$toMillis("2024 AD", "[Y] [E]")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         // Should parse successfully even with the era text
-        Assert.NotEqual("undefined", result);
+        Assert.AreNotEqual("undefined", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToMillis_WithCalendarComponent()
     {
         // [C] = Calendar component — parsing calls SkipWord to skip "ISO"/"Gregorian"/etc.
         string? result = Evaluator.EvaluateToString(
             """$toMillis("2024 ISO", "[Y] [C]")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToMillis_WithDayName()
     {
         // $toMillis with picture that includes [FNn] (day of week name) exercises SkipDayOfWeek
         string? result = Evaluator.EvaluateToString(
             """$toMillis("Monday 15 January 2024", "[FNn] [D] [MNn] [Y]")""", "{}");
-        Assert.NotNull(result);
-        Assert.Equal("1705276800000", result);
+        Assert.IsNotNull(result);
+        Assert.AreEqual("1705276800000", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToMillis_WithAbbreviatedDayName()
     {
         string? result = Evaluator.EvaluateToString(
             """$toMillis("Mon 15 Jan 2024", "[FNn,*-3] [D] [MNn,*-3] [Y]")""", "{}");
-        Assert.NotNull(result);
-        Assert.NotEqual("undefined", result);
+        Assert.IsNotNull(result);
+        Assert.AreNotEqual("undefined", result);
     }
 
     #endregion
@@ -734,7 +735,7 @@ public class XPathDateTimeFormatterEdgeCaseTests
     #region ParseTimezoneArgument (XPathDateTimeFormatter lines 3550-3557, 3579-3588)
 
 #if NET
-    [Fact]
+    [TestMethod]
     public void FromMillis_IanaTimezone()
     {
         // Verifies that IANA timezone names (e.g. "America/New_York") are resolved
@@ -744,105 +745,105 @@ public class XPathDateTimeFormatterEdgeCaseTests
         // .NET Framework does not support IANA timezone IDs in FindSystemTimeZoneById.
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "America/New_York")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         Assert.DoesNotContain("00:00:00", result);
     }
 #endif
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_ShortOffset()
     {
         // Short offset like "+5" (1-2 chars after sign) exercises lines 3579-3582
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "+5")""", "{}");
-        Assert.NotNull(result);
-        Assert.Contains("05:00:00", result);
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "05:00:00");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_ColonOffset_BackwardCompat()
     {
         // Offset with colon "+05:30" — not the spec format (±HHMM) but accepted for backward compat
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "+05:30")""", "{}");
-        Assert.NotNull(result);
-        Assert.Contains("05:30:00", result);
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "05:30:00");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_InvalidTimezone_TreatedAsUtc()
     {
         // Invalid timezone falls back to UTC (lines 3554-3557)
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "Not/A/Zone")""", "{}");
-        Assert.NotNull(result);
-        Assert.Contains("00:00:00", result);
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "00:00:00");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_WeirdOffsetLength()
     {
         // Offset with 3 chars after sign "123" → hits else branch (lines 3585-3588)
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]-[M01]-[D01]T[H01]:[m01]:[s01]", "+123")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
         // Falls through to hours=0, minutes=0 → treated as UTC
-        Assert.Contains("00:00:00", result);
+        StringAssert.Contains(result, "00:00:00");
     }
 
     #endregion
 
     #region $fromMillis with various picture components (lines 2730-2743, 3504-3517)
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_DayOfWeek()
     {
         // 2024-01-15 (Monday) at midnight UTC = 1705276800000
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[FNn]")""", "{}");
-        Assert.NotNull(result);
-        Assert.Contains("Monday", result);
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "Monday");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_WeekOfYear()
     {
         // Week number formatting
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[W01]")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_MonthName()
     {
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[MNn]")""", "{}");
-        Assert.NotNull(result);
-        Assert.Contains("January", result);
+        Assert.IsNotNull(result);
+        StringAssert.Contains(result, "January");
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_TimezoneOffset()
     {
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[H01]:[m01]:[s01] [Z]")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_EraAndCalendar()
     {
         string? result = Evaluator.EvaluateToString(
             """$fromMillis(1705276800000, "[Y]-[M01]-[D01] [E]")""", "{}");
-        Assert.NotNull(result);
+        Assert.IsNotNull(result);
     }
 
     #endregion
 
     #region Width modifier parsing (fix for jsonata-js#750)
 
-    [Fact]
+    [TestMethod]
     public void ToMillis_WidthModifier_FixedWidth()
     {
         // Tests fix for jsonata-js#750: width modifier ,min-max was not applied
@@ -850,32 +851,32 @@ public class XPathDateTimeFormatterEdgeCaseTests
         // Reference: $toMillis("20250703T231120Z","[Y1111][M11][D11]T[H1,2-2][m1,2-2][s1,2-2]Z") => 1751584280000
         string? result = Evaluator.EvaluateToString(
             """$toMillis("20250703T231120Z","[Y1111][M11][D11]T[H1,2-2][m1,2-2][s1,2-2]Z")""", "{}");
-        Assert.Equal("1751584280000", result);
+        Assert.AreEqual("1751584280000", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToMillis_WidthModifier_AllComponents()
     {
         // Width modifiers on all components: [Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z
         // Reference: 1751584280000
         string? result = Evaluator.EvaluateToString(
             """$toMillis("20250703T231120Z","[Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z")""", "{}");
-        Assert.Equal("1751584280000", result);
+        Assert.AreEqual("1751584280000", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void FromMillis_WidthModifier_RoundTrip()
     {
         // Verify $fromMillis produces correct output with width modifiers, then round-trip
         // Reference: $fromMillis(1751584280000, "[Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z") => "20250703T231120Z"
         string? formatted = Evaluator.EvaluateToString(
             """$fromMillis(1751584280000, "[Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z")""", "{}");
-        Assert.Equal("\"20250703T231120Z\"", formatted);
+        Assert.AreEqual("\"20250703T231120Z\"", formatted);
 
         // Round-trip: parse the formatted string back to millis
         string? millis = Evaluator.EvaluateToString(
             """$toMillis("20250703T231120Z","[Y1,4-4][M1,2-2][D1,2-2]T[H1,2-2][m1,2-2][s1,2-2]Z")""", "{}");
-        Assert.Equal("1751584280000", millis);
+        Assert.AreEqual("1751584280000", millis);
     }
 
     #endregion

@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -11,9 +11,10 @@ namespace Corvus.Text.Json.Tests;
 /// Verifies that codegen correctly suppresses the convenience CreateBuilder overload
 /// when it would collide with the existing CreateBuilder(workspace, Source, int) overload.
 /// </summary>
+[TestClass]
 public class GeneratedSelfReferencingObjectTests
 {
-    [Fact]
+    [TestMethod]
     public void SelfReferencingObject_CanBuildWithBuilderDelegate()
     {
         using var workspace = JsonWorkspace.Create();
@@ -30,10 +31,10 @@ public class GeneratedSelfReferencingObjectTests
                             }));
                 });
 
-        Assert.Equal("""{"parent":{}}""", builder.RootElement.ToString());
+        Assert.AreEqual("""{"parent":{}}""", builder.RootElement.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SelfReferencingObject_CanBuildNestedStructure()
     {
         using var workspace = JsonWorkspace.Create();
@@ -55,20 +56,20 @@ public class GeneratedSelfReferencingObjectTests
                             }));
                 });
 
-        Assert.Equal("""{"parent":{"parent":{}}}""", builder.RootElement.ToString());
+        Assert.AreEqual("""{"parent":{"parent":{}}}""", builder.RootElement.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SelfReferencingObject_CanBuildEmpty()
     {
         using var workspace = JsonWorkspace.Create();
         using JsonDocumentBuilder<SelfReferencingObject.Mutable> builder =
             SelfReferencingObject.CreateBuilder(workspace);
 
-        Assert.Equal("{}", builder.RootElement.ToString());
+        Assert.AreEqual("{}", builder.RootElement.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SelfReferencingObject_CanMutateParent()
     {
         using var workspace = JsonWorkspace.Create();
@@ -76,7 +77,7 @@ public class GeneratedSelfReferencingObjectTests
             SelfReferencingObject.CreateBuilder(workspace);
 
         SelfReferencingObject.Mutable root = builder.RootElement;
-        Assert.True(root.Parent.IsUndefined());
+        Assert.IsTrue(root.Parent.IsUndefined());
 
         root.SetParent(
             SelfReferencingObject.Build(
@@ -85,11 +86,11 @@ public class GeneratedSelfReferencingObjectTests
                     innerBuilder.Create();
                 }));
 
-        Assert.False(root.Parent.IsUndefined());
-        Assert.Equal("""{"parent":{}}""", root.ToString());
+        Assert.IsFalse(root.Parent.IsUndefined());
+        Assert.AreEqual("""{"parent":{}}""", root.ToString());
     }
 
-    [Fact]
+    [TestMethod]
     public void SelfReferencingObject_RoundTripsNestedStructure()
     {
         string json = """{"parent":{"parent":{}}}""";
@@ -97,10 +98,10 @@ public class GeneratedSelfReferencingObjectTests
         using var parsed =
             ParsedJsonDocument<SelfReferencingObject>.Parse(json);
 
-        Assert.False(parsed.RootElement.Parent.IsUndefined());
-        Assert.False(parsed.RootElement.Parent.Parent.IsUndefined());
-        Assert.True(parsed.RootElement.Parent.Parent.Parent.IsUndefined());
+        Assert.IsFalse(parsed.RootElement.Parent.IsUndefined());
+        Assert.IsFalse(parsed.RootElement.Parent.Parent.IsUndefined());
+        Assert.IsTrue(parsed.RootElement.Parent.Parent.Parent.IsUndefined());
 
-        Assert.Equal(json, parsed.RootElement.ToString());
+        Assert.AreEqual(json, parsed.RootElement.ToString());
     }
 }

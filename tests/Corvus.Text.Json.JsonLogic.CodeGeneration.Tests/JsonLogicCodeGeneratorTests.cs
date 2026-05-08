@@ -3,16 +3,17 @@
 // </copyright>
 
 using Corvus.Text.Json.JsonLogic.CodeGeneration;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.JsonLogic.CodeGeneration.Tests;
 
 /// <summary>
 /// Tests for <see cref="JsonLogicCodeGenerator"/>.
 /// </summary>
+[TestClass]
 public class JsonLogicCodeGeneratorTests
 {
-    [Fact]
+    [TestMethod]
     public void Generate_SimpleVar_ContainsEvaluateMethod()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -20,12 +21,12 @@ public class JsonLogicCodeGeneratorTests
             "SimpleVarRule",
             "Test.Generated");
 
-        Assert.Contains("public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)", result);
-        Assert.Contains("namespace Test.Generated;", result);
-        Assert.Contains("class SimpleVarRule", result);
+        StringAssert.Contains(result, "public static JsonElement Evaluate(in JsonElement data, JsonWorkspace workspace)");
+        StringAssert.Contains(result, "namespace Test.Generated;");
+        StringAssert.Contains(result, "class SimpleVarRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_SimpleVar_ResolvesProperty()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -34,10 +35,10 @@ public class JsonLogicCodeGeneratorTests
             "Test.Generated");
 
         // Should contain a property lookup for "x"
-        Assert.Contains("\"x\"u8", result);
+        StringAssert.Contains(result, "\"x\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Arithmetic_ContainsOperations()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -45,13 +46,13 @@ public class JsonLogicCodeGeneratorTests
             "ArithmeticRule",
             "Test.Generated");
 
-        Assert.Contains("class ArithmeticRule", result);
-        Assert.Contains("Evaluate", result);
+        StringAssert.Contains(result, "class ArithmeticRule");
+        StringAssert.Contains(result, "Evaluate");
         // Should reference var "x"
-        Assert.Contains("\"x\"u8", result);
+        StringAssert.Contains(result, "\"x\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Comparison_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -59,11 +60,11 @@ public class JsonLogicCodeGeneratorTests
             "ComparisonRule",
             "Test.Generated");
 
-        Assert.Contains("class ComparisonRule", result);
-        Assert.Contains("\"temp\"u8", result);
+        StringAssert.Contains(result, "class ComparisonRule");
+        StringAssert.Contains(result, "\"temp\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_StringCat_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -71,11 +72,11 @@ public class JsonLogicCodeGeneratorTests
             "CatRule",
             "Test.Generated");
 
-        Assert.Contains("class CatRule", result);
-        Assert.Contains("\"name\"u8", result);
+        StringAssert.Contains(result, "class CatRule");
+        StringAssert.Contains(result, "\"name\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_If_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -83,11 +84,11 @@ public class JsonLogicCodeGeneratorTests
             "IfRule",
             "Test.Generated");
 
-        Assert.Contains("class IfRule", result);
-        Assert.Contains("\"age\"u8", result);
+        StringAssert.Contains(result, "class IfRule");
+        StringAssert.Contains(result, "\"age\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_And_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -95,12 +96,12 @@ public class JsonLogicCodeGeneratorTests
             "AndRule",
             "Test.Generated");
 
-        Assert.Contains("class AndRule", result);
-        Assert.Contains("\"a\"u8", result);
-        Assert.Contains("\"b\"u8", result);
+        StringAssert.Contains(result, "class AndRule");
+        StringAssert.Contains(result, "\"a\"u8");
+        StringAssert.Contains(result, "\"b\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_AndInIf_SharedVarDoesNotLeakScope()
     {
         // Regression: var "total" inside and's short-circuit block leaked into
@@ -124,19 +125,19 @@ public class JsonLogicCodeGeneratorTests
             "AndScopeLeakRule",
             "Test.Generated");
 
-        Assert.Contains("class AndScopeLeakRule", result);
+        StringAssert.Contains(result, "class AndScopeLeakRule");
 
         // Verify goto-based short-circuit (no do/while(false))
         Assert.DoesNotContain("while (false)", result);
-        Assert.Contains("goto", result);
+        StringAssert.Contains(result, "goto");
 
         // Each context must declare its own variable for "total" because the
         // cache is restored after the and block and after each if-branch.
         int totalLookups = CountOccurrences(result, "\"total\"u8");
-        Assert.True(totalLookups > 1, $"Expected multiple 'total' lookups across scopes, got {totalLookups}");
+        Assert.IsTrue(totalLookups > 1, $"Expected multiple 'total' lookups across scopes, got {totalLookups}");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_OrInIf_SharedVarDoesNotLeakScope()
     {
         // Same regression as and, but for or's short-circuit block.
@@ -154,17 +155,17 @@ public class JsonLogicCodeGeneratorTests
             "OrScopeLeakRule",
             "Test.Generated");
 
-        Assert.Contains("class OrScopeLeakRule", result);
+        StringAssert.Contains(result, "class OrScopeLeakRule");
 
         // Verify goto-based short-circuit (no do/while(false))
         Assert.DoesNotContain("while (false)", result);
-        Assert.Contains("goto", result);
+        StringAssert.Contains(result, "goto");
 
         int roleLookups = CountOccurrences(result, "\"role\"u8");
-        Assert.True(roleLookups > 1, $"Expected multiple 'role' lookups across scopes, got {roleLookups}");
+        Assert.IsTrue(roleLookups > 1, $"Expected multiple 'role' lookups across scopes, got {roleLookups}");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Or_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -172,11 +173,11 @@ public class JsonLogicCodeGeneratorTests
             "OrRule",
             "Test.Generated");
 
-        Assert.Contains("class OrRule", result);
-        Assert.Contains("\"role\"u8", result);
+        StringAssert.Contains(result, "class OrRule");
+        StringAssert.Contains(result, "\"role\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Filter_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -184,11 +185,11 @@ public class JsonLogicCodeGeneratorTests
             "FilterRule",
             "Test.Generated");
 
-        Assert.Contains("class FilterRule", result);
-        Assert.Contains("\"items\"u8", result);
+        StringAssert.Contains(result, "class FilterRule");
+        StringAssert.Contains(result, "\"items\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Map_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -196,11 +197,11 @@ public class JsonLogicCodeGeneratorTests
             "MapRule",
             "Test.Generated");
 
-        Assert.Contains("class MapRule", result);
-        Assert.Contains("\"items\"u8", result);
+        StringAssert.Contains(result, "class MapRule");
+        StringAssert.Contains(result, "\"items\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Reduce_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -208,11 +209,11 @@ public class JsonLogicCodeGeneratorTests
             "ReduceRule",
             "Test.Generated");
 
-        Assert.Contains("class ReduceRule", result);
-        Assert.Contains("\"items\"u8", result);
+        StringAssert.Contains(result, "class ReduceRule");
+        StringAssert.Contains(result, "\"items\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_FusedMapReduce_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -220,10 +221,10 @@ public class JsonLogicCodeGeneratorTests
             "FusedMapReduceRule",
             "Test.Generated");
 
-        Assert.Contains("class FusedMapReduceRule", result);
+        StringAssert.Contains(result, "class FusedMapReduceRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Missing_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -231,10 +232,10 @@ public class JsonLogicCodeGeneratorTests
             "MissingRule",
             "Test.Generated");
 
-        Assert.Contains("class MissingRule", result);
+        StringAssert.Contains(result, "class MissingRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Not_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -242,11 +243,11 @@ public class JsonLogicCodeGeneratorTests
             "NotRule",
             "Test.Generated");
 
-        Assert.Contains("class NotRule", result);
-        Assert.Contains("\"active\"u8", result);
+        StringAssert.Contains(result, "class NotRule");
+        StringAssert.Contains(result, "\"active\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_DoubleNot_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -254,10 +255,10 @@ public class JsonLogicCodeGeneratorTests
             "DoubleNotRule",
             "Test.Generated");
 
-        Assert.Contains("class DoubleNotRule", result);
+        StringAssert.Contains(result, "class DoubleNotRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Equality_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -265,11 +266,11 @@ public class JsonLogicCodeGeneratorTests
             "EqualityRule",
             "Test.Generated");
 
-        Assert.Contains("class EqualityRule", result);
-        Assert.Contains("\"status\"u8", result);
+        StringAssert.Contains(result, "class EqualityRule");
+        StringAssert.Contains(result, "\"status\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_StrictEquality_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -277,10 +278,10 @@ public class JsonLogicCodeGeneratorTests
             "StrictEqRule",
             "Test.Generated");
 
-        Assert.Contains("class StrictEqRule", result);
+        StringAssert.Contains(result, "class StrictEqRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_In_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -288,10 +289,10 @@ public class JsonLogicCodeGeneratorTests
             "InRule",
             "Test.Generated");
 
-        Assert.Contains("class InRule", result);
+        StringAssert.Contains(result, "class InRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Min_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -299,10 +300,10 @@ public class JsonLogicCodeGeneratorTests
             "MinRule",
             "Test.Generated");
 
-        Assert.Contains("class MinRule", result);
+        StringAssert.Contains(result, "class MinRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_Max_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -310,10 +311,10 @@ public class JsonLogicCodeGeneratorTests
             "MaxRule",
             "Test.Generated");
 
-        Assert.Contains("class MaxRule", result);
+        StringAssert.Contains(result, "class MaxRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_DottedVarPath_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -321,12 +322,12 @@ public class JsonLogicCodeGeneratorTests
             "DottedVarRule",
             "Test.Generated");
 
-        Assert.Contains("class DottedVarRule", result);
-        Assert.Contains("\"person\"u8", result);
-        Assert.Contains("\"name\"u8", result);
+        StringAssert.Contains(result, "class DottedVarRule");
+        StringAssert.Contains(result, "\"person\"u8");
+        StringAssert.Contains(result, "\"name\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_ComplexRule_ProducesValidCode()
     {
         // The complex benchmark rule
@@ -344,57 +345,57 @@ public class JsonLogicCodeGeneratorTests
 
         string result = JsonLogicCodeGenerator.Generate(rule, "ComplexRule", "Test.Generated");
 
-        Assert.Contains("class ComplexRule", result);
-        Assert.Contains("\"age\"u8", result);
-        Assert.Contains("\"name\"u8", result);
+        StringAssert.Contains(result, "class ComplexRule");
+        StringAssert.Contains(result, "\"age\"u8");
+        StringAssert.Contains(result, "\"name\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_MissingDataBenchmark_ProducesValidCode()
     {
         string rule = """{"if":[{"missing":["a","b"]},{"cat":["Missing: ",{"missing":["a","b"]}]},{"+":[{"var":"a"},{"var":"b"}]}]}""";
 
         string result = JsonLogicCodeGenerator.Generate(rule, "MissingDataRule", "Test.Generated");
 
-        Assert.Contains("class MissingDataRule", result);
-        Assert.Contains("\"a\"u8", result);
-        Assert.Contains("\"b\"u8", result);
+        StringAssert.Contains(result, "class MissingDataRule");
+        StringAssert.Contains(result, "\"a\"u8");
+        StringAssert.Contains(result, "\"b\"u8");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_LiteralNumber_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate("42", "LiteralRule", "Test.Generated");
 
-        Assert.Contains("class LiteralRule", result);
-        Assert.Contains("Evaluate", result);
+        StringAssert.Contains(result, "class LiteralRule");
+        StringAssert.Contains(result, "Evaluate");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_LiteralString_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate("\"hello\"", "LiteralRule", "Test.Generated");
 
-        Assert.Contains("class LiteralRule", result);
+        StringAssert.Contains(result, "class LiteralRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_LiteralTrue_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate("true", "LiteralRule", "Test.Generated");
 
-        Assert.Contains("class LiteralRule", result);
+        StringAssert.Contains(result, "class LiteralRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_LiteralNull_ProducesValidCode()
     {
         string result = JsonLogicCodeGenerator.Generate("null", "LiteralRule", "Test.Generated");
 
-        Assert.Contains("class LiteralRule", result);
+        StringAssert.Contains(result, "class LiteralRule");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_OutputIsAutoGenerated()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -405,7 +406,7 @@ public class JsonLogicCodeGeneratorTests
         Assert.StartsWith("// <auto-generated/>", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_OutputIncludesRequiredUsings()
     {
         string result = JsonLogicCodeGenerator.Generate(
@@ -413,27 +414,27 @@ public class JsonLogicCodeGeneratorTests
             "TestRule",
             "Test.Generated");
 
-        Assert.Contains("using Corvus.Text.Json;", result);
-        Assert.Contains("using Corvus.Text.Json.JsonLogic;", result);
+        StringAssert.Contains(result, "using Corvus.Text.Json;");
+        StringAssert.Contains(result, "using Corvus.Text.Json.JsonLogic;");
     }
 
     // ─── JlopsParser Tests ──────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void JlopsParser_ExpressionForm_ParsesCorrectly()
     {
         string content = """op discount(price, percent) => BigNumberToElement(CoerceToBigNumber(price) * (BigNumber.One - CoerceToBigNumber(percent) / (BigNumber)100), workspace);""";
 
         IReadOnlyList<CustomOperator> ops = JlopsParser.Parse(content);
 
-        Assert.Single(ops);
-        Assert.Equal("discount", ops[0].Name);
-        Assert.Equal(new[] { "price", "percent" }, ops[0].Parameters);
-        Assert.True(ops[0].IsExpression);
-        Assert.Contains("CoerceToBigNumber(price)", ops[0].Body);
+        Assert.AreEqual(1, (ops).Count());
+        Assert.AreEqual("discount", ops[0].Name);
+        CollectionAssert.AreEqual(new[] { "price", "percent" }, ops[0].Parameters);
+        Assert.IsTrue(ops[0].IsExpression);
+        StringAssert.Contains(ops[0].Body, "CoerceToBigNumber(price)");
     }
 
-    [Fact]
+    [TestMethod]
     public void JlopsParser_BlockForm_ParsesCorrectly()
     {
         string content = """
@@ -449,15 +450,15 @@ public class JsonLogicCodeGeneratorTests
 
         IReadOnlyList<CustomOperator> ops = JlopsParser.Parse(content);
 
-        Assert.Single(ops);
-        Assert.Equal("clamp", ops[0].Name);
-        Assert.Equal(new[] { "value", "lo", "hi" }, ops[0].Parameters);
-        Assert.False(ops[0].IsExpression);
-        Assert.Contains("BigNumber v = CoerceToBigNumber(value);", ops[0].Body);
-        Assert.Contains("return BigNumberToElement(clamped, workspace);", ops[0].Body);
+        Assert.AreEqual(1, (ops).Count());
+        Assert.AreEqual("clamp", ops[0].Name);
+        CollectionAssert.AreEqual(new[] { "value", "lo", "hi" }, ops[0].Parameters);
+        Assert.IsFalse(ops[0].IsExpression);
+        StringAssert.Contains(ops[0].Body, "BigNumber v = CoerceToBigNumber(value);");
+        StringAssert.Contains(ops[0].Body, "return BigNumberToElement(clamped, workspace);");
     }
 
-    [Fact]
+    [TestMethod]
     public void JlopsParser_MultipleOperators_ParsesAll()
     {
         string content = """
@@ -468,12 +469,12 @@ public class JsonLogicCodeGeneratorTests
 
         IReadOnlyList<CustomOperator> ops = JlopsParser.Parse(content);
 
-        Assert.Equal(2, ops.Count);
-        Assert.Equal("double", ops[0].Name);
-        Assert.Equal("negate", ops[1].Name);
+        Assert.AreEqual(2, ops.Count);
+        Assert.AreEqual("double", ops[0].Name);
+        Assert.AreEqual("negate", ops[1].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void JlopsParser_CommentsAndBlankLinesSkipped()
     {
         string content = """
@@ -486,39 +487,39 @@ public class JsonLogicCodeGeneratorTests
 
         IReadOnlyList<CustomOperator> ops = JlopsParser.Parse(content);
 
-        Assert.Single(ops);
-        Assert.Equal("identity", ops[0].Name);
+        Assert.AreEqual(1, (ops).Count());
+        Assert.AreEqual("identity", ops[0].Name);
     }
 
-    [Fact]
+    [TestMethod]
     public void JlopsParser_ZeroParameters_Allowed()
     {
         string content = "op pi() => JsonLogicHelpers.NumberFromSpan(\"3.14159\"u8);";
 
         IReadOnlyList<CustomOperator> ops = JlopsParser.Parse(content);
 
-        Assert.Single(ops);
-        Assert.Equal("pi", ops[0].Name);
-        Assert.Empty(ops[0].Parameters);
+        Assert.AreEqual(1, (ops).Count());
+        Assert.AreEqual("pi", ops[0].Name);
+        Assert.AreEqual(0, (ops[0].Parameters).Count());
     }
 
-    [Fact]
+    [TestMethod]
     public void JlopsParser_MissingOpKeyword_Throws()
     {
         string content = "discount(price) => price;";
 
-        Assert.Throws<FormatException>(() => JlopsParser.Parse(content));
+        Assert.ThrowsExactly<FormatException>(() => JlopsParser.Parse(content));
     }
 
-    [Fact]
+    [TestMethod]
     public void JlopsParser_MissingParentheses_Throws()
     {
         string content = "op discount => price;";
 
-        Assert.Throws<FormatException>(() => JlopsParser.Parse(content));
+        Assert.ThrowsExactly<FormatException>(() => JlopsParser.Parse(content));
     }
 
-    [Fact]
+    [TestMethod]
     public void JlopsParser_UnmatchedBrace_Throws()
     {
         string content = """
@@ -527,12 +528,12 @@ public class JsonLogicCodeGeneratorTests
                 return x;
             """;
 
-        Assert.Throws<FormatException>(() => JlopsParser.Parse(content));
+        Assert.ThrowsExactly<FormatException>(() => JlopsParser.Parse(content));
     }
 
     // ─── Code Generator with Custom Operators ───────────────────
 
-    [Fact]
+    [TestMethod]
     public void Generate_WithCustomOperator_EmitsHelperMethod()
     {
         List<CustomOperator> customOps =
@@ -546,11 +547,11 @@ public class JsonLogicCodeGeneratorTests
             "Test.Generated",
             customOps);
 
-        Assert.Contains("CustomOp_double_it(", result);
-        Assert.Contains("CoerceToBigNumber(x) * (BigNumber)2", result);
+        StringAssert.Contains(result, "CustomOp_double_it(");
+        StringAssert.Contains(result, "CoerceToBigNumber(x) * (BigNumber)2");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_WithCustomOperator_BlockForm_EmitsHelperMethod()
     {
         List<CustomOperator> customOps =
@@ -572,11 +573,11 @@ public class JsonLogicCodeGeneratorTests
             "Test.Generated",
             customOps);
 
-        Assert.Contains("CustomOp_clamp(", result);
-        Assert.Contains("BigNumber v = CoerceToBigNumber(value);", result);
+        StringAssert.Contains(result, "CustomOp_clamp(");
+        StringAssert.Contains(result, "BigNumber v = CoerceToBigNumber(value);");
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_CustomOperator_WrongArgCount_Throws()
     {
         List<CustomOperator> customOps =
@@ -584,7 +585,7 @@ public class JsonLogicCodeGeneratorTests
             new("double_it", new[] { "x" }, "x", isExpression: true),
         ];
 
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
             JsonLogicCodeGenerator.Generate(
                 """{"double_it":[1, 2]}""",
                 "BadRule",
@@ -592,10 +593,10 @@ public class JsonLogicCodeGeneratorTests
                 customOps));
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_UnknownOperator_StillThrows()
     {
-        Assert.Throws<InvalidOperationException>(() =>
+        Assert.ThrowsExactly<InvalidOperationException>(() =>
             JsonLogicCodeGenerator.Generate(
                 """{"nonexistent":[1]}""",
                 "BadRule",
@@ -603,7 +604,7 @@ public class JsonLogicCodeGeneratorTests
                 null));
     }
 
-    [Fact]
+    [TestMethod]
     public void Generate_CustomOperator_NotUsed_OmitsMethod()
     {
         List<CustomOperator> customOps =

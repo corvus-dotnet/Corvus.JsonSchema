@@ -2,7 +2,7 @@
 // The .NET Foundation licenses this file to you under the MIT license.
 
 using Corvus.Text.Json.Tests.GeneratedModels.Draft202012;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -11,9 +11,10 @@ namespace Corvus.Text.Json.Tests;
 /// Exercises: conditional matching when the 'if' schema matches (→ then)
 /// and when it does not match (→ else), both with and without context.
 /// </summary>
+[TestClass]
 public class GeneratedIfThenElseMatchTests
 {
-    [Fact]
+    [TestMethod]
     public void Match_WhenIfConditionMet_CallsThenMatcher()
     {
         using var doc =
@@ -25,10 +26,10 @@ public class GeneratedIfThenElseMatchTests
             matchCorvusTextJsonTestsGeneratedModelsDraft202012IfThenElseElseEntity:
                 static (in _) => "else");
 
-        Assert.Equal("then:42", result);
+        Assert.AreEqual("then:42", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void Match_WhenIfConditionNotMet_CallsElseMatcher()
     {
         using var doc =
@@ -40,10 +41,10 @@ public class GeneratedIfThenElseMatchTests
             matchCorvusTextJsonTestsGeneratedModelsDraft202012IfThenElseElseEntity:
                 static (in v) => "else:" + v.Value.ToString());
 
-        Assert.Equal("else:hello", result);
+        Assert.AreEqual("else:hello", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void MatchWithContext_PassesContextThrough()
     {
         using var doc =
@@ -56,6 +57,6 @@ public class GeneratedIfThenElseMatchTests
             matchCorvusTextJsonTestsGeneratedModelsDraft202012IfThenElseElseEntity:
                 static (in _, in ctx) => ctx + ":else");
 
-        Assert.Equal("ctx:then:99", result);
+        Assert.AreEqual("ctx:then:99", result);
     }
 }

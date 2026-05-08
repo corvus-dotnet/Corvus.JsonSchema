@@ -4,15 +4,16 @@
 
 using Corvus.Text.Json;
 using Corvus.Text.Json.Jsonata;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
 
+[TestClass]
 public class SequenceBindingTests
 {
     // ── SequenceFunction binding: numeric result ─────────────
 
-    [Fact]
+    [TestMethod]
     public void SequenceFunctionReturnsNumericResult()
     {
         var evaluator = new JsonataEvaluator();
@@ -27,12 +28,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$triple(x)", doc.RootElement, workspace, bindings);
-        Assert.Equal(15.0, result.GetDouble());
+        Assert.AreEqual(15.0, result.GetDouble());
     }
 
     // ── SequenceFunction binding: string result ──────────────
 
-    [Fact]
+    [TestMethod]
     public void SequenceFunctionReturnsStringResult()
     {
         var evaluator = new JsonataEvaluator();
@@ -47,12 +48,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$greet(name)", doc.RootElement, workspace, bindings);
-        Assert.Equal("Hello, world!", result.GetString());
+        Assert.AreEqual("Hello, world!", result.GetString());
     }
 
     // ── SequenceFunction binding: bool result ────────────────
 
-    [Fact]
+    [TestMethod]
     public void SequenceFunctionReturnsBoolResult()
     {
         var evaluator = new JsonataEvaluator();
@@ -67,12 +68,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$isPositive(val)", doc.RootElement, workspace, bindings);
-        Assert.True(result.GetBoolean());
+        Assert.IsTrue(result.GetBoolean());
     }
 
     // ── Signature validation: valid call ─────────────────────
 
-    [Fact]
+    [TestMethod]
     public void SignatureValidationPassesForCorrectType()
     {
         var evaluator = new JsonataEvaluator();
@@ -88,12 +89,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$inc(41)", doc.RootElement, workspace, bindings);
-        Assert.Equal(42.0, result.GetDouble());
+        Assert.AreEqual(42.0, result.GetDouble());
     }
 
     // ── Signature validation: type mismatch ──────────────────
 
-    [Fact]
+    [TestMethod]
     public void SignatureValidationRejectsWrongType()
     {
         var evaluator = new JsonataEvaluator();
@@ -108,14 +109,14 @@ public class SequenceBindingTests
         };
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        JsonataException ex = Assert.Throws<JsonataException>(() =>
+        JsonataException ex = Assert.ThrowsExactly<JsonataException>(() =>
             evaluator.Evaluate("""$inc("hello")""", doc.RootElement, workspace, bindings));
-        Assert.Equal("T0410", ex.Code);
+        Assert.AreEqual("T0410", ex.Code);
     }
 
     // ── Func<double,double> convenience overload ─────────────
 
-    [Fact]
+    [TestMethod]
     public void FuncDoubleDoubleConvenienceOverload()
     {
         var evaluator = new JsonataEvaluator();
@@ -128,12 +129,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$cosine(0)", doc.RootElement, workspace, bindings);
-        Assert.Equal(1.0, result.GetDouble());
+        Assert.AreEqual(1.0, result.GetDouble());
     }
 
     // ── Func<double,double,double> convenience overload ──────
 
-    [Fact]
+    [TestMethod]
     public void FuncDoubleDoubleDoubleConvenienceOverload()
     {
         var evaluator = new JsonataEvaluator();
@@ -146,12 +147,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$maxOf(3, 7)", doc.RootElement, workspace, bindings);
-        Assert.Equal(7.0, result.GetDouble());
+        Assert.AreEqual(7.0, result.GetDouble());
     }
 
     // ── FromValue(double) ────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void FromValueDoubleBinding()
     {
         var evaluator = new JsonataEvaluator();
@@ -164,12 +165,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$threshold + 1", doc.RootElement, workspace, bindings);
-        Assert.Equal(43.0, result.GetDouble());
+        Assert.AreEqual(43.0, result.GetDouble());
     }
 
     // ── FromValue(string) ────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void FromValueStringBinding()
     {
         var evaluator = new JsonataEvaluator();
@@ -182,12 +183,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$greeting", doc.RootElement, workspace, bindings);
-        Assert.Equal("hello", result.GetString());
+        Assert.AreEqual("hello", result.GetString());
     }
 
     // ── FromValue(bool) ──────────────────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void FromValueBoolBinding()
     {
         var evaluator = new JsonataEvaluator();
@@ -200,12 +201,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("""$flag ? "yes" : "no" """, doc.RootElement, workspace, bindings);
-        Assert.Equal("yes", result.GetString());
+        Assert.AreEqual("yes", result.GetString());
     }
 
     // ── Implicit conversion from double ──────────────────────
 
-    [Fact]
+    [TestMethod]
     public void ImplicitConversionFromDouble()
     {
         var evaluator = new JsonataEvaluator();
@@ -218,12 +219,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$val * 2", doc.RootElement, workspace, bindings);
-        Assert.Equal(6.28, result.GetDouble(), 5);
+        Assert.AreEqual(6.28, result.GetDouble(), 5);
     }
 
     // ── Mixed value and function bindings ────────────────────
 
-    [Fact]
+    [TestMethod]
     public void MixedValueAndFunctionBindings()
     {
         var evaluator = new JsonataEvaluator();
@@ -239,12 +240,12 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$addOffset($offset)", doc.RootElement, workspace, bindings);
-        Assert.Equal(20.0, result.GetDouble());
+        Assert.AreEqual(20.0, result.GetDouble());
     }
 
     // ── Arg count validation (too few) ───────────────────────
 
-    [Fact]
+    [TestMethod]
     public void TooFewArgsThrowsT0410()
     {
         var evaluator = new JsonataEvaluator();
@@ -258,16 +259,16 @@ public class SequenceBindingTests
         };
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
-        JsonataException ex = Assert.Throws<JsonataException>(() =>
+        JsonataException ex = Assert.ThrowsExactly<JsonataException>(() =>
             evaluator.Evaluate("$add(3)", doc.RootElement, workspace, bindings));
-        Assert.Equal("T0410", ex.Code);
-        Assert.Contains("expects 2", ex.Message);
-        Assert.Contains("got 1", ex.Message);
+        Assert.AreEqual("T0410", ex.Code);
+        StringAssert.Contains(ex.Message, "expects 2");
+        StringAssert.Contains(ex.Message, "got 1");
     }
 
     // ── Extra args silently ignored ──────────────────────────
 
-    [Fact]
+    [TestMethod]
     public void ExtraArgsSilentlyIgnoredInMapHof()
     {
         var evaluator = new JsonataEvaluator();
@@ -284,6 +285,6 @@ public class SequenceBindingTests
 
         using JsonWorkspace workspace = JsonWorkspace.Create();
         JsonElement result = evaluator.Evaluate("$map(items, $negate)", doc.RootElement, workspace, bindings);
-        Assert.Equal("[-10,-20,-30]", result.GetRawText());
+        Assert.AreEqual("[-10,-20,-30]", result.GetRawText());
     }
 }

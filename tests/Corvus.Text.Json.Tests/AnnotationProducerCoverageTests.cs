@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Corvus.Text.Json;
 using TestUtilities;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests;
 
@@ -36,23 +36,32 @@ namespace Corvus.Text.Json.Tests;
 /// in normal evaluation. These are structural impossibilities in generated code, not testable paths.
 /// </para>
 /// </remarks>
-[Trait("AnnotationTestSuite", "CoverageTests")]
-public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerCoverageTests.Fixture>
+[TestCategory("CoverageTests")]
+[TestClass]
+public class AnnotationProducerCoverageTests
 {
-    private readonly Fixture _fixture;
-
-    public AnnotationProducerCoverageTests(Fixture fixture)
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
     {
-        _fixture = fixture;
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
     }
 
-    [Fact]
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
     public void CallbackOverload_InvokesForEachAnnotation()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("42");
         using JsonSchemaResultsCollector collector =
             JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
-        _fixture.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
+        s_fixture!.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
 
         var annotations = new List<(string Location, string Keyword, string SchemaLocation, string Value)>();
         JsonSchemaAnnotationProducer.EnumerateAnnotations(
@@ -63,18 +72,18 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
                 return true;
             });
 
-        Assert.True(annotations.Count >= 2, $"Expected at least 2 annotations, got {annotations.Count}");
-        Assert.Contains(annotations, a => a.Keyword == "title" && a.Value == "\"Foo\"");
-        Assert.Contains(annotations, a => a.Keyword == "default");
+        Assert.IsTrue(annotations.Count >= 2, $"Expected at least 2 annotations, got {annotations.Count}");
+        AssertEx.Contains(annotations, a => a.Keyword == "title" && a.Value == "\"Foo\"");
+        AssertEx.Contains(annotations, a => a.Keyword == "default");
     }
 
-    [Fact]
+    [TestMethod]
     public void CallbackOverload_StopsWhenCallbackReturnsFalse()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("42");
         using JsonSchemaResultsCollector collector =
             JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
-        _fixture.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
+        s_fixture!.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
 
         // Verify there are at least 2 annotations so stopping is meaningful.
         int totalCount = 0;
@@ -84,7 +93,7 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
             totalCount++;
         }
 
-        Assert.True(totalCount >= 2, $"Expected at least 2 annotations, got {totalCount}");
+        Assert.IsTrue(totalCount >= 2, $"Expected at least 2 annotations, got {totalCount}");
 
         // Callback returns false on first invocation — should stop after 1.
         int callbackCount = 0;
@@ -96,16 +105,16 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
                 return false;
             });
 
-        Assert.Equal(1, callbackCount);
+        Assert.AreEqual(1, callbackCount);
     }
 
-    [Fact]
+    [TestMethod]
     public void SpanProperties_ReturnCorrectUtf8Values()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("42");
         using JsonSchemaResultsCollector collector =
             JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
-        _fixture.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
+        s_fixture!.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
 
         bool found = false;
         foreach (JsonSchemaAnnotationProducer.Annotation annotation in
@@ -114,24 +123,24 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
             if (annotation.Keyword.SequenceEqual("title"u8))
             {
                 found = true;
-                Assert.True(annotation.InstanceLocation.IsEmpty, "Root instance location should be empty");
-                Assert.True(annotation.Keyword.SequenceEqual("title"u8));
-                Assert.True(annotation.SchemaLocation.IsEmpty, "Root schema location should be empty");
-                Assert.True(annotation.Value.SequenceEqual("\"Foo\""u8));
+                Assert.IsTrue(annotation.InstanceLocation.IsEmpty, "Root instance location should be empty");
+                Assert.IsTrue(annotation.Keyword.SequenceEqual("title"u8));
+                Assert.IsTrue(annotation.SchemaLocation.IsEmpty, "Root schema location should be empty");
+                Assert.IsTrue(annotation.Value.SequenceEqual("\"Foo\""u8));
                 break;
             }
         }
 
-        Assert.True(found, "Expected to find 'title' annotation");
+        Assert.IsTrue(found, "Expected to find 'title' annotation");
     }
 
-    [Fact]
+    [TestMethod]
     public void WriteValueTo_WritesRawJsonValue()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("42");
         using JsonSchemaResultsCollector collector =
             JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
-        _fixture.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
+        s_fixture!.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
 
         bool found = false;
         foreach (JsonSchemaAnnotationProducer.Annotation annotation in
@@ -149,22 +158,22 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
                 using ParsedJsonDocument<JsonElement> resultDoc =
                     ParsedJsonDocument<JsonElement>.Parse(buffer.ToArray());
                 JsonElement resultRoot = resultDoc.RootElement;
-                Assert.True(resultRoot.TryGetProperty("x", out JsonElement xProp));
-                Assert.Equal(1, xProp.GetInt32());
+                Assert.IsTrue(resultRoot.TryGetProperty("x", out JsonElement xProp));
+                Assert.AreEqual(1, xProp.GetInt32());
                 break;
             }
         }
 
-        Assert.True(found, "Expected to find 'default' annotation");
+        Assert.IsTrue(found, "Expected to find 'default' annotation");
     }
 
-    [Fact]
+    [TestMethod]
     public void WriteSchemaLocationPropertyTo_WritesPropertyWithHashPrefix()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("42");
         using JsonSchemaResultsCollector collector =
             JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
-        _fixture.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
+        s_fixture!.MultiAnnotationEvaluator.Evaluate(doc.RootElement, collector);
 
         bool found = false;
         foreach (JsonSchemaAnnotationProducer.Annotation annotation in
@@ -184,22 +193,22 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
                 using ParsedJsonDocument<JsonElement> resultDoc =
                     ParsedJsonDocument<JsonElement>.Parse(buffer.ToArray());
                 JsonElement resultRoot = resultDoc.RootElement;
-                Assert.True(resultRoot.TryGetProperty("#", out JsonElement value));
-                Assert.Equal("Foo", value.GetString());
+                Assert.IsTrue(resultRoot.TryGetProperty("#", out JsonElement value));
+                Assert.AreEqual("Foo", value.GetString());
                 break;
             }
         }
 
-        Assert.True(found, "Expected to find 'title' annotation");
+        Assert.IsTrue(found, "Expected to find 'title' annotation");
     }
 
-    [Fact]
+    [TestMethod]
     public void WriteSchemaLocationPropertyTo_WithNestedSchema_WritesFullPath()
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse("42");
         using JsonSchemaResultsCollector collector =
             JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
-        _fixture.NestedSchemaEvaluator.Evaluate(doc.RootElement, collector);
+        s_fixture!.NestedSchemaEvaluator.Evaluate(doc.RootElement, collector);
 
         bool found = false;
         foreach (JsonSchemaAnnotationProducer.Annotation annotation in
@@ -210,7 +219,7 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
                 found = true;
 
                 // The schema location for allOf[0].title should contain a path component.
-                Assert.False(
+                Assert.IsFalse(
                     annotation.SchemaLocation.IsEmpty,
                     "Nested schema annotation should have a non-empty schema location");
 
@@ -224,15 +233,15 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
 
                 // Verify the property name contains the '#' prefix with a path.
                 string json = Encoding.UTF8.GetString(buffer.ToArray());
-                Assert.Contains("#/", json);
+                StringAssert.Contains(json, "#/");
                 break;
             }
         }
 
-        Assert.True(found, "Expected to find 'title' annotation in allOf schema");
+        Assert.IsTrue(found, "Expected to find 'title' annotation in allOf schema");
     }
 
-    [Fact]
+    [TestMethod]
     public void EnumerateAnnotations_WithInvalidInstance_SkipsNonMatchResults()
     {
         // Schema has type:integer + title. Evaluating a string triggers !IsMatch for
@@ -241,7 +250,7 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
             ParsedJsonDocument<JsonElement>.Parse("\"not a number\"");
         using JsonSchemaResultsCollector collector =
             JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Verbose);
-        _fixture.TypeValidatingEvaluator.Evaluate(doc.RootElement, collector);
+        s_fixture!.TypeValidatingEvaluator.Evaluate(doc.RootElement, collector);
 
         var keywords = new List<string>();
         foreach (JsonSchemaAnnotationProducer.Annotation annotation in
@@ -250,13 +259,13 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
             keywords.Add(annotation.GetKeywordText());
         }
 
-        Assert.Contains("title", keywords);
+        Assert.IsTrue(keywords.Contains("title"));
     }
 
     /// <summary>
     /// Compiles evaluators for different schema patterns used by the coverage tests.
     /// </summary>
-    public class Fixture : IAsyncLifetime
+    public class Fixture
     {
         /// <summary>
         /// Gets a compiled evaluator for a schema producing two annotations (title + default).
@@ -272,8 +281,6 @@ public class AnnotationProducerCoverageTests : IClassFixture<AnnotationProducerC
         /// Gets a compiled evaluator for a schema with a nested annotation via allOf.
         /// </summary>
         public CompiledEvaluator NestedSchemaEvaluator { get; private set; } = null!;
-
-        public Task DisposeAsync() => Task.CompletedTask;
 
         public async Task InitializeAsync()
         {

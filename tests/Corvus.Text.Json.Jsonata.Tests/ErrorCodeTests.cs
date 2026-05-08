@@ -2,69 +2,70 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Jsonata.Tests;
 
 /// <summary>
 /// Tests that specific JSONata error codes are thrown for various error conditions.
 /// </summary>
+[TestClass]
 public class ErrorCodeTests
 {
     private static readonly JsonataEvaluator Evaluator = JsonataEvaluator.Default;
 
     // ----- T2001 / T2002: Arithmetic type errors -----
 
-    [Theory]
-    [InlineData("""x + 1""", """{"x": {"a":1}}""", "T2001")]
-    [InlineData("""x + 1""", """{"x": true}""", "T2001")]
+    [TestMethod]
+    [DataRow("""x + 1""", """{"x": {"a":1}}""", "T2001")]
+    [DataRow("""x + 1""", """{"x": true}""", "T2001")]
     public void ArithmeticWithNonNumericLeft_ThrowsT2001(string expression, string data, string expectedCode)
     {
-        var ex = Assert.Throws<JsonataException>(() => Evaluator.EvaluateToString(expression, data));
-        Assert.Equal(expectedCode, ex.Code);
+        var ex = Assert.ThrowsExactly<JsonataException>(() => Evaluator.EvaluateToString(expression, data));
+        Assert.AreEqual(expectedCode, ex.Code);
     }
 
-    [Theory]
-    [InlineData("""1 + x""", """{"x": [1,2]}""", "T2002")]
-    [InlineData("""1 + x""", """{"x": {"a":1}}""", "T2002")]
-    [InlineData("""1 + x""", """{"x": true}""", "T2002")]
+    [TestMethod]
+    [DataRow("""1 + x""", """{"x": [1,2]}""", "T2002")]
+    [DataRow("""1 + x""", """{"x": {"a":1}}""", "T2002")]
+    [DataRow("""1 + x""", """{"x": true}""", "T2002")]
     public void ArithmeticWithNonNumericRight_ThrowsT2002(string expression, string data, string expectedCode)
     {
-        var ex = Assert.Throws<JsonataException>(() => Evaluator.EvaluateToString(expression, data));
-        Assert.Equal(expectedCode, ex.Code);
+        var ex = Assert.ThrowsExactly<JsonataException>(() => Evaluator.EvaluateToString(expression, data));
+        Assert.AreEqual(expectedCode, ex.Code);
     }
 
     // ----- T0410: Function argument errors -----
 
-    [Fact]
+    [TestMethod]
     public void TooFewArguments_ThrowsT0410()
     {
-        var ex = Assert.Throws<JsonataException>(() => Evaluator.EvaluateToString("$substring()", "{}"));
-        Assert.Equal("T0410", ex.Code);
+        var ex = Assert.ThrowsExactly<JsonataException>(() => Evaluator.EvaluateToString("$substring()", "{}"));
+        Assert.AreEqual("T0410", ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void TooManyArguments_ThrowsT0410()
     {
-        var ex = Assert.Throws<JsonataException>(
+        var ex = Assert.ThrowsExactly<JsonataException>(
             () => Evaluator.EvaluateToString("""$string("a", "b", "c", "d")""", "{}"));
-        Assert.Equal("T0410", ex.Code);
+        Assert.AreEqual("T0410", ex.Code);
     }
 
     // ----- D3001: Non-finite number in function -----
 
-    [Fact]
+    [TestMethod]
     public void InfinityInStringFunction_ThrowsD3001()
     {
         // Dividing by a very small number that produces infinity, then trying to use in $string
-        var ex = Assert.Throws<JsonataException>(
+        var ex = Assert.ThrowsExactly<JsonataException>(
             () => Evaluator.EvaluateToString("""$string(1/0)""", "{}"));
         Assert.StartsWith("D", ex.Code);
     }
 
     // ----- Reduce edge cases -----
 
-    [Fact]
+    [TestMethod]
     public void ReduceEmptyArrayWithInit_ReturnsInit()
     {
         // JSONata $reduce with empty array and init value
@@ -74,72 +75,72 @@ public class ErrorCodeTests
             """$reduce([], function($acc, $v) { $acc + $v }, 42)""", "{}");
 
         // The implementation may return the init value or undefined
-        Assert.True(result is null or "42", $"Expected null or \"42\" but got \"{result}\"");
+        Assert.IsTrue(result is null or "42", $"Expected null or \"42\" but got \"{result}\"");
     }
 
-    [Fact]
+    [TestMethod]
     public void ReduceSingleElement_ReturnsThatElement()
     {
         var result = Evaluator.EvaluateToString(
             """$reduce([7], function($acc, $v) { $acc + $v })""", "{}");
-        Assert.Equal("7", result);
+        Assert.AreEqual("7", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ReduceEmptyArrayNoInit_ReturnsUndefined()
     {
         var result = Evaluator.EvaluateToString(
             """$reduce([], function($acc, $v) { $acc + $v })""", "{}");
-        Assert.Null(result);
+        Assert.IsNull(result);
     }
 
     // ----- Type mismatch errors in various functions -----
 
-    [Fact]
+    [TestMethod]
     public void SubstringOnNonString_ThrowsError()
     {
-        var ex = Assert.Throws<JsonataException>(
+        var ex = Assert.ThrowsExactly<JsonataException>(
             () => Evaluator.EvaluateToString("""$substring(42, 0, 1)""", "{}"));
-        Assert.NotNull(ex.Code);
+        Assert.IsNotNull(ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void JoinOnNonArray_ThrowsError()
     {
-        var ex = Assert.Throws<JsonataException>(
+        var ex = Assert.ThrowsExactly<JsonataException>(
             () => Evaluator.EvaluateToString("""$join(42, ",")""", "{}"));
-        Assert.NotNull(ex.Code);
+        Assert.IsNotNull(ex.Code);
     }
 
-    [Fact]
+    [TestMethod]
     public void SortOnNonArray_ReturnsWrappedOrUndefined()
     {
         var result = Evaluator.EvaluateToString("""$sort(42)""", "{}");
 
         // Non-array input to $sort wraps to single-element array or returns undefined
-        Assert.True(result == null || result == "42" || result == "[42]",
+        Assert.IsTrue(result == null || result == "42" || result == "[42]",
             $"Unexpected result: \"{result}\"");
     }
 
     // ----- Comparison type mixing -----
 
-    [Fact]
+    [TestMethod]
     public void StringComparison_Works()
     {
         var result = Evaluator.EvaluateToString("\"apple\" < \"banana\"", "{}");
-        Assert.Equal("true", result);
+        Assert.AreEqual("true", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void NullComparison_Works()
     {
         var result = Evaluator.EvaluateToString("null = null", "{}");
-        Assert.Equal("true", result);
+        Assert.AreEqual("true", result);
     }
 
     // ----- Division edge cases -----
 
-    [Fact]
+    [TestMethod]
     public void DivisionByZero_ProducesInfinity()
     {
         // JSONata follows IEEE 754: 1/0 = Infinity
@@ -149,7 +150,7 @@ public class ErrorCodeTests
             var result = Evaluator.EvaluateToString("1 / 0", "{}");
 
             // If it doesn't throw, the result should be sensible
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
         }
         catch (JsonataException)
         {
@@ -157,13 +158,13 @@ public class ErrorCodeTests
         }
     }
 
-    [Fact]
+    [TestMethod]
     public void ModuloByZero_HandledGracefully()
     {
         try
         {
             var result = Evaluator.EvaluateToString("10 % 0", "{}");
-            Assert.NotNull(result);
+            Assert.IsNotNull(result);
         }
         catch (JsonataException)
         {

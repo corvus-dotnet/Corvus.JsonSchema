@@ -2,17 +2,19 @@
 // The .NET Foundation licensed this code under the MIT license.
 
 using System.Numerics;
+using System.Linq;
 using Corvus.Numerics;
-using Xunit;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 
 namespace Corvus.Text.Json.Tests.BigNumberTests;
 
 /// <summary>
 /// Tests for BigNumber.ToString() method.
 /// </summary>
+[TestClass]
 public class BigNumberToStringTests
 {
-    [Fact]
+    [TestMethod]
     public void ToString_WithZeroSignificandZeroExponent_ShouldReturnZero()
     {
         // Arrange
@@ -22,10 +24,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("0", result);
+        Assert.AreEqual("0", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithPositiveSignificandZeroExponent_ShouldReturnSignificand()
     {
         // Arrange
@@ -35,10 +37,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("123", result);
+        Assert.AreEqual("123", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithNegativeSignificandZeroExponent_ShouldReturnSignificand()
     {
         // Arrange
@@ -48,10 +50,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("-456", result);
+        Assert.AreEqual("-456", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithZeroExponentPositiveSignificand_ShouldNotIncludeExponent()
     {
         // Arrange
@@ -61,11 +63,11 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("789", result);
+        Assert.AreEqual("789", result);
         Assert.DoesNotContain("E", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithPositiveExponent_ShouldIncludeExponent()
     {
         // Arrange
@@ -75,10 +77,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("123E5", result);
+        Assert.AreEqual("123E5", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithNegativeExponent_ShouldIncludeExponent()
     {
         // Arrange
@@ -88,10 +90,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("123E-5", result);
+        Assert.AreEqual("123E-5", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithVeryLargeSignificand_ShouldReturnCorrectString()
     {
         // Arrange
@@ -102,10 +104,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("1234567890123456789012345678901234567890123456789E1", result);
+        Assert.AreEqual("1234567890123456789012345678901234567890123456789E1", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithVeryLargeExponent_ShouldReturnCorrectString()
     {
         // Arrange
@@ -115,10 +117,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("123E999999", result);
+        Assert.AreEqual("123E999999", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithVeryLargeNegativeExponent_ShouldReturnCorrectString()
     {
         // Arrange
@@ -128,11 +130,11 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("123E-999999", result);
+        Assert.AreEqual("123E-999999", result);
     }
 
-    [Theory]
-    [MemberData(nameof(BigNumberTestData.FormatData), MemberType = typeof(BigNumberTestData))]
+    [TestMethod]
+    [DynamicData(nameof(BigNumberTestData.FormatData), typeof(BigNumberTestData))]
     public void ToString_WithVariousInputs_ShouldReturnCorrectString(
         BigInteger significand, int exponent, string expected)
     {
@@ -143,10 +145,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal(expected, result);
+        Assert.AreEqual(expected, result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithNegativeSignificandAndPositiveExponent_ShouldReturnCorrectString()
     {
         // Arrange
@@ -156,10 +158,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("-789E10", result);
+        Assert.AreEqual("-789E10", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithNegativeSignificandAndNegativeExponent_ShouldReturnCorrectString()
     {
         // Arrange
@@ -169,10 +171,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("-789E-10", result);
+        Assert.AreEqual("-789E-10", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithZeroSignificandAndNonZeroExponent_ShouldReturnCorrectString()
     {
         // Arrange
@@ -182,10 +184,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("0", result);
+        Assert.AreEqual("0", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_CompareWithTryFormatChar_ShouldProduceSameResult()
     {
         // Arrange
@@ -198,11 +200,11 @@ public class BigNumberToStringTests
         string tryFormatResult = charBuffer.Slice(0, charsWritten).ToString();
 
         // Assert
-        Assert.True(tryFormatSuccess);
-        Assert.Equal(toStringResult, tryFormatResult);
+        Assert.IsTrue(tryFormatSuccess);
+        Assert.AreEqual(toStringResult, tryFormatResult);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_CompareWithTryFormatByte_ShouldProduceSameResult()
     {
         // Arrange
@@ -215,11 +217,11 @@ public class BigNumberToStringTests
         string tryFormatResult = Encoding.UTF8.GetString(byteBuffer.Slice(0, bytesWritten).ToArray());
 
         // Assert
-        Assert.True(tryFormatSuccess);
-        Assert.Equal(toStringResult, tryFormatResult);
+        Assert.IsTrue(tryFormatSuccess);
+        Assert.AreEqual(toStringResult, tryFormatResult);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_RoundTripWithParse_ShouldProduceSameResult()
     {
         // Arrange
@@ -230,11 +232,11 @@ public class BigNumberToStringTests
         bool parseSuccess = Corvus.Numerics.BigNumber.TryParse(Encoding.UTF8.GetBytes(stringResult), out BigNumber parsedBigNumber);
 
         // Assert
-        Assert.True(parseSuccess);
+        Assert.IsTrue(parseSuccess);
         BigNumberTestData.AssertBigNumbersEqual(originalBigNumber, parsedBigNumber);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_MultipleCallsOnSameInstance_ShouldReturnSameValue()
     {
         // Arrange
@@ -246,11 +248,11 @@ public class BigNumberToStringTests
         string result3 = bigNumber.ToString();
 
         // Assert
-        Assert.Equal(result1, result2);
-        Assert.Equal(result2, result3);
+        Assert.AreEqual(result1, result2);
+        Assert.AreEqual(result2, result3);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithDefaultStruct_ShouldReturnZero()
     {
         // Arrange
@@ -260,10 +262,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("0", result);
+        Assert.AreEqual("0", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_AfterNormalization_ShouldBeConsistent()
     {
         // Arrange
@@ -277,10 +279,10 @@ public class BigNumberToStringTests
         // Assert
         // The string representation should be the same before and after normalization
         // if normalization doesn't change the mathematical value representation
-        Assert.Equal(originalResult, normalizedResult);
+        Assert.AreEqual(originalResult, normalizedResult);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithVeryLargeNumber_ShouldNotThrow()
     {
         // Arrange
@@ -289,13 +291,13 @@ public class BigNumberToStringTests
 
         // Act & Assert
         string result = bigNumber.ToString();
-        Assert.NotNull(result);
-        Assert.NotEmpty(result);
+        Assert.IsNotNull(result);
+        Assert.IsTrue((result).Any());
         Assert.StartsWith(new string('9', 1000), result);
-        Assert.Contains("E999999", result);
+        StringAssert.Contains(result, "E999999");
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithMinimumValues_ShouldWork()
     {
         // Arrange
@@ -305,10 +307,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal($"-1E{int.MinValue}", result);
+        Assert.AreEqual($"-1E{int.MinValue}", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_WithMaximumValues_ShouldWork()
     {
         // Arrange
@@ -318,10 +320,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal($"1E{int.MaxValue}", result);
+        Assert.AreEqual($"1E{int.MaxValue}", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_ConsistentWithObjectToString_ShouldBeTrue()
     {
         // Arrange
@@ -333,10 +335,10 @@ public class BigNumberToStringTests
         string objectResult = objectBigNumber.ToString();
 
         // Assert
-        Assert.Equal(directResult, objectResult);
+        Assert.AreEqual(directResult, objectResult);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_ExponentOfOne_ShouldIncludeExponent()
     {
         // Arrange
@@ -346,10 +348,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("123E1", result);
+        Assert.AreEqual("123E1", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_ExponentOfMinusOne_ShouldIncludeExponent()
     {
         // Arrange
@@ -359,10 +361,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("123E-1", result);
+        Assert.AreEqual("123E-1", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_SignificandOfOne_ShouldWork()
     {
         // Arrange
@@ -372,10 +374,10 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("1E5", result);
+        Assert.AreEqual("1E5", result);
     }
 
-    [Fact]
+    [TestMethod]
     public void ToString_SignificandOfMinusOne_ShouldWork()
     {
         // Arrange
@@ -385,6 +387,6 @@ public class BigNumberToStringTests
         string result = bigNumber.ToString();
 
         // Assert
-        Assert.Equal("-1E5", result);
+        Assert.AreEqual("-1E5", result);
     }
 }
