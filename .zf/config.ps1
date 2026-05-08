@@ -75,16 +75,13 @@ $ExcludeFilesInCodeCoverage = @('*.g.cs')
 # When running GHA honour the TFM that the matrix build passes via an environment variable
 $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
 
-# Run test assemblies sequentially to avoid OOM on CI runners (7 GB).
-# The solution has 7 test assemblies; running them all in parallel exhausts memory.
 # Exclude 'outerloop' (memory stress tests) and 'failing' (known failures) categories
 # which are too resource-intensive for CI runners.
-# Disable SourceLink queries during test — the JSON-Schema-Test-Suite submodule isn't
-# checked out in the test phase, and LocateRepository emits a warning per project.
+# NOTE: MSTest uses 'TestCategory' as the trait name (xUnit used 'category').
+# NOTE: '-m:1' and '-p:' are MSBuild-style args that are incompatible with the
+# Microsoft Testing Platform (MTP) used by MSTest. Removed to fix CI test execution.
 $AdditionalTestArgs = @(
-    "-m:1",
-    "--filter", 'category!=failing&category!=outerloop',
-    '-p:EnableSourceControlManagerQueries=false'
+    "--filter", 'TestCategory!=failing&TestCategory!=outerloop'
 )
 $StripOutputFromLargeTrxFiles = $true
 $TruncateOversizedCoverageReport = $true
