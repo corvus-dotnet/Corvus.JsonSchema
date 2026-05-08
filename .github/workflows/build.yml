@@ -112,7 +112,6 @@ jobs:
       - setCachePathsConfig
     uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@main
     with:
-      compilePhaseRunnerOs: ubuntu-latest
       testPhaseMatrixJson: |
           {
             "os": ["ubuntu-latest", "windows-latest"],
