@@ -789,7 +789,7 @@ public readonly struct BinaryJsonNumber :
             Kind.Single => new(-ReadSingle(value.binaryData)),
             Kind.UInt16 => new(-ReadUInt16(value.binaryData)),
             Kind.UInt32 => new(-ReadUInt32(value.binaryData)),
-            Kind.UInt64 => value,
+            Kind.UInt64 => new(-(Int128)ReadUInt64(value.binaryData)),
             Kind.UInt128 => new(-ReadUInt128(value.binaryData)),
             _ => throw new NotSupportedException(),
         };

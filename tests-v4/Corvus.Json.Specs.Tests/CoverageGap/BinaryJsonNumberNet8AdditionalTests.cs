@@ -470,11 +470,11 @@ public class BinaryJsonNumberNet8AdditionalTests
         Assert.AreEqual(-42.0, (-new BinaryJsonNumber((uint)42)).CreateChecked<double>());
 
     [TestMethod]
-    public void Negation_UInt64_ReturnsSelf()
+    public void Negation_UInt64()
     {
         var bjn = new BinaryJsonNumber((ulong)42);
         var neg = -bjn;
-        Assert.AreEqual(42.0, neg.CreateChecked<double>());
+        Assert.AreEqual(-42.0, neg.CreateChecked<double>());
     }
 
     [TestMethod]
