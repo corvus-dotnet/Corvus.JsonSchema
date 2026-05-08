@@ -78,7 +78,7 @@ All tests use **MSTest** (MSTest.Sdk 4.2.2) with **Microsoft Testing Platform** 
 | `Corvus.Text.Json.slnx` | Main V5 solution — build and test (all TFMs, all projects) |
 | `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
 
-All test projects target both `net10.0` and `net481`, with one exception: `CodeGenerator.Tests` targets `net10.0` only because the CLI tool it tests is a .NET 10 application. Three source-generator test projects (JMESPath, Jsonata, JsonLogic) exclude their `SourceGeneratorDiagnosticTests.cs` file on net481 because those Roslyn-hosted tests require .NET Core reference assemblies. Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
+All test projects target both `net10.0` and `net481`. `CodeGenerator.Tests` produces an empty assembly on net481 (the CLI tool it tests is .NET 10 only); `<IsTestProject>false</IsTestProject>` on net481 plus `--ignore-exit-code 8` in CI prevents the empty assembly from failing the test run. Three source-generator test projects (JMESPath, Jsonata, JsonLogic) exclude their `SourceGeneratorDiagnosticTests.cs` file on net481 because those Roslyn-hosted tests require .NET Core reference assemblies. Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
 
 `TreatWarningsAsErrors=true` is set across all projects — the build will fail on any warning.
 

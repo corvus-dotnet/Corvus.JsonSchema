@@ -80,8 +80,11 @@ $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
 # NOTE: MSTest uses 'TestCategory' as the trait name (xUnit used 'category').
 # NOTE: '-m:1' and '-p:' are MSBuild-style args that are incompatible with the
 # Microsoft Testing Platform (MTP) used by MSTest. Removed to fix CI test execution.
+# NOTE: '--ignore-exit-code 8' suppresses MTP exit code 8 ("zero tests ran") which
+# occurs for CodeGenerator.Tests on net481 (empty assembly — CLI tool is net10.0 only).
 $AdditionalTestArgs = @(
     "--filter", 'TestCategory!=failing&TestCategory!=outerloop'
+    "--ignore-exit-code", "8"
 )
 $StripOutputFromLargeTrxFiles = $true
 $TruncateOversizedCoverageReport = $true
