@@ -46,7 +46,7 @@ public class CodeGenConformanceTests
         (string givenJson, string expectedJson) = LoadCase(file, group, caseIndex);
 
         Console.WriteLine($"Expression: {expression}");
-        Console.WriteLine($"Given: {(givenJson.Length > 200 ? givenJson[..200] + "..." : givenJson)}");
+        Console.WriteLine($"Given: {(givenJson.Length > 200 ? givenJson.Substring(0, 200) + "..." : givenJson)}");
         Console.WriteLine($"Expected: {expectedJson}");
 
         CompiledJMESPathExpression compiled = s_fixture!.GetOrCompile(expression);

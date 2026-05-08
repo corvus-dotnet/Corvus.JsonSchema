@@ -12,9 +12,8 @@ using System.Threading.Tasks;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using Verify = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerVerifier<
-    Corvus.Text.Json.Migration.Analyzers.AsAccessorAnalyzer,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
+using Verify = Corvus.Text.Json.Migration.Analyzers.Tests.AnalyzerVerifier<
+    Corvus.Text.Json.Migration.Analyzers.AsAccessorAnalyzer>;
 
 namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 

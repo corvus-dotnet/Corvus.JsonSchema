@@ -14,9 +14,8 @@ using Microsoft.CodeAnalysis.Testing;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using Verify = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerVerifier<
-    Corvus.Text.Json.Analyzers.IgnoredValidationResultAnalyzer,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
+using Verify = Corvus.Text.Json.Analyzers.Tests.AnalyzerVerifier<
+    Corvus.Text.Json.Analyzers.IgnoredValidationResultAnalyzer>;
 
 namespace Corvus.Text.Json.Analyzers.Tests;
 
@@ -63,7 +62,7 @@ namespace TestApp
     }
 }";
 
-        await new CSharpAnalyzerTest<IgnoredValidationResultAnalyzer, DefaultVerifier>
+        await new AnalyzerTestBase<IgnoredValidationResultAnalyzer>
         {
             TestCode = testCode,
             ExpectedDiagnostics =
@@ -92,7 +91,7 @@ namespace TestApp
     }
 }";
 
-        await new CSharpAnalyzerTest<IgnoredValidationResultAnalyzer, DefaultVerifier>
+        await new AnalyzerTestBase<IgnoredValidationResultAnalyzer>
         {
             TestCode = testCode,
         }.RunAsync();
@@ -114,7 +113,7 @@ namespace TestApp
     }
 }";
 
-        await new CSharpAnalyzerTest<IgnoredValidationResultAnalyzer, DefaultVerifier>
+        await new AnalyzerTestBase<IgnoredValidationResultAnalyzer>
         {
             TestCode = testCode,
         }.RunAsync();
@@ -136,7 +135,7 @@ namespace TestApp
     }
 }";
 
-        await new CSharpAnalyzerTest<IgnoredValidationResultAnalyzer, DefaultVerifier>
+        await new AnalyzerTestBase<IgnoredValidationResultAnalyzer>
         {
             TestCode = testCode,
         }.RunAsync();
@@ -178,7 +177,7 @@ namespace TestApp
     }
 }";
 
-        await new CSharpAnalyzerTest<IgnoredValidationResultAnalyzer, DefaultVerifier>
+        await new AnalyzerTestBase<IgnoredValidationResultAnalyzer>
         {
             TestCode = testCode,
             ExpectedDiagnostics =
@@ -213,7 +212,7 @@ namespace TestApp
     }
 }";
 
-        await new CSharpAnalyzerTest<IgnoredValidationResultAnalyzer, DefaultVerifier>
+        await new AnalyzerTestBase<IgnoredValidationResultAnalyzer>
         {
             TestCode = testCode,
         }.RunAsync();
@@ -235,7 +234,7 @@ namespace TestApp
     }
 }";
 
-        await new CSharpAnalyzerTest<IgnoredValidationResultAnalyzer, DefaultVerifier>
+        await new AnalyzerTestBase<IgnoredValidationResultAnalyzer>
         {
             TestCode = testCode,
         }.RunAsync();
@@ -257,7 +256,7 @@ namespace TestApp
     }
 }";
 
-        await new CSharpAnalyzerTest<IgnoredValidationResultAnalyzer, DefaultVerifier>
+        await new AnalyzerTestBase<IgnoredValidationResultAnalyzer>
         {
             TestCode = testCode,
         }.RunAsync();

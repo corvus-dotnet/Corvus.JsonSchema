@@ -13,16 +13,13 @@ using Microsoft.CodeAnalysis.CSharp.Testing;
 using Microsoft.CodeAnalysis.Testing;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using AnalyzerTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<
+using AnalyzerTest = Corvus.Text.Json.Migration.Analyzers.Tests.AnalyzerTestBase<
+    Corvus.Text.Json.Migration.Analyzers.NamespaceMigrationAnalyzer>;
+using CodeFixTest = Corvus.Text.Json.Migration.Analyzers.Tests.CodeFixTestBase<
     Corvus.Text.Json.Migration.Analyzers.NamespaceMigrationAnalyzer,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
-using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
-    Corvus.Text.Json.Migration.Analyzers.NamespaceMigrationAnalyzer,
-    Corvus.Text.Json.Migration.Analyzers.NamespaceMigrationCodeFix,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
-using Verify = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerVerifier<
-    Corvus.Text.Json.Migration.Analyzers.NamespaceMigrationAnalyzer,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
+    Corvus.Text.Json.Migration.Analyzers.NamespaceMigrationCodeFix>;
+using Verify = Corvus.Text.Json.Migration.Analyzers.Tests.AnalyzerVerifier<
+    Corvus.Text.Json.Migration.Analyzers.NamespaceMigrationAnalyzer>;
 
 namespace Corvus.Text.Json.Migration.Analyzers.Tests;
 

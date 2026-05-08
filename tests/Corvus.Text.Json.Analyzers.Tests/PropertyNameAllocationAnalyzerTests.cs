@@ -14,13 +14,11 @@ using Microsoft.CodeAnalysis.Testing;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using AnalyzerTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<
+using AnalyzerTest = Corvus.Text.Json.Analyzers.Tests.AnalyzerTestBase<
+    Corvus.Text.Json.Analyzers.PropertyNameAllocationAnalyzer>;
+using CodeFixTest = Corvus.Text.Json.Analyzers.Tests.CodeFixTestBase<
     Corvus.Text.Json.Analyzers.PropertyNameAllocationAnalyzer,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
-using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
-    Corvus.Text.Json.Analyzers.PropertyNameAllocationAnalyzer,
-    Corvus.Text.Json.Analyzers.PropertyNameAllocationCodeFix,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
+    Corvus.Text.Json.Analyzers.PropertyNameAllocationCodeFix>;
 
 namespace Corvus.Text.Json.Analyzers.Tests;
 

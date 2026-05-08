@@ -14,9 +14,8 @@ using Microsoft.CodeAnalysis.Testing;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using AnalyzerTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerTest<
-    Corvus.Text.Json.Analyzers.PreferMemoryParseAnalyzer,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
+using AnalyzerTest = Corvus.Text.Json.Analyzers.Tests.AnalyzerTestBase<
+    Corvus.Text.Json.Analyzers.PreferMemoryParseAnalyzer>;
 
 namespace Corvus.Text.Json.Analyzers.Tests;
 

@@ -4,7 +4,11 @@
 
 using System.Collections.Concurrent;
 using System.Reflection;
+
+#if NET
 using System.Runtime.Loader;
+#endif
+
 using Corvus.Text.Json.Jsonata;
 using Corvus.Text.Json.Jsonata.CodeGeneration;
 using Microsoft.CodeAnalysis;
@@ -32,7 +36,9 @@ public sealed class CodeGenConformanceFixture : IDisposable
 {
     private const string GeneratedNamespace = "Corvus.Text.Json.Jsonata.CodeGeneration.Tests.Generated";
 
+#if NET
     private static readonly DynamicAssemblyLoadContext LoadContext = new();
+#endif
     private static readonly ConcurrentDictionary<string, CompiledExpression> Cache = new();
     private static int s_classCounter;
 
@@ -123,7 +129,7 @@ public sealed class CodeGenConformanceFixture : IDisposable
                     }
 
                     ms.Seek(0, SeekOrigin.Begin);
-                    Assembly assembly = LoadContext.LoadFromStream(ms);
+                    Assembly assembly = LoadAssembly(ms);
                     return (code, (Assembly?)assembly, (string?)null);
                 });
 
@@ -131,7 +137,7 @@ public sealed class CodeGenConformanceFixture : IDisposable
                 {
                     return new CompiledExpression(
                         null, null, generatedCode,
-                        $"Pipeline timed out after {CompilationTimeout.TotalSeconds}s for: {(expr.Length > 80 ? expr[..80] + "..." : expr)}");
+                        $"Pipeline timed out after {CompilationTimeout.TotalSeconds}s for: {(expr.Length > 80 ? expr.Substring(0, 80) + "..." : expr)}");
                 }
 
                 var (genCode, asm, error) = compileTask.Result;
@@ -230,6 +236,12 @@ public sealed class CodeGenConformanceFixture : IDisposable
         }
     }
 
+#if NET
+    private static Assembly LoadAssembly(MemoryStream stream)
+    {
+        return LoadContext.LoadFromStream(stream);
+    }
+
     private sealed class DynamicAssemblyLoadContext : AssemblyLoadContext
     {
         public DynamicAssemblyLoadContext()
@@ -237,6 +249,12 @@ public sealed class CodeGenConformanceFixture : IDisposable
         {
         }
     }
+#else
+    private static Assembly LoadAssembly(MemoryStream stream)
+    {
+        return Assembly.Load(stream.ToArray());
+    }
+#endif
 }
 
 /// <summary>

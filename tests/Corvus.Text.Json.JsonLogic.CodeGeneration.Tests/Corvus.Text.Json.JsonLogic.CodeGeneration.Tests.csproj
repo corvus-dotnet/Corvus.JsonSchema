@@ -1,6 +1,6 @@
 <Project Sdk="MSTest.Sdk">
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <IsPackable>false</IsPackable>
     <PreserveCompilationContext>true</PreserveCompilationContext>
@@ -16,5 +16,9 @@
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="tests.json" />
+  </ItemGroup>
+  <!-- Polyfill for 'record' types on net481 (IsExternalInit is built-in on net5.0+). -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\System.Private.CoreLib\src\System\Runtime\CompilerServices\IsExternalInit.cs" Link="Polyfills\IsExternalInit.cs" />
   </ItemGroup>
 </Project>

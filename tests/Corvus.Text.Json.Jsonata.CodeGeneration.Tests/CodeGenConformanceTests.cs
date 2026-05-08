@@ -56,7 +56,7 @@ public class CodeGenConformanceTests
         {
             int closeBracket = caseName.IndexOf(']');
             arrayIndex = int.Parse(caseName.Substring(bracketPos + 1, closeBracket - bracketPos - 1));
-            baseName = caseName[..bracketPos];
+            baseName = caseName.Substring(0, bracketPos);
         }
 
         string caseFilePath = Path.Combine(TestSuiteRoot, "groups", group, baseName + ".json");

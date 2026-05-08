@@ -1171,9 +1171,11 @@ public class CodeGenCoverageTests
         return compiled;
     }
 
+    private static readonly Random SharedRandom = new();
+
     private string GenerateWithCustomFunctions(string expression, CustomFunction[] customFunctions)
     {
-        int id = Random.Shared.Next(10000, 99999);
+        int id = SharedRandom.Next(10000, 99999);
         return JsonPathCodeGenerator.Generate(
             expression,
             $"CustomFnTest_{id}",

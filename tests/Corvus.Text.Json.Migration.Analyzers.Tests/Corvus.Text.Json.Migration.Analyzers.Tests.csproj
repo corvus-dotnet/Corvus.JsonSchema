@@ -1,7 +1,7 @@
 <Project Sdk="MSTest.Sdk">
   <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
     <IsPackable>false</IsPackable>
     <NoWarn>$(NoWarn);IDE0065;IDE0290;IDE0079;IDE0130;CS8969;CS1591</NoWarn>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>

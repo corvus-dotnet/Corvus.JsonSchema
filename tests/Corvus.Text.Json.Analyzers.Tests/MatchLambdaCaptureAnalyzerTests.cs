@@ -14,13 +14,11 @@ using Microsoft.CodeAnalysis.Testing;
 
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-using CodeFixTest = Microsoft.CodeAnalysis.CSharp.Testing.CSharpCodeFixTest<
+using CodeFixTest = Corvus.Text.Json.Analyzers.Tests.CodeFixTestBase<
     Corvus.Text.Json.Analyzers.MatchLambdaCaptureAnalyzer,
-    Corvus.Text.Json.Analyzers.MatchLambdaCaptureCodeFix,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
-using Verify = Microsoft.CodeAnalysis.CSharp.Testing.CSharpAnalyzerVerifier<
-    Corvus.Text.Json.Analyzers.MatchLambdaCaptureAnalyzer,
-    Microsoft.CodeAnalysis.Testing.DefaultVerifier>;
+    Corvus.Text.Json.Analyzers.MatchLambdaCaptureCodeFix>;
+using Verify = Corvus.Text.Json.Analyzers.Tests.AnalyzerVerifier<
+    Corvus.Text.Json.Analyzers.MatchLambdaCaptureAnalyzer>;
 
 namespace Corvus.Text.Json.Analyzers.Tests;
 

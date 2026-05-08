@@ -1064,7 +1064,7 @@ namespace TestApp
     {
         var workspace = new Microsoft.CodeAnalysis.AdhocWorkspace();
         Project project = workspace.AddProject("TestProject", LanguageNames.CSharp);
-        ImmutableArray<MetadataReference> refs = await ReferenceAssemblies.Net.Net80.ResolveAsync(
+        ImmutableArray<MetadataReference> refs = await TestReferences.Assemblies.ResolveAsync(
                 LanguageNames.CSharp, default);
         project = project.AddMetadataReferences(refs);
         Document document = project.AddDocument("Test.cs", SourceText.From(code), filePath: "Test.cs");
