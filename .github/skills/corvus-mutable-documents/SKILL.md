@@ -77,7 +77,7 @@ using (JsonDocumentBuilder<JsonElement.Mutable> doc = parsedDoc.RootElement.Crea
     clone = doc.RootElement[0].Clone();
 }
 // clone is still valid after the workspace is disposed
-Assert.Equal("[[]]", clone.GetRawText());
+Assert.AreEqual("[[]]", clone.GetRawText());
 ```
 
 ## Version Tracking

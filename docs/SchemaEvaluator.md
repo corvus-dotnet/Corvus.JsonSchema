@@ -165,8 +165,8 @@ The `CollectAnnotations` method returns a `Dictionary` keyed by `(instanceLocati
 var annotations = JsonSchemaAnnotationProducer.CollectAnnotations(collector);
 
 // Check a specific annotation exists
-Assert.True(annotations.TryGetValue(("", "title"), out var titleMap));
-Assert.Equal("\"Person\"", titleMap["#"]);
+Assert.IsTrue(annotations.TryGetValue(("", "title"), out var titleMap));
+Assert.AreEqual("\"Person\"", titleMap["#"]);
 ```
 
 > **Note:** `CollectAnnotations` allocates dictionaries. For production use, prefer `EnumerateAnnotations` or `WriteAnnotationsTo`.

@@ -82,7 +82,7 @@ This is the same pattern used by both the V5 source generator (`src/Corvus.Text.
 ## Suppressed Warnings
 
 These warnings are suppressed project-wide — don't add `#pragma warning disable` for them:
-- `JSON001`, `xUnit1031`, `xUnit2013`, `CS8500`, `IDE0065`, `IDE0290`
+- `JSON001`, `CS8500`, `IDE0065`, `IDE0290`
 
 ## Cross-References
 - For migration workflow using CVJ analyzers, see `corvus-v4-migration`

@@ -24,7 +24,7 @@ The `--recurse-submodules` flag is required to fetch the `JSON-Schema-Test-Suite
 ### Run tests
 
 ```powershell
-dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 Always exclude the `failing` and `outerloop` categories:
@@ -68,7 +68,7 @@ The repository uses `.editorconfig` to enforce formatting. Key rules:
 ### Suppressions
 
 These warnings are suppressed project-wide and should not be re-suppressed with `#pragma`:
-- `JSON001`, `xUnit1031`, `xUnit2013`, `CS8500`, `IDE0065`, `IDE0290`
+- `JSON001`, `CS8500`, `IDE0065`, `IDE0290`
 
 ### StyleCop
 
@@ -116,7 +116,7 @@ Files in `Corvus.Text.Json.CodeGeneration` that are also needed by the Roslyn so
 ## Test requirements
 
 - All new functionality must have tests
-- Tests must pass with `category!=failing&category!=outerloop`
+- Tests must pass with `TestCategory!=failing&TestCategory!=outerloop`
 - Use `JsonReaderHelper.TranscodeHelper()` to convert UTF-8 output to strings in assertions
 - Follow the existing `stackalloc`/`ArrayPool` pattern for buffer-heavy tests
 
@@ -131,7 +131,7 @@ Use `SR.ExceptionMessageName` for all user-facing exception messages. Define new
 ## Pull request checklist
 
 - [ ] Code compiles with no warnings (`TreatWarningsAsErrors=true`)
-- [ ] Tests pass: `dotnet test --filter "category!=failing&category!=outerloop"`
+- [ ] Tests pass: `dotnet test --filter "TestCategory!=failing&TestCategory!=outerloop"`
 - [ ] New public APIs have XML doc comments
 - [ ] New source files are listed in `.csproj` (no glob includes)
 - [ ] Exception messages use `SR.*` resource strings

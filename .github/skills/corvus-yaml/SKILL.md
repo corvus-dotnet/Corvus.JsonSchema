@@ -75,7 +75,7 @@ Four YAML schema modes control how scalar values are interpreted:
 ## Running Tests
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.Yaml.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Yaml.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ## Key Implementation Details

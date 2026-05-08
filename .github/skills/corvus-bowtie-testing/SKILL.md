@@ -10,7 +10,7 @@ description: >
   USE FOR: running Bowtie conformance suites against local changes, setting up the
   local development loop, interpreting Bowtie failure reports, testing schema dialect
   compliance (Draft 4 through 2020-12).
-  DO NOT USE FOR: running the in-repo xUnit test suite (use corvus-build-and-test),
+  DO NOT USE FOR: running the in-repo MSTest test suite (use corvus-build-and-test),
   regenerating test classes from the submodule (use corvus-test-suite-regeneration).
 ---
 

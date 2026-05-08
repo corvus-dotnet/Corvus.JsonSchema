@@ -49,7 +49,7 @@ JsonElement result = TotalPrice.Evaluate(doc.RootElement, workspace);
 ### Key Notes
 - User-defined functions may shadow built-ins; compilation preserves runtime fallback
 - Individual test cases have 10-second timeout for runaway recursion
-- Conformance tests: `dotnet test tests\Corvus.Text.Json.Jsonata.Tests --filter "category!=failing&category!=outerloop"`
+- Conformance tests: `dotnet test --project tests\Corvus.Text.Json.Jsonata.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"`
 - Code-gen tests tagged: `codegen-conformance` and `codegen-edge`
 
 ## JMESPath
@@ -147,22 +147,22 @@ JsonPathEvaluator evaluator = JsonPathEvaluator.Default
 
 ```powershell
 # JSONata conformance
-dotnet test tests\Corvus.Text.Json.Jsonata.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Jsonata.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # JSONata code-gen
-dotnet test tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # JMESPath conformance
-dotnet test tests\Corvus.Text.Json.JMESPath.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JMESPath.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # JsonLogic conformance
-dotnet test tests\Corvus.Text.Json.JsonLogic.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JsonLogic.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # JSONPath conformance
-dotnet test tests\Corvus.Text.Json.JsonPath.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JsonPath.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # JSONPath code-gen
-dotnet test tests\Corvus.Text.Json.JsonPath.CodeGeneration.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JsonPath.CodeGeneration.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ## Common Pitfalls

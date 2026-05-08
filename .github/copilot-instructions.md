@@ -40,18 +40,36 @@ The repo structure mirrors the dotnet/runtime repository conventions: shared sou
 dotnet build Corvus.Text.Json.slnx
 
 # Run the standard test suite — exclude the 'failing' and 'outerloop' categories
-dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # Run a single test class
-dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&TestCategory!=failing&TestCategory!=outerloop"
 
 # Run a single test method
-dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 Always exclude `failing` and `outerloop` categories when running tests. Never run all tests without these filters.
 
 Always use `FullyQualifiedName~` (substring match) for test filters — not `ClassName=`. The `ClassName` filter does not work reliably in this repo.
+
+### Test framework
+
+All tests use **MSTest** (MSTest.Sdk 4.2.2) with **Microsoft Testing Platform** (MTP). The `global.json` pins the MSTest.Sdk version and configures MTP as the test runner.
+
+**Key MSTest conventions:**
+- `[TestMethod]` (not `[Fact]`), `[DataRow]` (not `[InlineData]`), `[DynamicData]` (not `[MemberData]`)
+- `[TestCategory("...")]` (not `[Trait("Category", "...")]`)
+- `Assert.AreEqual` / `Assert.IsTrue` / `Assert.IsFalse` / `Assert.IsNull` / `Assert.IsNotNull`
+- `Assert.ThrowsExactly<T>()` for exact type match (equivalent to xUnit's `Assert.Throws<T>`)
+- `Assert.Throws<T>()` for T-or-derived match (equivalent to xUnit's `Assert.ThrowsAny<T>`)
+- Class fixtures use `static` fields with `[ClassInitialize]` / `[ClassCleanup]` methods
+- Test classes must have `[TestClass]` attribute
+
+**MTP-specific notes:**
+- The `--nologo` and `-v q` flags are **not supported** by MTP. Omit them from `dotnet test` commands.
+- Test filter uses `TestCategory` (not `category`). Both MSTest and MTP use this property name.
+- Use `--solution` or `--project` flags for explicit target selection.
 
 **Solution files:**
 
@@ -60,7 +78,7 @@ Always use `FullyQualifiedName~` (substring match) for test filters — not `Cla
 | `Corvus.Text.Json.slnx` | Main V5 solution — build and test (all TFMs, all projects) |
 | `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
 
-All test projects target both `net10.0` and `net481`. Projects with .NET Core-only dependencies (Analyzers, CodeGenerator, CodeGeneration tests) use `<Compile Remove>` on net481 to produce empty assemblies with 0 tests (exit code 0). This means a single `dotnet test Corvus.Text.Json.slnx` without `-f` runs tests on both TFMs.
+Most test projects target both `net10.0` and `net481`. Seven projects with .NET Core-only dependencies target `net10.0` only: Analyzers.Tests, Migration.Analyzers.Tests, CodeGenerator.Tests, and four CodeGeneration.Tests projects (JMESPath, Jsonata, JsonLogic, JsonPath). Three source-generator test projects (JMESPath, JsonLogic, Jsonata) target both TFMs but exclude their diagnostic test file on net481. Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
 
 `TreatWarningsAsErrors=true` is set across all projects — the build will fail on any warning.
 
@@ -68,7 +86,7 @@ All test projects target both `net10.0` and `net481`. Projects with .NET Core-on
 
 Before every commit, verify these mandatory gates in order:
 
-1. **Warning-free build**: `dotnet build Corvus.Text.Json.slnx -v q --nologo` must report `0 Warning(s)`.
+1. **Warning-free build**: `dotnet build Corvus.Text.Json.slnx` must report `0 Warning(s)`.
 2. **Code sample catalog**: if any file tracked by the catalog was modified (anything under `.github/`, `docs/`, or skill/instruction files), update and verify the catalog:
 
 ```powershell
@@ -127,9 +145,9 @@ bool success = JsonElementHelpers.TryFormatCurrency(
     isNegative, integral, fractional, exponent,
     destination, out int bytesWritten, precision, formatInfo);
 
-Assert.True(success);
+Assert.IsTrue(success);
 string result = JsonReaderHelper.TranscodeHelper(destination.Slice(0, bytesWritten));
-Assert.Equal(expected, result);
+Assert.AreEqual(expected, result);
 ```
 
 **Available overloads** (all in `Corvus.Text.Json.Reader.JsonReaderHelper`, internal):
@@ -185,19 +203,19 @@ finally
 - **Nullable annotations** — enabled in all library projects (`Nullable=enable`), disabled in test projects. Public APIs must have complete XML doc comments; `CS1591` is treated as an error in test projects.
 - **Shared source via `Common/`** — files in `Common/src/` and `Common/tests/` are shared across projects via `<Compile Include="$(CommonPath)..." Link="..." />`. Do not duplicate these; link them instead.
 - **`SR` alias** — `using SR = Resources.Strings;` (or the project-specific variant) is a global using. Use `SR.ExceptionMessageName` for all user-facing strings; define new strings in the `.resx` file.
-- **Disabled warnings** — `JSON001`, `xUnit1031`, `xUnit2013`, `CS8500`, `IDE0065`, `IDE0290` are suppressed project-wide; don't add `#pragma warning disable` for these.
+- **Disabled warnings** — `JSON001`, `CS8500`, `IDE0065`, `IDE0290` are suppressed project-wide; don't add `#pragma warning disable` for these.
 - **EditorConfig** — 4-space indentation, `csharp_new_line_before_open_brace = all`. Generated files must be marked `generated_code = true` in `.editorconfig` entries.
 - **JSON Schema test suite** — `JSON-Schema-Test-Suite/` is a git submodule. Run `.\update-json-schema-test-suite.ps1` to update the submodule and regenerate V5 test classes. See `docs/RunningTests.md` for manual regeneration details.
 - **`BigNumber`** — the custom arbitrary-precision decimal struct lives in `Corvus.Numerics`. Prefer it over `decimal` when the JSON value may have precision beyond 28 significant digits.
 - **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.
 - **Data-driven coverage improvement** — when working to improve code coverage, ONLY write tests that target specific uncovered branches/lines identified in Cobertura XML coverage reports. Never write generic tests for already-covered functions hoping they might help. The process is: (1) collect coverage **for ALL TFMs** (do NOT pass `-f net10.0` — omit `-f` entirely so both net10.0 and net481 run and merge automatically), (2) parse the Cobertura XML to find exact uncovered line ranges, (3) read the actual source code at those lines to understand the uncovered logic, (4) devise expressions/inputs that exercise those specific code paths, (5) verify with the reference implementation where applicable, (6) **after writing tests, re-collect coverage for just those tests and verify the specific target lines moved from 0 to >0 hits** — "tests pass" does NOT mean "target code paths exercised." If target lines are still uncovered, the tests are exercising different code paths and must be revised, (7) **iterate until every target line is covered, or you have verified evidence that a path is unreachable** — do not stop after one attempt. For lines you cannot cover, verify the claim by tracing all callers and checking generated code before reporting to the user; provide the evidence (e.g., "grep for `Source<TContext>` across all `.cs` files finds no call sites that construct one"). The coverage report is the sole source of truth for what needs testing — not guesswork about what "might" be uncovered. Remove any tests that do not contribute novel coverage.
-- **Coverage tooling** — use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet (`--collect:"XPlat Code Coverage"`). Coverlet 10.0.0 has a known instrumentation bug that reports 0% coverage for many types (including ref structs, static classes, and regular sealed classes) despite tests exercising the code. The repo includes `dotnet-coverage.settings.xml` which filters to published library assemblies and excludes non-actionable source files. **⚠️ CRITICAL: NEVER pass `-f net10.0` when collecting baseline or full coverage** — this misses all `#if !NET` / netstandard2.0 code paths. Omit `-f` entirely so both TFMs run and merge automatically: `dotnet-coverage collect --output result.cobertura.xml --output-format cobertura -s dotnet-coverage.settings.xml "dotnet test Corvus.Text.Json.slnx --filter \"category!=failing&category!=outerloop\" --no-build -v q --nologo"`. The output is a single Cobertura XML with merged multi-TFM coverage. Only use `-f net10.0` for single-test-class verification during iterative coverage improvement. See the `corvus-build-and-test` skill for XML parsing patterns and the coverage verification loop.
+- **Coverage tooling** — use `dotnet-coverage` (Microsoft Code Coverage), **not** Coverlet (`--collect:"XPlat Code Coverage"`). Coverlet 10.0.0 has a known instrumentation bug that reports 0% coverage for many types (including ref structs, static classes, and regular sealed classes) despite tests exercising the code. The repo includes `dotnet-coverage.settings.xml` which filters to published library assemblies and excludes non-actionable source files. **⚠️ CRITICAL: NEVER pass `-f net10.0` when collecting baseline or full coverage** — this misses all `#if !NET` / netstandard2.0 code paths. Omit `-f` entirely so both TFMs run and merge automatically: `dotnet-coverage collect --output result.cobertura.xml --output-format cobertura -s dotnet-coverage.settings.xml "dotnet test --solution Corvus.Text.Json.slnx --filter \"TestCategory!=failing&TestCategory!=outerloop\" --no-build"`. The output is a single Cobertura XML with merged multi-TFM coverage. Only use `-f net10.0` for single-test-class verification during iterative coverage improvement. See the `corvus-build-and-test` skill for XML parsing patterns and the coverage verification loop.
 - **Coverage exclusions** — the `dotnet-coverage.settings.xml` `<Sources><Exclude>` section filters out non-actionable source files that inflate coverage denominators: (1) `src-v4/Corvus.Json.ExtendedTypes/Corvus.Json/GeneratedCoreTypes/` — V4 CLI-generated core types (~144 files), (2) all Roslyn source-generator output under `obj/` (matched by `.*\\obj\\.*\.g\.cs$`), and (3) auto-generated resource files (`SR.cs` and `*.Designer.cs`). When parsing Cobertura XML to calculate coverage percentages, apply the same exclusions: skip classes whose `filename` matches any of these patterns. Failure to exclude these will significantly undercount coverage for packages with generated code or resource files.
 - **Doc samples: prefer `Parse` over `ParseValue`** — documentation examples should show `ParsedJsonDocument<T>.Parse(...)` with `using` to promote pooled-memory best practice. `ParseValue` creates non-disposable copies. Use `ParseValue` only where `Parse` is impractical (e.g., inline dictionary initializers for small constants).
 - **Doc samples: use implicit `JsonElement.Source` conversions** — write `PatchBuilder.Add("/name"u8, "Alice")`, `.Replace("/version"u8, 2)` instead of wrapping scalars in `ParseValue`.
 - **Doc samples: only import `Corvus.Text.Json`** — doc blocks should not import `System.Text.Json`. Use fully-qualified names for `System.Text.Json` types when needed.
 - **Tests: use Corvus types, not `System.Text.Json`** — test code under test and assertions must use `Corvus.Text.Json` types (`JsonElement`, `JsonValueKind`, etc.), never `System.Text.Json` equivalents. `System.Text.Json` is acceptable only for test data infrastructure (e.g., reading JSON fixture files with `System.Text.Json.JsonDocument`).
-- **Tests: prefer exact assertions** — always use `Assert.Equal` with the complete expected value rather than `Assert.Contains`, `Assert.StartsWith`, or `Assert.EndsWith`. Weak assertions mask bugs where the output format changes but still contains the checked substring. Acceptable exceptions: (1) error/exception message substring checks (e.g., `Assert.Contains("T0410", ex.Message)`), (2) buffer-growth tests that write 15+ iterations in a loop producing very large outputs where the assertion just verifies data wasn't corrupted, (3) cases where the exact output depends on non-deterministic internal state. When writing new tests, capture the exact output first (via a diagnostic `Assert.Fail(actual)` or a file-based app script), then use that as the expected value in a raw string literal (`"""`). For JSON assertions, raw string literals are ideal because `\u002B`, `\n`, `\t` are literal characters matching JSON content.
+- **Tests: prefer exact assertions** — always use `Assert.AreEqual` with the complete expected value rather than `StringAssert.Contains`, `Assert.IsTrue(x.StartsWith(...))`, or similar weak assertions. Weak assertions mask bugs where the output format changes but still contains the checked substring. Acceptable exceptions: (1) error/exception message substring checks (e.g., `StringAssert.Contains(ex.Message, "T0410")`), (2) buffer-growth tests that write 15+ iterations in a loop producing very large outputs where the assertion just verifies data wasn't corrupted, (3) cases where the exact output depends on non-deterministic internal state. When writing new tests, capture the exact output first (via a diagnostic `Assert.Fail(actual)` or a file-based app script), then use that as the expected value in a raw string literal (`"""`). For JSON assertions, raw string literals are ideal because `\u002B`, `\n`, `\t` are literal characters matching JSON content.
 
 ## Documentation Code Sample Verification
 
@@ -458,7 +476,7 @@ Multiple benchmark projects live under `benchmarks/`. They all use BDN with out-
 dotnet build <relevant-src-projects> -c Release -v q --no-restore
 
 # 2. Run the relevant tests to verify correctness before benchmarking
-dotnet test <relevant-test-project> -f net10.0 --filter "category!=failing&category!=outerloop" -v q --no-restore
+dotnet test --project <relevant-test-project> -f net10.0 --filter "TestCategory!=failing&TestCategory!=outerloop" --no-restore
 
 # 3. Clean stale BDN artifacts (CRITICAL — stale Job-* dirs cause file locks)
 $benchDir = "benchmarks\<BenchmarkProject>"

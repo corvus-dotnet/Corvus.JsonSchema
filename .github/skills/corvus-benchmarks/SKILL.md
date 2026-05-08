@@ -33,7 +33,7 @@ Each benchmark model project has two subdirectories:
 dotnet build Corvus.Text.Json.slnx -c Release -v q
 
 # 2. Run correctness tests first
-dotnet test Corvus.Text.Json.slnx -c Release -f net10.0 --filter "category!=failing&category!=outerloop" -v q
+dotnet test --solution Corvus.Text.Json.slnx -c Release -f net10.0 --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # 3. CRITICAL — Clean stale Job-* directories
 $benchDir = "benchmarks\Corvus.Text.Json.Benchmarks"

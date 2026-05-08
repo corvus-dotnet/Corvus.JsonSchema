@@ -6,7 +6,7 @@ This guide covers the test projects in the solution and how to run them.
 
 ```powershell
 # Run the standard test suite (excludes slow stress tests)
-dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 Always exclude the `failing` and `outerloop` categories when running the full suite. The `outerloop` tests are long-running stress and thread-safety tests that are not suitable for routine development.
@@ -50,14 +50,14 @@ The solution contains twenty-one runnable test projects and six supporting model
 | `Corvus.Text.Json.Tests.MigrationModels.V4` | V4-generated model types (references `src-v4/Corvus.Json.ExtendedTypes`) |
 | `Corvus.Text.Json.Tests.MigrationModels.V5` | V5 equivalents of the V4 models |
 | `Corvus.Text.Json.Tests.MigrationSchemas` | JSON schemas used to generate the migration model types |
-| `Corvus.JsonSchemaTestSuite.CodeGenerator` | Utility that regenerates xUnit test classes from the JSON Schema Test Suite submodule |
+| `Corvus.JsonSchemaTestSuite.CodeGenerator` | Utility that regenerates MSTest test classes from the JSON Schema Test Suite submodule |
 
 ## Running specific test areas
 
 ### All V5 library tests
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 This is the main test suite covering the V5 library: reader, writer, parsed documents, mutable documents, schema validation, and generated type behaviour.
@@ -67,13 +67,13 @@ This is the main test suite covering the V5 library: reader, writer, parsed docu
 The `MigrationEquivalenceTests` folder within the main test project compares V4-generated and V5-generated types side-by-side for parsing, serialization, mutation, validation, and property access:
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.Tests --filter "FullyQualifiedName~MigrationEquivalence&category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "FullyQualifiedName~MigrationEquivalence&TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ### Migration analyzer tests
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.Migration.Analyzers.Tests
+dotnet test --project tests\Corvus.Text.Json.Migration.Analyzers.Tests
 ```
 
 These test the Roslyn analyzers (CVJ001–CVJ025) and their associated code fixes. No category filter needed — they run quickly.
@@ -84,32 +84,32 @@ Tests are generated from the [JSON Schema Test Suite](https://github.com/json-sc
 
 ```powershell
 # All schema drafts
-dotnet test tests\Corvus.Text.Json.Tests --filter "Trait~JsonSchemaTestSuite&category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "TestCategory~JsonSchemaTestSuite&TestCategory!=failing&TestCategory!=outerloop"
 
 # A single draft
-dotnet test tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft202012&category!=failing&category!=outerloop"
-dotnet test tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft201909&category!=failing&category!=outerloop"
-dotnet test tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft7&category!=failing&category!=outerloop"
-dotnet test tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft6&category!=failing&category!=outerloop"
-dotnet test tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft4&category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft202012&TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft201909&TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft7&TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft6&TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft4&TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ### Numerics tests
 
 ```powershell
-dotnet test tests\Corvus.Numerics.Tests
+dotnet test --project tests\Corvus.Numerics.Tests
 ```
 
 ### Validator tests
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.Validator.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Validator.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ### Code generator tests
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.CodeGenerator.Tests
+dotnet test --project tests\Corvus.Text.Json.CodeGenerator.Tests
 ```
 
 ### JSONata tests
@@ -122,11 +122,11 @@ The `Corvus.Text.Json.Jsonata.Tests` project runs the full [JSONata test suite](
 
 ```powershell
 # All runtime conformance tests
-dotnet test tests\Corvus.Text.Json.Jsonata.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Jsonata.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # On a specific framework
-dotnet test tests\Corvus.Text.Json.Jsonata.Tests -f net10.0 --filter "category!=failing&category!=outerloop"
-dotnet test tests\Corvus.Text.Json.Jsonata.Tests -f net481 --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Jsonata.Tests -f net10.0 --filter "TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Jsonata.Tests -f net481 --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 Individual test cases have a 10-second timeout to catch runaway recursive expressions.
@@ -137,23 +137,23 @@ The `Corvus.Text.Json.Jsonata.CodeGeneration.Tests` project compiles every JSONa
 
 ```powershell
 # All CG conformance tests
-dotnet test tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests --filter "category=codegen-conformance"
+dotnet test --project tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests --filter "TestCategory=codegen-conformance"
 ```
 
 A separate set of edge-case tests (tagged `codegen-edge`) exercises code paths that the conformance suite may not cover thoroughly — nested higher-order functions, lambda variable capture, parameter shadowing, and root-reference (`$$`) propagation:
 
 ```powershell
 # CG edge-case tests only
-dotnet test tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests --filter "category=codegen-edge"
+dotnet test --project tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests --filter "TestCategory=codegen-edge"
 
 # All CG tests (conformance + edge cases)
-dotnet test tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests
+dotnet test --project tests\Corvus.Text.Json.Jsonata.CodeGeneration.Tests
 ```
 
 #### Source generator integration
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.Jsonata.SourceGenerator.Tests
+dotnet test --project tests\Corvus.Text.Json.Jsonata.SourceGenerator.Tests
 ```
 
 These tests verify that the Roslyn incremental source generator produces correct evaluators for representative expressions (property paths, arithmetic, string concatenation, aggregate functions, predicate filtering, higher-order functions).
@@ -167,13 +167,13 @@ The JsonLogic test projects mirror the JSONata structure: runtime conformance, c
 The `Corvus.Text.Json.JsonLogic.Tests` project runs the full [official JsonLogic test suite](https://jsonlogic.com/tests.json) against the interpreted evaluator.
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.JsonLogic.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JsonLogic.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 #### Code generation
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.JsonLogic.CodeGeneration.Tests
+dotnet test --project tests\Corvus.Text.Json.JsonLogic.CodeGeneration.Tests
 ```
 
 Tests that the code generator produces valid C# for representative JsonLogic rules (variable access, arithmetic, comparison, string concatenation, conditional logic).
@@ -181,7 +181,7 @@ Tests that the code generator produces valid C# for representative JsonLogic rul
 #### Source generator integration
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.JsonLogic.SourceGenerator.Tests
+dotnet test --project tests\Corvus.Text.Json.JsonLogic.SourceGenerator.Tests
 ```
 
 Verifies that source-generated evaluators produce correct results for addition, conditional logic, string concatenation, array filtering, and missing-data checks.
@@ -195,13 +195,13 @@ The JSONPath test projects exercise the runtime evaluator, the code generator, a
 The `Corvus.Text.Json.JsonPath.Tests` project runs the full 723 official JSONPath compliance test cases against the interpreted evaluator.
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.JsonPath.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JsonPath.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 #### Code generation
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.JsonPath.CodeGeneration.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JsonPath.CodeGeneration.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 Tests that the code generator produces valid C# for JSONPath expressions including property access, wildcards, array slices, filters, recursive descent, and custom function extensions.
@@ -209,7 +209,7 @@ Tests that the code generator produces valid C# for JSONPath expressions includi
 #### Source generator integration
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.JsonPath.SourceGenerator.Tests
+dotnet test --project tests\Corvus.Text.Json.JsonPath.SourceGenerator.Tests
 ```
 
 Verifies that source-generated evaluators produce correct results for representative JSONPath expressions.
@@ -218,10 +218,10 @@ Verifies that source-generated evaluators produce correct results for representa
 
 ```powershell
 # Single class
-dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&TestCategory!=failing&TestCategory!=outerloop"
 
 # Single method (substring match)
-dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ## Outerloop (stress) tests
@@ -229,7 +229,7 @@ dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM
 The `[OuterLoop]` attribute (from `Microsoft.DotNet.XUnitExtensions`) marks long-running stress and thread-safety tests. These are excluded from routine runs but should be run before major releases:
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.Tests --filter "Category=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "TestCategory=outerloop"
 ```
 
 ## Target framework selection
@@ -237,8 +237,8 @@ dotnet test tests\Corvus.Text.Json.Tests --filter "Category=outerloop"
 The main test projects multi-target `net9.0`, `net10.0`, and `net481`. To run against a specific framework:
 
 ```powershell
-dotnet test tests\Corvus.Text.Json.Tests -f net10.0 --filter "category!=failing&category!=outerloop"
-dotnet test tests\Corvus.Text.Json.Tests -f net481 --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests -f net10.0 --filter "TestCategory!=failing&TestCategory!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests -f net481 --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ## Regenerating V5 migration model types
@@ -283,7 +283,7 @@ After regenerating, rebuild and run the migration equivalence tests to verify:
 
 ```powershell
 dotnet build tests\Corvus.Text.Json.Tests
-dotnet test tests\Corvus.Text.Json.Tests --filter "FullyQualifiedName~MigrationEquivalenceTests"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "FullyQualifiedName~MigrationEquivalenceTests"
 ```
 
 ## Regenerating JSON Schema Test Suite tests
@@ -314,7 +314,7 @@ After the script completes, rebuild and run the tests to verify:
 
 ```powershell
 dotnet build Corvus.Text.Json.slnx
-dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ### Manual regeneration
@@ -323,7 +323,7 @@ If you need to run the generators individually, the details below explain each o
 
 #### V5 test generator
 
-The `Corvus.JsonSchemaTestSuite.CodeGenerator` project reads the submodule and writes xUnit test classes into three output directories under `tests/Corvus.Text.Json.Tests/`:
+The `Corvus.JsonSchemaTestSuite.CodeGenerator` project reads the submodule and writes MSTest test classes into three output directories under `tests/Corvus.Text.Json.Tests/`:
 
 - `JsonSchemaTestSuite/` — type-based tests
 - `StandaloneEvaluatorTestSuite/` — standalone evaluator tests
@@ -348,7 +348,7 @@ cd ..\..\..\..\..\
 | `outputPath` | Relative path to the generated test output directory |
 | `jsonSchemaTestSuite.baseDirectory` | Relative path to the `JSON-Schema-Test-Suite/` submodule |
 | `jsonSchemaTestSuite.collections[]` | One entry per draft (draft4, draft6, draft7, draft2019-09, draft2020-12) |
-| `collections[].name` | Draft name — becomes the xUnit `[Trait("JsonSchemaTestSuite", "...")]` value |
+| `collections[].name` | Draft name — becomes the MSTest `[TestCategory("JsonSchemaTestSuite", "...")]` value |
 | `collections[].defaultVocabulary` | The `$schema` URI used for validation |
 | `collections[].directory` | Subdirectory within the test suite (e.g. `tests/draft2020-12`) |
 | `collections[].options[]` | Per-path overrides, e.g. `"validateFormat": true` for `optional/format` |
@@ -358,4 +358,4 @@ Each generated test class uses `TestJsonSchemaCodeGenerator.GenerateTypeForVirtu
 
 #### V4 tests
 
-V4 schema validation tests live in `tests-v4/Corvus.Json.Specs.Tests/` as xUnit test classes. These test V4 types (`Corvus.Json.ExtendedTypes`, `Corvus.Json.CodeGeneration.CSharp`) using runtime Roslyn compilation via `JsonSchemaBuilderDriver`. The tests cover all drafts (4, 6, 7, 2019-09, 2020-12) plus OpenAPI 3.0 and are run as part of the main solution test pass.
+V4 schema validation tests live in `tests-v4/Corvus.Json.Specs.Tests/` as MSTest test classes. These test V4 types (`Corvus.Json.ExtendedTypes`, `Corvus.Json.CodeGeneration.CSharp`) using runtime Roslyn compilation via `JsonSchemaBuilderDriver`. The tests cover all drafts (4, 6, 7, 2019-09, 2020-12) plus OpenAPI 3.0 and are run as part of the main solution test pass.

@@ -20,7 +20,9 @@ description: >
 | `Corvus.Text.Json.slnx` | Main V5 solution — all libraries + all tests (use for `dotnet build` and `dotnet test`) |
 | `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
 
-All test projects target both `net10.0` and `net481`. Projects with .NET Core-only dependencies (Analyzers, CodeGenerator, 4× CodeGeneration tests) use `<Compile Remove="**\*.cs">` on net481 to produce empty assemblies with 0 tests. Source generator test projects exclude only their diagnostic test files on net481 (integration tests run on both TFMs). This means `dotnet test Corvus.Text.Json.slnx` without `-f` runs tests on both TFMs.
+All test projects use **MSTest** (MSTest.Sdk 4.2.2) with **Microsoft Testing Platform** (MTP). The `global.json` pins the MSTest.Sdk version and configures MTP as the test runner.
+
+Most test projects target both `net10.0` and `net481`. Seven projects target `net10.0` only: Analyzers.Tests, Migration.Analyzers.Tests, CodeGenerator.Tests, and four CodeGeneration.Tests projects (JMESPath, Jsonata, JsonLogic, JsonPath). Three source-generator test projects (JMESPath, JsonLogic, Jsonata) target both TFMs but exclude their diagnostic test file on net481 (integration tests run on both TFMs). Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
 
 V4 projects live in `src-v4/` and `tests-v4/` and are included in the solution.
 
@@ -40,7 +42,7 @@ dotnet build src\Corvus.Text.Json\Corvus.Text.Json.csproj
 
 Before every commit, verify these mandatory gates:
 
-1. **Warning-free build**: `dotnet build Corvus.Text.Json.slnx -v q --nologo` must report `0 Warning(s)`.
+1. **Warning-free build**: `dotnet build Corvus.Text.Json.slnx` must report `0 Warning(s)`.
 2. **Code sample catalog**: if any file under `.github/`, `docs/`, or skill/instruction files was modified (even incidentally), update and verify:
 
 ```powershell
@@ -64,10 +66,10 @@ Test code and assertions must use `Corvus.Text.Json` types (`JsonElement`, `Json
 
 ### ⚠️ Prefer exact assertions
 
-Always use `Assert.Equal` with the complete expected value. Do **not** use `Assert.Contains`, `Assert.StartsWith`, or `Assert.EndsWith` for output verification — these mask bugs where the format changes but still contains the checked substring.
+Always use `Assert.AreEqual` with the complete expected value. Do **not** use `StringAssert.Contains`, `Assert.IsTrue(x.StartsWith(...))`, or similar weak assertions for output verification — these mask bugs where the format changes but still contains the checked substring.
 
 **Acceptable exceptions:**
-- Error/exception message substring checks (e.g., `Assert.Contains("T0410", ex.Message)`)
+- Error/exception message substring checks (e.g., `StringAssert.Contains(ex.Message, "T0410")`)
 - Buffer-growth tests writing 15+ iterations in a loop (output is hundreds of bytes; Contains verifying data integrity is fine)
 - Non-deterministic output that cannot be reproduced exactly
 
@@ -78,52 +80,52 @@ Always use `Assert.Equal` with the complete expected value. Do **not** use `Asse
 
 ```csharp
 // GOOD — exact assertion with raw string literal
-Assert.Equal("""{"name":"Alice","age":30}""", json);
+Assert.AreEqual("""{"name":"Alice","age":30}""", json);
 
 // BAD — weak assertion that passes even if output is wrong
-Assert.Contains("Alice", json);
+StringAssert.Contains(json, "Alice");
 ```
 
 ```powershell
 # Run all tests (standard — all 21 test projects, both TFMs)
-dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # Run all tests on a specific TFM
-dotnet test Corvus.Text.Json.slnx -f net10.0 --filter "category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx -f net10.0 --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # Run a single test class
-dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParsedJsonDocumentTests&TestCategory!=failing&TestCategory!=outerloop"
 
 # Run a single test method
-dotnet test Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&category!=failing&category!=outerloop"
+dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseValidUtf8BOM&TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ### Test by Feature Area
 
 ```powershell
 # JSON Schema draft-specific tests (all in Corvus.Text.Json.Tests)
-dotnet test tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft202012&category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "JsonSchemaTestSuite=Draft202012&TestCategory!=failing&TestCategory!=outerloop"
 
 # Standalone evaluator tests (all in Corvus.Text.Json.Tests)
-dotnet test tests\Corvus.Text.Json.Tests --filter "Trait~StandaloneEvaluatorTestSuite&category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "TestCategory~StandaloneEvaluatorTestSuite&TestCategory!=failing&TestCategory!=outerloop"
 
 # Annotation tests (all in Corvus.Text.Json.Tests)
-dotnet test tests\Corvus.Text.Json.Tests --filter "Trait~AnnotationTestSuite&category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Tests --filter "TestCategory~AnnotationTestSuite&TestCategory!=failing&TestCategory!=outerloop"
 
 # JSONata conformance
-dotnet test tests\Corvus.Text.Json.Jsonata.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Jsonata.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # JMESPath conformance
-dotnet test tests\Corvus.Text.Json.JMESPath.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JMESPath.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # YAML conformance
-dotnet test tests\Corvus.Text.Json.Yaml.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.Yaml.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # JSONPath conformance
-dotnet test tests\Corvus.Text.Json.JsonPath.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JsonPath.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 
 # JSONPath code-gen
-dotnet test tests\Corvus.Text.Json.JsonPath.CodeGeneration.Tests --filter "category!=failing&category!=outerloop"
+dotnet test --project tests\Corvus.Text.Json.JsonPath.CodeGeneration.Tests --filter "TestCategory!=failing&TestCategory!=outerloop"
 ```
 
 ### Key Test Projects (21 runnable)
@@ -157,7 +159,7 @@ Plus 6 supporting model/utility projects that generate types consumed by other t
 ## Target Frameworks
 
 - **Libraries**: `net9.0;net10.0;netstandard2.0;netstandard2.1`
-- **Tests**: `net9.0;net10.0;net481` (varies by project)
+- **Tests**: `net10.0;net481` (most projects), `net10.0` only (7 projects — see Solution Files above)
 - Run a specific TFM: `dotnet test -f net10.0 ...`
 
 ## Collecting Code Coverage
@@ -179,7 +181,7 @@ dotnet-coverage collect `
     --output TestResults\coverage.cobertura.xml `
     --output-format cobertura `
     -s dotnet-coverage.settings.xml `
-    "dotnet test Corvus.Text.Json.slnx --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
+    "dotnet test --solution Corvus.Text.Json.slnx --filter `"TestCategory!=failing&TestCategory!=outerloop`" --no-build"
 ```
 
 All test projects target both net10.0 and net481. Running without `-f` executes tests on both TFMs, and `dotnet-coverage` produces a single merged Cobertura XML. This captures TFM-conditional code paths (e.g., `#if NETSTANDARD2_0` polyfill branches, `net481` fallback code) that a single-TFM run would miss.
@@ -195,7 +197,7 @@ dotnet-coverage collect `
     --output TestResults\coverage-net10.0.cobertura.xml `
     --output-format cobertura `
     -s dotnet-coverage.settings.xml `
-    "dotnet test Corvus.Text.Json.slnx -f net10.0 --filter `"category!=failing&category!=outerloop`" --no-build -v q --nologo"
+    "dotnet test --solution Corvus.Text.Json.slnx -f net10.0 --filter `"TestCategory!=failing&TestCategory!=outerloop`" --no-build"
 ```
 
 Note: single-TFM runs miss TFM-conditional branches. Use the all-TFM approach above for accurate coverage baselines.
@@ -207,7 +209,7 @@ dotnet-coverage collect `
     --output TestResults\mytest.cobertura.xml `
     --output-format cobertura `
     -s dotnet-coverage.settings.xml `
-    "dotnet test Corvus.Text.Json.slnx -f net10.0 --filter `"FullyQualifiedName~MyTestClass&category!=failing&category!=outerloop`" --no-build -v q --nologo"
+    "dotnet test --solution Corvus.Text.Json.slnx -f net10.0 --filter `"FullyQualifiedName~MyTestClass&TestCategory!=failing&TestCategory!=outerloop`" --no-build"
 ```
 
 ### Key points
@@ -274,7 +276,7 @@ When writing tests to close coverage gaps, **always verify that the target lines
        --output TestResults\verify.cobertura.xml `
        --output-format cobertura `
        -s dotnet-coverage.settings.xml `
-       "dotnet test Corvus.Text.Json.slnx --filter `"FullyQualifiedName~MyNewTestClass&category!=failing&category!=outerloop`" --no-build -v q --nologo"
+       "dotnet test --solution Corvus.Text.Json.slnx --filter `"FullyQualifiedName~MyNewTestClass&TestCategory!=failing&TestCategory!=outerloop`" --no-build"
    ```
 5. **Parse the report** and check whether the specific target lines now have `hits > 0`
 6. **If target lines are still at 0:** the tests exercise different code paths. Revise and repeat from step 2
@@ -292,7 +294,7 @@ Common pitfalls that cause this mismatch:
 Building individual `.csproj` files produces output in `bin\{TFM}\` (no config subfolder). Building via `.slnx` produces `bin\{Config}\{TFM}\`. Stale `bin\{TFM}\` directories cause test failures because relative paths in `appsettings.json` resolve incorrectly. Fix: always use `-c Debug` or `-c Release` explicitly, and delete stale `bin\{TFM}\` dirs.
 
 ### Missing test filter
-Running `dotnet test` without `category!=failing&category!=outerloop` will run tests that are expected to fail or are slow stress tests, producing misleading failures.
+Running `dotnet test` without `TestCategory!=failing&TestCategory!=outerloop` will run tests that are expected to fail or are slow stress tests, producing misleading failures.
 
 ### Source generator not running
 If generated types are missing, ensure you're building in the correct configuration. Check `obj\{Config}\{TFM}\generated\` for `.g.cs` files.

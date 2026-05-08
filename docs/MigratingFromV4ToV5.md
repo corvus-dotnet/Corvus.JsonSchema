@@ -377,7 +377,7 @@ ValidationContext result = v4.Validate(
     ValidationContext.ValidContext,
     ValidationLevel.Detailed);
 
-Assert.False(result.IsValid);
+Assert.IsFalse(result.IsValid);
 
 foreach (ValidationResult r in result.Results)
 {
@@ -398,7 +398,7 @@ using JsonSchemaResultsCollector collector =
 
 bool isValid = v5.EvaluateSchema(collector);
 
-Assert.False(isValid);
+Assert.IsFalse(isValid);
 
 foreach (JsonSchemaResultsCollector.Result r in collector.EnumerateResults())
 {

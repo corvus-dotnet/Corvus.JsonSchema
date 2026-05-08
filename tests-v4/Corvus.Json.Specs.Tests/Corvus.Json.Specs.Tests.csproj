@@ -6,14 +6,14 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PreserveCompilationContext>true</PreserveCompilationContext>
-    <NoWarn>$(NoWarn);IDE0065;IDE0290;IDE0079;IDE0130;CS8969;CS1591;RCS1146;RCS1029;RCS1118;MSTEST0014;MSTEST0032;MSTEST0003;SA1210</NoWarn>
+    <NoWarn>$(NoWarn);IDE0065;IDE0290;IDE0079;IDE0130;CS8969;CS1591;RCS1146;RCS1029;RCS1118;MSTEST0014;MSTEST0032;MSTEST0003;SA1210;SA0001</NoWarn>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
     <RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+
     <PackageReference Include="System.Collections.Immutable" />
     <PackageReference Include="System.Reflection.Metadata" />
     <PackageReference Include="System.Text.RegularExpressions" />

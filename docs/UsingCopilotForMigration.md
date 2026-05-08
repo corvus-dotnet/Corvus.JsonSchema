@@ -248,7 +248,7 @@ After migrating a group of files:
 
 2. **Run tests:**
    ```bash
-   dotnet test --filter "category!=failing&category!=outerloop"
+   dotnet test --filter "TestCategory!=failing&TestCategory!=outerloop"
    ```
 
 3. **If tests fail**, give Copilot the error output:
