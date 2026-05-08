@@ -1,6 +1,6 @@
 <Project Sdk="MSTest.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <NoWarn>$(NoWarn);CS1591</NoWarn>
     <Nullable>disable</Nullable>
@@ -8,19 +8,11 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
-  </ItemGroup>
-  <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
     <ProjectReference Include="..\..\src\Corvus.Json.Cli.Core\Corvus.Json.Cli.Core.csproj" />
   </ItemGroup>
   <ItemGroup>
     <None Update="TestFixtures\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <!-- On net481 this project produces an empty assembly (no tests). The code
-       shells out to the net10.0 CLI tool and uses APIs unavailable on net481
-       (WaitForExitAsync, Kill(entireProcessTree)). -->
-  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
-    <Compile Remove="**\*.cs" />
   </ItemGroup>
 </Project>

@@ -78,7 +78,7 @@ All tests use **MSTest** (MSTest.Sdk 4.2.2) with **Microsoft Testing Platform** 
 | `Corvus.Text.Json.slnx` | Main V5 solution — build and test (all TFMs, all projects) |
 | `Corvus.Text.Json.Benchmarks.slnx` | Benchmark projects only |
 
-Most test projects target both `net10.0` and `net481`. Seven projects with .NET Core-only dependencies target `net10.0` only: Analyzers.Tests, Migration.Analyzers.Tests, CodeGenerator.Tests, and four CodeGeneration.Tests projects (JMESPath, Jsonata, JsonLogic, JsonPath). Three source-generator test projects (JMESPath, JsonLogic, Jsonata) target both TFMs but exclude their diagnostic test file on net481. Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
+All test projects target both `net10.0` and `net481`, with one exception: `CodeGenerator.Tests` targets `net10.0` only because the CLI tool it tests is a .NET 10 application. Three source-generator test projects (JMESPath, Jsonata, JsonLogic) exclude their `SourceGeneratorDiagnosticTests.cs` file on net481 because those Roslyn-hosted tests require .NET Core reference assemblies. Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
 
 `TreatWarningsAsErrors=true` is set across all projects — the build will fail on any warning.
 

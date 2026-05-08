@@ -22,7 +22,7 @@ description: >
 
 All test projects use **MSTest** (MSTest.Sdk 4.2.2) with **Microsoft Testing Platform** (MTP). The `global.json` pins the MSTest.Sdk version and configures MTP as the test runner.
 
-Most test projects target both `net10.0` and `net481`. Seven projects target `net10.0` only: Analyzers.Tests, Migration.Analyzers.Tests, CodeGenerator.Tests, and four CodeGeneration.Tests projects (JMESPath, Jsonata, JsonLogic, JsonPath). Three source-generator test projects (JMESPath, JsonLogic, Jsonata) target both TFMs but exclude their diagnostic test file on net481 (integration tests run on both TFMs). Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
+All test projects target both `net10.0` and `net481`, with one exception: `CodeGenerator.Tests` targets `net10.0` only because the CLI tool it tests is a .NET 10 application. Three source-generator test projects (JMESPath, Jsonata, JsonLogic) exclude their `SourceGeneratorDiagnosticTests.cs` file on net481 because those Roslyn-hosted tests require .NET Core reference assemblies (integration tests run on both TFMs). Running `dotnet test --solution Corvus.Text.Json.slnx` without `-f` runs tests on all applicable TFMs.
 
 V4 projects live in `src-v4/` and `tests-v4/` and are included in the solution.
 
@@ -159,7 +159,7 @@ Plus 6 supporting model/utility projects that generate types consumed by other t
 ## Target Frameworks
 
 - **Libraries**: `net9.0;net10.0;netstandard2.0;netstandard2.1`
-- **Tests**: `net10.0;net481` (most projects), `net10.0` only (7 projects — see Solution Files above)
+- **Tests**: `net10.0;net481` (all projects except `CodeGenerator.Tests`), `net10.0` only (`CodeGenerator.Tests` — .NET 10 CLI tool)
 - Run a specific TFM: `dotnet test -f net10.0 ...`
 
 ## Collecting Code Coverage
