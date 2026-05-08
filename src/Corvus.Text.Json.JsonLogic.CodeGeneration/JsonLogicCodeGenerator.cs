@@ -1,6 +1,7 @@
 // <copyright file="JsonLogicCodeGenerator.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
+using System.Buffers.Text;
 using System.Diagnostics;
 using System.Globalization;
 using System.Text;
@@ -757,6 +758,58 @@ public static class JsonLogicCodeGenerator
             return v;
         }
 
+        /// <summary>
+        /// Emits a folded constant from a double value, formatting it identically
+        /// to the runtime evaluator's <see cref="Utf8Formatter.TryFormat(double, Span{byte}, out int)"/>
+        /// path so that constant-folded and runtime-evaluated results match exactly.
+        /// </summary>
+        private string EmitFoldedDoubleConstant(StringBuilder sb, double value, string indent)
+        {
+            string v = NextVar();
+            byte[] buf = new byte[32];
+            if (Utf8Formatter.TryFormat(value, buf.AsSpan(), out int written))
+            {
+                string numStr = System.Text.Encoding.UTF8.GetString(buf, 0, written);
+                if (numStr == "0")
+                {
+                    L(sb, indent, $"JsonElement {v} = JsonLogicHelpers.Zero();");
+                }
+                else if (numStr == "1")
+                {
+                    L(sb, indent, $"JsonElement {v} = JsonLogicHelpers.One();");
+                }
+                else
+                {
+                    string field = GetOrCreateStaticLiteral(numStr);
+                    L(sb, indent, $"JsonElement {v} = {field};");
+                }
+            }
+            else
+            {
+                L(sb, indent, $"JsonElement {v} = JsonLogicHelpers.Zero();");
+            }
+
+            return v;
+        }
+
+        /// <summary>
+        /// Attempts to extract all operands as doubles. Returns true if every operand
+        /// fits in a double, matching the runtime evaluator's fast path.
+        /// </summary>
+        private static bool TryAllGetDouble(STJ.JsonElement[] operands, out double[] values)
+        {
+            values = new double[operands.Length];
+            for (int i = 0; i < operands.Length; i++)
+            {
+                if (!operands[i].TryGetDouble(out values[i]))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         // ─── VAR ─────────────────────────────────────────────────
         private string EmitVar(StringBuilder sb, STJ.JsonElement args, string indent, string dataVar)
         {
@@ -1165,13 +1218,24 @@ public static class JsonLogicCodeGenerator
             // Constant folding
             if (AllLiteralNumbers(operands))
             {
-                BigNumber sum = BigNumber.Zero;
-                foreach (STJ.JsonElement op in operands)
+                if (TryAllGetDouble(operands, out double[] dvals))
                 {
-                    sum += BigNumber.Parse(op.GetRawText());
+                    double sum = 0;
+                    foreach (double d in dvals)
+                    {
+                        sum += d;
+                    }
+
+                    return EmitFoldedDoubleConstant(sb, sum, indent);
                 }
 
-                return EmitFoldedConstant(sb, sum, indent);
+                BigNumber sum2 = BigNumber.Zero;
+                foreach (STJ.JsonElement op in operands)
+                {
+                    sum2 += BigNumber.Parse(op.GetRawText());
+                }
+
+                return EmitFoldedConstant(sb, sum2, indent);
             }
 
             return EmitDeferredArithmetic(sb, operands, "+", "+", "BigNumber.Zero", indent, dataVar);
@@ -1234,6 +1298,11 @@ public static class JsonLogicCodeGenerator
             // Constant folding
             if (AllLiteralNumbers(operands))
             {
+                if (TryAllGetDouble(operands, out double[] dvals))
+                {
+                    return EmitFoldedDoubleConstant(sb, dvals[0] - dvals[1], indent);
+                }
+
                 BigNumber diff = BigNumber.Parse(operands[0].GetRawText()) - BigNumber.Parse(operands[1].GetRawText());
                 return EmitFoldedConstant(sb, diff, indent);
             }
@@ -1253,13 +1322,24 @@ public static class JsonLogicCodeGenerator
             // Constant folding
             if (AllLiteralNumbers(operands))
             {
-                BigNumber product = BigNumber.One;
-                foreach (STJ.JsonElement op in operands)
+                if (TryAllGetDouble(operands, out double[] dvals))
                 {
-                    product *= BigNumber.Parse(op.GetRawText());
+                    double product = 1;
+                    foreach (double d in dvals)
+                    {
+                        product *= d;
+                    }
+
+                    return EmitFoldedDoubleConstant(sb, product, indent);
                 }
 
-                return EmitFoldedConstant(sb, product, indent);
+                BigNumber product2 = BigNumber.One;
+                foreach (STJ.JsonElement op in operands)
+                {
+                    product2 *= BigNumber.Parse(op.GetRawText());
+                }
+
+                return EmitFoldedConstant(sb, product2, indent);
             }
 
             return EmitDeferredArithmetic(sb, operands, "*", "*", "BigNumber.One", indent, dataVar);
@@ -1277,6 +1357,11 @@ public static class JsonLogicCodeGenerator
             // Constant folding
             if (AllLiteralNumbers(operands))
             {
+                if (TryAllGetDouble(operands, out double[] dvals) && dvals[1] != 0)
+                {
+                    return EmitFoldedDoubleConstant(sb, dvals[0] / dvals[1], indent);
+                }
+
                 BigNumber divisor = BigNumber.Parse(operands[1].GetRawText());
                 if (divisor != BigNumber.Zero)
                 {
@@ -1330,6 +1415,11 @@ public static class JsonLogicCodeGenerator
             // Constant folding
             if (AllLiteralNumbers(operands))
             {
+                if (TryAllGetDouble(operands, out double[] dvals) && dvals[1] != 0)
+                {
+                    return EmitFoldedDoubleConstant(sb, dvals[0] % dvals[1], indent);
+                }
+
                 BigNumber divisor = BigNumber.Parse(operands[1].GetRawText());
                 if (divisor != BigNumber.Zero)
                 {
