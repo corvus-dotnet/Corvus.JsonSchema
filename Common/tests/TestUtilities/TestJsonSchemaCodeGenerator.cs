@@ -1,6 +1,5 @@
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
-using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -20,8 +19,6 @@ namespace TestUtilities;
 
 public class TestJsonSchemaCodeGenerator
 {
-    private static readonly ConcurrentDictionary<string, DynamicJsonType> s_compiledTypesCache = new();
-
     private readonly IDocumentResolver _documentResolver;
 
     private readonly VocabularyRegistry _vocabularyRegistry;
@@ -146,13 +143,6 @@ public class TestJsonSchemaCodeGenerator
         bool addExplicitUsings,
         Assembly hostAssembly)
     {
-        string key = schemaText;
-        if (s_compiledTypesCache.TryGetValue(key, out DynamicJsonType value))
-        {
-            return value;
-        }
-
-        // Potentially execute async operation unnecessarily, but only in the case where we need to add to the cache.
         var generator = new TestJsonSchemaCodeGenerator(
             remotesBaseDirectory,
             defaultVocabulary: defaultVocabulary,
@@ -162,8 +152,7 @@ public class TestJsonSchemaCodeGenerator
             addExplicitUsings: addExplicitUsings);
 
         GeneratedCode generatedCode = await generator.GenerateCodeAsync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
-        DynamicJsonType result = Compile(generatedCode, hostAssembly);
-        return s_compiledTypesCache.GetOrAdd(key, _ => result);
+        return Compile(generatedCode, hostAssembly);
     }
 
     /// <summary>
@@ -192,13 +181,6 @@ public class TestJsonSchemaCodeGenerator
         bool addExplicitUsings,
         Assembly hostAssembly)
     {
-        string key = $"{schemaText}_{defaultVocabulary}_{validateFormat}_{optionalAsNullable}_{useImplicitOperatorString}_{addExplicitUsings}";
-        if (s_compiledTypesCache.TryGetValue(key, out DynamicJsonType value))
-        {
-            return value;
-        }
-
-        // Potentially execute async operation unnecessarily, but only in the case where we need to add to the cache.
         var generator = new TestJsonSchemaCodeGenerator(
             remotesBaseDirectory,
             defaultVocabulary: defaultVocabulary,
@@ -208,8 +190,7 @@ public class TestJsonSchemaCodeGenerator
             addExplicitUsings: addExplicitUsings);
 
         GeneratedCode generatedCode = await generator.GenerateCodeAsync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
-        DynamicJsonType result = Compile(generatedCode, hostAssembly);
-        return s_compiledTypesCache.GetOrAdd(key, _ => result);
+        return Compile(generatedCode, hostAssembly);
     }
 
     /// <summary>
@@ -239,13 +220,6 @@ public class TestJsonSchemaCodeGenerator
         bool addExplicitUsings,
         Assembly hostAssembly)
     {
-        string key = schemaText;
-        if (s_compiledTypesCache.TryGetValue(key, out DynamicJsonType value))
-        {
-            return value;
-        }
-
-        // Potentially execute async operation unnecessarily, but only in the case where we need to add to the cache.
         var generator = new TestJsonSchemaCodeGenerator(
             remotesBaseDirectory,
             defaultVocabulary: defaultVocabulary,
@@ -255,8 +229,7 @@ public class TestJsonSchemaCodeGenerator
             addExplicitUsings: addExplicitUsings);
 
         GeneratedCode generatedCode = generator.GenerateCodeSync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
-        DynamicJsonType result = Compile(generatedCode, hostAssembly);
-        return s_compiledTypesCache.GetOrAdd(key, _ => result);
+        return Compile(generatedCode, hostAssembly);
     }
 
     /// <summary>
@@ -286,13 +259,6 @@ public class TestJsonSchemaCodeGenerator
         bool addExplicitUsings,
         Assembly hostAssembly)
     {
-        string key = schemaText;
-        if (s_compiledTypesCache.TryGetValue(key, out DynamicJsonType value))
-        {
-            return value;
-        }
-
-        // Potentially execute async operation unnecessarily, but only in the case where we need to add to the cache.
         var generator = new TestJsonSchemaCodeGenerator(
             remotesBaseDirectory,
             defaultVocabulary: defaultVocabulary,
@@ -302,8 +268,7 @@ public class TestJsonSchemaCodeGenerator
             addExplicitUsings: addExplicitUsings);
 
         GeneratedCode generatedCode = generator.GenerateCodeSync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
-        DynamicJsonType result = Compile(generatedCode, hostAssembly);
-        return s_compiledTypesCache.GetOrAdd(key, _ => result);
+        return Compile(generatedCode, hostAssembly);
     }
 
     /// <summary>

@@ -37,10 +37,6 @@ public static class DynamicCompiler
         global using global::System.Linq;
         """;
 
-#if NET8_0_OR_GREATER
-    private static readonly DynamicAssemblyLoadContext PluginAssemblyLoadContext = new();
-#endif
-
     /// <summary>
     /// Compile the generated code files and return the exported type with the given fully-qualified name.
     /// </summary>
@@ -249,7 +245,12 @@ public static class DynamicCompiler
 #if NET8_0_OR_GREATER
     private static Assembly LoadAssembly(MemoryStream outputStream)
     {
-        return PluginAssemblyLoadContext.LoadFromStream(outputStream);
+        // Each compilation gets its own collectible AssemblyLoadContext so that
+        // the loaded assembly can be unloaded when nothing references the returned
+        // Type any longer. This prevents unbounded memory growth in long-running
+        // test processes that compile hundreds of schemas.
+        var context = new DynamicAssemblyLoadContext();
+        return context.LoadFromStream(outputStream);
     }
 
     private sealed class DynamicAssemblyLoadContext : AssemblyLoadContext
