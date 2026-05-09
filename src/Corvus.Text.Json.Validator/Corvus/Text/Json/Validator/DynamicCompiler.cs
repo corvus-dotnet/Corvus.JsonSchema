@@ -140,6 +140,21 @@ public static class DynamicCompiler
         HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
         List<MetadataReference> references = [];
 
+        // Add assemblies loaded in the AppDomain FIRST. These are the real runtime
+        // assemblies (e.g. mscorlib 4.0.0.0 from the GAC) and must take precedence
+        // over facade DLLs in the output directory (e.g. mscorlib 2.0.0.0 from
+        // netstandard2.0). Without this ordering, the directory scan picks up the
+        // facade version, causing CS1705 version mismatch errors in Roslyn compilation.
+        foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (!a.IsDynamic && !string.IsNullOrEmpty(a.Location) && seenNames.Add(a.GetName().Name ?? Path.GetFileNameWithoutExtension(a.Location)))
+            {
+                references.Add(MetadataReference.CreateFromFile(a.Location));
+            }
+        }
+
+        // Then scan DLLs in the output directory for project dependencies not yet
+        // loaded into the AppDomain.
         if (directory is not null && Directory.Exists(directory))
         {
             foreach (string dll in Directory.EnumerateFiles(directory, "*.dll"))
@@ -149,24 +164,19 @@ public static class DynamicCompiler
                 {
                     try
                     {
+                        // Validate the DLL is a managed assembly before adding it.
+                        // Native DLLs (e.g. coverage instrumentation, msdia140.dll)
+                        // pass MetadataReference.CreateFromFile but cause CS0009
+                        // "PE image doesn't contain managed metadata" at compile time.
+                        AssemblyName.GetAssemblyName(dll);
                         references.Add(MetadataReference.CreateFromFile(dll));
                     }
                     catch
                     {
-                        // Skip DLLs that can't be loaded as metadata references (e.g. native DLLs)
+                        // Skip DLLs that aren't managed assemblies or can't be loaded
                         seenNames.Remove(simpleName);
                     }
                 }
-            }
-        }
-
-        // Also include assemblies loaded in the AppDomain that may be from the GAC or
-        // other locations not in the output directory.
-        foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
-        {
-            if (!a.IsDynamic && !string.IsNullOrEmpty(a.Location) && seenNames.Add(a.GetName().Name ?? Path.GetFileNameWithoutExtension(a.Location)))
-            {
-                references.Add(MetadataReference.CreateFromFile(a.Location));
             }
         }
 
