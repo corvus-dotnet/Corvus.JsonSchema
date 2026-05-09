@@ -19,6 +19,8 @@ namespace TestUtilities;
 
 public class TestJsonSchemaCodeGenerator
 {
+    private static int s_compilationCount;
+
     private readonly IDocumentResolver _documentResolver;
 
     private readonly VocabularyRegistry _vocabularyRegistry;
@@ -290,13 +292,43 @@ public class TestJsonSchemaCodeGenerator
             return new(typeof(JsonElementForBooleanFalseSchema));
         }
 
+        int count = Interlocked.Increment(ref s_compilationCount);
+        long memMB = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / (1024 * 1024);
         string rootTypeName = code.RootType.FullyQualifiedDotnetTypeName()!;
+
+        // Write diagnostics to stderr (shown by MTP in --output Detailed mode) and
+        // to a log file that survives even if the process is SIGKILL'd (OOM), since
+        // the OS flushes file buffers on process exit.
+        string diagLine = $"[DIAG] Compilation #{count} | Mem={memMB}MB | Type={rootTypeName}";
+        Console.Error.WriteLine(diagLine);
+        Console.Error.Flush();
+        WriteDiagnosticLog(diagLine);
+
         Type generatedType = Corvus.Text.Json.Validator.DynamicCompiler.CompileGeneratedType(
             rootTypeName,
             code.GeneratedFiles,
             hostAssembly);
 
         return new(generatedType);
+    }
+
+    private static void WriteDiagnosticLog(string message)
+    {
+        try
+        {
+            string logDir = Path.Combine(
+                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".",
+                "TestResults");
+            Directory.CreateDirectory(logDir);
+            string logPath = Path.Combine(logDir, "compilation-diagnostics.log");
+            using var writer = new StreamWriter(logPath, append: true);
+            writer.WriteLine($"{System.DateTime.UtcNow:HH:mm:ss.fff} {message}");
+            writer.Flush();
+        }
+        catch
+        {
+            // Best-effort diagnostics — don't fail the test if logging fails
+        }
     }
 
     /// <summary>

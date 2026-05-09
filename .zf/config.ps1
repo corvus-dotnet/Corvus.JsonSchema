@@ -90,6 +90,8 @@ $AdditionalTestArgs = @(
     "--filter", 'TestCategory!=failing&TestCategory!=outerloop'
     "--ignore-exit-code", "8"
     "--max-parallel-test-modules", "2"
+    "--no-ansi"
+    "--output", "Detailed"
 )
 $StripOutputFromLargeTrxFiles = $true
 $TruncateOversizedCoverageReport = $true
