@@ -72,6 +72,10 @@ $IncludeAssembliesInCodeCoverage = @(
 $ExcludeAssembliesInCodeCoverage = @()
 $ExcludeFilesInCodeCoverage = @('*.g.cs')
 
+# Pass the dotnet-coverage settings file to control which assemblies are instrumented.
+# This filters coverage collection at instrumentation time (not just at report time).
+$DotNetCoverageSettingsFile = (Resolve-Path (Join-Path $here "dotnet-coverage.settings.xml")).Path
+
 # When running GHA honour the TFM that the matrix build passes via an environment variable
 $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
 

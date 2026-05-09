@@ -123,6 +123,7 @@ jobs:
               }
             ]
           }
+      compilePhaseRunnerOs: ubuntu-latest
       netSdkVersion: '10.0.x'
       additionalNetSdkVersion: |
         8.0.x
