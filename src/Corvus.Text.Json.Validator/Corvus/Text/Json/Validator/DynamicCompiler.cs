@@ -282,22 +282,15 @@ public static class DynamicCompiler
     }
 
 #if NET8_0_OR_GREATER
+    // A single shared ALC for all dynamically compiled assemblies. Using one ALC
+    // is more memory-efficient than per-compilation ALCs because test classes hold
+    // static references to the compiled types (preventing collection anyway).
+    private static readonly AssemblyLoadContext s_dynamicLoadContext =
+        new(nameof(DynamicCompiler), isCollectible: false);
+
     private static Assembly LoadAssembly(MemoryStream outputStream)
     {
-        // Each compilation gets its own collectible AssemblyLoadContext so that
-        // the loaded assembly can be unloaded when nothing references the returned
-        // Type any longer. This prevents unbounded memory growth in long-running
-        // test processes that compile hundreds of schemas.
-        var context = new DynamicAssemblyLoadContext();
-        return context.LoadFromStream(outputStream);
-    }
-
-    private sealed class DynamicAssemblyLoadContext : AssemblyLoadContext
-    {
-        public DynamicAssemblyLoadContext()
-            : base($"DynamicAssemblyLoadContext_{Guid.NewGuid():N}", isCollectible: true)
-        {
-        }
+        return s_dynamicLoadContext.LoadFromStream(outputStream);
     }
 #else
     private static Assembly LoadAssembly(MemoryStream outputStream)

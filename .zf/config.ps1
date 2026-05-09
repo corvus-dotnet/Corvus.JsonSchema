@@ -93,7 +93,6 @@ $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
 $AdditionalTestArgs = @(
     "--filter", 'TestCategory!=outerloop'
     "--ignore-exit-code", "8"
-    "--max-parallel-test-modules", "1"
 )
 $StripOutputFromLargeTrxFiles = $true
 $TruncateOversizedCoverageReport = $true
