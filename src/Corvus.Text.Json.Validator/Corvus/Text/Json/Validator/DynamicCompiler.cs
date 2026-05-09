@@ -87,6 +87,7 @@ public static class DynamicCompiler
     private static (IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines)
         BuildMetadataReferencesAndDefines(Assembly hostAssembly)
     {
+#if NET8_0_OR_GREATER
         DependencyContext? ctx = DependencyContext.Load(hostAssembly) ?? DependencyContext.Default;
 
         if (ctx is not null)
@@ -97,9 +98,14 @@ public static class DynamicCompiler
                 select MetadataReference.CreateFromFile(r),
                 ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]));
         }
+#endif
 
-        // Fallback for .NET Framework where DependencyContext is not available.
+        // Fallback for .NET Framework, or when DependencyContext is not available.
         // Scan all DLLs in the host assembly's directory to pick up transitive dependencies.
+        // On .NET Framework this is always used because DependencyContext.Load() may return
+        // a context with unresolvable paths when the build ran on a different OS (e.g. Linux
+        // build, Windows test run). The directory-scanning approach uses runtime assembly
+        // resolution (GAC, framework dirs) which is OS-independent.
         return (BuildMetadataReferencesFromDirectory(hostAssembly), new[] { "DYNAMIC_BUILD" });
     }
 
