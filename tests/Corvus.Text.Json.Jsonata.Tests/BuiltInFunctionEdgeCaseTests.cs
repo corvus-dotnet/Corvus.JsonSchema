@@ -3259,12 +3259,12 @@ public class BuiltInFunctionEdgeCaseTests
     }
 
     [TestMethod]
-    public void FormatNumber_NoDigitChars_ThrowsD3085()
+    public void FormatNumber_NoDigitChars_ThrowsD3086()
     {
-        // Reference implementation bug: crashes at splitParts (jsonata.js:2196) with
-        // code: undefined. Our D3085 is the correct behavior per XPath/XQuery spec.
-        // See: https://github.com/jsonata-js/jsonata/issues/787
-        EvalThrows("$formatNumber(42, \"---\")", "{}", "D3085");
+        // A picture with only passive characters (no active characters at all) throws
+        // D3086. The JSONata test suite (issue786.json) confirms this behavior.
+        // See: https://github.com/jsonata-js/jsonata/issues/786
+        EvalThrows("$formatNumber(42, \"---\")", "{}", "D3086");
     }
 
     [TestMethod]
