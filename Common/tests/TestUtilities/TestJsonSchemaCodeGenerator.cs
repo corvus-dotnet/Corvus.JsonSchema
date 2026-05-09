@@ -293,12 +293,22 @@ public class TestJsonSchemaCodeGenerator
         }
 
         int count = Interlocked.Increment(ref s_compilationCount);
-        long memMB = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / (1024 * 1024);
         string rootTypeName = code.RootType.FullyQualifiedDotnetTypeName()!;
 
-        // Write diagnostics to stderr (shown by MTP in --output Detailed mode) and
-        // to a log file that survives even if the process is SIGKILL'd (OOM), since
-        // the OS flushes file buffers on process exit.
+        // Force GC every 50 compilations to allow collectible ALCs to unload (net8.0+)
+        // and to free Roslyn temporary objects. Without this, memory grows faster than
+        // the background GC can reclaim, causing OOM on CI runners with 7 GB RAM.
+        if (count % 50 == 0)
+        {
+            GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+            GC.WaitForPendingFinalizers();
+            GC.Collect(2, GCCollectionMode.Forced, blocking: true);
+        }
+
+        long memMB = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / (1024 * 1024);
+
+        // Write diagnostics to a log file that survives even if the process is
+        // SIGKILL'd (OOM), since the OS flushes file buffers on process exit.
         string diagLine = $"[DIAG] Compilation #{count} | Mem={memMB}MB | Type={rootTypeName}";
         Console.Error.WriteLine(diagLine);
         Console.Error.Flush();
