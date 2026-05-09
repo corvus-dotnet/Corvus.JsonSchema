@@ -86,10 +86,14 @@ $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
 # Microsoft Testing Platform (MTP) used by MSTest. Removed to fix CI test execution.
 # NOTE: '--ignore-exit-code 8' suppresses MTP exit code 8 ("zero tests ran") which
 # occurs for CodeGenerator.Tests on net481 (empty assembly — CLI tool is net10.0 only).
+# NOTE: The '&' character in 'TestCategory!=failing&TestCategory!=outerloop' can be
+# misinterpreted by process-spawning layers (e.g. dotnet-coverage launching dotnet test).
+# Using 'TestCategory!=outerloop' alone is sufficient since no tests currently have the
+# 'failing' category. If tests are later given 'failing', add a separate --filter arg.
 $AdditionalTestArgs = @(
-    "--filter", 'TestCategory!=failing&TestCategory!=outerloop'
+    "--filter", 'TestCategory!=outerloop'
     "--ignore-exit-code", "8"
-    "--max-parallel-test-modules", "2"
+    "--max-parallel-test-modules", "1"
 )
 $StripOutputFromLargeTrxFiles = $true
 $TruncateOversizedCoverageReport = $true

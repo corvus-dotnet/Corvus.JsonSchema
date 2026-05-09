@@ -37,6 +37,14 @@ public static class DynamicCompiler
         global using global::System.Linq;
         """;
 
+    // Cache metadata references per host assembly to avoid re-reading PE metadata
+    // from hundreds of DLLs on every compilation. The references depend only on the
+    // host assembly's compilation context, which doesn't change across compilations.
+    private static readonly object s_referenceCacheLock = new();
+    private static Assembly? s_cachedHostAssembly;
+    private static IReadOnlyList<MetadataReference>? s_cachedReferences;
+    private static IReadOnlyList<string?>? s_cachedDefines;
+
     /// <summary>
     /// Compile the generated code files and return the exported type with the given fully-qualified name.
     /// </summary>
@@ -50,8 +58,8 @@ public static class DynamicCompiler
         IReadOnlyCollection<GeneratedCodeFile> generatedCode,
         Assembly hostAssembly)
     {
-        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) =
-            BuildMetadataReferencesAndDefines(hostAssembly);
+        (IReadOnlyList<MetadataReference> references, IReadOnlyList<string?> defines) =
+            GetOrBuildMetadataReferences(hostAssembly);
 
         IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedCode, defines);
 
@@ -80,7 +88,28 @@ public static class DynamicCompiler
         return generatedAssembly.ExportedTypes.Single(t => t.FullName == rootTypeName);
     }
 
-    private static (IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines)
+    private static (IReadOnlyList<MetadataReference> MetadataReferences, IReadOnlyList<string?> Defines)
+        GetOrBuildMetadataReferences(Assembly hostAssembly)
+    {
+        lock (s_referenceCacheLock)
+        {
+            if (s_cachedReferences is not null && ReferenceEquals(s_cachedHostAssembly, hostAssembly))
+            {
+                return (s_cachedReferences, s_cachedDefines!);
+            }
+
+            (IReadOnlyList<MetadataReference> references, IReadOnlyList<string?> defines) =
+                BuildMetadataReferencesAndDefines(hostAssembly);
+
+            s_cachedHostAssembly = hostAssembly;
+            s_cachedReferences = references;
+            s_cachedDefines = defines;
+
+            return (references, defines);
+        }
+    }
+
+    private static (IReadOnlyList<MetadataReference> MetadataReferences, IReadOnlyList<string?> Defines)
         BuildMetadataReferencesAndDefines(Assembly hostAssembly)
     {
 #if NET8_0_OR_GREATER
@@ -89,10 +118,10 @@ public static class DynamicCompiler
         if (ctx is not null)
         {
             return (
-                from l in ctx.CompileLibraries
-                from r in TryResolveReferencePaths(l)
-                select MetadataReference.CreateFromFile(r),
-                ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]));
+                (from l in ctx.CompileLibraries
+                 from r in TryResolveReferencePaths(l)
+                 select MetadataReference.CreateFromFile(r)).ToList(),
+                ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]).ToList());
         }
 #endif
 
@@ -102,7 +131,7 @@ public static class DynamicCompiler
         // a context with unresolvable paths when the build ran on a different OS (e.g. Linux
         // build, Windows test run). The directory-scanning approach uses runtime assembly
         // resolution (GAC, framework dirs) which is OS-independent.
-        return (BuildMetadataReferencesFromDirectory(hostAssembly), new[] { "DYNAMIC_BUILD" });
+        return (BuildMetadataReferencesFromDirectory(hostAssembly), ["DYNAMIC_BUILD"]);
     }
 
     private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library)
@@ -120,7 +149,7 @@ public static class DynamicCompiler
         }
     }
 
-    private static IEnumerable<MetadataReference> BuildMetadataReferencesFromDirectory(Assembly hostAssembly)
+    private static IReadOnlyList<MetadataReference> BuildMetadataReferencesFromDirectory(Assembly hostAssembly)
     {
         // On .NET Framework, assemblies may be shadow-copied to a temp directory,
         // so hostAssembly.Location may not be in the original output directory.
