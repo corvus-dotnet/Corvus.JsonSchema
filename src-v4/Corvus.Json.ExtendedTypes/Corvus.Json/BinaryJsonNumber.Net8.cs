@@ -1087,9 +1087,9 @@ public readonly struct BinaryJsonNumber :
     {
         return value.numericKind switch
         {
-            Kind.Double => double.IsNegativeInfinity(ReadDouble(value.binaryData)),
-            Kind.Half => Half.IsNegativeInfinity(ReadHalf(value.binaryData)),
-            Kind.Single => float.IsNegativeInfinity(ReadSingle(value.binaryData)),
+            Kind.Double => double.IsPositiveInfinity(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsPositiveInfinity(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsPositiveInfinity(ReadSingle(value.binaryData)),
             _ => false,
         };
     }
@@ -1113,9 +1113,9 @@ public readonly struct BinaryJsonNumber :
     {
         return value.numericKind switch
         {
-            Kind.Double => double.IsNormal(ReadDouble(value.binaryData)),
-            Kind.Half => Half.IsNormal(ReadHalf(value.binaryData)),
-            Kind.Single => float.IsNormal(ReadSingle(value.binaryData)),
+            Kind.Double => double.IsSubnormal(ReadDouble(value.binaryData)),
+            Kind.Half => Half.IsSubnormal(ReadHalf(value.binaryData)),
+            Kind.Single => float.IsSubnormal(ReadSingle(value.binaryData)),
             _ => false,
         };
     }

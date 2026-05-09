@@ -494,4 +494,40 @@ public class JsonPropertyNameTests
         Assert.IsTrue(result.HasStringBacking);
         Assert.AreEqual("propname", result.GetString());
     }
+
+#if NET8_0_OR_GREATER
+    [TestMethod]
+    public void As_StringBacked()
+    {
+        JsonPropertyName name = new("hello");
+        JsonString result = name.As<JsonString>();
+        Assert.AreEqual("hello", (string)result);
+    }
+
+    [TestMethod]
+    public void As_JsonElementBacked()
+    {
+        using var doc = JsonDocument.Parse("\"hello\"");
+        JsonPropertyName name = new(doc.RootElement);
+        JsonString result = name.As<JsonString>();
+        Assert.AreEqual("hello", (string)result);
+    }
+
+    [TestMethod]
+    public void EqualsString_Overload_StringBacking()
+    {
+        JsonPropertyName name = new("test");
+        Assert.IsTrue(name.EqualsString("test"));
+        Assert.IsFalse(name.EqualsString("other"));
+    }
+
+    [TestMethod]
+    public void EqualsString_Overload_JsonElementBacking()
+    {
+        using var doc = JsonDocument.Parse("\"test\"");
+        JsonPropertyName name = new(doc.RootElement);
+        Assert.IsTrue(name.EqualsString("test"));
+        Assert.IsFalse(name.EqualsString("other"));
+    }
+#endif
 }
