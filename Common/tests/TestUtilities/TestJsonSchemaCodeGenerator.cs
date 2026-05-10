@@ -1,5 +1,6 @@
 // Derived from code licensed to the .NET Foundation under one or more agreements.
 // The .NET Foundation licensed this code under the MIT license.
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -19,7 +20,7 @@ namespace TestUtilities;
 
 public class TestJsonSchemaCodeGenerator
 {
-    private static int s_compilationCount;
+    private static readonly ConcurrentDictionary<string, DynamicJsonType> s_compiledTypesCache = new();
 
     private readonly IDocumentResolver _documentResolver;
 
@@ -145,6 +146,13 @@ public class TestJsonSchemaCodeGenerator
         bool addExplicitUsings,
         Assembly hostAssembly)
     {
+        string key = schemaText;
+        if (s_compiledTypesCache.TryGetValue(key, out DynamicJsonType value))
+        {
+            return value;
+        }
+
+        // Potentially execute async operation unnecessarily, but only in the case where we need to add to the cache.
         var generator = new TestJsonSchemaCodeGenerator(
             remotesBaseDirectory,
             defaultVocabulary: defaultVocabulary,
@@ -154,7 +162,8 @@ public class TestJsonSchemaCodeGenerator
             addExplicitUsings: addExplicitUsings);
 
         GeneratedCode generatedCode = await generator.GenerateCodeAsync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
-        return Compile(generatedCode, hostAssembly);
+        DynamicJsonType result = Compile(generatedCode, hostAssembly);
+        return s_compiledTypesCache.GetOrAdd(key, _ => result);
     }
 
     /// <summary>
@@ -183,6 +192,13 @@ public class TestJsonSchemaCodeGenerator
         bool addExplicitUsings,
         Assembly hostAssembly)
     {
+        string key = $"{schemaText}_{defaultVocabulary}_{validateFormat}_{optionalAsNullable}_{useImplicitOperatorString}_{addExplicitUsings}";
+        if (s_compiledTypesCache.TryGetValue(key, out DynamicJsonType value))
+        {
+            return value;
+        }
+
+        // Potentially execute async operation unnecessarily, but only in the case where we need to add to the cache.
         var generator = new TestJsonSchemaCodeGenerator(
             remotesBaseDirectory,
             defaultVocabulary: defaultVocabulary,
@@ -192,7 +208,8 @@ public class TestJsonSchemaCodeGenerator
             addExplicitUsings: addExplicitUsings);
 
         GeneratedCode generatedCode = await generator.GenerateCodeAsync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
-        return Compile(generatedCode, hostAssembly);
+        DynamicJsonType result = Compile(generatedCode, hostAssembly);
+        return s_compiledTypesCache.GetOrAdd(key, _ => result);
     }
 
     /// <summary>
@@ -222,6 +239,13 @@ public class TestJsonSchemaCodeGenerator
         bool addExplicitUsings,
         Assembly hostAssembly)
     {
+        string key = schemaText;
+        if (s_compiledTypesCache.TryGetValue(key, out DynamicJsonType value))
+        {
+            return value;
+        }
+
+        // Potentially execute async operation unnecessarily, but only in the case where we need to add to the cache.
         var generator = new TestJsonSchemaCodeGenerator(
             remotesBaseDirectory,
             defaultVocabulary: defaultVocabulary,
@@ -231,7 +255,8 @@ public class TestJsonSchemaCodeGenerator
             addExplicitUsings: addExplicitUsings);
 
         GeneratedCode generatedCode = generator.GenerateCodeSync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
-        return Compile(generatedCode, hostAssembly);
+        DynamicJsonType result = Compile(generatedCode, hostAssembly);
+        return s_compiledTypesCache.GetOrAdd(key, _ => result);
     }
 
     /// <summary>
@@ -261,6 +286,13 @@ public class TestJsonSchemaCodeGenerator
         bool addExplicitUsings,
         Assembly hostAssembly)
     {
+        string key = schemaText;
+        if (s_compiledTypesCache.TryGetValue(key, out DynamicJsonType value))
+        {
+            return value;
+        }
+
+        // Potentially execute async operation unnecessarily, but only in the case where we need to add to the cache.
         var generator = new TestJsonSchemaCodeGenerator(
             remotesBaseDirectory,
             defaultVocabulary: defaultVocabulary,
@@ -270,7 +302,8 @@ public class TestJsonSchemaCodeGenerator
             addExplicitUsings: addExplicitUsings);
 
         GeneratedCode generatedCode = generator.GenerateCodeSync(virtualFilename, schemaText, defaultNamespace: ToPascalCase(defaultNamespace));
-        return Compile(generatedCode, hostAssembly);
+        DynamicJsonType result = Compile(generatedCode, hostAssembly);
+        return s_compiledTypesCache.GetOrAdd(key, _ => result);
     }
 
     /// <summary>
@@ -292,27 +325,7 @@ public class TestJsonSchemaCodeGenerator
             return new(typeof(JsonElementForBooleanFalseSchema));
         }
 
-        int count = Interlocked.Increment(ref s_compilationCount);
         string rootTypeName = code.RootType.FullyQualifiedDotnetTypeName()!;
-
-        // Force GC every 10 compilations to allow collectible ALCs to unload (net8.0+)
-        // and to free Roslyn temporary objects. Without this, memory grows faster than
-        // the background GC can reclaim, causing OOM on CI runners with 7 GB RAM.
-        if (count % 10 == 0)
-        {
-            GC.Collect(2, GCCollectionMode.Forced, blocking: true);
-            GC.WaitForPendingFinalizers();
-            GC.Collect(2, GCCollectionMode.Forced, blocking: true);
-        }
-
-        long memMB = System.Diagnostics.Process.GetCurrentProcess().WorkingSet64 / (1024 * 1024);
-
-        // Write diagnostics to a log file that survives even if the process is
-        // SIGKILL'd (OOM), since the OS flushes file buffers on process exit.
-        string diagLine = $"[DIAG] Compilation #{count} | Mem={memMB}MB | Type={rootTypeName}";
-        Console.Error.WriteLine(diagLine);
-        Console.Error.Flush();
-        WriteDiagnosticLog(diagLine);
 
         Type generatedType = Corvus.Text.Json.Validator.DynamicCompiler.CompileGeneratedType(
             rootTypeName,
@@ -320,25 +333,6 @@ public class TestJsonSchemaCodeGenerator
             hostAssembly);
 
         return new(generatedType);
-    }
-
-    private static void WriteDiagnosticLog(string message)
-    {
-        try
-        {
-            string logDir = Path.Combine(
-                Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? ".",
-                "TestResults");
-            Directory.CreateDirectory(logDir);
-            string logPath = Path.Combine(logDir, "compilation-diagnostics.log");
-            using var writer = new StreamWriter(logPath, append: true);
-            writer.WriteLine($"{System.DateTime.UtcNow:HH:mm:ss.fff} {message}");
-            writer.Flush();
-        }
-        catch
-        {
-            // Best-effort diagnostics — don't fail the test if logging fails
-        }
     }
 
     /// <summary>

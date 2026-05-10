@@ -14,6 +14,7 @@ using System.Runtime.Loader;
 #endif
 
 using System.Text;
+using System.Threading;
 using Corvus.Json.CodeGeneration;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
@@ -37,6 +38,16 @@ public static class DynamicCompiler
         global using global::System.Linq;
         """;
 
+#if NET8_0_OR_GREATER
+    private static readonly DynamicAssemblyLoadContext PluginAssemblyLoadContext = new();
+#endif
+
+    private static readonly string s_diagnosticLogPath = Path.Combine(
+        AppDomain.CurrentDomain.BaseDirectory ?? Environment.CurrentDirectory,
+        "dynamic-compiler-diagnostics.log");
+
+    private static int s_compilationCount;
+
     // Cache metadata references per host assembly to avoid re-reading PE metadata
     // from hundreds of DLLs on every compilation. The references depend only on the
     // host assembly's compilation context, which doesn't change across compilations.
@@ -58,8 +69,13 @@ public static class DynamicCompiler
         IReadOnlyCollection<GeneratedCodeFile> generatedCode,
         Assembly hostAssembly)
     {
+        int count = Interlocked.Increment(ref s_compilationCount);
+        WriteDiagnostic($"CompileGeneratedType #{count}: rootType={rootTypeName}, files={generatedCode.Count}");
+
         (IReadOnlyList<MetadataReference> references, IReadOnlyList<string?> defines) =
             GetOrBuildMetadataReferences(hostAssembly);
+
+        WriteDiagnostic($"  Compilation #{count}: refs={references.Count}, defines=[{string.Join(",", defines)}]");
 
         IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedCode, defines);
 
@@ -77,9 +93,13 @@ public static class DynamicCompiler
 
         if (!result.Success)
         {
+            string errors = BuildCompilationErrors(result);
+            WriteDiagnostic($"  Compilation #{count} FAILED: {errors.Substring(0, Math.Min(500, errors.Length))}");
             throw new InvalidOperationException(
-                "Unable to compile generated code\r\n" + BuildCompilationErrors(result));
+                "Unable to compile generated code\r\n" + errors);
         }
+
+        WriteDiagnostic($"  Compilation #{count} succeeded");
 
         outputStream.Flush();
         outputStream.Position = 0;
@@ -112,39 +132,93 @@ public static class DynamicCompiler
     private static (IReadOnlyList<MetadataReference> MetadataReferences, IReadOnlyList<string?> Defines)
         BuildMetadataReferencesAndDefines(Assembly hostAssembly)
     {
-#if NET8_0_OR_GREATER
+        WriteDiagnostic($"BuildMetadataReferencesAndDefines: hostAssembly={hostAssembly.GetName().Name}, Location={hostAssembly.Location}");
+
         DependencyContext? ctx = DependencyContext.Load(hostAssembly) ?? DependencyContext.Default;
+
+        WriteDiagnostic($"  DependencyContext: {(ctx is null ? "null" : $"loaded, Target={ctx.Target.Framework}/{ctx.Target.Runtime}, CompileLibraries={ctx.CompileLibraries.Count()}")}");
 
         if (ctx is not null)
         {
-            return (
-                (from l in ctx.CompileLibraries
-                 from r in TryResolveReferencePaths(l)
-                 select MetadataReference.CreateFromFile(r)).ToList(),
-                ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]).ToList());
-        }
-#endif
+            int totalLibraries = 0;
+            int resolvedLibraries = 0;
+            int failedLibraries = 0;
+            List<MetadataReference> refs = [];
 
-        // Fallback for .NET Framework, or when DependencyContext is not available.
-        // Scan all DLLs in the host assembly's directory to pick up transitive dependencies.
-        // On .NET Framework this is always used because DependencyContext.Load() may return
-        // a context with unresolvable paths when the build ran on a different OS (e.g. Linux
-        // build, Windows test run). The directory-scanning approach uses runtime assembly
-        // resolution (GAC, framework dirs) which is OS-independent.
-        return (BuildMetadataReferencesFromDirectory(hostAssembly), ["DYNAMIC_BUILD"]);
+            foreach (CompilationLibrary library in ctx.CompileLibraries)
+            {
+                totalLibraries++;
+                IEnumerable<string> paths = TryResolveReferencePaths(library, out bool resolved);
+                if (resolved)
+                {
+                    resolvedLibraries++;
+                }
+                else
+                {
+                    failedLibraries++;
+                }
+
+                foreach (string r in paths)
+                {
+                    refs.Add(MetadataReference.CreateFromFile(r));
+                }
+            }
+
+            WriteDiagnostic($"  DependencyContext resolution: total={totalLibraries}, resolved={resolvedLibraries}, failed={failedLibraries}, refs={refs.Count}");
+
+            // Verify the resolved references are viable by checking for a core
+            // framework assembly (System.Object). When the build ran on a different OS
+            // (e.g. Linux build, Windows net481 test), DependencyContext may resolve
+            // SOME libraries (those whose DLLs happen to exist in the output directory)
+            // but miss critical framework assemblies like mscorlib. In that case,
+            // refs.Count > 0 but compilations fail with CS8021 "No assembly containing
+            // System.Object was found". We must fall through to directory scanning which
+            // finds framework assemblies from the GAC/AppDomain.
+            bool hasSystemObject = refs.Any(r =>
+            {
+                if (r is PortableExecutableReference peRef && peRef.FilePath is string path)
+                {
+                    string name = Path.GetFileNameWithoutExtension(path);
+                    return name.Equals("mscorlib", StringComparison.OrdinalIgnoreCase)
+                        || name.Equals("System.Runtime", StringComparison.OrdinalIgnoreCase)
+                        || name.Equals("netstandard", StringComparison.OrdinalIgnoreCase);
+                }
+
+                return false;
+            });
+
+            if (refs.Count > 0 && hasSystemObject)
+            {
+                WriteDiagnostic($"  -> Taking DependencyContext path with {refs.Count} refs (hasSystemObject=true, defines: {string.Join(",", ctx.CompilationOptions.Defines)})");
+                return (
+                    refs,
+                    ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]).ToList());
+            }
+
+            WriteDiagnostic($"  -> DependencyContext refs={refs.Count}, hasSystemObject={hasSystemObject}, falling through to directory scanning");
+        }
+
+        // Fallback for .NET Framework where DependencyContext is not available,
+        // or when all DependencyContext paths failed to resolve (cross-OS build).
+        var dirRefs = BuildMetadataReferencesFromDirectory(hostAssembly);
+        WriteDiagnostic($"  -> Directory scanning produced {dirRefs.Count} refs");
+        return (dirRefs, ["DYNAMIC_BUILD"]);
     }
 
-    private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library)
+    private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library, out bool resolved)
     {
         try
         {
-            return library.ResolveReferencePaths();
+            var paths = library.ResolveReferencePaths().ToList();
+            resolved = paths.Count > 0;
+            return paths;
         }
         catch (InvalidOperationException)
         {
             // Some reference assembly entries (e.g., System.ValueTuple.Reference) may not be
             // resolvable when the framework reference assemblies are not available. These types
             // are typically in-box in the target framework and reachable through other references.
+            resolved = false;
             return [];
         }
     }
@@ -162,6 +236,8 @@ public static class DynamicCompiler
             string? assemblyLocation = hostAssembly.Location;
             directory = !string.IsNullOrEmpty(assemblyLocation) ? Path.GetDirectoryName(assemblyLocation) : null;
         }
+
+        WriteDiagnostic($"  BuildMetadataReferencesFromDirectory: directory={directory}");
 
         // Track by assembly simple name (filename without extension) to avoid CS1704
         // "An assembly with the same simple name has already been imported" when the
@@ -182,8 +258,13 @@ public static class DynamicCompiler
             }
         }
 
+        int appDomainRefs = references.Count;
+        WriteDiagnostic($"  AppDomain assemblies: {appDomainRefs}");
+
         // Then scan DLLs in the output directory for project dependencies not yet
         // loaded into the AppDomain.
+        int dirRefs = 0;
+        int skippedNative = 0;
         if (directory is not null && Directory.Exists(directory))
         {
             foreach (string dll in Directory.EnumerateFiles(directory, "*.dll"))
@@ -199,20 +280,26 @@ public static class DynamicCompiler
                         // "PE image doesn't contain managed metadata" at compile time.
                         AssemblyName.GetAssemblyName(dll);
                         references.Add(MetadataReference.CreateFromFile(dll));
+                        dirRefs++;
                     }
                     catch
                     {
                         // Skip DLLs that aren't managed assemblies or can't be loaded
                         seenNames.Remove(simpleName);
+                        skippedNative++;
                     }
                 }
             }
         }
 
+        WriteDiagnostic($"  Directory DLLs: added={dirRefs}, skippedNative={skippedNative}");
+
         // On .NET Framework, resolve referenced assemblies that may be in the GAC or
         // reference assembly directories but not in the output directory or loaded AppDomain.
         // This catches assemblies like System.Numerics that are transitively referenced.
+        int beforeTransitive = references.Count;
         ResolveTransitiveReferences(references, seenNames);
+        WriteDiagnostic($"  Transitive resolution: added={references.Count - beforeTransitive}, total={references.Count}");
 
         return references;
     }
@@ -282,15 +369,17 @@ public static class DynamicCompiler
     }
 
 #if NET8_0_OR_GREATER
-    // A single shared ALC for all dynamically compiled assemblies. Using one ALC
-    // is more memory-efficient than per-compilation ALCs because test classes hold
-    // static references to the compiled types (preventing collection anyway).
-    private static readonly AssemblyLoadContext s_dynamicLoadContext =
-        new(nameof(DynamicCompiler), isCollectible: false);
-
     private static Assembly LoadAssembly(MemoryStream outputStream)
     {
-        return s_dynamicLoadContext.LoadFromStream(outputStream);
+        return PluginAssemblyLoadContext.LoadFromStream(outputStream);
+    }
+
+    private sealed class DynamicAssemblyLoadContext : AssemblyLoadContext
+    {
+        public DynamicAssemblyLoadContext()
+            : base($"DynamicAssemblyLoadContext_{Guid.NewGuid():N}", isCollectible: true)
+        {
+        }
     }
 #else
     private static Assembly LoadAssembly(MemoryStream outputStream)
@@ -298,4 +387,22 @@ public static class DynamicCompiler
         return Assembly.Load(outputStream.ToArray());
     }
 #endif
+
+    private static readonly object s_diagnosticLock = new();
+
+    private static void WriteDiagnostic(string message)
+    {
+        string line = $"[{DateTime.UtcNow:HH:mm:ss.fff}] {message}";
+        lock (s_diagnosticLock)
+        {
+            try
+            {
+                File.AppendAllText(s_diagnosticLogPath, line + Environment.NewLine);
+            }
+            catch
+            {
+                // Diagnostics must never cause failures
+            }
+        }
+    }
 }

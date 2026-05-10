@@ -139,13 +139,6 @@ task PreTest {
 task PostTest {
     # Revert logging level
     $script:LogLevel = $LogLevelBackup
-
-    # Dump compilation diagnostics log if present (survives OOM kills via per-write flush)
-    $diagLogs = Get-ChildItem -Path $here -Recurse -Filter "compilation-diagnostics.log" -ErrorAction SilentlyContinue
-    foreach ($log in $diagLogs) {
-        Write-Build Green "=== Compilation diagnostics: $($log.FullName) ==="
-        Get-Content $log.FullName -Tail 50 | ForEach-Object { Write-Build White $_ }
-    }
 }
 # task PreTestReport {}
 # task PostTestReport {}
