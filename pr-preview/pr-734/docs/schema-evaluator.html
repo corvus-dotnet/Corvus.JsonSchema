@@ -396,8 +396,8 @@ using (var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions { Indented 
 <pre><code class="language-csharp">var annotations = JsonSchemaAnnotationProducer.CollectAnnotations(collector);
 
 // Check a specific annotation exists
-Assert.True(annotations.TryGetValue((&quot;&quot;, &quot;title&quot;), out var titleMap));
-Assert.Equal(&quot;\&quot;Person\&quot;&quot;, titleMap[&quot;#&quot;]);
+Assert.IsTrue(annotations.TryGetValue((&quot;&quot;, &quot;title&quot;), out var titleMap));
+Assert.AreEqual(&quot;\&quot;Person\&quot;&quot;, titleMap[&quot;#&quot;]);
 </code></pre>
 <blockquote>
 <p><strong>Note:</strong> <code>CollectAnnotations</code> allocates dictionaries. For production use, prefer <code>EnumerateAnnotations</code> or <code>WriteAnnotationsTo</code>.</p>
