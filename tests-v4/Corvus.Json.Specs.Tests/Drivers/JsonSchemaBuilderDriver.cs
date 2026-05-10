@@ -656,37 +656,48 @@ public class JsonSchemaBuilderDriver : IDisposable
     {
         DependencyContext? ctx = DependencyContext.Default ?? DependencyContext.Load(Assembly.GetExecutingAssembly());
 
+        List<MetadataReference> references;
+        List<string?> defines = ["DYNAMIC_BUILD"];
+
         if (ctx is not null)
         {
-            List<MetadataReference> references = (
+            references = (
                 from l in ctx.CompileLibraries
                 from r in TryResolveReferencePaths(l)
                 select (MetadataReference)MetadataReference.CreateFromFile(r)).ToList();
 
-            // Verify the resolved references include a core framework assembly.
-            // When the build ran on a different OS (e.g. Linux build, Windows net481 test),
-            // DependencyContext may partially resolve — enough for refs.Count > 0 but
-            // missing mscorlib/System.Runtime, causing CS0012/CS8021 in every compilation.
+            defines.AddRange(ctx.CompilationOptions.Defines);
+
             bool hasFrameworkAssembly = references.Any(r =>
                 r is PortableExecutableReference peRef && peRef.FilePath is string path &&
                 (Path.GetFileNameWithoutExtension(path).Equals("mscorlib", StringComparison.OrdinalIgnoreCase) ||
                  Path.GetFileNameWithoutExtension(path).Equals("System.Runtime", StringComparison.OrdinalIgnoreCase) ||
                  Path.GetFileNameWithoutExtension(path).Equals("netstandard", StringComparison.OrdinalIgnoreCase)));
 
-            if (references.Count > 0 && hasFrameworkAssembly)
+            if (!hasFrameworkAssembly)
             {
-                return (references, ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]));
+                SupplementWithDirectoryAndAppDomain(references);
             }
         }
+        else
+        {
+            references = [];
+            SupplementWithDirectoryAndAppDomain(references);
+        }
 
-        // Fallback: AppDomain assemblies first (finds mscorlib from GAC), then output directory DLLs.
-        return (BuildReferencesFromDirectoryAndAppDomain(), (IEnumerable<string?>)["DYNAMIC_BUILD"]);
+        return (references, defines);
     }
 
-    private static List<MetadataReference> BuildReferencesFromDirectoryAndAppDomain()
+    private static void SupplementWithDirectoryAndAppDomain(List<MetadataReference> references)
     {
         HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
-        List<MetadataReference> references = [];
+        foreach (MetadataReference r in references)
+        {
+            if (r is PortableExecutableReference peRef && peRef.FilePath is string path)
+            {
+                seenNames.Add(Path.GetFileNameWithoutExtension(path));
+            }
+        }
 
         foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
         {
@@ -718,8 +729,6 @@ public class JsonSchemaBuilderDriver : IDisposable
             }
         }
 
-        // Resolve transitive references (e.g. netstandard.dll) that may be in the
-        // GAC but not loaded into the AppDomain or present in the output directory.
         foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
         {
             if (!a.IsDynamic)
@@ -741,8 +750,6 @@ public class JsonSchemaBuilderDriver : IDisposable
                 }
             }
         }
-
-        return references;
     }
 
     private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library)

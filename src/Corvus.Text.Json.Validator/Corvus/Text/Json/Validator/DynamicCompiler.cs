@@ -119,21 +119,22 @@ public static class DynamicCompiler
     {
         DependencyContext? ctx = DependencyContext.Load(hostAssembly) ?? DependencyContext.Default;
 
+        List<MetadataReference> refs;
+        List<string?> defines = ["DYNAMIC_BUILD"];
+
         if (ctx is not null)
         {
-            List<MetadataReference> refs = (
+            refs = (
                 from l in ctx.CompileLibraries
                 from r in TryResolveReferencePaths(l)
                 select (MetadataReference)MetadataReference.CreateFromFile(r)).ToList();
 
-            // Verify the resolved references are viable by checking for a core
-            // framework assembly (System.Object). When the build ran on a different OS
-            // (e.g. Linux build, Windows net481 test), DependencyContext may resolve
-            // SOME libraries (those whose DLLs happen to exist in the output directory)
-            // but miss critical framework assemblies like mscorlib. In that case,
-            // refs.Count > 0 but compilations fail with CS8021 "No assembly containing
-            // System.Object was found". We must fall through to directory scanning which
-            // finds framework assemblies from the GAC/AppDomain.
+            defines.AddRange(ctx.CompilationOptions.Defines);
+
+            // When the build ran on a different OS (e.g. Linux build, Windows net481 test),
+            // DependencyContext may partially resolve — NuGet packages in the output dir
+            // resolve, but framework assemblies (mscorlib, netstandard) do not. Supplement
+            // with AppDomain/directory/transitive refs to fill the gaps.
             bool hasSystemObject = refs.Any(r =>
             {
                 if (r is PortableExecutableReference peRef && peRef.FilePath is string path)
@@ -147,18 +148,18 @@ public static class DynamicCompiler
                 return false;
             });
 
-            if (refs.Count > 0 && hasSystemObject)
+            if (!hasSystemObject)
             {
-                return (
-                    refs,
-                    ctx.CompilationOptions.Defines.AsEnumerable().Union(["DYNAMIC_BUILD"]).ToList());
+                SupplementWithDirectoryAndAppDomain(refs, hostAssembly);
             }
         }
+        else
+        {
+            refs = [];
+            SupplementWithDirectoryAndAppDomain(refs, hostAssembly);
+        }
 
-        // Fallback for .NET Framework where DependencyContext is not available,
-        // or when all DependencyContext paths failed to resolve (cross-OS build).
-        var dirRefs = BuildMetadataReferencesFromDirectory(hostAssembly);
-        return (dirRefs, ["DYNAMIC_BUILD"]);
+        return (refs, defines);
     }
 
     private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library)
@@ -176,7 +177,7 @@ public static class DynamicCompiler
         }
     }
 
-    private static IReadOnlyList<MetadataReference> BuildMetadataReferencesFromDirectory(Assembly hostAssembly)
+    private static void SupplementWithDirectoryAndAppDomain(List<MetadataReference> references, Assembly hostAssembly)
     {
         // On .NET Framework, assemblies may be shadow-copied to a temp directory,
         // so hostAssembly.Location may not be in the original output directory.
@@ -190,11 +191,16 @@ public static class DynamicCompiler
             directory = !string.IsNullOrEmpty(assemblyLocation) ? Path.GetDirectoryName(assemblyLocation) : null;
         }
 
-        // Track by assembly simple name (filename without extension) to avoid CS1704
-        // "An assembly with the same simple name has already been imported" when the
-        // same assembly exists at different paths (e.g. output dir vs NuGet packages).
+        // Seed seenNames from references already resolved by DependencyContext
+        // so we don't add duplicates.
         HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
-        List<MetadataReference> references = [];
+        foreach (MetadataReference r in references)
+        {
+            if (r is PortableExecutableReference peRef && peRef.FilePath is string path)
+            {
+                seenNames.Add(Path.GetFileNameWithoutExtension(path));
+            }
+        }
 
         // Add assemblies loaded in the AppDomain FIRST. These are the real runtime
         // assemblies (e.g. mscorlib 4.0.0.0 from the GAC) and must take precedence
@@ -238,10 +244,8 @@ public static class DynamicCompiler
 
         // On .NET Framework, resolve referenced assemblies that may be in the GAC or
         // reference assembly directories but not in the output directory or loaded AppDomain.
-        // This catches assemblies like System.Numerics that are transitively referenced.
+        // This catches assemblies like System.Numerics and netstandard that are transitively referenced.
         ResolveTransitiveReferences(references, seenNames);
-
-        return references;
     }
 
     private static void ResolveTransitiveReferences(List<MetadataReference> references, HashSet<string> seenNames)

@@ -148,29 +148,23 @@ public sealed class CodeGenConformanceFixture : IDisposable
                 from r in TryResolveReferencePaths(l)
                 select (MetadataReference)MetadataReference.CreateFromFile(r)).ToList();
 
-            // Verify the resolved references include a core framework assembly.
-            // When the build ran on a different OS (e.g. Linux build, Windows net481 test),
-            // DependencyContext may partially resolve — enough for refs.Count > 0 but
-            // missing mscorlib/System.Runtime, causing CS0012/CS8021 in every compilation.
+            defines.AddRange(ctx.CompilationOptions.Defines.Where(d => d is not null)!);
+
             bool hasFrameworkAssembly = references.Any(r =>
                 r is PortableExecutableReference peRef && peRef.FilePath is string path &&
                 (Path.GetFileNameWithoutExtension(path).Equals("mscorlib", StringComparison.OrdinalIgnoreCase) ||
                  Path.GetFileNameWithoutExtension(path).Equals("System.Runtime", StringComparison.OrdinalIgnoreCase) ||
                  Path.GetFileNameWithoutExtension(path).Equals("netstandard", StringComparison.OrdinalIgnoreCase)));
 
-            if (references.Count > 0 && hasFrameworkAssembly)
+            if (!hasFrameworkAssembly)
             {
-                defines.AddRange(ctx.CompilationOptions.Defines.Where(d => d is not null)!);
-            }
-            else
-            {
-                // Fall through to directory/AppDomain scanning
-                references = BuildReferencesFromDirectoryAndAppDomain();
+                SupplementWithDirectoryAndAppDomain(references);
             }
         }
         else
         {
-            references = BuildReferencesFromDirectoryAndAppDomain();
+            references = [];
+            SupplementWithDirectoryAndAppDomain(references);
         }
 
         CSharpParseOptions parseOptions = CSharpParseOptions.Default
@@ -180,12 +174,17 @@ public sealed class CodeGenConformanceFixture : IDisposable
         return (references, parseOptions);
     }
 
-    private static List<MetadataReference> BuildReferencesFromDirectoryAndAppDomain()
+    private static void SupplementWithDirectoryAndAppDomain(List<MetadataReference> references)
     {
         HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
-        List<MetadataReference> references = [];
+        foreach (MetadataReference r in references)
+        {
+            if (r is PortableExecutableReference peRef && peRef.FilePath is string path)
+            {
+                seenNames.Add(Path.GetFileNameWithoutExtension(path));
+            }
+        }
 
-        // AppDomain assemblies first — these include mscorlib from the GAC.
         foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
         {
             if (!a.IsDynamic && !string.IsNullOrEmpty(a.Location) &&
@@ -195,7 +194,6 @@ public sealed class CodeGenConformanceFixture : IDisposable
             }
         }
 
-        // Then DLLs in the output directory not yet seen.
         string? dir = AppDomain.CurrentDomain.BaseDirectory;
         if (dir is not null && Directory.Exists(dir))
         {
@@ -217,8 +215,6 @@ public sealed class CodeGenConformanceFixture : IDisposable
             }
         }
 
-        // Resolve transitive references (e.g. netstandard.dll) that may be in the
-        // GAC but not loaded into the AppDomain or present in the output directory.
         foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
         {
             if (!a.IsDynamic)
@@ -240,8 +236,6 @@ public sealed class CodeGenConformanceFixture : IDisposable
                 }
             }
         }
-
-        return references;
     }
 
     private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library)
