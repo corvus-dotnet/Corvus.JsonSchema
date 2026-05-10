@@ -41,8 +41,6 @@ public class JsonSchemaBuilderDriver : IDisposable
 
     private static readonly MethodInfo SequenceEqualMethod = GetSequenceEqualMethod();
 
-    private static readonly Lazy<(IEnumerable<MetadataReference> MetadataReferences, IEnumerable<string?> Defines)> CachedCompilationContext = new(BuildMetadataReferencesAndDefines);
-
     private readonly IConfiguration configuration;
     private readonly JsonSchemaTypeBuilder builder;
     private readonly IVocabulary defaultVocabulary;
@@ -574,7 +572,7 @@ public class JsonSchemaBuilderDriver : IDisposable
     {
         bool isCorvusType = rootTypeName.StartsWith("Corvus.");
 
-        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = CachedCompilationContext.Value;
+        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
 
         IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes, defines);
 
@@ -614,7 +612,7 @@ public class JsonSchemaBuilderDriver : IDisposable
     {
         bool isCorvusType = rootTypeName.StartsWith("Corvus.");
 
-        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = CachedCompilationContext.Value;
+        (IEnumerable<MetadataReference> references, IEnumerable<string?> defines) = BuildMetadataReferencesAndDefines();
 
         IEnumerable<SyntaxTree> syntaxTrees = ParseSyntaxTrees(generatedTypes, defines);
 
