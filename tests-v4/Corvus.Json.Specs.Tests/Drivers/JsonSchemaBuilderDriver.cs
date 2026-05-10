@@ -667,23 +667,16 @@ public class JsonSchemaBuilderDriver : IDisposable
                 select (MetadataReference)MetadataReference.CreateFromFile(r)).ToList();
 
             defines.AddRange(ctx.CompilationOptions.Defines);
-
-            bool hasFrameworkAssembly = references.Any(r =>
-                r is PortableExecutableReference peRef && peRef.FilePath is string path &&
-                (Path.GetFileNameWithoutExtension(path).Equals("mscorlib", StringComparison.OrdinalIgnoreCase) ||
-                 Path.GetFileNameWithoutExtension(path).Equals("System.Runtime", StringComparison.OrdinalIgnoreCase) ||
-                 Path.GetFileNameWithoutExtension(path).Equals("netstandard", StringComparison.OrdinalIgnoreCase)));
-
-            if (!hasFrameworkAssembly)
-            {
-                SupplementWithDirectoryAndAppDomain(references);
-            }
         }
         else
         {
             references = [];
-            SupplementWithDirectoryAndAppDomain(references);
         }
+
+        // Always supplement — even when DependencyContext resolves framework assemblies,
+        // they may be facades (e.g. mscorlib 2.0.0.0 from NuGet reference assembly packages)
+        // that cause CS1705 version mismatch. AppDomain has the real GAC versions.
+        SupplementWithDirectoryAndAppDomain(references);
 
         return (references, defines);
     }
@@ -699,11 +692,22 @@ public class JsonSchemaBuilderDriver : IDisposable
             }
         }
 
+        // AppDomain assemblies are the authoritative runtime assemblies (e.g. mscorlib
+        // 4.0.0.0 from the GAC). When DependencyContext resolved a facade with the same
+        // name (e.g. mscorlib 2.0.0.0 from NuGet reference assemblies), replace it.
         foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
         {
-            if (!a.IsDynamic && !string.IsNullOrEmpty(a.Location) &&
-                seenNames.Add(a.GetName().Name ?? Path.GetFileNameWithoutExtension(a.Location)))
+            if (!a.IsDynamic && !string.IsNullOrEmpty(a.Location))
             {
+                string name = a.GetName().Name ?? Path.GetFileNameWithoutExtension(a.Location);
+                if (!seenNames.Add(name))
+                {
+                    references.RemoveAll(r =>
+                        r is PortableExecutableReference peRef &&
+                        peRef.FilePath is string p &&
+                        Path.GetFileNameWithoutExtension(p).Equals(name, StringComparison.OrdinalIgnoreCase));
+                }
+
                 references.Add(MetadataReference.CreateFromFile(a.Location));
             }
         }

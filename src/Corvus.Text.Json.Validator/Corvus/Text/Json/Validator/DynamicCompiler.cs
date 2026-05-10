@@ -130,34 +130,16 @@ public static class DynamicCompiler
                 select (MetadataReference)MetadataReference.CreateFromFile(r)).ToList();
 
             defines.AddRange(ctx.CompilationOptions.Defines);
-
-            // When the build ran on a different OS (e.g. Linux build, Windows net481 test),
-            // DependencyContext may partially resolve — NuGet packages in the output dir
-            // resolve, but framework assemblies (mscorlib, netstandard) do not. Supplement
-            // with AppDomain/directory/transitive refs to fill the gaps.
-            bool hasSystemObject = refs.Any(r =>
-            {
-                if (r is PortableExecutableReference peRef && peRef.FilePath is string path)
-                {
-                    string name = Path.GetFileNameWithoutExtension(path);
-                    return name.Equals("mscorlib", StringComparison.OrdinalIgnoreCase)
-                        || name.Equals("System.Runtime", StringComparison.OrdinalIgnoreCase)
-                        || name.Equals("netstandard", StringComparison.OrdinalIgnoreCase);
-                }
-
-                return false;
-            });
-
-            if (!hasSystemObject)
-            {
-                SupplementWithDirectoryAndAppDomain(refs, hostAssembly);
-            }
         }
         else
         {
             refs = [];
-            SupplementWithDirectoryAndAppDomain(refs, hostAssembly);
         }
+
+        // Always supplement — even when DependencyContext resolves framework assemblies,
+        // they may be facades (e.g. mscorlib 2.0.0.0 from NuGet reference assembly packages)
+        // that cause CS1705 version mismatch. AppDomain has the real GAC versions.
+        SupplementWithDirectoryAndAppDomain(refs, hostAssembly);
 
         return (refs, defines);
     }
@@ -202,15 +184,22 @@ public static class DynamicCompiler
             }
         }
 
-        // Add assemblies loaded in the AppDomain FIRST. These are the real runtime
-        // assemblies (e.g. mscorlib 4.0.0.0 from the GAC) and must take precedence
-        // over facade DLLs in the output directory (e.g. mscorlib 2.0.0.0 from
-        // netstandard2.0). Without this ordering, the directory scan picks up the
-        // facade version, causing CS1705 version mismatch errors in Roslyn compilation.
+        // AppDomain assemblies are the authoritative runtime assemblies (e.g. mscorlib
+        // 4.0.0.0 from the GAC). When DependencyContext resolved a facade with the same
+        // name (e.g. mscorlib 2.0.0.0 from NuGet reference assemblies), replace it.
         foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
         {
-            if (!a.IsDynamic && !string.IsNullOrEmpty(a.Location) && seenNames.Add(a.GetName().Name ?? Path.GetFileNameWithoutExtension(a.Location)))
+            if (!a.IsDynamic && !string.IsNullOrEmpty(a.Location))
             {
+                string name = a.GetName().Name ?? Path.GetFileNameWithoutExtension(a.Location);
+                if (!seenNames.Add(name))
+                {
+                    references.RemoveAll(r =>
+                        r is PortableExecutableReference peRef &&
+                        peRef.FilePath is string p &&
+                        Path.GetFileNameWithoutExtension(p).Equals(name, StringComparison.OrdinalIgnoreCase));
+                }
+
                 references.Add(MetadataReference.CreateFromFile(a.Location));
             }
         }
