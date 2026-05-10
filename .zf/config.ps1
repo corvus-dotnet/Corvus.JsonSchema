@@ -90,9 +90,15 @@ $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
 # misinterpreted by process-spawning layers (e.g. dotnet-coverage launching dotnet test).
 # Using 'TestCategory!=outerloop' alone is sufficient since no tests currently have the
 # 'failing' category. If tests are later given 'failing', add a separate --filter arg.
+# NOTE: '--max-parallel-test-modules 1' serializes test assembly execution.
+# Without this, MTP runs assemblies in parallel and the two heaviest
+# (Corvus.Text.Json.Tests + Corvus.Json.Specs.Tests, both doing extensive
+# Roslyn compilation) can overlap and exceed the 7GB GitHub Actions runner
+# memory limit, triggering OOM kills (exit code 137) on Ubuntu.
 $AdditionalTestArgs = @(
     "--filter", 'TestCategory!=outerloop'
     "--ignore-exit-code", "8"
+    "--max-parallel-test-modules", "1"
 )
 $StripOutputFromLargeTrxFiles = $true
 $TruncateOversizedCoverageReport = $true
