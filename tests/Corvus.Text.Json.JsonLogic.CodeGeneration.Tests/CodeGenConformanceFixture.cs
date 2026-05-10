@@ -200,6 +200,30 @@ public sealed class CodeGenConformanceFixture : IDisposable
             }
         }
 
+        // Resolve transitive references (e.g. netstandard.dll) that may be in the
+        // GAC but not loaded into the AppDomain or present in the output directory.
+        foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (!a.IsDynamic)
+            {
+                foreach (AssemblyName refName in a.GetReferencedAssemblies())
+                {
+                    try
+                    {
+                        Assembly resolved = Assembly.Load(refName);
+                        if (!resolved.IsDynamic && !string.IsNullOrEmpty(resolved.Location) &&
+                            seenNames.Add(resolved.GetName().Name ?? Path.GetFileNameWithoutExtension(resolved.Location)))
+                        {
+                            references.Add(MetadataReference.CreateFromFile(resolved.Location));
+                        }
+                    }
+                    catch
+                    {
+                    }
+                }
+            }
+        }
+
         return references;
     }
 
