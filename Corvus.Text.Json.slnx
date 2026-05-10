@@ -75,6 +75,8 @@
     <Project Path="tests/Corvus.Text.Json.Tests.MigrationModels.V4/Corvus.Text.Json.Tests.MigrationModels.V4.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests.MigrationModels.V5/Corvus.Text.Json.Tests.MigrationModels.V5.csproj" />
     <Project Path="tests/Corvus.Text.Json.Tests/Corvus.Text.Json.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.SchemaTestSuite.Tests/Corvus.Text.Json.SchemaTestSuite.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.EvaluatorTestSuite.Tests/Corvus.Text.Json.EvaluatorTestSuite.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Validator.Tests/Corvus.Text.Json.Validator.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Yaml.Tests/Corvus.Text.Json.Yaml.Tests.csproj" />
     <Project Path="tests/Corvus.Yaml.SystemTextJson.Tests/Corvus.Yaml.SystemTextJson.Tests.csproj" />

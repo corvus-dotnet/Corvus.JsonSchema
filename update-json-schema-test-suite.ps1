@@ -49,9 +49,9 @@ Write-Host ""
 Write-Host "=== Regenerating V5 test classes ===" -ForegroundColor Cyan
 
 $v5OutputDirs = @(
-    "$repoRoot\tests\Corvus.Text.Json.Tests\JsonSchemaTestSuite",
-    "$repoRoot\tests\Corvus.Text.Json.Tests\StandaloneEvaluatorTestSuite",
-    "$repoRoot\tests\Corvus.Text.Json.Tests\AnnotationTestSuite"
+    "$repoRoot\tests\Corvus.Text.Json.SchemaTestSuite.Tests\JsonSchemaTestSuite",
+    "$repoRoot\tests\Corvus.Text.Json.EvaluatorTestSuite.Tests\StandaloneEvaluatorTestSuite",
+    "$repoRoot\tests\Corvus.Text.Json.EvaluatorTestSuite.Tests\AnnotationTestSuite"
 )
 
 foreach ($dir in $v5OutputDirs) {
