@@ -148,26 +148,29 @@ public sealed class CodeGenConformanceFixture : IDisposable
                 from r in TryResolveReferencePaths(l)
                 select (MetadataReference)MetadataReference.CreateFromFile(r)).ToList();
 
-            defines.AddRange(ctx.CompilationOptions.Defines.Where(d => d is not null)!);
+            // Verify the resolved references include a core framework assembly.
+            // When the build ran on a different OS (e.g. Linux build, Windows net481 test),
+            // DependencyContext may partially resolve — enough for refs.Count > 0 but
+            // missing mscorlib/System.Runtime, causing CS0012/CS8021 in every compilation.
+            bool hasFrameworkAssembly = references.Any(r =>
+                r is PortableExecutableReference peRef && peRef.FilePath is string path &&
+                (Path.GetFileNameWithoutExtension(path).Equals("mscorlib", StringComparison.OrdinalIgnoreCase) ||
+                 Path.GetFileNameWithoutExtension(path).Equals("System.Runtime", StringComparison.OrdinalIgnoreCase) ||
+                 Path.GetFileNameWithoutExtension(path).Equals("netstandard", StringComparison.OrdinalIgnoreCase)));
+
+            if (references.Count > 0 && hasFrameworkAssembly)
+            {
+                defines.AddRange(ctx.CompilationOptions.Defines.Where(d => d is not null)!);
+            }
+            else
+            {
+                // Fall through to directory/AppDomain scanning
+                references = BuildReferencesFromDirectoryAndAppDomain();
+            }
         }
         else
         {
-            references = [];
-            string? dir = AppDomain.CurrentDomain.BaseDirectory;
-            if (dir is not null && Directory.Exists(dir))
-            {
-                foreach (string dll in Directory.EnumerateFiles(dir, "*.dll"))
-                {
-                    try
-                    {
-                        references.Add(MetadataReference.CreateFromFile(dll));
-                    }
-                    catch
-                    {
-                        // Skip native DLLs.
-                    }
-                }
-            }
+            references = BuildReferencesFromDirectoryAndAppDomain();
         }
 
         CSharpParseOptions parseOptions = CSharpParseOptions.Default
@@ -175,6 +178,46 @@ public sealed class CodeGenConformanceFixture : IDisposable
             .WithPreprocessorSymbols(defines);
 
         return (references, parseOptions);
+    }
+
+    private static List<MetadataReference> BuildReferencesFromDirectoryAndAppDomain()
+    {
+        HashSet<string> seenNames = new(StringComparer.OrdinalIgnoreCase);
+        List<MetadataReference> references = [];
+
+        // AppDomain assemblies first — these include mscorlib from the GAC.
+        foreach (Assembly a in AppDomain.CurrentDomain.GetAssemblies())
+        {
+            if (!a.IsDynamic && !string.IsNullOrEmpty(a.Location) &&
+                seenNames.Add(a.GetName().Name ?? Path.GetFileNameWithoutExtension(a.Location)))
+            {
+                references.Add(MetadataReference.CreateFromFile(a.Location));
+            }
+        }
+
+        // Then DLLs in the output directory not yet seen.
+        string? dir = AppDomain.CurrentDomain.BaseDirectory;
+        if (dir is not null && Directory.Exists(dir))
+        {
+            foreach (string dll in Directory.EnumerateFiles(dir, "*.dll"))
+            {
+                string simpleName = Path.GetFileNameWithoutExtension(dll);
+                if (seenNames.Add(simpleName))
+                {
+                    try
+                    {
+                        AssemblyName.GetAssemblyName(dll);
+                        references.Add(MetadataReference.CreateFromFile(dll));
+                    }
+                    catch
+                    {
+                        seenNames.Remove(simpleName);
+                    }
+                }
+            }
+        }
+
+        return references;
     }
 
     private static IEnumerable<string> TryResolveReferencePaths(CompilationLibrary library)
