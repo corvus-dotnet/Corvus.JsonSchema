@@ -1281,21 +1281,21 @@ copilot-docs:
 copilot-instructions:
   - path: ".github/copilot-instructions.md"
     blocks:
-      - {index: 0, language: bash, lines: [38, 50]}
-      - {index: 1, language: powershell, lines: [93, 96]}
-      - {index: 2, language: csharp, lines: [151, 161], category: compilable, verified: false}
-      - {index: 3, language: csharp, lines: [178, 197], category: compilable, verified: false}
-      - {index: 4, language: powershell, lines: [240, 242]}
-      - {index: 5, language: powershell, lines: [254, 258]}
-      - {index: 6, language: powershell, lines: [296, 301]}
-      - {index: 7, language: powershell, lines: [328, 334]}
-      - {index: 8, language: csharp, lines: [344, 354], category: compilable, verified: false}
-      - {index: 9, language: powershell, lines: [422, 431]}
-      - {index: 10, language: bash, lines: [459, 465]}
-      - {index: 11, language: bash, lines: [471, 474]}
-      - {index: 12, language: powershell, lines: [484, 499]}
-      - {index: 13, language: powershell, lines: [507, 509]}
-      - {index: 14, language: bash, lines: [542, 544]}
+      - {index: 0, language: bash, lines: [44, 56]}
+      - {index: 1, language: powershell, lines: [99, 102]}
+      - {index: 2, language: csharp, lines: [157, 167], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [184, 203], category: compilable, verified: false}
+      - {index: 4, language: powershell, lines: [246, 248]}
+      - {index: 5, language: powershell, lines: [260, 264]}
+      - {index: 6, language: powershell, lines: [302, 307]}
+      - {index: 7, language: powershell, lines: [334, 340]}
+      - {index: 8, language: csharp, lines: [350, 360], category: compilable, verified: false}
+      - {index: 9, language: powershell, lines: [428, 437]}
+      - {index: 10, language: bash, lines: [465, 471]}
+      - {index: 11, language: bash, lines: [477, 480]}
+      - {index: 12, language: powershell, lines: [490, 505]}
+      - {index: 13, language: powershell, lines: [513, 515]}
+      - {index: 14, language: bash, lines: [548, 550]}
 
 skills:
   - path: ".github/skills/corvus-analyzers/SKILL.md"

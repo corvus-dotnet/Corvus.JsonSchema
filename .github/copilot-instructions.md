@@ -6,6 +6,12 @@ This is **Corvus.Text.Json**, a high-performance JSON library for .NET that exte
 
 The repo structure mirrors the dotnet/runtime repository conventions: shared source files in `Common/`, polyfills from `System.Private.CoreLib/`, and explicit `<Compile>` item groups (no glob includes).
 
+### Upstream dotnet/runtime Tracking
+
+The low-level JSON reader, writer, document, and helper types are derived from `dotnet/runtime`'s `System.Text.Json`. Changes in upstream must be reviewed periodically and ported when they fix bugs or improve correctness.
+
+See `docs/UpstreamReview.md` for the component mapping, review process, and the latest review results. Reviews should be performed monthly, covering commits to `src/libraries/System.Text.Json` since the last review date. Serializer, source generator, `JsonNode`, and `JsonConverter` changes are always irrelevant — only reader, writer, document, helper, and polyfill changes need evaluation.
+
 ## Skills Inventory
 
 20 skills in `.github/skills/` provide deep context on specific areas. Copilot loads them on demand.
