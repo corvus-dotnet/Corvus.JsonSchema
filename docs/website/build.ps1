@@ -1064,8 +1064,9 @@ if ($BasePathPrefix) {
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
     # Rewrite HTML files (excluding playgrounds which use <base href>)
+    # Use -notmatch with [/\\] separators for cross-platform compatibility (Linux uses /, Windows uses \)
     $htmlFiles = Get-ChildItem $outputDir -Filter "*.html" -Recurse -File |
-        Where-Object { $_.FullName -notlike "*\playground\*" -and $_.FullName -notlike "*\playground-jsonata\*" -and $_.FullName -notlike "*\playground-jmespath\*" -and $_.FullName -notlike "*\playground-jsonlogic\*" -and $_.FullName -notlike "*\playground-jsonpath\*" -and $_.FullName -notlike "*\playground-yaml\*" }
+        Where-Object { $_.FullName -notmatch '[/\\]playground[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonata[/\\]' -and $_.FullName -notmatch '[/\\]playground-jmespath[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonlogic[/\\]' -and $_.FullName -notmatch '[/\\]playground-jsonpath[/\\]' -and $_.FullName -notmatch '[/\\]playground-yaml[/\\]' }
     $rewriteCount = 0
     foreach ($htmlFile in $htmlFiles) {
         $content = [System.IO.File]::ReadAllText($htmlFile.FullName)
