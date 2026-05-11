@@ -253,17 +253,15 @@ These three methods account for **98%** of the net481 test execution time penalt
 
 The `WritingHugeBase64Bytes` test allocates a 1 GB byte array on each of its 90 invocations. Although the GC reclaims the memory between runs, the peak working set can exceed 2 GB. When MTP runs test assemblies in parallel, this can overlap with other memory-intensive assemblies and trigger OOM kills — particularly on CI runners with limited available memory.
 
-This is the primary reason `--max-parallel-test-modules 1` was introduced in `.zf/config.ps1`. The net481 matrix entry now allows 2 concurrent modules because net481 test hosts have lower peak memory than CoreCLR hosts, but the large-allocation tests remain the main constraint.
+These tests (along with the other large-allocation writer and reader tests) are now categorized as `[TestCategory("outerloop")]` and excluded from CI via `--filter TestCategory!=outerloop`. With the outerloop tests excluded, the remaining test assemblies have modest memory footprints and can safely run in parallel without `--max-parallel-test-modules` throttling.
 
 ### Options for reducing impact
 
 If CI time becomes a concern, these are the available levers (in order of impact):
 
-1. **Mark the three methods as `[TestCategory("outerloop")]`** — removes them from CI entirely, saving ~11 minutes on net481 and ~5 minutes on net10.0. This is the highest-impact change but reduces coverage of large-buffer edge cases on every PR.
+1. **Reduce `JsonOptions()` to representative cases for outerloop methods** — instead of 90 option combinations, use 3–4 representative options (indented/not-indented, skip-validation/no-skip). This would reduce the three methods from 270 to ~12 total cases, saving most of the time while retaining the large-buffer coverage when outerloop tests are run locally.
 
-2. **Reduce `JsonOptions()` to representative cases for these methods** — instead of 90 option combinations, use 3–4 representative options (indented/not-indented, skip-validation/no-skip). This would reduce the three methods from 270 to ~12 total cases, saving most of the time while retaining the large-buffer coverage.
-
-3. **Increase `--max-parallel-test-modules`** — allows more test assemblies to overlap. This helps the overall wall-clock time but does not reduce the per-assembly time and increases memory pressure.
+2. **Run outerloop tests in a separate CI job** — a scheduled or manual workflow can run `--filter TestCategory=outerloop` on a runner with more memory, catching regressions without blocking PRs.
 
 ## Target framework selection
 

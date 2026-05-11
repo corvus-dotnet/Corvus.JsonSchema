@@ -82,32 +82,16 @@ $TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
 # Exclude 'outerloop' (memory stress tests) and 'failing' (known failures) categories
 # which are too resource-intensive for CI runners.
 # NOTE: MSTest uses 'TestCategory' as the trait name (xUnit used 'category').
-# NOTE: '-m:1' and '-p:' are MSBuild-style args that are incompatible with the
-# Microsoft Testing Platform (MTP) used by MSTest. Removed to fix CI test execution.
 # NOTE: '--ignore-exit-code 8' suppresses MTP exit code 8 ("zero tests ran") which
 # occurs for CodeGenerator.Tests on net481 (empty assembly — CLI tool is net10.0 only).
 # NOTE: The '&' character in 'TestCategory!=failing&TestCategory!=outerloop' can be
 # misinterpreted by process-spawning layers (e.g. dotnet-coverage launching dotnet test).
 # Using 'TestCategory!=outerloop' alone is sufficient since no tests currently have the
 # 'failing' category. If tests are later given 'failing', add a separate --filter arg.
-# NOTE: '--max-parallel-test-modules' controls how many test assemblies run concurrently.
-# Without any limit, MTP runs all assemblies in parallel and the two heaviest
-# (Corvus.Text.Json.Tests + Corvus.Json.Specs.Tests, both doing extensive
-# Roslyn compilation) can overlap and exceed the 7GB GitHub Actions runner
-# memory limit, triggering OOM kills (exit code 137) on Ubuntu.
-# net10.0 runs are serialized (1 module at a time) to avoid OOM.
-# net481 runs allow 2 concurrent modules — net481 test hosts have lower peak memory
-# than CoreCLR hosts, and this overlaps the smaller assemblies with the dominant
-# Corvus.Text.Json.Tests assembly (which takes 2.3x longer on net481 vs net10.0).
 $AdditionalTestArgs = @(
     "--filter", 'TestCategory!=outerloop'
     "--ignore-exit-code", "8"
 )
-if ($TargetFrameworkMoniker -eq 'net481') {
-    $AdditionalTestArgs += @("--max-parallel-test-modules", "2")
-} else {
-    $AdditionalTestArgs += @("--max-parallel-test-modules", "1")
-}
 $StripOutputFromLargeTrxFiles = $true
 $TruncateOversizedCoverageReport = $true
 $UseGitHubFlavour = $true

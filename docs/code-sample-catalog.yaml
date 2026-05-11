@@ -994,13 +994,13 @@ main-docs:
       - {index: 17, language: powershell, lines: [211, 213]}
       - {index: 18, language: powershell, lines: [219, 225]}
       - {index: 19, language: powershell, lines: [231, 233]}
-      - {index: 20, language: powershell, lines: [272, 275]}
-      - {index: 21, language: powershell, lines: [283, 313]}
-      - {index: 22, language: powershell, lines: [317, 320]}
-      - {index: 23, language: powershell, lines: [330, 332]}
-      - {index: 24, language: powershell, lines: [342, 344]}
-      - {index: 25, language: powershell, lines: [348, 351]}
-      - {index: 26, language: powershell, lines: [369, 375]}
+      - {index: 20, language: powershell, lines: [270, 273]}
+      - {index: 21, language: powershell, lines: [281, 311]}
+      - {index: 22, language: powershell, lines: [315, 318]}
+      - {index: 23, language: powershell, lines: [328, 330]}
+      - {index: 24, language: powershell, lines: [340, 342]}
+      - {index: 25, language: powershell, lines: [346, 349]}
+      - {index: 26, language: powershell, lines: [367, 373]}
   - path: "docs/SchemaEvaluator.md"
     blocks:
       - {index: 0, language: xml, lines: [19, 25]}
