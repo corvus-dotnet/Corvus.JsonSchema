@@ -530,9 +530,9 @@ main-docs:
     blocks:
       - {index: 0, language: , lines: [56, 59]}
       - {index: 1, language: , lines: [65, 69]}
-      - {index: 2, language: csharp, lines: [77, 90], category: fragment, verified: true}
-      - {index: 3, language: csharp, lines: [96, 100], category: fragment, verified: true}
-      - {index: 4, language: csharp, lines: [106, 129], category: fragment, verified: true}
+      - {index: 2, language: csharp, lines: [77, 90], category: compilable, verified: false}
+      - {index: 3, language: csharp, lines: [96, 100], category: compilable, verified: false}
+      - {index: 4, language: csharp, lines: [106, 129], category: compilable, verified: false}
       - {index: 5, language: powershell, lines: [167, 177]}
   - path: "docs/EcmaRegexTranslations.md"
     blocks:

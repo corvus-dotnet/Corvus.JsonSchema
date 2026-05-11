@@ -87,7 +87,8 @@ All test projects target both `net10.0` and `net481`. `CodeGenerator.Tests` prod
 Before every commit, verify these mandatory gates in order:
 
 1. **Warning-free build**: `dotnet build Corvus.Text.Json.slnx` must report `0 Warning(s)`.
-2. **Code sample catalog**: if any file tracked by the catalog was modified (anything under `.github/`, `docs/`, or skill/instruction files), update and verify the catalog:
+2. **Run affected tests end-to-end**: identify every test project that exercises the changed code and run it. Do not assume a build success means the change works. When a bug pattern is fixed across multiple sites (e.g., six dynamic compilation fixtures), test ALL of them — not just one.
+3. **Code sample catalog**: if any file tracked by the catalog was modified (anything under `.github/`, `docs/`, or skill/instruction files), update and verify the catalog:
 
 ```powershell
 .\docs\update-code-sample-catalog.ps1 -UpdateFile <relative-path>   # for each changed file
@@ -97,6 +98,15 @@ Before every commit, verify these mandatory gates in order:
 The catalog tracks line numbers of code blocks in documentation, instructions, and skill files. Editing these files shifts line numbers, making the catalog stale. CI runs `-Check` and fails if it is stale. This applies even when the edits are incidental to non-documentation work (e.g., adding a coverage rule to copilot-instructions.md while doing test work).
 
 See the `corvus-build-and-test` skill for TFM targeting, test project mapping, and common build failure diagnosis.
+
+### Diagnostic discipline
+
+These rules apply whenever investigating or fixing a problem. Do not skip them.
+
+- **Measure before and after**: never claim a fix improves performance, coverage, or correctness without measuring the baseline first. Run the same test/command before the change and after, and report both numbers.
+- **Replicate the actual failure environment**: if a bug manifests on CI (cross-OS, specific TFM, specific runner), replicate those conditions locally before committing a fix. For cross-OS CI issues, use the WSL build → Windows test pattern documented in the `corvus-xplat-dynamic-compilation` skill. A fix that passes under different conditions proves nothing.
+- **Do not commit speculative fixes**: if you cannot reproduce the problem locally, say so. Do not push a change and hope CI validates it — CI runs are expensive (30+ minutes) and limited.
+- **Diagnose before acting**: when a CI job is slow or failing, read the logs and identify the specific slow step or error before proposing a fix. Do not guess at the root cause and implement a solution without evidence.
 
 ## Architecture
 
