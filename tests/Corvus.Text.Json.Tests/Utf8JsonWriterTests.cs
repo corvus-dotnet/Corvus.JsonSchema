@@ -3344,6 +3344,7 @@ public class BuggyJavaScriptEncoder : JavaScriptEncoder
     }
 
     [TestMethod]
+    [TestCategory("outerloop")]
     [DynamicData(nameof(JsonOptions_TestData))]
     public void WritingTooLargeBase64Bytes(JsonWriterOptions options)
     {
@@ -3421,6 +3422,7 @@ public class BuggyJavaScriptEncoder : JavaScriptEncoder
     //       succeed even if there is not enough memory but then the test may get killed by the OOM killer at the
     //       time the memory is accessed which triggers the full memory allocation.
     [TestMethod]
+    [TestCategory("outerloop")]
     [DynamicData(nameof(JsonOptions_TestData))]
     public void WritingHugeBase64Bytes(JsonWriterOptions options)
     {
@@ -6556,6 +6558,7 @@ public class BuggyJavaScriptEncoder : JavaScriptEncoder
     //       succeed even if there is not enough memory but then the test may get killed by the OOM killer at the
     //       time the memory is accessed which triggers the full memory allocation.
     [TestMethod]
+    [TestCategory("outerloop")]
     [DynamicData(nameof(JsonOptions_TestData))]
     public void WriteLargeKeyEscapedValue(JsonWriterOptions options)
     {
