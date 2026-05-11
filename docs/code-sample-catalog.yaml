@@ -1290,12 +1290,12 @@ copilot-instructions:
       - {index: 6, language: powershell, lines: [302, 307]}
       - {index: 7, language: powershell, lines: [334, 340]}
       - {index: 8, language: csharp, lines: [350, 360], category: compilable, verified: false}
-      - {index: 9, language: powershell, lines: [428, 437]}
-      - {index: 10, language: bash, lines: [465, 471]}
-      - {index: 11, language: bash, lines: [477, 480]}
-      - {index: 12, language: powershell, lines: [490, 505]}
-      - {index: 13, language: powershell, lines: [513, 515]}
-      - {index: 14, language: bash, lines: [548, 550]}
+      - {index: 9, language: powershell, lines: [429, 438]}
+      - {index: 10, language: bash, lines: [466, 472]}
+      - {index: 11, language: bash, lines: [478, 481]}
+      - {index: 12, language: powershell, lines: [491, 506]}
+      - {index: 13, language: powershell, lines: [514, 516]}
+      - {index: 14, language: bash, lines: [549, 551]}
 
 skills:
   - path: ".github/skills/corvus-analyzers/SKILL.md"

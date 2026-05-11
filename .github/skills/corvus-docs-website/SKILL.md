@@ -113,3 +113,15 @@ dotnet run --project src\Corvus.Text.Json.Jsonata.Playground\Corvus.Text.Json.Js
 ## Cross-References
 - For building the library (prerequisite for API docs), see `corvus-build-and-test`
 - See `docs/website/DEVELOPMENT.md` for the full development guide
+
+## CI Pipeline
+
+In CI, the website build runs as a **post-compile** job, in parallel with tests and packaging. This avoids adding ~13 minutes to the critical compile step.
+
+- **Compile phase** (`build.ps1`) — sets `BUILDVAR_BuildWebsite=false` to skip the website build during the main compile.
+- **Post-compile phase** (`build-website.ps1`) — restores the compile cache and runs `docs/website/build.ps1 -SkipDotNetBuild`, using pre-built assemblies and XML docs from the compile phase. Reads `BUILDVAR_BasePathPrefix` and `BUILDVAR_IsPreviewDeployment` from environment variables.
+- **Deploy jobs** — download the website output artifact produced by the post-compile job.
+
+The parallel structure is enabled by the `postCompileScript` input in the reusable workflow (`endjin/Endjin.RecommendedPractices.GitHubActions`).
+
+For local development, run `docs/website/build.ps1` directly (it builds the .NET solution as part of its pipeline unless `-SkipDotNetBuild` is passed).

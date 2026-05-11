@@ -377,6 +377,7 @@ The documentation site lives in `docs/website/`. See `docs/website/DEVELOPMENT.m
 - **Build** → `docs/website/build.ps1` runs a 12-step pipeline (steps 0-11) that compiles everything into `docs/website/.output/`.
 - **Serving** → The local dev server (`build.ps1 -ServeOnly` or `preview.ps1`) serves static files from `.output/`, **not** from the source theme directory. Editing source files (views, SCSS, JS) has no effect until the relevant build step is re-run.
 - **IMPORTANT: Stop the server before rebuilding.** The build script deletes and recreates `.output/`. On Windows, the Node file server holds file locks that prevent deletion, causing the build to hang indefinitely. Always stop the serving process (`Stop-Process -Id <PID>`) before running `build.ps1`.
+- **CI** → In CI, the website builds in a separate **post-compile** job (`build-website.ps1`) that runs in parallel with tests and packaging, using pre-built assemblies from the compile cache. This avoids adding ~13 minutes to the compile step's critical path.
 
 ### Generated vs hand-authored files
 

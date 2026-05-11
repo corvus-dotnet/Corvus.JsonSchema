@@ -31,7 +31,7 @@ Always exclude the `failing` and `outerloop` categories:
 - **`failing`** — known failures tracked for future fixes
 - **`outerloop`** — memory stress tests that are too resource-intensive for normal CI
 
-Tests run sequentially (`-m:1`) in CI to avoid memory pressure on GitHub Actions runners.
+Tests run in parallel across matrix jobs in CI. The documentation website builds in a separate post-compile job, also in parallel with tests.
 
 ### Local package testing
 
