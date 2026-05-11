@@ -48,6 +48,7 @@ public partial class BitStackTests
     }
 
     [TestMethod]
+    [TestCategory("outerloop")]
     [DataRow(3_200_000)]
     [DataRow(int.MaxValue / 32 + 1)]    // 67_108_864
     public void BitStackPushPopLarge(int bitLength)

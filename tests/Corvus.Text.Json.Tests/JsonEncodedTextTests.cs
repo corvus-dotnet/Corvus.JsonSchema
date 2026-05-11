@@ -363,6 +363,7 @@ public partial class JsonEncodedTextTests
     }
 
     [TestMethod]
+    [TestCategory("outerloop")]
     public void InvalidLargeEncode()
     {
         try

@@ -3580,6 +3580,7 @@ public partial class Utf8JsonReaderTests
     }
 
     [TestMethod]
+    [TestCategory("outerloop")]
     [DynamicData(nameof(SpecialNumTestCases))]
     public void TestPartialJsonReaderSlicesSpecialNumbers(TestCaseType type, string jsonString)
     {
