@@ -140,7 +140,7 @@ jobs:
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       additionalCachePaths: ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
       # Build the documentation website in a parallel post-compile job
-      postCompileScript: ./build-website.ps1
+      postCompilePhaseTasks: buildWebSite
       postCompileRunnerOs: ubuntu-latest
       postCompilePhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       postCompileArtifactName: website-output

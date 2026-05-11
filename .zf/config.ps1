@@ -127,8 +127,7 @@ task PreBuild {
     Write-Host "Checking documentation code sample catalog is up to date"
     exec { & pwsh -File (Join-Path $here "docs\update-code-sample-catalog.ps1") -Check }
 }
-# Synopsis: Optionally builds the documentation website
-task PostBuild BuildWebsite
+task PostBuild BuildWebSiteLocal
 task PreTest {
     # Turn down logging when running Specs to suppress ReqnRoll Given/When/Then output
     $script:LogLevelBackup = $LogLevel
@@ -150,25 +149,30 @@ task PostTest {
 
 # Custom tasks
 
-task BuildWebsite -If { $BuildWebsite } {
+# Synopsis: Standalone task to build the documentation static web app.
+task BuildWebsite {
     $websiteDir = Join-Path $here "docs\website"
 
-    Write-Information "Building documentation website..."
-
-    # Ensure Node dependencies are installed
-    Set-Location $websiteDir
-    if (!(Test-Path (Join-Path $websiteDir "node_modules"))) {
-        Write-Information "Installing Node dependencies..."
-        exec { & npm ci --prefix $websiteDir }
-    }
-
     $websiteBuildArgs = @("-SkipDotNetBuild")
-    if ($BasePathPrefix) {
-        $websiteBuildArgs += "-BasePathPrefix", $BasePathPrefix
+
+    $basePathPrefix = $env:BUILDVAR_BasePathPrefix
+    if ($basePathPrefix) {
+        $websiteBuildArgs += "-BasePathPrefix", $basePathPrefix
     }
-    if ($IsPreviewDeployment) {
+
+    if ($env:BUILDVAR_IsPreviewDeployment -ieq "true") {
         $websiteBuildArgs += "-IsPreviewDeployment"
     }
 
-    exec { & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs }
+    Write-Host "Building documentation website..."
+    Write-Host "  BasePathPrefix: $basePathPrefix"
+    Write-Host "  IsPreviewDeployment: $($env:BUILDVAR_IsPreviewDeployment)"
+    Write-Host "  Args: $websiteBuildArgs"
+
+    & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
 }
+# Synopsis: Wrapper task to enable running the standalone BuildWebsite task for local builds
+task BuildWebSiteLocal -If { $BuildWebsite } BuildWebsite
