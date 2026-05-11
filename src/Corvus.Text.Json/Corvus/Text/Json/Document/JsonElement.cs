@@ -318,7 +318,7 @@ public readonly partial struct JsonElement
             return property;
         }
 
-        throw new KeyNotFoundException();
+        throw new KeyNotFoundException(string.Format(Resources.Strings.Arg_KeyNotFoundWithKey, propertyName));
     }
 
     /// <summary>
@@ -356,7 +356,7 @@ public readonly partial struct JsonElement
             return property;
         }
 
-        throw new KeyNotFoundException();
+        throw new KeyNotFoundException(string.Format(Resources.Strings.Arg_KeyNotFoundWithKey, propertyName.ToString()));
     }
 
     /// <summary>
@@ -396,7 +396,7 @@ public readonly partial struct JsonElement
             return property;
         }
 
-        throw new KeyNotFoundException();
+        throw new KeyNotFoundException(string.Format(Resources.Strings.Arg_KeyNotFoundWithKey, System.Text.Encoding.UTF8.GetString(utf8PropertyName)));
     }
 
     /// <summary>

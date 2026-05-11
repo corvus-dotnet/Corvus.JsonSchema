@@ -34,13 +34,13 @@ Code from the serializer, source generator, `JsonNode`, and `JsonConverter` infr
 
 ### ADOPT — Port these changes
 
-| SHA | Summary | Upstream files | Notes |
+| SHA | Summary | Upstream files | Status |
 |---|---|---|---|
-| `aba46e33ea` | Fix string buffer size in Utf8JsonWriter.WriteStringValue | `JsonConstants.cs`, `Writer/Utf8JsonWriter.WriteValues.String.cs` | **Bug fix**: buffer size underestimation in `WriteStringMinimized`/`WriteStringIndented` causing potential `IndexOutOfRangeException` with large strings. Precomputes `maxRequiredBytes` using original length × expansion factor. |
-| `2ec033b0ce` | Fix excessive capacity allocation in ValueListBuilder\<T\> | `Common/.../ValueListBuilder.cs` | **Bug fix**: `Grow` was passed `_span.Length` (current capacity) instead of `_pos` (actual count), causing 2× over-allocation. Fix: `Grow(count - _pos)` instead of `Grow(count - _span.Length)`. |
-| `cde2bcd237` | Support ISO 8601 24:00 (end-of-day) in DateTime parsing | `JsonHelpers.Date.cs`, `Utf8Parser.Date.Helpers.cs` | **Spec compliance**: adds 24:00:00 support to JSON date parsing. Also touches `Utf8Parser.Date.Helpers.cs` in CoreLib which Corvus links. |
-| `7010dbd3f0` | Move polyfills to Common/src/Polyfills | `JsonHelpers.cs`, `JsonDocument.MetadataDb.cs`, `JsonElement.cs`, `Utf8JsonReader.TryGet.cs`, `JsonWriterHelper.cs` | **Simplification**: removes `JsonHelpers.IsFinite` and replaces `#if NET` blocks with polyfill calls across forked reader/writer/document code. Port applicable simplifications. |
-| `85b61ab1ce` | Include propertyName in KeyNotFoundException from JsonElement.GetProperty | `Document/JsonElement.cs` | **UX improvement**: `GetProperty("foo")` now throws with `"The given key 'foo' was not present…"` instead of a bare message. Easy port, better debuggability. |
+| `aba46e33ea` | Fix string buffer size in Utf8JsonWriter.WriteStringValue | `JsonConstants.cs`, `Writer/Utf8JsonWriter.WriteValues.String.cs` | ✅ **Ported** — precomputes `maxRequiredBytes` from original length × expansion factor in `WriteStringByOptions`, `WriteStringMinimized`, and `WriteStringIndented` for `ReadOnlySpan<char>` overloads. |
+| `2ec033b0ce` | Fix excessive capacity allocation in ValueListBuilder\<T\> | `Common/.../ValueListBuilder.cs` | ✅ **Ported** — `Grow` parameter renamed to `additionalCapacityBeyondPos`, computation changed from `_span.Length + additional` to `_pos + additional`. Callers simplified to pass `source.Length` directly. `Dispose` updated to use `this = default` pattern. |
+| `cde2bcd237` | Support ISO 8601 24:00 (end-of-day) in DateTime parsing | `JsonHelpers.Date.cs`, `Utf8Parser.Date.Helpers.cs` | ✅ **Ported** — `TryCreateDateTime` now accepts hour 24 when minute/second/fraction are zero, advancing to next day's 00:00:00. Test data updated: `1997-07-16T24:00` moved from invalid to valid (expected: `1997-07-17T00:00`). |
+| `7010dbd3f0` | Move polyfills to Common/src/Polyfills | `JsonHelpers.cs`, `JsonDocument.MetadataDb.cs`, `JsonElement.cs`, `Utf8JsonReader.TryGet.cs`, `JsonWriterHelper.cs` | ⏭️ **Deferred** — large refactor (50+ files) with low bug-fix value. Corvus still targets netstandard2.0/net481 where most `#if NET` blocks are still necessary. |
+| `85b61ab1ce` | Include propertyName in KeyNotFoundException from JsonElement.GetProperty | `Document/JsonElement.cs` | ✅ **Ported** — 6 throw sites updated (3 in `JsonElement.cs`, 3 in `JsonElement.Mutable.cs`) to include property name via `Arg_KeyNotFoundWithKey` resource string. |
 
 ### CONSIDER — Evaluate but lower priority
 

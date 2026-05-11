@@ -121,7 +121,7 @@ public sealed partial class Utf8JsonWriter
         _tokenType = JsonTokenType.String;
     }
 
-    private void WriteStringByOptions(ReadOnlySpan<char> value)
+    private void WriteStringByOptions(ReadOnlySpan<char> value, int maxRequiredBytes)
     {
         if (!_options.SkipValidation)
         {
@@ -130,11 +130,11 @@ public sealed partial class Utf8JsonWriter
 
         if (_options.Indented)
         {
-            WriteStringIndented(value);
+            WriteStringIndented(value, maxRequiredBytes);
         }
         else
         {
-            WriteStringMinimized(value);
+            WriteStringMinimized(value, maxRequiredBytes);
         }
     }
 
@@ -167,7 +167,8 @@ public sealed partial class Utf8JsonWriter
         }
         else
         {
-            WriteStringByOptions(value);
+            // Each input char may transcode to up to 3 bytes.
+            WriteStringByOptions(value, value.Length * JsonConstants.MaxExpansionFactorWhileTranscoding);
         }
     }
 
@@ -202,7 +203,11 @@ public sealed partial class Utf8JsonWriter
 
         JsonWriterHelper.EscapeString(value, escapedValue, firstEscapeIndexVal, _options.Encoder, out int written);
 
-        WriteStringByOptions(escapedValue.Slice(0, written));
+        // Each original input char expands to at most MaxExpansionFactorWhileEscaping bytes to the output.
+        // Escaped sequences are all ASCII (1 byte each), so × 6 ≥ transcoded bytes.
+        int requiredBytes = value.Length * JsonConstants.MaxExpansionFactorWhileEscaping;
+
+        WriteStringByOptions(escapedValue.Slice(0, written), requiredBytes);
 
         if (valueArray != null)
         {
@@ -234,16 +239,14 @@ public sealed partial class Utf8JsonWriter
     }
 
     // TODO: https://github.com/dotnet/runtime/issues/29293
-    private void WriteStringIndented(ReadOnlySpan<char> escapedValue)
+    private void WriteStringIndented(ReadOnlySpan<char> escapedValue, int maxRequiredBytes)
     {
         int indent = Indentation;
         Debug.Assert(indent <= _indentLength * _options.MaxDepth);
+        Debug.Assert(maxRequiredBytes >= 0 && maxRequiredBytes < int.MaxValue - indent - 3 - _newLineLength);
 
-        Debug.Assert(escapedValue.Length < (int.MaxValue / JsonConstants.MaxExpansionFactorWhileTranscoding) - indent - 3 - _newLineLength);
-
-        // All ASCII, 2 quotes => indent + escapedValue.Length + 2
-        // Optionally, 1 list separator, 1-2 bytes for new line, and up to 3x growth when transcoding
-        int maxRequired = indent + (escapedValue.Length * JsonConstants.MaxExpansionFactorWhileTranscoding) + 3 + _newLineLength;
+        // indent + 2 quotes + optional 1 list separator + 1-2 bytes for new line, plus precomputed max bytes for the payload.
+        int maxRequired = indent + maxRequiredBytes + 3 + _newLineLength;
 
         if (_memory.Length - BytesPending < maxRequired)
         {
@@ -318,13 +321,12 @@ public sealed partial class Utf8JsonWriter
     }
 
     // TODO: https://github.com/dotnet/runtime/issues/29293
-    private void WriteStringMinimized(ReadOnlySpan<char> escapedValue)
+    private void WriteStringMinimized(ReadOnlySpan<char> escapedValue, int maxRequiredBytes)
     {
-        Debug.Assert(escapedValue.Length < (int.MaxValue / JsonConstants.MaxExpansionFactorWhileTranscoding) - 3);
+        Debug.Assert(maxRequiredBytes >= 0 && maxRequiredBytes < int.MaxValue - 3);
 
-        // All ASCII, 2 quotes => escapedValue.Length + 2
-        // Optionally, 1 list separator, and up to 3x growth when transcoding
-        int maxRequired = (escapedValue.Length * JsonConstants.MaxExpansionFactorWhileTranscoding) + 3;
+        // 2 quotes + optional 1 list separator, plus precomputed max bytes for the payload.
+        int maxRequired = maxRequiredBytes + 3;
 
         if (_memory.Length - BytesPending < maxRequired)
         {
