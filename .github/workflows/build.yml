@@ -52,7 +52,7 @@ jobs:
       with:
         environmentVariablesYaml: |
           ZF_NUGET_PUBLISH_SOURCE: ${{ (startsWith(github.ref, 'refs/tags/') || github.event.inputs.forcePublicNugetDestination == 'true') && 'https://api.nuget.org/v3/index.json' || format('https://nuget.pkg.github.com/{0}/index.json', github.repository_owner) }}
-          BUILDVAR_BuildWebsite: "${{ (github.event_name == 'push' && github.ref == 'refs/heads/main') || github.event_name == 'pull_request' }}"
+          BUILDVAR_BuildWebsite: "false"
           BUILDVAR_IsPreviewDeployment: "${{ github.event_name == 'pull_request' }}"
           BUILDVAR_BasePathPrefix: "${{ github.event_name == 'pull_request' && format('/{0}/pr-preview/pr-{1}', github.event.repository.name, github.event.pull_request.number) || format('/{0}', github.event.repository.name) }}"
         secretsYaml: |
@@ -110,7 +110,7 @@ jobs:
     needs:
       - prepareConfig
       - setCachePathsConfig
-    uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@main
+    uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@feature/194-post-compile-parallel-job
     with:
       testPhaseMatrixJson: |
           {
@@ -139,6 +139,12 @@ jobs:
       packagePhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       additionalCachePaths: ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
+      # Build the documentation website in a parallel post-compile job
+      postCompileScript: ./build-website.ps1
+      postCompileRunnerOs: ubuntu-latest
+      postCompilePhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
+      postCompileArtifactName: website-output
+      postCompileArtifactPath: docs/website/.output
     secrets:
       compilePhaseAzureCredentials: ${{ secrets.AZURE_READER_CREDENTIALS }}
       compilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
@@ -148,13 +154,13 @@ jobs:
       # testPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       # packagePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       publishPhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
+      postCompilePhaseSecrets: ${{ needs.prepareConfig.outputs.RESOLVED_SECRETS }}
       secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
 
   deploy-docs:
     name: Deploy Documentation
     needs:
       - build
-      - setCachePathsConfig
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment:
@@ -164,12 +170,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Restore compile cache
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7  # v5.0.4
+      - name: Download website artifact
+        uses: actions/download-artifact@v4
         with:
-          path: ${{ needs.setCachePathsConfig.outputs.allCachePaths }}
-          key: build-state-${{ github.run_id }}-compile
-          enableCrossOsArchive: true
+          name: website-output
+          path: docs/website/.output
 
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
@@ -182,7 +187,6 @@ jobs:
     name: Deploy PR Preview
     needs:
       - build
-      - setCachePathsConfig
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     concurrency: preview-${{ github.event.pull_request.number }}
@@ -190,12 +194,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Restore compile cache
-        uses: actions/cache/restore@668228422ae6a00e4ad889ee87cd7109ec5666a7  # v5.0.4
+      - name: Download website artifact
+        uses: actions/download-artifact@v4
         with:
-          path: ${{ needs.setCachePathsConfig.outputs.allCachePaths }}
-          key: build-state-${{ github.run_id }}-compile
-          enableCrossOsArchive: true
+          name: website-output
+          path: docs/website/.output
 
       - name: Ensure Jekyll config on gh-pages
         run: |
