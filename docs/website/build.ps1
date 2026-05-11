@@ -985,13 +985,13 @@ $jsonpathSize = (Get-ChildItem $jsonpathOutputDir -Recurse -File | Measure-Objec
 Write-Host "  JSONPath Playground: $([math]::Round($jsonpathSize/1MB, 1)) MB" -ForegroundColor Gray
 Write-StepDuration "JSONPath Playground build" $sw
 
-# Tell Jekyll to include _-prefixed directories needed by the Blazor playground.
-# We cannot use .nojekyll (which bypasses Jekyll entirely) because the resulting
-# unprocessed artifact exceeds GitHub Pages deployment limits.
-$configPath = Join-Path $outputDir "_config.yml"
-if (!(Test-Path $configPath)) {
-    Set-Content -Path $configPath -Value "include: [_framework, _content]" -NoNewline
-    Write-Host "  Created _config.yml to include _framework and _content." -ForegroundColor Gray
+# Disable Jekyll processing so that _-prefixed directories (_framework, _content)
+# are served correctly at any nesting depth (e.g. pr-preview/pr-NNN/playground/_framework/).
+# The previous _config.yml include approach only worked for root-level directories.
+$nojekyllPath = Join-Path $outputDir ".nojekyll"
+if (!(Test-Path $nojekyllPath)) {
+    New-Item -Path $nojekyllPath -ItemType File -Force | Out-Null
+    Write-Host "  Created .nojekyll to disable Jekyll processing." -ForegroundColor Gray
 }
 
 # -- Step 10: Check for broken links (lychee) ---------------------------------

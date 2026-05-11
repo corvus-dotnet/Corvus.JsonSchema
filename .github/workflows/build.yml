@@ -200,15 +200,15 @@ jobs:
           name: website-output
           path: docs/website/.output
 
-      - name: Ensure Jekyll config on gh-pages
+      - name: Ensure .nojekyll on gh-pages
         run: |
           if ! git fetch origin gh-pages 2>/dev/null || \
-             ! git show origin/gh-pages:_config.yml >/dev/null 2>&1; then
+             ! git show origin/gh-pages:.nojekyll >/dev/null 2>&1; then
             git fetch origin gh-pages:gh-pages 2>/dev/null || git checkout --orphan gh-pages
             git worktree add /tmp/gh-pages gh-pages
             cd /tmp/gh-pages
-            rm -f .nojekyll
-            echo -n 'include: [_framework, _content]' > _config.yml
+            rm -f _config.yml
+            touch .nojekyll
             git add -A
             git -c user.name="github-actions[bot]" -c user.email="github-actions[bot]@users.noreply.github.com" \
               commit --amend --no-edit
