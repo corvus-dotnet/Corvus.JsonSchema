@@ -226,11 +226,44 @@ dotnet test --solution Corvus.Text.Json.slnx --filter "FullyQualifiedName~ParseV
 
 ## Outerloop (stress) tests
 
-The `[OuterLoop]` attribute (from `Microsoft.DotNet.XUnitExtensions`) marks long-running stress and thread-safety tests. These are excluded from routine runs but should be run before major releases:
+The `[TestCategory("outerloop")]` attribute marks long-running stress and thread-safety tests. These are excluded from routine runs but should be run before major releases:
 
 ```powershell
 dotnet test --project tests\Corvus.Text.Json.Tests --filter "TestCategory=outerloop"
 ```
+
+## Near-outerloop tests and CI performance
+
+Several tests in `Corvus.Text.Json.Tests` allocate very large buffers (200 MB–1 GB) but are **not** marked as `outerloop`. These "near-outerloop" tests have a significant impact on CI runtime and memory consumption.
+
+### Impact analysis
+
+Local profiling (May 2025) measured per-method wall-clock time across all `Utf8JsonWriterTests` methods. Three methods dominate:
+
+| Method | Allocation | Cases | net10.0 | net481 | net481 penalty |
+|--------|-----------|-------|---------|--------|---------------|
+| `WriteLargeKeyEscapedValue` | `MaxUnescapedTokenSize/2` buffers | 90 | 115s | 277s | +162s |
+| `WritingHugeBase64Bytes` | `new byte[1_000_000_000]` (1 GB) | 90 | 113s | 274s | +161s |
+| `WritingTooLargeBase64Bytes` | `new byte[200_000_000]` (200 MB) | 90 | 43s | 117s | +74s |
+| **All other methods (193)** | — | ~11,500 | 78s | 100s | +22s |
+
+These three methods account for **98%** of the net481 test execution time penalty for the entire assembly. Each runs 90 times (the full `JsonOptions()` Cartesian product of indent character × indent size × new line × skip validation), even though the indentation options are irrelevant to the buffer management logic being tested.
+
+### Memory pressure on CI
+
+The `WritingHugeBase64Bytes` test allocates a 1 GB byte array on each of its 90 invocations. Although the GC reclaims the memory between runs, the peak working set can exceed 2 GB. When MTP runs test assemblies in parallel, this can overlap with other memory-intensive assemblies and trigger OOM kills — particularly on CI runners with limited available memory.
+
+This is the primary reason `--max-parallel-test-modules 1` was introduced in `.zf/config.ps1`. The net481 matrix entry now allows 2 concurrent modules because net481 test hosts have lower peak memory than CoreCLR hosts, but the large-allocation tests remain the main constraint.
+
+### Options for reducing impact
+
+If CI time becomes a concern, these are the available levers (in order of impact):
+
+1. **Mark the three methods as `[TestCategory("outerloop")]`** — removes them from CI entirely, saving ~11 minutes on net481 and ~5 minutes on net10.0. This is the highest-impact change but reduces coverage of large-buffer edge cases on every PR.
+
+2. **Reduce `JsonOptions()` to representative cases for these methods** — instead of 90 option combinations, use 3–4 representative options (indented/not-indented, skip-validation/no-skip). This would reduce the three methods from 270 to ~12 total cases, saving most of the time while retaining the large-buffer coverage.
+
+3. **Increase `--max-parallel-test-modules`** — allows more test assemblies to overlap. This helps the overall wall-clock time but does not reduce the per-assembly time and increases memory pressure.
 
 ## Target framework selection
 
