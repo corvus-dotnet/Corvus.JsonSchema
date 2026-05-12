@@ -1,0 +1,47 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: Getting Started
+Navigation:
+  Title: Getting Started
+  Description: "Install the tools, define a JSON Schema, generate C# types, and start building."
+  Parent: /
+  Url: /getting-started/index.html
+  Rank: 1
+  Header:
+    Visible: True
+    Link: True
+  Footer:
+    Visible: True
+    Link: True
+MetaData:
+  Title: "Getting Started — Corvus.Text.Json"
+  Description: "Step-by-step guide to installing Corvus.Text.Json, defining a JSON Schema, generating strongly-typed C# classes, creating and mutating documents, and running validation."
+  Keywords: [getting started, installation, JSON Schema, source generator, C#, tutorial, quickstart]
+OpenGraph:
+  Title: "Getting Started — Corvus.Text.Json"
+  Description: "Step-by-step guide to installing Corvus.Text.Json, defining a JSON Schema, and generating strongly-typed C# classes."
+  Image:
+ContentBlocks:
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Introduction
+    Spec:
+      Path: ../../content/GettingStarted/Introduction.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: DefineSchema
+    Spec:
+      Path: ../../content/GettingStarted/DefineSchema.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Setup
+    Spec:
+      Path: ../../content/GettingStarted/Setup.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: UseGeneratedTypes
+    Spec:
+      Path: ../../content/GettingStarted/UseGeneratedTypes.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: CreateAndMutate
+    Spec:
+      Path: ../../content/GettingStarted/CreateAndMutate.md
+  - ContentType: application/vnd.endjin.ssg.content+md
+    Id: Validate
+    Spec:
+      Path: ../../content/GettingStarted/Validate.md

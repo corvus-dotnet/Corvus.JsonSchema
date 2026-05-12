@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/person",
+  "title": "Person",
+  "type": "object",
+  "required": [ "name", "age" ],
+  "properties": {
+    "name": {
+      "type": "string",
+      "minLength": 1
+    },
+    "age": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "address": {
+      "$ref": "#/$defs/Address"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "$defs": {
+    "Address": {
+      "type": "object",
+      "required": [ "city" ],
+      "properties": {
+        "city": { "type": "string" },
+        "postcode": { "type": "string" }
+      }
+    }
+  }
+}

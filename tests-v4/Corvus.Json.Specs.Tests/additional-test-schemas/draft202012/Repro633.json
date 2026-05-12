@@ -1,0 +1,162 @@
+[
+  {
+    "description": "Validate required property defined in reference",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "$ref": "#/$defs/ifThisThenThat",
+      "required": [
+        "match"
+      ],
+      "maxProperties": 1,
+      "$defs": {
+        "ifThisThenThat": {
+          "type": "object",
+          "properties": {
+            "match": {
+              "type": "string"
+            }
+          },
+          "unevaluatedProperties": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022match\u0022: \u0022foo\u0022}",
+        "data": {
+          "match": "foo"
+        },
+        "valid": true
+      },
+      {
+        "description": "data: {}",
+        "data": {},
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "Validate required property required in reference",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "$ref": "#/$defs/ifThisThenThat",
+      "maxProperties": 1,
+      "$defs": {
+        "ifThisThenThat": {
+          "type": "object",
+          "required": [
+            "match"
+          ],
+          "properties": {
+            "match": {
+              "type": "string"
+            }
+          },
+          "unevaluatedProperties": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022match\u0022: \u0022foo\u0022}",
+        "data": {
+          "match": "foo"
+        },
+        "valid": true
+      },
+      {
+        "description": "data: {}",
+        "data": {},
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "Validate overrides",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "$ref": "#/$defs/ifThisThenThat",
+      "properties": {
+        "match": {
+          "minimum": 3
+        }
+      },
+      "$defs": {
+        "ifThisThenThat": {
+          "type": "object",
+          "properties": {
+            "match": {
+              "minimum": 2
+            }
+          }
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022match\u0022: 3 }",
+        "data": {
+          "match": 3
+        },
+        "valid": true
+      },
+      {
+        "description": "data: {\u0022match\u0022: 2 }",
+        "data": {
+          "match": 2
+        },
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "Validate reverse overrides",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "$ref": "#/$defs/ifThisThenThat",
+      "properties": {
+        "match": {
+          "minimum": 2
+        }
+      },
+      "$defs": {
+        "ifThisThenThat": {
+          "type": "object",
+          "properties": {
+            "match": {
+              "minimum": 3
+            }
+          }
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022match\u0022: 3 }",
+        "data": {
+          "match": 3
+        },
+        "valid": true
+      },
+      {
+        "description": "data: {\u0022match\u0022: 2 }",
+        "data": {
+          "match": 2
+        },
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  }
+]

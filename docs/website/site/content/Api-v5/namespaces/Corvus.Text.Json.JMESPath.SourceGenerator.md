@@ -1,0 +1,1 @@
+Roslyn incremental source generator for compile-time JMESPath code generation. Annotate a `static partial class` with `[JMESPathExpression("path.jmespath")]` to generate an optimized static `Evaluate(in JsonElement, JsonWorkspace)` method from a `.jmespath` expression file.

@@ -1,0 +1,20 @@
+description: |
+  This is a literal block scalar that preserves
+  newlines exactly as written. Each line break
+  in the content is kept as-is in the output.
+
+  Blank lines are preserved too.
+  
+  This tests the literal block scalar parsing
+  performance including indentation detection,
+  chomping behavior, and line-by-line copying.
+notes: >
+  This is a folded block scalar where
+  line breaks between content lines are
+  converted to spaces. Only blank lines
+  and more-indented lines preserve their
+  breaks.
+
+  A blank line starts a new paragraph.
+    This indented line keeps its break.
+  Back to normal folding here.

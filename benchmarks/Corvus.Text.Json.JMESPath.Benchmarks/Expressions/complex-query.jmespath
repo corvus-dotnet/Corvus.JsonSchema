@@ -1,0 +1,1 @@
+people[?age > `25`] | sort_by(@, &age) | [*].{name: name, age: age}

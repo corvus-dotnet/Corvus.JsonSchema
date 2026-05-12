@@ -1,0 +1,1 @@
+$decodeUrl("https://example.com/path?q=hello%20world&x=1")

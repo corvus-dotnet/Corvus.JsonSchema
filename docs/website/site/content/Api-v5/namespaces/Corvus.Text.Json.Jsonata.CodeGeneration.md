@@ -1,0 +1,1 @@
+Code generation for JSONata expressions. Translates JSONata expression strings into optimized static C# methods that evaluate without runtime parsing or compilation overhead. Up to 12× faster than interpreted evaluation for complex expressions.

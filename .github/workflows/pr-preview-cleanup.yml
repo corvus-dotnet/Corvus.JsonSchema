@@ -1,0 +1,23 @@
+name: PR Preview Cleanup
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup-preview:
+    name: Clean up PR Preview
+    runs-on: ubuntu-latest
+    concurrency: preview-${{ github.event.pull_request.number }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Remove PR preview
+        uses: rossjrw/pr-preview-action@v1
+        with:
+          action: remove
+          umbrella-dir: pr-preview

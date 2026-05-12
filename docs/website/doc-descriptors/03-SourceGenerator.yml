@@ -1,0 +1,3 @@
+source: SourceGenerator.md
+navTitle: "Source Generator"
+description: "Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator. Annotate a partial struct, register your schema, and get full IntelliSense immediately."

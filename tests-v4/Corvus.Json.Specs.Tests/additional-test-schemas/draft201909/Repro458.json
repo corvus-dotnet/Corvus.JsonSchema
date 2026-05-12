@@ -1,0 +1,59 @@
+[
+  {
+    "description": "An empty required array",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "type": "object",
+      "properties": {
+        "flag": {
+          "type": "boolean"
+        },
+        "bar": {
+          "type": "number"
+        }
+      },
+      "if": {
+        "properties": {
+          "flag": {
+            "const": true
+          }
+        }
+      },
+      "then": {
+        "required": []
+      },
+      "else": {
+        "required": [
+          "bar"
+        ]
+      },
+      "required": [
+        "flag"
+      ]
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022flag\u0022: false, \u0022bar\u0022: 3}",
+        "data": {
+          "flag": false,
+          "bar": 3
+        },
+        "valid": true
+      },
+      {
+        "description": "data: {\u0022flag\u0022: true}",
+        "data": {
+          "flag": true
+        },
+        "valid": true
+      },
+      {
+        "description": "data: {\u0022flag\u0022: false}",
+        "data": {
+          "flag": false
+        },
+        "valid": false
+      }
+    ]
+  }
+]

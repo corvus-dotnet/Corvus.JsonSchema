@@ -1,0 +1,51 @@
+@model SiteViewModel
+@{
+    Layout = "../Shared/_Layout.cshtml";
+    var docsParent = Model.SiteContext.Navigation?.Children?
+        .FirstOrDefault(x => x.Url?.ToString()?.Contains("/docs/") == true);
+    var docPages = docsParent?.Children?.OrderBy(x => x.Rank).ToList();
+}
+<div class="layout-docs container">
+    <aside class="sidebar">
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Getting Started</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link is-active" href="/getting-started/index.html">Tutorial</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Documentation</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    @if (docPages != null)
+                    {
+                        @foreach (var doc in docPages)
+                        {
+                            <li class="sidebar__item">
+                                <a class="sidebar__link" href="@doc.Url">@doc.Title</a>
+                            </li>
+                        }
+                    }
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar__section">
+            <button class="sidebar__heading">Examples</button>
+            <div class="sidebar__body">
+                <ul class="sidebar__list">
+                    <li class="sidebar__item"><a class="sidebar__link" href="/examples/index.html">All Recipes</a></li>
+                </ul>
+            </div>
+        </div>
+    </aside>
+    <main id="main-content" class="layout-docs__main">
+        <div class="doc__content">
+            @foreach (var contentFragment in Model.PageContext.GetAllMarkdownContent())
+            {
+                @Html.Raw(contentFragment.Body)
+            }
+        </div>
+    </main>
+</div>

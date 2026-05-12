@@ -1,0 +1,24 @@
+[
+  {
+    "description": "Repro tilde description",
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "properties": {
+        "dry": {
+          "description": "~"
+        }
+      },
+      "type": "object",
+      "$id": "https://json.schemastore.org/jsconfig.json"
+    },
+    "tests": [
+      {
+        "description": "data: { \u0022dry\u0022: 123 }",
+        "data": {
+          "dry": 123
+        },
+        "valid": true
+      }
+    ]
+  }
+]

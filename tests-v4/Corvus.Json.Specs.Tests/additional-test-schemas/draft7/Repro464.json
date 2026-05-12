@@ -1,0 +1,23 @@
+[
+  {
+    "description": "Repro property collision with definition",
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema",
+      "properties": {
+        "builder": {}
+      },
+      "definitions": {
+        "builder": {}
+      }
+    },
+    "tests": [
+      {
+        "description": "data: { \u0022builder\u0022: 123 }",
+        "data": {
+          "builder": 123
+        },
+        "valid": true
+      }
+    ]
+  }
+]

@@ -1,0 +1,32 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Schema with nested name collisions",
+    "type": "object",
+    "properties": {
+        "config": {
+            "type": "object",
+            "properties": {
+                "config": {
+                    "type": "object",
+                    "properties": {
+                        "value": { "type": "string" }
+                    }
+                },
+                "data": {
+                    "type": "object",
+                    "properties": {
+                        "data": {
+                            "type": "object",
+                            "properties": {
+                                "items": {
+                                    "type": "array",
+                                    "items": { "type": "integer" }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

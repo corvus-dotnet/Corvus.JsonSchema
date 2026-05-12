@@ -1,0 +1,29 @@
+{
+    "title": "Payment",
+    "type": "object",
+    "required": ["amount", "method"],
+    "properties": {
+        "amount": { "type": "number" },
+        "method": { "type": "string", "enum": ["card", "bank"] }
+    },
+    "if": {
+        "properties": {
+            "method": { "const": "card" }
+        },
+        "required": ["method"]
+    },
+    "then": {
+        "required": ["cardNumber", "expiry"],
+        "properties": {
+            "cardNumber": { "type": "string", "pattern": "^[0-9]{16}$" },
+            "expiry": { "type": "string", "pattern": "^(0[1-9]|1[0-2])/[0-9]{2}$" }
+        }
+    },
+    "else": {
+        "required": ["accountNumber", "sortCode"],
+        "properties": {
+            "accountNumber": { "type": "string", "pattern": "^[0-9]{8}$" },
+            "sortCode": { "type": "string", "pattern": "^[0-9]{6}$" }
+        }
+    }
+}

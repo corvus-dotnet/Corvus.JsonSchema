@@ -1,0 +1,29 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+    <EnableDefaultCompileItems>true</EnableDefaultCompileItems>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <LangVersion>preview</LangVersion>
+    <!-- Warnings to always disable -->
+    <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065;CS8632;MSTEST0014;MSTEST0032;MSTEST0003</NoWarn>
+    <NoWarn Condition="'$(TargetFramework)' == 'net481'">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
+  </PropertyGroup>
+  <ItemGroup>
+    <Using Include="System" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\tests\TestUtilities\TestUtilities.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="System.Runtime.Loader" />
+    <PackageReference Include="System.Net.Http" />
+    <PackageReference Include="System.Memory" />
+  </ItemGroup>
+</Project>

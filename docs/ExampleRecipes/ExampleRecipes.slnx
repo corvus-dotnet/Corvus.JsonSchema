@@ -1,0 +1,89 @@
+<Solution>
+  <Folder Name="/Docs/">
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/001-DataObject/">
+    <Project Path="001-DataObject\DataObject.csproj" />
+  </Folder>
+  <Folder Name="/002-DataObjectValidation/">
+    <Project Path="002-DataObjectValidation\DataObjectValidation.csproj" />
+  </Folder>
+  <Folder Name="/003-ReusingCommonTypes/">
+    <Project Path="003-ReusingCommonTypes\ReusingCommonTypes.csproj" />
+  </Folder>
+  <Folder Name="/004-OpenVersusClosedTypes/">
+    <Project Path="004-OpenVersusClosedTypes\OpenVersusClosedTypes.csproj" />
+  </Folder>
+  <Folder Name="/005-ExtendingABaseType/">
+    <Project Path="005-ExtendingABaseType\ExtendingABaseType.csproj" />
+  </Folder>
+  <Folder Name="/006-ConstrainingABaseType/">
+    <Project Path="006-ConstrainingABaseType\ConstrainingABaseType.csproj" />
+  </Folder>
+  <Folder Name="/007-CreatingAStronglyTypedArray/">
+    <Project Path="007-CreatingAStronglyTypedArray\CreatingAStronglyTypedArray.csproj" />
+  </Folder>
+  <Folder Name="/008-CreatingAnArrayOfHigherRank/">
+    <Project Path="008-CreatingAnArrayOfHigherRank\CreatingAnArrayOfHigherRank.csproj" />
+  </Folder>
+  <Folder Name="/009-WorkingWithTensors/">
+    <Project Path="009-WorkingWithTensors\WorkingWithTensors.csproj" />
+  </Folder>
+  <Folder Name="/010-CreatingTuples/">
+    <Project Path="010-CreatingTuples\CreatingTuples.csproj" />
+  </Folder>
+  <Folder Name="/011-InterfacesAndMixInTypes/">
+    <Project Path="011-InterfacesAndMixInTypes\InterfacesAndMixInTypes.csproj" />
+  </Folder>
+  <Folder Name="/012-PatternMatching/">
+    <Project Path="012-PatternMatching\PatternMatching.csproj" />
+  </Folder>
+  <Folder Name="/013-PolymorphismWithDiscriminators/">
+    <Project Path="013-PolymorphismWithDiscriminators\PolymorphismWithDiscriminators.csproj" />
+  </Folder>
+  <Folder Name="/014-StringEnumerations/">
+    <Project Path="014-StringEnumerations\StringEnumerations.csproj" />
+  </Folder>
+  <Folder Name="/015-NumericEnumerations/">
+    <Project Path="015-NumericEnumerations\NumericEnumerations.csproj" />
+  </Folder>
+  <Folder Name="/016-Maps/">
+    <Project Path="016-Maps\Maps.csproj" />
+  </Folder>
+  <Folder Name="/017-MappingInputAndOutputValues/">
+    <Project Path="017-MappingInputAndOutputValues\MappingInputAndOutputValues.csproj" />
+  </Folder>
+  <Folder Name="/018-CreatingAndMutatingObjects/">
+    <Project Path="018-CreatingAndMutatingObjects\CreatingAndMutatingObjects.csproj" />
+  </Folder>
+  <Folder Name="/019-CloneAndFreeze/">
+    <Project Path="019-CloneAndFreeze\CloneAndFreeze.csproj" />
+  </Folder>
+  <Folder Name="/020-ConditionalSchemas/">
+    <Project Path="020-ConditionalSchemas\ConditionalSchemas.csproj" />
+  </Folder>
+  <Folder Name="/021-DefaultValues/">
+    <Project Path="021-DefaultValues\DefaultValues.csproj" />
+  </Folder>
+  <Folder Name="/022-FormatValidation/">
+    <Project Path="022-FormatValidation\FormatValidation.csproj" />
+  </Folder>
+  <Folder Name="/023-JsonPatch/">
+    <Project Path="023-JsonPatch\JsonPatch.csproj" />
+  </Folder>
+  <Folder Name="/024-JsonLogic/">
+    <Project Path="024-JsonLogic\JsonLogic.csproj" />
+  </Folder>
+  <Folder Name="/025-JSONata/">
+    <Project Path="025-JSONata\JSONata.csproj" />
+  </Folder>
+  <Folder Name="/026-JMESPath/">
+    <Project Path="026-JMESPath\JMESPath.csproj" />
+  </Folder>
+  <Folder Name="/027-Yaml/">
+    <Project Path="027-Yaml\Yaml.csproj" />
+  </Folder>
+  <Folder Name="/028-JsonPath/">
+    <Project Path="028-JsonPath\JsonPath.csproj" />
+  </Folder>
+</Solution>

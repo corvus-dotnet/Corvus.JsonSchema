@@ -1,0 +1,44 @@
+{
+  "type": "object",
+  "properties": {
+    "bigMultiple": {
+      "type": "number",
+      "multipleOf": 18446744073709551617
+    },
+    "smallMultiple": {
+      "type": "integer",
+      "multipleOf": 7,
+      "minimum": 0,
+      "maximum": 100
+    },
+    "rangeWithExclusive": {
+      "type": "number",
+      "exclusiveMinimum": 0,
+      "exclusiveMaximum": 1000
+    },
+    "email": {
+      "type": "string",
+      "format": "email"
+    },
+    "dateTime": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "uri": {
+      "type": "string",
+      "format": "uri"
+    },
+    "ipv4": {
+      "type": "string",
+      "format": "ipv4"
+    },
+    "ipv6": {
+      "type": "string",
+      "format": "ipv6"
+    },
+    "duration": {
+      "type": "string",
+      "format": "duration"
+    }
+  }
+}

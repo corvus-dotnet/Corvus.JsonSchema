@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "jsonContent": {
+      "type": "string",
+      "contentMediaType": "application/json"
+    },
+    "base64JsonContent": {
+      "type": "string",
+      "contentMediaType": "application/json",
+      "contentEncoding": "base64"
+    },
+    "binaryContent": {
+      "type": "string",
+      "contentMediaType": "application/octet-stream",
+      "contentEncoding": "base64"
+    },
+    "otherEncodedJson": {
+      "type": "string",
+      "contentMediaType": "application/json",
+      "contentEncoding": "gzip"
+    },
+    "plainText": {
+      "type": "string",
+      "contentMediaType": "text/plain"
+    }
+  }
+}

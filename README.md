@@ -1,25 +1,307 @@
-# Corvus.JsonSchema
-Build-time code generation for [Json Schema](https://json-schema.org/) validation, and serialization.
+# Corvus.Text.Json
 
-It supports serialization of *every feature of JSON schema* from draft4 to draft2020-12, including the OpenApi3.0 variant of draft4. (i.e. it doesn't give up on complex structure and lapse back to 'anonymous JSON objects' like most .NET tooling.)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+High-performance, source-generated, strongly-typed C# models from JSON Schema — with pooled-memory parsing, full draft 4 through 2020-12 validation, and 136B per-document allocation.
+
+## Features
+
+- **Source Generation** — Generate strongly-typed C# from JSON Schema at build time with the Roslyn incremental source generator, or ahead of time with the `corvusjson` CLI tool.
+- **Schema Validation** — Full JSON Schema draft 4, 6, 7, 2019-09, and 2020-12 validation. Over 10× faster than other .NET JSON Schema validators.
+- **Pooled Memory** — `ParsedJsonDocument<T>` uses `ArrayPool<byte>` for minimal GC impact. Just 136 bytes per-document allocation.
+- **Mutable Documents** — `JsonDocumentBuilder<T>` and `JsonWorkspace` provide a builder pattern for creating and modifying JSON with pooled workspace memory.
+- **Extended Types** — `BigNumber` for arbitrary-precision decimals, `BigInteger` for large integers, plus NodaTime integration for `date`, `date-time`, `time`, and `duration` formats.
+- **Pattern Matching** — Type-safe `Match()` for `oneOf`/`anyOf` discriminated unions with exhaustive dispatch.
+- **[JSONata](#jsonata)** — Full [JSONata](https://jsonata.org/) query and transformation language with 100% test-suite conformance. Interpreted and code-generated evaluation modes.
+- **[JMESPath](#jmespath)** — Full [JMESPath](https://jmespath.org/) query language with 100% conformance against the official test suite. Interpreted and code-generated evaluation modes.
+- **[JsonLogic](#jsonlogic)** — Complete [JsonLogic](https://jsonlogic.com/) rule engine for evaluating business rules against JSON data with interpreted and code-generated modes.
+- **[JSONPath](#jsonpath)** — Full [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) query language with 100% conformance against the official compliance test suite. Interpreted and code-generated evaluation modes.
+- **JSON Pointer** — RFC 6901 JSON Pointer for navigating and resolving paths within JSON documents.
+- **JSON Patch, Merge Patch & Diff** — RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff with zero-allocation operations on `JsonElement`.
+- **JSON Canonicalization** — RFC 8785 JSON Canonicalization Scheme (JCS) for deterministic serialization. Zero heap allocation.
+- **[YAML](#yaml)** — High-performance YAML 1.2 to JSON converter with 100% yaml-test-suite conformance. Zero-allocation `ref struct` tokenizer.
+
+## Quick Start
+
+```csharp
+// 1. Define a schema (Schemas/person.json)
+// {
+//     "$schema": "https://json-schema.org/draft/2020-12/schema",
+//     "type": "object",
+//     "required": ["name"],
+//     "properties": {
+//         "name": { "type": "string", "minLength": 1 },
+//         "age": { "type": "integer", "format": "int32", "minimum": 0 }
+//     }
+// }
+
+// 2. Use the source generator
+[JsonSchemaTypeGenerator("Schemas/person.json")]
+public readonly partial struct Person;
+
+// 3. Parse and access properties
+using var doc = ParsedJsonDocument<Person>.Parse(
+    """{"name":"Alice","age":30}""");
+Person person = doc.RootElement;
+
+string name = (string)person.Name;           // "Alice"
+int age = (int)person.Age;                        // 30
+
+// 4. Validate against the schema
+bool valid = person.EvaluateSchema();        // true
+
+// 5. Mutate with the builder pattern
+using JsonWorkspace workspace = JsonWorkspace.Create();
+using var builder = person.CreateBuilder(workspace);
+Person.Mutable root = builder.RootElement;
+root.SetAge(31);
+
+Console.WriteLine(root.ToString());
+// {"name":"Alice","age":31}
+```
+
+## NuGet Packages
+
+| Package | Description |
+|---|---|
+| **Corvus.Text.Json** | Core runtime library. Required by all generated types. |
+| **Corvus.Text.Json.SourceGenerator** | Roslyn incremental source generator. Generates C# from JSON Schema at build time. |
+| **Corvus.Json.Cli** | CLI tool (`corvusjson`) for ahead-of-time code generation. |
+| **Corvus.Json.CodeGenerator** | Legacy CLI tool (`generatejsonschematypes`). Delegates to the same engine; defaults to V4. |
+| **Corvus.Text.Json.Validator** | Dynamically load and validate JSON against JSON Schema at runtime using Roslyn. |
+| **Corvus.Text.Json.Jsonata** | JSONata query and transformation language — interpreted runtime evaluator. |
+| **Corvus.Text.Json.Jsonata.SourceGenerator** | Roslyn source generator for compile-time JSONata code generation. |
+| **Corvus.Text.Json.JMESPath** | JMESPath query language — interpreted runtime evaluator. |
+| **Corvus.Text.Json.JMESPath.SourceGenerator** | Roslyn source generator for compile-time JMESPath code generation. |
+| **Corvus.Text.Json.JsonLogic** | JsonLogic rule engine — interpreted runtime evaluator. |
+| **Corvus.Text.Json.JsonLogic.SourceGenerator** | Roslyn source generator for compile-time JsonLogic code generation. |
+| **Corvus.Text.Json.JsonPath** | JSONPath (RFC 9535) query language — interpreted runtime evaluator. |
+| **Corvus.Text.Json.JsonPath.SourceGenerator** | Roslyn source generator for compile-time JSONPath code generation. |
+| **Corvus.Text.Json.Patch** | RFC 6902 JSON Patch, RFC 7396 Merge Patch, and diff. |
+| **Corvus.Text.Json.Yaml** | YAML 1.2 to JSON converter with Corvus document model integration. |
+| **Corvus.Yaml.SystemTextJson** | YAML 1.2 to JSON converter using only System.Text.Json (no Corvus dependency). |
+
+### Install
+
+```bash
+# Core library
+dotnet add package Corvus.Text.Json
+
+# CLI code generator
+dotnet tool install --global Corvus.Json.Cli
+```
+
+For the source generator, add as an analyzer reference:
+
+```xml
+<PackageReference Include="Corvus.Text.Json.SourceGenerator" Version="5.0.0">
+  <PrivateAssets>all</PrivateAssets>
+  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+</PackageReference>
+```
+
+## Target Frameworks
+
+### V5 engine (Corvus.Text.Json)
+- .NET 10.0, 9.0
+- .NET Standard 2.0, 2.1
+
+### V4 engine (Corvus.Json)
+- .NET 10.0, 9.0, 8.0
+- .NET Standard 2.0, 2.1
+
+> **Note:** .NET 8.0 is not supported on the V5 engine. The V4 engine will drop .NET 8.0 support in November 2026 when it reaches end-of-life.
+
+## Documentation
+
+Full documentation is available at the [Corvus.Text.Json documentation website](docs/website/.output/index.html).
+
+To build and preview the docs locally:
+
+```powershell
+cd docs/website
+./preview.ps1
+```
+
+Then open http://localhost:5000.
+
+### Guides
+
+- [Parsing & Reading JSON](docs/ParsedJsonDocument.md)
+- [Building & Mutating JSON](docs/JsonDocumentBuilder.md)
+- [Source Generator](docs/SourceGenerator.md)
+- [CLI Code Generation](docs/CodeGenerator.md)
+- [Dynamic Schema Validation](docs/Validator.md)
+- [JSONata Query & Transformation](docs/Jsonata.md)
+- [JMESPath Query Language](docs/JMESPath.md)
+- [JSONPath Query Language](docs/JsonPath.md)
+- [JsonLogic Rule Engine](docs/JsonLogic.md)
+- [JSON Patch, Merge Patch & Diff](docs/JsonPatch.md)
+- [JSON Canonicalization (RFC 8785)](docs/JsonCanonicalization.md)
+- [YAML to JSON Converter](docs/Yaml.md)
+- [Migrating from V4](docs/MigratingFromV4ToV5.md)
+
+## Building
+
+```bash
+dotnet build Corvus.Text.Json.slnx
+```
+
+## Testing
+
+```bash
+dotnet test Corvus.Text.Json.slnx --filter "category!=failing&category!=outerloop"
+```
+
+## Comparison with System.Text.Json
+
+| Feature | System.Text.Json | Corvus.Text.Json |
+|---|---|---|
+| Read-only parsing | `JsonDocument` (pooled) | `ParsedJsonDocument<T>` (pooled, generic) |
+| Mutable documents | `JsonNode` (allocates per node) | Builder pattern on pooled memory |
+| Schema validation | None built-in | Draft 4/6/7/2019-09/2020-12 with full diagnostics |
+| Code generation | Serialization to/from POCOs | Strongly-typed entities from JSON Schema |
+| Date/Time | `DateTime`, `DateTimeOffset` | All .NET types plus NodaTime |
+| Numeric precision | `decimal` (28 digits) | `BigNumber` (arbitrary precision), `Int128`, `Half` |
+| String/URI handling | .NET string allocation | Zero-allocation UTF-8/UTF-16 access |
+
+## JSONata
+
+`Corvus.Text.Json.Jsonata` implements [JSONata](https://jsonata.org/) — an expressive, Turing-complete functional query and transformation language for JSON. It supports path navigation, predicate filtering, higher-order functions (`$map`, `$filter`, `$reduce`, `$sort`), object construction, string manipulation, arithmetic, regular expressions, and user-defined functions.
+
+- **100% conformance** — passes all 1,665 tests in the official [JSONata test suite](https://github.com/jsonata-js/jsonata)
+- **Up to 8× faster** than [Jsonata.Net.Native](https://github.com/mikhail-barg/jsonata.net.native) with 90–100% less memory allocation in the runtime evaluator
+- **Code-generated evaluation** — an optional source generator and CLI tool produce optimized static C# for expressions known at build time (up to 12× faster)
+- **Zero-allocation hot path** — pooled workspace memory with `ArrayPool`-backed evaluation
+
+```csharp
+using Corvus.Text.Json.Jsonata;
+
+string? result = JsonataEvaluator.Default.EvaluateToString(
+    "Account.Order.Product.Price ~> $sum()",
+    """{"Account":{"Order":[{"Product":{"Price":10}},{"Product":{"Price":20}}]}}""");
+// result: "30"
+```
+
+See [JSONata documentation](docs/Jsonata.md) for the full API, code generation, and performance benchmarks.
+
+## JMESPath
+
+`Corvus.Text.Json.JMESPath` implements [JMESPath](https://jmespath.org/) — a query language for JSON that supports path navigation, sub-expressions, index access, slicing, list and object projections, flatten, filter expressions, multiselect lists and hashes, pipe expressions, comparisons, and built-in functions.
+
+- **100% conformance** — passes all 892 conformance test cases in the official [JMESPath Compliance Test Suite](https://github.com/jmespath/jmespath.test)
+- **Up to 150× faster** than [JmesPath.Net](https://github.com/jdevillard/JmesPath.Net) on common benchmarks with zero allocation in the runtime evaluator
+- **Code-generated evaluation** — an optional source generator and CLI tool produce optimized static C# for expressions known at build time
+- **Zero-allocation hot path** — pooled workspace memory with `ArrayPool`-backed evaluation
+
+```csharp
+using Corvus.Text.Json.JMESPath;
+
+JsonElement result = JMESPathEvaluator.Default.Search(
+    "locations[?state == 'WA'].name | sort(@) | {WashingtonCities: join(', ', @)}",
+    JsonElement.ParseValue("""
+    {
+      "locations": [
+        {"name": "Seattle", "state": "WA"},
+        {"name": "New York", "state": "NY"},
+        {"name": "Bellevue", "state": "WA"},
+        {"name": "Olympia", "state": "WA"}
+      ]
+    }
+    """u8));
+
+Console.WriteLine(result); // {"WashingtonCities":"Bellevue, Olympia, Seattle"}
+```
+
+See [JMESPath documentation](docs/JMESPath.md) for the full API, code generation, and performance benchmarks.
+
+## JsonLogic
+
+`Corvus.Text.Json.JsonLogic` implements [JsonLogic](https://jsonlogic.com/) — a standard for expressing business rules as JSON. Rules are portable, storable in databases, and safely evaluated without allowing arbitrary code execution. It supports all standard operators, plus extended numeric types (`BigNumber`) via custom operators.
+
+- **100% conformance** — passes the full [official JsonLogic test suite](https://jsonlogic.com/tests.json)
+- **70–98% faster** than [JsonEverything](https://json-everything.net/) across 19 benchmark scenarios with zero or near-zero allocations in the runtime evaluator
+- **Code-generated evaluation** — an optional source generator and CLI tool produce optimized static C# for rules known at build time
+- **Zero-allocation hot path** — pooled workspace memory with `ArrayPool`-backed evaluation
+
+```csharp
+using Corvus.Text.Json.JsonLogic;
+
+JsonElement ruleElement = JsonElement.ParseValue(
+    """{"if": [{">":[{"var":"temp"}, 100]}, "too hot", "ok"]}"""u8);
+JsonElement data = JsonElement.ParseValue("""{"temp": 110}"""u8);
+
+JsonLogicRule rule = new(ruleElement);
+using JsonWorkspace workspace = JsonWorkspace.Create();
+JsonElement result = JsonLogicEvaluator.Default.Evaluate(rule, data, workspace);
+Console.WriteLine(result); // "too hot"
+```
+
+See [JsonLogic documentation](docs/JsonLogic.md) for the full API, code generation, and performance benchmarks.
+
+## JSONPath
+
+`Corvus.Text.Json.JsonPath` implements [JSONPath (RFC 9535)](https://www.rfc-editor.org/rfc/rfc9535) — an IETF-standardized query language for extracting values from JSON documents. It supports property access, wildcards, array slicing, filter expressions with comparisons and logical operators, recursive descent, and function extensions.
+
+- **100% conformance** — passes all 723 tests in the official [JSONPath Compliance Test Suite](https://github.com/jsonpath-standard/jsonpath-compliance-test-suite)
+- **Faster than JsonEverything** on 5 of 6 benchmark scenarios with 13–16× less memory allocation
+- **Code-generated evaluation** — an optional source generator and CLI tool produce optimized static C# for expressions known at build time
+- **Zero-allocation hot path** — stack-allocated result buffers with `ArrayPool` overflow
+
+```csharp
+using Corvus.Text.Json.JsonPath;
+
+JsonElement result = JsonPathEvaluator.Default.Query(
+    "$.store.book[?@.price<10].title",
+    JsonElement.ParseValue("""{"store":{"book":[{"title":"A","price":8.95},{"title":"B","price":12.99}]}}"""u8));
+// result: ["A"]
+```
+
+See [JSONPath documentation](docs/JsonPath.md) for the full API, code generation, and performance benchmarks.
+
+## YAML
+
+`Corvus.Text.Json.Yaml` is a high-performance YAML 1.2 to JSON converter built on a custom `ref struct` tokenizer operating directly on UTF-8 bytes. It supports all YAML scalar styles, flow and block collections, anchors and aliases, multi-document streams, and four schema modes.
+
+- **100% conformance** — passes all 402 tests in the [yaml-test-suite](https://github.com/yaml/yaml-test-suite) (308 valid + 94 invalid)
+- **Zero-allocation** on the hot path with `stackalloc`/`ArrayPool` pattern
+- **Two packages**: `Corvus.Text.Json.Yaml` (full Corvus integration) and `Corvus.Yaml.SystemTextJson` (System.Text.Json only)
+
+```csharp
+using Corvus.Text.Json;
+using Corvus.Text.Json.Yaml;
+
+string yaml = """
+    name: Alice
+    age: 30
+    hobbies: [reading, cycling]
+    """;
+
+using ParsedJsonDocument<JsonElement> doc = YamlDocument.Parse<JsonElement>(yaml);
+Console.WriteLine(doc.RootElement.GetProperty("name").GetString()); // "Alice"
+```
+
+See [YAML documentation](docs/Yaml.md) for the full API, configuration options, and supported YAML features. **[Try the YAML Playground](docs/playground-yaml/)** to convert between YAML and JSON in your browser.
 
 ## Supported platforms
 
 ### .NET 4.8.1 (Windows)
 It now works with .NET 4.8.1 and later by providing `netstandard2.0` packages.
 
-### .NET 8.0, 9.0 (Windows, Linux, MacOs)
-We take advantage of features in .NET 8.0 and later, by providing `net80` packages. These are supported on Windows, Linux, and MacOS.
+### .NET 9.0, 10.0 (Windows, Linux, MacOs)
+The V5 engine provides `net9.0` and `net10.0` packages. These are supported on Windows, Linux, and MacOS.
 
-Note that if you are building libraries using `Corvus.Json.ExtendedTypes`, and generated schema types, you should ensure
-that you target *both* `netstandard2.0` *and* `net80` (or later) to ensure that your library can be consumed
-by the widest possible range of projects
+> **Note:** .NET 8.0 is not supported on the V5 engine. If you need .NET 8.0, use the V4 engine (which will retain .NET 8.0 support until its end-of-life in November 2026).
 
-If you build your library against `netstandard2.0` only, and are consumed by a `net80` or later project, you will see type load errors.
+Note that if you are building libraries using `Corvus.JsonSchema`, you should ensure
+that you target *both* `netstandard2.0` *and* `net9.0` (or later) to ensure that your library can be consumed
+by the widest possible range of projects.
 
-## Support schema dialects
+If you build your library against `netstandard2.0` only, and are consumed by a `net9.0` or later project, you will see type load errors.
 
-In V4 we have full support for the following schema dialects:
+## Supported schema dialects
+
+Since V4 we have full support for the following schema dialects:
 
 - Draft 4
 - OpenAPI 3.0
@@ -50,849 +332,6 @@ Our other Open Source projects can be found at [https://endjin.com/open-source](
 
 This project has adopted a code of conduct adapted from the [Contributor Covenant](http://contributor-covenant.org/) to clarify expected behavior in our community. This code of conduct has been [adopted by many other projects](http://contributor-covenant.org/adopters/). For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [&#104;&#101;&#108;&#108;&#111;&#064;&#101;&#110;&#100;&#106;&#105;&#110;&#046;&#099;&#111;&#109;](&#109;&#097;&#105;&#108;&#116;&#111;:&#104;&#101;&#108;&#108;&#111;&#064;&#101;&#110;&#100;&#106;&#105;&#110;&#046;&#099;&#111;&#109;) with any additional questions or comments.
 
-## Concepts
+## License
 
-### Introduction
-
-For a quick introduction, you could read [this blog post by Ian Griffiths (@idg10)](https://endjin.com/blog/2024/04/dotnet-jsonelement-schema), a C# MVP and Technical Fellow at [endjin](https://endjin.com).
-
-There's also [a talk by Ian](https://endjin.com/what-we-think/talks/high-performance-json-serialization-with-code-generation-on-csharp-11-and-dotnet-7-0) on the techniques used in this library.
-
-If you want to see some well-worn patterns with JSON Schema, and how they translate into common .NET idioms, then [this series](https://endjin.com/blog/2024/05/json-schema-patterns-dotnet-data-object) is very useful. The corresponding sample code is found [here](./docs/ExampleRecipes).
-
-### History
-
-For a more detailed introduction to the concepts, take a look at [this blog post](https://endjin.com/blog/2021/05/csharp-serialization-with-system-text-json-schema).
-
-### What kind of things is Corvus.JsonSchema good for?
-
-There are 2 key features:
-
-### Serialization
-
-You use our `generatejsonschematypes` tool to generate code (on Windows, Linux or MacOS) from an existing JSON Schema document, and compile it in a standard .NET assembly.
-
-The generated code provides object models for JSON Schema documents that give you rich, idiomatic C# types with strongly typed properties, pattern matching and efficient cast operations.
-
-You can operate directly over the JSON data, or mix-and-match building new JSON models from .NET primitive types.
-
-```csharp
-string jsonText =
-    """
-    {
-        "name": {
-            "familyName": "Oldroyd",
-            "givenName": "Michael",
-            "otherNames": ["Francis", "James"]
-        },
-        "dateOfBirth": "1944-07-14"
-    }
-    """;
-
-var person = Person.Parse(jsonText);
-
-Console.WriteLine($"{person.Name.FamilyName}"});
-```
-
-### Validation
-
-The same object-model provides ultra-fast, zero/low allocation validation of JSON data against a JSON Schema.
-
-Having "deserialized" (really 'mapped') the JSON into the object model you can make use of the validation:
-
-```csharp
-string jsonText =
-    """
-    {
-        "name": {
-            "familyName": "Oldroyd",
-            "givenName": "Michael",
-            "otherNames": ["Francis", "James"]
-        },
-        "dateOfBirth": "1944-07-14"
-    }
-    """;
-
-var person = Person.Parse(jsonText);
-
-Console.WriteLine($"The person {person.IsValid() ? "is" : "is not"} valid JSON");
-```
-
-Or you can retrieve detailed validation results including JSON Schema output format location information:
-
-```csharp
-var result = person.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
-
-if (!result.IsValid)
-{
-    foreach (ValidationResult error in result.Results)
-    {
-        Console.WriteLine(error);
-    }
-}
-```
-## Getting started
-
-To get started, install the dotnet global tool.
-
-```
-dotnet tool install --global Corvus.Json.JsonSchema.TypeGeneratorTool
-```
-
-[On Linux/MacOS you may need to ensure that the `.dotnet/tools` folder is in your path.]
-
-Validate it is installed correctly
-
-```
-generatejsonschematypes -h
-```
-
-This should produce output similar to the following:
-
-```
-USAGE:
-    generatejsonschematypes <schemaFile> [OPTIONS]
-
-ARGUMENTS:
-    <schemaFile>    The path to the schema file to process
-
-OPTIONS:
-                                             DEFAULT
-    -h, --help                                               Prints help information
-        --rootNamespace                                      The default root namespace for generated types
-        --rootPath                                           The path in the document for the root type
-        --useSchema                          NotSpecified    Override the fallback schema variant to use. If
-                                                             NotSpecified, and it cannot be inferred from the schema
-                                                             itself, it will use Draft2020-12
-        --outputMapFile                                      The name to use for a map file which includes details of
-                                                             the files that were written
-        --outputPath                                         The path to which to write the generated code
-        --outputRootTypeName                                 The .NET type name for the root type
-        --rebaseToRootPath                                   If a --rootPath is specified, rebase the document as if it
-                                                             was rooted on the specified element
-        --assertFormat                       True            If --assertFormat is specified, assert format
-                                                             specifications
-        --disableOptionalNamingHeuristics                    Disables optional naming heuristics
-        --optionalAsNullable                 None            If NullOrUndefined, optional properties are emitted as .NET
-                                                             nullable values
-  ```
-
-To run it against a JSON Schema file in the local file system:
-
-e.g. Create a JSON schema file called `person-from-api.json`
-
-```json
-{
-  "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "JSON Schema for a Person entity coming back from a 3rd party API (e.g. a storage format in a database)",
-  "$defs": {
-    "Person": {
-      "type": "object",
-
-      "required":  ["name"],
-      "properties": {
-        "name": { "$ref": "#/$defs/PersonName" },
-        "dateOfBirth": {
-          "type": "string",
-          "format": "date"
-        }
-      }
-    },
-    "PersonName": {
-      "type": "object",
-      "description": "A name of a person.",
-      "required": [ "familyName" ],
-      "properties": {
-        "givenName": {
-          "$ref": "#/$defs/PersonNameElement",
-          "description": "The person's given name."
-        },
-        "familyName": {
-          "$ref": "#/$defs/PersonNameElement",
-          "description": "The person's family name."
-        },
-        "otherNames": {
-          "$ref": "#/$defs/OtherNames",
-          "description": "Other (middle) names for the person"
-        }
-      }
-    },
-    "OtherNames": {
-        "oneOf": [
-            { "$ref": "#/$defs/PersonNameElement" },
-            { "$ref": "#/$defs/PersonNameElementArray" }
-        ]
-    },
-    "PersonNameElementArray": {
-      "type": "array",
-      "items": {
-        "$ref": "#/$defs/PersonNameElement"
-      }
-    },
-    "PersonNameElement": {
-      "type": "string",
-      "minLength": 1,
-      "maxLength": 256
-    },
-    "Link":
-    {
-      "required": [
-        "href"
-      ],
-      "type": "object",
-      "properties": {
-        "href": {
-          "title": "URI of the target resource",
-          "type": "string",
-          "description": "Either a URI [RFC3986] or URI Template [RFC6570] of the target resource."
-        },
-        "templated": {
-          "title": "URI Template",
-          "type": "boolean",
-          "description": "Is true when the link object's href property is a URI Template. Defaults to false.",
-          "default": false
-        },
-        "type": {
-          "title": "Media type indication of the target resource",
-          "pattern": "^(application|audio|example|image|message|model|multipart|text|video)\\\\/[a-zA-Z0-9!#\\\\$&\\\\.\\\\+-\\\\^_]{1,127}$",
-          "type": "string",
-          "description": "When present, used as a hint to indicate the media type expected when dereferencing the target resource."
-        },
-        "name": {
-          "title": "Secondary key",
-          "type": "string",
-          "description": "When present, may be used as a secondary key for selecting link objects that contain the same relation type."
-        },
-        "profile": {
-          "title": "Additional semantics of the target resource",
-          "type": "string",
-          "description": "A URI that, when dereferenced, results in a profile to allow clients to learn about additional semantics (constraints, conventions, extensions) that are associated with the target resource representation, in addition to those defined by the HAL media type and relations.",
-          "format": "uri"
-        },
-        "description": {
-          "title": "Human-readable identifier",
-          "type": "string",
-          "description": "When present, is used to label the destination of a link such that it can be used as a human-readable identifier (e.g. a menu entry) in the language indicated by the Content-Language header (if present)."
-        },
-        "hreflang": {
-          "title": "Language indication of the target resource [RFC5988]",
-          "pattern": "^([a-zA-Z]{2,3}(-[a-zA-Z]{3}(-[a-zA-Z]{3}){0,2})?(-[a-zA-Z]{4})?(-([a-zA-Z]{2}|[0-9]{3}))?(-([a-zA-Z0-9]{5,8}|[0-9][a-zA-Z0-9]{3}))*([0-9A-WY-Za-wy-z](-[a-zA-Z0-9]{2,8}){1,})*(x-[a-zA-Z0-9]{2,8})?)|(x-[a-zA-Z0-9]{2,8})|(en-GB-oed)|(i-ami)|(i-bnn)|(i-default)|(i-enochian)|(i-hak)|(i-klingon)|(i-lux)|(i-mingo)|(i-navajo)|(i-pwn)|(i-tao)|(i-tay)|(i-tsu)|(sgn-BE-FR)|(sgn-BE-NL)|(sgn-CH-DE)|(art-lojban)|(cel-gaulish)|(no-bok)|(no-nyn)|(zh-guoyu)|(zh-hakka)|(zh-min)|(zh-min-nan)|(zh-xiang)$",
-          "type": "string",
-          "description": "When present, is a hint in RFC5646 format indicating what the language of the result of dereferencing the link should be.  Note that this is only a hint; for example, it does not override the Content-Language header of a HTTP response obtained by actually following the link."
-        }
-      }
-    }
-  }
-}
-```
-
-Then run the tool to generate C# files for that schema in the JsonSchemaSample.Api namespace, adjacent to that document.
-
-```
-generatejsonschematypes --rootNamespace JsonSchemaSample.Api --rootPath #/$defs/Person person-from-api.json
-```
-
-Compile this code in a project with a reference to the `Corvus.Json.ExtendedTypes` nuget package, and you can then work with the Dotnet type model, and JSON Schema validation e.g.
-
-```csharp
-string jsonText =
-    """{
-           "name": {
-               "familyName": "Oldroyd",
-               "givenName": "Michael",
-               "otherNames": ["Francis", "James"]
-           },
-           "dateOfBirth": "1944-07-14"
-       }""";
-
-var person = Person.Parse(jsonText);
-Console.WriteLine(person.Name.FamilyName);
-Console.WriteLine($"The person {person.IsValid() ? "is" : "is not"} valid JSON");
-```
-
-We also provide  a [full hands-on-lab](docs/GettingStartedWithJsonSchemaCodeGeneration.md).
-
-# Development environment
-
-## Use of PowerShell
-
-This project uses its own code generation to generate code for the built-in JSON types in `Corvus.Json.ExtendedTypes`, and the
-types for working with various schema dialects such as `Corvus.Json.JsonSchema.Draft202012`.
-If you add or update core types, you will need to run the `./Solutions/generatetypes.ps1` script file to regenerate them.
-
-## Use of JSON-Schema-Test-Suite
-
-This project uses test suites from https://github.com/json-schema-org/JSON-Schema-Test-Suite to
-validate operation. The ./JSON-Schema-Test-Suite folder is a submodule pointing to that test suite
-repo. When cloning this repository it is important to clone submodules, because test projects in
-this repository depend on that submodule being present. If you've already cloned the project, and
-haven't yet got the submodules, run this commands:
-
-```
-git submodule update --init --recursive
-```
-
-Note that `git pull` does not automatically update submodules, so if `git pull` reports that any
-submodules have changed, you can use the preceding command again, used to update the existing
-submodule reference.
-
-When updating to newer versions of the test suite, we can update the submodule reference thus:
-
-```
-cd JSON-Schema-Test-Suite
-git fetch
-git merge origin/main
-cd ..
-git commit -a -m "Updated to the lastest JSON Schema Test Suite"
-```
-
-(Or you can use `git submodule update --remote` instead of `cd`ing into the submodule folder and
-updating from there.)
-
-## Organization of the repository
-
-### Corvus.Json.CodeGenerator
-
-A .NET command line tool that generates C# code from JSON schema.
-
-### Corvus.Json.ExtendedTypes
-
-Builds on System.Text.Json to provide a rich object model over JSON data, with validation for well-known types.
-
-### Corvus.Json.JsonSchema.*
-
-Object models for working with JSON Schema documents. *This does not provide validation of your own JSON Schema - it is purely a model for reading,  writing, and validating JSON Schema documents of various flavours.*
-
-### Corvus.Json.CodeGeneration
-
-Common code to assist with building code generators for various flavours of JSON schema. It includes a common data model for abstracting schema into an object model which can be consumed by an `ILanguageProvider` (or other analyser).
-
-### Corvus.Json.CodeGenerator.CSharp
-
-A C# `ILanguageProvider` that can take the anlysis of a JSON Schema document from Corvus.Json.CodeGeneration and generate C# code from it.
-
-### Corvus.Json.CodeGeneration.202012, Corvus.Json.CodeGeneration.201909, Corvus.Json.CodeGeneration.7, Corvus.Json.CodeGeneration.6, Corvus.Json.CodeGeneration.4, Corvus.Json.CodeGeneration.OpenApi30
-
-Specific dialects that collect keywords into vocabularies, and provide analysers to determine the specific vocabulary in play for a particular JSON Schema document.
-
-### Corvus.Json.Validator
-
-Dynamic JSON Schema validator that can validate JSON data against a JSON Schema document loaded at runtime, without the need to generate code ahead-of-time.
-
-### Corvus.Json.Patch
-
-An implementation of JSON Patch over `Corvus.Json.ExtendedTypes`.
-
-### Corvus.Json.Specs
-
-Specification/tests for the various components in the solution.
-
-### Corvus.JsonSchema.SpecGenerator
-
-Generates Feature Files in `Corvus.Json.Specs` for the specs found in the JSON-Schema-Test-Suite (see above).
-
-### Corvus.Json.Patch.SpecGenerator
-
-Generates Feature Files in `Corvus.Json.Specs` for the JSON Patch tests.
-
-### Corvus.Json.Benchmarking
-### Corvus.JsonPatch.Benchmarking
-
-Benchmark suites for various components.
-
-### Corvus.Json.SourceGenerator
-
-The Source Generator which generates types from Json Schema.
-
-## V4.6 Updates
-
-### Breaking changes
-
-We had a long-standing bug with the pseudo-generic type pattern and `$dynamicRef` where you would get an extra level of indirection because the anchoring `$ref` was not reducible. This is now fixed, but any code using `$dynamicRef` will need to be simplified to remove the redundant indirection.
-
-## V4.5 Updates
-
-### Breaking changes (Language Provider Implementers only)
-
-The `IKeywordValidationHandler` interface contains a number of APIs that are, with hindsight, specific to the particular implementation in the `CSharpLanguageProvider` implementation.
-
-It forces you into a method definition / method call pattern, and also implementing the "child handler" pattern.
-
-While the child-handler pattern is still likely useful, it may have a completely different implementation in other providers.
-
-The method definition / method call pattern is very much an "implementer's choice" and should not be imposed on all future implementations.
-
-This breaking change applies to *language provider implementers* only, and it splits `IKeywordValidationHandler` into `IKeywordValidationHandler` and `IMethodBasedKeywordValidationHandlerWithChildren`
-
-If you have any existing code that depends on `IKeywordValidationHandler` you will need to update it to use `IMethodBasedKeywordValidationHandlerWithChildren` instead. This can be done with a global search and replace.
-
-You will likely also need to use the new overload of the `TypeDeclaration` extension method `OrderedValidationHandlers<T>()` to retrieve the handlers using the correct interface.
-
-For example, the CSharpLanguageProvider has been updated in three places to use the new overload, so we can access the handler via the new interface. Unsurprisingly, these are the three places that make use of the method based/child handler pattern. Here's one of those.
-
-```csharp
-    private static CodeGenerator AppendValidationHandlerSetup(this CodeGenerator generator, TypeDeclaration typeDeclaration)
-    {
-        if (generator.IsCancellationRequested)
-        {
-            return generator;
-        }
-
-        generator.AppendUsingEvaluatedItems(typeDeclaration);
-        generator.AppendUsingEvaluatedProperties(typeDeclaration);
-
-        foreach (IMethodBasedKeywordValidationHandlerWithChildren handler in typeDeclaration.OrderedValidationHandlers<IMethodBasedKeywordValidationHandlerWithChildren>(generator.LanguageProvider))
-        {
-            handler.AppendValidationSetup(generator, typeDeclaration);
-        }
-
-        return generator;
-    }
-```
-
-## V4.4.3 Updates
-
-Added <CorvusJsonSchemaFallbackVocabulary>Corvus202012</CorvusJsonSchemaFallbackVocabulary> to support the `$corvusTypeName` keyword without requiring you to specify an explicit `$schema` for the vocabulary.
-
-## V4.4 Updates
-
-### Breaking changes
-
-The property accessor mechanism now respects the default value of the property type.
-
-If the schema for the property defines a `default` value, then the property accessor will return this value if and only if the value actual value is `ValueKind.Undefined`.
-
-This does *not* affect equality or other comparisons for the object as a whole - if one value has the property *explicitly* set to the default value, and the other is relying on the "default" value, then the instances *will not* be equal.
-
-If you use the `TryGetProperty()` mechanism to get the property value, this *will not* return the default from its `JsonObjectProperty.Value`. However, if you have access to a `JsonObjectProperty<TValue>` where the type of the property is known, then the `Value` will respect the default in the same way as the property itself.
-
-### Fixes
-
-In the latest version of the .NET SourceGenerator codebase, the behaviour when properties are missing has changed (we would suggest "is broken"). It no longer returns false and a null value for a missing property, but instead provides an empty string. This broke our default-value logic for settings - the net effect of which is that forcing format validation by default is accidentally switched off.
-
-We have restored the previous behaviour, regardless of which version of the source generator infrastructure is in use.
-
-## V4.3.17 Updates
-
-Added netstandard2.1 packages for `Corvus.Json.ExtendedTypes` and `Corvus.Json.JsonReference` in order to support Unity builds.
-
-## V4.3.16 Updates
-
-### Use of IndexRange package is deprecated.
-
-As of V1.1 of IndexRange, it now type-forwards to the recently shipped `Microsoft.Bcl.Memory` library. We will be removing the dependency on IndexRange in the V4.4 release cycle (some time after .NET 10 ships), and replacing it directly with `Microsoft.Bcl.Memory`. You should make the changes in your own code base if you have a direct dependency on `IndexRange` with this releasee in order to prepare for that change.
-
-## V4.3.10 Updates
-
-Added `<CorvusJsonSchemaUseImplicitOperatorString>true</CorvusJsonSchemaUseImplicitOperatorString>` to enable implicit conversion to `string`.
-
-WARNING: Although this is very convenient for string-heavy code, it may cause unintended allocations if used without care.
-
-## V4.3.0 Updates
-
-### Type Accessibility using the Source Generator
-
-The source generator now respects the accessibility of the model type.
-
-For example
-
-```csharp
-[JsonSchemaTypeGenerator("../test.json#/$defs/FlimFlam")]
-internal readonly partial struct FlimFlam
-{
-}
-```
-
-Any nested types will be generated with `public` accessibility.
-
-Only `internal` and `public` are supported. The source generator will fail for an unsupported accessiblity declaration.
-
-You can override the default accessibility for all generated types with a build property:
-
-`<CorvusJsonSchemaDefaultAccessibility>Internal</CorvusJsonSchemaDefaultAccessibility>`
-
-Note that you can still generate code that will not compile if you incorrectly mix-and-match `public` and `internal`. It is your responsibility to ensure that your types have compatible accessibility.
-
-## V4.2.0 Updates
-
-### Breaking change
-
-The heuristic for naming (but not ordering) parameters to the `JsonObject.Create()` function has changed, to fix an issue with a parameter naming where properties differ only by case.
-
-This could affect code that is using explicit named parameters with `Create()`, if your parameter changes its name.
-
-If this causes a significant problem in your codebase, please raise an issue here and we will work with you to resolve the problem.
-
-## V4.1.2 Updates
-
-Added the `--addExplicitUsings` switch to the code generator (and a corresponding property to the `generator-config.json` schema). If `true`, then
-the source generator will emit the standard global usings explicitly into the generated source files. You can then use the generated code in a project that does not have `<ImplicitUsings>enable</ImplicitUsings>`.
-
-```csharp
-using global::System;
-using global::System.Collections.Generic;
-using global::System.IO;
-using global::System.Linq;
-using global::System.Net.Http;
-using global::System.Threading;
-using global::System.Threading.Tasks;
-```
-
-## V4.1.1 Updates
-
-## Help for people building analyzers and source generators with JSON Schema code generation
-
-We have built a self-contained package called Corvus.Json.SourceGeneratorTools for people looking to build .NET Analyzers or Source Generators that take advantage of JSON Schema code generation.
-
-See the [README](./Solutions/Corvus.Json.SourceGeneratorTools/README.md) for details.
-
-## V4.1 Updates
-
-### YAML support
-
-We now support YAML documents for the CLI tool.
-
-You can mix-and-match YAML and JSON documents in the same schema set, and the tool will generate code for either.
-
-Your JSON schema can be embedded in a YAML document (such as a YAML-based OpenAPI or AsyncAPI document), and you can resolve internal references just as with a JSON document.
-
-Add the `--yaml` command line option to enable YAML support, or set the `supportYaml: true` property in a generator config file
-
-#### Example
-
-*schema.yaml*
-```yaml
-type: array
-prefixItems:
-  - $ref: ./positiveInt32.yaml
-  - type: string
-  - type: string
-    format: date-time
-unevaluatedItems: false
-```
-
-*positiveInt32.yaml*
-```yaml
-type: integer
-format: int32
-minimum: 0
-```
-
-```
-generatejsonschematypes --rootNamespace TestYaml --outputPath .\Model --yaml schema.yaml
-```
-
-## V4.0 Updates
-
-There are a number of significant changes in this release
-
-### Support for cross-vocabulary schema generation.
-
-  So if you are upgrading a draft6 or draft7 schema set to 2020-12, for example, you can do it piecemeal and reference a schema with one dialect from a schema with another.
-
-### Opt-in support for .NET nullable properties
-
-  Where JSON Schema object properties are optional or nullable, use the `--optionalAsNullable` command line switch to emit nullable properties.
-
-### Opt-in support for implicit conversions to `string` from JSON `string` types
-
-If you have a JSON `string` type, we currently emit an `explicit` operator to convert to a .NET `string` (the counterpart of the `implicit` conversion operator *from* a .NET `string`).
-
-We do this because conversion to string causes an allocation, and it is very easy to inadvertently do this when working with APIs that offer `string`-based overloads, in addition to e.g.
-`ReadOnlySpan<char>` overloads. When passing an instance of the generated type directly to the API, the implicit conversion would kick in, allocating a string, with no warning that this
-is what you have done. In a high-performance/low-allocation scenario this would be undesirable, and you would prefer to use the `GetValue()` method on the instance,
-and pass the `ReadOnlySpan<char>` provided to the callback for that method.
-
-However, sometimes you just want the convenience of being able to behave as if your JSON value is a `string`.
-
-If so, you can now use the `--useImplicitOperatorString` command line switch to emit an implicit conversion operator to `string` for JSON `string` types.
-
-Note: this means you will never use the built-in `Corvus.Json` types for your string-like types. This could increase the amount of code generated for your schema.
-
-### New Source Generator
-
-We now have a source generator that can generate types at compile time, rather than using the `generatejsonschematypes` tool.
-
-### Using the source generator
-
-Add a reference to the `Corvus.Json.SourceGenerator` nuget package in addition to `Corvus.Json.ExtendedTypes`. [Note, you may need to restart Visual Studio once you have done this.]
-Add your JSON schema file(s), and set the Build Action to _C# analyzer additional file_.
-
-```xml
-<Project Sdk="Microsoft.NET.Sdk">
-
-  <PropertyGroup>
-    <TargetFramework>net8.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
-  </PropertyGroup>
-
-  <ItemGroup>
-    <PackageReference Include="Corvus.Json.ExtendedTypes" Version="4.3.9" />
-    <PackageReference Include="Corvus.Json.SourceGenerator" Version="4.3.9">
-      <PrivateAssets>all</PrivateAssets>
-      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
-    </PackageReference>
-  </ItemGroup>
-
-  <ItemGroup>
-    <AdditionalFiles Include="test.json" />
-  </ItemGroup>
-
-</Project>
-```
-
-Now, create a `readonly partial struct` as a placeholder for your root generated type, and attribute it with
-`[JsonSchemaTypeGenerator]`. The path to the schema file is relative to the file containing the attribute. You can
-provide a pointer fragment in the usual way, if you need to e.g. `"./somefile.json#/components/schema/mySchema"`
-
-```csharp
-namespace SourceGenTest2.Model;
-
-using Corvus.Json;
-
-[JsonSchemaTypeGenerator("../test.json")]
-public readonly partial struct FlimFlam
-{
-}
-```
-
-The source generator will now automatically emit code for your schema, and you can use the generated types in your code.
-
-```
-using Corvus.Json;
-using SourceGenTest2.Model;
-
-FlimFlam flimFlam = JsonAny.ParseValue("[1,2,3]"u8);
-Console.WriteLine(flimFlam);
-JsonArray array = flimFlam.As<JsonArray>();
-Console.WriteLine(array);
-```
-
-You can find an example project here: [Sandbox.SourceGenerator](./Solutions/Sandbox.SourceGenerator)
-
-We'd like to credit our Google Summer of Code 2024 contributor, [Pranay Joshi](https://github.com/pranayjoshi) and mentor [Greg Dennis](https://github.com/gregsdennis) for their work on this tool.
-
-#### Configuring the source generator
-
-There are a number of global configuration options for the source generator. These can be added to a `PropertyGroup` in your `.csproj` file.
-
-e.g.
-
-```xml
-<PropertyGroup>
-   <CorvusJsonSchemaOptionalAsNullable>None</CorvusJsonSchemaOptionalAsNullable>
-</PropertyGroup>
-```
-
-`CorvusJsonSchemaOptionalAsNullable`
-  - `None` - Do not emit nullable properties for optional properties
-  - `NullOrUndefined` - Emit nullable properties for optional properties
-
-`CorvusJsonSchemaDisableOptionalNamingHeuristics`
-  - `False` - Enable optional naming heuristics [default]
-  - `True` - Disable optional naming heuristics
-
-`CorvusJsonSchemaDisabledNamingHeuristics`
-  - Semi-colon separated list of naming heuristics to disable. You can list the available name heuristics with the `generatejsonschematypes listNameHeuristics` command in the CLI.
-
-`CorvusJsonSchemaAlwaysAssertFormat`
-  - `False` - Respect the vocabulary's format assertion
-  - `True` - Always assert format assertions [default]
-
-### New dynamic schema validation
-
-There is a new `Corvus.Json.Validator` assembly, containing a `JsonSchema` type.
-
-This is a new *dynamic* JSON Schema validator that can validate JSON data against a JSON Schema document, without the need to generate code ahead-of-time.
-
-This is useful for scenarios where you have a JSON Schema document that is not known at compile time, and you only require validation, not deserialization.
-
-You can load the schema with
-
-```csharp
-var corvusSchema = CorvusValidator.JsonSchema.FromFile("./person-array-schema.json");
-```
-
-This builds and caches a schema object from the file, and you can then validate JSON data against it with
-
-```csharp
-JsonElement elementToValidate = ...
-ValidationContext result = this.corvusSchema.Validate(elementToValidate);
-```
-
-Note that this uses dynamic code generation under the hood, with Roslyn, so there is an appreciable cold-start cost for the very first schema you validate in this way
-while the Roslyn components are jitted. Subsequent schema are much faster, and reused schema come from the cache.
-
-If you reference the `Corvus.Validator` package directly in your executing assembly, it will include a target that ensures `<PreserveCompilationContext>true</PreserveCompilationContext>`
-is added to a `<PropertyGroup>` in your project.
-
-If you are using the `Corvus.Json.Validator` package in a library, you should ensure that the consuming project has this property set, to avoid issues with dynamic code generation.
-
-You will have to do this manually if it is consumed via a Project Reference.
-
-### New `generatejsonschematypes config` command
-
-  Supply a json config file to the generate command, to configure and generate 1 or many schema in a single command.
-
-  The configuration file also allows you to explicitly name arbitrary types, and optionally map them in to a specific .NET namespace.
-
-  You can also map json schema base file URIs to specific .NET namespaces, and pre-load known-good versions of file reference dependencies.
-
-  The [schema for the configuration file is here](./Corvus.Json.CodeGenerator/generator-config.json).
-
-### New command line validator with `generatejsonschematypes validateDocument`
-
-This command will validate a JSON document against a JSON schema, and output the results to the console.
-
-For example, given schema `schema.json`
-
-```json
-{
-    "$schema": "https://corvus-oss.org/json-schema/2020-12/schema",
-    "type": "array",
-    "prefixItems": [
-        {
-            "$corvusTypeName": "PositiveInt32",
-            "type": "integer",
-            "format": "int32",
-            "minimum": 0
-        },
-        { "type": "string" },
-        {
-            "type": "string",
-            "format": "date-time"
-        }
-    ],
-    "unevaluatedItems": false
-}
-```
-
-and the document `document_to_validate.json`
-
-```json
-[
-    -1,
-    "Hello",
-    "Goodbye"
-]
-```
-
-If we run:
-
-```
-generatejsonschematypes validateDocument ./schema.json ./document_to_validate.json`
-```
-
-We see the output:
-
-```
-Validation minimum - -1 is less than 0 (#/prefixItems/0/minimum, #/prefixItems/0, #/0, ./testdoc.json#1:4)
-Validation type - should have been 'string' with format 'datetime' but was 'Goodbye'. (#/prefixItems/2, , #/2, ./testdoc.json#3:4)
-```
-### Multi-language code generator engine
-
-- Brand new JSON Schema analyser engine, which is now language independent.
-- Brand new code generation engine, which is more flexible and extensible, and uses the result of the schema analyser.
-- An extensible C# language provider which generates code-using-code. No more T4 templates in the language engine.
-
-### Additional features
-
-- Opt-out of optional naming heuristics introduced in V3.0 with the `--disableOptionalNamingHeuristics` command line switch.
-- Opt-out of specific naming heuristics by specifying `--disableNamingHeuristic`. You can list the available name heuristics with the new `generatejsonschematypes listNameHeuristics` command
-- Safe truncation for extremely long file names
-- Access to all JSON schema validation constants via the `CorvusValidation` nested static class.
-- All formatted types (e.g. string or number formats) are now convertible to the equivalent core types (e.g. your custom `"format": "date"` type is freely convertible to and from `JsonDate`) and offer the same accessors and conversions as the core types.
-
-### Upgrading to V4
-- Code generated using V3.1 of the generator can still be built against V4 of Corvus.Json.ExtendedTypes, and used interoperably.
-
-  This allows you to upgrade your code piecemeal to the new version of the generator. You do not need to update everything all at once.
-
-- For the vast majority of schema, the new naming heuristics will continue to work as they did in V3.
-  However, if you have a schema that is not generating the names you expect, you can inject `$corvusTypeName` into the schema to provide a hint to the generator.
-  If you  hit one of these cases, please [open an issue in github](https://github.com/corvus-dotnet/Corvus.JsonSchema/issues).
-
-- We now generate fewer files for each type. You should delete your previous generated files before running the new version of the generator, to avoid leaving duplicate partial definitions.
-
-### Breaking changes
-- .NET 6 and .NET 7 are now out-of-support. We no longer support these versions. The `netstandard2.0` builds will fail at runtime.
-
-- - We no longer generate the property 'default' accessors.
-
-  Prior to V4 we emitted methods like `TryGetDefault(in JsonPropertyName name, out JsonAny value)` on objects whose properties had types with default values.
-
-  This was somewhat redundant code, as
-  a) it lacked strong typing and
-  b) it had unncessary overhead - you could go directly to the property type to get the default value, rather than doing a lookup by the property name.
-
-  If you want to discover the default value for a property, you must now do so by inspecting the `Default` static property of its type.
-  If you are affected by this change, you can copy the `[typename].Default.cs` file for the relevant type from your V3 code base to provide the capability.
-
-  However, we recommend refactoring to use the static `Default` property on the property type instead.
-
-## V3.0 Updates
-
-The big change with v3.0 is support for older (supported) versions of .NET, including the .NET Framework, through netstandard2.0.
-
-As of v3.0.23 we also support draft4 and OpenAPI3.0 schema.
-
-Additional changes include:
-
-- Pattern matching methods for anyOf, oneOf and enum types.
-- Implicit cast to bool for boolean types
-- Specify an explicit type name hint for a schema with the $corvusTypeName keyword
-- Improved heuristic for type naming based on `title` and `documentation` as fallbacks if no better name can be dervied.
-
-## V2.0 Updates
-
-There have been considerable breaking changes with V2.0 of the generator. This section will help you understand what has changed, and how to update your code.
-
-### Json Schema Models
-
-The JSON Schema Models have been broken out into separate projects.
-
-  - Corvus.Json.JsonSchema.Draft6
-  - Corvus.Json.JsonSchema.Draft7
-  - Corvus.Json.JsonSchema.Draft201909
-  - Corvus.Json.JsonSchema.Draft202012
-
-### Code Generation
-
-### Property Names
-
-The static values for JSON Property Names have been moved from the root type, to a nested subtype called `PropertyNamesEntity`
-
-### Conversions and operators
-
-The implicit/explicit conversions and operators have been rationalised. More explicit conversions are required, at the expense of the implicit conversions.
-
-However, most implicit conversions from/to intrinsic types are still supported.
-
-One significant change is that there is *no* implicit conversion to `string` - this must be done explicitly, or directly through one of the comparison functions like `EqualsString()` or `EqualsUtf8String()`. This is to prevent a common source of accidental allocations and the corresponding performance hit.
-
-## System.Text.Json support by other projects
-
-There is a thriving ecosystem of System.Text.Json-based projects out there.
-
-In particular I would point you at
-
-[JsonEverything](https://github.com/gregsdennis/json-everything) by [@gregsdennis](https://github.com/gregsdennis)
-
-- JSON Schema, drafts 6 and higher ([Specification](https://json-schema.org))
-- JSON Path ([RFC in progress](https://github.com/ietf-wg-jsonpath/draft-ietf-jsonpath-jsonpath)) (.NET Standard 2.1)
-- JSON Patch ([RFC 6902](https://tools.ietf.org/html/rfc6902))
-- JsonLogic ([Website](https://jsonlogic.com)) (.NET Standard 2.1)
-- JSON Pointer ([RFC 6901](https://tools.ietf.org/html/rfc6901))
-- Relative JSON Pointer ([Specification](https://tools.ietf.org/id/draft-handrews-relative-json-pointer-00.html))
-- Json.More.Net (Useful System.Text.Json extensions)
-- Yaml2JsonNode
-
-[JsonCons.Net](https://github.com/danielaparker/JsonCons.Net) by [@danielParker](https://github.com/danielaparker)
-
-- JSON Pointer
-- JSON Patch
-- JSON Merge Patch
-- JSON Path
-- JMES Path
+Licensed under the Apache License, Version 2.0. See [LICENSE](LICENSE) for details.

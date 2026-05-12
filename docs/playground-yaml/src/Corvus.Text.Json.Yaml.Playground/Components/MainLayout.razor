@@ -1,0 +1,858 @@
+@inherits LayoutComponentBase
+@implements IDisposable
+@page "/"
+@inject ConversionService ConvertService
+@inject IJSRuntime JSRuntime
+
+<div class="playground-toolbar">
+    <h1>YAML ↔ JSON Playground</h1>
+    <button class="toolbar-btn secondary" @onclick="NewProjectAsync" title="New blank project">📄 New</button>
+    <select class="toolbar-select" @bind="selectedDirection" @bind:after="OnDirectionChanged" title="Conversion direction">
+        <option value="@ConversionDirection.YamlToJson">YAML → JSON</option>
+        <option value="@ConversionDirection.JsonToYaml">JSON → YAML</option>
+    </select>
+    <select class="toolbar-select" value="@(activeSampleId ?? "")" @onchange="OnSampleChanged">
+        @if (activeSampleId is null)
+        {
+            <option value="" disabled>— Custom —</option>
+        }
+        @foreach (var sample in ActiveSamples)
+        {
+            <option value="@sample.Id">@sample.DisplayName</option>
+        }
+    </select>
+    <div class="spacer"></div>
+    @if (selectedDirection == ConversionDirection.YamlToJson)
+    {
+        <div class="toolbar-options">
+            <label>Schema:
+                <select @bind="selectedSchema" @bind:after="OnOptionChanged">
+                    <option value="@YamlSchema.Core">Core</option>
+                    <option value="@YamlSchema.Json">JSON</option>
+                    <option value="@YamlSchema.Failsafe">Failsafe</option>
+                    <option value="@YamlSchema.Yaml11">YAML 1.1</option>
+                </select>
+            </label>
+            <label>Documents:
+                <select @bind="selectedDocMode" @bind:after="OnOptionChanged">
+                    <option value="@YamlDocumentMode.SingleRequired">Single</option>
+                    <option value="@YamlDocumentMode.MultiAsArray">Multi (Array)</option>
+                </select>
+            </label>
+            <label>Duplicate keys:
+                <select @bind="selectedDupeBehavior" @bind:after="OnOptionChanged">
+                    <option value="@DuplicateKeyBehavior.Error">Error</option>
+                    <option value="@DuplicateKeyBehavior.LastWins">Last Wins</option>
+                </select>
+            </label>
+        </div>
+    }
+    <button class="toolbar-btn secondary events-toggle @(showEventStream ? "active" : "")"
+            @onclick="ToggleEventStream" title="Toggle YAML event stream">
+        📊 Events
+    </button>
+    <button class="theme-toggle-btn" @onclick="CycleTheme" title="@themeTooltip">@themeIcon</button>
+</div>
+
+@if (activeSample is not null)
+{
+    <div class="sample-description">@activeSample.Description</div>
+}
+
+<div class="yaml-grid @(maximizedPanel is not null ? "has-maximized" : "") @(showEventStream ? "with-events" : "")">
+    @* Left: input *@
+    <div class="playground-panel panel-yaml @(GetPanelClass("input"))">
+        <div class="panel-header">
+            @InputLabel
+            <div class="spacer"></div>
+            <button class="panel-copy-btn" @onclick="CopyInput" title="Copy @InputLabel">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("input")' title="@(maximizedPanel == "input" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "input" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body">
+            <StandaloneCodeEditor @ref="inputEditor"
+                                  Id="input-editor"
+                                  ConstructionOptions="InputEditorOptions"
+                                  OnDidChangeModelContent="OnInputChanged" />
+        </div>
+    </div>
+
+    @* Middle: output *@
+    <div class="playground-panel panel-output @(GetPanelClass("output"))">
+        <div class="panel-header">
+            @OutputLabel
+            <div class="spacer"></div>
+            @if (lastResult is not null)
+            {
+                <span style="font-weight:normal;text-transform:none;">
+                    @(lastResult.Success ? "✓" : "✗")
+                    @($"{lastResult.ElapsedMs:F1}ms")
+                </span>
+            }
+            <button class="panel-copy-btn" @onclick="CopyResult" title="Copy @OutputLabel">📋</button>
+            <button class="panel-maximize-btn" @onclick='() => ToggleMaximize("output")' title="@(maximizedPanel == "output" ? "Restore" : "Maximize")">
+                @(maximizedPanel == "output" ? "⊟" : "⊞")
+            </button>
+        </div>
+        <div class="panel-body" style="@(lastResult is not null && !lastResult.Success ? "display:none" : "")">
+            <StandaloneCodeEditor @ref="outputEditor"
+                                  Id="output-editor"
+                                  ConstructionOptions="OutputEditorOptions" />
+        </div>
+        @if (lastResult is not null && !lastResult.Success)
+        {
+            <div class="panel-body">
+                <div class="error-output">@lastResult.ErrorMessage</div>
+            </div>
+        }
+    </div>
+
+    @* Right: event stream *@
+    @if (showEventStream)
+    {
+        <div class="playground-panel panel-events">
+            <div class="panel-header">
+                YAML Events
+                <div class="spacer"></div>
+                <span style="font-weight:normal;text-transform:none;font-size:10px;color:var(--fg-muted);">
+                    Canonical event notation
+                </span>
+                <button class="panel-copy-btn" @onclick="CopyEvents" title="Copy events">📋</button>
+                <button class="panel-maximize-btn" @onclick="ToggleEventStream" title="Close">✕</button>
+            </div>
+            <div class="panel-body events-body">
+                <pre class="events-output">@eventStreamText</pre>
+            </div>
+        </div>
+    }
+</div>
+
+@if (showDirtyConfirmation)
+{
+    <div class="modal-overlay" @onclick="CancelDirtyConfirmation">
+        <div class="modal-dialog" @onclick:stopPropagation="true">
+            <h3>Unsaved Changes</h3>
+            <p>Your input has been modified. Do you want to discard these changes?</p>
+            <div class="modal-actions">
+                <button class="toolbar-btn secondary" @onclick="CancelDirtyConfirmation">Cancel</button>
+                <button class="toolbar-btn primary" @onclick="ConfirmDirtyAction">Discard Changes</button>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="status-bar @(lastResult is not null && !lastResult.Success ? "error" : "")">
+    <span>Corvus.Yaml.SystemTextJson — @DirectionLabel</span>
+    <div class="spacer"></div>
+    @if (isConverting)
+    {
+        <span>Converting…</span>
+    }
+    else if (lastResult is not null)
+    {
+        <span>@(lastResult.Success ? "OK" : "Error") — @($"{lastResult.ElapsedMs:F1}ms")</span>
+    }
+    else
+    {
+        <span>Ready</span>
+    }
+</div>
+
+@code {
+    private StandaloneCodeEditor inputEditor = null!;
+    private StandaloneCodeEditor outputEditor = null!;
+
+    private string? activeSampleId;
+    private Sample? activeSample;
+    private ConversionResult? lastResult;
+    private bool isConverting;
+    private bool isInitializing = true;
+    private bool isLoadingSample;
+    private string? maximizedPanel;
+
+    // Direction
+    private ConversionDirection selectedDirection = ConversionDirection.YamlToJson;
+
+    // Event stream
+    private bool showEventStream;
+    private string eventStreamText = "";
+
+    // Options (YAML→JSON only)
+    private YamlSchema selectedSchema = YamlSchema.Core;
+    private YamlDocumentMode selectedDocMode = YamlDocumentMode.SingleRequired;
+    private DuplicateKeyBehavior selectedDupeBehavior = DuplicateKeyBehavior.Error;
+
+    // Dirty checking
+    private bool showDirtyConfirmation;
+    private Func<Task>? pendingDirtyAction;
+    private string cleanInput = "";
+
+    // Theme state
+    private string themePref = "auto";
+    private string resolvedTheme = "dark";
+    private string themeIcon = "🌙";
+    private string themeTooltip = "Toggle theme";
+    private DotNetObjectReference<MainLayout>? dotNetRef;
+
+    // Debounce
+    private CancellationTokenSource? convertDebounce;
+    private CancellationTokenSource? saveDebounce;
+
+    private const string InputStorageKey = "yaml-playground-input";
+    private const string DirectionStorageKey = "yaml-playground-direction";
+    private const string SchemaStorageKey = "yaml-playground-schema";
+    private const string DocModeStorageKey = "yaml-playground-docmode";
+    private const string DupeStorageKey = "yaml-playground-dupe";
+    private const string ThemeStorageKey = "yaml-playground-theme";
+    private const string EventsStorageKey = "yaml-playground-events-visible";
+
+    // ── Computed properties ──
+
+    private IReadOnlyList<Sample> ActiveSamples =>
+        selectedDirection == ConversionDirection.YamlToJson
+            ? SampleRegistry.YamlSamples
+            : SampleRegistry.JsonSamples;
+
+    private string InputLabel =>
+        selectedDirection == ConversionDirection.YamlToJson ? "YAML Input" : "JSON Input";
+
+    private string OutputLabel =>
+        selectedDirection == ConversionDirection.YamlToJson ? "JSON Output" : "YAML Output";
+
+    private string DirectionLabel =>
+        selectedDirection == ConversionDirection.YamlToJson ? "YAML → JSON" : "JSON → YAML";
+
+    private string InputLanguage =>
+        selectedDirection == ConversionDirection.YamlToJson ? "yaml" : "json";
+
+    private string OutputLanguage =>
+        selectedDirection == ConversionDirection.YamlToJson ? "json" : "yaml";
+
+    // ── Editor options ──
+
+    private StandaloneEditorConstructionOptions InputEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = InputLanguage,
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = initialInput,
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ScrollBeyondLastLine = false,
+    };
+
+    private StandaloneEditorConstructionOptions OutputEditorOptions(StandaloneCodeEditor editor) => new()
+    {
+        Language = OutputLanguage,
+        Theme = resolvedTheme == "light" ? "vs" : "vs-dark",
+        Value = "",
+        AutomaticLayout = true,
+        Minimap = new EditorMinimapOptions { Enabled = false },
+        FontSize = 13,
+        TabSize = 2,
+        ReadOnly = true,
+        ScrollBeyondLastLine = false,
+    };
+
+    // ── Initial values ──
+    private string initialInput = SampleRegistry.YamlSamples[0].Content;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            dotNetRef = DotNetObjectReference.Create(this);
+            await JSRuntime.InvokeVoidAsync("registerPlaygroundShortcuts", dotNetRef);
+            await JSRuntime.InvokeVoidAsync("onSystemThemeChange", dotNetRef);
+
+            // Load saved theme preference
+            var savedTheme = await GetLocalStorage(ThemeStorageKey);
+            if (!string.IsNullOrEmpty(savedTheme))
+            {
+                themePref = savedTheme;
+            }
+
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getInitialTheme");
+            UpdateThemeIcon();
+
+            // Load saved direction
+            var savedDirection = await GetLocalStorage(DirectionStorageKey);
+            if (!string.IsNullOrEmpty(savedDirection) && Enum.TryParse<ConversionDirection>(savedDirection, out var dir))
+            {
+                selectedDirection = dir;
+            }
+
+            // Load saved events visibility
+            var savedEvents = await GetLocalStorage(EventsStorageKey);
+            if (savedEvents == "true")
+            {
+                showEventStream = true;
+            }
+
+            // Load saved options
+            var savedSchema = await GetLocalStorage(SchemaStorageKey);
+            if (!string.IsNullOrEmpty(savedSchema) && Enum.TryParse<YamlSchema>(savedSchema, out var s))
+            {
+                selectedSchema = s;
+            }
+
+            var savedDocMode = await GetLocalStorage(DocModeStorageKey);
+            if (!string.IsNullOrEmpty(savedDocMode) && Enum.TryParse<YamlDocumentMode>(savedDocMode, out var dm))
+            {
+                selectedDocMode = dm;
+            }
+
+            var savedDupe = await GetLocalStorage(DupeStorageKey);
+            if (!string.IsNullOrEmpty(savedDupe) && Enum.TryParse<DuplicateKeyBehavior>(savedDupe, out var db))
+            {
+                selectedDupeBehavior = db;
+            }
+
+            // Load saved input
+            var savedInput = await GetLocalStorage(InputStorageKey);
+
+            if (!string.IsNullOrEmpty(savedInput))
+            {
+                activeSampleId = null;
+                activeSample = null;
+                await inputEditor.SetValue(savedInput);
+            }
+            else
+            {
+                var samples = ActiveSamples;
+                activeSampleId = samples[0].Id;
+                activeSample = samples[0];
+                await inputEditor.SetValue(samples[0].Content);
+            }
+
+            // Set editor languages to match direction
+            await SetEditorLanguages();
+
+            StateHasChanged();
+
+            isInitializing = false;
+            cleanInput = await inputEditor.GetValue();
+            await ConvertAsync();
+        }
+    }
+
+    // ── Event handlers ──
+
+    private void OnInputChanged(ModelContentChangedEvent e)
+    {
+        if (isInitializing || isLoadingSample) { return; }
+
+        activeSampleId = null;
+        activeSample = null;
+        DebounceConvert();
+        DebounceSave();
+    }
+
+    private async Task OnOptionChanged()
+    {
+        if (isInitializing) { return; }
+
+        await SaveOptions();
+        await ConvertAsync();
+    }
+
+    private async Task OnDirectionChanged()
+    {
+        if (isInitializing) { return; }
+
+        await SetLocalStorage(DirectionStorageKey, selectedDirection.ToString());
+
+        // Load the first sample for the new direction
+        isLoadingSample = true;
+        try
+        {
+            var samples = ActiveSamples;
+            activeSampleId = samples[0].Id;
+            activeSample = samples[0];
+            await inputEditor.SetValue(samples[0].Content);
+        }
+        finally
+        {
+            isLoadingSample = false;
+        }
+
+        cleanInput = await inputEditor.GetValue();
+        await ClearLocalStorage(inputOnly: true);
+        await ClearInputMarkers();
+
+        // Switch editor languages
+        await SetEditorLanguages();
+
+        lastResult = null;
+        eventStreamText = "";
+        if (outputEditor is not null)
+        {
+            await outputEditor.SetValue("");
+        }
+
+        StateHasChanged();
+        await ConvertAsync();
+    }
+
+    private async Task OnSampleChanged(ChangeEventArgs e)
+    {
+        var sampleId = e.Value?.ToString();
+        var sample = ActiveSamples.FirstOrDefault(s => s.Id == sampleId);
+        if (sample is null)
+        {
+            return;
+        }
+
+        await CheckDirtyAndConfirm(async () =>
+        {
+            await LoadSample(sample);
+        });
+    }
+
+    private async Task NewProjectAsync()
+    {
+        await CheckDirtyAndConfirm(async () =>
+        {
+            isLoadingSample = true;
+            try
+            {
+                activeSampleId = null;
+                activeSample = null;
+                string placeholder = selectedDirection == ConversionDirection.YamlToJson
+                    ? "# Enter your YAML here"
+                    : "{\n  \n}";
+                await inputEditor.SetValue(placeholder);
+            }
+            finally
+            {
+                isLoadingSample = false;
+            }
+
+            cleanInput = await inputEditor.GetValue();
+            await ClearLocalStorage(inputOnly: true);
+            await ClearInputMarkers();
+            lastResult = null;
+            eventStreamText = "";
+            if (outputEditor is not null)
+            {
+                await outputEditor.SetValue("");
+            }
+
+            StateHasChanged();
+        });
+    }
+
+    private async Task LoadSample(Sample sample)
+    {
+        isLoadingSample = true;
+        try
+        {
+            activeSampleId = sample.Id;
+            activeSample = sample;
+
+            // Auto-select appropriate options for YAML samples
+            if (selectedDirection == ConversionDirection.YamlToJson)
+            {
+                if (sample.Id == "multi-document")
+                {
+                    selectedDocMode = YamlDocumentMode.MultiAsArray;
+                }
+                else if (sample.Id == "yaml11-compat")
+                {
+                    selectedSchema = YamlSchema.Yaml11;
+                    selectedDocMode = YamlDocumentMode.SingleRequired;
+                }
+                else
+                {
+                    selectedSchema = YamlSchema.Core;
+                    selectedDocMode = YamlDocumentMode.SingleRequired;
+                }
+
+                selectedDupeBehavior = DuplicateKeyBehavior.Error;
+            }
+
+            await inputEditor.SetValue(sample.Content);
+        }
+        finally
+        {
+            isLoadingSample = false;
+        }
+
+        cleanInput = await inputEditor.GetValue();
+        await ClearLocalStorage(inputOnly: true);
+        await ClearInputMarkers();
+        await ConvertAsync();
+    }
+
+    // ── Event stream ──
+
+    private async Task ToggleEventStream()
+    {
+        showEventStream = !showEventStream;
+        await SetLocalStorage(EventsStorageKey, showEventStream ? "true" : "false");
+
+        if (showEventStream && lastResult is not null && lastResult.Success)
+        {
+            await UpdateEventStream();
+        }
+
+        StateHasChanged();
+    }
+
+    private async Task UpdateEventStream()
+    {
+        if (!showEventStream)
+        {
+            return;
+        }
+
+        try
+        {
+            // Get the YAML text to parse events from
+            string yamlText;
+            if (selectedDirection == ConversionDirection.YamlToJson)
+            {
+                yamlText = await inputEditor.GetValue();
+            }
+            else
+            {
+                // In JSON→YAML mode, events come from the YAML output
+                yamlText = lastResult?.ResultText ?? "";
+            }
+
+            if (string.IsNullOrWhiteSpace(yamlText))
+            {
+                eventStreamText = "";
+                return;
+            }
+
+            var options = new YamlReaderOptions
+            {
+                Schema = selectedSchema,
+            };
+
+            var events = await ConvertService.GetEventsAsync(yamlText, options);
+            eventStreamText = ConversionService.FormatEventStream(events);
+        }
+        catch (Exception ex)
+        {
+            eventStreamText = $"Error parsing events: {ex.Message}";
+        }
+    }
+
+    private async Task CopyEvents()
+    {
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", eventStreamText);
+    }
+
+    // ── Dirty checking ──
+
+    private async Task CheckDirtyAndConfirm(Func<Task> action)
+    {
+        var currentInput = await inputEditor.GetValue();
+
+        if (currentInput == cleanInput)
+        {
+            await action();
+            return;
+        }
+
+        pendingDirtyAction = action;
+        showDirtyConfirmation = true;
+        StateHasChanged();
+    }
+
+    private async Task ConfirmDirtyAction()
+    {
+        showDirtyConfirmation = false;
+        var action = pendingDirtyAction;
+        pendingDirtyAction = null;
+
+        if (action is not null)
+        {
+            await action();
+        }
+    }
+
+    private async Task CancelDirtyConfirmation()
+    {
+        showDirtyConfirmation = false;
+        pendingDirtyAction = null;
+
+        await JSRuntime.InvokeVoidAsync("resetSampleSelect", activeSampleId ?? "");
+    }
+
+    // ── Copy helpers ──
+
+    private async Task CopyInput()
+    {
+        var text = await inputEditor.GetValue();
+        await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+    }
+
+    private async Task CopyResult()
+    {
+        if (lastResult is not null && !lastResult.Success)
+        {
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", lastResult.ErrorMessage ?? "");
+        }
+        else if (outputEditor is not null)
+        {
+            var text = await outputEditor.GetValue();
+            await JSRuntime.InvokeVoidAsync("navigator.clipboard.writeText", text);
+        }
+    }
+
+    [JSInvokable]
+    public async Task OnConvertShortcut()
+    {
+        await ConvertAsync();
+    }
+
+    [JSInvokable]
+    public void OnSystemThemeChanged(string systemTheme)
+    {
+        if (themePref == "auto")
+        {
+            resolvedTheme = systemTheme;
+            UpdateThemeIcon();
+            _ = JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+            StateHasChanged();
+        }
+    }
+
+    // ── Conversion ──
+
+    private async Task ConvertAsync()
+    {
+        if (isConverting)
+        {
+            return;
+        }
+
+        isConverting = true;
+        StateHasChanged();
+
+        try
+        {
+            var input = await inputEditor.GetValue();
+
+            if (selectedDirection == ConversionDirection.YamlToJson)
+            {
+                lastResult = await ConvertService.ConvertYamlToJsonAsync(
+                    input, selectedSchema, selectedDocMode, selectedDupeBehavior);
+            }
+            else
+            {
+                lastResult = await ConvertService.ConvertJsonToYamlAsync(input);
+            }
+
+            if (lastResult.Success)
+            {
+                await ClearInputMarkers();
+                if (outputEditor is not null)
+                {
+                    await outputEditor.SetValue(lastResult.ResultText ?? "");
+                }
+
+                if (showEventStream)
+                {
+                    await UpdateEventStream();
+                }
+            }
+            else
+            {
+                eventStreamText = "";
+
+                if (lastResult.ErrorLine.HasValue)
+                {
+                    await SetInputMarkers(lastResult);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            lastResult = new ConversionResult
+            {
+                Success = false,
+                ErrorMessage = ex.Message,
+                ElapsedMs = 0,
+            };
+            eventStreamText = "";
+        }
+        finally
+        {
+            isConverting = false;
+            StateHasChanged();
+        }
+    }
+
+    // ── Editor language switching ──
+
+    private async Task SetEditorLanguages()
+    {
+        await JSRuntime.InvokeVoidAsync("setEditorLanguage", "input-editor", InputLanguage);
+        await JSRuntime.InvokeVoidAsync("setEditorLanguage", "output-editor", OutputLanguage);
+    }
+
+    // ── Debounce ──
+
+    private void DebounceConvert()
+    {
+        convertDebounce?.Cancel();
+        convertDebounce = new CancellationTokenSource();
+        var token = convertDebounce.Token;
+        _ = Task.Delay(300, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(ConvertAsync);
+            }
+        }, token);
+    }
+
+    private void DebounceSave()
+    {
+        saveDebounce?.Cancel();
+        saveDebounce = new CancellationTokenSource();
+        var token = saveDebounce.Token;
+        _ = Task.Delay(1000, token).ContinueWith(async _ =>
+        {
+            if (!token.IsCancellationRequested)
+            {
+                await InvokeAsync(async () =>
+                {
+                    var text = await inputEditor.GetValue();
+                    await SetLocalStorage(InputStorageKey, text);
+                });
+            }
+        }, token);
+    }
+
+    // ── Monaco markers (error squiggles) ──
+
+    private async Task SetInputMarkers(ConversionResult result)
+    {
+        if (result.ErrorLine is int line && result.ErrorColumn is int col)
+        {
+            await JSRuntime.InvokeVoidAsync("setEditorMarkers", "input-editor",
+                result.ErrorMessage ?? "Error", line, col, line, col + 1);
+        }
+    }
+
+    private async Task ClearInputMarkers()
+    {
+        await JSRuntime.InvokeVoidAsync("clearEditorMarkers", "input-editor");
+    }
+
+    // ── Theme management ──
+
+    private async Task CycleTheme()
+    {
+        themePref = themePref switch
+        {
+            "auto" => "dark",
+            "dark" => "light",
+            "light" => "auto",
+            _ => "auto",
+        };
+
+        if (themePref == "auto")
+        {
+            resolvedTheme = await JSRuntime.InvokeAsync<string>("getSystemTheme");
+        }
+        else
+        {
+            resolvedTheme = themePref;
+        }
+
+        UpdateThemeIcon();
+        await JSRuntime.InvokeVoidAsync("applyTheme", resolvedTheme);
+        await SetLocalStorage(ThemeStorageKey, themePref);
+        StateHasChanged();
+    }
+
+    private void UpdateThemeIcon()
+    {
+        (themeIcon, themeTooltip) = themePref switch
+        {
+            "auto" => ("🖥️", "Theme: system (click for dark)"),
+            "dark" => ("🌙", "Theme: dark (click for light)"),
+            "light" => ("☀️", "Theme: light (click for system)"),
+            _ => ("🖥️", "Toggle theme"),
+        };
+    }
+
+    // ── Panel maximize ──
+
+    private void ToggleMaximize(string panel)
+    {
+        maximizedPanel = maximizedPanel == panel ? null : panel;
+    }
+
+    private string GetPanelClass(string panel)
+    {
+        if (maximizedPanel is null) return "";
+        return maximizedPanel == panel ? "maximized" : "minimized";
+    }
+
+    // ── Local storage ──
+
+    private async Task<string?> GetLocalStorage(string key)
+    {
+        try
+        {
+            return await JSRuntime.InvokeAsync<string?>("localStorage.getItem", key);
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task SetLocalStorage(string key, string value)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.setItem", key, value);
+        }
+        catch
+        {
+            // Ignore storage errors (e.g. private browsing)
+        }
+    }
+
+    private async Task ClearLocalStorage(bool inputOnly = false)
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("localStorage.removeItem", InputStorageKey);
+            if (!inputOnly)
+            {
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", SchemaStorageKey);
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DocModeStorageKey);
+                await JSRuntime.InvokeVoidAsync("localStorage.removeItem", DupeStorageKey);
+            }
+        }
+        catch
+        {
+            // Ignore
+        }
+    }
+
+    private async Task SaveOptions()
+    {
+        await SetLocalStorage(SchemaStorageKey, selectedSchema.ToString());
+        await SetLocalStorage(DocModeStorageKey, selectedDocMode.ToString());
+        await SetLocalStorage(DupeStorageKey, selectedDupeBehavior.ToString());
+    }
+
+    public void Dispose()
+    {
+        convertDebounce?.Dispose();
+        saveDebounce?.Dispose();
+        dotNetRef?.Dispose();
+    }
+}

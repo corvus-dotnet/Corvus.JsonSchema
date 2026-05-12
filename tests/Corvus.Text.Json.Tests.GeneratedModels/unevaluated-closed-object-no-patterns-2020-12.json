@@ -1,0 +1,21 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "A closed object with unevaluatedProperties: false and no pattern properties",
+    "$defs": {
+        "base": {
+            "type": "object",
+            "properties": {
+                "tag": { "type": "string" }
+            }
+        }
+    },
+    "allOf": [
+        { "$ref": "#/$defs/base" }
+    ],
+    "type": "object",
+    "properties": {
+        "name": { "type": "string" }
+    },
+    "required": ["name"],
+    "unevaluatedProperties": false
+}

@@ -1,0 +1,10 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Jsonata\Corvus.Text.Json.Jsonata.csproj" />
+  </ItemGroup>
+</Project>

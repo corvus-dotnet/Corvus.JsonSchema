@@ -1,0 +1,1 @@
+{"and":[{">":[{"var":"temp"},0]},{"<":[{"var":"temp"},110]},{"==":[{"var":"pie.filling"},"apple"]}]}

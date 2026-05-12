@@ -1,0 +1,1565 @@
+using System.Reflection;
+using System.Threading.Tasks;
+using Corvus.Text.Json.Validator;
+using TestUtilities;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace JsonSchemaTestSuite.Draft201909.Format;
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteEmailFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"email\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteIdnEmailFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"idn-email\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRegexFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"regex\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteIpv4Format
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"ipv4\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteIpv6Format
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"ipv6\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteIdnHostnameFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"idn-hostname\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteHostnameFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"hostname\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteDateFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"date\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteDateTimeFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"date-time\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteTimeFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"time\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteJsonPointerFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"json-pointer\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteRelativeJsonPointerFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"relative-json-pointer\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteIriFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"iri\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteIriReferenceFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"iri-reference\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUriFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"uri\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUriReferenceFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"uri-reference\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUriTemplateFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"uri-template\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteUuidFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"uuid\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}
+
+[TestCategory("Draft201909")]
+[TestClass]
+public class SuiteDurationFormat
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreIntegers()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("12");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreFloats()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("13.7");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreObjects()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("{}");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreArrays()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("[]");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreBooleans()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("false");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    [TestMethod]
+    public void TestAllStringFormatsIgnoreNulls()
+    {
+        var dynamicInstance = s_fixture!.DynamicJsonType.ParseInstance("null");
+        Assert.IsTrue(dynamicInstance.EvaluateSchema());
+    }
+
+    public class Fixture
+    {
+        public DynamicJsonType DynamicJsonType { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.DynamicJsonType = await TestJsonSchemaCodeGenerator.GenerateTypeForVirtualFile(
+                "tests\\draft2019-09\\format.json",
+                "{\r\n            \"$schema\": \"https://json-schema.org/draft/2019-09/schema\",\r\n            \"format\": \"duration\"\r\n        }",
+                "JsonSchemaTestSuite.Draft201909.Format",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "https://json-schema.org/draft/2019-09/schema",
+                validateFormat: false,
+                optionalAsNullable: false,
+                useImplicitOperatorString: false,
+                addExplicitUsings: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "RefArrayWithItems",
+  "description": "A $ref-based array composed via allOf with a local minItems constraint.",
+  "$defs": {
+    "baseArray": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "allOf": [
+    { "$ref": "#/$defs/baseArray" }
+  ],
+  "minItems": 1
+}

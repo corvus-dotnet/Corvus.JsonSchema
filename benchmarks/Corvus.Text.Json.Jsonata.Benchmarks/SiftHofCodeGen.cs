@@ -1,0 +1,15 @@
+// <copyright file="SiftHofCodeGen.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+using Corvus.Text.Json.Jsonata;
+
+namespace Corvus.Text.Json.Jsonata.Benchmarks;
+
+/// <summary>
+/// Source-generated evaluator for $sift higher-order function.
+/// </summary>
+[JsonataExpression("Expressions/sift-hof.jsonata")]
+internal static partial class SiftHofCodeGen
+{
+}

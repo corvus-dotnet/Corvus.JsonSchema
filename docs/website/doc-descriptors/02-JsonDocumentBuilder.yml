@@ -1,0 +1,3 @@
+source: JsonDocumentBuilder.md
+navTitle: "Building & Mutating JSON"
+description: "Create and modify JSON documents in-place with workspace-managed pooled memory. A builder-pattern alternative to System.Text.Json's JsonNode, designed for request/response cycles and data pipelines."

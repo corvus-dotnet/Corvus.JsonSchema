@@ -1,0 +1,78 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <RootNamespace>Corvus.Text.Json.Compatibility</RootNamespace>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- For this project, we want warnings if there are public APIs/types without properly formatted XML comments. -->
+    <SkipIntellisenseNoWarnCS1591>true</SkipIntellisenseNoWarnCS1591>
+    <NoWarn>$(NoWarn);CS8969</NoWarn>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
+    <!-- Warnings to always disable -->
+    <NoWarn>$(NoWarn);CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;NU1504;CS1591;CS1573;CS1572;CS1574;CS1584;CS1658;CS1711;CS1712;CS1734;SA1620</NoWarn>
+    <IncludeInternalObsoleteAttribute>true</IncludeInternalObsoleteAttribute>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <Description>Compatibility layer for Corvus.Text.Json providing bridge types and helpers for interoperating with System.Text.Json types and APIs.</Description>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <CommonPath>..\..\Common\src\</CommonPath>
+    <LibrariesProjectRoot>..\..\</LibrariesProjectRoot>
+    <CoreLibSharedDir>..\..\System.Private.CoreLib\src\</CoreLibSharedDir>
+    <LangVersion>preview</LangVersion>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Using Include="System" />
+    <Using Include="System.Text" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <Using Include="SR = Corvus.Text.Json.Compatibility.Resources.Strings" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.Tests" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src-v4\Corvus.Json.ExtendedTypes\Corvus.Json.ExtendedTypes.csproj" />
+    <PackageReference Include="Microsoft.Bcl.Memory" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <Compile Include="CorvusTextJsonPolyfills.cs" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\StringSyntaxAttribute.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\RequiresDynamicCodeAttribute.cs" />
+  </ItemGroup>
+  <!-- ArrayBufferWriter polyfill: only needed for netstandard2.0 (native in netstandard2.1+) -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <Compile Include="$(CommonPath)System\Buffers\ArrayBufferWriter.cs" Link="Common\System\Buffers\ArrayBufferWriter.cs" />
+  </ItemGroup>
+  <!-- Include files under StringResourcesPath by convention unless OmitResources is set. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
+    <!-- Include common SR helper when resources are included. -->
+    <Compile Include="SR.cs" Visible="true" Link="Resources/Common/SR$(DefaultLanguageSourceExtension)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+</Project>

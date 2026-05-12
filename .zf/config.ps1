@@ -1,0 +1,147 @@
+<#
+This example demonstrates a software build process using the 'ZeroFailed.Build.DotNet' extension
+to provide the features needed when building a .NET solutions.
+#>
+
+$zerofailedExtensions = @(
+    @{
+        # References the extension from its GitHub repository. If not already installed, use latest version from 'main' will be downloaded.
+        Name = "ZeroFailed.Build.DotNet"
+        GitRepository = "https://github.com/zerofailed/ZeroFailed.Build.DotNet"
+        GitRef = "main"
+    }
+    @{
+        # References the extension from its GitHub repository. If not already installed, use latest version from 'main' will be downloaded.
+        Name = "ZeroFailed.Build.GitHub"
+        GitRepository = "https://github.com/zerofailed/ZeroFailed.Build.GitHub"
+        GitRef = "main"
+    }
+)
+
+# Load the tasks and process
+. ZeroFailed.tasks -ZfPath $here/.zf
+
+#
+# Build process configuration
+#
+#
+# Build process control options
+#
+$SkipInit = $false
+$SkipVersion = $false
+$SkipBuild = $false
+$CleanBuild = $Clean
+$SkipTest = $false
+$SkipTestReport = $false
+$SkipAnalysis = $false
+$SkipPackage = $false
+$SkipPublish = $true
+
+$SolutionToBuild = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.slnx")).Path
+$ProjectsToPublish = @()
+$NugetPublishSource = property ZF_NUGET_PUBLISH_SOURCE "$here/_local-nuget-feed"
+$IncludeAssembliesInCodeCoverage = @()
+$ExcludeAssembliesInCodeCoverage = @()
+$ExcludeFilesInCodeCoverage = @('*.g.cs')
+
+# Pass the dotnet-coverage settings file to control which assemblies are instrumented.
+# This filters coverage collection at instrumentation time (not just at report time).
+$DotNetCoverageSettingsFile = (Resolve-Path (Join-Path $here "dotnet-coverage.settings.xml")).Path
+
+# When running GHA honour the TFM that the matrix build passes via an environment variable
+$TargetFrameworkMoniker = property BUILDVAR_TargetFrameworkMoniker ''
+
+# Exclude 'outerloop' (memory stress tests) and 'failing' (known failures) categories
+# which are too resource-intensive for CI runners.
+# NOTE: MSTest uses 'TestCategory' as the trait name (xUnit used 'category').
+# NOTE: '--ignore-exit-code 8' suppresses MTP exit code 8 ("zero tests ran") which
+# occurs for CodeGenerator.Tests on net481 (empty assembly — CLI tool is net10.0 only).
+# NOTE: The '&' character in 'TestCategory!=failing&TestCategory!=outerloop' can be
+# misinterpreted by process-spawning layers (e.g. dotnet-coverage launching dotnet test).
+# Using 'TestCategory!=outerloop' alone is sufficient since no tests currently have the
+# 'failing' category. If tests are later given 'failing', add a separate --filter arg.
+$AdditionalTestArgs = @(
+    "--filter", 'TestCategory!=outerloop'
+    "--ignore-exit-code", "8"
+)
+$StripOutputFromLargeTrxFiles = $true
+$TruncateOversizedCoverageReport = $true
+$UseGitHubFlavour = $true
+
+# When running in GHA create a GitHub Release when running a release build
+$CreateGitHubRelease = $env:GITHUB_ACTIONS ? $true : $false
+$PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
+
+# Allow build script parameters to be overridden via environment variables
+$BuildWebsite = [Convert]::ToBoolean((property BUILDVAR_BuildWebsite $Website.ToBool()))
+$IsPreviewDeployment = [Convert]::ToBoolean((property BUILDVAR_IsPreviewDeployment $false))
+$BasePathPrefix = property BUILDVAR_BasePathPrefix $BasePathPrefix
+
+task . FullBuild
+
+#
+# Build Process Extensibility Points - uncomment and implement as required
+#
+
+# task RunFirst {}
+# task PreInit {}
+# task PostInit {}
+# task PreVersion {}
+# task PostVersion {}
+task PreBuild {
+    Write-Host "Initialising submodule"
+    exec { & git submodule init }
+    exec { & git submodule update }
+
+    Write-Host "Checking documentation code sample catalog is up to date"
+    exec { & pwsh -File (Join-Path $here "docs\update-code-sample-catalog.ps1") -Check }
+}
+task PostBuild BuildWebSiteLocal
+task PreTest {
+    # Turn down logging when running Specs to suppress ReqnRoll Given/When/Then output
+    $script:LogLevelBackup = $LogLevel
+    $script:LogLevel = "quiet"
+}
+task PostTest {
+    # Revert logging level
+    $script:LogLevel = $LogLevelBackup
+}
+# task PreTestReport {}
+# task PostTestReport {}
+# task PreAnalysis {}
+# task PostAnalysis {}
+# task PrePackage {}
+# task PostPackage {}
+# task PrePublish {}
+# task PostPublish {}
+# task RunLast {}
+
+# Custom tasks
+
+# Synopsis: Standalone task to build the documentation static web app.
+task BuildWebsite {
+    $websiteDir = Join-Path $here "docs\website"
+
+    $websiteBuildArgs = @("-SkipDotNetBuild")
+
+    $basePathPrefix = $env:BUILDVAR_BasePathPrefix
+    if ($basePathPrefix) {
+        $websiteBuildArgs += "-BasePathPrefix", $basePathPrefix
+    }
+
+    if ($env:BUILDVAR_IsPreviewDeployment -ieq "true") {
+        $websiteBuildArgs += "-IsPreviewDeployment"
+    }
+
+    Write-Host "Building documentation website..."
+    Write-Host "  BasePathPrefix: $basePathPrefix"
+    Write-Host "  IsPreviewDeployment: $($env:BUILDVAR_IsPreviewDeployment)"
+    Write-Host "  Args: $websiteBuildArgs"
+
+    & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs
+    if ($LASTEXITCODE -ne 0) {
+        exit $LASTEXITCODE
+    }
+}
+# Synopsis: Wrapper task to enable running the standalone BuildWebsite task for local builds
+task BuildWebSiteLocal -If { $BuildWebsite } BuildWebsite

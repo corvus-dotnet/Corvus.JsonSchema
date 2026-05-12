@@ -1,0 +1,72 @@
+[
+  {
+    "description": "A property that matches a built-in name",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "match": {
+          "$ref": "#/$defs/SomeMatch"
+        }
+      },
+      "$defs": {
+        "SomeMatch": {
+          "type": "string",
+          "minLength": 2
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022match\u0022: \u0022foo\u0022 }",
+        "data": {
+          "match": "foo"
+        },
+        "valid": true
+      },
+      {
+        "description": "data: {\u0022match\u0022: \u0022f\u0022 }",
+        "data": {
+          "match": "f"
+        },
+        "valid": false
+      }
+    ]
+  },
+  {
+    "description": "Repro 625 - collides with System",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "system": {
+          "type": "string",
+          "minLength": 0
+        },
+        "someOtherProp": {
+          "type": "string",
+          "minLength": 0
+        }
+      },
+      "required": [
+        "system",
+        "someOtherProp"
+      ]
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022system\u0022: \u0022foo\u0022, \u0022someOtherProp\u0022: \u0022bar\u0022 }",
+        "data": {
+          "system": "foo",
+          "someOtherProp": "bar"
+        },
+        "valid": true
+      },
+      {
+        "description": "data: {\u0022someOtherProp\u0022: \u0022bar\u0022  }",
+        "data": {
+          "someOtherProp": "bar"
+        },
+        "valid": false
+      }
+    ]
+  }
+]

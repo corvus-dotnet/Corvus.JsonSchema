@@ -1,0 +1,17 @@
+{
+    "oneOf": [
+        { "type": "string" },
+        {
+            "type": "integer",
+            "format": "int32"
+        },
+        { "$ref": "./person-open.json" },
+        { "$ref": "#/$defs/people" }
+    ],
+    "$defs": {
+        "people": {
+            "type": "array",
+            "items": { "$ref": "./person-open.json" }
+        }
+    }
+}

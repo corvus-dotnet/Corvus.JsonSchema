@@ -1,0 +1,13 @@
+{
+    "title": "Configuration",
+    "type": "object",
+    "properties": {
+        "host": { "type": "string" },
+        "port": { "type": "integer", "format": "int32", "default": 8080 },
+        "timeout": { "type": "integer", "format": "int32", "default": 30 },
+        "retries": { "type": "integer", "format": "int32", "default": 3 },
+        "logLevel": { "type": "string", "enum": ["debug", "info", "warn", "error"], "default": "info" },
+        "enableSsl": { "type": "boolean", "default": true }
+    },
+    "required": ["host"]
+}

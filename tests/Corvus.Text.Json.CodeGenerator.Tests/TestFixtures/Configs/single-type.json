@@ -1,0 +1,9 @@
+{
+    "rootNamespace": "Corvus.Text.Json.CodeGenerator.Tests.ConfigGenerated",
+    "typesToGenerate": [
+        {
+            "schemaFile": "./Schemas/simple-object.json",
+            "outputRootTypeName": "ConfigPerson"
+        }
+    ]
+}

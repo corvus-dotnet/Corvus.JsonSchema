@@ -1,0 +1,21 @@
+{
+    "title": "Person",
+    "type": "object",
+    "required": ["name", "age"],
+    "properties": {
+        "name": {
+            "type": "object",
+            "required": ["familyName"],
+            "properties": {
+                "familyName": { "type": "string" },
+                "givenName": { "type": "string" }
+            }
+        },
+        "age": { "type": "integer", "format": "int32" },
+        "email": { "type": "string", "format": "email" },
+        "hobbies": {
+            "type": "array",
+            "items": { "type": "string" }
+        }
+    }
+}

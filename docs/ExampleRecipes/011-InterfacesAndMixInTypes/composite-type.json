@@ -1,0 +1,18 @@
+{
+  "title": "A composition of multiple different schema",
+  "type": "object",
+  "allOf": [
+    { "$ref": "./countable.json" },
+    { "$ref": "./documentation.json" }
+  ],
+  "required": [ "budget" ],
+  "properties": {
+    "budget": { "$ref": "#/$defs/currencyValue" }
+  },
+  "$defs": {
+    "currencyValue": {
+      "type": "number",
+      "format": "decimal"
+    }
+  }
+}

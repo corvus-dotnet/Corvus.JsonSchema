@@ -1,0 +1,20 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="PolySharp" />
+    <PackageReference Include="Shouldly" />
+    <PackageReference Include="DiffEngine" />
+  </ItemGroup>
+  <!-- Additional polyfills for .NET Framework 4.8.1 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <PackageReference Include="System.Memory" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,24 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "AllOfInt32Matrix",
+    "description": "A rank-2 int32 matrix composed via allOf with a base matrix definition.",
+    "$defs": {
+        "baseMatrix": {
+            "type": "array",
+            "items": {
+                "type": "array",
+                "items": {
+                    "type": "integer",
+                    "format": "int32"
+                },
+                "minItems": 3,
+                "maxItems": 3
+            },
+            "minItems": 2,
+            "maxItems": 2
+        }
+    },
+    "allOf": [
+        { "$ref": "#/$defs/baseMatrix" }
+    ]
+}

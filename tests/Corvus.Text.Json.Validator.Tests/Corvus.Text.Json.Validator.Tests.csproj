@@ -1,0 +1,19 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Validator\Corvus.Text.Json.Validator.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="Schemas\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+</Project>

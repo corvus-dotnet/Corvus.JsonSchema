@@ -1,0 +1,18 @@
+<Project Sdk="MSTest.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);IDE0065;IDE0290;IDE0079;IDE0130;CS8969;CS1591</NoWarn>
+    <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <RestoreLockedMode Condition="$(ContinuousIntegrationBuild) == 'true'">true</RestoreLockedMode>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Analyzer.Testing" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.CodeFix.Testing" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.Migration.Analyzers\Corvus.Text.Json.Migration.Analyzers.csproj" />
+  </ItemGroup>
+</Project>

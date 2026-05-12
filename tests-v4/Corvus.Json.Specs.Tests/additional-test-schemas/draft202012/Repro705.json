@@ -1,0 +1,46 @@
+[
+  {
+    "description": "Defaulted required property",
+    "schema": {
+      "type": "object",
+      "properties": {
+        "regularProperty": {
+          "type": "string"
+        },
+        "propertyWithDefault": {
+          "$ref": "#/$defs/defaultedValue"
+        },
+        "unsetProperty": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "regularProperty",
+        "propertyWithDefault"
+      ],
+      "$defs": {
+        "defaultedValue": {
+          "type": "string",
+          "default": "Hello"
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022regularProperty\u0022: \u0022foo\u0022}",
+        "data": {
+          "regularProperty": "foo"
+        },
+        "valid": false
+      },
+      {
+        "description": "data: {\u0022regularProperty\u0022: \u0022foo\u0022, \u0022propertyWithDefault\u0022: \u0022bar\u0022}",
+        "data": {
+          "regularProperty": "foo",
+          "propertyWithDefault": "bar"
+        },
+        "valid": true
+      }
+    ]
+  }
+]

@@ -1,0 +1,33 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);MSB3243</NoWarn>
+    <!-- Allow generated files to write to obj for inspection -->
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
+    <CompilerGeneratedFilesOutputPath>$(BaseIntermediateOutputPath)\GeneratedFiles</CompilerGeneratedFilesOutputPath>
+  </PropertyGroup>
+  <!-- Runtime reference to Corvus.Text.Json (for JsonElement, JsonWorkspace, etc.) -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonLogic\Corvus.Text.Json.JsonLogic.csproj" />
+  </ItemGroup>
+  <!-- Source generator reference: acts as analyzer for integration tests AND regular reference for diagnostic tests -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonLogic.SourceGenerator\Corvus.Text.Json.JsonLogic.SourceGenerator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+  </ItemGroup>
+  <!-- Roslyn API for CSharpGeneratorDriver-based diagnostic tests -->
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+  <!-- JSON rule files as AdditionalFiles for the source generator -->
+  <ItemGroup>
+    <AdditionalFiles Include="Rules\*.json" />
+    <AdditionalFiles Include="Operators\*.jlops" />
+  </ItemGroup>
+  <!-- Diagnostic tests use TRUSTED_PLATFORM_ASSEMBLIES which is unavailable on net481. -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Remove="SourceGeneratorDiagnosticTests.cs" />
+  </ItemGroup>
+</Project>

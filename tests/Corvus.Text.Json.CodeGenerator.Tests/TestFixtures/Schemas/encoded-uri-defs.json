@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "agent": { "$ref": "#/$defs/https:~1~1www.example.com~1schema~1v2.7~1async_agent.json" },
+    "config": { "$ref": "#/$defs/https:~1~1www.example.com~1schema~1v2.7~1service_config.json" }
+  },
+  "$defs": {
+    "https://www.example.com/schema/v2.7/async_agent.json": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "timeout": { "type": "integer" }
+      }
+    },
+    "https://www.example.com/schema/v2.7/service_config.json": {
+      "type": "object",
+      "properties": {
+        "host": { "type": "string" },
+        "port": { "type": "integer" }
+      }
+    }
+  }
+}

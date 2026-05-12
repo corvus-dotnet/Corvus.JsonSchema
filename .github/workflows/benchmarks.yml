@@ -1,0 +1,83 @@
+name: benchmarks
+on:
+  workflow_dispatch:
+    inputs:
+      filter:
+        description: 'BenchmarkDotNet filter pattern (e.g. *Validation* or *CodeGeneration*)'
+        required: false
+        default: '*'
+        type: string
+
+permissions:
+  actions: write
+  contents: read
+
+jobs:
+  run-benchmarks:
+    name: Run Benchmarks
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Restore previous results
+        id: baseline-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: benchmarks/baseline-results
+          key: benchmark-baseline-${{ github.ref_name }}
+
+      - name: Build benchmark solution
+        run: dotnet build Corvus.Text.Json.Benchmarks.slnx -c Release
+
+      - name: Run benchmarks
+        working-directory: benchmarks/Corvus.Text.Json.Benchmarks
+        run: dotnet run -c Release -f net10.0 --no-build -- --filter=${{ inputs.filter }} --buildTimeout 1200
+
+      - name: Generate summary
+        if: always()
+        shell: pwsh
+        run: |
+          $resultsDir = 'benchmarks/Corvus.Text.Json.Benchmarks/BenchmarkDotNet.Artifacts/results'
+          $baselineArgs = @{}
+          if (Test-Path benchmarks/baseline-results) {
+            $baselineArgs['BaselineDir'] = 'benchmarks/baseline-results'
+          }
+          & benchmarks/scripts/Write-BenchmarkSummary.ps1 `
+            -ResultsDir $resultsDir `
+            @baselineArgs
+
+      - name: Save results as new baseline
+        if: always()
+        shell: pwsh
+        run: |
+          $src = 'benchmarks/Corvus.Text.Json.Benchmarks/BenchmarkDotNet.Artifacts/results'
+          $dest = 'benchmarks/baseline-results'
+          if (Test-Path $dest) { Remove-Item -Recurse -Force $dest }
+          if (Test-Path $src) {
+            Copy-Item -Recurse $src $dest
+          }
+
+      - name: Update baseline cache
+        if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: benchmarks/baseline-results
+          key: benchmark-baseline-${{ github.ref_name }}-${{ github.run_id }}
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-results
+          path: benchmarks/Corvus.Text.Json.Benchmarks/BenchmarkDotNet.Artifacts/
+          if-no-files-found: ignore

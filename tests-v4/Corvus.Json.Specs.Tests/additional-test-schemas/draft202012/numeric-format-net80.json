@@ -1,0 +1,62 @@
+[
+  {
+    "description": "int128 format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "format": "int128"
+    },
+    "tests": [
+      {
+        "description": "data: -170141183460469231731687303715884105728",
+        "data": -170141183460469231731687303715884105728,
+        "valid": true
+      },
+      {
+        "description": "data: 170141183460469231731687303715884105727",
+        "data": 170141183460469231731687303715884105727,
+        "valid": true
+      },
+      {
+        "description": "data: -170141183460469231731687303715884105729",
+        "data": -170141183460469231731687303715884105729,
+        "valid": false
+      },
+      {
+        "description": "data: 170141183460469231731687303715884105728",
+        "data": 170141183460469231731687303715884105728,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "uint128 format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "format": "uint128"
+    },
+    "tests": [
+      {
+        "description": "data: 0",
+        "data": 0,
+        "valid": true
+      },
+      {
+        "description": "data: 340282366920938463463374607431768211455",
+        "data": 340282366920938463463374607431768211455,
+        "valid": true
+      },
+      {
+        "description": "data: 340282366920938463463374607431768211456",
+        "data": 340282366920938463463374607431768211456,
+        "valid": false
+      },
+      {
+        "description": "data: -1",
+        "data": -1,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  }
+]

@@ -1,0 +1,11 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "A person with an address reference",
+    "type": "object",
+    "required": ["name"],
+    "properties": {
+        "name": { "type": "string" },
+        "age": { "type": "integer", "format": "int32" },
+        "address": { "$ref": "http://example.com/schemas/address" }
+    }
+}

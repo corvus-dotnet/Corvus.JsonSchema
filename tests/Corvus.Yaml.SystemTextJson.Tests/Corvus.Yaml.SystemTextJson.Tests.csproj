@@ -1,0 +1,26 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <DefineConstants>$(DefineConstants);STJ</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup>
+    <CtjTestDir>..\Corvus.Text.Json.Yaml.Tests\</CtjTestDir>
+  </PropertyGroup>
+  <!-- Shared test files from CTJ test project (with #if STJ) -->
+  <ItemGroup>
+    <Compile Include="$(CtjTestDir)YamlTestHelper.cs" Link="YamlTestHelper.cs" />
+    <Compile Include="$(CtjTestDir)YamlToJsonBasicTests.cs" Link="YamlToJsonBasicTests.cs" />
+    <Compile Include="$(CtjTestDir)ScalarTests.cs" Link="ScalarTests.cs" />
+    <Compile Include="$(CtjTestDir)CollectionTests.cs" Link="CollectionTests.cs" />
+    <Compile Include="$(CtjTestDir)JsonToYamlTests.cs" Link="JsonToYamlTests.cs" />
+    <Compile Include="$(CtjTestDir)Utf8YamlWriterTests.cs" Link="Utf8YamlWriterTests.cs" />
+    <Compile Include="$(CtjTestDir)YamlCoverageTests.cs" Link="YamlCoverageTests.cs" />
+    <Compile Include="$(CtjTestDir)YamlDocumentParseOverloadTests.cs" Link="YamlDocumentParseOverloadTests.cs" />
+    <Compile Include="$(CtjTestDir)YamlEventConformanceTests.cs" Link="YamlEventConformanceTests.cs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Yaml.SystemTextJson\Corvus.Yaml.SystemTextJson.csproj" />
+  </ItemGroup>
+</Project>

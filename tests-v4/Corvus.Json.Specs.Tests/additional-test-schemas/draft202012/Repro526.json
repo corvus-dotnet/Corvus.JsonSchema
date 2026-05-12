@@ -1,0 +1,33 @@
+[
+  {
+    "description": "Base64 encoded application/octet-stream.",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "type": "object",
+      "properties": {
+        "file": {
+          "type": "object",
+          "properties": {
+            "content": {
+              "type": "string",
+              "contentEncoding": "base64",
+              "contentMediaType": "application/octet-stream"
+            }
+          }
+        }
+      }
+    },
+    "tests": [
+      {
+        "description": "data: { \u0022file\u0022: { \u0022content\u0022: \u0022eyJmb28iOiAiYmFyIn0K\u0022 } }",
+        "data": {
+          "file": {
+            "content": "eyJmb28iOiAiYmFyIn0K"
+          }
+        },
+        "valid": true
+      }
+    ],
+    "validateFormat": true
+  }
+]

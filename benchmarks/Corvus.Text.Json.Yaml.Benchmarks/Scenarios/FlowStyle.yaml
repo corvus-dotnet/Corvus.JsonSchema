@@ -1,0 +1,6 @@
+users: [{name: Alice, age: 30, active: true}, {name: Bob, age: 25, active: false}, {name: Carol, age: 35, active: true}]
+settings: {theme: dark, language: en, notifications: {email: true, sms: false, push: true}}
+matrix: [[1, 2, 3], [4, 5, 6], [7, 8, 9]]
+empty: {}
+nested: {a: {b: {c: {d: {e: value}}}}}
+mixed: {items: [1, two, 3.0, true, null, {key: val}], count: 6}

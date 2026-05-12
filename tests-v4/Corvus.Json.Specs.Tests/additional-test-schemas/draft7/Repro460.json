@@ -1,0 +1,48 @@
+[
+  {
+    "description": "Repro Unable to get type declaration",
+    "schema": {
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "$ref": "#/definitions/Options",
+      "definitions": {
+        "Options": {
+          "type": "object",
+          "properties": {
+            "plugins": {
+              "type": "array",
+              "items": {
+                "type": "array",
+                "items": [
+                  {
+                    "type": "string"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "type": "object",
+      "$id": "https://json.schemastore.org/babelrc.json"
+    },
+    "tests": [
+      {
+        "description": "data: {\u0022plugins\u0022: [[\u0022foo\u0022, {\u0022bar\u0022: 3}]]}",
+        "data": {
+          "plugins": [
+            [
+              "foo",
+              {
+                "bar": 3
+              }
+            ]
+          ]
+        },
+        "valid": true
+      }
+    ]
+  }
+]

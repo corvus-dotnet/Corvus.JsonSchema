@@ -1,0 +1,22 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "An object with pattern properties via allOf with $ref",
+    "$defs": {
+        "textAndNumericPatterns": {
+            "type": "object",
+            "patternProperties": {
+                "^T_": { "type": "string" },
+                "^N_": { "type": "number" }
+            }
+        }
+    },
+    "allOf": [
+        { "$ref": "#/$defs/textAndNumericPatterns" }
+    ],
+    "type": "object",
+    "properties": {
+        "id": { "type": "string" }
+    },
+    "required": ["id"],
+    "additionalProperties": false
+}

@@ -1,0 +1,71 @@
+[
+  {
+    "description": "Generate single valued single char enum",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "enum": [
+        "\u002B"
+      ]
+    },
+    "tests": [
+      {
+        "description": "data: \u0022-\u0022",
+        "data": "-",
+        "valid": false
+      },
+      {
+        "description": "data: \u0022\u002B\u0022",
+        "data": "\u002B",
+        "valid": true
+      }
+    ]
+  },
+  {
+    "description": "Generate single valued multi char enum",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "enum": [
+        "\u002B\u002B"
+      ]
+    },
+    "tests": [
+      {
+        "description": "data: \u0022-\u0022",
+        "data": "-",
+        "valid": false
+      },
+      {
+        "description": "data: \u0022\u002B\u002B\u0022",
+        "data": "\u002B\u002B",
+        "valid": true
+      }
+    ]
+  },
+  {
+    "description": "Generate multi valued multi char enum",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "enum": [
+        "\u002B\u002B",
+        "--"
+      ]
+    },
+    "tests": [
+      {
+        "description": "data: \u0022;;\u0022",
+        "data": ";;",
+        "valid": false
+      },
+      {
+        "description": "data: \u0022--\u0022",
+        "data": "--",
+        "valid": true
+      },
+      {
+        "description": "data: \u0022\u002B\u002B\u0022",
+        "data": "\u002B\u002B",
+        "valid": true
+      }
+    ]
+  }
+]

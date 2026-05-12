@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/payment",
+  "title": "Payment",
+  "oneOf": [
+    { "$ref": "#/$defs/CreditCard" },
+    { "$ref": "#/$defs/BankTransfer" }
+  ],
+  "$defs": {
+    "CreditCard": {
+      "type": "object",
+      "required": [ "type", "cardNumber", "amount" ],
+      "properties": {
+        "type": { "const": "credit_card" },
+        "cardNumber": { "type": "string", "pattern": "^\\d{16}$" },
+        "amount": { "type": "number", "minimum": 0 }
+      }
+    },
+    "BankTransfer": {
+      "type": "object",
+      "required": [ "type", "accountNumber", "sortCode", "amount" ],
+      "properties": {
+        "type": { "const": "bank_transfer" },
+        "accountNumber": { "type": "string" },
+        "sortCode": { "type": "string" },
+        "amount": { "type": "number", "minimum": 0 }
+      }
+    }
+  }
+}

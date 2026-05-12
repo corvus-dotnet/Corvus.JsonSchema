@@ -1,0 +1,21 @@
+{
+  "oneOf": [
+    {
+      "type": "object",
+      "required": ["type", "radius"],
+      "properties": {
+        "type": { "const": "circle" },
+        "radius": { "type": "number" }
+      }
+    },
+    {
+      "type": "object",
+      "required": ["type", "width", "height"],
+      "properties": {
+        "type": { "const": "rectangle" },
+        "width": { "type": "number" },
+        "height": { "type": "number" }
+      }
+    }
+  ]
+}

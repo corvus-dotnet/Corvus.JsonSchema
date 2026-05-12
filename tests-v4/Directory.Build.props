@@ -1,0 +1,13 @@
+<Project>
+
+  <PropertyGroup>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <LangVersion>preview</LangVersion>
+    <Nullable>enable</Nullable>
+    <!-- Disable analyzers warnings about JSON being misformatted in string literals -->
+    <NoWarn>$(NoWarn);JSON001</NoWarn>
+    <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+  </PropertyGroup>
+
+</Project>

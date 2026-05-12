@@ -1,0 +1,1 @@
+$reduce(Account.Order.Product, function($prev, $curr) { $prev + $curr.Price * $curr.Quantity }, 0)

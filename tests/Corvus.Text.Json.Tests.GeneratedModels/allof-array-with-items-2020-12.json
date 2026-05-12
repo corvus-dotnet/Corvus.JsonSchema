@@ -1,0 +1,12 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "AllOfArrayWithItems",
+  "description": "An inline array composed via allOf with a local minItems constraint.",
+  "allOf": [
+    {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  ],
+  "minItems": 1
+}

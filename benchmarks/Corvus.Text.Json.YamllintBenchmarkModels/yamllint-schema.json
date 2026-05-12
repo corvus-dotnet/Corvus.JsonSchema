@@ -1,0 +1,33 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://json.schemastore.org/yamllint.json",
+  "title": "yamllint",
+  "description": "yamllint uses a set of rules to check source files for problems.",
+  "$comment": "https://yamllint.readthedocs.io/en/stable/configuration.html",
+  "allOf": [ { "$ref": "#/definitions/ignore" } ],
+  "definitions": {
+    "allRules": {
+      "$ref": "#/definitions/ignore",
+      "properties": {
+        "level": {
+          "title": "Level",
+          "default": "warning",
+          "type": "string"
+        }
+      }
+    },
+    "ignore": {
+      "properties": {
+        "ignore": {
+          "title": "Ignore",
+          "description": "Ignore files, so that the linter doesn't process them.",
+          "type": "string"
+        }
+      }
+    },
+    "toggle": {
+      "type": "string",
+      "enum": [ "enable", "disable" ]
+    }
+  }
+}

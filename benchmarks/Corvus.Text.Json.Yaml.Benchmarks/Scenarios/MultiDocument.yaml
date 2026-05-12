@@ -1,0 +1,20 @@
+---
+name: Document One
+type: config
+values:
+  - alpha
+  - beta
+  - gamma
+---
+name: Document Two
+type: data
+values:
+  - 1
+  - 2
+  - 3
+---
+name: Document Three
+type: metadata
+tags:
+  env: production
+  region: us-east

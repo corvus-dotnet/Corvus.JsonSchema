@@ -1,0 +1,34 @@
+{
+  "type": "object",
+  "required": ["id", "firstName", "lastName", "email"],
+  "properties": {
+    "id": { "type": "integer", "minimum": 1 },
+    "firstName": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "lastName": { "type": "string", "minLength": 1, "maxLength": 100 },
+    "email": { "type": "string", "format": "email" },
+    "phone": { "type": "string", "pattern": "^\\+?[0-9\\-\\s]+$" },
+    "dateOfBirth": { "type": "string", "format": "date" },
+    "age": { "type": "integer", "minimum": 0, "maximum": 150 },
+    "isActive": { "type": "boolean" },
+    "score": { "type": "number", "minimum": 0, "maximum": 100 },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "address": {
+      "type": "object",
+      "required": ["street", "city", "country"],
+      "properties": {
+        "street": { "type": "string" },
+        "city": { "type": "string" },
+        "state": { "type": "string" },
+        "postalCode": { "type": "string" },
+        "country": { "type": "string" }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "additionalProperties": { "type": "string" }
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "private": true,
+  "name": "corvus-jsonata-playground-assets",
+  "description": "Build assets for the JSONata Playground (monaco-jsonata bundle)",
+  "scripts": {
+    "bundle": "node esbuild.mjs"
+  },
+  "dependencies": {
+    "monaco-jsonata": "^1.0.1",
+    "jsonata": "^2.1.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

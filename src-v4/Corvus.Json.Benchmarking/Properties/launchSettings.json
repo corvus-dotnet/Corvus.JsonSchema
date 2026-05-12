@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "Corvus.Json.Benchmarking": {
+      "commandName": "Project",
+      "commandLineArgs": "config config.json",
+      "workingDirectory": "D:\\source\\mwadams\\repro685"
+    },
+    "WSL": {
+      "commandName": "WSL2",
+      "distributionName": ""
+    }
+  }
+}

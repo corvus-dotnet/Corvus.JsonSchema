@@ -1,0 +1,58 @@
+using System.Reflection;
+using System.Threading.Tasks;
+using Corvus.Text.Json;
+using TestUtilities;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
+
+namespace StandaloneEvaluatorTestSuite.Draft6.Definitions;
+
+[TestCategory("Draft6")]
+[TestClass]
+public class SuiteValidateDefinitionAgainstMetaschema
+{
+    private static Fixture? s_fixture;
+    [ClassInitialize]
+    public static async Task ClassInit(TestContext _)
+    {
+        s_fixture = new Fixture();
+        await s_fixture.InitializeAsync();
+    }
+
+    [ClassCleanup]
+    public static void ClassCleanupMethod()
+    {
+        (s_fixture as IDisposable)?.Dispose();
+        s_fixture = null;
+    }
+
+    [TestMethod]
+    public void TestValidDefinitionSchema()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"definitions\": {\r\n                        \"foo\": {\"type\": \"integer\"}\r\n                    }\r\n                }");
+        Assert.IsTrue(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    [TestMethod]
+    public void TestInvalidDefinitionSchema()
+    {
+        using var doc = ParsedJsonDocument<JsonElement>.Parse("{\r\n                    \"definitions\": {\r\n                        \"foo\": {\"type\": 1}\r\n                    }\r\n                }");
+        Assert.IsFalse(s_fixture!.Evaluator.Evaluate(doc.RootElement));
+    }
+
+    public class Fixture
+    {
+        public CompiledEvaluator Evaluator { get; private set; }
+
+        public async Task InitializeAsync()
+        {
+            this.Evaluator = await TestEvaluatorHelper.GenerateEvaluatorForVirtualFileAsync(
+                "tests\\draft6\\definitions.json",
+                "{\"$ref\": \"http://json-schema.org/draft-06/schema#\"}",
+                "StandaloneEvaluatorTestSuite.Draft6.Definitions",
+                "../../../../../JSON-Schema-Test-Suite/remotes",
+                "http://json-schema.org/draft-06/schema#",
+                validateFormat: false,
+                Assembly.GetExecutingAssembly());
+        }
+    }
+}

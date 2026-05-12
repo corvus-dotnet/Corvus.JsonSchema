@@ -1,0 +1,234 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: production
+  labels:
+    app: frontend
+    version: v2.1.0
+    environment: production
+    team: platform
+    managed-by: helm
+  annotations:
+    deployment.kubernetes.io/revision: "42"
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9090"
+spec:
+  replicas: 5
+  revisionHistoryLimit: 10
+  selector:
+    matchLabels:
+      app: frontend
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 1
+  template:
+    metadata:
+      labels:
+        app: frontend
+        version: v2.1.0
+    spec:
+      serviceAccountName: frontend-sa
+      terminationGracePeriodSeconds: 60
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchExpressions:
+                    - key: app
+                      operator: In
+                      values:
+                        - frontend
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: frontend
+          image: registry.example.com/frontend:v2.1.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+            - name: metrics
+              containerPort: 9090
+              protocol: TCP
+          env:
+            - name: NODE_ENV
+              value: production
+            - name: LOG_LEVEL
+              value: info
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: db-credentials
+                  key: url
+            - name: REDIS_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: redis-config
+                  key: host
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: api-secrets
+                  key: api-key
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: "1"
+              memory: 512Mi
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 3
+            failureThreshold: 3
+          volumeMounts:
+            - name: config-volume
+              mountPath: /etc/config
+              readOnly: true
+            - name: tls-certs
+              mountPath: /etc/tls
+              readOnly: true
+            - name: tmp
+              mountPath: /tmp
+        - name: sidecar
+          image: registry.example.com/envoy:v1.28.0
+          ports:
+            - name: proxy
+              containerPort: 15001
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          volumeMounts:
+            - name: envoy-config
+              mountPath: /etc/envoy
+              readOnly: true
+      initContainers:
+        - name: init-db
+          image: registry.example.com/db-init:v1.0.0
+          command:
+            - sh
+            - -c
+            - "until pg_isready -h $DB_HOST; do sleep 2; done"
+          env:
+            - name: DB_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: db-config
+                  key: host
+      volumes:
+        - name: config-volume
+          configMap:
+            name: frontend-config
+            items:
+              - key: app.yaml
+                path: app.yaml
+              - key: routes.yaml
+                path: routes.yaml
+        - name: tls-certs
+          secret:
+            secretName: frontend-tls
+        - name: tmp
+          emptyDir:
+            sizeLimit: 100Mi
+        - name: envoy-config
+          configMap:
+            name: envoy-config
+services:
+  - name: frontend
+    type: ClusterIP
+    ports:
+      - name: http
+        port: 80
+        targetPort: 8080
+        protocol: TCP
+      - name: metrics
+        port: 9090
+        targetPort: 9090
+        protocol: TCP
+    selector:
+      app: frontend
+  - name: api-gateway
+    type: ClusterIP
+    ports:
+      - name: http
+        port: 8080
+        targetPort: 8080
+    selector:
+      app: api-gateway
+autoscaling:
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+        - type: Percent
+          value: 50
+          periodSeconds: 60
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 120
+ingress:
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/rate-limit: "100"
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+  tls:
+    - hosts:
+        - app.example.com
+        - www.example.com
+      secretName: frontend-tls
+  rules:
+    - host: app.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend: frontend
+        - path: /api
+          pathType: Prefix
+          backend: api-gateway
+    - host: www.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+          backend: frontend

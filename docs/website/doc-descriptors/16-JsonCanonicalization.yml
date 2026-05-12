@@ -1,0 +1,3 @@
+source: JsonCanonicalization.md
+navTitle: "JSON Canonicalization (JCS)"
+description: "Produce a deterministic byte-exact serialization of JSON values using RFC 8785 JSON Canonicalization Scheme. Zero heap allocation on the hot path. Ideal for digital signatures, content hashing, and content-addressed storage."

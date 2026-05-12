@@ -1,0 +1,89 @@
+@model SiteViewModel
+@{
+    Layout = "Shared/_Layout.cshtml";
+    ViewBag.MetaTitle = Model.PageContext.MetaData.Title;
+}
+<!-- Recipe detail -->
+<div class="docs-layout container">
+    <!-- Sidebar -->
+    <aside class="docs-sidebar" aria-label="Recipe navigation">
+        <nav class="docs-sidebar__nav">
+            <h2 class="docs-sidebar__title">Sections</h2>
+            <ul class="docs-sidebar__list" id="toc-list">
+                @foreach (var contentFragment in Model.PageContext.GetAllMarkdownContent())
+                {
+                    <li class="docs-sidebar__item">
+                        <a class="docs-sidebar__link" href="#@contentFragment.Id.ToLower()">@contentFragment.Id.Humanize(LetterCasing.Title)</a>
+                    </li>
+                }
+            </ul>
+            <a class="docs-sidebar__back" href="/examples/index.html">&larr; All Examples</a>
+        </nav>
+    </aside>
+
+    <!-- Main content -->
+    <main id="main-content" class="docs-content">
+        <article class="text-content">
+            <!-- Recipe header -->
+            <header class="page-header">
+                <h1 class="page-header__title">@Model.PageContext.Title</h1>
+                @if (!string.IsNullOrEmpty(Model.PageContext.MetaData.Description))
+                {
+                    <p class="page-header__description">@Model.PageContext.MetaData.Description</p>
+                }
+                @if (Model.PageContext.MetaData.Keywords.Any())
+                {
+                    <div class="card__tags">
+                        @foreach (var keyword in Model.PageContext.MetaData.Keywords)
+                        {
+                            <span class="card__tag">@keyword</span>
+                        }
+                    </div>
+                }
+            </header>
+
+            <!-- Content blocks (schema, code examples, etc.) -->
+            @foreach (var contentFragment in Model.PageContext.GetAllMarkdownContent())
+            {
+                <section class="content-section" id="@contentFragment.Id.ToLower()">
+                    @Html.Raw(contentFragment.Body)
+                </section>
+            }
+
+            <!-- Related patterns -->
+            @{
+                var parentNav = Model.SiteContext.Navigation.Children
+                    .Where(x => Vellum.Cli.Domain.Url.AreEquivalent(x.Url, new Vellum.Cli.Domain.Url("/examples/")))
+                    .SelectMany(x => x.Children)
+                    .Where(x => x.Header.Visible)
+                    .OrderBy(x => x.Rank)
+                    .ToList();
+
+                var currentIndex = parentNav.FindIndex(x =>
+                    Vellum.Cli.Domain.Url.AreEquivalent(x.Url, Model.PageContext.Navigation.Url));
+            }
+            @if (parentNav.Count > 1)
+            {
+                <nav class="recipe-nav" aria-label="Previous and next recipes">
+                    @if (currentIndex > 0)
+                    {
+                        var prev = parentNav[currentIndex - 1];
+                        <a class="recipe-nav__link recipe-nav__link--prev" href="@prev.Url">
+                            <span class="recipe-nav__direction">&larr; Previous</span>
+                            <span class="recipe-nav__title">@prev.Title</span>
+                        </a>
+                    }
+                    @if (currentIndex >= 0 && currentIndex < parentNav.Count - 1)
+                    {
+                        var next = parentNav[currentIndex + 1];
+                        <a class="recipe-nav__link recipe-nav__link--next" href="@next.Url">
+                            <span class="recipe-nav__direction">Next &rarr;</span>
+                            <span class="recipe-nav__title">@next.Title</span>
+                        </a>
+                    }
+                </nav>
+            }
+        </article>
+    </main>
+</div>
+<!-- /Recipe detail -->

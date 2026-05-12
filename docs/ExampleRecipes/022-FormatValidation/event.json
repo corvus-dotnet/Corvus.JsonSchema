@@ -1,0 +1,17 @@
+{
+    "title": "Event",
+    "type": "object",
+    "required": ["name", "startTime"],
+    "properties": {
+        "name": { "type": "string" },
+        "startTime": { "type": "string", "format": "date-time" },
+        "date": { "type": "string", "format": "date" },
+        "duration": { "type": "string", "format": "duration" },
+        "website": { "type": "string", "format": "uri" },
+        "relatedLink": { "type": "string", "format": "uri-reference" },
+        "intlHomepage": { "type": "string", "format": "iri" },
+        "intlRelatedLink": { "type": "string", "format": "iri-reference" },
+        "eventId": { "type": "string", "format": "uuid" },
+        "hostEmail": { "type": "string", "format": "email" }
+    }
+}

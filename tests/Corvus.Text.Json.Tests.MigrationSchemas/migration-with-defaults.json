@@ -1,0 +1,10 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": { "type": "string" },
+    "status": { "type": "string", "default": "active" },
+    "count": { "type": "integer", "format": "int32", "default": 0 }
+  }
+}

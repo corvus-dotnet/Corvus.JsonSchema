@@ -1,0 +1,21 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <IsPackable>false</IsPackable>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+    <PackageReference Include="Microsoft.Extensions.DependencyModel" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonPath.CodeGeneration\Corvus.Text.Json.JsonPath.CodeGeneration.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.JsonPath\Corvus.Text.Json.JsonPath.csproj" />
+    <ProjectReference Include="..\..\src\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <!-- Polyfill for 'record' types on net481 (IsExternalInit is built-in on net5.0+). -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Include="$(MSBuildThisFileDirectory)..\..\System.Private.CoreLib\src\System\Runtime\CompilerServices\IsExternalInit.cs" Link="Polyfills\IsExternalInit.cs" />
+  </ItemGroup>
+</Project>

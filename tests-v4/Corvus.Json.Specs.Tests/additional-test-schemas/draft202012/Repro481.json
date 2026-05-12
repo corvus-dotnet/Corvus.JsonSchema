@@ -1,0 +1,17 @@
+[
+  {
+    "description": "Mixed-case email.",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "format": "email"
+    },
+    "tests": [
+      {
+        "description": "data: \u0022Endjin@corvus.net\u0022",
+        "data": "Endjin@corvus.net",
+        "valid": true
+      }
+    ],
+    "validateFormat": true
+  }
+]

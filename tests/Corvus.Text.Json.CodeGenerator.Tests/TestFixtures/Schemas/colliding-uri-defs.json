@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "agent1": { "$ref": "#/$defs/https:~1~1www.example.com~1schema~1backend~1agent.json" },
+    "agent2": { "$ref": "#/$defs/https:~1~1www.example.com~1schema~1frontend~1agent.json" }
+  },
+  "$defs": {
+    "https://www.example.com/schema/backend/agent.json": {
+      "type": "object",
+      "properties": {
+        "host": { "type": "string" },
+        "port": { "type": "integer" }
+      }
+    },
+    "https://www.example.com/schema/frontend/agent.json": {
+      "type": "object",
+      "properties": {
+        "url": { "type": "string" },
+        "timeout": { "type": "integer" }
+      }
+    }
+  }
+}

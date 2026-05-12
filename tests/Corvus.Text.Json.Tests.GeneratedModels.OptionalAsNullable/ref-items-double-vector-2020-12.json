@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RefItemsDoubleVector",
+    "description": "A rank-1 double vector where the items type is referenced via $ref.",
+    "$defs": {
+        "doubleValue": {
+            "type": "number",
+            "format": "double"
+        }
+    },
+    "type": "array",
+    "items": {
+        "$ref": "#/$defs/doubleValue"
+    },
+    "minItems": 3,
+    "maxItems": 3
+}

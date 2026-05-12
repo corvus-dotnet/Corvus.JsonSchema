@@ -1,0 +1,396 @@
+@namespace Corvus.Text.Json.Playground.Components
+
+<div class="type-map-tree">
+    @if (TypeMap.Count == 0)
+    {
+        <p style="color:#808080;padding:16px;">Click <strong>Generate</strong> to create types from the schema.</p>
+    }
+    else
+    {
+        <div class="type-map-search">
+            <input type="text" placeholder="Filter types…" @bind="searchFilter" @bind:event="oninput"
+                   class="type-map-search-input" />
+            @if (!string.IsNullOrEmpty(searchFilter))
+            {
+                <button class="type-map-search-clear" @onclick="() => searchFilter = string.Empty"
+                        title="Clear filter">✕</button>
+            }
+        </div>
+        <ul>
+            @foreach (var entry in TypeMap)
+            {
+                if (!MatchesFilter(entry))
+                {
+                    continue;
+                }
+
+                bool hasChildren = entry.CompositionGroups.Count > 0
+                    || entry.EnumValues is { Count: > 0 }
+                    || entry.TupleItems is { Count: > 0 }
+                    || entry.PrefixItems is { Count: > 0 }
+                    || entry.ArrayItemType is not null
+                    || entry.Properties.Count > 0;
+                bool isExpanded = IsExpanded(entry.FullTypeName);
+                bool isFiltering = !string.IsNullOrEmpty(searchFilter);
+
+                <li>
+                    <div class="type-map-entry @GetEntryClass(entry)">
+                        @if (hasChildren)
+                        {
+                            <span class="type-map-toggle @(isExpanded || isFiltering ? "expanded" : "")"
+                                  @onclick="() => ToggleExpand(entry.FullTypeName)"
+                                  @onclick:stopPropagation="true">▶</span>
+                        }
+                        else
+                        {
+                            <span class="type-map-toggle-spacer"></span>
+                        }
+                        <span class="type-map-entry-content" @onclick="() => SelectType(entry)">
+                            <span class="type-name">@entry.TypeName</span>
+                            <span class="type-kind">(@entry.Kind)</span>
+                            @if (entry.ConstValue is not null)
+                            {
+                                <span class="type-const-value">= @entry.ConstValue</span>
+                            }
+                        </span>
+                    </div>
+                    @if (hasChildren && (isExpanded || isFiltering))
+                    {
+                        @if (entry.CompositionGroups.Count > 0)
+                        {
+                            <ul>
+                                @foreach (var group in entry.CompositionGroups)
+                                {
+                                    <li>
+                                        <div class="type-map-composition-header">@group.Keyword</div>
+                                        <ul>
+                                            @foreach (var member in group.Types)
+                                            {
+                                                <li>
+                                                    <div class="type-map-entry composition-member @GetCompositionClass(member)"
+                                                         @onclick="() => SelectCompositionMember(member)">
+                                                        <span class="type-name">@member.TypeName</span>
+                                                        @if (member.ConstValue is not null)
+                                                        {
+                                                            <span class="type-const-value">= @member.ConstValue</span>
+                                                        }
+                                                    </div>
+                                                </li>
+                                            }
+                                        </ul>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                        @if (entry.EnumValues is { Count: > 0 })
+                        {
+                            <ul>
+                                <li>
+                                    <div class="type-map-composition-header">enum</div>
+                                    <ul>
+                                        @foreach (var value in entry.EnumValues)
+                                        {
+                                            <li>
+                                                <div class="type-map-entry enum-value">
+                                                    <span class="type-const-value">@value</span>
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            </ul>
+                        }
+                        @if (entry.TupleItems is { Count: > 0 })
+                        {
+                            <ul>
+                                <li>
+                                    <div class="type-map-composition-header">prefixItems</div>
+                                    <ul>
+                                        @foreach (var item in entry.TupleItems)
+                                        {
+                                            <li>
+                                                <div class="type-map-entry tuple-item @GetTupleItemClass(item)"
+                                                     @onclick="() => SelectTupleItem(item)">
+                                                    <span class="prop-name">Item@(item.Index)</span>
+                                                    <span class="prop-type">: @item.TypeName</span>
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            </ul>
+                        }
+                        @if (entry.PrefixItems is { Count: > 0 })
+                        {
+                            <ul>
+                                <li>
+                                    <div class="type-map-composition-header">prefixItems</div>
+                                    <ul>
+                                        @foreach (var item in entry.PrefixItems)
+                                        {
+                                            <li>
+                                                <div class="type-map-entry tuple-item @GetTupleItemClass(item)"
+                                                     @onclick="() => SelectTupleItem(item)">
+                                                    <span class="prop-name">[@(item.Index - 1)]</span>
+                                                    <span class="prop-type">: @item.TypeName</span>
+                                                </div>
+                                            </li>
+                                        }
+                                    </ul>
+                                </li>
+                            </ul>
+                        }
+                        @if (entry.ArrayItemType is not null)
+                        {
+                            <ul>
+                                <li>
+                                    <div class="type-map-composition-header">items</div>
+                                    <ul>
+                                        <li>
+                                            <div class="type-map-entry @GetArrayItemClass(entry.ArrayItemType)"
+                                                 @onclick="() => SelectArrayItem(entry.ArrayItemType)">
+                                                <span class="type-name">@entry.ArrayItemType.TypeName</span>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        }
+                        @if (entry.Properties.Count > 0)
+                        {
+                            <ul>
+                                @foreach (var prop in entry.Properties)
+                                {
+                                    <li>
+                                        <div class="type-map-entry @GetPropertyClass(prop)"
+                                             @onclick="() => SelectProperty(prop)">
+                                            <span class="prop-name">@prop.DotnetPropertyName</span>
+                                            <span class="prop-type">: @prop.TypeName</span>
+                                            @if (prop.IsRequired)
+                                            {
+                                                <span class="prop-required">required</span>
+                                            }
+                                            @if (prop.IsComposed)
+                                            {
+                                                <span class="prop-composed">composed</span>
+                                            }
+                                        </div>
+                                    </li>
+                                }
+                            </ul>
+                        }
+                    }
+                </li>
+            }
+        </ul>
+    }
+</div>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<TypeMapEntry> TypeMap { get; set; } = [];
+
+    [Parameter]
+    public EventCallback<SchemaNavigation> OnSchemaPointerSelected { get; set; }
+
+    private string? selectedItemKey;
+    private string? relatedFullTypeName;
+    private string searchFilter = string.Empty;
+    private readonly HashSet<string> expandedNodes = new();
+
+    private bool IsExpanded(string fullTypeName) => expandedNodes.Contains(fullTypeName);
+
+    private void ToggleExpand(string fullTypeName)
+    {
+        if (!expandedNodes.Remove(fullTypeName))
+        {
+            expandedNodes.Add(fullTypeName);
+        }
+    }
+
+    private bool MatchesFilter(TypeMapEntry entry)
+    {
+        if (string.IsNullOrEmpty(searchFilter))
+        {
+            return true;
+        }
+
+        // Match against type name, kind, property names, composition member names, enum values
+        if (entry.TypeName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase)
+            || entry.Kind.Contains(searchFilter, StringComparison.OrdinalIgnoreCase))
+        {
+            return true;
+        }
+
+        foreach (var prop in entry.Properties)
+        {
+            if (prop.DotnetPropertyName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase)
+                || prop.TypeName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        foreach (var group in entry.CompositionGroups)
+        {
+            foreach (var member in group.Types)
+            {
+                if (member.TypeName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (entry.EnumValues is not null)
+        {
+            foreach (var value in entry.EnumValues)
+            {
+                if (value.Contains(searchFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (entry.TupleItems is not null)
+        {
+            foreach (var item in entry.TupleItems)
+            {
+                if (item.TypeName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        if (entry.PrefixItems is not null)
+        {
+            foreach (var item in entry.PrefixItems)
+            {
+                if (item.TypeName.Contains(searchFilter, StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private async Task SelectType(TypeMapEntry entry)
+    {
+        selectedItemKey = $"type:{entry.FullTypeName}";
+        relatedFullTypeName = null;
+
+        // Auto-expand when selected
+        expandedNodes.Add(entry.FullTypeName);
+
+        await OnSchemaPointerSelected.InvokeAsync(
+            new SchemaNavigation(entry.SchemaPointer, entry.SourceSchemaName));
+    }
+
+    private async Task SelectProperty(TypeMapProperty prop)
+    {
+        selectedItemKey = $"prop:{prop.Name}:{prop.FullTypeName}";
+        relatedFullTypeName = prop.FullTypeName;
+        await OnSchemaPointerSelected.InvokeAsync(
+            new SchemaNavigation(prop.SchemaPointer, prop.SourceSchemaName));
+    }
+
+    private async Task SelectCompositionMember(TypeMapCompositionMember member)
+    {
+        selectedItemKey = $"comp:{member.FullTypeName}";
+        relatedFullTypeName = member.FullTypeName;
+        await OnSchemaPointerSelected.InvokeAsync(
+            new SchemaNavigation(member.SchemaPointer, member.SourceSchemaName));
+    }
+
+    private string GetEntryClass(TypeMapEntry entry)
+    {
+        if (selectedItemKey == $"type:{entry.FullTypeName}")
+        {
+            return "selected";
+        }
+
+        if (relatedFullTypeName is not null && entry.FullTypeName == relatedFullTypeName)
+        {
+            return "related";
+        }
+
+        return "";
+    }
+
+    private string GetPropertyClass(TypeMapProperty prop)
+    {
+        if (selectedItemKey == $"prop:{prop.Name}:{prop.FullTypeName}")
+        {
+            return "selected";
+        }
+
+        return "";
+    }
+
+    private string GetCompositionClass(TypeMapCompositionMember member)
+    {
+        if (selectedItemKey == $"comp:{member.FullTypeName}")
+        {
+            return "selected";
+        }
+
+        if (relatedFullTypeName is not null && member.FullTypeName == relatedFullTypeName)
+        {
+            return "related";
+        }
+
+        return "";
+    }
+
+    private string GetTupleItemClass(TypeMapTupleItem item)
+    {
+        if (selectedItemKey == $"tuple:{item.Index}:{item.FullTypeName}")
+        {
+            return "selected";
+        }
+
+        if (relatedFullTypeName is not null && item.FullTypeName == relatedFullTypeName)
+        {
+            return "related";
+        }
+
+        return "";
+    }
+
+    private async Task SelectTupleItem(TypeMapTupleItem item)
+    {
+        selectedItemKey = $"tuple:{item.Index}:{item.FullTypeName}";
+        relatedFullTypeName = item.FullTypeName;
+        await OnSchemaPointerSelected.InvokeAsync(
+            new SchemaNavigation(item.SchemaPointer, item.SourceSchemaName));
+    }
+
+    private async Task SelectArrayItem(TypeMapArrayItemType item)
+    {
+        selectedItemKey = $"items:{item.FullTypeName}";
+        relatedFullTypeName = item.FullTypeName;
+        await OnSchemaPointerSelected.InvokeAsync(
+            new SchemaNavigation(item.SchemaPointer, item.SourceSchemaName));
+    }
+
+    private string GetArrayItemClass(TypeMapArrayItemType item)
+    {
+        if (selectedItemKey == $"items:{item.FullTypeName}")
+        {
+            return "selected";
+        }
+
+        if (relatedFullTypeName is not null && item.FullTypeName == relatedFullTypeName)
+        {
+            return "related";
+        }
+
+        return "";
+    }
+
+    public record SchemaNavigation(string? Pointer, string? SchemaName);
+}

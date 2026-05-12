@@ -1,0 +1,3 @@
+source: JMESPath.md
+navTitle: "JMESPath Query Language"
+description: "Query and extract data from JSON documents using the JMESPath query language. Supports interpreted evaluation, Roslyn source generator, and CLI code generation with zero-allocation evaluation."

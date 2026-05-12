@@ -1,0 +1,35 @@
+level1:
+  level2a:
+    level3a:
+      level4a:
+        name: deep-a
+        value: 42
+      level4b:
+        name: deep-b
+        value: 99
+    level3b:
+      items:
+        - alpha
+        - beta
+        - gamma
+  level2b:
+    level3c:
+      level4c:
+        enabled: true
+        count: 7
+      level4d:
+        enabled: false
+        count: 0
+    level3d:
+      tags:
+        - x
+        - y
+        - z
+metadata:
+  version: 2
+  author: benchmark
+  nested:
+    a:
+      b:
+        c:
+          d: leaf

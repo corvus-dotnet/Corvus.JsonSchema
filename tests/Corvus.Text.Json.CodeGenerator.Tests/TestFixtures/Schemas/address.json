@@ -1,0 +1,12 @@
+{
+    "$id": "http://example.com/schemas/address",
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Address",
+    "type": "object",
+    "required": ["street", "city"],
+    "properties": {
+        "street": { "type": "string" },
+        "city": { "type": "string" },
+        "postcode": { "type": "string" }
+    }
+}

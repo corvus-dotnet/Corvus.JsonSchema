@@ -1,0 +1,3 @@
+source: Analyzers.md
+navTitle: "Analyzers"
+description: "Built-in Roslyn analyzers and code fixes for Corvus.Text.Json — CTJ001 (prefer UTF-8 literals), CTJ002 (unnecessary conversions), CTJ003 (static match lambdas), and CTJ-NAV (navigate to JSON Schema source)."

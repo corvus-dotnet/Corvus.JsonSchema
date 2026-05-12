@@ -1,0 +1,297 @@
+[
+  {
+    "description": "byte format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "byte"
+    },
+    "tests": [
+      {
+        "description": "data: 255",
+        "data": 255,
+        "valid": true
+      },
+      {
+        "description": "data: -1",
+        "data": -1,
+        "valid": false
+      },
+      {
+        "description": "data: 256",
+        "data": 256,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "sbyte format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "sbyte"
+    },
+    "tests": [
+      {
+        "description": "data: -128",
+        "data": -128,
+        "valid": true
+      },
+      {
+        "description": "data: 127",
+        "data": 127,
+        "valid": true
+      },
+      {
+        "description": "data: 128",
+        "data": 128,
+        "valid": false
+      },
+      {
+        "description": "data: -129",
+        "data": -129,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "int16 format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "int16"
+    },
+    "tests": [
+      {
+        "description": "data: -32768",
+        "data": -32768,
+        "valid": true
+      },
+      {
+        "description": "data: 32767",
+        "data": 32767,
+        "valid": true
+      },
+      {
+        "description": "data: -32769",
+        "data": -32769,
+        "valid": false
+      },
+      {
+        "description": "data: 32768",
+        "data": 32768,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "uint16 format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "uint16"
+    },
+    "tests": [
+      {
+        "description": "data: 0",
+        "data": 0,
+        "valid": true
+      },
+      {
+        "description": "data: 65535",
+        "data": 65535,
+        "valid": true
+      },
+      {
+        "description": "data: 65536",
+        "data": 65536,
+        "valid": false
+      },
+      {
+        "description": "data: -1",
+        "data": -1,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "int32 format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "int32"
+    },
+    "tests": [
+      {
+        "description": "data: -2147483648",
+        "data": -2147483648,
+        "valid": true
+      },
+      {
+        "description": "data: 2147483647",
+        "data": 2147483647,
+        "valid": true
+      },
+      {
+        "description": "data: -2147483649",
+        "data": -2147483649,
+        "valid": false
+      },
+      {
+        "description": "data: 2147483648",
+        "data": 2147483648,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "uint32 format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "uint32"
+    },
+    "tests": [
+      {
+        "description": "data: 0",
+        "data": 0,
+        "valid": true
+      },
+      {
+        "description": "data: 4294967295",
+        "data": 4294967295,
+        "valid": true
+      },
+      {
+        "description": "data: 4294967296",
+        "data": 4294967296,
+        "valid": false
+      },
+      {
+        "description": "data: -1",
+        "data": -1,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "int64 format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "int64"
+    },
+    "tests": [
+      {
+        "description": "data: -9223372036854775808",
+        "data": -9223372036854775808,
+        "valid": true
+      },
+      {
+        "description": "data: 9223372036854775807",
+        "data": 9223372036854775807,
+        "valid": true
+      },
+      {
+        "description": "data: -9223372036854775809",
+        "data": -9223372036854775809,
+        "valid": false
+      },
+      {
+        "description": "data: 9223372036854775808",
+        "data": 9223372036854775808,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "uint64 format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "uint64"
+    },
+    "tests": [
+      {
+        "description": "data: 0",
+        "data": 0,
+        "valid": true
+      },
+      {
+        "description": "data: 18446744073709551615",
+        "data": 18446744073709551615,
+        "valid": true
+      },
+      {
+        "description": "data: 18446744073709551616",
+        "data": 18446744073709551616,
+        "valid": false
+      },
+      {
+        "description": "data: -1",
+        "data": -1,
+        "valid": false
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "half format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "half"
+    },
+    "tests": [
+      {
+        "description": "data: -65500",
+        "data": -65500,
+        "valid": true
+      },
+      {
+        "description": "data: 65500",
+        "data": 65500,
+        "valid": true
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "single format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "single"
+    },
+    "tests": [
+      {
+        "description": "data: -340282346638528859811704183484516925440",
+        "data": -340282346638528859811704183484516925440,
+        "valid": true
+      },
+      {
+        "description": "data: 340282346638528859811704183484516925440",
+        "data": 340282346638528859811704183484516925440,
+        "valid": true
+      }
+    ],
+    "validateFormat": true
+  },
+  {
+    "description": "decimal format",
+    "schema": {
+      "$schema": "https://json-schema.org/draft/2019-09/schema",
+      "format": "decimal"
+    },
+    "tests": [
+      {
+        "description": "data: -79228162514264337593543950335",
+        "data": -79228162514264337593543950335,
+        "valid": true
+      },
+      {
+        "description": "data: 79228162514264337593543950335",
+        "data": 79228162514264337593543950335,
+        "valid": true
+      }
+    ],
+    "validateFormat": true
+  }
+]

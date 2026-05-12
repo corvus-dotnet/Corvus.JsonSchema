@@ -1,0 +1,1 @@
+($total := $sum(Account.Order.Product.(Price * Quantity)); $total > 100 ? "high" : "low")

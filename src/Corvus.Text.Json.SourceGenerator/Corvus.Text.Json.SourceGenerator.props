@@ -1,0 +1,12 @@
+<Project>
+  <ItemGroup>
+    <CompilerVisibleProperty Include="CorvusTextJsonFallbackVocabulary" />
+    <CompilerVisibleProperty Include="CorvusTextJsonOptionalAsNullable" />
+    <CompilerVisibleProperty Include="CorvusTextJsonUseOptionalNameHeuristics" />
+    <CompilerVisibleProperty Include="CorvusTextJsonAlwaysAssertFormat" />
+    <CompilerVisibleProperty Include="CorvusTextJsonDisabledNamingHeuristics" />
+    <CompilerVisibleProperty Include="CorvusTextJsonDefaultAccessibility" />
+    <CompilerVisibleProperty Include="CorvusTextJsonAddExplicitUsings" />
+    <CompilerVisibleProperty Include="CorvusTextJsonUseImplicitOperatorString" />
+  </ItemGroup>
+</Project>

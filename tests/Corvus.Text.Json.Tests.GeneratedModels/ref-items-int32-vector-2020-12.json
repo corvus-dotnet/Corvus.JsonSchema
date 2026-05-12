@@ -1,0 +1,17 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "RefItemsInt32Vector",
+    "description": "A rank-1 int32 vector where the items type is referenced via $ref.",
+    "$defs": {
+        "int32Value": {
+            "type": "integer",
+            "format": "int32"
+        }
+    },
+    "type": "array",
+    "items": {
+        "$ref": "#/$defs/int32Value"
+    },
+    "minItems": 4,
+    "maxItems": 4
+}

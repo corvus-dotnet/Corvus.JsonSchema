@@ -1,0 +1,70 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <Import Project="$(EndjinProjectPropsPath)" Condition="$(EndjinProjectPropsPath) != ''" />
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0;netstandard2.0;netstandard2.1</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <LangVersion>preview</LangVersion>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
+    <NoWarn>$(NoWarn);CS1591;NU1504;CS8500;CS8969;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <NoWarn Condition="$(TargetFrameworks.Contains('netstandard'))">$(NoWarn);CA1510;CA1511;CA1512;CA1513;CA1845;CA1846;CA1847</NoWarn>
+    <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <IsPackable>true</IsPackable>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Description>High-performance zero-allocation YAML to JSON converter for Corvus.Text.Json, supporting YAML 1.2 (and optional 1.1 compatibility) with streaming Utf8JsonWriter output.</Description>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+  <PropertyGroup>
+    <CommonPath>..\..\Common\src\</CommonPath>
+    <CoreLibSharedDir>..\..\System.Private.CoreLib\src\</CoreLibSharedDir>
+    <EnableDefaultEmbeddedResourceItems>false</EnableDefaultEmbeddedResourceItems>
+  </PropertyGroup>
+  <!-- SR/Resource setup -->
+  <ItemGroup>
+    <Using Include="SR = Resources.Strings" />
+    <EmbeddedResource Include="Resources\Strings.resx" Visible="true" IncludeDefaultValues="true" EmitFormatMethods="false" GenerateSource="true" OmitGetResourceString="true" />
+  </ItemGroup>
+  <!-- Common files linked -->
+  <ItemGroup>
+    <Compile Include="..\Common\JsonConstants.cs" Link="Common\JsonConstants.cs" />
+    <Compile Include="..\Common\Utf8KeyHashSet.cs" Link="Common\Utf8KeyHashSet.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.cs" Link="Common\System\Collections\Generic\ValueListBuilder.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Collections\Generic\ValueListBuilder.Pop.cs" Link="Common\System\Collections\Generic\ValueListBuilder.Pop.cs" />
+  </ItemGroup>
+  <!-- Polyfills for netstandard2.0 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0'">
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Diagnostics\CodeAnalysis\NullableAttributes.cs" Link="System\Diagnostics\CodeAnalysis\NullableAttributes.cs" />
+    <Compile Include="$(CoreLibSharedDir)System\Index.cs" Link="System\Index.cs" />
+  </ItemGroup>
+  <!-- IsExternalInit: also needed for netstandard2.1 -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.1'">
+    <Compile Include="$(CoreLibSharedDir)System\Runtime\CompilerServices\IsExternalInit.cs" />
+  </ItemGroup>
+  <!-- netstandard polyfill packages -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'netstandard2.0' OR '$(TargetFramework)' == 'netstandard2.1'">
+    <PackageReference Include="System.Memory" />
+    <PackageReference Include="System.Buffers" />
+    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" />
+  </ItemGroup>
+  <!-- Internals visibility -->
+  <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.Yaml.Tests" />
+  </ItemGroup>
+  <!-- Project reference -->
+  <ItemGroup>
+    <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+  </ItemGroup>
+  <!-- Analyzer packages -->
+  <ItemGroup>
+    <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />
+    <PackageReference Include="Microsoft.CodeAnalysis.ResxSourceGenerator" PrivateAssets="all" />
+    <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
+    <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+</Project>

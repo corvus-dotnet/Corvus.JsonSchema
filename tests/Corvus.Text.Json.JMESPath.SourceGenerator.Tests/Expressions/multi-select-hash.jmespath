@@ -1,0 +1,1 @@
+{total: length(items), names: items[*].name}

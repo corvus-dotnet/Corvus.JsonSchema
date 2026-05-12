@@ -1,0 +1,9 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "Pure oneOf (no other constraints)",
+    "oneOf": [
+        { "type": "string" },
+        { "type": "number" },
+        { "type": "boolean" }
+    ]
+}

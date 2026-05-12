@@ -1,0 +1,1194 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "$schema": {
+      "description": "Ignored. Can be set to get completions, validations and documentation in some editors.",
+      "example": [
+        "https://openapi.vercel.sh/vercel.json"
+      ],
+      "type": "string"
+    },
+    "alias": {
+      "description": "Aliases that will get assigned when the deployment is `READY` and the target is `production`. The client needs to make a `GET` request to its API to ensure the assignment",
+      "example": [
+        "example.vercel.app"
+      ],
+      "oneOf": [
+        {
+          "private": true,
+          "type": "string"
+        },
+        {
+          "items": {
+            "maxLength": 253,
+            "type": "string"
+          },
+          "maxItems": 50,
+          "maxLength": 253,
+          "type": "array"
+        }
+      ]
+    },
+    "build": {
+      "additionalProperties": false,
+      "description": "An object containing another object with information to be passed to the Build Process",
+      "deprecated": true,
+      "properties": {
+        "env": {
+          "additionalProperties": false,
+          "description": "An object containing the deployment's environment variable names and values to be passed to Builds. Secrets can be referenced by prefixing the value with `@`",
+          "example": {
+            "A_SECRET": "@a-secret"
+          },
+          "deprecated": true,
+          "maxProperties": 100,
+          "minProperties": 0,
+          "patternProperties": {
+            ".+": {
+              "maxLength": 65536,
+              "minLength": 0,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "builds": {
+      "description": "A list of build descriptions whose src references valid source files.",
+      "deprecated": true,
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "description": "Optionally, an object including arbitrary metadata to be passed to the Builder",
+            "type": "object"
+          },
+          "src": {
+            "description": "A glob expression or pathname. If more than one file is resolved, one build will be created per matched file. It can include `*` and `**`",
+            "maxLength": 4096,
+            "minLength": 1,
+            "type": "string"
+          },
+          "use": {
+            "description": "An npm module to be installed by the build process. It can include a semver compatible version (e.g.: `@org/proj@1`)",
+            "maxLength": 256,
+            "minLength": 3,
+            "type": "string"
+          }
+        },
+        "required": [
+          "use"
+        ],
+        "type": "object"
+      },
+      "maxItems": 128,
+      "minItems": 0,
+      "type": "array"
+    },
+    "cleanUrls": {
+      "description": "When set to `true`, all HTML files and Serverless Functions will have their extension removed. When visiting a path that ends with the extension, a 308 response will redirect the client to the extensionless path.",
+      "type": "boolean"
+    },
+    "env": {
+      "additionalProperties": false,
+      "description": "An object containing the deployment's environment variable names and values. Secrets can be referenced by prefixing the value with `@`",
+      "example": {
+        "A_SECRET": "@a-secret"
+      },
+      "deprecated": true,
+      "maxProperties": 100,
+      "minProperties": 0,
+      "patternProperties": {
+        ".+": {
+          "maxLength": 65536,
+          "minLength": 0,
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "functions": {
+      "additionalProperties": false,
+      "description": "An object describing custom options for your Serverless Functions. Each key must be glob pattern that matches the paths of the Serverless Functions you would like to customize (like `api/*.js` or `api/test.js`).",
+      "example": {
+        "src/pages/**": {
+          "maxDuration": 6,
+          "memory": 1024
+        }
+      },
+      "maxProperties": 50,
+      "minProperties": 1,
+      "patternProperties": {
+        "^.{1,256}$": {
+          "additionalProperties": false,
+          "properties": {
+            "excludeFiles": {
+              "description": "A glob pattern to match files that should be excluded from your Serverless Function. If you’re using a Community Runtime, the behavior might vary.",
+              "maxLength": 256,
+              "type": "string"
+            },
+            "includeFiles": {
+              "description": "A glob pattern to match files that should be included in your Serverless Function. If you’re using a Community Runtime, the behavior might vary.",
+              "maxLength": 256,
+              "type": "string"
+            },
+            "maxDuration": {
+              "description": "An integer defining how long your Serverless Function should be allowed to run on every request in seconds (between 1 and the maximum limit of your plan).",
+              "maximum": 900,
+              "minimum": 1,
+              "type": "number"
+            },
+            "memory": {
+              "description": "An integer defining the memory your Serverless Function should be provided with (between 128 and 3008).",
+              "maximum": 3008,
+              "minimum": 128,
+              "type": "number"
+            },
+            "runtime": {
+              "description": "The npm package name of a Runtime, including its version",
+              "maxLength": 256,
+              "type": "string"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "git": {
+      "type": "object",
+      "properties": {
+        "deploymentEnabled": {
+          "description": "Specifies the branches that will not trigger an auto-deployment when committing to them. Any non specified branch is `true` by default.",
+          "example": {
+            "main": false
+          },
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "object",
+              "additionalProperties": {
+                "type": "boolean"
+              }
+            }
+          ]
+        }
+      }
+    },
+    "github": {
+      "private": true,
+      "type": "object",
+      "properties": {
+        "autoAlias": {
+          "description": "When set to `false`, Vercel for GitHub will not deploy the given project regardless of the GitHub app being installed.",
+          "type": "boolean"
+        },
+        "autoJobCancelation": {
+          "description": "When set to `false`, Vercel for GitHub will always build pushes in sequence without cancelling a build for the most recent commit.",
+          "type": "boolean"
+        },
+        "enabled": {
+          "description": "When set to false, Vercel for GitHub will not apply the alias upon merge.",
+          "type": "boolean"
+        },
+        "silent": {
+          "description": "When set to `true`, Vercel for GitHub will stop commenting on pull requests and commits.",
+          "type": "boolean"
+        }
+      }
+    },
+    "headers": {
+      "type": "array",
+      "maxItems": 1024,
+      "description": "A list of header definitions.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "headers"
+        ],
+        "properties": {
+          "source": {
+            "description": "A pattern that matches each incoming pathname (excluding querystring)",
+            "type": "string",
+            "maxLength": 4096
+          },
+          "headers": {
+            "description": "An array of key/value pairs representing each response header.",
+            "type": "array",
+            "maxItems": 1024,
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "key",
+                "value"
+              ],
+              "properties": {
+                "key": {
+                  "type": "string",
+                  "maxLength": 4096
+                },
+                "value": {
+                  "type": "string",
+                  "maxLength": 4096
+                }
+              }
+            }
+          },
+          "has": {
+            "description": "An array of requirements that are needed to match",
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "const": "host"
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "key"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "enum": [
+                        "header",
+                        "cookie",
+                        "query"
+                      ]
+                    },
+                    "key": {
+                      "description": "The name of the element contained in the particular type",
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "missing": {
+            "description": "An array of requirements that are needed to match",
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "const": "host"
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "key"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "enum": [
+                        "header",
+                        "cookie",
+                        "query"
+                      ]
+                    },
+                    "key": {
+                      "description": "The name of the element contained in the particular type",
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "images": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "sizes"
+      ],
+      "properties": {
+        "contentDispositionType": {
+          "enum": [
+            "inline",
+            "attachment"
+          ]
+        },
+        "contentSecurityPolicy": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "dangerouslyAllowSVG": {
+          "type": "boolean"
+        },
+        "domains": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 50,
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 256
+          }
+        },
+        "formats": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 4,
+          "items": {
+            "enum": [
+              "image/avif",
+              "image/webp",
+              "image/jpeg",
+              "image/png"
+            ]
+          }
+        },
+        "minimumCacheTTL": {
+          "type": "integer",
+          "minimum": 1,
+          "maximum": 315360000
+        },
+        "remotePatterns": {
+          "type": "array",
+          "minItems": 0,
+          "maxItems": 50,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "hostname"
+            ],
+            "properties": {
+              "protocol": {
+                "enum": [
+                  "http",
+                  "https"
+                ]
+              },
+              "hostname": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              },
+              "port": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 5
+              },
+              "pathname": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 256
+              }
+            }
+          }
+        },
+        "sizes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 50,
+          "items": {
+            "type": "number"
+          }
+        }
+      }
+    },
+    "name": {
+      "description": "A name for the deployment",
+      "type": "string"
+    },
+    "public": {
+      "description": "Whether a deployment's source and logs are available publicly",
+      "type": "boolean"
+    },
+    "redirects": {
+      "title": "Redirects",
+      "type": "array",
+      "maxItems": 1024,
+      "description": "A list of redirect definitions.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "destination"
+        ],
+        "properties": {
+          "source": {
+            "description": "A pattern that matches each incoming pathname (excluding querystring).",
+            "type": "string",
+            "maxLength": 4096
+          },
+          "destination": {
+            "description": "A location destination defined as an absolute pathname or external URL.",
+            "type": "string",
+            "maxLength": 4096
+          },
+          "permanent": {
+            "description": "A boolean to toggle between permanent and temporary redirect. When `true`, the status code is `308`. When `false` the status code is `307`.",
+            "type": "boolean"
+          },
+          "statusCode": {
+            "private": true,
+            "type": "integer",
+            "minimum": 100,
+            "maximum": 999
+          },
+          "has": {
+            "description": "An array of requirements that are needed to match",
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "const": "host"
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "key"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "enum": [
+                        "header",
+                        "cookie",
+                        "query"
+                      ]
+                    },
+                    "key": {
+                      "description": "The name of the element contained in the particular type",
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "missing": {
+            "description": "An array of requirements that are needed to match",
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "const": "host"
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "key"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "enum": [
+                        "header",
+                        "cookie",
+                        "query"
+                      ]
+                    },
+                    "key": {
+                      "description": "The name of the element contained in the particular type",
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "regions": {
+      "description": "An array of the regions the deployment's Serverless Functions should be deployed to",
+      "example": [
+        "sfo",
+        "bru"
+      ],
+      "items": {
+        "maxLength": 256,
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "minItems": 1,
+      "type": "array"
+    },
+    "rewrites": {
+      "type": "array",
+      "maxItems": 1024,
+      "description": "A list of rewrite definitions.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "destination"
+        ],
+        "properties": {
+          "source": {
+            "description": "A pattern that matches each incoming pathname (excluding querystring).",
+            "type": "string",
+            "maxLength": 4096
+          },
+          "destination": {
+            "description": "An absolute pathname to an existing resource or an external URL.",
+            "type": "string",
+            "maxLength": 4096
+          },
+          "has": {
+            "description": "An array of requirements that are needed to match",
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "const": "host"
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "key"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "enum": [
+                        "header",
+                        "cookie",
+                        "query"
+                      ]
+                    },
+                    "key": {
+                      "description": "The name of the element contained in the particular type",
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                }
+              ]
+            }
+          },
+          "missing": {
+            "description": "An array of requirements that are needed to match",
+            "type": "array",
+            "maxItems": 16,
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "value"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "const": "host"
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                },
+                {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "key"
+                  ],
+                  "properties": {
+                    "type": {
+                      "description": "The type of request element to check",
+                      "type": "string",
+                      "enum": [
+                        "header",
+                        "cookie",
+                        "query"
+                      ]
+                    },
+                    "key": {
+                      "description": "The name of the element contained in the particular type",
+                      "type": "string",
+                      "maxLength": 4096
+                    },
+                    "value": {
+                      "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                      "type": "string",
+                      "maxLength": 4096
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "routes": {
+      "type": "array",
+      "maxItems": 1024,
+      "deprecated": true,
+      "description": "A list of routes objects used to rewrite paths to point towards other internal or external paths",
+      "example": [
+        {
+          "dest": "https://docs.example.com",
+          "src": "/docs"
+        }
+      ],
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "required": [
+              "src"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "src": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "dest": {
+                "type": "string",
+                "maxLength": 4096
+              },
+              "headers": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "maxProperties": 100,
+                "patternProperties": {
+                  "^.{1,256}$": {
+                    "type": "string",
+                    "maxLength": 4096
+                  }
+                }
+              },
+              "methods": {
+                "type": "array",
+                "maxItems": 10,
+                "items": {
+                  "type": "string",
+                  "maxLength": 32
+                }
+              },
+              "caseSensitive": {
+                "type": "boolean"
+              },
+              "important": {
+                "type": "boolean"
+              },
+              "user": {
+                "type": "boolean"
+              },
+              "continue": {
+                "type": "boolean"
+              },
+              "override": {
+                "type": "boolean"
+              },
+              "check": {
+                "type": "boolean"
+              },
+              "isInternal": {
+                "type": "boolean"
+              },
+              "status": {
+                "type": "integer",
+                "minimum": 100,
+                "maximum": 999
+              },
+              "locale": {
+                "type": "object",
+                "additionalProperties": false,
+                "minProperties": 1,
+                "properties": {
+                  "redirect": {
+                    "type": "object",
+                    "additionalProperties": false,
+                    "minProperties": 1,
+                    "maxProperties": 100,
+                    "patternProperties": {
+                      "^.{1,256}$": {
+                        "type": "string",
+                        "maxLength": 4096
+                      }
+                    }
+                  },
+                  "value": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "path": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "cookie": {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  "default": {
+                    "type": "string",
+                    "maxLength": 4096
+                  }
+                }
+              },
+              "middleware": {
+                "type": "number"
+              },
+              "middlewarePath": {
+                "type": "string"
+              },
+              "middlewareRawSrc": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "has": {
+                "description": "An array of requirements that are needed to match",
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "properties": {
+                        "type": {
+                          "description": "The type of request element to check",
+                          "type": "string",
+                          "const": "host"
+                        },
+                        "value": {
+                          "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                          "type": "string",
+                          "maxLength": 4096
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "key"
+                      ],
+                      "properties": {
+                        "type": {
+                          "description": "The type of request element to check",
+                          "type": "string",
+                          "enum": [
+                            "header",
+                            "cookie",
+                            "query"
+                          ]
+                        },
+                        "key": {
+                          "description": "The name of the element contained in the particular type",
+                          "type": "string",
+                          "maxLength": 4096
+                        },
+                        "value": {
+                          "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                          "type": "string",
+                          "maxLength": 4096
+                        }
+                      }
+                    }
+                  ]
+                }
+              },
+              "missing": {
+                "description": "An array of requirements that are needed to match",
+                "type": "array",
+                "maxItems": 16,
+                "items": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "value"
+                      ],
+                      "properties": {
+                        "type": {
+                          "description": "The type of request element to check",
+                          "type": "string",
+                          "const": "host"
+                        },
+                        "value": {
+                          "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                          "type": "string",
+                          "maxLength": 4096
+                        }
+                      }
+                    },
+                    {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "type",
+                        "key"
+                      ],
+                      "properties": {
+                        "type": {
+                          "description": "The type of request element to check",
+                          "type": "string",
+                          "enum": [
+                            "header",
+                            "cookie",
+                            "query"
+                          ]
+                        },
+                        "key": {
+                          "description": "The name of the element contained in the particular type",
+                          "type": "string",
+                          "maxLength": 4096
+                        },
+                        "value": {
+                          "description": "A regular expression used to match the value. Named groups can be used in the destination",
+                          "type": "string",
+                          "maxLength": 4096
+                        }
+                      }
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "handle"
+            ],
+            "additionalProperties": false,
+            "properties": {
+              "handle": {
+                "type": "string",
+                "maxLength": 32,
+                "enum": [
+                  "error",
+                  "filesystem",
+                  "hit",
+                  "miss",
+                  "resource",
+                  "rewrite"
+                ]
+              }
+            }
+          }
+        ]
+      }
+    },
+    "scope": {
+      "description": "This property determines the scope (user or team) under which the project will be deployed by Vercel CLI.",
+      "type": "string",
+      "private": true
+    },
+    "trailingSlash": {
+      "description": "When `false`, visiting a path that ends with a forward slash will respond with a `308` status code and redirect to the path without the trailing slash.",
+      "type": "boolean"
+    },
+    "version": {
+      "maximum": 2,
+      "minimum": 2,
+      "private": true,
+      "type": "integer"
+    },
+    "wildcard": {
+      "private": true,
+      "items": {
+        "additionalProperties": false,
+        "properties": {
+          "domain": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 1024,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "domain",
+          "value"
+        ],
+        "type": "object"
+      },
+      "maxItems": 25,
+      "minItems": 1,
+      "type": "array"
+    },
+    "buildCommand": {
+      "description": "The build command for this project. When `null` is used this value will be automatically detected",
+      "maxLength": 256,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ignoreCommand": {
+      "maxLength": 256,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "devCommand": {
+      "description": "The dev command for this project. When `null` is used this value will be automatically detected",
+      "maxLength": 256,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "framework": {
+      "description": "The framework that is being used for this project. When `null` is used no framework is selected",
+      "type": [
+        "null",
+        "string"
+      ],
+      "enum": [
+        "blitzjs",
+        "nextjs",
+        "gatsby",
+        "remix",
+        "astro",
+        "hexo",
+        "eleventy",
+        "docusaurus-2",
+        "docusaurus",
+        "preact",
+        "solidstart",
+        "dojo",
+        "ember",
+        "vue",
+        "scully",
+        "ionic-angular",
+        "angular",
+        "polymer",
+        "svelte",
+        "sveltekit",
+        "sveltekit-1",
+        "ionic-react",
+        "create-react-app",
+        "gridsome",
+        "umijs",
+        "sapper",
+        "saber",
+        "stencil",
+        "nuxtjs",
+        "redwoodjs",
+        "hugo",
+        "jekyll",
+        "brunch",
+        "middleman",
+        "zola",
+        "hydrogen",
+        "vite",
+        "vitepress",
+        "vuepress",
+        "parcel",
+        "sanity",
+        "storybook",
+        null
+      ]
+    },
+    "installCommand": {
+      "description": "The install command for this project. When `null` is used this value will be automatically detected",
+      "maxLength": 256,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "outputDirectory": {
+      "description": "The output directory of the project. When `null` is used this value will be automatically detected",
+      "maxLength": 256,
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "crons": {
+      "description": "An array of cron jobs that should be created for production Deployments.",
+      "type": "array",
+      "maxItems": 20,
+      "items": {
+        "type": "object",
+        "required": [
+          "schedule",
+          "path"
+        ],
+        "properties": {
+          "schedule": {
+            "type": "string",
+            "minLength": 9,
+            "maxLength": 256
+          },
+          "path": {
+            "type": "string",
+            "maxLength": 512,
+            "pattern": "^/.*"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+ContentType: application/vnd.endjin.ssg.page+yaml
+Title: Page Not Found
+Navigation:
+  Title: "404"
+  Description: "The page you were looking for could not be found."
+  Parent: /
+  Url: /404.html
+  Rank: 999
+  Header:
+    Visible: False
+    Link: False
+  Footer:
+    Visible: False
+    Link: False
+MetaData:
+  Title: "Page Not Found — Corvus.Text.Json"
+  Description: "The page you were looking for could not be found."
+  Keywords: []
+OpenGraph:
+  Title: "Page Not Found — Corvus.Text.Json"
+  Description: "The page you were looking for could not be found."
+  Image:
+ContentBlocks: []

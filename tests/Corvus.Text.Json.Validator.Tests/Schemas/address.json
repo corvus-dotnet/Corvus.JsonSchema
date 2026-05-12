@@ -1,0 +1,11 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/schemas/address",
+  "type": "object",
+  "required": ["street", "city"],
+  "properties": {
+    "street": { "type": "string" },
+    "city": { "type": "string" },
+    "zipCode": { "type": "string", "pattern": "^[0-9]{5}$" }
+  }
+}

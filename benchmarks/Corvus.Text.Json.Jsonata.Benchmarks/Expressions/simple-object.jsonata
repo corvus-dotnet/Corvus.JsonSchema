@@ -1,0 +1,1 @@
+{"name": Account.`Account Name`, "total": $sum(Account.Order.Product.(Price * Quantity))}

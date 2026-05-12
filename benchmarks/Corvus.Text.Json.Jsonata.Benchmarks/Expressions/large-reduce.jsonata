@@ -1,0 +1,1 @@
+$reduce(items, function($prev, $curr) { $prev + $curr.value }, 0)

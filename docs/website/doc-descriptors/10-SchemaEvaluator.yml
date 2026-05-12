@@ -1,0 +1,3 @@
+source: SchemaEvaluator.md
+navTitle: "Standalone Schema Evaluator"
+description: "Generate lightweight static evaluator classes for JSON Schema validation and annotation collection without creating full strongly-typed C# models. Ideal for validation-only workflows, full annotation gathering, and minimal footprint scenarios."

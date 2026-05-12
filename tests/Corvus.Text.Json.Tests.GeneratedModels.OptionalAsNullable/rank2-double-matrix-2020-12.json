@@ -1,0 +1,15 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "type": "array",
+    "items": {
+        "type": "array",
+        "items": {
+            "type": "number",
+            "format": "double"
+        },
+        "minItems": 3,
+        "maxItems": 3
+    },
+    "minItems": 2,
+    "maxItems": 2
+}

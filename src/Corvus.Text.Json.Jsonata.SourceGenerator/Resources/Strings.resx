@@ -1,0 +1,696 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+
+  <data name="D1001_BindLhsMustBeAVariable" xml:space="preserve">
+    <value>Bind LHS must be a variable</value>
+  </data>
+  <data name="D1001_NumberOutOfRange" xml:space="preserve">
+    <value>Number out of range</value>
+  </data>
+  <data name="D1001_NumberOutOfRangeWithExpr" xml:space="preserve">
+    <value>Number out of range: {0}("{1}", "{2}")</value>
+  </data>
+  <data name="D1001_NumberOutOfRangeWithValue" xml:space="preserve">
+    <value>Number out of range: {0}</value>
+  </data>
+  <data name="D1001_UnexpectedPlaceholderOutsidePartialApplication" xml:space="preserve">
+    <value>Unexpected placeholder outside partial application</value>
+  </data>
+  <data name="D1001_UnknownBinaryOperator" xml:space="preserve">
+    <value>Unknown binary operator: {0}</value>
+  </data>
+  <data name="D1001_UnknownNodeType" xml:space="preserve">
+    <value>Unknown node type: {0}</value>
+  </data>
+  <data name="D1001_UnknownUnaryOperator" xml:space="preserve">
+    <value>Unknown unary operator: {0}</value>
+  </data>
+  <data name="D1001_UnknownValue" xml:space="preserve">
+    <value>Unknown value: {0}</value>
+  </data>
+  <data name="D1002_CannotNegateANonNumericValue" xml:space="preserve">
+    <value>Cannot negate a non-numeric value</value>
+  </data>
+  <data name="D1004_RegularExpressionMatchesZeroLengthString" xml:space="preserve">
+    <value>Regular expression matches zero length string</value>
+  </data>
+  <data name="D1009_MultipleKeyDefinitionsEvaluateToSameKey" xml:space="preserve">
+    <value>Multiple key definitions evaluate to same key: "{0}"</value>
+  </data>
+  <data name="D2014_RangeExpressionGeneratesTooManyResults" xml:space="preserve">
+    <value>Range expression generates too many results</value>
+  </data>
+  <data name="D3001_AStringCannotBeGeneratedFromThisValue" xml:space="preserve">
+    <value>A string cannot be generated from this value</value>
+  </data>
+  <data name="D3001_AttemptingToInvokeStringFunctionOnInfinityOrNan" xml:space="preserve">
+    <value>Attempting to invoke string function on Infinity or NaN</value>
+  </data>
+  <data name="D3010_TheSecondArgumentOfTheReplaceFunctionCannotBeAnEmptyString" xml:space="preserve">
+    <value>The second argument of the $replace function cannot be an empty string</value>
+  </data>
+  <data name="D3011_TheFourthArgumentOfTheReplaceFunctionMustBeAPositiveNumber" xml:space="preserve">
+    <value>The fourth argument of the $replace function must be a positive number</value>
+  </data>
+  <data name="D3012_TheReplacementFunctionMustReturnAString" xml:space="preserve">
+    <value>The replacement function must return a string</value>
+  </data>
+  <data name="D3020_ThirdArgumentOfTheSplitFunctionMustEvaluateToAPositiveNumber" xml:space="preserve">
+    <value>Third argument of the split function must evaluate to a positive number</value>
+  </data>
+  <data name="D3030_UnableToCastValueToANumber" xml:space="preserve">
+    <value>Unable to cast value to a number</value>
+  </data>
+  <data name="D3050_ReduceSecondArgMustBeFunction" xml:space="preserve">
+    <value>The second argument of the $reduce function must be a function with at least two arguments</value>
+  </data>
+  <data name="D3060_TheArgumentOfTheSqrtFunctionMustBeNonNegative" xml:space="preserve">
+    <value>The argument of the $sqrt function must be non-negative</value>
+  </data>
+  <data name="D3061_PowerFunctionResultOutOfRange" xml:space="preserve">
+    <value>The power function has resulted in a value that cannot be represented as a JSON number</value>
+  </data>
+  <data name="D3070_SortSingleArgRequiresStringsOrNumbers" xml:space="preserve">
+    <value>The single argument form of the $sort function can only be used on an array of strings or an array of numbers</value>
+  </data>
+  <data name="D3080_ThePictureStringMustNotContainMoreThanOnePatternSeparator" xml:space="preserve">
+    <value>The picture string must not contain more than one pattern separator</value>
+  </data>
+  <data name="D3081_ThePictureStringMustNotContainMoreThanOneDecimalSeparator" xml:space="preserve">
+    <value>The picture string must not contain more than one decimal separator</value>
+  </data>
+  <data name="D3082_ThePictureStringMustNotContainMoreThanOnePercentCharacter" xml:space="preserve">
+    <value>The picture string must not contain more than one percent character</value>
+  </data>
+  <data name="D3083_ThePictureStringMustNotContainMoreThanOnePerMilleCharacter" xml:space="preserve">
+    <value>The picture string must not contain more than one per-mille character</value>
+  </data>
+  <data name="D3084_PictureStringBothPercentAndPerMille" xml:space="preserve">
+    <value>The picture string must not contain both percent and per-mille characters</value>
+  </data>
+  <data name="D3085_MantissaMustContainDigit" xml:space="preserve">
+    <value>The mantissa part of the picture string must contain at least one digit or optional digit character</value>
+  </data>
+  <data name="D3086_PassiveCharacterBetweenActive" xml:space="preserve">
+    <value>The picture string must not contain a passive character between active characters</value>
+  </data>
+  <data name="D3087_GroupingSeparatorAdjacentToDecimal" xml:space="preserve">
+    <value>The picture string must not contain a grouping separator adjacent to the decimal separator</value>
+  </data>
+  <data name="D3088_IntegerPartEndsWithGroupingSeparator" xml:space="preserve">
+    <value>The integer part of the picture string must not end with a grouping separator</value>
+  </data>
+  <data name="D3089_ThePictureStringMustNotContainAdjacentGroupingSeparators" xml:space="preserve">
+    <value>The picture string must not contain adjacent grouping separators</value>
+  </data>
+  <data name="D3090_MandatoryDigitBeforeOptional" xml:space="preserve">
+    <value>The integer part must not contain a mandatory digit before an optional digit</value>
+  </data>
+  <data name="D3091_MandatoryDigitAfterOptional" xml:space="preserve">
+    <value>The fractional part must not contain a mandatory digit after an optional digit</value>
+  </data>
+  <data name="D3092_ExponentWithPercentOrPerMille" xml:space="preserve">
+    <value>The picture string must not contain an exponent with percent or per-mille</value>
+  </data>
+  <data name="D3093_TheExponentPartOfThePictureStringMustContainAtLeastOneDigit" xml:space="preserve">
+    <value>The exponent part of the picture string must contain at least one digit</value>
+  </data>
+  <data name="D3093_TheExponentPartOfThePictureStringMustContainOnlyDigitCharact" xml:space="preserve">
+    <value>The exponent part of the picture string must contain only digit characters</value>
+  </data>
+  <data name="D3100_FormatBaseRadixOutOfRange" xml:space="preserve">
+    <value>The radix of the $formatBase function must be between 2 and 36. It was given {0}</value>
+  </data>
+  <data name="D3110_StringCannotBeParsedAsTimestamp" xml:space="preserve">
+    <value>The string "{0}" cannot be parsed as a valid timestamp</value>
+  </data>
+  <data name="D3120_SyntaxErrorInEval" xml:space="preserve">
+    <value>Syntax error in expression passed to $eval: {0}</value>
+  </data>
+  <data name="D3121_DynamicErrorInEval" xml:space="preserve">
+    <value>Dynamic error in expression passed to $eval: {0}</value>
+  </data>
+  <data name="D3130_TheFormatPictureStringIsNotValid" xml:space="preserve">
+    <value>The format/picture string is not valid</value>
+  </data>
+  <data name="D3131_TheFormatPictureStringContainsMixedDecimalDigitGroups" xml:space="preserve">
+    <value>The format/picture string contains mixed decimal digit groups</value>
+  </data>
+  <data name="D3132_UnknownComponentSpecifier" xml:space="preserve">
+    <value>Unknown component specifier '{0}' in date/time picture string</value>
+  </data>
+  <data name="D3133_TheComponentCannotBeRepresentedAsAName" xml:space="preserve">
+    <value>The component cannot be represented as a name</value>
+  </data>
+  <data name="D3133_TheYearComponentCannotBeRepresentedAsAName" xml:space="preserve">
+    <value>The year component cannot be represented as a name</value>
+  </data>
+  <data name="D3134_TheTimezoneComponentOfThePictureStringIsNotValid" xml:space="preserve">
+    <value>The timezone component of the picture string is not valid</value>
+  </data>
+  <data name="D3135_PictureStringContainsAWithNoMatching" xml:space="preserve">
+    <value>Picture string contains a '[' with no matching ']'</value>
+  </data>
+  <data name="D3136_TheDateTimeComponentsInThePictureStringAreNotConsistent" xml:space="preserve">
+    <value>The date/time components in the picture string are not consistent</value>
+  </data>
+  <data name="D3138_SingleFunctionExpectedOneResult" xml:space="preserve">
+    <value>The $single function expected exactly 1 matching result but got {0}</value>
+  </data>
+  <data name="D3138_TheSingleFunctionExpectedExactlyOneMatchingResult" xml:space="preserve">
+    <value>The $single function expected exactly one matching result</value>
+  </data>
+  <data name="D3139_SingleFunctionExpectedOneResultGotZero" xml:space="preserve">
+    <value>The $single function expected exactly 1 matching result but got 0</value>
+  </data>
+  <data name="D3139_TheSingleFunctionMatchedZeroResults" xml:space="preserve">
+    <value>The $single function matched zero results</value>
+  </data>
+  <data name="D3140_MalformedUrlEncodeUrl" xml:space="preserve">
+    <value>Malformed URL passed to $encodeUrl(): invalid string</value>
+  </data>
+  <data name="D3140_MalformedUrlEncodeUrlComponent" xml:space="preserve">
+    <value>Malformed URL passed to $encodeUrlComponent(): invalid string</value>
+  </data>
+  <data name="D3140_MalformedUrlPassedToDecodeUrl" xml:space="preserve">
+    <value>Malformed URL passed to $decodeUrl(): "{0}"</value>
+  </data>
+  <data name="D3140_MalformedUrlPassedToDecodeUrlComponent" xml:space="preserve">
+    <value>Malformed URL passed to $decodeUrlComponent(): "{0}"</value>
+  </data>
+  <data name="D3140_MalformedUrlPassedToFunc" xml:space="preserve">
+    <value>Malformed URL passed to {0}(): "{1}"</value>
+  </data>
+  <data name="D3140_StringContainsUnpairedSurrogates" xml:space="preserve">
+    <value>String contains unpaired surrogates</value>
+  </data>
+  <data name="FailedToFormatNumberAsUtf8" xml:space="preserve">
+    <value>Failed to format number as UTF-8</value>
+  </data>
+  <data name="S0101_StringLiteralNotTerminated" xml:space="preserve">
+    <value>String literal not terminated</value>
+  </data>
+  <data name="S0102_InvalidNumber" xml:space="preserve">
+    <value>Invalid number: {0}</value>
+  </data>
+  <data name="S0103_IllegalEscapeSequence" xml:space="preserve">
+    <value>Illegal escape sequence: \{0}</value>
+  </data>
+  <data name="S0104_InvalidUnicodeEscape" xml:space="preserve">
+    <value>Invalid unicode escape</value>
+  </data>
+  <data name="S0105_BacktickQuotedNameNotTerminated" xml:space="preserve">
+    <value>Backtick-quoted name not terminated</value>
+  </data>
+  <data name="S0106_CommentNotTerminated" xml:space="preserve">
+    <value>Comment not terminated</value>
+  </data>
+  <data name="S0201_UnexpectedToken" xml:space="preserve">
+    <value>Unexpected token: {0}</value>
+  </data>
+  <data name="S0204_UnknownOperator" xml:space="preserve">
+    <value>Unknown operator: {0}</value>
+  </data>
+  <data name="S0206_UnexpectedNodeType" xml:space="preserve">
+    <value>Unexpected node type: {0}</value>
+  </data>
+  <data name="S0207_UnexpectedEndOfExpression" xml:space="preserve">
+    <value>Unexpected end of expression</value>
+  </data>
+  <data name="S0208_ParameterIsNotAVariable" xml:space="preserve">
+    <value>Parameter {0} of function definition is not a variable</value>
+  </data>
+  <data name="S0209_APredicateCannotFollowAGroupingExpressionInAStep" xml:space="preserve">
+    <value>A predicate cannot follow a grouping expression in a step</value>
+  </data>
+  <data name="S0210_MultipleGroupByClauses" xml:space="preserve">
+    <value>Multiple group-by clauses</value>
+  </data>
+  <data name="S0211_UnexpectedOperatorInPrefixPosition" xml:space="preserve">
+    <value>Unexpected operator in prefix position: {0}</value>
+  </data>
+  <data name="S0211_UnexpectedToken" xml:space="preserve">
+    <value>Unexpected token: {0}</value>
+  </data>
+  <data name="S0212_TheLeftSideOfMustBeAVariable" xml:space="preserve">
+    <value>The left side of := must be a variable</value>
+  </data>
+  <data name="S0213_NumberUsedAsStepInPath" xml:space="preserve">
+    <value>Number used as a step in a path: {0}</value>
+  </data>
+  <data name="S0213_ValueUsedAsStepInPath" xml:space="preserve">
+    <value>Value used as a step in a path: {0}</value>
+  </data>
+  <data name="S0214_RightSideOfAtMustBeAVariable" xml:space="preserve">
+    <value>The right side of @ must be a variable</value>
+  </data>
+  <data name="S0214_RightSideOfHashMustBeAVariable" xml:space="preserve">
+    <value>The right side of # must be a variable</value>
+  </data>
+  <data name="S0215_FocusBindingAfterPredicate" xml:space="preserve">
+    <value>Focus binding after predicate</value>
+  </data>
+  <data name="S0216_FocusBindingAfterSort" xml:space="preserve">
+    <value>Focus binding after sort</value>
+  </data>
+  <data name="S0217_AttemptToDeriveParentAtTopLevel" xml:space="preserve">
+    <value>Attempt to derive parent at top level</value>
+  </data>
+  <data name="S0217_CannotDeriveAncestor" xml:space="preserve">
+    <value>Cannot derive ancestor</value>
+  </data>
+  <data name="S0301_EmptyRegularExpression" xml:space="preserve">
+    <value>Empty regular expression</value>
+  </data>
+  <data name="S0302_RegularExpressionNotTerminated" xml:space="preserve">
+    <value>Regular expression not terminated</value>
+  </data>
+  <data name="S0401_TypeDoesNotSupportSubTypes" xml:space="preserve">
+    <value>The "{0}" type in the function signature "{1}" does not support sub-types</value>
+  </data>
+  <data name="S0401_TypeIsNotValid" xml:space="preserve">
+    <value>The "{0}" type in the function signature "{1}" is not valid</value>
+  </data>
+  <data name="S0402_UnexpectedGt" xml:space="preserve">
+    <value>The function signature "{0}" is not valid. Unexpected '&gt;'</value>
+  </data>
+  <data name="S0402_UnknownTypeSpecifier" xml:space="preserve">
+    <value>The function signature "{0}" is not valid. Unknown type specifier '{1}'</value>
+  </data>
+  <data name="S0402_UnmatchedLt" xml:space="preserve">
+    <value>The function signature "{0}" is not valid. Unmatched '&lt;'</value>
+  </data>
+  <data name="S0402_UnmatchedOpenParen" xml:space="preserve">
+    <value>The function signature "{0}" is not valid. Unmatched '('</value>
+  </data>
+  <data name="S0402_UnrecognizedSignatureStructure" xml:space="preserve">
+    <value>The function signature "{0}" is not valid. Unrecognized signature structure</value>
+  </data>
+  <data name="T0410_AppendExpects2Arguments" xml:space="preserve">
+    <value>$append expects 2 arguments</value>
+  </data>
+  <data name="T0410_Argument1OfFunctionAssertMustBeABoolean" xml:space="preserve">
+    <value>Argument 1 of function $assert must be a boolean</value>
+  </data>
+  <data name="T0410_Argument1OfFunctionContainsMustBeAString" xml:space="preserve">
+    <value>Argument 1 of function $contains must be a string</value>
+  </data>
+  <data name="T0410_Argument1OfFunctionLengthIsNotCorrectType" xml:space="preserve">
+    <value>Argument 1 of function $length is not of the correct type</value>
+  </data>
+  <data name="T0410_Argument1OfFunctionLengthMustBeAString" xml:space="preserve">
+    <value>Argument 1 of function 'length' must be a string</value>
+  </data>
+  <data name="T0410_Argument1OfFunctionNumberIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 1 of function $number is not of the correct type</value>
+  </data>
+  <data name="T0410_Argument1OfFunctionNumberIsNotOfTheCorrectType2" xml:space="preserve">
+    <value>Argument 1 of function 'number' is not of the correct type</value>
+  </data>
+  <data name="T0410_Argument1OfFunctionReplaceIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 1 of function $replace is not of the correct type</value>
+  </data>
+  <data name="T0410_Argument1OfFunctionSplitIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 1 of function $split is not of the correct type</value>
+  </data>
+  <data name="T0410_Argument1OfFunctionSubstringIsNotAString" xml:space="preserve">
+    <value>Argument 1 of function $substring is not a string</value>
+  </data>
+  <data name="T0410_Argument1OfStringFunctionIsNotAString" xml:space="preserve">
+    <value>Argument 1 of string function is not a string</value>
+  </data>
+  <data name="T0410_Argument2OfFunctionContainsMustBeAStringOrRegex" xml:space="preserve">
+    <value>Argument 2 of function $contains must be a string or regex</value>
+  </data>
+  <data name="T0410_Argument2OfFunctionReplaceIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 2 of function $replace is not of the correct type</value>
+  </data>
+  <data name="T0410_Argument2OfFunctionSplitIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 2 of function $split is not of the correct type</value>
+  </data>
+  <data name="T0410_Argument2OfFunctionSubstringIsNotANumber" xml:space="preserve">
+    <value>Argument 2 of function $substring is not a number</value>
+  </data>
+  <data name="T0410_Argument2OfStringFunctionIsNotAString" xml:space="preserve">
+    <value>Argument 2 of string function is not a string</value>
+  </data>
+  <data name="T0410_Argument3OfFunctionReplaceIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 3 of function $replace is not of the correct type</value>
+  </data>
+  <data name="T0410_Argument3OfFunctionSplitIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 3 of function $split is not of the correct type</value>
+  </data>
+  <data name="T0410_Argument3OfFunctionSubstringIsNotANumber" xml:space="preserve">
+    <value>Argument 3 of function $substring is not a number</value>
+  </data>
+  <data name="T0410_Argument4OfFunctionReplaceIsNotOfTheCorrectType" xml:space="preserve">
+    <value>Argument 4 of function $replace is not of the correct type</value>
+  </data>
+  <data name="T0410_ArgumentTypeMismatch" xml:space="preserve">
+    <value>Argument {0} of function {1} expected {2} but got {3}</value>
+  </data>
+  <data name="T0410_AssertExpects12Arguments" xml:space="preserve">
+    <value>$assert expects 1-2 arguments</value>
+  </data>
+  <data name="T0410_AverageExpects1Argument" xml:space="preserve">
+    <value>$average expects 1 argument</value>
+  </data>
+  <data name="T0410_Base64decodeExpects01Arguments" xml:space="preserve">
+    <value>$base64decode expects 0-1 arguments</value>
+  </data>
+  <data name="T0410_Base64encodeExpects01Arguments" xml:space="preserve">
+    <value>$base64encode expects 0-1 arguments</value>
+  </data>
+  <data name="T0410_BooleanExpects0Or1Arguments" xml:space="preserve">
+    <value>$boolean expects 0 or 1 arguments</value>
+  </data>
+  <data name="T0410_ContainsExpects1Or2Arguments" xml:space="preserve">
+    <value>$contains expects 1 or 2 arguments</value>
+  </data>
+  <data name="T0410_CountExpects1Argument" xml:space="preserve">
+    <value>$count expects 1 argument</value>
+  </data>
+  <data name="T0410_DecodeurlExpects1Argument" xml:space="preserve">
+    <value>$decodeUrl expects 1 argument</value>
+  </data>
+  <data name="T0410_DecodeurlcomponentExpects1Argument" xml:space="preserve">
+    <value>$decodeUrlComponent expects 1 argument</value>
+  </data>
+  <data name="T0410_DistinctExpects1Argument" xml:space="preserve">
+    <value>$distinct expects 1 argument</value>
+  </data>
+  <data name="T0410_EachExpects12Arguments" xml:space="preserve">
+    <value>$each expects 1-2 arguments</value>
+  </data>
+  <data name="T0410_EncodeurlExpects1Argument" xml:space="preserve">
+    <value>$encodeUrl expects 1 argument</value>
+  </data>
+  <data name="T0410_EncodeurlcomponentExpects1Argument" xml:space="preserve">
+    <value>$encodeUrlComponent expects 1 argument</value>
+  </data>
+  <data name="T0410_ErrorExpectsAStringArgument" xml:space="preserve">
+    <value>$error expects a string argument</value>
+  </data>
+  <data name="T0410_EvalExpects1Or2Arguments" xml:space="preserve">
+    <value>$eval expects 1 or 2 arguments</value>
+  </data>
+  <data name="T0410_EvalExpectsAStringArgument" xml:space="preserve">
+    <value>$eval expects a string argument</value>
+  </data>
+  <data name="T0410_ExistsExpects1Argument" xml:space="preserve">
+    <value>$exists expects 1 argument</value>
+  </data>
+  <data name="T0410_FilterExpects2Arguments" xml:space="preserve">
+    <value>$filter expects 2 arguments</value>
+  </data>
+  <data name="T0410_FlattenExpects1Argument" xml:space="preserve">
+    <value>$flatten expects 1 argument</value>
+  </data>
+  <data name="T0410_FormatbaseExpects1Or2Arguments" xml:space="preserve">
+    <value>$formatBase expects 1 or 2 arguments</value>
+  </data>
+  <data name="T0410_FormatintegerExpectsAtLeast2Arguments" xml:space="preserve">
+    <value>$formatInteger expects at least 2 arguments</value>
+  </data>
+  <data name="T0410_FormatnumberExpects2Or3Arguments" xml:space="preserve">
+    <value>$formatNumber expects 2 or 3 arguments</value>
+  </data>
+  <data name="T0410_JoinExpects1Or2Arguments" xml:space="preserve">
+    <value>$join expects 1 or 2 arguments</value>
+  </data>
+  <data name="T0410_KeysExpects1Argument" xml:space="preserve">
+    <value>$keys expects 1 argument</value>
+  </data>
+  <data name="T0410_LengthExpects0Or1Arguments" xml:space="preserve">
+    <value>$length expects 0 or 1 arguments</value>
+  </data>
+  <data name="T0410_LookupExpects2Arguments" xml:space="preserve">
+    <value>$lookup expects 2 arguments</value>
+  </data>
+  <data name="T0410_MapExpects2Arguments" xml:space="preserve">
+    <value>$map expects 2 arguments</value>
+  </data>
+  <data name="T0410_MatchExpects13Arguments" xml:space="preserve">
+    <value>$match expects 1-3 arguments</value>
+  </data>
+  <data name="T0410_MathFunctionExpects1Argument" xml:space="preserve">
+    <value>Math function expects 1 argument</value>
+  </data>
+  <data name="T0410_MaxExpects1Argument" xml:space="preserve">
+    <value>$max expects 1 argument</value>
+  </data>
+  <data name="T0410_MergeExpects1Argument" xml:space="preserve">
+    <value>$merge expects 1 argument</value>
+  </data>
+  <data name="T0410_MinExpects1Argument" xml:space="preserve">
+    <value>$min expects 1 argument</value>
+  </data>
+  <data name="T0410_NotExpects1Argument" xml:space="preserve">
+    <value>$not expects 1 argument</value>
+  </data>
+  <data name="T0410_NumberExpects0Or1Arguments" xml:space="preserve">
+    <value>$number expects 0 or 1 arguments</value>
+  </data>
+  <data name="T0410_PadExpects23Arguments" xml:space="preserve">
+    <value>$pad expects 2-3 arguments</value>
+  </data>
+  <data name="T0410_ParseintegerExpectsAtLeast2Arguments" xml:space="preserve">
+    <value>$parseInteger expects at least 2 arguments</value>
+  </data>
+  <data name="T0410_PowerExpects2Arguments" xml:space="preserve">
+    <value>$power expects 2 arguments</value>
+  </data>
+  <data name="T0410_ReduceExpects23Arguments" xml:space="preserve">
+    <value>$reduce expects 2-3 arguments</value>
+  </data>
+  <data name="T0410_ReplaceExpects24Arguments" xml:space="preserve">
+    <value>$replace expects 2-4 arguments</value>
+  </data>
+  <data name="T0410_ReverseExpects1Argument" xml:space="preserve">
+    <value>$reverse expects 1 argument</value>
+  </data>
+  <data name="T0410_RoundExpects1Or2Arguments" xml:space="preserve">
+    <value>$round expects 1 or 2 arguments</value>
+  </data>
+  <data name="T0410_SecondArgumentOfFunctionJoinMustBeAString" xml:space="preserve">
+    <value>Second argument of function $join must be a string</value>
+  </data>
+  <data name="T0410_SecondArgumentOfJoinMustBeAString" xml:space="preserve">
+    <value>Second argument of $join must be a string</value>
+  </data>
+  <data name="T0410_SecondArgumentOfStringMustBeABoolean" xml:space="preserve">
+    <value>Second argument of $string must be a boolean</value>
+  </data>
+  <data name="T0410_ShuffleExpects1Argument" xml:space="preserve">
+    <value>$shuffle expects 1 argument</value>
+  </data>
+  <data name="T0410_SiftExpects12Arguments" xml:space="preserve">
+    <value>$sift expects 1-2 arguments</value>
+  </data>
+  <data name="T0410_SingleExpects12Arguments" xml:space="preserve">
+    <value>$single expects 1-2 arguments</value>
+  </data>
+  <data name="T0410_SortExpects12Arguments" xml:space="preserve">
+    <value>$sort expects 1-2 arguments</value>
+  </data>
+  <data name="T0410_SplitExpects13Arguments" xml:space="preserve">
+    <value>$split expects 1-3 arguments</value>
+  </data>
+  <data name="T0410_SpreadExpects1Argument" xml:space="preserve">
+    <value>$spread expects 1 argument</value>
+  </data>
+  <data name="T0410_SqrtExpects1Argument" xml:space="preserve">
+    <value>$sqrt expects 1 argument</value>
+  </data>
+  <data name="T0410_StringExpectsAtMost2Arguments" xml:space="preserve">
+    <value>$string expects at most 2 arguments</value>
+  </data>
+  <data name="T0410_StringFunctionArgumentMustBeAString" xml:space="preserve">
+    <value>String function argument must be a string</value>
+  </data>
+  <data name="T0410_StringFunctionExpects0Or1Arguments" xml:space="preserve">
+    <value>String function expects 0 or 1 arguments</value>
+  </data>
+  <data name="T0410_SubstringExpects2Or3Arguments" xml:space="preserve">
+    <value>$substring expects 2 or 3 arguments</value>
+  </data>
+  <data name="T0410_SumExpects1Argument" xml:space="preserve">
+    <value>$sum expects 1 argument</value>
+  </data>
+  <data name="T0410_TomillisExpectsAtLeast1Argument" xml:space="preserve">
+    <value>$toMillis expects at least 1 argument</value>
+  </data>
+  <data name="T0410_TooManyArgumentsForFunction" xml:space="preserve">
+    <value>Too many arguments for function {0}</value>
+  </data>
+  <data name="T0410_TypeExpects1Argument" xml:space="preserve">
+    <value>$type expects 1 argument</value>
+  </data>
+  <data name="T0410_UnableToCastValueToANumber" xml:space="preserve">
+    <value>Unable to cast value to a number</value>
+  </data>
+  <data name="T0410_UnableToInvokeBuiltInFunction" xml:space="preserve">
+    <value>Unable to invoke built-in function</value>
+  </data>
+  <data name="T0410_ValuesExpects1Argument" xml:space="preserve">
+    <value>$values expects 1 argument</value>
+  </data>
+  <data name="T0411_SubstringafterExpects2Arguments" xml:space="preserve">
+    <value>$substringAfter expects 2 arguments</value>
+  </data>
+  <data name="T0411_SubstringbeforeExpects2Arguments" xml:space="preserve">
+    <value>$substringBefore expects 2 arguments</value>
+  </data>
+  <data name="T0412_Argument1OfAggregateFunctionMustBeAnArrayOfNumbers" xml:space="preserve">
+    <value>Argument 1 of aggregate function must be an array of numbers</value>
+  </data>
+  <data name="T0412_Argument1OfFunctionAverageMustBeAnArrayOfNumbers" xml:space="preserve">
+    <value>Argument 1 of function 'average' must be an array of numbers</value>
+  </data>
+  <data name="T0412_Argument1OfFunctionJoinMustBeAnArrayOfStrings" xml:space="preserve">
+    <value>Argument 1 of function $join must be an array of strings</value>
+  </data>
+  <data name="T0412_Argument1OfFunctionMaxMustBeAnArrayOfNumbers" xml:space="preserve">
+    <value>Argument 1 of function 'max' must be an array of numbers</value>
+  </data>
+  <data name="T0412_Argument1OfFunctionMinMustBeAnArrayOfNumbers" xml:space="preserve">
+    <value>Argument 1 of function 'min' must be an array of numbers</value>
+  </data>
+  <data name="T0412_Argument1OfFunctionSumMustBeAnArrayOfNumbers" xml:space="preserve">
+    <value>Argument 1 of function 'sum' must be an array of numbers</value>
+  </data>
+  <data name="T0412_ArgumentExpectedArrayOfType" xml:space="preserve">
+    <value>Argument {0} of function {1} expected array of {2} but got {3}</value>
+  </data>
+  <data name="T0412_ArgumentExpectedArrayOfTypeGotArrayContaining" xml:space="preserve">
+    <value>Argument {0} of function {1} expected array of {2} but got array containing {3}</value>
+  </data>
+  <data name="T1003_KeyInObjectStructureMustEvaluateToAStringGotNumber" xml:space="preserve">
+    <value>Key in object structure must evaluate to a string; got: number</value>
+  </data>
+  <data name="T1003_KeyMustBeStringGotType" xml:space="preserve">
+    <value>Key in object structure must evaluate to a string; got: {0}</value>
+  </data>
+  <data name="T1003_KeyMustBeStringGotValueKind" xml:space="preserve">
+    <value>Key in object structure must evaluate to a string; got: {0}</value>
+  </data>
+  <data name="T1005_AttemptedToInvokeNonFunctionSuggestion" xml:space="preserve">
+    <value>Attempted to invoke a non-function. Did you mean '${0}'?</value>
+  </data>
+  <data name="T1006_AttemptedToInvokeANonFunction" xml:space="preserve">
+    <value>Attempted to invoke a non-function</value>
+  </data>
+  <data name="T1010_TheFunctionArgumentToSplitDoesNotMatchFunctionSignature" xml:space="preserve">
+    <value>The function argument to '$split' does not match function signature</value>
+  </data>
+  <data name="T2001_LeftSideOfOperatorMustBeNumber" xml:space="preserve">
+    <value>The left side of the "{0}" operator must evaluate to a number</value>
+  </data>
+  <data name="T2001_TheLeftSideOfTheArithmeticExpressionIsNotANumber" xml:space="preserve">
+    <value>The left side of the arithmetic expression is not a number</value>
+  </data>
+  <data name="T2002_RightSideOfOperatorMustBeNumber" xml:space="preserve">
+    <value>The right side of the "{0}" operator must evaluate to a number</value>
+  </data>
+  <data name="T2002_TheRightSideOfTheArithmeticExpressionIsNotANumber" xml:space="preserve">
+    <value>The right side of the arithmetic expression is not a number</value>
+  </data>
+  <data name="T2003_TheLeftSideOfTheRangeOperatorMustEvaluateToAnInteger" xml:space="preserve">
+    <value>The left side of the range operator (..) must evaluate to an integer</value>
+  </data>
+  <data name="T2004_TheRightSideOfTheRangeOperatorMustEvaluateToAnInteger" xml:space="preserve">
+    <value>The right side of the range operator (..) must evaluate to an integer</value>
+  </data>
+  <data name="T2006_TheRightSideOfTheOperatorMustBeAFunction" xml:space="preserve">
+    <value>The right side of the '~&gt;' operator must be a function</value>
+  </data>
+  <data name="T2007_TypeMismatchWithinOrderByClauseAllValuesMustBeOfTheSameType" xml:space="preserve">
+    <value>Type mismatch within order-by clause. All values must be of the same type</value>
+  </data>
+  <data name="T2008_OrderByMustBeNumericOrString" xml:space="preserve">
+    <value>The expressions within an order-by clause must evaluate to numeric or string values</value>
+  </data>
+  <data name="T2009_TheValuesEitherSideOfTheOperatorMustBeOfTheSameDataType" xml:space="preserve">
+    <value>The values either side of the operator must be of the same data type</value>
+  </data>
+  <data name="T2010_ExpressionsMustBeNumbersOrStringsWithOp" xml:space="preserve">
+    <value>The expressions either side of operator "{0}" must be both numbers or both strings</value>
+  </data>
+  <data name="T2010_TheExpressionsEitherSideOfOperatorMustBeBothNumbersOrBothStr" xml:space="preserve">
+    <value>The expressions either side of operator must be both numbers or both strings</value>
+  </data>
+  <data name="T2011_TransformRhsMustBeObject" xml:space="preserve">
+    <value>The literal value of the right side of the Transform expression must be an object</value>
+  </data>
+  <data name="T2012_TransformDeleteClauseMustBeString" xml:space="preserve">
+    <value>The delete clause of the Transform expression must evaluate to a string or array of strings</value>
+  </data>
+  <data name="U1001_ExpressionEvaluationTimeoutCheckForInfiniteLoop" xml:space="preserve">
+    <value>Expression evaluation timeout: Check for infinite loop</value>
+  </data>
+  <data name="U1001_StackOverflowError" xml:space="preserve">
+    <value>Stack overflow error: Check for non-terminating recursive function. Consider rewriting as tail-recursive.</value>
+  </data>
+  <data name="T1007_AttemptedToPartiallyApplyANonFunction" xml:space="preserve">
+    <value>Attempted to partially apply a non-function</value>
+  </data>
+
+</root>

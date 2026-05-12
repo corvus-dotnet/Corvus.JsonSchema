@@ -1,0 +1,3 @@
+Code generation for JSONPath expressions. Translates JSONPath expression strings into optimized static C# methods that evaluate without runtime parsing or interpretation overhead.
+
+Key types include [`JsonPathCodeGenerator`](/api/v5/corvus-text-json-jsonpath-codegen-jsonpathcodegenerator.html) (generates C# source code from a JSONPath expression), [`CustomFunction`](/api/v5/corvus-text-json-jsonpath-codegen-customfunction.html) (represents a custom function definition parsed from a `.jpfn` file), and [`JpfnParser`](/api/v5/corvus-text-json-jsonpath-codegen-jpfnparser.html) (parses `.jpfn` custom function definition files).

@@ -1,0 +1,28 @@
+<Project Sdk="MSTest.Sdk">
+  <PropertyGroup>
+    <TargetFrameworks>net10.0;net481</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <NoWarn>$(NoWarn);CS1591</NoWarn>
+    <Nullable>disable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- On net481 this project cannot run tests (the CLI tool is net10.0 only).
+         Setting IsTestProject=false prevents dotnet test from trying to invoke it. -->
+    <IsTestProject Condition="'$(TargetFramework)' == 'net481'">false</IsTestProject>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(TargetFramework)' != 'net481'">
+    <ProjectReference Include="..\..\src\Corvus.Json.Cli.Core\Corvus.Json.Cli.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Update="TestFixtures\**\*">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+  <!-- On net481 produce an empty assembly — the CLI tool uses APIs unavailable
+       on .NET Framework (WaitForExitAsync, Kill(entireProcessTree)). -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net481'">
+    <Compile Remove="**\*.cs" />
+  </ItemGroup>
+</Project>

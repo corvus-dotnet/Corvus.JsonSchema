@@ -1,0 +1,349 @@
+// <copyright file="GenerationDriverV4.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+// <licensing>
+// Derived from code licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licensed this code under the MIT license.
+// https://github.com/dotnet/runtime/blob/388a7c4814cb0d6e344621d017507b357902043a/LICENSE.TXT
+// </licensing>
+
+using System.Text.Json;
+using Corvus.Json;
+using Corvus.Json.CodeGeneration;
+using Corvus.Json.CodeGeneration.CSharp;
+using Corvus.Json.CodeGeneration.DocumentResolvers;
+using Corvus.Json.CodeGenerator;
+using Corvus.Json.Internal;
+using Spectre.Console;
+
+namespace Corvus.Text.Json.CodeGenerator;
+
+/// <summary>
+/// Drives code generation from our command line model.
+/// </summary>
+public static class GenerationDriverV4
+{
+    internal static async Task<int> GenerateTypes(GeneratorConfig generatorConfig, CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (!generatorConfig.IsValid())
+            {
+                return WriteValidationErrors(generatorConfig);
+            }
+
+            CompoundDocumentResolver documentResolver;
+
+            if (generatorConfig.SupportYaml ?? false)
+            {
+                var preProcessor = new YamlPreProcessor();
+                documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(preProcessor), new HttpClientDocumentResolver(new HttpClient(), preProcessor));
+            }
+            else
+            {
+                documentResolver = new CompoundDocumentResolver(new FileSystemDocumentResolver(), new HttpClientDocumentResolver(new HttpClient()));
+            }
+
+            documentResolver.AddMetaschema();
+
+            await RegisterAdditionalFiles(generatorConfig, documentResolver);
+
+            VocabularyRegistry vocabularyRegistry = RegisterVocabularies(documentResolver);
+
+            // This will be our fallback vocabulary
+            IVocabulary defaultVocabulary = GetFallbackVocabulary(generatorConfig.UseSchemaValue ?? GeneratorConfig.UseSchema.DefaultInstance);
+
+            JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+            Progress progress = AnsiConsole.Progress().Columns(new TaskDescriptionColumn { Alignment = Justify.Left });
+
+            await progress.StartAsync(async context =>
+            {
+                await ExecuteTask(generatorConfig, context, defaultVocabulary, typeBuilder);
+            });
+
+        }
+        catch (Exception ex)
+        {
+            AnsiConsole.WriteException(ex);
+            return -1;
+        }
+
+        return 0;
+    }
+
+    private static async Task RegisterAdditionalFiles(GeneratorConfig generatorConfig, CompoundDocumentResolver documentResolver)
+    {
+        if (generatorConfig.AdditionalFiles is GeneratorConfig.FileList fileList)
+        {
+            YamlPreProcessor? yamlPreProcessor = generatorConfig.SupportYaml ?? false ? new YamlPreProcessor() : null;
+
+            foreach (GeneratorConfig.FileSpecification fileSpec in fileList.EnumerateArray())
+            {
+                await using FileStream inputStream = File.OpenRead((string)fileSpec.ContentPath);
+                Stream processedStream = yamlPreProcessor is null
+                    ? inputStream
+                    : yamlPreProcessor.Process(inputStream);
+
+                try
+                {
+                    JsonDocument document = await JsonDocument.ParseAsync(processedStream);
+                    string canonicalUri = (string)fileSpec.CanonicalUri;
+
+                    documentResolver.AddDocument(canonicalUri, document);
+
+                    // Also register by $id if present and different from the canonical URI
+                    if (document.RootElement.TryGetProperty("$id", out System.Text.Json.JsonElement idElement) &&
+                        idElement.ValueKind == System.Text.Json.JsonValueKind.String &&
+                        idElement.GetString() is string id &&
+                        !string.Equals(id, canonicalUri, StringComparison.Ordinal))
+                    {
+                        documentResolver.AddDocument(id, document);
+                    }
+
+                    // Also register by the resolved file path if different
+                    string resolvedPath = Path.GetFullPath((string)fileSpec.ContentPath);
+                    if (!string.Equals(resolvedPath, canonicalUri, StringComparison.Ordinal))
+                    {
+                        documentResolver.AddDocument(resolvedPath, document);
+                    }
+                }
+                finally
+                {
+                    if (inputStream != processedStream)
+                    {
+                        await processedStream.DisposeAsync();
+                    }
+                }
+            }
+        }
+    }
+
+    private static VocabularyRegistry RegisterVocabularies(IDocumentResolver documentResolver)
+    {
+        VocabularyRegistry vocabularyRegistry = new();
+
+        // Add support for the vocabularies we are interested in.
+        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+
+        // And regisrvuster the custom vocabulary for Corvus extensions.
+        vocabularyRegistry.RegisterVocabularies(Corvus.Json.CodeGeneration.CorvusVocabulary.SchemaVocabulary.DefaultInstance);
+        return vocabularyRegistry;
+    }
+
+    private static int WriteValidationErrors(GeneratorConfig generatorConfig)
+    {
+        ValidationContext result = generatorConfig.Validate(ValidationContext.ValidContext, ValidationLevel.Detailed);
+        AnsiConsole.MarkupLine("[red]Error: Invalid configuration[/]");
+        foreach (Corvus.Json.ValidationResult validationResult in result.Results)
+        {
+            AnsiConsole.MarkupLineInterpolated($"[yellow]{validationResult.Message}[/] [white]{validationResult.Location?.ValidationLocation} {validationResult.Location?.SchemaLocation} {validationResult.Location?.DocumentLocation}[/]");
+        }
+
+        return -1;
+    }
+
+    private static async Task ExecuteTask(GeneratorConfig generatorConfig, ProgressContext context, IVocabulary defaultVocabulary, JsonSchemaTypeBuilder typeBuilder)
+    {
+        ProgressTask outerTask = context.AddTask("Generating JSON types", maxValue: generatorConfig.TypesToGenerate.GetArrayLength());
+
+        List<TypeDeclaration> typesToGenerate = [];
+
+        GeneratorConfig.NamedTypeList namedTypes = generatorConfig.NamedTypes ?? GeneratorConfig.NamedTypeList.EmptyArray;
+
+        string? fallbackOutputPath = null;
+
+        foreach (GeneratorConfig.GenerationSpecification generatorSpecification in generatorConfig.TypesToGenerate)
+        {
+            string schemaFile = (string)generatorSpecification.SchemaFile;
+            JsonReference reference = new(schemaFile, generatorSpecification.RootPath is JsonUriReference rootPath ? (string)rootPath : string.Empty);
+            ProgressTask typeBuilderTask = context.AddTask($"Building type declarations for [green]{reference}[/]");
+            TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(reference, defaultVocabulary, generatorSpecification.RebaseToRootPath ?? false);
+            typesToGenerate.Add(rootType);
+
+            if (fallbackOutputPath is null && Path.Exists(schemaFile))
+            {
+                // Set our fallback output path to be the path of the first schema file we find
+                fallbackOutputPath = Path.GetDirectoryName(schemaFile);
+            }
+
+            if (generatorSpecification.OutputRootTypeName is JsonString outputRootTypeName)
+            {
+                namedTypes = namedTypes.Add(GeneratorConfig.NamedTypeSpecification.Create(outputRootTypeName, new JsonIriReference(rootType.ReducedTypeDeclaration().ReducedType.LocatedSchema.Location), generatorSpecification.OutputRootNamespace));
+            }
+
+            typeBuilderTask.Increment(100);
+            outerTask.Increment(1);
+            typeBuilderTask.StopTask();
+        }
+
+        CSharpLanguageProvider.Options options = MapGeneratorConfigToOptions(generatorConfig, namedTypes);
+
+        ProgressTask currentTask = context.AddTask("Generating code for schema.");
+        var languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        IReadOnlyCollection<GeneratedCodeFile> generatedCode =
+            typeBuilder.GenerateCodeUsing(
+                languageProvider,
+                typesToGenerate,
+                CancellationToken.None);
+        currentTask.Increment(100);
+        currentTask.StopTask();
+
+        string outputPath = generatorConfig.OutputPath?.GetString() ?? fallbackOutputPath ?? Environment.CurrentDirectory;
+
+        if (!string.IsNullOrEmpty(outputPath))
+        {
+            Directory.CreateDirectory(outputPath);
+        }
+
+        currentTask = await WriteFiles(generatorConfig, context, generatedCode, outputPath);
+
+        currentTask.StopTask();
+        outerTask.Increment(100);
+        AnsiConsole.MarkupLineInterpolated($"Completed in: [green]{outerTask.ElapsedTime?.TotalSeconds}s[/]");
+        outerTask.StopTask();
+    }
+
+    private static CSharpLanguageProvider.Options MapGeneratorConfigToOptions(in GeneratorConfig generatorConfig, in GeneratorConfig.NamedTypeList namedTypes)
+    {
+        return new CSharpLanguageProvider.Options(
+            (string)generatorConfig.RootNamespace,
+            namedTypes: namedTypes.Select(n => new CSharpLanguageProvider.NamedType(new((string)n.Reference), (string)n.DotnetTypeName, n.DotnetNamespace?.GetString())).ToArray(),
+            namespaces: generatorConfig.Namespaces?.Select(n => new CSharpLanguageProvider.Namespace(new JsonReference((string)n.Key), (string)n.Value)).ToArray(),
+            alwaysAssertFormat: generatorConfig.AssertFormat ?? true,
+            useOptionalNameHeuristics: !(generatorConfig.DisableOptionalNameHeuristics ?? false),
+            optionalAsNullable: (generatorConfig.OptionalAsNullableValue ?? GeneratorConfig.OptionalAsNullable.DefaultInstance).Equals(GeneratorConfig.OptionalAsNullable.EnumValues.NullOrUndefined),
+            disabledNamingHeuristics: generatorConfig.DisabledNamingHeuristics?.Select(n => (string)n).ToArray(),
+            useImplicitOperatorString: generatorConfig.UseImplicitOperatorString ?? false,
+            lineEndSequence: (generatorConfig.UseUnixLineEndings ?? false) ? "\n" : "\r\n",
+            addExplicitUsings: generatorConfig.AddExplicitUsings ?? false);
+    }
+
+    private static async Task<string?> BeginMapFile(GeneratorConfig generatorConfig, string outputPath)
+    {
+        string? mapFile = generatorConfig.OutputMapFile is JsonString omf ? Path.Combine(outputPath, (string)omf) : null;
+        if (!string.IsNullOrEmpty(mapFile))
+        {
+            File.Delete(mapFile);
+            await File.AppendAllTextAsync(mapFile, "[");
+        }
+
+        return mapFile;
+    }
+
+    private static async Task EndMapFile(string? mapFile)
+    {
+        if (!string.IsNullOrEmpty(mapFile))
+        {
+            await File.AppendAllTextAsync(mapFile, "]");
+        }
+    }
+
+    private static async Task<ProgressTask> WriteFiles(GeneratorConfig generatorConfig, ProgressContext context, IReadOnlyCollection<GeneratedCodeFile> generatedCode, string outputPath)
+    {
+        ProgressTask currentTask = context.AddTask("Writing files", true, generatedCode.Count);
+
+        HashSet<string> writtenFiles = new(StringComparer.OrdinalIgnoreCase);
+
+        int index = 0;
+
+        string? mapFile = await BeginMapFile(generatorConfig, outputPath);
+
+        foreach (GeneratedCodeFile generatedCodeFile in generatedCode)
+        {
+            WriteFile(context, currentTask, outputPath, mapFile, index++, writtenFiles, generatedCodeFile);
+        }
+
+        await EndMapFile(mapFile);
+
+        return currentTask;
+    }
+
+    private static void WriteFile(ProgressContext context, ProgressTask currentTask, string outputPath, string? mapFile, int index, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile)
+    {
+        ProgressTask subtask = context.AddTask($"{generatedCodeFile.FileName} [green]({(generatedCodeFile.TypeDeclaration is TypeDeclaration t ? t.RelativeSchemaLocation.ToString().EscapeMarkup() : "globals")})[/]");
+        currentTask.Increment(1);
+        string source = generatedCodeFile.FileContent;
+
+        string outputFile = TruncateFileNameIfRequired(outputPath, writtenFiles, generatedCodeFile);
+
+        File.WriteAllText(outputFile, source);
+
+        WriteMapFile(mapFile, index, generatedCodeFile, outputFile);
+
+        subtask.Increment(100);
+        subtask.StopTask();
+    }
+
+    private static string TruncateFileNameIfRequired(string outputPath, HashSet<string> writtenFiles, GeneratedCodeFile generatedCodeFile)
+    {
+        string outputFile = Path.Combine(outputPath, generatedCodeFile.FileName);
+        string originalFileName = PathTruncator.NormalizePath(outputFile);
+        outputFile = PathTruncator.TruncatePath(originalFileName);
+        if (!writtenFiles.Add(outputFile))
+        {
+            if (originalFileName != outputFile)
+            {
+                AnsiConsole.MarkupLineInterpolated($"[red]The file path [/][white]{originalFileName}[/] [red]was too long.[/]");
+                AnsiConsole.MarkupLineInterpolated($"[red]It was truncated to [/][white]{outputFile}[/][red], but that file name was already in use.[/]");
+                AnsiConsole.MarkupLineInterpolated($"[red]Consider using a shallower path for your output files, or explicitly map types into a root namespace, rather than nesting in their parent.[/]");
+                outputFile = originalFileName;
+            }
+            else
+            {
+                string path = Path.GetDirectoryName(outputFile)!;
+                string baseName = Path.GetFileNameWithoutExtension(outputFile);
+                string extension = Path.GetExtension(outputFile);
+                int counter = 1;
+                do
+                {
+                    outputFile = PathTruncator.TruncatePath(Path.Combine(path, $"{baseName}{counter++}{extension}"));
+                }
+
+                while (!writtenFiles.Add(outputFile) && counter < 1000);
+
+                if (counter == 1000)
+                {
+                    throw new InvalidOperationException("Unexpected duplicate file generated.");
+                }
+            }
+        }
+
+        return outputFile;
+    }
+
+    private static void WriteMapFile(string? mapFile, int index, GeneratedCodeFile generatedCodeFile, string outputFile)
+    {
+        if (!string.IsNullOrEmpty(mapFile))
+        {
+            if (index > 0)
+            {
+                File.AppendAllText(mapFile, ", ");
+            }
+
+            string? typeName = CSharpLanguageProvider.GetFullyQualifiedDotnetTypeName(generatedCodeFile);
+
+            if (typeName is not null && generatedCodeFile.TypeDeclaration is not null)
+            {
+                File.AppendAllText(mapFile, $"{{\"key\": \"{JsonEncodedText.Encode(generatedCodeFile.TypeDeclaration.LocatedSchema.Location)}\", \"class\": \"{JsonEncodedText.Encode(typeName)}\", \"path\": \"{JsonEncodedText.Encode(outputFile)}\"}}\r\n");
+            }
+        }
+    }
+
+    private static IVocabulary GetFallbackVocabulary(GeneratorConfig.UseSchema schemaVariant)
+    {
+        return schemaVariant.Match(
+            matchDraft4: static () => Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.DefaultVocabulary,
+            matchDraft6: static () => Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.DefaultVocabulary,
+            matchDraft7: static () => Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.DefaultVocabulary,
+            matchDraft201909: static () => Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.DefaultVocabulary,
+            matchDraft202012: static () => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
+            matchOpenApi30: static () => Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
+            defaultMatch: static () => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary);
+    }
+}

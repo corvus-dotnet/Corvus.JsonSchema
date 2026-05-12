@@ -1,0 +1,981 @@
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": "src"}}
+{"compilerOptions": {"baseUrl": ".", "disableSizeLimit": true, "target": "ES2020"}, "exclude": ["node_modules", "src/third_party"]}
+{"include": ["./src/**/*.js", "./src/**/*.vue"], "compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"], "@dev/*": ["dev/*"]}}, "exclude": ["node_modules", "dist"]}
+{"appenders": [{"type": "dateFile", "filename": "logs/log", "pattern": "-yyyy-MM-dd", "alwaysIncludePattern": true}, {"type": "console"}]}
+{"compilerOptions": {"checkJs": true}, "updateImportsOnFileMove": "prompt", "include": ["js/**/*"]}
+{"SPDX-FileCopyrightText": "2023 Leorize <leorize+oss@disroot.org>", "SPDX-License-Identifier": "MPL-2.0"}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {"c/datatableV2": ["datatableV2/datatableV2.js"]}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "typeAcquisition": {"include": ["jest"]}, "paths": {"c/*": ["*"]}}
+{"include": ["src"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"ui/*": ["src/*"]}}}
+{"compilerOptions": {"target": "es2015", "module": "commonjs", "moduleResolution": "node"}}
+{"port": "3003", "host": "0.0.0.0", "appRootUrl": "/", "asyncCSS": false, "serviceWorker": true, "serverSideRender": true, "singlePageApplication": false}
+{"compilerOptions": {"jsx": "react", "baseUrl": "src", "noUnusedLocals": true, "noUnusedParameters": true}, "include": ["./src"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es2019", "module": "es2020", "lib": ["esnext", "dom"]}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"target": "es2017"}, "include": ["src/module/**/*", "src/module-system/**/*", "src/module-vendor/**/*", "src/suite/**/*", "src/suite-vendor/**/*", "packages/**/*"], "exclude": ["node_modules", "**/dist/**", "**/*.min.js", "backend/cli/templates"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"doc/*": ["./site/*"], "docs/*": ["./site/Components/*"], "shineout/*": ["./src/*"]}}, "include": ["./src", "./site"]}
+{"compilerOptions": {"moduleResolution": "bundler", "target": "ESNext", "module": "ESNext", "verbatimModuleSyntax": true, "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"target": "es6", "experimentalDecorators": true}, "exclude": ["node_modules", "packages/**/node_modules", "test-packages/**/node_modules", "bower_components", "tmp", "vendor", ".git", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"docs/*": ["./*"]}}}
+{"compilerOptions": {"module": "esnext", "target": "es6", "checkJs": true, "allowUmdGlobalAccess": true, "esModuleInterop": true, "baseUrl": "./", "paths": {"vue$": ["./node_modules/vue/dist/vue.esm.js"], "src/*": ["./src/*"], "module/*": ["./src/module/*"], "scss/*": ["./src/app/assets/scss/*"], "assets/*": ["./static/*"], "Shopware": ["./src/core/shopware"]}}, "include": ["src/**/*", "types/**/*"], "exclude": ["node_modules", "test/**/*", "**/fixtures/*.js"]}
+{"include": ["../../node_modules/cypress", "cypress/**/*.js"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "jsx": "preserve", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "checkJs": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["./src/*"]}, "allowJs": true}}
+{"baseUrl": "."}
+{"compilerOptions": {"experimentalDecorators": true, "target": "es2015", "moduleResolution": "node"}}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"pretty-text/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse/tests/*": ["../discourse/tests/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"resources/*": ["src/main/resources/*"], "scala/*": ["target/next-modules/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", ".nuxt", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["*"]}, "lib": ["es2020", "dom"], "jsx": "preserve"}}
+{"compilerOptions": {"alwaysStrict": true, "target": "es2018", "module": "commonjs"}, "files": ["./bsb"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"client/*": ["client/*"], "server/*": ["server/*"]}}, "include": ["./src/client/*", "./src/server/*"], "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es6"}, "exclude": ["**/node_modules/*", "**/dist/*", "**/build/*"], "include": ["packages", "projects"]}
+{"compilerOptions": {"target": "es2020", "lib": ["ES2020"], "module": "node16", "checkJs": true, "noEmit": true}}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"include": ["./node_modules/cypress", "cypress/**/*.js"]}
+{"compilerOptions": {"target": "ES5", "module": "commonjs"}}
+{"compilerOptions": {"target": "es6", "module": "commonjs"}}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"ignoreDeprecations": "5.0"}}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "allowJs": true}}
+{"compilerOptions": {"lib": ["ESNext"], "module": "esnext", "target": "esnext", "moduleResolution": "nodenext", "strict": true, "downlevelIteration": true, "skipLibCheck": true, "jsx": "preserve", "allowSyntheticDefaultImports": true, "forceConsistentCasingInFileNames": true, "allowJs": true, "types": ["bun-types"]}}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "module": "commonjs", "target": "ES6", "baseUrl": ".", "paths": {"*": ["test/*", "server/*", "client/*"]}}, "exclude": ["public", "node_modules", "**/node_modules/*", "build", "**/build/*", "**/build-module/*", "**/build-style/*", "**/dist/*", "cached-results.json", "stats.json", "server/bundlers/assets-*.json", "server/devdocs/search-index.js"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"utils/*": ["utils/*"]}}, "exclude": ["node_modules", "dist", "es", "lib", "coverage"]}
+{"compilerOptions": {"skipLibCheck": true, "baseUrl": ".", "paths": {"styles/*": ["./styles/*"]}}}
+{"compilerOptions": {"allowJs": true}}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "checkJs": false, "lib": ["es6"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es6", "checkJs": true}, "include": ["./**/*.js"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"~/*": ["*"]}, "experimentalDecorators": true}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"checkJs": true, "lib": ["es6"], "module": "es2020", "moduleResolution": "nodenext", "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ESNext", "lib": ["dom", "dom.iterable", "esnext"], "allowJs": true, "skipLibCheck": true, "esModuleInterop": true, "allowSyntheticDefaultImports": true, "strict": true, "forceConsistentCasingInFileNames": true, "module": "esnext", "moduleResolution": "node", "resolveJsonModule": true, "isolatedModules": true, "noEmit": true, "typeRoots": ["./node_modules/@webgpu/types", "./node_modules/@types"]}, "include": ["build", ".", ".eslintrc.js"]}
+{"compilerOptions": {"module": "commonjs", "target": "ES6"}}
+{"compilerOptions": {"emitDeclarationOnly": true, "noEmit": false, "strict": true, "target": "es2017", "declaration": true, "checkJs": true, "noUnusedParameters": true, "noUnusedLocals": true, "outDir": "./dist/typings", "lib": ["es2017", "dom"]}, "include": ["lib/**/*"]}
+{"compilerOptions": {"target": "es5", "module": "commonjs", "jsx": "react-jsx", "outDir": "./build", "esModuleInterop": true, "forceConsistentCasingInFileNames": true}}
+{"compilerOptions": {"baseUrl": "node_modules", "paths": {"@/*": ["../*"]}}}
+{"compilerOptions": {"types": ["@dcloudio/types", "miniprogram-api-typings", "mini-types"]}}
+{"extensions": [".vue"], "vueCompilerOptions": {"target": 2}}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es2015", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp", "distribution"]}
+{"compilerOptions": {"target": "ES6"}, "exclude": ["tmp", ".pytest_cache", ".tox", "_build", "build", "dist", "plonecli.egg-info", "man", "htmlcov", ".cache", ".github", "parts", "selenium", "tmp_resources", "local", "node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"experimentalDecorators": true}, "include": ["packages/**/*", "node_modules/@wdio/mocha-framework", "packages/@webex"], "exclude": ["packages/**/dist/*", "node_modules/**/*", "dist"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@server/*": ["server/*"]}}, "exclude": ["node_modules", "dist", "build"]}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "lib": ["dom", "es2015", "es2016", "es6", "es2017"], "target": "esnext", "module": "es6", "baseUrl": ".", "paths": {"root": ["."], "res": ["res"], "styles": ["styles"], "src": ["src"], "utilities": ["src/utilities"], "site": ["src/sites/twitch-twilight"]}}}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"exclude": ["node_modules", "platforms", "plugins"]}
+{"compilerOptions": {"noEmit": true, "esModuleInterop": true, "target": "esnext", "module": "esnext", "moduleResolution": "node", "baseUrl": "./", "paths": {"$api/*": ["../api/*"], "api/*": ["../api/*"], "$web/*": ["../web/*"], "web/*": ["../web/*"], "$web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "types/*": ["../types/*", "../web/types/*", "../api/types/*"]}, "typeRoots": ["../node_modules/@types"], "jsx": "preserve"}, "include": [".", "../.redwood/types/includes/all-*", "../.redwood/types/includes/web-*", "../types"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"GLHelper": ["./src/index"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": "."}}
+{"vueCompilerOptions": {"target": 2.7}}
+{"compilerOptions": {"target": "es6", "allowSyntheticDefaultImports": true, "baseUrl": "./"}}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "baseUrl": "./", "paths": {"@root/*": ["./*"], "@features/*": ["./src/features/*"], "@handlers/*": ["./src/handlers/*"], "@helpers/*": ["./src/helpers/*"], "@schemas/*": ["./src/database/schemas/*"], "@src/*": ["./src/*"], "@structures/*": ["./src/structures/*"]}}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"jsx": "react-jsx"}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"], "include": ["src/**/*"]}
+{"compilerOptions": {"target": "es6", "checkJs": false, "baseUrl": "src", "jsx": "react", "module": "commonjs", "moduleResolution": "node", "paths": {"*": ["*"]}}, "include": ["./src/**/*"], "exclude": []}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["*"]}}}
+{"compilerOptions": {"target": "ES6", "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"moduleResolution": "node", "target": "esnext", "module": "esnext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "baseUrl": "", "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"target": "es2018"}, "include": ["**/*.js", "../../Framework/Framework/obj/typescript-types/dotvvm.d.ts", "../../Framework/Framework/Resources/Scripts/**/*.d.ts"], "exclude": ["../../Framework/Framework/Resources/Scripts/tests"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@wordpress/*": ["./node_modules/@wordpress/*"], "~stackable/*": ["./src/*"]}}, "include": ["./src/**/*"], "typeAcquisition": {"include": ["jest"]}}
+{"compilerOptions": {"target": "es5"}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "exclude": ["node_modules", "dist"], "include": ["src/**/*", "build/**/*", "test/**/*"]}
+{"compilerOptions": {"moduleResolution": "Node", "target": "ESNext", "module": "ESNext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["../../../../../.cache/hugo_cache/modules/filecache/modules/pkg/mod/github.com/gohugoio/hugo-mod-jslibs-dist/popperjs/v2@v2.21100.20000/package/dist/cjs/popper.js/*", "../../../../../.cache/hugo_cache/modules/filecache/modules/pkg/mod/github.com/twbs/bootstrap@v5.3.0+incompatible/js/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "include": ["src/*/**"]}
+{"include": ["src/**/*", "docs/**/*"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "baseUrl": "."}}
+{"compilerOptions": {"moduleResolution": "node", "target": "esnext", "module": "esnext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "baseUrl": ".", "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"target": "ES6"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES5", "module": "commonjs", "outDir": "./dist/js", "removeComments": true, "strict": true}, "exclude": ["node_modules", "dist"], "include": ["src/js/**/*", "html/**"]}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"wizard/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@components/*": ["components/*"], "@styles/*": ["styles/*"], "@lib/*": ["lib/*"]}}}
+{"compilerOptions": {"strict": true, "typeRoots": ["./node_modules/@types", "./node_modules/@gi-types"], "types": ["gjs-environment", "base-types", "gtk4-types", "adw1"], "lib": ["ES2022"], "allowSyntheticDefaultImports": true}, "exclude": ["./src/lib", "node_modules"]}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "jsx": "react-native", "lib": ["dom", "esnext"], "moduleResolution": "node", "noEmit": true, "skipLibCheck": true, "resolveJsonModule": true, "baseUrl": ".", "paths": {"@/*": ["src/*"], "stores/*": ["src/stores/*"], "screens/*": ["src/screens/*"], "locales/*": ["src/locales/*"], "utils/*": ["src/utils/*"]}}}
+{"compilerOptions": {"target": "es2015", "module": "commonjs", "moduleResolution": "node", "allowSyntheticDefaultImports": true, "experimentalDecorators": true, "baseUrl": "./dev", "paths": {"*": ["*"]}}, "exclude": ["build", "data", "vendors", "rainloop", "plugins", "node_modules", "bower_components", "jspm_packages", "nbproject", "tests", "tmp", "temp"]}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": "src"}}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": "src"}}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": "src"}}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": "src"}}
+{"compilerOptions": {"baseUrl": ".", "disableSizeLimit": true, "target": "ES2020"}, "exclude": ["node_modules", "src/third_party"]}
+{"compilerOptions": {"checkJs": true}, "updateImportsOnFileMove": "prompt", "include": ["js/**/*"]}
+{"compilerOptions": {"checkJs": true}, "updateImportsOnFileMove": "prompt", "include": ["js/**/*"]}
+{"compilerOptions": {"checkJs": true}, "updateImportsOnFileMove": "prompt", "include": ["js/**/*"]}
+{"compilerOptions": {"checkJs": true}, "updateImportsOnFileMove": "prompt", "include": ["js/**/*"]}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {"c/datatableV2": ["datatableV2/datatableV2.js"]}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "typeAcquisition": {"include": ["jest"]}, "paths": {"c/*": ["*"]}}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {"c/datatableV2": ["datatableV2/datatableV2.js"]}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "typeAcquisition": {"include": ["jest"]}, "paths": {"c/*": ["*"]}}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {"c/datatableV2": ["datatableV2/datatableV2.js"]}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "typeAcquisition": {"include": ["jest"]}, "paths": {"c/*": ["*"]}}
+{"include": ["src"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"ui/*": ["src/*"]}}}
+{"compilerOptions": {"target": "es2015", "module": "commonjs", "moduleResolution": "node"}}
+{"compilerOptions": {"target": "es2015", "module": "commonjs", "moduleResolution": "node"}}
+{"compilerOptions": {"target": "es2015", "module": "commonjs", "moduleResolution": "node"}}
+{"compilerOptions": {"jsx": "react", "baseUrl": "src", "noUnusedLocals": true, "noUnusedParameters": true}, "include": ["./src"]}
+{"compilerOptions": {"jsx": "react", "baseUrl": "src", "noUnusedLocals": true, "noUnusedParameters": true}, "include": ["./src"]}
+{"compilerOptions": {"jsx": "react", "baseUrl": "src", "noUnusedLocals": true, "noUnusedParameters": true}, "include": ["./src"]}
+{"compilerOptions": {"jsx": "react", "baseUrl": "src", "noUnusedLocals": true, "noUnusedParameters": true}, "include": ["./src"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"moduleResolution": "bundler", "target": "ESNext", "module": "ESNext", "verbatimModuleSyntax": true, "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"moduleResolution": "bundler", "target": "ESNext", "module": "ESNext", "verbatimModuleSyntax": true, "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"moduleResolution": "bundler", "target": "ESNext", "module": "ESNext", "verbatimModuleSyntax": true, "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"moduleResolution": "bundler", "target": "ESNext", "module": "ESNext", "verbatimModuleSyntax": true, "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"module": "esnext", "target": "es6", "checkJs": true, "allowUmdGlobalAccess": true, "esModuleInterop": true, "baseUrl": "./", "paths": {"vue$": ["./node_modules/vue/dist/vue.esm.js"], "src/*": ["./src/*"], "module/*": ["./src/module/*"], "scss/*": ["./src/app/assets/scss/*"], "assets/*": ["./static/*"], "Shopware": ["./src/core/shopware"]}}, "include": ["src/**/*", "types/**/*"], "exclude": ["node_modules", "test/**/*", "**/fixtures/*.js"]}
+{"compilerOptions": {"module": "esnext", "target": "es6", "checkJs": true, "allowUmdGlobalAccess": true, "esModuleInterop": true, "baseUrl": "./", "paths": {"vue$": ["./node_modules/vue/dist/vue.esm.js"], "src/*": ["./src/*"], "module/*": ["./src/module/*"], "scss/*": ["./src/app/assets/scss/*"], "assets/*": ["./static/*"], "Shopware": ["./src/core/shopware"]}}, "include": ["src/**/*", "types/**/*"], "exclude": ["node_modules", "test/**/*", "**/fixtures/*.js"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "jsx": "preserve", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "jsx": "preserve", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "jsx": "preserve", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "jsx": "preserve", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "checkJs": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "checkJs": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "checkJs": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "checkJs": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["./src/*"]}, "allowJs": true}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["./src/*"]}, "allowJs": true}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["./src/*"]}, "allowJs": true}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["./src/*"]}, "allowJs": true}}
+{"baseUrl": "."}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"pretty-text/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse/tests/*": ["../discourse/tests/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"pretty-text/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse/tests/*": ["../discourse/tests/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"pretty-text/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse/tests/*": ["../discourse/tests/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"pretty-text/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse/tests/*": ["../discourse/tests/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", ".nuxt", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["*"]}, "lib": ["es2020", "dom"], "jsx": "preserve"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["*"]}, "lib": ["es2020", "dom"], "jsx": "preserve"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["*"]}, "lib": ["es2020", "dom"], "jsx": "preserve"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["*"]}, "lib": ["es2020", "dom"], "jsx": "preserve"}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"client/*": ["client/*"], "server/*": ["server/*"]}}, "include": ["./src/client/*", "./src/server/*"], "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es2020", "lib": ["ES2020"], "module": "node16", "checkJs": true, "noEmit": true}}
+{"compilerOptions": {"target": "es2020", "lib": ["ES2020"], "module": "node16", "checkJs": true, "noEmit": true}}
+{"compilerOptions": {"target": "es2020", "lib": ["ES2020"], "module": "node16", "checkJs": true, "noEmit": true}}
+{"compilerOptions": {"target": "es2020", "lib": ["ES2020"], "module": "node16", "checkJs": true, "noEmit": true}}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"include": ["./node_modules/cypress", "cypress/**/*.js"]}
+{"include": ["./node_modules/cypress", "cypress/**/*.js"]}
+{"include": ["./node_modules/cypress", "cypress/**/*.js"]}
+{"include": ["./node_modules/cypress", "cypress/**/*.js"]}
+{"compilerOptions": {"target": "ES5", "module": "commonjs"}}
+{"compilerOptions": {"target": "ES5", "module": "commonjs"}}
+{"compilerOptions": {"target": "ES5", "module": "commonjs"}}
+{"compilerOptions": {"target": "es6", "module": "commonjs"}}
+{"compilerOptions": {"target": "es6", "module": "commonjs"}}
+{"compilerOptions": {"target": "es6", "module": "commonjs"}}
+{"compilerOptions": {"target": "es6", "module": "commonjs"}}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"ignoreDeprecations": "5.0"}}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"ignoreDeprecations": "5.0"}}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"ignoreDeprecations": "5.0"}}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"ignoreDeprecations": "5.0"}}
+{"compilerOptions": {"lib": ["ESNext"], "module": "esnext", "target": "esnext", "moduleResolution": "nodenext", "strict": true, "downlevelIteration": true, "skipLibCheck": true, "jsx": "preserve", "allowSyntheticDefaultImports": true, "forceConsistentCasingInFileNames": true, "allowJs": true, "types": ["bun-types"]}}
+{"compilerOptions": {"lib": ["ESNext"], "module": "esnext", "target": "esnext", "moduleResolution": "nodenext", "strict": true, "downlevelIteration": true, "skipLibCheck": true, "jsx": "preserve", "allowSyntheticDefaultImports": true, "forceConsistentCasingInFileNames": true, "allowJs": true, "types": ["bun-types"]}}
+{"compilerOptions": {"lib": ["ESNext"], "module": "esnext", "target": "esnext", "moduleResolution": "nodenext", "strict": true, "downlevelIteration": true, "skipLibCheck": true, "jsx": "preserve", "allowSyntheticDefaultImports": true, "forceConsistentCasingInFileNames": true, "allowJs": true, "types": ["bun-types"]}}
+{"compilerOptions": {"lib": ["ESNext"], "module": "esnext", "target": "esnext", "moduleResolution": "nodenext", "strict": true, "downlevelIteration": true, "skipLibCheck": true, "jsx": "preserve", "allowSyntheticDefaultImports": true, "forceConsistentCasingInFileNames": true, "allowJs": true, "types": ["bun-types"]}}
+{"compilerOptions": {"allowJs": true}}
+{"compilerOptions": {"allowJs": true}}
+{"compilerOptions": {"allowJs": true}}
+{"compilerOptions": {"allowJs": true}}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "checkJs": false, "lib": ["es6"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "checkJs": false, "lib": ["es6"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "checkJs": false, "lib": ["es6"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "checkJs": false, "lib": ["es6"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es6", "checkJs": true}, "include": ["./**/*.js"]}
+{"compilerOptions": {"target": "es6", "checkJs": true}, "include": ["./**/*.js"]}
+{"compilerOptions": {"target": "es6", "checkJs": true}, "include": ["./**/*.js"]}
+{"compilerOptions": {"target": "es6", "checkJs": true}, "include": ["./**/*.js"]}
+{"compilerOptions": {"module": "commonjs", "target": "ES6"}}
+{"compilerOptions": {"module": "commonjs", "target": "ES6"}}
+{"compilerOptions": {"module": "commonjs", "target": "ES6"}}
+{"compilerOptions": {"module": "commonjs", "target": "ES6"}}
+{"compilerOptions": {"emitDeclarationOnly": true, "noEmit": false, "strict": true, "target": "es2017", "declaration": true, "checkJs": true, "noUnusedParameters": true, "noUnusedLocals": true, "outDir": "./dist/typings", "lib": ["es2017", "dom"]}, "include": ["lib/**/*"]}
+{"compilerOptions": {"baseUrl": "node_modules", "paths": {"@/*": ["../*"]}}}
+{"compilerOptions": {"baseUrl": "node_modules", "paths": {"@/*": ["../*"]}}}
+{"compilerOptions": {"baseUrl": "node_modules", "paths": {"@/*": ["../*"]}}}
+{"compilerOptions": {"baseUrl": "node_modules", "paths": {"@/*": ["../*"]}}}
+{"compilerOptions": {"types": ["@dcloudio/types", "miniprogram-api-typings", "mini-types"]}}
+{"compilerOptions": {"types": ["@dcloudio/types", "miniprogram-api-typings", "mini-types"]}}
+{"compilerOptions": {"types": ["@dcloudio/types", "miniprogram-api-typings", "mini-types"]}}
+{"compilerOptions": {"types": ["@dcloudio/types", "miniprogram-api-typings", "mini-types"]}}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@server/*": ["server/*"]}}, "exclude": ["node_modules", "dist", "build"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@server/*": ["server/*"]}}, "exclude": ["node_modules", "dist", "build"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@server/*": ["server/*"]}}, "exclude": ["node_modules", "dist", "build"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@server/*": ["server/*"]}}, "exclude": ["node_modules", "dist", "build"]}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"noEmit": true, "esModuleInterop": true, "target": "esnext", "module": "esnext", "moduleResolution": "node", "baseUrl": "./", "paths": {"$api/*": ["../api/*"], "api/*": ["../api/*"], "$web/*": ["../web/*"], "web/*": ["../web/*"], "$web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "types/*": ["../types/*", "../web/types/*", "../api/types/*"]}, "typeRoots": ["../node_modules/@types"], "jsx": "preserve"}, "include": [".", "../.redwood/types/includes/all-*", "../.redwood/types/includes/web-*", "../types"]}
+{"compilerOptions": {"noEmit": true, "esModuleInterop": true, "target": "esnext", "module": "esnext", "moduleResolution": "node", "baseUrl": "./", "paths": {"$api/*": ["../api/*"], "api/*": ["../api/*"], "$web/*": ["../web/*"], "web/*": ["../web/*"], "$web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "types/*": ["../types/*", "../web/types/*", "../api/types/*"]}, "typeRoots": ["../node_modules/@types"], "jsx": "preserve"}, "include": [".", "../.redwood/types/includes/all-*", "../.redwood/types/includes/web-*", "../types"]}
+{"compilerOptions": {"noEmit": true, "esModuleInterop": true, "target": "esnext", "module": "esnext", "moduleResolution": "node", "baseUrl": "./", "paths": {"$api/*": ["../api/*"], "api/*": ["../api/*"], "$web/*": ["../web/*"], "web/*": ["../web/*"], "$web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "types/*": ["../types/*", "../web/types/*", "../api/types/*"]}, "typeRoots": ["../node_modules/@types"], "jsx": "preserve"}, "include": [".", "../.redwood/types/includes/all-*", "../.redwood/types/includes/web-*", "../types"]}
+{"compilerOptions": {"noEmit": true, "esModuleInterop": true, "target": "esnext", "module": "esnext", "moduleResolution": "node", "baseUrl": "./", "paths": {"$api/*": ["../api/*"], "api/*": ["../api/*"], "$web/*": ["../web/*"], "web/*": ["../web/*"], "$web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "web/src/*": ["../web/src/*", "../.redwood/types/mirror/web/src/*"], "types/*": ["../types/*", "../web/types/*", "../api/types/*"]}, "typeRoots": ["../node_modules/@types"], "jsx": "preserve"}, "include": [".", "../.redwood/types/includes/all-*", "../.redwood/types/includes/web-*", "../types"]}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": "."}}
+{"vueCompilerOptions": {"target": 2.7}}
+{"compilerOptions": {"jsx": "react-jsx"}}
+{"compilerOptions": {"jsx": "react-jsx"}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"], "include": ["src/**/*"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"], "include": ["src/**/*"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"], "include": ["src/**/*"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"], "include": ["src/**/*"]}
+{"compilerOptions": {"target": "es6", "checkJs": false, "baseUrl": "src", "jsx": "react", "module": "commonjs", "moduleResolution": "node", "paths": {"*": ["*"]}}, "include": ["./src/**/*"], "exclude": []}
+{"compilerOptions": {"target": "es6", "checkJs": false, "baseUrl": "src", "jsx": "react", "module": "commonjs", "moduleResolution": "node", "paths": {"*": ["*"]}}, "include": ["./src/**/*"], "exclude": []}
+{"compilerOptions": {"target": "es6", "checkJs": false, "baseUrl": "src", "jsx": "react", "module": "commonjs", "moduleResolution": "node", "paths": {"*": ["*"]}}, "include": ["./src/**/*"], "exclude": []}
+{"compilerOptions": {"target": "es6", "checkJs": false, "baseUrl": "src", "jsx": "react", "module": "commonjs", "moduleResolution": "node", "paths": {"*": ["*"]}}, "include": ["./src/**/*"], "exclude": []}
+{"compilerOptions": {"target": "ES6", "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es5"}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es5"}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es5"}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es5"}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "exclude": ["node_modules", "dist"], "include": ["src/**/*", "build/**/*", "test/**/*"]}
+{"compilerOptions": {"moduleResolution": "Node", "target": "ESNext", "module": "ESNext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "include": ["src/*/**"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "include": ["src/*/**"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "include": ["src/*/**"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "include": ["src/*/**"]}
+{"include": ["src/**/*", "docs/**/*"]}
+{"include": ["src/**/*", "docs/**/*"]}
+{"include": ["src/**/*", "docs/**/*"]}
+{"compilerOptions": {"moduleResolution": "node", "target": "esnext", "module": "esnext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "baseUrl": ".", "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"moduleResolution": "node", "target": "esnext", "module": "esnext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "baseUrl": ".", "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"moduleResolution": "node", "target": "esnext", "module": "esnext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "baseUrl": ".", "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"moduleResolution": "node", "target": "esnext", "module": "esnext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "baseUrl": ".", "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"target": "ES6"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES6"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES6"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES6"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES5", "module": "commonjs", "outDir": "./dist/js", "removeComments": true, "strict": true}, "exclude": ["node_modules", "dist"], "include": ["src/js/**/*", "html/**"]}
+{"compilerOptions": {"target": "ES5", "module": "commonjs", "outDir": "./dist/js", "removeComments": true, "strict": true}, "exclude": ["node_modules", "dist"], "include": ["src/js/**/*", "html/**"]}
+{"compilerOptions": {"target": "ES5", "module": "commonjs", "outDir": "./dist/js", "removeComments": true, "strict": true}, "exclude": ["node_modules", "dist"], "include": ["src/js/**/*", "html/**"]}
+{"compilerOptions": {"target": "ES5", "module": "commonjs", "outDir": "./dist/js", "removeComments": true, "strict": true}, "exclude": ["node_modules", "dist"], "include": ["src/js/**/*", "html/**"]}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"wizard/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"wizard/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"wizard/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"extends": "../../../../jsconfig.base.json", "compilerOptions": {"baseUrl": ".", "paths": {"wizard/*": ["./addon/*"], "discourse/*": ["../discourse/app/*"], "discourse-common/*": ["../discourse-common/addon/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@components/*": ["components/*"], "@styles/*": ["styles/*"], "@lib/*": ["lib/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@components/*": ["components/*"], "@styles/*": ["styles/*"], "@lib/*": ["lib/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@components/*": ["components/*"], "@styles/*": ["styles/*"], "@lib/*": ["lib/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@components/*": ["components/*"], "@styles/*": ["styles/*"], "@lib/*": ["lib/*"]}}}
+{"compilerOptions": {"target": "es2015", "module": "commonjs", "moduleResolution": "node", "allowSyntheticDefaultImports": true, "experimentalDecorators": true, "baseUrl": "./dev", "paths": {"*": ["*"]}}, "exclude": ["build", "data", "vendors", "rainloop", "plugins", "node_modules", "bower_components", "jspm_packages", "nbproject", "tests", "tmp", "temp"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"]}}}
+{"compilerOptions": {"jsx": "react", "allowSyntheticDefaultImports": true, "module": "commonjs", "target": "ES6", "baseUrl": ".", "paths": {"*": ["test/*", "client/*"]}}, "exclude": ["public", "node_modules", "**/node_modules/*", "build", "**/build/*", "**/build-module/*", "**/build-style/*", "**/dist/*", "cached-results.json", "client/stats.json", "client/server/bundler/assets-*.json", "client/server/devdocs/search-index.js"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"baseUrl": "./", "jsx": "react", "paths": {"Style/*": ["src/style/*"], "Component/*": ["src/component/*"], "Route/*": ["src/route/*"], "Store/*": ["src/store/*"], "Util/*": ["src/util/*"], "Query/*": ["src/query/*"], "Type/*": ["src/type/*"], "Pages/*": ["src/pages/*"]}}}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "baseUrl": ".", "strict": true, "moduleResolution": "node", "resolveJsonModule": true, "isolatedModules": true, "paths": {"@generator/*": ["*"]}}, "exclude": ["node_modules"]}
+{"$schema": "https://cli.sasjs.io/sasjsconfig-schema.json", "docConfig": {"enableLineage": true, "doxyContent": {"readMe": "../../README.md"}, "outDirectory": "public/docs/static/sas"}, "macroFolders": ["sasjs/macros"], "programFolders": [], "serviceConfig": {"serviceFolders": ["sasjs/services/common", "sasjs/services/files"], "initProgram": "sasjs/services/serviceinit.sas"}, "streamConfig": {"streamWeb": false, "streamWebFolder": "webv", "webSourcePath": "build"}, "defaultTarget": "viya", "targets": [{"name": "viya", "serverUrl": "https://azureuse011059.my-trials.sas.com/", "serverType": "SASVIYA", "appLoc": "/Public/app/react-seed-app", "contextName": "SAS Job Execution compute context"}, {"name": "server", "serverUrl": "", "serverType": "SASJS", "appLoc": "/Public/app/react-seed-app", "streamConfig": {"streamLogo": "logo512.png", "streamServiceName": "React", "streamWeb": true, "streamWebFolder": "web", "webSourcePath": "build", "assetPaths": []}}, {"name": "sas9", "serverType": "SAS9", "appLoc": "/Shared Data/sasjs/react-seed-app", "deployConfig": {"deployServicePack": true}, "serverName": "SASApp", "repositoryName": "Foundation"}, {"name": "electron", "serverType": "SASJS", "serverUrl": "http://localhost:5000", "appLoc": "/Public/app/react-seed-app"}]}
+{"compilerOptions": {"jsx": "react-jsx", "target": "esnext", "module": "esnext", "baseUrl": "src", "moduleResolution": "node"}, "include": ["src/**/*"], "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "experimentalDecorators": true, "lib": ["es7", "es2017.sharedmemory", "es2017.object"]}}
+{"Gold1": {"money": 10, "backV": 8}, "Gold2": {"money": 20, "backV": 6}, "Gold3": {"money": 30, "backV": 4}, "Stone1": {"money": 2, "backV": 3}, "Stone2": {"money": 4, "backV": 2}, "Diamond": {"money": 900, "backV": 8}, "Kulou": {"money": 20, "backV": 3}, "Gutou": {"money": 7, "backV": 3}, "TNT": {"money": 2, "backV": 7}, "Mouse": {"money": 2, "backV": 7}, "MouseDiamond": {"money": 2, "backV": 7}, "RandomBag": {"money": "1-1000", "backV": "1-10"}}
+{"exclude": ["**/bin", "**/bower_components", "**/jspm_packages", "**/node_modules", "**/obj", "**/platforms"], "DbConnection": {"documentDbEndPoint": "https://localhost:8081/", "documentDbKey": "C2y6yDjf5/R+ob0N8A7Cgv30VRDJIWEHLM+4QDU5DE2nQ9nDuVTqobD4b8mGGyPMbIZnqyMsEcaGQy67XIw/Jw==", "databaseName": "CommClient", "collectionDbs": [{"name": "clientCollection", "value": "Clients"}, {"name": "pageCollection", "value": "Pages"}]}}
+{"compilerOptions": {"target": "es6", "experimentalDecorators": true}, "exclude": ["node_modules", "tmp", "vendor", ".git", "dist"]}
+{"rewrites": [{"source": "/sitemap.xml", "destination": "/api/sitemap"}], "headers": [{"headers": [{"key": "Content-Type", "value": "application/xml"}, {"key": "Cache-Control", "value": "public, max-age=3600"}], "source": "/sitemap.xml"}]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"types": ["node"], "lib": ["es2016"], "allowJs": true, "checkJs": true}}
+{"compilerOptions": {"target": "es5", "module": "es2015", "noImplicitAny": true, "strictNullChecks": true}, "include": ["./**/*.ts", "./**/*.js", "bin/www.cjs", "app.cjs", "models/user.controller.ks"]}
+{"sslProtocol": "any", "ignoreSslErrors": true, "webSecurityEnabled": false}
+{"compilerOptions": {"baseUrl": "..", "paths": {"@pages/*": ["web3-ui/pages/*"], "@components/*": ["web3-ui/components/*"], "@styles/*": ["web3-ui/styles/*"], "@content/*": ["web3-ui/content/*"], "@utils/*": ["web3-ui/utils/*"]}}}
+{"map": {"*": {"canvas-to-blob": "blueimp-canvas-to-blob", "leaflet": "leaflet-dist"}}, "paths": {"angular": "../../bower_components/angular/angular", "underscore": "//cdnjs.cloudflare.com/ajax/libs/underscore.js/1.5.2/underscore-min", "angular-cookies": "../../bower_components/angular-cookies/angular-cookies", "angular-mocks": "../../bower_components/angular-mocks/angular-mocks", "angular-resource": "../../bower_components/angular-resource/angular-resource", "angular-sanitize": "../../bower_components/angular-sanitize/angular-sanitize", "angular-scenario": "../../bower_components/angular-scenario/angular-scenario", "jquery": "../bower_components/jquery/jquery", "elastic": "../../bower_components/elastic.js/dist/elastic", "elastic-angular-client": "../bower_components/elastic.js/dist/elastic-angular-client", "angular-bootstrap": "../../bower_components/angular-bootstrap/ui-bootstrap-tpls", "angular-animate": "../../bower_components/angular-animate/angular-animate", "angular-route": "../../bower_components/angular-route/angular-route", "i18next": "../../bower_components/i18next/release/i18next-1.6.3.min", "ng-i18next": "../../bower_components/ng-i18next/dist/ng-i18next", "angular-translate": "../../bower_components/angular-translate/angular-translate", "blueimp-canvas-to-blob": "../../bower_components/blueimp-canvas-to-blob/js/canvas-to-blob", "blueimp-tmpl": "../../bower_components/blueimp-tmpl/js/tmpl", "jquery.ui.widget": "../../bower_components/blueimp-file-upload/js/vendor/jquery.ui.widget", "jquery.fileupload-angular": "../../bower_components/blueimp-file-upload/js/jquery.fileupload-angular", "jquery.fileupload-audio": "../../bower_components/blueimp-file-upload/js/jquery.fileupload-audio", "jquery.fileupload-image": "../../bower_components/blueimp-file-upload/js/jquery.fileupload-image", "jquery.fileupload-process": "../../bower_components/blueimp-file-upload/js/jquery.fileupload-process", "jquery.fileupload-ui": "../../bower_components/blueimp-file-upload/js/jquery.fileupload-ui", "jquery.fileupload-validate": "../../bower_components/blueimp-file-upload/js/jquery.fileupload-validate", "jquery.fileupload-video": "../../bower_components/blueimp-file-upload/js/jquery.fileupload-video", "jquery.fileupload": "../../bower_components/blueimp-file-upload/js/jquery.fileupload", "jquery.iframe-transport": "../../bower_components/blueimp-file-upload/js/jquery.iframe-transport", "blueimp-helper": "../../bower_components/blueimp-gallery/js/blueimp-helper", "blueimp-gallery": "../../bower_components/blueimp-gallery/js/blueimp-gallery", "blueimp-gallery-fullscreen": "../../bower_components/blueimp-gallery/js/blueimp-gallery-fullscreen", "blueimp-gallery-indicator": "../../bower_components/blueimp-gallery/js/blueimp-gallery-indicator", "blueimp-gallery-video": "../../bower_components/blueimp-gallery/js/blueimp-gallery-video", "load-image": "../../bower_components/blueimp-load-image/js/load-image", "load-image-ios": "../../bower_components/blueimp-load-image/js/load-image-ios", "load-image-orientation": "../../bower_components/blueimp-load-image/js/load-image-orientation", "load-image-meta": "../../bower_components/blueimp-load-image/js/load-image-meta", "load-image-exif": "../../bower_components/blueimp-load-image/js/load-image-exif", "load-image-exif-map": "../../bower_components/blueimp-load-image/js/load-image-exif-map", "leaflet-dist": "../../bower_components/leaflet-dist/leaflet", "leaflet-plugin-google": "leaflet-plugins/layer/tile/Google", "angular-leaflet": "../../bower_components/angular-leaflet/dist/angular-leaflet-directive", "jquery.cloudinary": "jquery.cloudinary", "jquery.ui.core": "../../bower_components/jqueryui/ui/jquery.ui.core", "jquery.ui.datepicker": "../../bower_components/jqueryui/ui/jquery.ui.datepicker", "jqueryui": "../../bower_components/jqueryui/ui/jquery-ui"}, "shim": {"jquery": {"exports": "$"}, "jquery.ui.widget": {"deps": ["jquery"]}, "angular": {"exports": "angular"}, "elastic-angular-client": {"deps": ["angular"], "exports": "angular"}, "angular-bootstrap": {"deps": ["angular"]}, "angular-route": {"deps": ["angular"]}, "i18next": {"exports": "i18n"}, "ng-i18next": {"deps": ["angular", "i18next"]}, "jquery.ui.core": {"deps": ["jquery"]}, "jquery.ui.datepicker": {"deps": ["jquery.ui.core"]}, "jquery.fileupload": {"deps": ["jquery", "canvas-to-blob"]}, "jquery.fileupload-angular": {"deps": ["jquery", "jquery.fileupload", "angular"]}, "jquery.cloudinary": {"deps": ["jquery", "jquery.fileupload"]}, "leaflet": {"exports": "L"}, "angular-leaflet": {"deps": ["angular", "leaflet"]}, "leaflet-plugin-google": {"deps": ["leaflet"]}}, "baseUrl": "scripts/"}
+{"compilerOptions": {"target": "es2015", "experimentalDecorators": true}}
+{"compilerOptions": {"jsx": "react", "checkJs": true, "lib": ["es2017", "dom"]}, "include": ["src/**/*.js"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "commonjs"}, "include": ["jest.config.js"]}
+{"compilerOptions": {"jsx": "react", "target": "es6", "module": "commonjs", "baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "experimentalDecorators": true, "paths": {"~/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"common/*": ["./common/*"], "features/*": ["./client/src/features/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@Components/*": ["src/components/*", "src/components"], "@Configs/*": ["src/configs/*", "src/configs"], "@Assets/*": ["src/assets/*", "src/assets"], "@Containers/*": ["src/containers/*", "src/containers"], "@Screens/*": ["src/screens/*", "src/screens"]}}}
+{"compilerOptions": {"baseUrl": ".", "strict": false, "jsx": "react", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "module": "commonJS", "paths": {"_components/*": ["./src/components/*"], "_assets/*": ["./src/assets/*"], "_screens/*": ["./src/screens/*"], "_redux/*": ["./src/redux/*"], "_utils/*": ["./src/utils/*"]}}, "exclude": ["node_modules", "android", "ios"]}
+{"compilerOptions": {"checkJs": true, "lib": ["ES2017", "DOM"], "target": "ES2017", "moduleResolution": "classic"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["src/components/*"]}}}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {"c/formAbstract": ["formAbstract/formAbstract.js"], "c/formExample": ["formExample/formExample.js"], "c/formlette": ["formlette/formlette.js"]}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "typeAcquisition": {"include": ["jest"]}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@components/*": ["src/components/*"], "@context/*": ["src/context/*"], "@hooks/*": ["src/hooks/*"], "@util/*": ["src/util/*"], "@public/*": ["public/*"], "@node_modules/*": ["node_modules/*"]}}}
+{"exclude": ["node_modules", "**/node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["../../../../../../var/folders/6n/b63bhh497zl6y40dv0mknfzm0000gn/T/hugo_cache/modules/filecache/modules/pkg/mod/github.com/wowchemy/wowchemy-hugo-modules/wowchemy/v5@v5.0.0-20210629192904-559885af86b7/assets/*"]}}}
+{"$schema": "https://raw.githubusercontent.com/sasjs/utils/main/src/types/sasjsconfig-schema.json", "macroFolders": ["macros"], "jobConfig": {"jobFolders": ["jobs/extract", "jobs/load"], "initProgram": "jobs/jobinit.sas", "termProgram": "jobs/jobterm.sas", "macroVars": {}}, "testConfig": {"testFolders": ["tests"], "initProgram": "tests/testinit.sas", "termProgram": "tests/testterm.sas", "macroVars": {"testsuite": "SASjs Jobs Template"}, "testSetUp": "tests/testsetup.sas", "testTearDown": "tests/testteardown.sas"}, "programFolders": ["db/demolib", "includes"], "defaultTarget": "server", "targets": [{"name": "viya", "serverType": "SASVIYA", "appLoc": "/Public/sasjs/jobs", "contextName": "SAS Job Execution compute context"}, {"name": "server", "serverUrl": "", "serverType": "SASJS", "appLoc": "/Public/demo/server"}]}
+{"extends": "../jsconfig.json", "compilerOptions": {"types": ["cypress", "cypress-real-events"]}, "include": ["../node_modules/cypress", "./**/*.js"]}
+{"compilerOptions": {"target": "es6", "baseUrl": "src"}, "include": ["src/**/*"], "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~features/*": ["./src/features/*"], "~services/*": ["./src/services/*"], "~shared/*": ["./src/shared/*"]}}, "typeAcquisition": {"include": ["jest"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"checkJs": true, "experimentalDecorators": true, "module": "CommonJS", "target": "ES2022"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"checkJs": true, "allowJs": true, "lib": ["es2015"], "jsx": "react", "baseUrl": ".", "paths": {"/*": ["./*"]}}, "typeAcquisition": {"include": ["meteor"]}, "exclude": ["node_modules", ".meteor"]}
+{"compilerOptions": {"module": "esnext", "target": "es6"}, "include": ["pkg/**/*", "js/**/*"]}
+{"typeAcquisition": {"include": ["jest"]}, "compilerOptions": {"baseUrl": "src"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"]}}}
+{"compilerOptions": {"baseUrl": "node_modules", "paths": {"@ui": ["../components/ui/index"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["*"], "@components/*": ["components/*"], "@assets/*": ["assets/*"], "@lib/*": ["lib/*"], "@middleware/*": ["middleware/*"], "@constants/*": ["constants/*"]}}}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "allowSyntheticDefaultImports": true, "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"components/*": ["src/components/*"], "styles/*": ["src/styles/*"], "assets/*": ["src/assets/*"]}}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@components/*": ["./components/*"], "@config/*": ["./config/*"], "@contexts/*": ["./contexts/*"], "@pages/*": ["./pages/*"], "@public/*": ["./public/*"], "@styles/*": ["./styles/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"], "@/*": ["./*"], "~~/*": ["./*"], "@@/*": ["./*"]}, "types": ["@nuxt/types", "@nuxtjs/axios"]}, "exclude": ["node_modules", ".nuxt", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"], "@/pages/*": ["src/pages/*"], "@/components/*": ["src/components/*"], "@/hooks/*": ["src/hooks/*"], "@/lib/*": ["src/lib/*"], "@/context/*": ["src/context/*"], "@/layouts/*": ["src/layouts/*"], "@/settings": ["src/settings.js"], "@/content": ["src/content.js"], "@/helpers": ["src/helpers.js"], "@/css/*": ["src/css/*"]}}}
+{"description": "This is to config VS Code to recongnise our aliases, aka https://medium.com/@justintulk/solve-module-import-aliasing-for-webpack-jest-and-vscode-74007ce4adc9", "compilerOptions": {"baseUrl": ".", "paths": {"~img": ["src/assets/img"], "~fonts": ["src/assets/fonts"], "~*": ["./src/*"]}}, "exclude": ["node_modules", "public"]}
+{"compilerOptions": {"target": "es6", "jsx": "react"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@pages/*": ["src/pages/*"], "@components/*": ["src/components/*"], "@utils/*": ["src/utils/*"], "@styles/*": ["src/styles/*"], "@public/*": ["public/*"], "@lib/*": ["src/lib/*"]}}}
+{"compilerOptions": {"checkJs": true, "module": "commonjs", "target": "es6"}, "include": ["src/**/*", "src/*.js", "src/**/*.js"], "exclude": ["node_modules", "**/node_modules/*", "assets", ".gitignore", "link_del_repo_en_GitHub.txt", "README.md"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"@pages/*": ["pages/*"], "@components/*": ["components/*"], "@containers/*": ["containers/*"], "@styles/*": ["styles/*"], "@hooks/*": ["hooks/*"], "@common/*": ["common/*"], "@layout/*": ["layout/*"], "@services/*": ["services/*"]}}}
+{"include": ["."], "compilerOptions": {"baseUrl": ".", "paths": {"@src/*": ["./src/*"], "@request": ["./__tests__/setup.js"], "@user/*": ["./src/modules/user/*"]}, "checkJs": false, "resolveJsonModule": true, "moduleResolution": "node", "target": "es2018", "module": "es2015"}, "exclude": ["dist", "node_modules", "build", ".vscode", "coverage", "jspm_packages", "tmp", "temp", "bower_components", ".npm", ".yarn"], "typeAcquisition": {"enable": true, "include": ["jest", "node"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["./src/components/*"], "@assets/*": ["./src/assets/*"], "@styles/*": ["./src/styles/*"], "@hooks/*": ["./src/hooks/*"], "@contexts/*": ["./src/contexts/*"], "@atoms/*": ["./src/atoms/*"], "@molecules/*": ["./src/molecules/*"]}}, "exclude": ["node_modules", "build"]}
+{"compilerOptions": {"experimentalDecorators": true, "paths": {"@themost/cache": ["src/index"], "@themost/cache/platform-server": ["platform-server/src/index"]}}}
+{"compilerOptions": {"baseUrl": ".", "target": "esnext", "module": "esnext", "moduleResolution": "node", "maxNodeModuleJsDepth": 20, "allowSyntheticDefaultImports": true, "lib": ["DOM", "DOM.Iterable", "ESNext", "WebWorker"], "declaration": true, "declarationDir": ".", "declarationMap": true, "allowJs": true, "checkJs": true, "noEmit": true, "esModuleInterop": true, "skipLibCheck": true, "types": ["node"], "typeRoots": ["typings", "node_modules/@types"]}, "include": ["./types.js", "*.js", "bin/**/*.js", "lib/**/*.js", "src/**/*.js"], "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "react", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"paths": {"@/*": ["./app/*"]}}}
+{"include": ["src/**/*"], "exclude": ["node_modules", "dist", "demo", "example"], "compilerOptions": {"baseUrl": "./src/"}}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "strictNullChecks": true, "strictFunctionTypes": true, "baseUrl": ".", "paths": {"@Tests/*": ["./__tests__/"], "@Components/*": ["src/components/*", "src/components"], "@Configs/*": ["src/configs/*", "src/configs"], "@Assets/*": ["src/assets/*", "src/assets"], "@Containers/*": ["src/containers/*", "src/containers"], "@Screens/*": ["src/screens/*", "src/screens"], "@Styles/*": ["src/styles/*", "src/styles"], "@Hooks/*": ["src/hooks/*", "src/hooks"]}}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"include": ["**/*.js", "**/*.json"], "typeAcquisition": {"include": ["jest"]}}
+{"compilerOptions": {"module": "commonjs", "target": "es2020", "jsx": "preserve", "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@hoc/*": ["components/hoc/*"], "@hooks/*": ["components/hooks/*"], "@layouts/*": ["components/layouts/*"], "@ui/*": ["components/ui/*"], "@util/*": ["util/*"], "@views/*": ["components/views/*"]}}}
+{"include": ["types/**/*", "**/*.js", "**/*.html", "**/*.php"], "exclude": ["node_modules"], "compilerOptions": {"lib": ["esnext", "dom", "dom.iterable"], "esModuleInterop": true, "isolatedModules": true, "module": "esnext", "target": "esnext", "sourceMap": true, "moduleResolution": "node", "noEmit": true, "strict": true, "skipLibCheck": true, "resolveJsonModule": true, "useDefineForClassFields": false, "allowSyntheticDefaultImports": true, "verbatimModuleSyntax": false, "experimentalDecorators": true, "noImplicitOverride": true, "forceConsistentCasingInFileNames": true, "useUnknownInCatchVariables": true, "exactOptionalPropertyTypes": true, "noPropertyAccessFromIndexSignature": true, "noUncheckedIndexedAccess": true, "allowJs": true, "checkJs": true}}
+{"compilerOptions": {"jsx": "react", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@/*": ["./*"]}}, "include": ["src"], "exclude": ["node_modules", "build"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@src/*": ["src/*"], "@assets/*": ["src/@core/assets/*"], "@components/*": ["src/@core/components/*"], "@layouts/*": ["src/@core/layouts/*"], "@store/*": ["src/redux/*"], "@styles/*": ["src/@core/scss/*"], "@configs/*": ["src/configs/*"], "@utils": ["src/utility/Utils"], "@hooks/*": ["src/utility/hooks/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["types/*"]}, "module": "commonjs", "target": "es6", "checkJs": false, "lib": ["es6"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["components/*"], "@utils/*": ["utils/*"], "@styles/*": ["styles/*"]}}, "include": ["**/*.js", "**/*.jsx"], "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "allowSyntheticDefaultImports": true, "baseUrl": "./", "paths": {"@ymc/*": ["./packages/*"], "@provate-pkgs/*": ["./private-pkgs/*"], "@script-pkgs/*": ["./scr/lib/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}}
+{"exclude": ["node_modules", ".git", "bundle", "**/dist", "**/node_modules"]}
+{"compilerOptions": {"baseUrl": "./src"}, "include": ["./src"], "exclude": ["/node_modules"]}
+{"include": ["src"], "compilerOptions": {"baseUrl": "src"}}
+{"compilerOptions": {"baseUrl": "src", "module": "commonjs", "target": "es6"}, "include": ["src"], "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components": ["src/components"], "@hooks": ["src/hooks"], "@pages": ["src/pages"], "@sections": ["src/sections"], "@utils": ["src/utils"]}}}
+{"compilerOptions": {"jsx": "react", "baseUrl": "./src", "paths": {"States/*": ["states/*"], "Utilities/*": ["utilities/*"], "Components/*": ["components/*"], "Api/*": ["api/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/context/*": ["context/*"], "@/hooks/*": ["hooks/*"], "@/slices/*": ["slices/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"], "@/public/*": ["public/*"]}}}
+{"typeAcquisition": {"enable": true, "include": ["three"]}, "compilerOptions": {"target": "ES6", "module": "es6"}, "exclude": ["assets/js/build", "assets/js/build-min", "assets/js/vendor", "node_modules"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"fp": ["fp"], "view": ["view"], "app": ["app"], "test": ["test"]}, "checkJs": true, "skipLibCheck": true}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"$libs": ["src/libs"], "$libs/*": ["src/libs/*"]}}}
+{"compilerOptions": {"target": "es5", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es6", "moduleResolution": "node", "checkJs": true, "esModuleInterop": true}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"$lib": ["src/lib"], "$lib/*": ["src/lib/*"]}}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte", "src/**/*.ts"]}
+{"compilerOptions ": {"allowJs": true}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"], "@/utils/*": ["utils/*"], "@/themeConfig/*": ["themeConfig/*"]}}}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"], "@c/*": ["src/components/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"allowJs": true, "checkJs": false, "esModuleInterop": true, "forceConsistentCasingInFileNames": true, "resolveJsonModule": true, "skipLibCheck": true, "sourceMap": true, "strict": true, "ignoreDeprecations": "5.0"}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@/components/*": ["src/components/*"]}}, "include": ["src/**/*.js", "src/**/*.jsx"], "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es5", "module": "esnext", "allowJs": true, "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"experimentalDecorators": true, "target": "es2017"}, "exclude": ["node_modules", "www", "scripts"], "include": ["src"]}
+{"compilerOptions": {"module": "es6", "target": "es2020", "strict": false, "allowJs": true, "checkJs": false, "skipLibCheck": true, "isolatedModules": true, "esModuleInterop": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "jsx": "preserve", "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "moduleResolution": "node", "jsx": "react", "baseUrl": "src/", "paths": {"components/*": ["src/components/*"], "dialogs/*": ["src/dialogs/*"], "actions/*": ["src/actions/*"], "reducers/*": ["src/reducers/*"], "router": ["src/router.jsx"], "store/*": ["src/store/*"], "types/*": ["src/types/*"], "pages/*": ["src/pages/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["UI/*"], "@UI/*": ["UI/packages/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "stores/*": ["src/stores/*"], "vue$": ["node_modules/vue/dist/vue.runtime.esm-bundler.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"], "exclude": ["src/theme/overrides"]}
+{"compilerOptions": {"target": "es6", "lib": ["dom", "webworker", "es7"]}}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "baseUrl": "src", "emitDecoratorMetadata": true, "experimentalDecorators": true, "forceConsistentCasingInFileNames": true, "target": "es6", "jsx": "react", "lib": ["esnext", "dom", "webworker"], "module": "esnext", "moduleResolution": "node", "noEmitOnError": false, "noImplicitAny": false, "noImplicitReturns": true, "noImplicitThis": true, "noUnusedLocals": true, "plugins": [{"name": "tslint-language-service"}], "paths": {"*": ["*", "src/*"]}, "rootDirs": [".", "src"], "skipLibCheck": false, "sourceMap": true, "strictNullChecks": false, "suppressImplicitAnyIndexErrors": true}, "exclude": ["build", "config-overrides.js", "jest", "scripts"], "include": ["src/**/*"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"components/*": ["components/*"], "common/*": ["common/*"], "data/*": ["data/*"], "layouts/*": ["layouts/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"$lib": ["src/lib"], "$lib/*": ["src/lib/*"], "$comp": ["src/components"], "$comp/*": ["src/components/*"]}}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"baseUrl": "src"}, "includes": ["src"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"@components/": ["./src/ui/components/"]}}, "include": ["src"]}
+{"compilerOptions": {"checkJs": true, "strict": true, "target": "esnext", "module": "commonjs", "strictNullChecks": false, "lib": ["esnext", "scripthost"]}}
+{"compilerOptions": {"baseUrl": "src", "paths": {"redux": ["./src/redux"], "utils": ["./src/utils"], "assets": ["./src/assets"]}}, "include": ["src"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "baseUrl": "src"}, "exclude": ["node_modules"], "include": ["src"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"], "@/*": ["./*"], "~~/*": ["./*"], "@@/*": ["./*"]}}, "exclude": ["node_modules", ".nuxt", "dist", "src/static/sw.js", "__mocks__"]}
+{"compilerOptions": {"target": "es2015", "expermentalDecorators": true}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"experimentalDecorators": true}}
+{"compilerOptions": {"baseUrl": "src", "target": "es6"}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/util/*": ["util/*"]}}}
+{"compilerOptions": {"jsx": "react", "module": "commonjs", "target": "es2020", "checkJs": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@common/*": ["common/*", "common"]}}}
+{"compilerOptions": {"baseUrl": "src", "paths": {"components/*": ["./components/*"]}}, "include": ["src"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true, "experimentalDecorators": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "ES6", "baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"], "include": ["src/**/*"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "checkJs": true, "strictNullChecks": true}, "include": ["./src/*"], "exclude": ["node_modules/", "coverage"]}
+{"compilerOptions": {"target": "esnext", "module": "esnext", "strict": true, "jsx": "preserve", "moduleResolution": "node"}, "exclude": ["node_modules"], "include": ["src/**/*"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src", "jsconfig.json"]}
+{"compilerOptions": {"target": "es2017", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"@components/*": ["src/components/*"], "@common/*": ["src/common/*"], "@app/*": ["src/app/*"], "@src/*": ["src/*"]}}, "exclude": ["node_modules", "build"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "baseUrl": "./", "paths": {"@components/*": ["components/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es6", "module": "amd", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "ES5"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es5", "strict": true, "module": "es2015", "moduleResolution": "node", "allowJs": true}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./resources/js/*"]}}, "include": ["./resources/js/**/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"$lib": ["src/lib"], "$lib/*": ["src/lib/*"], "$components/*": ["src/components/*"]}}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"~/*": ["./*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}, "target": "ES6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "include": ["src/**/*"], "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "es6", "baseUrl": ".", "paths": {"*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["components/*"], "@lib/*": ["lib/*"], "@utils/*": ["utils/*"], "@styles/*": ["styles/*"], "@context/*": ["context/*"]}}}
+{"include": ["src/**/*"], "compilerOptions": {"target": "ES6", "allowSyntheticDefaultImports": true, "baseUrl": "src/", "checkJs": false, "paths": {"services/*": ["shared/services/*"], "browser-services/*": ["browser/services/*"], "shared/*": ["shared/*"], "browser-components/*": ["browser/components/*"], "browser/*": ["browser/*"], "browser-styles/*": ["browser/styles/*"]}}}
+{"include": ["**/**/*.js", "**/*.json", "node_modules/@wdio/sync", "node_modules/@wdio/mocha-framework", "test/specs/.spec.js"]}
+{"compilerOptions": {"target": "ES6", "module": "ES6"}}
+{"compilerOptions": {"target": "ES5", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"target": "es6"}, "files": ["scripts/", "pages/"], "exclude": ["node_modules"], "typeAcquisition": {"include": []}}
+{"typeAcquisition": {"include": ["chrome"]}}
+{"exclude": ["node_modules"], "typeAcquisition": {"include": ["jquery"]}}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "react", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true, "baseUrl": "./src"}, "include": []}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@Clients": ["src/dfx_fleek_app_assets/public/clients"], "@Shared": ["src/dfx_fleek_app_assets/public/shared"], "~": ["src/dfx_fleek_app_assets/public"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"styles/*": ["./styles/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["src/*"], "images/*": ["./assets/images/*"]}}}
+{"compilerOptions": {"module": "CommonJS", "target": "ES6", "strict": false, "moduleResolution": "node", "resolveJsonModule": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/data/*": ["data/*"], "@/hooks/*": ["hooks/*"], "@/img/*": ["img/*"], "@/layouts/*": ["layouts/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"]}}}
+{"compilerOptions": {"checkJs": true, "strict": true, "target": "ES2015", "lib": ["ES2015", "DOM"], "baseUrl": ".", "paths": {"@/common/*": ["./src/*"], "@/modules/*": ["./src/modules/*"]}, "module": "NodeNext"}, "include": ["./src", "./typings"]}
+{"compilerOptions": {"types": ["estree"], "target": "ES6", "module": "commonjs", "allowSyntheticDefaultImports": true, "baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist", "public"], "include": ["src/**/*"]}
+{"compilerOptions": {"checkJs": false, "target": "es6", "lib": ["es2018", "dom"]}}
+{"compilerOptions": {"baseUrl": "src"}}
+{"compilerOptions": {"target": "es2015", "baseUrl": "./src/", "paths": {"core": ["./src/core/*"], "components": ["./src/components/*"], "controllers": ["./src/controllers/*"], "services": ["./src/services/*"], "constants": ["./src/constants/*"]}}, "exclude": ["node_modules"], "include": ["./src/**/*"]}
+{"compilerOptions": {"resolveJsonModule": true, "allowSyntheticDefaultImports": true, "baseUrl": "./src", "paths": {"components/*": ["components/*"], "assets/*": ["assets/*"]}}}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true, "baseUrl": "./", "paths": {"@ui/*": ["./src/components/uiComponents/*"], "@comp/*": ["./src/components/*"]}}, "include": ["src"], "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"paths": {"#utils/*": ["./src/utils/*"], "#controllers/*": ["./src/controllers/*"], "#services/*": ["./src/services/*"], "#routes/*": ["./src/routes/*"], "#models/*": ["./src/models/*"], "#validations/*": ["./src/validations/*"], "#middlewares/*": ["./src/middlewares/*"]}, "target": "ESNext"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"jsx": "react", "target": "ES6", "module": "commonjs", "baseUrl": "src"}, "exclude": ["dist", "node_modules", "**/node_modules/*"], "paths": {"@/*": ["./src/*"]}}
+{"compilerOptions": {"baseUrl": ".", "moduleResolution": "node", "target": "es6", "paths": {"*": ["typings/*"]}}}
+{"type": "npm", "script": "start", "isBackground": true, "presentation": {"focus": true, "panel": "dedicated"}, "group": {"kind": "build", "isDefault": true}, "problemMatcher": {"owner": "typescript", "source": "ts", "applyTo": "closedDocuments", "fileLocation": ["relative", "${cwd}"], "pattern": "$tsc", "background": {"activeOnStart": true, "beginsPattern": {"regexp": "(.*?)"}, "endsPattern": {"regexp": "Compiled |Failed to compile."}}}}
+{"compilerOptions": {"baseUrl": "src", "module": "commonjs", "target": "es6"}, "paths": {"assets/*": ["/assets/*"], "components/*": ["/components/*"], "screens/*": ["/screens/*"], "provider/*": ["/provider/*"], "utils/*": ["/utils/*"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@styles/*": ["./styles/*"], "@common/*": ["./src/common/*"], "@components/*": ["./src/components/*"], "@pages/*": ["./src/pages/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "react", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "es2022", "module": "commonjs", "moduleResolution": "node", "typeRoots": ["./typings", "./node_modules/@types"], "allowJs": true, "checkJs": true, "maxNodeModuleJsDepth": 0, "noEmit": true, "esModuleInterop": true, "forceConsistentCasingInFileNames": true, "strict": true, "noImplicitAny": true, "alwaysStrict": true, "skipLibCheck": true}, "include": ["*.js", "bin/**/*.js", "lib/**/*.js", "src/**/*.js"], "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/abis/*": ["abis/*"], "@/components/*": ["components/*"], "@/contexts/*": ["contexts/*"], "@/helpers/*": ["helpers/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"]}}}
+{"compilerOptions": {"jsx": "react", "target": "es6", "module": "commonjs", "baseUrl": "."}, "include": ["src/**/*"], "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/pages/components/*": ["components/*"], "@/config/*": ["config/*"], "@/utils/*": ["utils/*"], "@/lib/*": ["lib/*"]}}}
+{"include": [".eslintrc.js"], "extends": "./tsconfig.base.json", "compilerOptions": {"checkJs": true}}
+{"compilerOptions": {"module": "es6", "target": "esnext", "lib": ["dom", "esnext", "dom.iterable", "webworker"], "noImplicitAny": true, "suppressImplicitAnyIndexErrors": false}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["resources/app/js/*", "../../../resources/js/*"], "@img/*": ["resources/app/img/*", "../../../resources/img/*"], "@modules/*": ["../../../resources/modules/*"]}}, "include": ["/resources/app/**/*", "../../../resources/**/*"], "exclude": ["node_modules", "public"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["resources/js/*"], "@Components/*": ["resources/js/components/*"]}}, "exclude": ["node_modules", "public"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/assets/*": ["public/assets/*"], "@/utils/*": ["utils/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./*"], "@helpers/*": ["./helpers/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["components/*"], "@themes/*": ["themes/*"]}}}
+{"compilerOptions": {"target": "ES6", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"components/*": ["./src/components/*"], "containers/*": ["./src/containers/*"], "reducers/*": ["./src/reducers/*"], "routes/*": ["./src/routes/*"], "utils/*": ["./src/utils/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@blog/*": ["./src/*"]}}, "exclude": ["node_modules"]}
+{"include": ["./node_modules/cypress", "cypress/**/*.js"], "compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["components/*"], "@context/*": ["context/*"], "@functions/*": ["functions/*"], "@lib/*": ["lib/*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "jsx": "react", "paths": {"@/*": ["./*"], "@/components/*": ["./components/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "."}, "exclude": ["node_modules", ".next", "build"]}
+{"compilerOptions": {"experimentalDecorators": true, "jsxImportSource": "react", "module": "es6", "moduleResolution": "node", "target": "es6", "allowSyntheticDefaultImports": true}, "include": ["./src/**/*", "./static/**/*"], "exclude": ["./.cache/**/*", "./.netlify/**/*", "./.vscode/**/*", "./node_modules/**/*", "./public/**/*"]}
+{"compilerOptions": {"lib": ["es2017"], "target": "es6", "moduleResolution": "node", "checkJs": true, "esModuleInterop": true}}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "baseUrl": "./src"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": "src"}, "exclude": ["build", "coverage", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "module": "CommonJS", "paths": {"@/*": ["./src/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"rootDir": "./__tests__", "target": "es6", "module": "es6", "jsx": "react"}, "exclude": ["node_modules", "jspm_packages"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "baseUrl": "./", "paths": {"@components/*": ["components/*"], "@styles/*": ["styles/*"], "@public/*": ["public/*"]}}, "exclude": ["node_modules"]}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"], "test/*": ["tests/*"]}, "allowJs": true, "checkJs": true, "esModuleInterop": true, "forceConsistentCasingInFileNames": true, "resolveJsonModule": true, "skipLibCheck": true, "sourceMap": true, "strict": true}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["components/*"]}}, "exclude": ["node_modules", ".next", "out"]}
+{"compilerOptions": {"paths": {"@/*": ["./*"]}}}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "experimentalDecorators": true}, "exclude": ["node_modules"]}
+{"exclude": ["node_modules"], "include": ["./src/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"]}}}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"baseUrl": "./", "jsx": "react", "paths": {"Style/*": ["src/style/*"], "Component/*": ["src/component/*"], "Route/*": ["src/route/*"], "Store/*": ["src/store/*"], "Util/*": ["src/util/*"], "Query/*": ["src/query/*"], "Type/*": ["src/type/*"], "Pages/*": ["src/pages/*"]}}}
+{"compilerOptions": {"target": "es6", "experimentalDecorators": true}, "exclude": ["node_modules", "tmp", "vendor", ".git", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "es5", "module": "es2015", "noImplicitAny": true, "strictNullChecks": true}, "include": ["./**/*.ts", "./**/*.js", "bin/www.cjs", "app.cjs", "models/user.controller.ks"]}
+{"compilerOptions": {"jsx": "react", "checkJs": true, "lib": ["es2017", "dom"]}, "include": ["src/**/*.js"]}
+{"compilerOptions": {"jsx": "react", "checkJs": true, "lib": ["es2017", "dom"]}, "include": ["src/**/*.js"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["src/components/*"]}}}
+{"exclude": ["node_modules", "**/node_modules"]}
+{"compilerOptions": {"target": "es6", "baseUrl": "src"}, "include": ["src/**/*"], "exclude": ["node_modules"]}
+{"description": "This is to config VS Code to recongnise our aliases, aka https://medium.com/@justintulk/solve-module-import-aliasing-for-webpack-jest-and-vscode-74007ce4adc9", "compilerOptions": {"baseUrl": ".", "paths": {"~img": ["src/assets/img"], "~fonts": ["src/assets/fonts"], "~*": ["./src/*"]}}, "exclude": ["node_modules", "public"]}
+{"description": "This is to config VS Code to recongnise our aliases, aka https://medium.com/@justintulk/solve-module-import-aliasing-for-webpack-jest-and-vscode-74007ce4adc9", "compilerOptions": {"baseUrl": ".", "paths": {"~img": ["src/assets/img"], "~fonts": ["src/assets/fonts"], "~*": ["./src/*"]}}, "exclude": ["node_modules", "public"]}
+{"description": "This is to config VS Code to recongnise our aliases, aka https://medium.com/@justintulk/solve-module-import-aliasing-for-webpack-jest-and-vscode-74007ce4adc9", "compilerOptions": {"baseUrl": ".", "paths": {"~img": ["src/assets/img"], "~fonts": ["src/assets/fonts"], "~*": ["./src/*"]}}, "exclude": ["node_modules", "public"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "react", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "react", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"paths": {"@/*": ["./app/*"]}}}
+{"compilerOptions": {"module": "commonjs", "target": "es2020", "jsx": "preserve", "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"jsx": "react", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"experimentalDecorators": true, "target": "es2017"}, "exclude": ["node_modules", "www", "scripts"], "include": ["src"]}
+{"compilerOptions": {"experimentalDecorators": true, "target": "es2017"}, "exclude": ["node_modules", "www", "scripts"], "include": ["src"]}
+{"compilerOptions": {"experimentalDecorators": true, "target": "es2017"}, "exclude": ["node_modules", "www", "scripts"], "include": ["src"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "moduleResolution": "node", "jsx": "react", "baseUrl": "src/", "paths": {"components/*": ["src/components/*"], "dialogs/*": ["src/dialogs/*"], "actions/*": ["src/actions/*"], "reducers/*": ["src/reducers/*"], "router": ["src/router.jsx"], "store/*": ["src/store/*"], "types/*": ["src/types/*"], "pages/*": ["src/pages/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "moduleResolution": "node", "jsx": "react", "baseUrl": "src/", "paths": {"components/*": ["src/components/*"], "dialogs/*": ["src/dialogs/*"], "actions/*": ["src/actions/*"], "reducers/*": ["src/reducers/*"], "router": ["src/router.jsx"], "store/*": ["src/store/*"], "types/*": ["src/types/*"], "pages/*": ["src/pages/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "src"}, "includes": ["src"]}
+{"compilerOptions": {"baseUrl": "src"}, "includes": ["src"]}
+{"compilerOptions": {"baseUrl": "src"}, "includes": ["src"]}
+{"compilerOptions": {"baseUrl": "src"}, "includes": ["src"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true, "experimentalDecorators": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}, "target": "ES6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "include": ["src/**/*"], "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"exclude": ["node_modules"], "typeAcquisition": {"include": ["jquery"]}}
+{"exclude": ["node_modules"], "typeAcquisition": {"include": ["jquery"]}}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "react", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "react", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "react", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "react", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"checkJs": false, "target": "es6", "lib": ["es2018", "dom"]}}
+{"compilerOptions": {"baseUrl": "src"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["resources/app/js/*", "../../../resources/js/*"], "@img/*": ["resources/app/img/*", "../../../resources/img/*"], "@modules/*": ["../../../resources/modules/*"]}}, "include": ["/resources/app/**/*", "../../../resources/**/*"], "exclude": ["node_modules", "public"]}
+{"compilerOptions": {"baseUrl": ".", "module": "CommonJS", "paths": {"@/*": ["./src/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "module": "CommonJS", "paths": {"@/*": ["./src/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "module": "CommonJS", "paths": {"@/*": ["./src/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "module": "CommonJS", "paths": {"@/*": ["./src/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "baseUrl": "./", "paths": {"@components/*": ["components/*"], "@styles/*": ["styles/*"], "@public/*": ["public/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"paths": {"@/*": ["./*"]}}}
+{"compilerOptions": {"paths": {"@/*": ["./*"]}}}
+{"compilerOptions": {"paths": {"@/*": ["./*"]}}}
+{"compilerOptions": {"paths": {"@/*": ["./*"]}}}
+{"compilerOptions": {"rootDir": ".", "module": "commonjs", "target": "es6"}, "exclude": ["**/node_modules/*", ".git", ".npm", "**/.cache/*", "**/.tmp/*", "**/dist/*", "**/build/*", "**/*.test.js", "**/*.test.api.js", "**/examples/getstarted/*", "**/examples/kitchensink/*"]}
+{"exclude": ["close-old-issues.js", "fix-tslint.js"], "compilerOptions": {"noUnusedLocals": true, "target": "es6", "module": "esnext", "strict": true, "baseUrl": "../types", "moduleResolution": "node", "resolveJsonModule": true, "typeRoots": ["../types"], "types": [], "checkJs": true, "forceConsistentCasingInFileNames": true, "lib": ["es2019"]}}
+{"compilerOptions": {"typeRoots": ["./node_modules/@types", "./node_modules/iina-plugin-definition"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"store/*": ["./src/store/*"], "components/*": ["./src/components/*"], "styles/*": ["./src/styles/*"], "renderer/*": ["./src/renderer/*"], "utils/*": ["./src/utils/*"], "assets/*": ["./src/assets/*"], "proto_bundle/*": ["./proto_bundle/*"]}}, "exclude": ["node_modules"]}
+{"appenders": [{"category": "server", "type": "console"}, {"category": "server", "type": "file", "filename": "logs/server.log"}, {"category": "client", "type": "console"}, {"category": "client", "type": "file", "filename": "logs/client.log"}], "levels": {"server": "ALL", "client": "ALL"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"], "@/*": ["./*"], "~~/*": ["./*"], "@@/*": ["./*"]}, "types": ["@nuxtjs/axios"]}, "exclude": ["node_modules", ".nuxt", "dist"], "include": ["**/*"]}
+{"include": ["js/**/*", "types/**/*"]}
+{"compilerOptions": {"target": "es2017", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"@ui5/webcomponents-base/dist/*": ["../base/src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "./tests", "paths": {"@tests/*": ["./*"], "/*": ["./*"]}}}
+{"$schema": "https://cli.sasjs.io/sasjsconfig-schema.json", "macroFolders": ["sasjs/macros"], "serviceConfig": {"serviceFolders": ["sasjs/services/common"]}, "targets": []}
+{"compilerOptions": {"allowJs": true, "checkJs": true, "esModuleInterop": true, "forceConsistentCasingInFileNames": true, "resolveJsonModule": true, "skipLibCheck": true, "sourceMap": true, "strict": true}}
+{"compilerOptions": {"target": "ES2015", "module": "ES2015", "moduleResolution": "node", "experimentalDecorators": true, "jsx": "preserve", "lib": ["DOM", "DOM.Iterable", "ScriptHost", "ESNext"]}}
+{"compilerOptions": {"baseUrl": "./src", "checkJs": true, "jsx": "react", "paths": {"@": ["./src"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"components/*": ["components/*"], "tests/*": ["__tests__/*"]}}, "exclude": ["node_modules"]}
+{"$schema": "https://raw.githubusercontent.com/sasjs/utils/main/src/types/sasjsconfig-schema.json", "programFolders": ["db/demolib", "includes"], "defaultTarget": "viya", "targets": [{"name": "viya", "serverType": "SASVIYA", "appLoc": "/Public/sasjs/adventureworks"}]}
+{"compilerOptions": {"target": "esnext", "module": "esnext", "jsx": "preserve", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"emitDecoratorMetadata": true, "experimentalDecorators": true, "baseUrl": ".", "paths": {"@/*": ["./renderer/src/*"]}}}
+{"$schema": "https://raw.githubusercontent.com/sasjs/utils/main/src/types/sasjsconfig-schema.json", "targets": [{"name": "viya", "serverType": "SASVIYA", "appLoc": "/Public/apps/sasjs/rockroller", "serverUrl": "http://sas.analytium.co.uk", "buildConfig": {"buildOutputFileName": "viyadeploy.sas"}, "deployConfig": {"deployServicePack": true}, "streamConfig": {"streamWeb": true, "streamWebFolder": "webv", "webSourcePath": "src"}}, {"name": "sas9", "serverType": "SAS9", "appLoc": "/User Folders/&sysuserid/My Folder", "serverUrl": "https://sas.analytium.co.uk:8080", "buildConfig": {"buildOutputFileName": "sas9deploy.sas"}, "deployConfig": {"deployScripts": ["sasjsbuild/sas9deploy.sas"]}, "streamConfig": {"streamWeb": true, "streamWebFolder": "webv", "webSourcePath": "src"}}]}
+{"compilerOptions": {"target": "ES6", "module": "system"}}
+{"compilerOptions": {"checkJs": true, "lib": ["dom", "esnext"], "module": "esnext", "moduleResolution": "node", "noImplicitAny": true, "target": "esnext"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "reactapp", "module": "CommonJS", "target": "ES6"}, "include": ["reactapp"], "exclude": ["node_modules", "tethysapp"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src": ["./src"], "Components": ["./src/components"]}}}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "baseUrl": ".", "paths": {"~/*": ["./*"], "@/*": ["./src/*"], "~~/*": ["./*"], "@@/*": ["./*"]}}, "exclude": ["node_modules", ".cache", "dist"]}
+{"compilerOptions": {"allowJs": true, "allowSyntheticDefaultImports": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "ES5", "noLib": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src/components", "checkJs": true, "javascript.preferences.importModuleSpecifier": "non-relative"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true, "baseUrl": "./app/", "jsx": "react", "paths": {"*": ["*"]}}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist", "build", "public"]}
+{"compilerOptions": {"module": "es2015"}, "include": ["src/**/*"]}
+{"compilerOptions": {"target": "es2015"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES6", "baseUrl": "./src"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"components/*": ["src/components/common/*"], "hooks/*": ["src/hooks/*"], "pages/*": ["src/components/pages/*"], "providers/*": ["src/components/providers/*"], "styles/*": ["src/styles/*"], "utils/*": ["src/utils/*"], "public/*": ["public/*"], "images/*": ["public/images/*"], "constants/*": ["src/constants/*"], "stubs/*": ["src/stubs/*"], "lottie/*": ["public/lottie/*"], "entities/*": ["src/domain/entities/*"]}}}
+{"compilerOptions": {"paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"module": "es6"}}
+{"description": "This is to config VS Code to recongnise our aliases, aka https://medium.com/@justintulk/solve-module-import-aliasing-for-webpack-jest-and-vscode-74007ce4adc9", "compilerOptions": {"baseUrl": ".", "jsx": "preserve", "paths": {"~components": ["src/components"], "~img": ["src/assets/img"], "~fonts": ["src/assets/fonts"], "~styles": ["src/styles"], "~images": ["src/images"]}}, "exclude": ["node_modules", "public"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"*": ["types/*", "*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@/*": ["src/*"]}}, "include": ["src/**/*", "components.d.ts"], "exclude": ["node_modules", "dist", "public", "report"]}
+{"compilerOptions": {"target": "es2017", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"@native/*": ["src/lib/native/*"], "@browser/*": ["src/lib/browser/*"], "@shared/*": ["src/lib/shared/*"], "@components/*": ["src/components/*"], "@config/*": ["src/config/*"], "@ws-chat/*": ["src/lib/*"], "@audio/*": ["src/lib/audio/*"], "@enums/*": ["src/enums/*"], "@hooks/*": ["src/lib/hooks/*"], "@icons/*": ["src/components/atoms/Icons/*"], "@styles/*": ["src/styles/*"], "@utils/*": ["src/utils/*"], "@state/*": ["src/state/*"], "@types/*": ["src/types/*"], "@storybookHelpers/*": ["../.storybook/helpers/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"target": "ES6", "allowSyntheticDefaultImports": true, "experimentalDecorators": true}, "exclude": ["dist", "node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/helpers/*": ["helpers/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["./src/*"]}}, "exclude": [".yarn", "build"]}
+{"allowJs": true}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"target": "es2015", "experimentalDecorators": true}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"moduleResolution": "node", "module": "commonjs", "target": "es2016", "checkJs": true}}
+{"compilerOptions": {"target": "es2017", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"api/*": ["src/api/*"], "assets/*": ["assets/*"], "components/*": ["src/components/*"], "containers/*": ["src/containers/*"], "utils/*": ["src/utils/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"emitDecoratorMetadata": true, "experimentalDecorators": true, "module": "amd", "target": "ES6"}}
+{"compilerOptions": {"moduleResolution": "node", "baseUrl": ".", "paths": {"pages/*": ["pages/*"], "mocks/*": ["mocks/*"], "data/*": ["data/*"]}}, "exclude": ["node_modules"], "include": ["node_modules/cypress", "./cypress/**/*.js"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"~src/*": ["./src/*"], "~api/*": ["./src/api/*"], "~utils/*": ["./src/utils/*"], "~store/*": ["./src/store/*"], "~pages/*": ["./src/pages/*"], "~components/*": ["./src/components/*"]}}, "include": ["src/**/*"], "exclude": ["node_modules/**/*"]}
+{"compilerOptions": {"baseUrl": ".", "checkJs": true, "target": "esnext", "moduleResolution": "node", "jsx": "preserve"}}
+{"compilerOptions": {"checkJs": true, "allowJs": true, "target": "ES2020", "moduleResolution": "node"}, "include": ["./src/**/*.js"]}
+{"extends": "../../jsconfig.json", "include": ["src", "./*.js"], "exclude": ["node_modules", "dist", "vendor", "rollup.config.js"]}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {"c/hello": ["hello/hello.js"]}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "typeAcquisition": {"include": ["jest"]}, "paths": {"c/*": ["*"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["../../../../../../var/folders/zr/1lcy71z97n33bq1zyg3vtbp80000gn/T/hugo_cache/modules/filecache/modules/pkg/mod/github.com/wowchemy/wowchemy-hugo-themes/modules/wowchemy/v5@v5.7.0/assets/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["../../../../../../var/folders/yc/lxh8w5lj0fb5kjlx59nc40m80000gn/T/hugo_cache/modules/filecache/modules/pkg/mod/github.com/wowchemy/wowchemy-hugo-modules/wowchemy@v0.0.0-20210526223849-81ba17522966/assets/*"]}}}
+{"compilerOptions": {"module": "commonjs", "target": "es2020", "outDir": "out", "lib": ["es2020"], "rootDir": "."}, "exclude": ["node_modules", ".vscode-test"]}
+{"include": ["node_modules/cypress", "./cypress/integration/**/*.js"]}
+{"compilerOptions": {"baseUrl": "./src", "checkJs": true, "jsx": "react", "resolveJsonModule": true}}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {"c/activityTimeline": ["activityTimeline/activityTimeline.js"], "c/addChildObjectProgressBar": ["addChildObjectProgressBar/addChildObjectProgressBar.js"], "c/addFilterToChildObject": ["addFilterToChildObject/addFilterToChildObject.js"], "c/apexClassRowItem": ["apexClassRowItem/apexClassRowItem.js"], "c/apexVerifyStepItem": ["apexVerifyStepItem/apexVerifyStepItem.js"], "c/diagnosticTestItem": ["diagnosticTestItem/diagnosticTestItem.js"], "c/getObjectNameFromConfig": ["getObjectNameFromConfig/getObjectNameFromConfig.js"], "c/linkedOutputText": ["linkedOutputText/linkedOutputText.js"], "c/logATask": ["logATask/logATask.js"], "c/logAnEvent": ["logAnEvent/logAnEvent.js"], "c/objectIconSelector": ["objectIconSelector/objectIconSelector.js"], "c/readonlyTextWithIcon": ["readonlyTextWithIcon/readonlyTextWithIcon.js"], "c/searchableDataTable": ["searchableDataTable/searchableDataTable.js"], "c/selectApexRecordProvider": ["selectApexRecordProvider/selectApexRecordProvider.js"], "c/selectChildObject": ["selectChildObject/selectChildObject.js"], "c/selectFieldsForConfig": ["selectFieldsForConfig/selectFieldsForConfig.js"], "c/selectObjectThemeColor": ["selectObjectThemeColor/selectObjectThemeColor.js"], "c/textComboBox": ["textComboBox/textComboBox.js"], "c/textComboBoxItem": ["textComboBoxItem/textComboBoxItem.js"], "c/timelineComposer": ["timelineComposer/timelineComposer.js"], "c/timelineDiagnostic": ["timelineDiagnostic/timelineDiagnostic.js"], "c/timelineFilterPanel": ["timelineFilterPanel/timelineFilterPanel.js"], "c/timelineItem": ["timelineItem/timelineItem.js"], "c/timelineItemCaseArticle": ["timelineItemCaseArticle/timelineItemCaseArticle.js"], "c/timelineItemDetail": ["timelineItemDetail/timelineItemDetail.js"], "c/timelineItemFile": ["timelineItemFile/timelineItemFile.js"], "c/timelineItemOtherObject": ["timelineItemOtherObject/timelineItemOtherObject.js"], "c/timelineItemTask": ["timelineItemTask/timelineItemTask.js"], "c/timelineMonth": ["timelineMonth/timelineMonth.js"], "c/verifyApexProvider": ["verifyApexProvider/verifyApexProvider.js"], "c/filterCriteria": ["filterCriteria/filterCriteria.js"]}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "typeAcquisition": {"include": ["jest"]}, "paths": {"c/*": ["*"]}}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}, "experimentalDecorators": true}, "exclude": ["node_modules", "build"]}
+{"compilerOptions": {"baseUrl": "./src/", "checkJs": true, "jsx": "react"}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@config/*": ["./src/config/*"], "@controller/*": ["./src/controllers/*"], "@model/*": ["./src/models/*"], "@route/*": ["./src/routes/*"], "@service/*": ["./src/services/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"~/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"], "#/*": ["src/styles/*"]}, "jsx": "react"}}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src", "public"], "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "skipLibCheck": true, "lib": ["DOM", "ES2021"], "target": "ESNext", "checkJs": true, "moduleResolution": "classic", "noImplicitReturns": true, "strict": true, "noUnusedLocals": true}, "exclude": ["main.js"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "Makefile"]}
+{"compilerOptions": {"target": "es2020", "lib": ["es2020"]}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "esnext", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"@app/*": ["src/app/*"], "@helpers/*": ["src/helpers/*"], "@config/*": ["config/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"], "exclude": ["node_modules", "build"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/utils/*": ["utils/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["src/*"], "hooks": ["./src/hooks"], "views": ["./src/views"], "components": ["./src/components"], "assets": ["./src/assets"], "propTypes": ["./src/types"]}}}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "allowSyntheticDefaultImports": true, "baseUrl": "./", "paths": {"~/*": ["./*"]}}, "exclude": ["build", "node_modules", "static", ".next"]}
+{"compilerOptions": {"target": "es6", "baseUrl": ".", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"checkJs": true, "module": "nodenext", "target": "ES2022", "resolveJsonModule": true}, "exclude": ["node_modules", "test"]}
+{"compilerOptions": {"module": "commonJS", "target": "es6"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./src/*"], "@/*": ["./src/*"], "~~/*": ["./*"], "@@/*": ["./*"]}}, "exclude": ["node_modules", ".nuxt", "dist", ".nuxt-storybook", "storybook-static"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/utils/*": ["utils/*"], "@/assets/*": ["assets/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["components/*"], "@contexts/*": ["context/*"], "@helpers/*": ["helpers/*"], "@modelos/*": ["modelos/*"], "@hooks/*": ["hooks/*"], "@assets/*": ["assets/*"], "@config/*": ["config/*"], "@pages/*": ["pages/*"]}}}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src", "src/components", "src/config", "src/errors", "src/pages", "src/utils"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["./src/components/*"]}}, "exclude": ["node_modules", "build"], "target": "ES6", "allowSyntheticDefaultImports": true}
+{"compilerOptions": {"baseUrl": "src", "paths": {"@/*": ["./*"]}}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"typeAcquisition": {"include": ["jest"]}, "compilerOptions": {}}
+{"compilerOptions": {"baseUrl": "src", "paths": {"@/*": ["./*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./app/javascript/*"]}}, "exclude": ["node_modules", "build", "dist"]}
+{"404": "Not Found"}
+{"compilerOptions": {"baseUrl": "src", "paths": {"~/*": ["*"]}}}
+{"compilerOptions": {"module": "es2020", "moduleResolution": "node", "checkJs": true, "target": "es6", "resolveJsonModule": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es2018", "experimentalDecorators": true, "baseUrl": "./"}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["*", "src/*", "src/app/*", "src/theme/*", "src/assets/*"]}}}
+{"jumpToAliasFile.alias": {"@": "/Users/xxx/project/src"}, "jumpToAliasFile.webpeckConfigPath": "./webpack.config.json", "compilerOptions": {"target": "es2017", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"styles/*": ["src/config/*"], "components/*": ["src/components/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./src/*"], "@css/*": ["./src/pcss/*"], "@js/*": ["./src/js/*"]}}, "exclude": ["node_modules", "web", "storage"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/config": ["config/index.js"], "@/hooks/*": ["hooks/*"], "@/styles/*": ["styles/*"], "@/utils/*": ["utils/*"]}}}
+{"include": ["./components/**/*", "./layouts/**/*", "./pages/**/*", "./store/**/*", "./utils/**/*"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"target": "ES6", "allowSyntheticDefaultImports": true, "baseUrl": "./", "paths": {"~/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"include": ["src/**/**.js"]}
+{"compilerOptions": {"baseUrl": "./src", "checkJs": true, "jsx": "react"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src": ["./src/*"], "assets": ["./assets/*"], "appConstants": ["./appConstants"]}}}
+{"compilerOptions": {"experimentalDecorators": true}, "exclude": ["node_modules", "build", "flow-typed", ".github"]}
+{"compilerOptions": {"types": ["@league-of-foundry-developers/foundry-vtt-types"]}}
+{"compilerOptions": {"module": "esnext", "target": "esnext", "strict": true, "checkJs": true, "forceConsistentCasingInFileNames": true, "useUnknownInCatchVariables": false, "moduleResolution": "node", "noImplicitAny": false}, "include": ["theme/modules/**/fields.js", "build/**/*"]}
+{"compilerOptions": {"jsx": "react", "baseUrl": "src"}, "include": ["src", "pages/index.tsx"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["*"], "@/components/*": ["components/*"]}}}
+{"compilerOptions": {"target": "es6", "module": "es6", "baseUrl": ".", "paths": {"MobiusUI": ["./src/libs/mobius-ui.js"], "MobiusJS": ["./src/libs/mobius-js.js"], "MobiusUtils": ["./src/libs/mobius-utils.js"], "Libs/*": ["./src/libs/*"], "Interface/*": ["./src/interface/*"], "Business/*": ["./src/business/*"]}}, "exclude": ["node_modules", "dist", "build"]}
+{"compilerOptions": {"target": "ES6", "module": "es2015", "experimentalDecorators": true}, "exclude": ["node_modules", "bower_components"]}
+{"include": ["*.js", "libraries/*.js", "c:\\Users\\vinic\\.vscode\\extensions\\samplavigne.p5-vscode-1.2.11\\p5types\\global.d.ts"]}
+{"compilerOptions": {"outDir": "./dist", "baseUrl": "./src", "target": "es2015", "module": "commonjs", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*", "dist"]}
+{"exclude": ["node_modules", "docs", "website"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./src/*"]}}, "include": ["src/**/*"], "exclude": ["dist", "node_modules"]}
+{"checkJs": true, "jsx": "react", "compilerOptions": {"baseUrl": "src"}}
+{"compilerOptions": {"allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"@assets/*": ["./assets/*"], "@icons": ["./assets/icons"], "@styles/*": ["./src/styles/*"], "@utils": ["./src/utils"], "@utils/*": ["./src/utils/*"], "@components": ["./src/components"], "@components/*": ["./src/components/*"], "@containers": ["./src/containers"], "@containers/*": ["./src/containers/*"], "@selectors": ["./src/selectors"], "@selectors/*": ["./src/selectors/*"], "@slices": ["./src/modules"], "@slices/*": ["./src/modules/*"], "@layouts": ["./src/layouts"], "@layouts/*": ["./src/layouts/*"], "@pages": ["./src/pages"], "@pages/*": ["./src/pages/*"], "@sagas": ["./src/sagas"], "@sagas/*": ["./src/sagas/*"], "@api": ["./src/api"], "@api/*": ["./src/api/*"], "@types": ["./src/types"], "@types/*": ["./src/types/*"], "@src/*": ["./src/*"]}}, "exclude": ["node_modules", "dist", "docker"]}
+{"compilerOptions": {"types": ["jest", "node"]}}
+{"compilerOptions": {"target": "ES2022", "lib": ["ES2022"], "module": "NodeNext", "moduleResolution": "NodeNext"}}
+{"compilerOptions": {"sourceMap": true, "target": "es6", "module": "esnext", "moduleResolution": "node", "baseUrl": ".", "paths": {"*": ["src/*", "*"]}}}
+{"compilerOptions": {"baseUrl": ".", "forceConsistentCasingInFileNames": false, "paths": {"~/*": ["./*"], "@/*": ["./src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"baseUrl": ".", "include": ["src/**/*", "tests/**/*"]}
+{"description": "DO NOT EDIT. THIS FILE IS GENERATED BY config/aliases.js.", "compilerOptions": {"baseUrl": "src", "paths": {"@": ["src/src"], "@styles": ["src/styles"], "@lib": ["src/lib"], "@store": ["src/store"], "@actions": ["src/actions"], "@hooks": ["src/hooks"], "@routes": ["src/routes"], "@components": ["src/components"], "@constants": ["src/constants"], "@assets": ["src/assets"], "@workers": ["src/workers"], "@messages": ["src/messages"]}}}
+{"compilerOptions": {"paths": {"#public/*": ["./src/frontend/public/*"], "#assets/*": ["./src/frontend/public/assets/*"], "#helpers/*": ["./src/helpers/*.js"], "#hooks/*": ["./src/frontend/public/hooks/*"], "#pages/*": ["./src/frontend/public/pages/*"], "#utils/*": ["./src/frontend/public/utils/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@layouts/*": ["layouts/*"], "@components/*": ["components/*"], "@formatters/*": ["formatters/*"], "@ctf": ["ctf/*"], "@styles/*": ["styles/*"], "@hooks/*": ["hooks/*"], "@gstyles/*": ["gstyles/*"], "@services/*": ["services/*"], "@utils/*": ["utils/*"]}}}
+{"compilerOptions": {"watch": true, "target": "ES6", "lib": ["es6", "ES2017", "dom", "dom.iterable", "scripthost"], "noImplicitAny": false, "noImplicitThis": false, "strictNullChecks": false, "sourceMap": true, "strictFunctionTypes": false, "strictPropertyInitialization": false, "noImplicitReturns": false, "noFallthroughCasesInSwitch": false, "allowJs": true, "strict": true, "alwaysStrict": false, "checkJs": false, "outDir": "../../public/dist", "jsx": "react", "allowSyntheticDefaultImports": false, "moduleResolution": "NodeNext", "allowUmdGlobalAccess": true, "noResolve": false, "module": "AMD", "baseUrl": ".", "paths": {"react": ["../../node_modules/react"], "react-dom": ["../../node_modules/react-dom"], "@pages/*": ["../../src/pages/"], "@router": ["../../src/router"]}}, "isolatedModules": false, "include": ["./src/*/*", "./"]}
+{"compilerOptions": {"module": "commonjs", "target": "esnext", "jsx": "preserve"}, "exclude": ["dist", "node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"moduleResolution": "Node", "target": "ESNext", "module": "ESNext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": false, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/animating-properties/*": ["/src/animating-properties/*"], "@/src/*": ["/src/*"]}}}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"/src/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"Models": ["src/models"], "Resolvers": ["src/resolvers"], "Helpers": ["src/helpers"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}, "types": ["@dcloudio/types", "miniprogram-api-typings", "mini-types"]}, "exclude": ["node_modules", "dist"], "include": ["src/**/*"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "preserve", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": "./src"}, "include": ["src", "setupProxy.js"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"contentlayer/generated": ["./.contentlayer/generated"]}}, "include": ["next-env.d.ts", "**/*.tsx", "**/*.ts", ".contentlayer/generated"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"components/*": ["src/components/*"], "data/*": ["src/data/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components": ["./components/index"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"], "@/*": ["./*"], "~~/*": ["./*"], "@@/*": ["./*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"@jumbo*": ["@jumbo*"]}}}
+{"compilerOptions": {"baseUrl": "src", "target": "es6"}, "baseUrl": ["src/"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@api/*": ["src/api/*"], "@config/*": ["src/config/*"], "@loaders/*": ["src/loaders/*"], "@models/*": ["src/models/*"], "@util/*": ["src/util/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "include": ["src/*"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"~/*": ["*"]}}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "esnext", "target": "ES6", "jsx": "react", "baseUrl": "./src"}}
+{"compilerOptions": {"baseUrl": "./app/packs", "paths": {"@/*": ["./app/packs/*"]}}, "exclude": ["node_modules", "public"]}
+{"source": {"includePattern": ".+\\.ts?$", "excludePattern": ".+\\.(test|spec).ts"}, "plugins": ["node_modules/jsdoc-babel"], "babel": {"extensions": ["ts"], "babelrc": false, "presets": [["@babel/preset-env", {"targets": {"node": true}}], "@babel/preset-typescript"], "plugins": ["@babel/proposal-class-properties", "@babel/proposal-object-rest-spread"]}}
+{"compilerOptions": {"target": "es6", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "system"}}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"allowJs": true, "checkJs": true, "esModuleInterop": true, "forceConsistentCasingInFileNames": true, "resolveJsonModule": true, "skipLibCheck": true, "sourceMap": true, "module": "NodeNext", "moduleResolution": "NodeNext"}}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["build", "node_modules", "temp", "tmp"]}
+{"compilerOptions": {"baseUrl": "src", "jsx": "react"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["*"], "dev/*": ["dev/*"], "src/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@assets": ["./src/assets"], "@components": ["./src/components"], "@services": ["./src/services"], "@store": ["./src/store"], "@routers": ["./src/routers"], "@utils": ["./src/utils"]}, "target": "es6", "lib": ["dom", "dom.iterable", "esnext"], "skipLibCheck": true, "esModuleInterop": true, "allowSyntheticDefaultImports": true, "strict": false, "forceConsistentCasingInFileNames": true, "module": "esnext", "moduleResolution": "node", "resolveJsonModule": true, "isolatedModules": true, "noEmit": true, "jsx": "react-jsx", "noImplicitAny": false, "noFallthroughCasesInSwitch": true}, "include": ["src"]}
+{"files": ["index.js"], "exclude": ["node_modules"], "typeAcquisition": {"enable": true}, "compilerOptions": {"module": "Node16", "checkJs": true, "resolveJsonModule": true, "types": ["jsonresume", "htmls"], "typeRoots": ["node_modules/@types", "types"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/resources/js/*"]}}, "exclude": ["node_modules", "public"]}
+{"include": ["*.js", "libraries/*.js", "c:\\Users\\lucas\\.vscode\\extensions\\samplavigne.p5-vscode-1.2.11\\p5types\\global.d.ts"]}
+{"compilerOptions": {"jsx": "preserve", "target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": "./", "jsx": "preserve", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp", "*.min.*", "dist"]}
+{"include": ["*.js", "libraries/*.js", "c:\\Users\\harry\\.vscode\\extensions\\samplavigne.p5-vscode-1.2.11\\p5types\\global.d.ts"]}
+{"compilerOptions": {"checkJs": true, "jsx": "react"}, "exclude": ["node_modules", "dist"], "include": ["src/**/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "stores/*": ["src/stores/*"], "vue$": ["node_modules/vue/dist/vue.runtime.esm-bundler.js"]}}, "exclude": ["dist", ".quasar", "node_modules"], "vueCompilerOptions": {"experimentalDisableTemplateSupport": true}}
+{"compilerOptions": {"baseUrl": "./src"}, "include": ["."]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["./*"]}}}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "include": ["./**/*"], "typeAcquisition": {"include": ["discord.js"]}}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"experimentalDecorators": true, "target": "es6", "module": "es6", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules", "bower_components", "jspm_packages", "tmp", "temp"]}
+{"compilerOptions": {"baseUrl": "", "jsx": "preserve", "paths": {"@/*": ["./*"]}}, "exclude": ["node_modules", "build"]}
+{"compilerOptions": {"paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/layouts": ["layouts/"], "@/components": ["components/"], "@/data/*": ["data/*"], "@/lib/*": ["lib/*"], "@/styles/*": ["styles/*"]}}}
+{"compilerOptions": {"strict": true, "checkJs": true, "target": "esnext", "lib": ["esnext", "scripthost"]}}
+{"compilerOptions": {"jsx": "preserve", "baseUrl": "./src", "paths": {"@/assets/*": ["./assets/*"], "@/utils/*": ["./utils/*"], "@/app/*": ["./app/*"]}}}
+{"compilerOptions": {"target": "ES6", "baseUrl": ".", "paths": {"@components/*": ["src/components/*"], "@config/*": ["src/config/*"], "@lib/*": ["src/lib/*"]}}}
+{"compilerOptions": {"target": "esnext", "baseUrl": "./src", "jsx": "react", "paths": {"@application/*": ["./application/*"], "@infrastructure/*": ["./infrastructure/*"], "@presentation/*": ["./presentation/*"]}}, "exclude": ["node_modules", "**/node_modules/*", "build"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "baseUrl": ".", "paths": {"@zoo/*": ["./src/*"]}}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES6", "baseUrl": "./src/", "module": "es6"}, "exclude": ["bin", "build"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"~/*": ["app/*"]}}, "include": ["app/**/*"]}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"allowJs": true, "checkJs": true, "esModuleInterop": true, "forceConsistentCasingInFileNames": true, "resolveJsonModule": true, "skipLibCheck": true, "sourceMap": true, "strict": true, "rootDirs": [".", "./.svelte-kit/types", "./$houdini/types"]}}
+{"compilerOptions": {"target": "es2015", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["*", "src/*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "target": "ES6", "jsx": "react", "moduleResolution": "node", "paths": {"@src/*": ["./src/*"]}}, "exclude": ["node_modules", "public", "build", "coverage", "dist", "lib"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/context/*": ["context/*"], "@/styles/*": ["styles/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"src/*": ["./src/*"]}}, "exclude": ["node_modules", "build"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["src/components/*"], "@/uiComponents/*": ["src/uiComponents/*"], "@/hooks/*": ["src/hooks/*"], "@/utils/*": ["src/utils/*"], "@/services/*": ["src/services/*"], "@/redux/*": ["src/redux/*"], "@/context/*": ["src/context/*"], "@/api": ["src/utils/axiosInstance"], "@secureStorage": ["src/middleware/secureStorage"]}}}
+{"compilerOptions": {"target": "ES5", "module": "commonjs", "allowSyntheticDefaultImports": true, "baseUrl": "./", "paths": {"root/*": ["./*"], "api/*": ["src/api/*"], "config/*": ["src/config/*"], "controllers/*": ["src/controllers/*"], "db/*": ["src/db/*"], "models/*": ["src/models/*"]}}, "exclude": ["dist", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}, "target": "ES6", "module": "commonjs", "allowSyntheticDefaultImports": true}, "include": ["src/**/*"], "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "ES6", "checkJs": false, "lib": ["ES6"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@/*": ["src/*"]}}}
+{"include": ["packages/*/*.js"], "exclude": ["node_modules"], "compilerOptions": {"allowJs": true, "declaration": true, "declarationDir": ".", "declarationMap": true, "module": "esnext", "moduleResolution": "node", "skipLibCheck": true, "sourceMap": true, "strict": true, "target": "esnext"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"common/*": ["./components/common/*"], "components/*": ["./components/pages/*"], "styles/*": ["./styles/*"], "util/*": ["./util/*"]}}}
+{"compilerOptions": {"module": "ES2022", "target": "ES2022", "moduleResolution": "node"}, "include": ["fvtt", "module"], "exclude": ["**/node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "include": ["./client/**/*", "./server/**/*"]}
+{"compilerOptions": {"moduleResolution": "node", "baseUrl": ".", "paths": {"_src/*": ["src/*"], "_store/*": ["src/store/*"], "_modulus/*": ["src/modulus/*"], "_apis/*": ["src/apis/*"], "_utils/*": ["src/utils/*"], "_static/*": ["public/static/*"], "_components/*": ["src/components/*"], "_router/*": ["src/router/*"], "_layout/*": ["src/layout/*"], "_constants/*": ["src/constants/*"], "_styles/*": ["src/styles/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"newLine": "lf", "target": "ES2021", "module": "CommonJS", "outDir": "lib", "esModuleInterop": true, "moduleResolution": "node", "emitDecoratorMetadata": true, "experimentalDecorators": true, "declaration": false, "lib": ["ES6"]}, "include": ["src"], "exclude": []}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"], "@public/*": ["public/*"]}}}
+{"compilerOptions": {"rootDir": ".", "module": "commonjs", "target": "es6"}, "exclude": ["**/node_modules/*", ".git", ".npm", "**/.cache/*", "**/.tmp/*", "**/dist/*", "**/build/*", "**/*.test.js", "**/*.test.api.js", "**/examples/getstarted/*", "**/examples/kitchensink/*"]}
+{"compilerOptions": {"rootDir": ".", "module": "commonjs", "target": "es6"}, "exclude": ["**/node_modules/*", ".git", ".npm", "**/.cache/*", "**/.tmp/*", "**/dist/*", "**/build/*", "**/*.test.js", "**/*.test.api.js", "**/examples/getstarted/*", "**/examples/kitchensink/*"]}
+{"compilerOptions": {"rootDir": ".", "module": "commonjs", "target": "es6"}, "exclude": ["**/node_modules/*", ".git", ".npm", "**/.cache/*", "**/.tmp/*", "**/dist/*", "**/build/*", "**/*.test.js", "**/*.test.api.js", "**/examples/getstarted/*", "**/examples/kitchensink/*"]}
+{"compilerOptions": {"rootDir": ".", "module": "commonjs", "target": "es6"}, "exclude": ["**/node_modules/*", ".git", ".npm", "**/.cache/*", "**/.tmp/*", "**/dist/*", "**/build/*", "**/*.test.js", "**/*.test.api.js", "**/examples/getstarted/*", "**/examples/kitchensink/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"store/*": ["./src/store/*"], "components/*": ["./src/components/*"], "styles/*": ["./src/styles/*"], "renderer/*": ["./src/renderer/*"], "utils/*": ["./src/utils/*"], "assets/*": ["./src/assets/*"], "proto_bundle/*": ["./proto_bundle/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"store/*": ["./src/store/*"], "components/*": ["./src/components/*"], "styles/*": ["./src/styles/*"], "renderer/*": ["./src/renderer/*"], "utils/*": ["./src/utils/*"], "assets/*": ["./src/assets/*"], "proto_bundle/*": ["./proto_bundle/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"store/*": ["./src/store/*"], "components/*": ["./src/components/*"], "styles/*": ["./src/styles/*"], "renderer/*": ["./src/renderer/*"], "utils/*": ["./src/utils/*"], "assets/*": ["./src/assets/*"], "proto_bundle/*": ["./proto_bundle/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "es2017", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"@ui5/webcomponents-base/dist/*": ["../base/src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"target": "es2017", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"@ui5/webcomponents-base/dist/*": ["../base/src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"target": "es2017", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"@ui5/webcomponents-base/dist/*": ["../base/src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"target": "es2017", "allowSyntheticDefaultImports": false, "baseUrl": "./", "paths": {"@ui5/webcomponents-base/dist/*": ["../base/src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"allowJs": true, "checkJs": true, "esModuleInterop": true, "forceConsistentCasingInFileNames": true, "resolveJsonModule": true, "skipLibCheck": true, "sourceMap": true, "strict": true}}
+{"compilerOptions": {"target": "ES6", "module": "system"}}
+{"compilerOptions": {"baseUrl": "reactapp", "module": "CommonJS", "target": "ES6"}, "include": ["reactapp"], "exclude": ["node_modules", "tethysapp"]}
+{"compilerOptions": {"allowJs": true, "allowSyntheticDefaultImports": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "baseUrl": "./src"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES6", "baseUrl": "./src"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES6", "baseUrl": "./src"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"target": "ES6", "baseUrl": "./src"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"*": ["types/*", "*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"*": ["types/*", "*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"*": ["types/*", "*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"*": ["types/*", "*"]}}}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "exclude": ["node_modules"]}
+{"allowJs": true}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"~/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"~/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"~/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"~/*": ["./*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/utils/*": ["utils/*"]}}}
+{"compilerOptions": {"baseUrl": "src", "paths": {"@/*": ["./*"]}}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/modules/*": ["modules/*"], "@/packages/*": ["packages/*"], "@/containers/*": ["containers/*"], "@/hooks/*": ["hooks/*"], "@/hocs/*": ["hocs/*"], "@/utils/*": ["utils/*"], "@/services/*": ["services/*"], "@/layouts/*": ["layouts/*"], "@/imgs/*": ["assets/images/*"], "@/icons/*": ["assets/icons/*"], "@/locales/*": ["assets/locales/*"], "@/context/*": ["context/*"], "@/store/*": ["store/*"], "@/features/*": ["features/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "checkJs": true, "jsx": "react"}}
+{"compilerOptions": {"baseUrl": "./src", "checkJs": true, "jsx": "react"}}
+{"compilerOptions": {"baseUrl": "./src", "checkJs": true, "jsx": "react"}}
+{"compilerOptions": {"baseUrl": "./src", "checkJs": true, "jsx": "react"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src": ["./src/*"], "assets": ["./assets/*"], "appConstants": ["./appConstants"]}}}
+{"compilerOptions": {"target": "ES6", "module": "es2015", "experimentalDecorators": true}, "exclude": ["node_modules", "bower_components"]}
+{"compilerOptions": {"types": ["jest", "node"]}}
+{"baseUrl": ".", "include": ["src/**/*", "tests/**/*"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "preserve", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "preserve", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "preserve", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "ESNext", "moduleResolution": "Node", "target": "ES2020", "jsx": "preserve", "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": "./src"}, "include": ["src", "setupProxy.js"]}
+{"compilerOptions": {"baseUrl": "./src"}, "include": ["src", "setupProxy.js"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"@jumbo*": ["@jumbo*"]}}}
+{"compilerOptions": {"target": "es6", "allowSyntheticDefaultImports": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "system"}}
+{"compilerOptions": {"target": "ES6", "module": "system"}}
+{"compilerOptions": {"jsx": "preserve", "target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"jsx": "preserve", "target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"jsx": "preserve", "target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"jsx": "preserve", "target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"include": ["*.js", "libraries/*.js", "c:\\Users\\harry\\.vscode\\extensions\\samplavigne.p5-vscode-1.2.11\\p5types\\global.d.ts"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"extends": "./.svelte-kit/tsconfig.json", "compilerOptions": {"allowJs": true, "checkJs": true, "esModuleInterop": true, "forceConsistentCasingInFileNames": true, "resolveJsonModule": true, "skipLibCheck": true, "sourceMap": true, "strict": true, "rootDirs": [".", "./.svelte-kit/types", "./$houdini/types"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["*", "src/*"]}}}
+{"compilerOptions": {"baseUrl": "./", "paths": {"src/*": ["./src/*"]}}, "exclude": ["node_modules", "build"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "include": ["./client/**/*", "./server/**/*"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "include": ["./client/**/*", "./server/**/*"]}
+{"compilerOptions": {"moduleResolution": "nodenext", "target": "ES2021", "checkJs": true, "allowJs": true}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@/*": ["./*"]}}}
+{"compilerOptions": {"checkJs": true, "lib": ["es2017"]}, "include": ["src/**/*.js"]}
+{"include": ["./components/**/*", "./layout/**/*", "./pages/**/*"]}
+{"compilerOptions": {"target": "ES5"}, "exclude": ["node_modules", "dist", "test"]}
+{"typeAcquisition": {"include": ["qooxdoo"]}, "include": ["source/**/*", "typings/*"]}
+{"compilerOptions": {"checkJs": true, "jsx": "react"}}
+{"include": ["./src/**/*"], "compilerOptions": {"module": "es2015", "moduleResolution": "node", "target": "es5", "sourceMap": true, "allowJs": true}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"/*": ["./*"]}}}
+{"compilerOptions": {"target": "es2017"}, "include": ["src/module/**/*", "src/module-vendor/**/*", "src/suite/**/*", "src/suite-vendor/**/*", "node_modules/egg-born-*/**/*"], "exclude": ["node_modules", "**/dist/**", "**/*.min.js", "backend/cli/templates"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src", "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}}
+{"compilerOptions": {"target": "es2017", "checkJs": true, "moduleResolution": "node", "esModuleInterop": true, "lib": ["es6"], "baseUrl": "./"}, "exclude": ["node_modules", "dist"], "include": ["./src/**/*", "tests/**/*", "./typings"]}
+{"compilerOptions": {"baseUrl": "src"}}
+{"SPDX-FileCopyrightText": "2023 Gonzalo Bulnes Guilpain", "SPDX-License-Identifier": "CC0-1.0"}
+{"compilerOptions": {"target": "es2017", "baseUrl": ".", "module": "es6", "paths": {"Components/*": ["src/components/*"], "Styles/*": ["src/styles/*"], "Store/*": ["src/store/*"], "Containers/*": ["src/containers/*"], "Pages/*": ["src/pages/*"], "Utils/*": ["src/utils/*"]}}, "exclude": ["node_modules", "dist"]}
+{"canvas": {"background": "rgba(0,0,0,0.75)"}, "particles": {"number": {"value": 80, "density": {"enable": true, "value_area": 800}}, "color": {"value": "#eee"}, "shape": {"type": "circle", "stroke": {"width": 0, "color": "#eeeeee"}, "polygon": {"nb_sides": 5}, "image": {"src": "img/github.svg", "width": 100, "height": 100}}, "opacity": {"value": 0.5, "random": false, "anim": {"enable": false, "speed": 1, "opacity_min": 0.1, "sync": false}}, "size": {"value": 1, "random": true, "anim": {"enable": false, "speed": 40, "size_min": 0.1, "sync": false}}, "line_linked": {"enable": true, "distance": 150, "color": "#ffffff", "opacity": 0.4, "width": 1}, "move": {"enable": true, "speed": 2, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false, "attract": {"enable": false, "rotateX": 600, "rotateY": 1200}}}, "interactivity": {"detect_on": "canvas", "events": {"onhover": {"enable": true, "mode": "grab"}, "onclick": {"enable": true, "mode": "push"}, "resize": true}, "modes": {"grab": {"distance": 140, "line_linked": {"opacity": 1}}, "bubble": {"distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3}, "repulse": {"distance": 200, "duration": 0.4}, "push": {"particles_nb": 1}, "remove": {"particles_nb": 2}}}, "retina_detect": true}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"], "@": ["src/"]}}}
+{"$schema": "https://cli.sasjs.io/sasjsconfig-schema.json", "macroFolders": ["macros"], "programFolders": ["programs"], "docConfig": {"displayMacroCore": false, "outDirectory": "sasjsbuild/docs"}}
+{"particles": {"number": {"value": 5, "density": {"enable": true, "value_area": 800}}, "color": {"value": "#ff2e34"}, "shape": {"type": "circle", "stroke": {"width": 0, "color": "#000"}, "polygon": {"nb_sides": 6}, "image": {"src": "img/github.svg", "width": 100, "height": 100}}, "opacity": {"value": 0.05, "random": false, "anim": {"enable": false, "speed": 1, "opacity_min": 0.1, "sync": false}}, "size": {"value": 150, "random": true, "anim": {"enable": true, "speed": 10, "size_min": 10, "sync": false}}, "line_linked": {"enable": true, "distance": 200, "color": "#ffffff", "opacity": 0.1, "width": 4.5770563214671816}, "move": {"enable": true, "speed": 3, "direction": "none", "random": false, "straight": false, "out_mode": "out", "bounce": false, "attract": {"enable": false, "rotateX": 600, "rotateY": 1200}}}, "interactivity": {"detect_on": "canvas", "events": {"onhover": {"enable": false, "mode": "grab"}, "onclick": {"enable": false, "mode": "push"}, "resize": true}, "modes": {"grab": {"distance": 400, "line_linked": {"opacity": 1}}, "bubble": {"distance": 400, "size": 40, "duration": 2, "opacity": 8, "speed": 3}, "repulse": {"distance": 200, "duration": 0.4}, "push": {"particles_nb": 4}, "remove": {"particles_nb": 2}}}, "retina_detect": true}
+{"compilerOptions": {"checkJs": true, "module": "commonjs", "target": "es2019"}, "exclude": ["node_modules"], "typeAcquisition": {"include": ["mocha", "chai"]}}
+{"compilerOptions": {"target": "ES6", "module": "commonjs"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "jsx": "react", "allowSyntheticDefaultImports": true, "baseUrl": "./", "paths": {"@moderntribe/tickets": ["./src/modules"], "@moderntribe/common": ["./common/src/modules"]}}, "include": ["src/modules", "common/src/modules"], "exclude": ["**/node_modules/*", "**/resources/*", "**/Tribe/*"]}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {"c/lwcCmp": ["lwcCmp/lwcCmp.js"]}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "typeAcquisition": {"include": ["jest"]}}
+{"compilerOptions": {"target": "es6", "module": "commonjs", "experimentalDecorators": true, "allowSyntheticDefaultImports": true, "baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"module": "es6", "baseUrl": ".", "paths": {"@components/*": ["./components/*"], "@layout": ["./components/layout/"], "@svg/*": ["./components/svg/*"], "@content/*": ["./content/*"], "@images/*": ["./content/images/*"], "@data/*": ["./data/*"], "@pages/*": ["./pages/*"], "@public/*": ["./public/*"], "@styles/*": ["./styles/*"], "@utils/*": ["./utils/*"], "@hooks": ["./utils/hooks/"], "@hooks/*": ["./utils/hooks/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"checkJs": true, "jsx": "react-jsx", "skipLibCheck": true}}
+{"compilerOptions": {"target": "es2015", "module": "esnext", "baseUrl": "./", "paths": {"@/*": ["src/*"]}, "jsx": "preserve"}, "include": ["src/**/*.vue", "src/**/*.js"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~components": ["./src/components"], "~image": ["./src/assets/image"], "~assets": ["./src/assets"], "~sections": ["./src/sections"], "~data": ["./src/data"], "~styled": ["./src/styles"]}}}
+{"compilerOptions": {"baseUrl": "src", "jsx": "preserve"}, "exclude": ["node_modules", "build"], "include": ["src"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"~/*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": "."}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"_assets": ["src/assets/*"], "_components": ["src/components/*"], "_redux": ["src/redux/*"], "_routes": ["src/routes/*"], "_navigations": ["src/navigations/*"], "_services": ["src/services/*"], "_screens": ["src/screens/*"], "_styles": ["src/styles/*"], "_utils": ["src/utils/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/layouts/*": ["layouts/*"], "@/lib/*": ["lib/*"], "@/data/*": ["data/*"], "@/css/*": ["css/*"]}}}
+{"compilerOptions": {"jsx": "react", "baseUrl": ".", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"jsx": "react", "module": "commonjs", "target": "es6"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "assets/*": ["src/assets/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/docs/vue.esm.js"]}}, "exclude": ["docs", ".quasar", "node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "types": ["cypress", "@testing-library/cypress"], "paths": {"$lib": ["src/lib"], "$lib/*": ["src/lib/*"], "$components": ["src/lib/shared/components"], "$components/*": ["src/lib/shared/components/*"], "$ui": ["src/lib/shared/ui"], "$ui/*": ["src/lib/shared/ui/*"], "$store": ["src/lib/core/stores"], "$store/*": ["src/lib/core/stores/*"], "$core": ["src/lib/core"], "$core/*": ["src/lib/core/*"], "$constants": ["src/lib/core/constants"], "$constants/*": ["src/lib/core/constants/*"], "$graphql": ["src/lib/core/graphql"], "$grapqhl/*": ["src/lib/core/graphql/*"], "$environment": ["src/lib/environments"], "$data": ["src/lib/data"], "$utils": ["src/lib/utils"]}}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte", "src/service-worker.js-"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["components/*"], "@data/*": ["data/*"], "@utils/*": ["utils/*"], "@layouts/*": ["layouts/*"], "@lib/*": ["lib/*"], "@styles/*": ["styles/*"], "@hooks/*": ["hooks/*"], "@constants/*": ["constants/*"]}}}
+{"include": ["*.js", "libraries/*.js", "c:\\Users\\Raul Zaldana\\.vscode\\extensions\\samplavigne.p5-vscode-1.2.8\\p5types\\global.d.ts"]}
+{"compilerOptions": {"target": "ES5", "module": "commonjs"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES5"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "target": "es2019", "paths": {"src/*": ["src/*"], "app/*": ["*"], "components/*": ["src/components/*"], "layouts/*": ["src/layouts/*"], "pages/*": ["src/pages/*"], "boot/*": ["src/boot/*"], "vue$": ["node_modules/vue/dist/vue.esm.js"]}}, "exclude": ["dist", ".quasar", "node_modules"]}
+{"compilerOptions": {"target": "es5", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"], "jsx": "preserve"}}
+{"compilerOptions": {"module": "commonjs", "target": "es6", "checkJs": true, "lib": ["es6"]}, "exclude": ["node_modules"]}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "paths": {"c/*": ["*"]}, "typeAcquisition": {"include": ["jest"]}}
+{"compilerOptions": {"checkJs": true, "module": "commonJS", "target": "es6", "lib": ["es2019"], "moduleResolution": "node", "sourceMap": true, "alwaysStrict": true, "resolveJsonModule": true}, "exclude": ["node_modules"]}
+{"compilerOptions": {"target": "ES6"}, "files": ["src/"], "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"], "@/*": ["./*"], "~~/*": ["./*"], "@@/*": ["./*"]}}, "exclude": [".nuxt", "dist", "node_modules"]}
+{"wvue": true}
+{"compilerOptions": {"allowSyntheticDefaultImports": true, "target": "es6", "module": "commonjs"}, "exclude": ["node_modules", "bower_components", "tmp", "temp", "jspm_packages"]}
+{"compilerOptions": {"target": "es2015", "module": "es2015", "strict": true, "jsx": "preserve", "outDir": "dist"}, "exclude": ["dist", "node_modules", "public"]}
+{"compilerOptions": {"jsx": "react", "allowSyntheticDefaultImports": true, "baseUrl": ".", "paths": {"*": ["*"], "app/*": ["src/*"], "oss-app/*": ["src/*"]}}, "include": ["src/**/*"], "exclude": ["node_modules", "dist"]}
+{"include": ["*.js", "libraries/*.js", "/Users/air-ck/.vscode/extensions/samplavigne.p5-vscode-1.2.11/p5types/global.d.ts"]}
+{"include": ["*.js", "libraries/*.js", "c:\\Users\\0101162\\.vscode\\extensions\\wmcicompsci.cs30-p5-1.5.0\\p5types\\global.d.ts"]}
+{"compilerOptions": {"target": "ES2022", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"module": "commonjs", "target": "esnext", "lib": ["esnext"], "strict": true, "noImplicitAny": false, "sourceMap": false}}
+{"compilerOptions": {"paths": {"@/*": ["./src/*"], "@/controllers": ["./src/utils/database/controllers"], "@/models": ["./src/utils/database/models"], "@/style": ["./src/styles/components"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["src/*"], "test/*": ["test/*"]}}}
+{"include": ["*.js", "libraries/*.js", "/Users/michelemauri/.vscode/extensions/samplavigne.p5-vscode-1.2.11/p5types/global.d.ts"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"*": ["*"]}}}
+{"include": ["./example/src/**/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["../../../../../../../../var/folders/8l/n9c3jh5918q11gvbhk9rs4rm0000gn/T/hugo_cache/modules/filecache/modules/pkg/mod/github.com/wowchemy/wowchemy-hugo-modules/wowchemy/v5@v5.0.0-20220423180919-17d5d3f0ca43/assets/*"]}}}
+{"compilerOptions": {"target": "es2020", "module": "esnext", "composite": true, "checkJs": true, "lib": ["esnext", "dom"], "esModuleInterop": true, "moduleResolution": "node", "allowSyntheticDefaultImports": true}, "include": ["./**/*"], "typeAcquisition": {"enable": true}}
+{"compilerOptions": {"module": "commonjs", "target": "es2016", "jsx": "preserve", "baseUrl": "./src"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": ".", "checkJs": false, "paths": {"@/*": ["./src/*"]}}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"jsx": "react-native", "allowSyntheticDefaultImports": false, "experimentalDecorators": true, "baseUrl": ".", "paths": {"~/*": ["src/*"]}}, "include": ["src/**/*"], "exclude": ["node_modules"]}
+{"compilerOptions": {"experimentalDecorators": true, "baseUrl": ".", "paths": {"c/propertyFiltersLwcStep4": ["propertyFiltersLwcStep4/propertyFiltersLwcStep4.js"], "c/propertyFiltersLwcStep6": ["propertyFiltersLwcStep6/propertyFiltersLwcStep6.js"], "c/propertyTileListLwcStep3": ["propertyTileListLwcStep3/propertyTileListLwcStep3.js"], "c/propertyTileListLwcStep5": ["propertyTileListLwcStep5/propertyTileListLwcStep5.js"], "c/propertyTileListLwcStep6": ["propertyTileListLwcStep6/propertyTileListLwcStep6.js"], "c/propertyTileLwcStep2": ["propertyTileLwcStep2/propertyTileLwcStep2.js"], "c/propertyTileLwcStep3": ["propertyTileLwcStep3/propertyTileLwcStep3.js"]}}, "include": ["**/*", "../../../../.sfdx/typings/lwc/**/*.d.ts"], "typeAcquisition": {"include": ["jest"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"*": ["./src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"common/*": ["./common/*"], "controller/*": ["./controller/*"], "static/*": ["./static/*"], "pages/*": ["./pages/*"], "config/*": ["./config/*"]}}, "include": ["**/*.js"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/pages/*": ["pages/*"], "@/lib/*": ["lib/*"], "@/mappers/*": ["mappers/*"]}}}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"], "exclude": ["nove_modules"]}
+{"compilerOptions": {"module": "commonjs", "target": "es6"}, "typeAcquisition": {"include": ["jquery"]}}
+{"compilerOptions": {"rootDir": "src", "baseUrl": "./src", "sourceMap": true, "jsx": "react", "moduleResolution": "node", "allowSyntheticDefaultImports": false, "esModuleInterop": true}, "include": ["src/**/*"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"allowJs": true, "checkJs": true, "esModuleInterop": true, "forceConsistentCasingInFileNames": true, "resolveJsonModule": true, "skipLibCheck": true, "sourceMap": true, "strict": false}}
+{"compilerOptions": {"moduleResolution": "node", "target": "es6", "module": "commonjs", "baseUrl": "./"}, "include": ["src/**/*"], "exclude": ["node_modules/*", "src/dist/*", "src/public/*", ".next"]}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "checkJs": true}, "exclude": ["node_modules"]}
+{"exclude": ["node_modules", "**/node_modules/*", "public/build/*"], "include": ["**/*.js", "**/*.jsx"], "compilerOptions": {"lib": ["DOM", "DOM.Iterable", "ES2019"], "isolatedModules": true, "esModuleInterop": true, "jsx": "react-jsx", "moduleResolution": "node", "resolveJsonModule": true, "target": "ES2019", "strict": true, "allowJs": true, "forceConsistentCasingInFileNames": true, "baseUrl": ".", "paths": {"~/*": ["./app/*"]}, "noEmit": true}}
+{"compilerOptions": {"target": "es6", "baseUrl": "src"}, "exclude": ["node_modules"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["./src/*"]}}}
+{"compilerOptions": {"target": "ES6", "module": "commonjs", "allowSyntheticDefaultImports": true, "paths": {"*": ["*"]}}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"baseUrl": ".", "include": ["src/**/*", "tests/**/*"], "compilerOptions": {"baseUrl": ".", "target": "esnext", "module": "es2015", "paths": {"@/*": ["./*"], "@": ["./index.js", "./index.json", "./index.vue", "./index.scss", "./index.css"], "@src/*": ["src/*"], "@src": ["src/index.js", "src/index.json", "src/index.vue", "src/index.scss", "src/index.css"], "@router/*": ["src/router/*"], "@router": ["src/router/index.js", "src/router/index.json", "src/router/index.vue", "src/router/index.scss", "src/router/index.css"], "@views/*": ["src/router/views/*"], "@views": ["src/router/views/index.js", "src/router/views/index.json", "src/router/views/index.vue", "src/router/views/index.scss", "src/router/views/index.css"], "@layouts/*": ["src/router/layouts/*"], "@layouts": ["src/router/layouts/index.js", "src/router/layouts/index.json", "src/router/layouts/index.vue", "src/router/layouts/index.scss", "src/router/layouts/index.css"], "@components/*": ["src/components/*"], "@components": ["src/components/index.js", "src/components/index.json", "src/components/index.vue", "src/components/index.scss", "src/components/index.css"], "@assets/*": ["src/assets/*"], "@assets": ["src/assets/index.js", "src/assets/index.json", "src/assets/index.vue", "src/assets/index.scss", "src/assets/index.css"], "@utils/*": ["src/utils/*"], "@utils": ["src/utils/index.js", "src/utils/index.json", "src/utils/index.vue", "src/utils/index.scss", "src/utils/index.css"], "@state/*": ["src/state/*"], "@state": ["src/state/index.js", "src/state/index.json", "src/state/index.vue", "src/state/index.scss", "src/state/index.css"], "@design/*": ["src/design/index.scss/*"], "@design": ["src/design/index.scss"]}}}
+{"compilerOptions": {"target": "es6", "module": "es2015"}, "include": ["src/**/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["./*"], "@/*": ["./src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"rootDir": ".", "outDir": "dist/", "baseUrl": "./server/", "target": "es2018"}, "include": ["**/*.js", "**/*.jsx"]}
+{"compilerOptions": {"target": "es6", "checkJs": true, "rootDirs": ["lib"]}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["sr/components/*"], "@/controllers/*": ["controllers/*"], "@/lib/*": ["lib/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "jsx": "react"}, "exclude": ["node_modules", "build"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules", "dist"]}
+{"compilerOptions": {"baseUrl": "lib/"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"#/*": ["src/*"]}}, "exclude": ["node_modules"]}
+{"typeAcquisition": {"include": ["jest"]}}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"app/*": ["app/*", "app/*/index.mjs"], "config": ["config/production.mjs"], "env/*": ["server/*"]}, "module": "commonJS", "target": "esnext", "moduleResolution": "classic", "jsx": "react"}, "exclude": ["node_modules", "lib", "static"]}
+{"compilerOptions": {"baseUrl": "src/"}, "include": ["src/*/"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/pages/*": ["pages/*"], "@/styles/*": ["styles/*"], "@/utils/*": ["utils/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"$app/*": [".svelte/dev/runtime/app/*", ".svelte/build/runtime/app/*"], "$lib/*": ["src/lib/*"], "$stores/*": ["src/stores/*"], "$utils/*": ["src/utils/*"]}}, "include": ["src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src", "jsconfig.json"]}
+{"include": ["*.js", "libraries/*.js", "c:\\Users\\willa\\.vscode\\extensions\\wmcicompsci.cs30-p5-1.5.0\\p5types\\global.d.ts"]}
+{"compilerOptions": {"moduleResolution": "node", "target": "esnext", "module": "esnext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "baseUrl": ".", "checkJs": false}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"baseUrl": "src", "checkJs": true, "jsx": "react"}}
+{"compilerOptions": {"module": "ESNext", "target": "es2020", "lib": ["ESNext", "DOM"], "esModuleInterop": true, "strict": true, "strictNullChecks": true, "moduleResolution": "Node", "resolveJsonModule": true, "skipLibCheck": true, "types": ["vite/client", "vite-plugin-pages/client"]}, "exclude": ["**/dist", "**/node_modules", "**/test"]}
+{"compilerOptions": {"module": "ES2022", "target": "ES6", "baseUrl": ".", "paths": {"@/*": ["src/*"], "@components/*": ["src/components/*"], "@pages/*": ["src/pages/*"], "@styles/*": ["src/styles/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["/components/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["resources/ts/*"]}}, "exclude": ["node_modules", "public"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@styles/*": ["styles/*"], "@lib/*": ["lib/*"], "@utils/*": ["utils/*"], "@modules/*": ["modules/*"], "@layouts/*": ["common/layouts/*"], "@elements/*": ["common/components/elements/*"], "@components/*": ["common/components/*"], "@hoc/*": ["common/hoc/*"], "types/*": ["common/types/*"], "@backend/*": ["backend/*"], "@apis/*": ["backend/apis/*"], "@models/*": ["backend/models/*"]}}, "exclude": ["node_modules"], "include": ["src/**/*"]}
+{"compilerOptions": {"target": "es6", "module": "esnext", "baseUrl": "./", "moduleResolution": "node", "esModuleInterop": true, "allowSyntheticDefaultImports": true, "paths": {"@/*": ["src/*"]}, "lib": ["esnext", "dom", "dom.iterable", "scripthost"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["src/components/*"], "@/main/*": ["src/main/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"], "@/styles/*": ["styles/*"], "@/apollo/*": ["apollo/*"], "@/store/*": ["store/*"], "@/hooks/*": ["hooks/*"], "@/generated/*": ["generated/*"], "@/graphql/*": ["graphql/*"], "@/ABIs/*": ["ABIs/*"], "@/pages/*": ["pages/*"]}}}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src", "src/index.js", "src/App.js"]}
+{"compilerOptions": {"lib": ["DOM", "DOM.Iterable", "ES2020", "ES2020.Intl"], "allowJs": true, "checkJs": true}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["components/*"]}}}
+{"compilerOptions": {"module": "ES6", "jsx": "preserve", "checkJs": true, "moduleResolution": "node"}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["src/components/*"], "@/layouts/*": ["src/layouts/*"], "@/theme/*": ["src/theme/*"], "@/lib/*": ["src/lib/*"], "@/styles/*": ["src/styles/*"], "@/assets/*": ["src/assets/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@lib": ["src/lib"], "@lib/*": ["src/lib/*"]}}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"baseUrl": "./src", "paths": {"@@/*": ["./*"], "@config/*": ["config/*"], "@helpers/*": ["helpers/*"], "@logger": ["helpers/logger"], "@models/*": ["models/*"], "@dialogflow/*": ["dialogflow/*"], "@modules/*": ["modules/*"]}}}
+{"compilerOptions": {"jsx": "react-jsx", "emitDecoratorMetadata": true, "experimentalDecorators": true, "baseUrl": "./", "paths": {"@/*": ["src/*"], "@dummy/*": ["dummy_data/*"], "@types/*": ["types/*"]}}}
+{"compilerOptions": {"baseUrl": "."}, "include": ["src"]}
+{"compilerOptions": {"lib": ["ES2019"], "module": "commonjs", "target": "ES2019", "jsx": "preserve", "strictFunctionTypes": true, "checkJs": true}, "exclude": ["node_modules", "**/node_modules/*"]}
+{"compilerOptions": {"baseUrl": ".", "module": "commonjs", "paths": {"@createjs/*": ["./src/createjs.js"], "@/*": ["./src/*"]}}}
+{"compilerOptions": {"target": "esnext", "module": "commonjs", "allowSyntheticDefaultImports": true, "baseUrl": "./", "paths": {"@/*": ["src/*"]}}, "exclude": ["node_modules"]}
+{"compilerOptions": {"paths": {}, "baseUrl": "src"}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@component/*": ["src/ui/components/*"], "@page/*": ["src/ui/page/*"], "@store/*": ["src/ui/store/*"], "@pup/*": ["src/pup/*"], "@ui/*": ["src/ui/*"]}}}
+{"include": ["./node_modules/cypress", "cypress/**/*.js"]}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src", "jest.config.js"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["components/*"], "@contexts/*": ["contexts/*"], "@public/*": ["public/*"], "@styles/*": ["styles/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"webkit/*": ["./node_modules/san-webkit/lib/*"], "@/*": ["./src/*"], "@cmp/*": ["./src/components/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@c/*": ["components/*"]}}}
+{"compilerOptions": {"moduleResolution": "Node", "target": "ESNext", "module": "ESNext", "importsNotUsedAsValues": "error", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "baseUrl": ".", "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte", "src/main.js"]}
+{"compilerOptions": {"baseUrl": "src", "paths": {"@pages/*": ["pages/*"], "@styles/*": ["styles/*"], "@assets/*": ["assets/*"], "@images/*": ["assets/images/*"], "@components/*": ["components/*"], "@config/*": ["config/*"], "@constants/*": ["constants/*"], "@helpers/*": ["helpers/*"]}}}
+{"include": ["./src"], "exclude": ["node_modules", "config", "docs", "public", "html"], "compilerOptions": {"jsx": "react", "baseUrl": "./", "paths": {"@/*": ["src/*"]}, "experimentalDecorators": true}}
+{"compilerOptions": {"baseUrl": "./src"}, "include": ["src"]}
+{"compilerOptions": {"module": "commonjs", "target": "es2020"}, "include": ["src/**/*"]}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["src/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"~/*": ["src/*"]}}}
+{"typeAcquisition": {"include": ["jest"]}}
+{"compilerOptions": {"baseUrl": "./src"}}
+{"compilerOptions": {"plugins": [{"name": "typescript-styled-plugin"}], "baseUrl": ".", "paths": {"~/*": ["src/*"], "@components/*": ["src/components/*"], "@pages/*": ["src/pages/*"], "@routes/*": ["src/routes/*"], "@hooks/*": ["src/hooks/*"], "@utils/*": ["src/utils/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@components/*": ["components/*"], "@data/*": ["data/*"], "@post/*": ["components/post/*"], "@sections/*": ["components/sections/*"], "@utils/*": ["utils/*"]}}}
+{"compilerOptions": {"lib": ["es6"]}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/components/*": ["src/components/*"], "@/styles/*": ["src/styles/*"], "@/constants/*": ["src/constants/*"], "@/lib/*": ["src/lib/*"], "@/hocs/*": ["src/hocs/*"], "@/models/*": ["src/models/*"]}}}
+{"compilerOptions": {"baseUrl": "src"}, "include": ["src"]}
+{"compilerOptions": {"baseUrl": "src/", "paths": {"@/*": ["./*"]}}}
+{"compilerOptions": {"target": "ES2015", "module": "ES2015", "moduleResolution": "Node16", "baseUrl": ".", "paths": {"@components/*": ["src/components/*/index.jsx"], "@assets/*": ["src/assets/*"]}, "strictNullChecks": true, "strictFunctionTypes": true}, "exclude": ["node_modules", "**/node_modules/*", "dist"]}
+{"compilerOptions": {"baseUrl": "./", "paths": {"@pages/*": ["pages/*"], "@src/*": ["src/*"]}}}
+{"compilerOptions": {"lib": ["esnext"], "baseUrl": ".", "jsx": "react", "paths": {"assets/*": ["./src/assets/*"], "components/*": ["./src/components/*"], "layouts/*": ["./src/layouts/*"], "pages/*": ["./src/pages/*"], "utils/*": ["./src/utils/*"]}}, "exclude": ["./node_modules/**/"]}
+{"compilerOptions": {"checkJs": true, "strict": true, "strictNullChecks": true, "typeRoots": ["./node_modules/@types"], "target": "ES5", "lib": ["dom", "es5", "es2015.collection", "es2015.iterable"], "downlevelIteration": true}, "include": ["data/**/*.js", "src/**/*.js", "test/**/*.js", "types/**/*.js"]}
+{"compilerOptions": {"moduleResolution": "Node", "target": "ESNext", "module": "ESNext", "isolatedModules": true, "resolveJsonModule": true, "sourceMap": true, "esModuleInterop": true, "skipLibCheck": true, "forceConsistentCasingInFileNames": true, "baseUrl": ".", "checkJs": true}, "include": ["src/**/*.d.ts", "src/**/*.js", "src/**/*.svelte"]}
+{"compilerOptions": {"jsx": "react", "baseUrl": ".", "paths": {"@assets/*": ["./public/assets/*"], "@styles/*": ["./src/styles/*"], "@components/*": ["./src/components/*"], "@elements/*": ["./src/elements/*"], "@pages/*": ["./src/pages/*"], "@utils/*": ["./src/utils/*"], "@services/*": ["./src/services/*"], "@hooks/*": ["./src/hooks/*"], "@router/*": ["./src/router/*"], "@context/*": ["./src/context/*"], "@store/*": ["./src/store/*"], "@constants/*": ["./src/constants/*"]}}}
+{"compilerOptions": {"baseUrl": ".", "paths": {"@/*": ["*"]}}, "exclude": ["node_modules", ".next"]}
