@@ -110,7 +110,7 @@ jobs:
     needs:
       - prepareConfig
       - setCachePathsConfig
-    uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@feature/194-post-compile-parallel-job
+    uses: endjin/Endjin.RecommendedPractices.GitHubActions/.github/workflows/scripted-build-matrix-pipeline.yml@main
     with:
       testPhaseMatrixJson: |
           {
@@ -140,7 +140,7 @@ jobs:
       publishPhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       additionalCachePaths: ${{ needs.setCachePathsConfig.outputs.additionalCachePaths }}
       # Build the documentation website in a parallel post-compile job
-      postCompilePhaseTasks: buildWebSite
+      postCompilePhaseTasks: BuildWebsite
       postCompileRunnerOs: ubuntu-latest
       postCompilePhaseEnv: ${{ needs.prepareConfig.outputs.RESOLVED_ENV_VARS }}
       postCompileArtifactName: website-output
