@@ -8,7 +8,7 @@ $zerofailedExtensions = @(
         # References the extension from its GitHub repository. If not already installed, use latest version from 'main' will be downloaded.
         Name = "ZeroFailed.Build.DotNet"
         GitRepository = "https://github.com/zerofailed/ZeroFailed.Build.DotNet"
-        GitRef = "main"
+        GitRef = "feature/8-add-support-for-richer-dotnet-coverage-configuration"
     }
     @{
         # References the extension from its GitHub repository. If not already installed, use latest version from 'main' will be downloaded.
