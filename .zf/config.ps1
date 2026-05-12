@@ -40,35 +40,7 @@ $SkipPublish = $true
 $SolutionToBuild = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.slnx")).Path
 $ProjectsToPublish = @()
 $NugetPublishSource = property ZF_NUGET_PUBLISH_SOURCE "$here/_local-nuget-feed"
-$IncludeAssembliesInCodeCoverage = @(
-    'Corvus.Json.CodeGeneration'
-    'Corvus.Json.CodeGeneration.4'
-    'Corvus.Json.CodeGeneration.6'
-    'Corvus.Json.CodeGeneration.7'
-    'Corvus.Json.CodeGeneration.201909'
-    'Corvus.Json.CodeGeneration.202012'
-    'Corvus.Json.CodeGeneration.CorvusVocabulary'
-    'Corvus.Json.CodeGeneration.CSharp'
-    'Corvus.Json.CodeGeneration.CSharp.QuickStart'
-    'Corvus.Json.CodeGeneration.HttpClientDocumentResolver'
-    'Corvus.Json.CodeGeneration.OpenApi30'
-    'Corvus.Json.CodeGeneration.OpenApi31'
-    'Corvus.Json.CodeGeneration.YamlPreProcessor'
-    'Corvus.Json.ExtendedTypes'
-    'Corvus.Json.JsonReference'
-    'Corvus.Json.JsonSchema.Draft4'
-    'Corvus.Json.JsonSchema.Draft6'
-    'Corvus.Json.JsonSchema.Draft7'
-    'Corvus.Json.JsonSchema.Draft201909'
-    'Corvus.Json.JsonSchema.Draft202012'
-    'Corvus.Json.JsonSchema.OpenApi30'
-    'Corvus.Json.JsonSchema.OpenApi31'
-    'Corvus.Json.Patch'
-    'Corvus.Json.SourceGenerator'
-    'Corvus.Json.SourceGeneratorTools'
-    'Corvus.Json.SourceGeneratorTools.ForLanguageProvider'
-    'Corvus.Json.Validator'
-)
+$IncludeAssembliesInCodeCoverage = @()
 $ExcludeAssembliesInCodeCoverage = @()
 $ExcludeFilesInCodeCoverage = @('*.g.cs')
 
@@ -95,9 +67,6 @@ $AdditionalTestArgs = @(
 $StripOutputFromLargeTrxFiles = $true
 $TruncateOversizedCoverageReport = $true
 $UseGitHubFlavour = $true
-
-# Collect code coverage only for the core library assemblies.
-# $IncludeFilesInCodeCoverage = "Corvus.Json.CodeGeneration.dll;Corvus.Json.CodeGeneration.CSharp.dll;Corvus.Json.ExtendedTypes.dll;Corvus.Json.JsonReference.dll;Corvus.Text.Json.dll;Corvus.Text.Json.Validator.dll;Corvus.Text.Json.CodeGeneration.dll"
 
 # When running in GHA create a GitHub Release when running a release build
 $CreateGitHubRelease = $env:GITHUB_ACTIONS ? $true : $false
