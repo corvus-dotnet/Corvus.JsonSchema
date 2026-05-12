@@ -9,17 +9,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
-# permissions:
-#   actions: write  # enable cache clean-up
-#   checks: write  # enable test result annotations
-#   contents: write  # enable creating releases
-#   issues: read
-#   packages: write  # enable publishing packages
-#   pull-requests: write  # enable test result annotations
-
 jobs:
   build:
-    name: Build/Deploy Web Site
+    name: Build/Deploy Documentation Site
     runs-on: ubuntu-latest
     steps:
     - name: Enable long paths
@@ -32,6 +24,8 @@ jobs:
       with:
         environmentVariablesYaml: |
           BUILDVAR_BasePathPrefix: "${{ format('/{0}', github.event.repository.name) }}"
+        secretsYaml: |
+          GH_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
         secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
     - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@main
       id: run_build
@@ -45,9 +39,8 @@ jobs:
         configuration: Release
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f   # v4.8.0
-      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      if: github.ref == 'refs/heads/main'
       with:
         branch: gh-pages
         folder: docs/website/.output
         clean-exclude: pr-preview
-
