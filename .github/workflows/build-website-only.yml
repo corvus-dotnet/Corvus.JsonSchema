@@ -1,8 +1,5 @@
 name: build-website-only
 on:
-  push:
-    branches:
-    - feature/fix-web-site-publish    # temporary measure to test workflow
   workflow_dispatch:
 
 concurrency:
