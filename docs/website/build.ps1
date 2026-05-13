@@ -100,9 +100,23 @@ if (-not $canonicalRepoUrl) {
 }
 
 # Branch for GitHub source links in generated pages.
-# Always use "main" — these are permanent documentation links that must survive
-# after feature branches are merged and deleted.
-$canonicalBranch = "main"
+# PR builds: GITHUB_HEAD_REF is the source branch (exists on GitHub).
+# Push builds: GITHUB_REF_NAME is the branch that was pushed.
+# Local: detect from git. Fallback: main.
+$canonicalBranch = $env:GITHUB_HEAD_REF   # set only on pull_request events
+if (-not $canonicalBranch) {
+    $canonicalBranch = $env:GITHUB_REF_NAME   # set on push events
+}
+if (-not $canonicalBranch) {
+    try {
+        $canonicalBranch = (git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null)
+        if ($canonicalBranch) { $canonicalBranch = $canonicalBranch.Trim() }
+    } catch { }
+}
+if (-not $canonicalBranch) {
+    $canonicalBranch = "main"
+    Write-Warning "Could not detect branch — using default: $canonicalBranch"
+}
 
 # V5 paths
 $v5SrcDir = Join-Path $repoRoot "src"
