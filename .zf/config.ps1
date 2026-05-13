@@ -35,7 +35,7 @@ $SkipTest = $false
 $SkipTestReport = $false
 $SkipAnalysis = $false
 $SkipPackage = $false
-$SkipPublish = $true
+$SkipPublish = $false
 
 $SolutionToBuild = (Resolve-Path (Join-Path $here ".\Corvus.Text.Json.slnx")).Path
 $ProjectsToPublish = @()

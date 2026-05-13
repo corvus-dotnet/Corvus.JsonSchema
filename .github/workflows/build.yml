@@ -161,7 +161,8 @@ jobs:
     name: Deploy Documentation
     needs:
       - build
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+    # The prod documentation site should only ever be updated, by this build, from stable release tags
+    if: github.event_name == 'push' && github.ref_type == 'tag' && !contains(github.ref_name, '-')
     runs-on: ubuntu-latest
     environment:
       name: github-pages
