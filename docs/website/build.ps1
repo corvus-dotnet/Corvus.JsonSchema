@@ -99,6 +99,25 @@ if (-not $canonicalRepoUrl) {
     Write-Warning "Could not detect repo URL from git remote — using default: $canonicalRepoUrl"
 }
 
+# Branch for GitHub source links in generated pages.
+# PR builds: GITHUB_HEAD_REF is the source branch (exists on GitHub).
+# Push builds: GITHUB_REF_NAME is the branch that was pushed.
+# Local: detect from git. Fallback: main.
+$canonicalBranch = $env:GITHUB_HEAD_REF   # set only on pull_request events
+if (-not $canonicalBranch) {
+    $canonicalBranch = $env:GITHUB_REF_NAME   # set on push events
+}
+if (-not $canonicalBranch) {
+    try {
+        $canonicalBranch = (git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null)
+        if ($canonicalBranch) { $canonicalBranch = $canonicalBranch.Trim() }
+    } catch { }
+}
+if (-not $canonicalBranch) {
+    $canonicalBranch = "main"
+    Write-Warning "Could not detect branch — using default: $canonicalBranch"
+}
+
 # V5 paths
 $v5SrcDir = Join-Path $repoRoot "src"
 $v5ApiContentDir = Join-Path $siteDir "content\Api-v5"
@@ -397,7 +416,7 @@ foreach ($dir in $recipeDirs) {
         $body = $body -replace [regex]::Escape("../$($entry.Key)/"), "/examples/$($entry.Value).html"
         $body = $body -replace [regex]::Escape("../$($entry.Key)"), "/examples/$($entry.Value).html"
     }
-    $ghRecipeBase = "https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/$($dir.Name)"
+    $ghRecipeBase = "$canonicalRepoUrl/blob/$canonicalBranch/docs/ExampleRecipes/$($dir.Name)"
     $body = $body -replace '\./Program\.cs', "$ghRecipeBase/Program.cs"
 
     # Extract first sentence as description
@@ -597,7 +616,7 @@ foreach ($descriptorFile in $descriptorFiles) {
 
     # Rewrite links to files that aren't website pages (e.g. copilot/ instructions)
     # Point them at the GitHub source
-    $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', '(https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/copilot/$1)'
+    $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', "($canonicalRepoUrl/blob/$canonicalBranch/docs/copilot/`$1)"
 
     # Use descriptor nav title, or fall back to doc title
     $navTitle = if ($descriptor['navTitle']) { $descriptor['navTitle'] } else {
@@ -671,7 +690,31 @@ if (!(Test-Path $vellumCmd) -and !(Test-Path "$vellumCmd.exe")) {
         New-Item -ItemType Directory -Path $vellumDir | Out-Null
     }
     & gh release download -R endjin/Endjin.StaticSiteGen $vellumVersion -p "vellum.$vellumVersion.nupkg" -D $vellumDir --clobber
-    & dotnet tool install vellum --version $vellumVersion --tool-path $vellumDir --add-source $vellumDir
+
+    # Create a temporary nuget.config based on the repo's existing one,
+    # adding the local Vellum source + package source mapping entry
+    $repoNugetConfig = Join-Path $repoRoot "nuget.config"
+    $tempNugetConfig = Join-Path $vellumDir "nuget.config"
+    $xml = [xml](Get-Content $repoNugetConfig)
+
+    # Add the local-vellum package source
+    $sourceEl = $xml.CreateElement("add")
+    $sourceEl.SetAttribute("key", "local-vellum")
+    $sourceEl.SetAttribute("value", $vellumDir)
+    $xml.configuration.packageSources.AppendChild($sourceEl) | Out-Null
+
+    # Add the package source mapping for vellum
+    $mappingNode = $xml.configuration.packageSourceMapping
+    $psElement = $xml.CreateElement("packageSource")
+    $psElement.SetAttribute("key", "local-vellum")
+    $patternEl = $xml.CreateElement("package")
+    $patternEl.SetAttribute("pattern", "vellum")
+    $psElement.AppendChild($patternEl) | Out-Null
+    $mappingNode.AppendChild($psElement) | Out-Null
+
+    $xml.Save($tempNugetConfig)
+
+    & dotnet tool install vellum --version $vellumVersion --tool-path $vellumDir --configfile $tempNugetConfig
     if ($LASTEXITCODE -ne 0) { throw "Failed to install Vellum" }
     Write-Host "  Vellum installed." -ForegroundColor Green
 } else {

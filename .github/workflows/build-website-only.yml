@@ -1,0 +1,38 @@
+name: build-website-only
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build/Deploy Documentation Site
+    runs-on: ubuntu-latest
+    steps:
+    - name: Enable long paths
+      run: git config --global core.longpaths true
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd   # v6.0.2
+      with:
+        fetch-depth: 0
+    - uses: endjin/Endjin.RecommendedPractices.GitHubActions/actions/run-scripted-build@main
+      id: run_build
+      with:
+        displayName: Build Documentation Site
+        netSdkVersion: '10.0.x'
+        additionalNetSdkVersion: |
+          8.0.x
+          9.0.x
+        tasks: Build,BuildWebsite
+        configuration: Release
+      env:
+        BUILDVAR_BasePathPrefix: "${{ format('/{0}', github.event.repository.name) }}"
+        GH_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
+    - name: Deploy to GitHub Pages
+      uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f   # v4.8.0
+      if: github.ref == 'refs/heads/main'
+      with:
+        branch: gh-pages
+        folder: docs/website/.output
+        clean-exclude: pr-preview
