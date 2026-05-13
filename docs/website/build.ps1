@@ -671,7 +671,31 @@ if (!(Test-Path $vellumCmd) -and !(Test-Path "$vellumCmd.exe")) {
         New-Item -ItemType Directory -Path $vellumDir | Out-Null
     }
     & gh release download -R endjin/Endjin.StaticSiteGen $vellumVersion -p "vellum.$vellumVersion.nupkg" -D $vellumDir --clobber
-    & dotnet tool install vellum --version $vellumVersion --tool-path $vellumDir --add-source $vellumDir
+
+    # Create a temporary nuget.config based on the repo's existing one,
+    # adding the local Vellum source + package source mapping entry
+    $repoNugetConfig = Join-Path $repoRoot "nuget.config"
+    $tempNugetConfig = Join-Path $vellumDir "nuget.config"
+    $xml = [xml](Get-Content $repoNugetConfig)
+
+    # Add the local-vellum package source
+    $sourceEl = $xml.CreateElement("add")
+    $sourceEl.SetAttribute("key", "local-vellum")
+    $sourceEl.SetAttribute("value", $vellumDir)
+    $xml.configuration.packageSources.AppendChild($sourceEl) | Out-Null
+
+    # Add the package source mapping for vellum
+    $mappingNode = $xml.configuration.packageSourceMapping
+    $psElement = $xml.CreateElement("packageSource")
+    $psElement.SetAttribute("key", "local-vellum")
+    $patternEl = $xml.CreateElement("package")
+    $patternEl.SetAttribute("pattern", "vellum")
+    $psElement.AppendChild($patternEl) | Out-Null
+    $mappingNode.AppendChild($psElement) | Out-Null
+
+    $xml.Save($tempNugetConfig)
+
+    & dotnet tool install vellum --version $vellumVersion --tool-path $vellumDir --configfile $tempNugetConfig
     if ($LASTEXITCODE -ne 0) { throw "Failed to install Vellum" }
     Write-Host "  Vellum installed." -ForegroundColor Green
 } else {
