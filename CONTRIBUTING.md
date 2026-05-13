@@ -48,10 +48,9 @@ This packs all V4 and V5 projects into a `local-packages/` folder (git-ignored).
 | Branch | Purpose |
 |--------|---------|
 | `main` | Stable release branch (auto-tags via GitVersion) |
-| `feature/v5` | Active V5 development branch |
 | `dependabot/*` | Automated dependency updates |
 
-Target your PRs at `feature/v5` for V5 work, or `main` for hotfixes.
+Target your PRs at `main`.
 
 ## Code style
 

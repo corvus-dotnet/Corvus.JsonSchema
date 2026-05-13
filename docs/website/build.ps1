@@ -99,6 +99,19 @@ if (-not $canonicalRepoUrl) {
     Write-Warning "Could not detect repo URL from git remote — using default: $canonicalRepoUrl"
 }
 
+# Derive the current branch for GitHub source links
+$canonicalBranch = $env:GITHUB_REF_NAME
+if (-not $canonicalBranch) {
+    try {
+        $canonicalBranch = (git -C $repoRoot rev-parse --abbrev-ref HEAD 2>$null)
+        if ($canonicalBranch) { $canonicalBranch = $canonicalBranch.Trim() }
+    } catch { }
+}
+if (-not $canonicalBranch) {
+    $canonicalBranch = "main"
+    Write-Warning "Could not detect branch from git or GITHUB_REF_NAME — using default: $canonicalBranch"
+}
+
 # V5 paths
 $v5SrcDir = Join-Path $repoRoot "src"
 $v5ApiContentDir = Join-Path $siteDir "content\Api-v5"
@@ -397,7 +410,7 @@ foreach ($dir in $recipeDirs) {
         $body = $body -replace [regex]::Escape("../$($entry.Key)/"), "/examples/$($entry.Value).html"
         $body = $body -replace [regex]::Escape("../$($entry.Key)"), "/examples/$($entry.Value).html"
     }
-    $ghRecipeBase = "https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/ExampleRecipes/$($dir.Name)"
+    $ghRecipeBase = "$canonicalRepoUrl/blob/$canonicalBranch/docs/ExampleRecipes/$($dir.Name)"
     $body = $body -replace '\./Program\.cs', "$ghRecipeBase/Program.cs"
 
     # Extract first sentence as description
@@ -597,7 +610,7 @@ foreach ($descriptorFile in $descriptorFiles) {
 
     # Rewrite links to files that aren't website pages (e.g. copilot/ instructions)
     # Point them at the GitHub source
-    $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', '(https://github.com/corvus-dotnet/Corvus.JsonSchema/blob/feature/v5/docs/copilot/$1)'
+    $docBody = $docBody -replace '\(copilot/([^)]+\.md)\)', "($canonicalRepoUrl/blob/$canonicalBranch/docs/copilot/`$1)"
 
     # Use descriptor nav title, or fall back to doc title
     $navTitle = if ($descriptor['navTitle']) { $descriptor['navTitle'] } else {
