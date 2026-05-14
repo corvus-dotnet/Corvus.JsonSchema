@@ -686,23 +686,23 @@ public sealed class ClientCodeEmitter
         switch (kind)
         {
             case ParameterSerializationKind.String:
-                // Strings need URI-escaping in path segments.
                 EmitStringWrite(w, valueExpr, uid);
                 EmitUriEscapeAndWrite(w, $"utf8{uid}.Span", uid);
                 break;
 
             case ParameterSerializationKind.Boolean:
+                EmitBooleanWrite(w, valueExpr);
+                break;
+
             case ParameterSerializationKind.Int32:
             case ParameterSerializationKind.Int64:
             case ParameterSerializationKind.Float:
             case ParameterSerializationKind.Double:
-                // Numeric/boolean characters are URI-safe, write directly.
                 EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
                 w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
                 break;
 
             case ParameterSerializationKind.UnboundedNumber:
-                // Raw numeric text is URI-safe, write directly.
                 EmitUnboundedNumberToLocal(w, valueExpr, uid);
                 w.WriteLine($"writer.Write(raw{uid}.Span);");
                 break;
@@ -725,25 +725,25 @@ public sealed class ClientCodeEmitter
         switch (kind)
         {
             case ParameterSerializationKind.Boolean:
+                EmitBooleanWriteCounted(w, valueExpr);
+                break;
+
             case ParameterSerializationKind.Int32:
             case ParameterSerializationKind.Int64:
             case ParameterSerializationKind.Float:
             case ParameterSerializationKind.Double:
-                // Numeric/boolean characters are URI-safe, write directly.
                 EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
                 w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
                 w.WriteLine($"totalWritten += bw{uid};");
                 break;
 
             case ParameterSerializationKind.UnboundedNumber:
-                // Raw numeric text is URI-safe, write directly.
                 EmitUnboundedNumberToLocal(w, valueExpr, uid);
                 w.WriteLine($"writer.Write(raw{uid}.Span);");
                 w.WriteLine($"totalWritten += raw{uid}.Span.Length;");
                 break;
 
             case ParameterSerializationKind.String:
-                // Strings need URI-escaping in query values.
                 EmitStringWrite(w, valueExpr, uid);
                 EmitUriEscapeAndWriteCounted(w, $"utf8{uid}.Span", uid);
                 break;
@@ -772,6 +772,9 @@ public sealed class ClientCodeEmitter
                 break;
 
             case ParameterSerializationKind.Boolean:
+                EmitBooleanHeaderWrite(w, valueExpr, uid);
+                break;
+
             case ParameterSerializationKind.Int32:
             case ParameterSerializationKind.Int64:
             case ParameterSerializationKind.Float:
@@ -795,7 +798,33 @@ public sealed class ClientCodeEmitter
         }
     }
 
-    // ── URI escaping helpers ────────────────────────────────────────────
+    /// <summary>
+    /// Emits a ternary that writes <c>"true"u8</c> or <c>"false"u8</c>
+    /// based on the boolean JSON value. This avoids <c>TryFormat</c> which
+    /// produces .NET-style <c>True</c>/<c>False</c> (uppercase).
+    /// </summary>
+    private static void EmitBooleanWrite(IndentedWriter w, string valueExpr)
+    {
+        w.WriteLine(
+            $"writer.Write((bool){valueExpr} ? \"true\"u8 : \"false\"u8);");
+    }
+
+    private static void EmitBooleanWriteCounted(IndentedWriter w, string valueExpr)
+    {
+        w.WriteLine(
+            $"bool bv = (bool){valueExpr};");
+        w.WriteLine(
+            $"writer.Write(bv ? \"true\"u8 : \"false\"u8);");
+        w.WriteLine(
+            $"totalWritten += bv ? 4 : 5;");
+    }
+
+    private static void EmitBooleanHeaderWrite(IndentedWriter w, string valueExpr, string uid)
+    {
+        w.WriteLine(
+            $"callback(nameUtf8{uid}, (bool){valueExpr} ? \"true\"u8 : \"false\"u8, state);");
+    }
+
     private static void EmitUriEscapeAndWrite(
         IndentedWriter w,
         string spanExpr,
