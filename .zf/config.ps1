@@ -76,6 +76,7 @@ $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
 $BuildWebsite = [Convert]::ToBoolean((property BUILDVAR_BuildWebsite $Website.ToBool()))
 $IsPreviewDeployment = [Convert]::ToBoolean((property BUILDVAR_IsPreviewDeployment $false))
 $BasePathPrefix = property BUILDVAR_BasePathPrefix $BasePathPrefix
+$VellumDownloadToken = property VELLUM_DOWNLOAD_TOKEN ''
 
 task . FullBuild
 
@@ -122,15 +123,19 @@ task PostTest {
 task BuildWebsite {
     $websiteDir = Join-Path $here "docs\website"
 
-    $websiteBuildArgs = @("-SkipDotNetBuild")
+    $websiteBuildArgs = @{ SkipDotNetBuild = $true }
+
+    if ($VellumDownloadToken) {
+        $websiteBuildArgs += @{ VellumDownloadToken = (ConvertTo-SecureString $VellumDownloadToken -AsPlainText) }
+    }
 
     $basePathPrefix = $env:BUILDVAR_BasePathPrefix
     if ($basePathPrefix) {
-        $websiteBuildArgs += "-BasePathPrefix", $basePathPrefix
+        $websiteBuildArgs += @{ BasePathPrefix = $basePathPrefix }
     }
 
     if ($env:BUILDVAR_IsPreviewDeployment -ieq "true") {
-        $websiteBuildArgs += "-IsPreviewDeployment"
+        $websiteBuildArgs += @{ IsPreviewDeployment = $true }
     }
 
     Write-Host "Building documentation website..."
@@ -138,7 +143,7 @@ task BuildWebsite {
     Write-Host "  IsPreviewDeployment: $($env:BUILDVAR_IsPreviewDeployment)"
     Write-Host "  Args: $websiteBuildArgs"
 
-    & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs
+    & (Join-Path $websiteDir "build.ps1") @websiteBuildArgs
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
     }

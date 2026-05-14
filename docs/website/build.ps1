@@ -31,6 +31,11 @@
     When set, the build produces a preview site with full robots blocking
     (noindex meta tag retained, robots.txt Disallow). When not set in CI,
     the build produces a production site (meta tag stripped, robots.txt Allow).
+.PARAMETER BasePathPrefix
+    When set, contains the base path used when the site is not hosted in the root.
+.PARAMETER VellumDownloadToken
+    When set, must contain a valid GitHub token with permissions to access the
+    GitHub repo hosting the Vellum static site generator tool.
 #>
 [CmdletBinding()]
 param (
@@ -50,7 +55,10 @@ param (
     [switch] $SkipDotNetBuild,
 
     [Parameter()]
-    [switch] $IsPreviewDeployment
+    [switch] $IsPreviewDeployment,
+
+    [Parameter()]
+    [securestring] $VellumDownloadToken
 )
 
 $ErrorActionPreference = 'Stop'
@@ -59,17 +67,6 @@ $InformationPreference = 'Continue'
 # Check that the Github CLI is available
 if (!(Get-Command gh -CommandType application -ErrorAction SilentlyContinue)) {
     Write-Error "The GitHub CLI was not found, but is required to build the web site - see https://cli.github.com/ for more details."
-}
-# Ensure the GH CLI is logged-in
-& gh auth status | Out-Null
-if ($LASTEXITCODE -eq 1) {
-    Write-Error "You are not logged into the GitHub CLI - run 'gh auth login'"
-}
-# Ensure we have access to the Vellum SSG repo, if not skip the build with a warning rather than a hard error
-& gh repo view endjin/Endjin.StaticSiteGen --json id | Out-Null
-if ($LASTEXITCODE -ne 0) {
-    Write-Warning "Skipping web site build - unable to access to the currently closed-source Vellum SSG tooling"
-    exit 0
 }
 
 $here = Split-Path -Parent $PSCommandPath
@@ -176,6 +173,113 @@ function Write-StepDuration($stepName, $sw) {
     }
 }
 
+# -- Helper: install Vellum tool
+function Install-Vellum($repoRoot, $vellumVersion,$VellumGitHubRepo,$VellumBasePath,$vellumDownloadToken) {
+    $defaultVellumCmd = Join-Path $VellumBasePath 'vellum'
+
+    if ($vellumDownloadToken) {
+        Write-Host "Using explicit access token to download Vellum"
+        if (Test-Path env:/GH_TOKEN) {
+            # Store any the current value for the GH_TOKEN environment variable, before we override it
+            $_savedGhToken = $env:GH_TOKEN
+        }
+        $env:GH_TOKEN = $vellumDownloadToken
+    }
+
+    # Ensure the GH CLI is logged-in
+    & gh auth status | Out-Null
+    if ($LASTEXITCODE -eq 1) {
+        Write-Error "You are not logged into the GitHub CLI - run 'gh auth login'"
+    }
+    # Ensure we have access to the Vellum SSG repo, if not skip the build with a warning rather than a hard error
+    & gh repo view $VellumGitHubRepo --json id | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+        Write-Warning "Skipping web site build - unable to access to the currently closed-source Vellum SSG tooling"
+        exit 0
+    }
+
+    try {
+        if (!$vellumVersion) {
+            # Find the version number of the 'Latest' GitHub release
+            $latestVersion = exec { & gh release list -R $VellumGitHubRepo } |
+                                ConvertFrom-Csv -Header title,type,"tag name",published -Delimiter `t |
+                                Where-Object { $_.type -eq "Latest" } |
+                                Select-Object -ExpandProperty "tag name"
+            
+            if (!$latestVersion) {
+                throw "Unable to determine the latest version of the vellum .NET tool"
+            }
+        }
+        else {
+            $latestVersion = $vellumVersion
+        }
+        Write-Verbose "Required version: $latestVersion"
+    
+        $vellumDownloadPath = Split-Path -Parent $defaultVellumCmd
+        if (!(Test-Path $vellumDownloadPath)) {
+            New-Item -ItemType Directory $vellumDownloadPath -Force | Out-Null
+        }
+    
+        $dotnetToolBaseArgs = @{
+            Name = "vellum"
+            Version = $latestVersion
+            ToolPath = $vellumDownloadPath
+        }
+    
+        # NOTE: The *-DotNetTool functions are provided by the ZeroFailed.DevOps.Common extension which is in
+        #       in-scope when this script is run via the main build script.
+        if (!(Get-Command Get-DotNetTool -ErrorAction SilentlyContinue)) {
+            throw 'Please run this process via the main build script (e.g. ./build.ps1 -task BuildWebsite)'
+        }
+
+        # Check whether the required version is already installed. This would be handled by the 'Install-DotNetTool'
+        # cmdlet, but we need to know whether to download the NuGet package first.
+        $existingTool = Get-DotNetTool @dotnetToolBaseArgs -Verbose
+        if (!$existingTool -or $existingTool.Version -ne $latestVersion) {
+            $vellumPackageFullName = "vellum.{0}.nupkg" -f $latestVersion
+            Write-Build White "Downloading vellum .NET tool package $vellumPackageFullName"
+            exec { & gh release download -R $VellumGitHubRepo $latestVersion -p $vellumPackageFullName -D $vellumDownloadPath --clobber }
+        
+            # Create a temporary nuget.config based on the repo's existing one,
+            # adding the local Vellum source + package source mapping entry
+            $repoNugetConfig = Join-Path $repoRoot "nuget.config"
+            $tempNugetConfig = Join-Path $VellumBasePath "nuget.config"
+            $xml = [xml](Get-Content $repoNugetConfig)
+
+            # Add the local-vellum package source
+            $sourceEl = $xml.CreateElement("add")
+            $sourceEl.SetAttribute("key", "local-vellum")
+            $sourceEl.SetAttribute("value", $vellumDir)
+            $xml.configuration.packageSources.AppendChild($sourceEl) | Out-Null
+
+            # Add the package source mapping for vellum
+            $mappingNode = $xml.configuration.packageSourceMapping
+            $psElement = $xml.CreateElement("packageSource")
+            $psElement.SetAttribute("key", "local-vellum")
+            $patternEl = $xml.CreateElement("package")
+            $patternEl.SetAttribute("pattern", "vellum")
+            $psElement.AppendChild($patternEl) | Out-Null
+            $mappingNode.AppendChild($psElement) | Out-Null
+
+            $xml.Save($tempNugetConfig)
+
+            Install-DotNetTool @dotnetToolBaseArgs -AdditionalArgs @("--configfile", $tempNugetConfig) -Verbose
+        }
+        else {
+            Write-Build White "Required version of vellum .NET tool already installed ($latestVersion)"
+        }
+    }
+    finally {
+        # Restore the environment back to its original state
+        if (Test-Path variable:/_savedGhToken) {
+            $env:GH_TOKEN = $_savedGhToken
+        }
+        elseif (Test-Path env:/GH_TOKEN) {
+            Remove-Item env:/GH_TOKEN
+        }
+    }
+}
+
 # -- ServeOnly: skip build, just start preview server -----------------------
 if ($ServeOnly) {
     if (!(Test-Path $outputDir)) {
@@ -214,8 +318,33 @@ http.createServer((req, res) => {
     return
 }
 
-# -- Step 0: Copy hand-authored source files ----------------------------------
-Write-Host "`n[0/10] Copying hand-authored source files..." -ForegroundColor Cyan
+# -- Step 0: Install Vellum --------------------------------------------------
+$vellumVersion = "2.0.9"
+$vellumDir = Join-Path $here ".endjin"
+$vellumCmd = Join-Path $vellumDir "vellum"
+
+if (!(Test-Path $vellumCmd) -and !(Test-Path "$vellumCmd.exe")) {
+    Write-Host "`n[0/10] Installing Vellum $vellumVersion..." -ForegroundColor Cyan
+    if (!(Test-Path $vellumDir)) {
+        New-Item -ItemType Directory -Path $vellumDir | Out-Null
+    }
+    $splat = @(
+        $repoRoot
+        $vellumVersion
+        'endjin/Endjin.StaticSiteGen'
+        $vellumDir
+    )
+    if ($VellumDownloadToken) {
+        $splat += ConvertFrom-SecureString -AsPlainText $VellumDownloadToken
+    }
+    Install-Vellum @splat
+    Write-Host "  Vellum installed." -ForegroundColor Green
+} else {
+    Write-Host "`n[0/10] Vellum already installed." -ForegroundColor DarkGray
+}
+
+# -- Step 1: Copy hand-authored source files ----------------------------------
+Write-Host "`n[1/10] Copying hand-authored source files..." -ForegroundColor Cyan
 $sourceDir = Join-Path $siteDir "source"
 # Ensure destination directories exist (they are generated, not in source control)
 foreach ($dir in @("content\Docs", "content\Examples")) {
@@ -237,13 +366,13 @@ foreach ($sub in @("docs", "examples", "api", "api-v5", "api-v4")) {
 }
 Write-Host "  Copied source files to site tree." -ForegroundColor Green
 
-# -- Step 1a/1b: Build .NET projects (skip when -SkipDotNetBuild) ---------------
+# -- Step 2a/2b: Build .NET projects (skip when -SkipDotNetBuild) ---------------
 if ($SkipDotNetBuild) {
-    Write-Host "`n[1a/10] Skipping V5 build (-SkipDotNetBuild)." -ForegroundColor DarkGray
-    Write-Host "[1b/10] Skipping V4 builds (-SkipDotNetBuild)." -ForegroundColor DarkGray
+    Write-Host "`n[2a/10] Skipping V5 build (-SkipDotNetBuild)." -ForegroundColor DarkGray
+    Write-Host "[2b/10] Skipping V4 builds (-SkipDotNetBuild)." -ForegroundColor DarkGray
 } else {
-    # -- Step 1a: Build V5 libraries -----------------------------------------------
-    Write-Host "`n[1a/10] Building V5 libraries..." -ForegroundColor Cyan
+    # -- Step 2a: Build V5 libraries -----------------------------------------------
+    Write-Host "`n[2a/10] Building V5 libraries..." -ForegroundColor Cyan
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $projIndex = 0
     foreach ($proj in $v5Projects) {
@@ -263,8 +392,8 @@ if ($SkipDotNetBuild) {
     }
     Write-StepDuration "V5 builds - $($v5Projects.Count) libraries" $sw
 
-    # -- Step 1b: Build V4 libraries ---------------------------------------------
-    Write-Host "`n[1b/10] Building V4 libraries..." -ForegroundColor Cyan
+    # -- Step 2b: Build V4 libraries ---------------------------------------------
+    Write-Host "`n[2b/10] Building V4 libraries..." -ForegroundColor Cyan
     $sw = [System.Diagnostics.Stopwatch]::StartNew()
     $projIndex = 0
     foreach ($proj in $v4Projects) {
@@ -283,8 +412,8 @@ if ($SkipDotNetBuild) {
     Write-StepDuration "V4 builds - $($v4Projects.Count) libraries" $sw
 }
 
-# -- Step 2a: Generate V5 API markdown, taxonomy & views ---------------------
-Write-Host "`n[2a/10] Generating V5 API markdown, taxonomy & views..." -ForegroundColor Cyan
+# -- Step 3a: Generate V5 API markdown, taxonomy & views ---------------------
+Write-Host "`n[3a/10] Generating V5 API markdown, taxonomy & views..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 # Build the --xml / --assembly argument pairs for all V5 libraries
@@ -326,8 +455,8 @@ foreach ($proj in $v5Projects) {
 if ($LASTEXITCODE -ne 0) { throw "V5 API generation failed" }
 Write-StepDuration "V5 API generation" $sw
 
-# -- Step 2b: Generate V4 API markdown, taxonomy & views ---------------------
-Write-Host "`n[2b/10] Generating V4 API markdown, taxonomy & views..." -ForegroundColor Cyan
+# -- Step 3b: Generate V4 API markdown, taxonomy & views ---------------------
+Write-Host "`n[3b/10] Generating V4 API markdown, taxonomy & views..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 # Build the --xml / --assembly argument pairs for all V4 libraries
@@ -362,8 +491,8 @@ foreach ($proj in $v4Projects) {
 if ($LASTEXITCODE -ne 0) { throw "V4 API generation failed" }
 Write-StepDuration "V4 API generation" $sw
 
-# -- Step 3: Generate recipe content from ExampleRecipes ---------------------
-Write-Host "`n[3/10] Generating recipe content from ExampleRecipes..." -ForegroundColor Cyan
+# -- Step 4: Generate recipe content from ExampleRecipes ---------------------
+Write-Host "`n[4/10] Generating recipe content from ExampleRecipes..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 $recipesSourceDir = Join-Path $repoRoot "docs\ExampleRecipes"
@@ -530,8 +659,8 @@ ContentBlocks:
 }
 Write-StepDuration "Recipe generation ($recipeCount recipes)" $sw
 
-# -- Step 4: Generate docs content from source documentation -----------------
-Write-Host "`n[4/10] Generating docs content from source documentation..." -ForegroundColor Cyan
+# -- Step 5: Generate docs content from source documentation -----------------
+Write-Host "`n[5/10] Generating docs content from source documentation..." -ForegroundColor Cyan
 $sw = [System.Diagnostics.Stopwatch]::StartNew()
 
 $docsSourceDir = Join-Path $repoRoot "docs"
@@ -678,48 +807,6 @@ ContentBlocks:
     Write-Host "  $docTitle -> $slug" -ForegroundColor Gray
 }
 Write-StepDuration "Docs generation ($docCount pages)" $sw
-
-# -- Step 5: Install Vellum --------------------------------------------------
-$vellumVersion = "2.0.9"
-$vellumDir = Join-Path $here ".endjin"
-$vellumCmd = Join-Path $vellumDir "vellum"
-
-if (!(Test-Path $vellumCmd) -and !(Test-Path "$vellumCmd.exe")) {
-    Write-Host "`n[5/10] Installing Vellum $vellumVersion..." -ForegroundColor Cyan
-    if (!(Test-Path $vellumDir)) {
-        New-Item -ItemType Directory -Path $vellumDir | Out-Null
-    }
-    & gh release download -R endjin/Endjin.StaticSiteGen $vellumVersion -p "vellum.$vellumVersion.nupkg" -D $vellumDir --clobber
-
-    # Create a temporary nuget.config based on the repo's existing one,
-    # adding the local Vellum source + package source mapping entry
-    $repoNugetConfig = Join-Path $repoRoot "nuget.config"
-    $tempNugetConfig = Join-Path $vellumDir "nuget.config"
-    $xml = [xml](Get-Content $repoNugetConfig)
-
-    # Add the local-vellum package source
-    $sourceEl = $xml.CreateElement("add")
-    $sourceEl.SetAttribute("key", "local-vellum")
-    $sourceEl.SetAttribute("value", $vellumDir)
-    $xml.configuration.packageSources.AppendChild($sourceEl) | Out-Null
-
-    # Add the package source mapping for vellum
-    $mappingNode = $xml.configuration.packageSourceMapping
-    $psElement = $xml.CreateElement("packageSource")
-    $psElement.SetAttribute("key", "local-vellum")
-    $patternEl = $xml.CreateElement("package")
-    $patternEl.SetAttribute("pattern", "vellum")
-    $psElement.AppendChild($patternEl) | Out-Null
-    $mappingNode.AppendChild($psElement) | Out-Null
-
-    $xml.Save($tempNugetConfig)
-
-    & dotnet tool install vellum --version $vellumVersion --tool-path $vellumDir --configfile $tempNugetConfig
-    if ($LASTEXITCODE -ne 0) { throw "Failed to install Vellum" }
-    Write-Host "  Vellum installed." -ForegroundColor Green
-} else {
-    Write-Host "`n[5/10] Vellum already installed." -ForegroundColor DarkGray
-}
 
 # -- Step 6: Run Vellum ------------------------------------------------------
 Write-Host "`n[6/10] Running Vellum..." -ForegroundColor Cyan
