@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Net;
 using System.Text;
 using Corvus.Text.Json.OpenApi;
@@ -19,16 +20,33 @@ public class HttpClientTransportTests
         using HttpClient client = CreateMockClient(HttpStatusCode.OK, expected);
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new("/pets/1", OperationMethod.Get);
-        await using ApiResponse response = await transport.SendAsync(in request);
+        TestGetRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request);
 
         Assert.AreEqual(200, response.StatusCode);
         Assert.IsTrue(response.IsSuccess);
+        Assert.AreEqual(expected.Length, response.ContentLength);
+    }
 
-        // Read the content stream
-        using MemoryStream ms = new();
-        await response.ContentStream.CopyToAsync(ms);
-        CollectionAssert.AreEqual(expected, ms.ToArray());
+    [TestMethod]
+    public async Task SendAsync_Get_CorrectMethodOnWire()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestGetRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual(HttpMethod.Get, captured.Method);
     }
 
     [TestMethod]
@@ -43,11 +61,9 @@ public class HttpClientTransportTests
 
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new("/pets", OperationMethod.Get);
-        request.AddQueryParameter("limit", JsonElement.ParseValue("\"10\""u8));
-        request.AddQueryParameter("offset", JsonElement.ParseValue("\"20\""u8));
-
-        await using ApiResponse response = await transport.SendAsync(in request);
+        TestQueryRequest request = new(limit: 10, offset: 20);
+        await using TestResponse response =
+            await transport.SendAsync<TestQueryRequest, TestResponse>(in request);
 
         Assert.IsNotNull(captured);
         string? uri = captured.RequestUri?.OriginalString;
@@ -69,10 +85,9 @@ public class HttpClientTransportTests
 
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new("/pets", OperationMethod.Get);
-        request.AddHeader("X-Custom", JsonElement.ParseValue("\"value123\""u8));
-
-        await using ApiResponse response = await transport.SendAsync(in request);
+        TestHeaderRequest request = new("value123");
+        await using TestResponse response =
+            await transport.SendAsync<TestHeaderRequest, TestResponse>(in request);
 
         Assert.IsNotNull(captured);
         Assert.IsTrue(captured.Headers.Contains("X-Custom"));
@@ -88,81 +103,12 @@ public class HttpClientTransportTests
 
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new("/pets/999", OperationMethod.Get);
-        await using ApiResponse response = await transport.SendAsync(in request);
+        TestGetRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestGetRequest, TestResponse>(in request);
 
         Assert.AreEqual(404, response.StatusCode);
         Assert.IsFalse(response.IsSuccess);
-    }
-
-    [TestMethod]
-    public async Task SendAsync_EmptyBody_ReturnsEmptyStream()
-    {
-        using HttpClient client = CreateMockClient(HttpStatusCode.NoContent, []);
-        await using HttpClientTransport transport = new(client);
-
-        ApiRequest request = new("/pets/1", OperationMethod.Delete);
-        await using ApiResponse response = await transport.SendAsync(in request);
-
-        Assert.AreEqual(204, response.StatusCode);
-
-        using MemoryStream ms = new();
-        await response.ContentStream.CopyToAsync(ms);
-        Assert.AreEqual(0, ms.Length);
-    }
-
-    [TestMethod]
-    public async Task DisposeAsync_WithDisposeClient_DisposesHttpClient()
-    {
-        MockHandler handler = new(HttpStatusCode.OK, []);
-        HttpClient client = new(handler);
-
-        HttpClientTransport transport = new(client, disposeClient: true);
-        await transport.DisposeAsync();
-
-        // Verify the client was disposed by trying to use it — should throw ObjectDisposedException
-        Assert.ThrowsExactly<ObjectDisposedException>(
-            () => client.GetAsync(new Uri("http://localhost/test")).GetAwaiter().GetResult());
-    }
-
-    [TestMethod]
-    public async Task DisposeAsync_WithoutDisposeClient_DoesNotDisposeHttpClient()
-    {
-        using MockHandler handler = new(HttpStatusCode.OK, "[]"u8.ToArray());
-        using HttpClient client = new(handler) { BaseAddress = new Uri("http://localhost") };
-
-        HttpClientTransport transport = new(client, disposeClient: false);
-        await transport.DisposeAsync();
-
-        // Client should still be usable
-        HttpResponseMessage response = await client.GetAsync(new Uri("http://localhost/test"));
-        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
-    }
-
-    [TestMethod]
-    public async Task SendAsync_QueryParametersWithSpecialChars_AreEncoded()
-    {
-        HttpRequestMessage? captured = null;
-
-        using HttpClient client = CreateMockClient(
-            HttpStatusCode.OK,
-            "[]"u8.ToArray(),
-            onRequest: req => { captured = req; return Task.CompletedTask; });
-
-        await using HttpClientTransport transport = new(client);
-
-        ApiRequest request = new("/search", OperationMethod.Get);
-        request.AddQueryParameter("q", JsonElement.ParseValue("\"hello world&foo=bar\""u8));
-
-        await using ApiResponse response = await transport.SendAsync(in request);
-
-        Assert.IsNotNull(captured);
-        string? uri = captured.RequestUri?.OriginalString;
-        Assert.IsNotNull(uri);
-
-        // Should be URL-encoded
-        Assert.IsFalse(uri.Contains("hello world", StringComparison.Ordinal), "Space should be encoded");
-        Assert.IsTrue(uri.Contains("q=", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -185,35 +131,70 @@ public class HttpClientTransportTests
 
         await using HttpClientTransport transport = new(client);
 
-        // Create a JsonElement body from JSON
         using ParsedJsonDocument<JsonElement> doc =
             ParsedJsonDocument<JsonElement>.Parse("""{"name":"Rex"}""");
         JsonElement body = doc.RootElement;
 
-        ApiRequest request = new("/pets", OperationMethod.Post);
-        await using ApiResponse response = await transport.SendAsync(in request, in body);
+        TestPostRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestPostRequest, JsonElement, TestResponse>(in request, in body);
 
         Assert.AreEqual(201, response.StatusCode);
         Assert.IsNotNull(captured);
         Assert.AreEqual(HttpMethod.Post, captured.Method);
         Assert.IsNotNull(capturedBody);
 
-        // The body should be valid JSON containing the name
         string bodyStr = Encoding.UTF8.GetString(capturedBody);
         Assert.IsTrue(bodyStr.Contains("Rex", StringComparison.Ordinal));
         Assert.AreEqual("application/json", captured.Content?.Headers.ContentType?.MediaType);
     }
 
     [TestMethod]
-    public async Task EnsureSuccess_ThrowsOnNonSuccessStatus()
+    public async Task DisposeAsync_WithDisposeClient_DisposesHttpClient()
     {
-        using HttpClient client = CreateMockClient(HttpStatusCode.InternalServerError, "[]"u8.ToArray());
+        MockHandler handler = new(HttpStatusCode.OK, []);
+        HttpClient client = new(handler);
+
+        HttpClientTransport transport = new(client, disposeClient: true);
+        await transport.DisposeAsync();
+
+        Assert.ThrowsExactly<ObjectDisposedException>(
+            () => client.GetAsync(new Uri("http://localhost/test")).GetAwaiter().GetResult());
+    }
+
+    [TestMethod]
+    public async Task DisposeAsync_WithoutDisposeClient_DoesNotDisposeHttpClient()
+    {
+        using MockHandler handler = new(HttpStatusCode.OK, "[]"u8.ToArray());
+        using HttpClient client = new(handler) { BaseAddress = new Uri("http://localhost") };
+
+        HttpClientTransport transport = new(client, disposeClient: false);
+        await transport.DisposeAsync();
+
+        HttpResponseMessage response = await client.GetAsync(new Uri("http://localhost/test"));
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_PathParameters_ResolvedCorrectly()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            """{"id":42}"""u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new("/fail", OperationMethod.Get);
-        await using ApiResponse response = await transport.SendAsync(in request);
+        TestPathRequest request = new(42);
+        await using TestResponse response =
+            await transport.SendAsync<TestPathRequest, TestResponse>(in request);
 
-        Assert.ThrowsExactly<ApiException>(() => response.EnsureSuccess());
+        Assert.IsNotNull(captured);
+        string? uri = captured.RequestUri?.OriginalString;
+        Assert.IsNotNull(uri);
+        Assert.IsTrue(uri.EndsWith("/pets/42", StringComparison.Ordinal), $"Expected URI ending with '/pets/42' but got '{uri}'");
     }
 
     private static HttpClient CreateMockClient(
@@ -255,5 +236,181 @@ public class HttpClientTransportTests
                 Content = new ByteArrayContent(this.responseBody),
             };
         }
+    }
+
+    /// <summary>
+    /// Minimal response for testing — just captures status and content length.
+    /// </summary>
+    private struct TestResponse : IApiResponse<TestResponse>
+    {
+        public int StatusCode { get; private set; }
+
+        public bool IsSuccess => this.StatusCode >= 200 && this.StatusCode < 300;
+
+        public int ContentLength { get; private set; }
+
+        public static async ValueTask<TestResponse> CreateAsync(
+            int statusCode,
+            Stream contentStream,
+            IAsyncDisposable? owner = null,
+            CancellationToken cancellationToken = default)
+        {
+            using MemoryStream ms = new();
+            await contentStream.CopyToAsync(ms, cancellationToken).ConfigureAwait(false);
+
+            if (owner is not null)
+            {
+                await owner.DisposeAsync().ConfigureAwait(false);
+            }
+
+            return new TestResponse
+            {
+                StatusCode = statusCode,
+                ContentLength = (int)ms.Length,
+            };
+        }
+
+        public ValueTask DisposeAsync() => default;
+    }
+
+    /// <summary>GET /pets/1 — no parameters.</summary>
+    private readonly struct TestGetRequest : IApiRequest<TestGetRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets/1"u8;
+
+        public static OperationMethod Method => OperationMethod.Get;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>GET /pets with query parameters.</summary>
+    private readonly struct TestQueryRequest : IApiRequest<TestQueryRequest>
+    {
+        private readonly int limit;
+        private readonly int offset;
+
+        public TestQueryRequest(int limit, int offset)
+        {
+            this.limit = limit;
+            this.offset = offset;
+        }
+
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Get;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => true;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer)
+        {
+            writer.Write("/pets"u8);
+        }
+
+        public int WriteQueryString(IBufferWriter<byte> writer)
+        {
+            byte[] query = Encoding.UTF8.GetBytes($"limit={this.limit}&offset={this.offset}");
+            writer.Write(query);
+            return query.Length;
+        }
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>GET /pets with X-Custom header.</summary>
+    private readonly struct TestHeaderRequest : IApiRequest<TestHeaderRequest>
+    {
+        private readonly string headerValue;
+
+        public TestHeaderRequest(string headerValue)
+        {
+            this.headerValue = headerValue;
+        }
+
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Get;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => true;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer)
+        {
+            writer.Write("/pets"u8);
+        }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state)
+        {
+            callback("X-Custom"u8, Encoding.UTF8.GetBytes(this.headerValue), state);
+        }
+    }
+
+    /// <summary>POST /pets — body operation, no parameters.</summary>
+    private readonly struct TestPostRequest : IApiRequest<TestPostRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Post;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>GET /pets/{petId} — path parameter.</summary>
+    private readonly struct TestPathRequest : IApiRequest<TestPathRequest>
+    {
+        private readonly int petId;
+
+        public TestPathRequest(int petId)
+        {
+            this.petId = petId;
+        }
+
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets/{petId}"u8;
+
+        public static OperationMethod Method => OperationMethod.Get;
+
+        public static bool HasPathParameters => true;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer)
+        {
+            byte[] path = Encoding.UTF8.GetBytes($"/pets/{this.petId}");
+            writer.Write(path);
+        }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
     }
 }

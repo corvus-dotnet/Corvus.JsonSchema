@@ -27,7 +27,7 @@ namespace Corvus.Text.Json.OpenApi;
 /// <para>
 /// The request carries only metadata — path, method, query parameters, and headers.
 /// Request bodies are not stored in this struct. Instead, the transport's generic
-/// <see cref="IApiTransport.SendAsync{TBody}"/> overload accepts the typed body
+/// <see cref="IApiTransport.SendAsync{TRequest, TBody, TResponse}"/> overload accepts the typed body
 /// separately and writes it directly into the transport's output stream.
 /// </para>
 /// </remarks>

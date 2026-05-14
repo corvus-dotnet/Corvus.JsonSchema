@@ -17,52 +17,60 @@ namespace Corvus.Text.Json.OpenApi;
 /// <see cref="HttpClient"/>-based implementation.
 /// </para>
 /// <para>
-/// The transport returns an <see cref="ApiResponse"/> that provides a
-/// <see cref="ApiResponse.ContentStream"/> for direct parsing. Generated
-/// client code parses the stream into V5 types via
-/// <see cref="ParsedJsonDocument{T}.ParseAsync(Stream, JsonDocumentOptions, CancellationToken)"/>
-/// — no intermediate buffer, no deserialization step.
+/// The transport is a low-level HTTP/messaging pipe. All OpenAPI semantics
+/// (path template resolution, parameter serialization, response parsing) are
+/// handled by the generated request and response types. The transport only
+/// needs to:
 /// </para>
-/// <para>
-/// For requests with a body, the generic
-/// <see cref="SendAsync{TBody}(in ApiRequest, in TBody, CancellationToken)"/>
-/// overload accepts the typed body and writes it directly into the transport's
-/// output stream. The body is never materialized into an intermediate buffer.
-/// </para>
+/// <list type="number">
+/// <item><description>Call <c>WriteResolvedPath</c> / <c>WriteQueryString</c> /
+/// <c>WriteHeaders</c> on the request to construct the URI and headers.</description></item>
+/// <item><description>Send the HTTP request (optionally writing a body).</description></item>
+/// <item><description>Call <c>TResponse.CreateAsync</c> to parse the response.</description></item>
+/// </list>
 /// </remarks>
 public interface IApiTransport : IAsyncDisposable
 {
     /// <summary>
-    /// Sends an API request with no body and returns the response.
+    /// Sends a typed API request with no body and returns a typed response.
     /// </summary>
-    /// <param name="request">The request metadata. Passed by <c>in</c> reference;
-    /// the transport must consume all request data synchronously before any async I/O.</param>
+    /// <typeparam name="TRequest">The generated request type for this operation.</typeparam>
+    /// <typeparam name="TResponse">The generated response type for this operation.</typeparam>
+    /// <param name="request">The request, passed by <c>in</c> reference.
+    /// The transport must consume all request data (path, query, headers) synchronously
+    /// before any async I/O.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>
-    /// An <see cref="ApiResponse"/> containing the status code and content stream.
+    /// A <typeparamref name="TResponse"/> containing the parsed, typed response.
     /// The caller must dispose the response when finished.
     /// </returns>
-    ValueTask<ApiResponse> SendAsync(
-        in ApiRequest request,
-        CancellationToken cancellationToken = default);
+    ValueTask<TResponse> SendAsync<TRequest, TResponse>(
+        in TRequest request,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TResponse : struct, IApiResponse<TResponse>;
 
     /// <summary>
-    /// Sends an API request with a typed body and returns the response.
+    /// Sends a typed API request with a typed body and returns a typed response.
     /// </summary>
+    /// <typeparam name="TRequest">The generated request type for this operation.</typeparam>
     /// <typeparam name="TBody">The type of the request body. Must be a value type
     /// implementing <see cref="IJsonElement{TBody}"/> so the transport can write it
     /// directly to its output stream via WriteTo.</typeparam>
-    /// <param name="request">The request metadata. Passed by <c>in</c> reference.</param>
+    /// <typeparam name="TResponse">The generated response type for this operation.</typeparam>
+    /// <param name="request">The request, passed by <c>in</c> reference.</param>
     /// <param name="body">The request body. Passed by <c>in</c> reference; the transport
     /// copies the small struct synchronously before any async I/O.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>
-    /// An <see cref="ApiResponse"/> containing the status code and content stream.
+    /// A <typeparamref name="TResponse"/> containing the parsed, typed response.
     /// The caller must dispose the response when finished.
     /// </returns>
-    ValueTask<ApiResponse> SendAsync<TBody>(
-        in ApiRequest request,
+    ValueTask<TResponse> SendAsync<TRequest, TBody, TResponse>(
+        in TRequest request,
         in TBody body,
         CancellationToken cancellationToken = default)
-        where TBody : struct, IJsonElement<TBody>;
+        where TRequest : struct, IApiRequest<TRequest>
+        where TBody : struct, IJsonElement<TBody>
+        where TResponse : struct, IApiResponse<TResponse>;
 }

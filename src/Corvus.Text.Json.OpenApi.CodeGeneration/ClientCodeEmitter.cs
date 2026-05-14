@@ -19,11 +19,12 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// </list>
 /// </para>
 /// <para>
-/// Generated client methods dispatch to the <see cref="IApiTransport"/>:
-/// no-body operations use <see cref="IApiTransport.SendAsync(in ApiRequest, CancellationToken)"/>,
-/// while operations with a body use the generic
-/// <see cref="IApiTransport.SendAsync{TBody}(in ApiRequest, in TBody, CancellationToken)"/>
-/// overload, which writes the body directly into the transport's output stream.
+/// Generated client methods dispatch to the <see cref="IApiTransport"/>
+/// via strongly-typed request/response structs. No-body operations use
+/// <c>SendAsync&lt;TRequest, TResponse&gt;</c>,
+/// while operations with a body use
+/// <c>SendAsync&lt;TRequest, TBody, TResponse&gt;</c>,
+/// which writes the body directly into the transport's output stream.
 /// </para>
 /// </remarks>
 public sealed class ClientCodeEmitter
