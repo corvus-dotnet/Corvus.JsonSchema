@@ -76,6 +76,7 @@ $PublishNuGetPackagesAsGitHubReleaseArtefacts = $true
 $BuildWebsite = [Convert]::ToBoolean((property BUILDVAR_BuildWebsite $Website.ToBool()))
 $IsPreviewDeployment = [Convert]::ToBoolean((property BUILDVAR_IsPreviewDeployment $false))
 $BasePathPrefix = property BUILDVAR_BasePathPrefix $BasePathPrefix
+$VellumDownloadToken = property VELLUM_DOWNLOAD_TOKEN ''
 
 task . FullBuild
 
@@ -124,6 +125,13 @@ task BuildWebsite {
 
     $websiteBuildArgs = @("-SkipDotNetBuild")
 
+    if ($VellumDownloadToken) {
+        $websiteBuildArgs += @(
+            "-VellumDownloadToken"
+            (ConvertTo-SecureString $VellumDownloadToken -AsPlainText)
+        )
+    }
+
     $basePathPrefix = $env:BUILDVAR_BasePathPrefix
     if ($basePathPrefix) {
         $websiteBuildArgs += "-BasePathPrefix", $basePathPrefix
@@ -138,7 +146,7 @@ task BuildWebsite {
     Write-Host "  IsPreviewDeployment: $($env:BUILDVAR_IsPreviewDeployment)"
     Write-Host "  Args: $websiteBuildArgs"
 
-    & pwsh -File (Join-Path $websiteDir "build.ps1") @websiteBuildArgs
+    & (Join-Path $websiteDir "build.ps1") @websiteBuildArgs
     if ($LASTEXITCODE -ne 0) {
         exit $LASTEXITCODE
     }

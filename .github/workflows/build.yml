@@ -58,7 +58,7 @@ jobs:
         secretsYaml: |
           NUGET_API_KEY: "${{ startsWith(github.ref, 'refs/tags/') && secrets.NUGET_APIKEY || secrets.BUILD_PUBLISHER_PAT }}"
           # TODO: Review approach to enable Vellum to be downloaded
-          GH_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
+          VELLUM_DOWNLOAD_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
         secretsEncryptionKey: ${{ secrets.SHARED_WORKFLOW_KEY }}
 
   setCachePathsConfig:
