@@ -19,8 +19,6 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// </remarks>
 public static class ClientModelBuilder
 {
-    private static ReadOnlySpan<byte> RefUtf8 => "$ref"u8;
-
     /// <summary>
     /// Builds a <see cref="ClientModel"/> from a specification document.
     /// </summary>
@@ -28,6 +26,14 @@ public static class ClientModelBuilder
     /// <param name="walker">The spec walker to use.</param>
     /// <param name="filter">Optional operation filter.</param>
     /// <returns>The built <see cref="ClientModel"/>.</returns>
+    /// <remarks>
+    /// <para>
+    /// Schema pointers are collected from operation parameters, request bodies, and
+    /// responses. Component schemas and transitive <c>$ref</c> targets do not need
+    /// to be gathered separately — <c>{ "$ref": "..." }</c> is a valid JSON Schema,
+    /// so the code generator follows references automatically.
+    /// </para>
+    /// </remarks>
     public static ClientModel Build(
         JsonElement specRoot,
         ISpecWalker walker,
@@ -40,16 +46,6 @@ public static class ClientModelBuilder
         {
             ClientOperation op = BuildOperation(entry, schemaPointers);
             operations.Add(op);
-        }
-
-        // Also collect component schemas
-        foreach (ExtractedSchema extracted in walker.ExtractSchemas(specRoot, filter))
-        {
-            string? pointer = GetSchemaPointer(extracted.Schema);
-            if (pointer is not null)
-            {
-                schemaPointers.Add(pointer);
-            }
         }
 
         return new ClientModel(
@@ -230,17 +226,6 @@ public static class ClientModelBuilder
         }
 
         return result;
-    }
-
-    private static string? GetSchemaPointer(JsonElement schema)
-    {
-        if (schema.TryGetProperty(RefUtf8, out JsonElement refValue)
-            && refValue.ValueKind == JsonValueKind.String)
-        {
-            return refValue.GetString();
-        }
-
-        return null;
     }
 
     private static string MethodToString(OperationMethod method) =>
