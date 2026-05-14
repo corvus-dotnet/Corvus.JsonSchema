@@ -762,7 +762,7 @@ public sealed class ClientCodeEmitter
             case ParameterSerializationKind.String:
                 EmitStringWrite(w, valueExpr, uid);
                 w.WriteLine(
-                    $"callback(nameUtf8{uid}, utf8{uid}.Span.ToArray(), state);");
+                    $"callback(nameUtf8{uid}, utf8{uid}.Span, state);");
                 break;
 
             case ParameterSerializationKind.Boolean:
@@ -772,13 +772,13 @@ public sealed class ClientCodeEmitter
             case ParameterSerializationKind.Double:
                 EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
                 w.WriteLine(
-                    $"callback(nameUtf8{uid}, buf{uid}[..bw{uid}].ToArray(), state);");
+                    $"callback(nameUtf8{uid}, buf{uid}[..bw{uid}], state);");
                 break;
 
             case ParameterSerializationKind.UnboundedNumber:
                 EmitUnboundedNumberToLocal(w, valueExpr, uid);
                 w.WriteLine(
-                    $"callback(nameUtf8{uid}, raw{uid}.Span.ToArray(), state);");
+                    $"callback(nameUtf8{uid}, raw{uid}.Span, state);");
                 break;
 
             case ParameterSerializationKind.Object:

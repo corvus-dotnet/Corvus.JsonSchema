@@ -21,6 +21,12 @@ namespace Corvus.Text.Json.OpenApi.HttpTransport;
 /// <see cref="IApiResponse{TSelf}"/> interfaces.
 /// </para>
 /// <para>
+/// URI construction uses a thread-static <see cref="ArrayBufferWriter{T}"/> that is reused
+/// across calls. The path, <c>?</c> separator, and query string are written sequentially —
+/// no back-tracking or re-copying. A single <see cref="Encoding.UTF8"/> transcoding produces
+/// the <see langword="string"/> required by <see cref="HttpRequestMessage"/>.
+/// </para>
+/// <para>
 /// The transport does not own the <see cref="HttpClient"/> by default.
 /// Pass <c>disposeClient: true</c> to the constructor if the transport should dispose
 /// the client when it is itself disposed.
@@ -28,6 +34,9 @@ namespace Corvus.Text.Json.OpenApi.HttpTransport;
 /// </remarks>
 public sealed class HttpClientTransport : IApiTransport
 {
+    [ThreadStatic]
+    private static ArrayBufferWriter<byte>? t_uriWriter;
+
     private readonly HttpClient httpClient;
     private readonly bool disposeClient;
 
@@ -99,7 +108,10 @@ public sealed class HttpClientTransport : IApiTransport
         where TRequest : struct, IApiRequest<TRequest>
     {
         string uri = BuildUri(in request);
-        HttpRequestMessage httpRequest = new(MapMethod(TRequest.Method), uri);
+
+        HttpRequestMessage httpRequest = new(
+            MapMethod(TRequest.Method),
+            new Uri(uri, new UriCreationOptions { DangerousDisablePathAndQueryCanonicalization = true }));
 
         if (TRequest.HasHeaderParameters)
         {
@@ -119,7 +131,11 @@ public sealed class HttpClientTransport : IApiTransport
     private static string BuildUri<TRequest>(in TRequest request)
         where TRequest : struct, IApiRequest<TRequest>
     {
-        ArrayBufferWriter<byte> writer = new(256);
+        // Reuse a thread-static writer: zero allocation for the writer and its
+        // internal byte[] on steady-state calls. The only allocation is the final
+        // string required by HttpRequestMessage.
+        ArrayBufferWriter<byte> writer = t_uriWriter ??= new(512);
+        writer.Clear();
 
         if (TRequest.HasPathParameters)
         {
@@ -127,25 +143,21 @@ public sealed class HttpClientTransport : IApiTransport
         }
         else
         {
-            ReadOnlySpan<byte> template = TRequest.PathTemplateUtf8;
-            writer.Write(template);
+            writer.Write(TRequest.PathTemplateUtf8);
         }
 
         if (TRequest.HasQueryParameters)
         {
-            int pathLength = writer.WrittenCount;
+            int pathEnd = writer.WrittenCount;
+
+            // Write '?' optimistically before the query string.
+            writer.Write("?"u8);
             int queryBytes = request.WriteQueryString(writer);
-            if (queryBytes > 0)
+
+            if (queryBytes == 0)
             {
-                // Insert '?' between path and query.
-                // We wrote path bytes, then query bytes were appended.
-                // Need to insert the '?' separator. Since IBufferWriter
-                // doesn't support insert, we build path + "?" + query.
-                byte[] combined = new byte[pathLength + 1 + queryBytes];
-                writer.WrittenSpan[..pathLength].CopyTo(combined);
-                combined[pathLength] = (byte)'?';
-                writer.WrittenSpan[pathLength..].CopyTo(combined.AsSpan(pathLength + 1));
-                return Encoding.UTF8.GetString(combined);
+                // All optional params were unset — discard the '?' by slicing.
+                return Encoding.UTF8.GetString(writer.WrittenSpan[..pathEnd]);
             }
         }
 
