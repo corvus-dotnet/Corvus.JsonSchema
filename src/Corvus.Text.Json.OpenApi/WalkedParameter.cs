@@ -1,46 +1,49 @@
-// <copyright file="ClientParameter.cs" company="Endjin Limited">
+// <copyright file="WalkedParameter.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using Corvus.Text.Json.OpenApi;
-
-namespace Corvus.Text.Json.OpenApi.CodeGeneration;
+namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
-/// Represents a parameter in an API operation.
+/// A parameter extracted from an API operation by the spec walker, using
+/// the strongly-typed schema model.
 /// </summary>
-public readonly struct ClientParameter
+/// <remarks>
+/// <para>
+/// This carries the typed metadata the walker extracts (name, location,
+/// style, explode, required) so that downstream consumers such as
+/// <c>ClientModelBuilder</c> do not need to re-parse raw JSON.
+/// </para>
+/// </remarks>
+public readonly struct WalkedParameter
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ClientParameter"/> struct.
+    /// Initializes a new instance of the <see cref="WalkedParameter"/> struct.
     /// </summary>
     /// <param name="name">The parameter name as declared in the spec.</param>
     /// <param name="location">Where the parameter appears.</param>
     /// <param name="isRequired">Whether the parameter is required.</param>
-    /// <param name="schemaPointer">
-    /// JSON pointer to the parameter's schema, or <see langword="null"/>
-    /// if the parameter has no schema.
-    /// </param>
-    /// <param name="style">The OpenAPI serialization style for this parameter.</param>
+    /// <param name="style">The serialization style.</param>
     /// <param name="explode">Whether to explode array/object values.</param>
-    public ClientParameter(
+    /// <param name="hasSchema">Whether the parameter declares a schema.</param>
+    public WalkedParameter(
         string name,
         ParameterLocation location,
         bool isRequired,
-        string? schemaPointer,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        bool hasSchema)
     {
         this.Name = name;
         this.Location = location;
         this.IsRequired = isRequired;
-        this.SchemaPointer = schemaPointer;
         this.Style = style;
         this.Explode = explode;
+        this.HasSchema = hasSchema;
     }
 
     /// <summary>
-    /// Gets the parameter name as declared in the spec.
+    /// Gets the parameter name.
     /// </summary>
     public string Name { get; }
 
@@ -55,12 +58,7 @@ public readonly struct ClientParameter
     public bool IsRequired { get; }
 
     /// <summary>
-    /// Gets the JSON pointer to the parameter's schema, or <see langword="null"/>.
-    /// </summary>
-    public string? SchemaPointer { get; }
-
-    /// <summary>
-    /// Gets the OpenAPI serialization style for this parameter.
+    /// Gets the OpenAPI serialization style.
     /// </summary>
     public ParameterStyle Style { get; }
 
@@ -68,4 +66,9 @@ public readonly struct ClientParameter
     /// Gets a value indicating whether array/object values are exploded.
     /// </summary>
     public bool Explode { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether the parameter declares a schema.
+    /// </summary>
+    public bool HasSchema { get; }
 }

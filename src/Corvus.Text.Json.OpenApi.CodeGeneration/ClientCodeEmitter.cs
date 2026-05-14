@@ -82,7 +82,7 @@ public sealed class ClientCodeEmitter
 
         foreach (ClientOperation op in operations)
         {
-            string[] tags = op.GetTags();
+            string[] tags = op.Tags;
 
             if (tags.Length == 0)
             {
@@ -148,7 +148,7 @@ public sealed class ClientCodeEmitter
         string methodName = op.GetMethodName();
 
         // XML doc
-        string? summary = op.GetSummary();
+        string? summary = op.Summary;
         if (summary is not null)
         {
             w.WriteLine("/// <summary>");
@@ -159,14 +159,14 @@ public sealed class ClientCodeEmitter
         // Parameters doc
         foreach (ClientParameter param in op.Parameters)
         {
-            string paramName = param.GetName();
-            string paramDesc = param.GetDescription() ?? $"The {paramName} parameter.";
+            string paramName = param.Name;
+            string paramDesc = $"The {paramName} parameter.";
             w.WriteLine($"/// <param name=\"{paramName}\">{EscapeXml(paramDesc)}.</param>");
         }
 
         if (op.RequestBody is not null)
         {
-            string bodyDesc = op.RequestBody.Value.GetDescription() ?? "The request body.";
+            string bodyDesc = op.RequestBody.Value.Description ?? "The request body.";
             w.WriteLine($"/// <param name=\"body\">{EscapeXml(bodyDesc)}.</param>");
         }
 
@@ -178,7 +178,7 @@ public sealed class ClientCodeEmitter
         foreach (ClientParameter param in op.Parameters)
         {
             string typeName = GetParameterTypeName(param);
-            string paramIdentifier = EscapeCSharpKeyword(param.GetName());
+            string paramIdentifier = EscapeCSharpKeyword(param.Name);
 
             if (param.IsRequired)
             {
@@ -243,7 +243,7 @@ public sealed class ClientCodeEmitter
     {
         foreach (ClientMediaTypeContent content in requestBody.Content)
         {
-            if (content.MediaTypeProperty.NameEquals("application/json"u8))
+            if (string.Equals(content.MediaType, "application/json", StringComparison.Ordinal))
             {
                 string? resolved = this.ResolveSchemaTypeName(content.SchemaPointer);
                 if (resolved is not null)
@@ -261,16 +261,14 @@ public sealed class ClientCodeEmitter
     /// <summary>
     /// Resolves a schema pointer to its generated .NET type name using the type map.
     /// </summary>
-    private string? ResolveSchemaTypeName(byte[]? schemaPointer)
+    private string? ResolveSchemaTypeName(string? schemaPointer)
     {
         if (schemaPointer is null || this.schemaTypeMap is null)
         {
             return null;
         }
 
-        string key = System.Text.Encoding.UTF8.GetString(schemaPointer);
-
-        if (this.schemaTypeMap.TryGetValue(key, out string? typeName))
+        if (this.schemaTypeMap.TryGetValue(schemaPointer, out string? typeName))
         {
             return typeName;
         }
@@ -415,9 +413,8 @@ public sealed class ClientCodeEmitter
         w.OpenBrace();
 
         string methodExpr = OperationMethodExpression(op.Method);
-        string pathTemplate = op.GetPathTemplate();
 
-        w.WriteLine($"ApiRequest request = new(\"{pathTemplate}\", {methodExpr});");
+        w.WriteLine($"ApiRequest request = new(\"{op.PathTemplate}\", {methodExpr});");
 
         // Add path parameters — the transport applies style/explode serialization
         // and substitutes {name} placeholders in the path template.
@@ -458,8 +455,8 @@ public sealed class ClientCodeEmitter
         ClientParameter param,
         string methodCall)
     {
-        string paramIdentifier = EscapeCSharpKeyword(param.GetName());
-        string rawName = param.GetName();
+        string paramIdentifier = EscapeCSharpKeyword(param.Name);
+        string rawName = param.Name;
         string styleExpr = ParameterStyleExpression(param.Style);
         string explodeExpr = param.Explode ? "true" : "false";
 

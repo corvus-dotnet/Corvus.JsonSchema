@@ -59,7 +59,19 @@ public sealed class OpenApi31Walker : ISpecWalker
                 if (pathItem.TryGetProperty(methodName.Span, out JsonElement operation)
                     && operation.ValueKind == JsonValueKind.Object)
                 {
-                    yield return new OperationEntry(pathProp, operation, method);
+                    OpenApiDocument.Operation typed = operation;
+
+                    yield return new OperationEntry(
+                        pathProp,
+                        operation,
+                        method,
+                        GetOptionalString(typed.OperationId),
+                        GetOptionalString(typed.Summary),
+                        GetOptionalString(typed.Description),
+                        ExtractParameters(typed),
+                        ExtractRequestBody(typed),
+                        ExtractResponses(typed),
+                        ExtractTags(typed));
                 }
             }
         }
@@ -149,6 +161,216 @@ public sealed class OpenApi31Walker : ISpecWalker
             }
         }
     }
+
+    private static string[] ExtractTags(OpenApiDocument.Operation operation)
+    {
+        if (operation.Tags.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        List<string> result = [];
+
+        foreach (JsonElement tag in ((JsonElement)operation.Tags).EnumerateArray())
+        {
+            if (tag.ValueKind == JsonValueKind.String)
+            {
+                result.Add(tag.GetString()!);
+            }
+        }
+
+        return [.. result];
+    }
+
+    private static WalkedParameter[] ExtractParameters(OpenApiDocument.Operation operation)
+    {
+        if (operation.Parameters.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        List<WalkedParameter> result = [];
+
+        foreach (JsonElement param in ((JsonElement)operation.Parameters).EnumerateArray())
+        {
+            if (param.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            OpenApiDocument.ParameterOrReference typed = param;
+
+            string name = GetOptionalString(typed.Name) ?? "unknown";
+            ParameterLocation location = ParseLocation(typed.In);
+            bool required = typed.Required.ValueKind == JsonValueKind.True;
+            bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
+
+            (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
+
+            result.Add(new WalkedParameter(name, location, required, style, explode, hasSchema));
+        }
+
+        return [.. result];
+    }
+
+    private static WalkedRequestBody? ExtractRequestBody(OpenApiDocument.Operation operation)
+    {
+        OpenApiDocument.RequestBodyOrReference requestBody = operation.RequestBody;
+
+        if (requestBody.ValueKind != JsonValueKind.Object)
+        {
+            return null;
+        }
+
+        bool required = requestBody.Required.ValueKind == JsonValueKind.True;
+        WalkedMediaTypeContent[] content = ExtractMediaTypeContent(requestBody.Content);
+        string? description = GetOptionalString(requestBody.Description);
+
+        return new WalkedRequestBody(required, content, description);
+    }
+
+    private static WalkedResponse[] ExtractResponses(OpenApiDocument.Operation operation)
+    {
+        if (operation.ResponsesValue.ValueKind != JsonValueKind.Object)
+        {
+            return [];
+        }
+
+        List<WalkedResponse> result = [];
+
+        foreach (JsonProperty<JsonElement> responseProp in
+            ((JsonElement)operation.ResponsesValue).EnumerateObject())
+        {
+            if (responseProp.Value.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            OpenApiDocument.ResponseOrReference response = responseProp.Value;
+
+            string statusCode = responseProp.Name;
+            string? description = GetOptionalString(response.Description);
+            WalkedMediaTypeContent[] content = ExtractMediaTypeContent(response.Content);
+
+            result.Add(new WalkedResponse(statusCode, description, content));
+        }
+
+        return [.. result];
+    }
+
+    private static WalkedMediaTypeContent[] ExtractMediaTypeContent(JsonElement contentMap)
+    {
+        if (contentMap.ValueKind != JsonValueKind.Object)
+        {
+            return [];
+        }
+
+        List<WalkedMediaTypeContent> result = [];
+
+        foreach (JsonProperty<JsonElement> mediaTypeProp in contentMap.EnumerateObject())
+        {
+            OpenApiDocument.MediaType mediaType = mediaTypeProp.Value;
+            bool hasSchema = mediaType.SchemaValue.ValueKind == JsonValueKind.Object;
+            result.Add(new WalkedMediaTypeContent(mediaTypeProp.Name, hasSchema));
+        }
+
+        return [.. result];
+    }
+
+    private static ParameterLocation ParseLocation(JsonElement inValue)
+    {
+        if (inValue.ValueKind != JsonValueKind.String)
+        {
+            return ParameterLocation.Query;
+        }
+
+        if (inValue.ValueEquals("path"u8))
+        {
+            return ParameterLocation.Path;
+        }
+
+        if (inValue.ValueEquals("header"u8))
+        {
+            return ParameterLocation.Header;
+        }
+
+        if (inValue.ValueEquals("cookie"u8))
+        {
+            return ParameterLocation.Cookie;
+        }
+
+        return ParameterLocation.Query;
+    }
+
+    private static (ParameterStyle Style, bool Explode) ParseStyleAndExplode(
+        JsonElement styleValue,
+        JsonElement explodeValue,
+        ParameterLocation location)
+    {
+        ParameterStyle style = ParseStyle(styleValue, location);
+
+        bool explode;
+        if (explodeValue.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            explode = explodeValue.ValueKind == JsonValueKind.True;
+        }
+        else
+        {
+            explode = style == ParameterStyle.Form;
+        }
+
+        return (style, explode);
+    }
+
+    private static ParameterStyle ParseStyle(JsonElement styleValue, ParameterLocation location)
+    {
+        if (styleValue.ValueKind == JsonValueKind.String)
+        {
+            if (styleValue.ValueEquals("form"u8))
+            {
+                return ParameterStyle.Form;
+            }
+
+            if (styleValue.ValueEquals("simple"u8))
+            {
+                return ParameterStyle.Simple;
+            }
+
+            if (styleValue.ValueEquals("label"u8))
+            {
+                return ParameterStyle.Label;
+            }
+
+            if (styleValue.ValueEquals("matrix"u8))
+            {
+                return ParameterStyle.Matrix;
+            }
+
+            if (styleValue.ValueEquals("spaceDelimited"u8))
+            {
+                return ParameterStyle.SpaceDelimited;
+            }
+
+            if (styleValue.ValueEquals("pipeDelimited"u8))
+            {
+                return ParameterStyle.PipeDelimited;
+            }
+
+            if (styleValue.ValueEquals("deepObject"u8))
+            {
+                return ParameterStyle.DeepObject;
+            }
+        }
+
+        return location switch
+        {
+            ParameterLocation.Query or ParameterLocation.Cookie => ParameterStyle.Form,
+            _ => ParameterStyle.Simple,
+        };
+    }
+
+    private static string? GetOptionalString(JsonElement element) =>
+        element.ValueKind == JsonValueKind.String ? element.GetString() : null;
 
     private static IEnumerable<ExtractedSchema> EnumerateMediaTypeSchemas(
         JsonElement contentMap, SchemaRole role)

@@ -1,24 +1,24 @@
-// <copyright file="ClientRequestBody.cs" company="Endjin Limited">
+// <copyright file="WalkedRequestBody.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Text.Json.OpenApi.CodeGeneration;
+namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
-/// Represents the request body of an API operation.
+/// A request body extracted from an API operation by the spec walker.
 /// </summary>
-public readonly struct ClientRequestBody
+public readonly struct WalkedRequestBody
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ClientRequestBody"/> struct.
+    /// Initializes a new instance of the <see cref="WalkedRequestBody"/> struct.
     /// </summary>
     /// <param name="isRequired">Whether the request body is required.</param>
-    /// <param name="content">The content entries, one per media type.</param>
-    /// <param name="description">The description, or <see langword="null"/>.</param>
-    public ClientRequestBody(
+    /// <param name="content">The media type content entries.</param>
+    /// <param name="description">The description, if present.</param>
+    public WalkedRequestBody(
         bool isRequired,
-        ClientMediaTypeContent[] content,
-        string? description)
+        WalkedMediaTypeContent[] content,
+        string? description = null)
     {
         this.IsRequired = isRequired;
         this.Content = content;
@@ -31,9 +31,9 @@ public readonly struct ClientRequestBody
     public bool IsRequired { get; }
 
     /// <summary>
-    /// Gets the content entries, one per media type.
+    /// Gets the media type content entries.
     /// </summary>
-    public ClientMediaTypeContent[] Content { get; }
+    public WalkedMediaTypeContent[] Content { get; }
 
     /// <summary>
     /// Gets the description, or <see langword="null"/> if not present.

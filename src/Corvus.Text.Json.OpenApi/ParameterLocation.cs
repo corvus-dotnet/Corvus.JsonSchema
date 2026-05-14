@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Text.Json.OpenApi.CodeGeneration;
+namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
 /// The location of an API parameter.

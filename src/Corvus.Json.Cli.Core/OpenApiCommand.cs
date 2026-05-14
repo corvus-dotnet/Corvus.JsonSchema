@@ -6,7 +6,6 @@
 
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
@@ -145,7 +144,7 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         string specVersion,
         string rootNamespace,
         string outputPath,
-        byte[][] schemaPointers,
+        string[] schemaPointers,
         CancellationToken cancellationToken)
     {
         string specFilePath = Path.GetFullPath(specFile);
@@ -179,16 +178,15 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         Dictionary<string, TypeDeclaration> pointerToType = new(StringComparer.Ordinal);
         List<TypeDeclaration> typesToGenerate = [];
 
-        foreach (byte[] pointer in schemaPointers)
+        foreach (string pointer in schemaPointers)
         {
-            string pointerStr = Encoding.UTF8.GetString(pointer);
-            JsonReference reference = new(specFilePath, pointerStr);
+            JsonReference reference = new(specFilePath, pointer);
 
             TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
                 reference, defaultVocabulary, rebaseAsRoot: false)
                 .ConfigureAwait(false);
 
-            pointerToType[pointerStr] = rootType;
+            pointerToType[pointer] = rootType;
             typesToGenerate.Add(rootType);
         }
 

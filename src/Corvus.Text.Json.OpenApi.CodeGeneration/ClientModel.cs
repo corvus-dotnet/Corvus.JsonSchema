@@ -37,13 +37,13 @@ public readonly struct ClientModel
     /// <param name="specRoot">The root element of the parsed spec document.</param>
     /// <param name="operations">The operations in the API.</param>
     /// <param name="schemaPointers">
-    /// UTF-8 JSON pointers to all schemas reachable from the selected operations.
+    /// JSON pointers to all schemas reachable from the selected operations.
     /// These will be fed to the V5 <c>JsonSchemaTypeBuilder</c> for type generation.
     /// </param>
     public ClientModel(
         JsonElement specRoot,
         ClientOperation[] operations,
-        byte[][] schemaPointers)
+        string[] schemaPointers)
     {
         this.SpecRoot = specRoot;
         this.Operations = operations;
@@ -61,9 +61,9 @@ public readonly struct ClientModel
     public ClientOperation[] Operations { get; }
 
     /// <summary>
-    /// Gets the UTF-8 JSON pointers to all schemas reachable from the selected operations.
+    /// Gets the JSON pointers to all schemas reachable from the selected operations.
     /// </summary>
-    public byte[][] SchemaPointers { get; }
+    public string[] SchemaPointers { get; }
 
     /// <summary>
     /// Gets the API title from the spec's info object.
