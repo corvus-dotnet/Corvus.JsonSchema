@@ -38,6 +38,10 @@ public static class ClientModelBuilder
 
     private static ReadOnlySpan<byte> RefUtf8 => "$ref"u8;
 
+    private static ReadOnlySpan<byte> StyleUtf8 => "style"u8;
+
+    private static ReadOnlySpan<byte> ExplodeUtf8 => "explode"u8;
+
     /// <summary>
     /// Builds a <see cref="ClientModel"/> from a specification document.
     /// </summary>
@@ -124,6 +128,8 @@ public static class ClientModelBuilder
             bool required = resolved.TryGetProperty(RequiredUtf8, out JsonElement req)
                 && req.ValueKind == JsonValueKind.True;
 
+            (ParameterStyle style, bool explode) = ParseStyleAndExplode(resolved, location);
+
             byte[]? schemaPointer = null;
             if (resolved.TryGetProperty(SchemaUtf8, out JsonElement schema)
                 && schema.ValueKind == JsonValueKind.Object)
@@ -132,7 +138,7 @@ public static class ClientModelBuilder
                 schemaPointers.Add(schemaPointer);
             }
 
-            result.Add(new ClientParameter(resolved, location, required, schemaPointer));
+            result.Add(new ClientParameter(resolved, location, required, schemaPointer, style, explode));
             index++;
         }
 
@@ -305,6 +311,90 @@ public static class ClientModelBuilder
         }
 
         return ParameterLocation.Query;
+    }
+
+    /// <summary>
+    /// Parses the OpenAPI <c>style</c> and <c>explode</c> properties from a parameter,
+    /// applying the spec-defined defaults per location.
+    /// </summary>
+    /// <remarks>
+    /// OpenAPI 3.x defaults:
+    /// <list type="table">
+    /// <listheader><term>Location</term><description>Default style / explode</description></listheader>
+    /// <item><term>path</term><description>simple / false</description></item>
+    /// <item><term>query</term><description>form / true</description></item>
+    /// <item><term>header</term><description>simple / false</description></item>
+    /// <item><term>cookie</term><description>form / false</description></item>
+    /// </list>
+    /// </remarks>
+    private static (ParameterStyle Style, bool Explode) ParseStyleAndExplode(
+        JsonElement param,
+        ParameterLocation location)
+    {
+        ParameterStyle style = ParseStyle(param, location);
+
+        bool explode;
+        if (param.TryGetProperty(ExplodeUtf8, out JsonElement explodeValue)
+            && explodeValue.ValueKind is JsonValueKind.True or JsonValueKind.False)
+        {
+            explode = explodeValue.ValueKind == JsonValueKind.True;
+        }
+        else
+        {
+            // Default depends on style: form → true, everything else → false
+            explode = style == ParameterStyle.Form;
+        }
+
+        return (style, explode);
+    }
+
+    private static ParameterStyle ParseStyle(JsonElement param, ParameterLocation location)
+    {
+        if (param.TryGetProperty(StyleUtf8, out JsonElement styleValue)
+            && styleValue.ValueKind == JsonValueKind.String)
+        {
+            if (styleValue.ValueEquals("form"u8))
+            {
+                return ParameterStyle.Form;
+            }
+
+            if (styleValue.ValueEquals("simple"u8))
+            {
+                return ParameterStyle.Simple;
+            }
+
+            if (styleValue.ValueEquals("label"u8))
+            {
+                return ParameterStyle.Label;
+            }
+
+            if (styleValue.ValueEquals("matrix"u8))
+            {
+                return ParameterStyle.Matrix;
+            }
+
+            if (styleValue.ValueEquals("spaceDelimited"u8))
+            {
+                return ParameterStyle.SpaceDelimited;
+            }
+
+            if (styleValue.ValueEquals("pipeDelimited"u8))
+            {
+                return ParameterStyle.PipeDelimited;
+            }
+
+            if (styleValue.ValueEquals("deepObject"u8))
+            {
+                return ParameterStyle.DeepObject;
+            }
+        }
+
+        // Spec defaults per location
+        return location switch
+        {
+            ParameterLocation.Query or ParameterLocation.Cookie => ParameterStyle.Form,
+            _ => ParameterStyle.Simple,
+        };
     }
 
     private static byte[]? GetSchemaPointer(JsonElement schema)

@@ -6,6 +6,11 @@
 
 using System.ComponentModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
+using Corvus.Json;
+using Corvus.Json.CodeGeneration;
+using Corvus.Json.CodeGeneration.DocumentResolvers;
+using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi31;
@@ -103,11 +108,22 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         AnsiConsole.MarkupLine($"[green]Operations:[/] {model.Operations.Length}");
         AnsiConsole.MarkupLine($"[green]Schemas:[/] {model.SchemaPointers.Length}");
 
-        // Emit client code
-        ClientCodeEmitter emitter = new(rootNamespace, settings.ClientName);
+        // Generate V5 schema types from the discovered schema pointers
+        Dictionary<string, string>? schemaTypeMap = model.SchemaPointers.Length > 0
+            ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, outputPath, model.SchemaPointers, cancellationToken)
+                .ConfigureAwait(false)
+            : null;
+
+        if (schemaTypeMap is not null)
+        {
+            AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+        }
+
+        // Emit client code with schema type resolution
+        ClientCodeEmitter emitter = new(rootNamespace, settings.ClientName, schemaTypeMap);
         IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
 
-        // Write files
+        // Write client files
         Directory.CreateDirectory(outputPath);
 
         foreach (GeneratedFile file in files)
@@ -118,9 +134,99 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
             AnsiConsole.MarkupLine($"  [blue]Wrote:[/] {filePath}");
         }
 
-        AnsiConsole.MarkupLine($"[green]Generated {files.Count} files in {outputPath}[/]");
+        int totalFiles = files.Count + (schemaTypeMap?.Count ?? 0);
+        AnsiConsole.MarkupLine($"[green]Generated {totalFiles} files in {outputPath}[/]");
 
         return 0;
+    }
+
+    private static async Task<Dictionary<string, string>> GenerateSchemaTypesAsync(
+        string specFile,
+        string specVersion,
+        string rootNamespace,
+        string outputPath,
+        byte[][] schemaPointers,
+        CancellationToken cancellationToken)
+    {
+        string specFilePath = Path.GetFullPath(specFile);
+
+        // Set up the document resolver — the FileSystemDocumentResolver reads the spec from disk
+        CompoundDocumentResolver documentResolver = new(
+            new FileSystemDocumentResolver(),
+            new HttpClientDocumentResolver(new HttpClient()));
+
+        documentResolver.AddMetaschema();
+
+        // Register vocabularies
+        VocabularyRegistry vocabularyRegistry = new();
+        Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft201909.VocabularyAnalyser.RegisterAnalyser(documentResolver, vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft7.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft6.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.Draft4.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+        Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.RegisterAnalyser(vocabularyRegistry);
+
+        // Select vocabulary based on spec version
+        IVocabulary defaultVocabulary = specVersion switch
+        {
+            "3.0" => Corvus.Json.CodeGeneration.OpenApi30.VocabularyAnalyser.DefaultVocabulary,
+            _ => Corvus.Json.CodeGeneration.Draft202012.VocabularyAnalyser.DefaultVocabulary,
+        };
+
+        JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
+
+        // Register each schema pointer as a type declaration
+        Dictionary<string, TypeDeclaration> pointerToType = new(StringComparer.Ordinal);
+        List<TypeDeclaration> typesToGenerate = [];
+
+        foreach (byte[] pointer in schemaPointers)
+        {
+            string pointerStr = Encoding.UTF8.GetString(pointer);
+            JsonReference reference = new(specFilePath, pointerStr);
+
+            TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
+                reference, defaultVocabulary, rebaseAsRoot: false)
+                .ConfigureAwait(false);
+
+            pointerToType[pointerStr] = rootType;
+            typesToGenerate.Add(rootType);
+        }
+
+        // Generate code — this assigns type names via naming heuristics
+        CSharpLanguageProvider.Options options = new(rootNamespace);
+        CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        IReadOnlyCollection<GeneratedCodeFile> generatedCode =
+            typeBuilder.GenerateCodeUsing(languageProvider, typesToGenerate, cancellationToken);
+
+        // Write schema type files
+        Directory.CreateDirectory(outputPath);
+
+        int schemaFilesWritten = 0;
+        foreach (GeneratedCodeFile codeFile in generatedCode)
+        {
+            string filePath = Path.Combine(outputPath, codeFile.FileName);
+            await File.WriteAllTextAsync(filePath, codeFile.FileContent, cancellationToken)
+                .ConfigureAwait(false);
+            AnsiConsole.MarkupLine($"  [cyan]Schema type:[/] {filePath}");
+            schemaFilesWritten++;
+        }
+
+        AnsiConsole.MarkupLine($"[green]Generated {schemaFilesWritten} schema type files[/]");
+
+        // Build the pointer → fully qualified type name map
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
+
+        foreach ((string pointerStr, TypeDeclaration td) in pointerToType)
+        {
+            TypeDeclaration reduced = td.ReducedTypeDeclaration().ReducedType;
+
+            if (reduced.HasDotnetTypeName())
+            {
+                schemaTypeMap[pointerStr] = reduced.FullyQualifiedDotnetTypeName();
+            }
+        }
+
+        return schemaTypeMap;
     }
 
     private static string DetectSpecVersion(JsonElement specRoot)

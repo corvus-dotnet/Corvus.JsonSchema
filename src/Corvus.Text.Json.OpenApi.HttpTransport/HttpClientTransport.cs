@@ -92,9 +92,9 @@ public sealed class HttpClientTransport : IApiTransport
 
     private static HttpRequestMessage BuildHttpRequest(in ApiRequest request)
     {
-        string uri = request.Path;
+        string uri = BuildResolvedPath(request.PathTemplate, request.PathParameters);
 
-        ReadOnlySpan<KeyValuePair<string, string>> queryParams = request.QueryParameters;
+        ReadOnlySpan<ParameterEntry> queryParams = request.QueryParameters;
         if (queryParams.Length > 0)
         {
             uri = BuildUriWithQuery(uri, queryParams);
@@ -102,9 +102,11 @@ public sealed class HttpClientTransport : IApiTransport
 
         HttpRequestMessage httpRequest = new(MapMethod(request.Method), uri);
 
-        foreach (KeyValuePair<string, string> header in request.Headers)
+        foreach (ParameterEntry header in request.Headers)
         {
-            httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
+            httpRequest.Headers.TryAddWithoutValidation(
+                header.Name,
+                SerializeParameterValue(header));
         }
 
         return httpRequest;
@@ -143,30 +145,281 @@ public sealed class HttpClientTransport : IApiTransport
         }
     }
 
+    private static string BuildResolvedPath(
+        string pathTemplate,
+        ReadOnlySpan<ParameterEntry> pathParams)
+    {
+        if (pathParams.Length == 0)
+        {
+            return pathTemplate;
+        }
+
+        DefaultInterpolatedStringHandler handler = new(0, 0, null, stackalloc char[256]);
+        ReadOnlySpan<char> remaining = pathTemplate;
+
+        while (remaining.Length > 0)
+        {
+            int openBrace = remaining.IndexOf('{');
+            if (openBrace < 0)
+            {
+                handler.AppendFormatted(remaining);
+                break;
+            }
+
+            handler.AppendFormatted(remaining[..openBrace]);
+
+            int closeBrace = remaining[(openBrace + 1)..].IndexOf('}');
+            if (closeBrace < 0)
+            {
+                // Malformed template — emit the rest as-is
+                handler.AppendFormatted(remaining[openBrace..]);
+                break;
+            }
+
+            ReadOnlySpan<char> paramName = remaining[(openBrace + 1)..(openBrace + 1 + closeBrace)];
+
+            // Find the matching path parameter
+            bool found = false;
+            foreach (ParameterEntry param in pathParams)
+            {
+                if (paramName.SequenceEqual(param.Name))
+                {
+                    string serialized = SerializeParameterValue(param);
+                    handler.AppendFormatted(System.Uri.EscapeDataString(serialized));
+                    found = true;
+                    break;
+                }
+            }
+
+            if (!found)
+            {
+                // No matching parameter — leave placeholder as-is
+                handler.AppendLiteral("{");
+                handler.AppendFormatted(paramName);
+                handler.AppendLiteral("}");
+            }
+
+            remaining = remaining[(openBrace + 1 + closeBrace + 1)..];
+        }
+
+        return handler.ToStringAndClear();
+    }
+
     private static string BuildUriWithQuery(
         string basePath,
-        ReadOnlySpan<KeyValuePair<string, string>> parameters)
+        ReadOnlySpan<ParameterEntry> parameters)
     {
         DefaultInterpolatedStringHandler handler = new(0, 0, null, stackalloc char[256]);
         handler.AppendLiteral(basePath);
         handler.AppendLiteral("?");
 
         bool first = true;
-        foreach (KeyValuePair<string, string> param in parameters)
+        foreach (ParameterEntry param in parameters)
+        {
+            if (param.Explode && param.Value.ValueKind == JsonValueKind.Array)
+            {
+                // Exploded array: key=v1&key=v2&key=v3
+                foreach (JsonElement item in param.Value.EnumerateArray())
+                {
+                    if (!first)
+                    {
+                        handler.AppendLiteral("&");
+                    }
+
+                    handler.AppendFormatted(System.Uri.EscapeDataString(param.Name));
+                    handler.AppendLiteral("=");
+                    handler.AppendFormatted(System.Uri.EscapeDataString(GetPrimitiveString(item)));
+                    first = false;
+                }
+            }
+            else if (param.Explode && param.Value.ValueKind == JsonValueKind.Object)
+            {
+                // Exploded object: key1=v1&key2=v2
+                foreach (JsonProperty<JsonElement> prop in param.Value.EnumerateObject())
+                {
+                    if (!first)
+                    {
+                        handler.AppendLiteral("&");
+                    }
+
+                    handler.AppendFormatted(System.Uri.EscapeDataString(prop.Name));
+                    handler.AppendLiteral("=");
+                    handler.AppendFormatted(System.Uri.EscapeDataString(GetPrimitiveString(prop.Value)));
+                    first = false;
+                }
+            }
+            else
+            {
+                // Simple scalar, or non-exploded array/object
+                if (!first)
+                {
+                    handler.AppendLiteral("&");
+                }
+
+                handler.AppendFormatted(System.Uri.EscapeDataString(param.Name));
+                handler.AppendLiteral("=");
+                handler.AppendFormatted(System.Uri.EscapeDataString(SerializeParameterValue(param)));
+                first = false;
+            }
+        }
+
+        return handler.ToStringAndClear();
+    }
+
+    /// <summary>
+    /// Serializes a <see cref="ParameterEntry"/> value to a string using its style and explode settings.
+    /// </summary>
+    /// <remarks>
+    /// This covers the subset of OpenAPI serialization styles used for query, path, and header parameters.
+    /// Styles like <see cref="ParameterStyle.Label"/>, <see cref="ParameterStyle.Matrix"/>, and
+    /// <see cref="ParameterStyle.DeepObject"/> are supported.
+    /// </remarks>
+    private static string SerializeParameterValue(in ParameterEntry entry)
+    {
+        JsonElement value = entry.Value;
+
+        if (value.ValueKind is JsonValueKind.String or JsonValueKind.Number
+            or JsonValueKind.True or JsonValueKind.False)
+        {
+            return entry.Style switch
+            {
+                ParameterStyle.Label => "." + GetPrimitiveString(value),
+                ParameterStyle.Matrix => $";{entry.Name}={GetPrimitiveString(value)}",
+                _ => GetPrimitiveString(value),
+            };
+        }
+
+        if (value.ValueKind == JsonValueKind.Null || value.ValueKind == JsonValueKind.Undefined)
+        {
+            return string.Empty;
+        }
+
+        string separator = entry.Style switch
+        {
+            ParameterStyle.SpaceDelimited => "%20",
+            ParameterStyle.PipeDelimited => "|",
+            ParameterStyle.Label => ".",
+            _ => ",",
+        };
+
+        if (value.ValueKind == JsonValueKind.Array)
+        {
+            return SerializeArray(value, separator, entry.Style, entry.Name, entry.Explode);
+        }
+
+        if (value.ValueKind == JsonValueKind.Object)
+        {
+            return SerializeObject(value, separator, entry.Style, entry.Name, entry.Explode);
+        }
+
+        return value.ToString();
+    }
+
+    private static string SerializeArray(
+        JsonElement value,
+        string separator,
+        ParameterStyle style,
+        string name,
+        bool explode)
+    {
+        DefaultInterpolatedStringHandler handler = new(0, 0, null, stackalloc char[128]);
+        bool first = true;
+
+        string prefix = style switch
+        {
+            ParameterStyle.Label => ".",
+            ParameterStyle.Matrix when explode => string.Empty,
+            _ => string.Empty,
+        };
+
+        if (prefix.Length > 0)
+        {
+            handler.AppendLiteral(prefix);
+        }
+
+        foreach (JsonElement item in value.EnumerateArray())
         {
             if (!first)
             {
-                handler.AppendLiteral("&");
+                if (style == ParameterStyle.Matrix && explode)
+                {
+                    handler.AppendFormatted($";{name}=");
+                }
+                else
+                {
+                    handler.AppendLiteral(separator);
+                }
             }
 
-            handler.AppendFormatted(System.Uri.EscapeDataString(param.Key));
-            handler.AppendLiteral("=");
-            handler.AppendFormatted(System.Uri.EscapeDataString(param.Value));
+            handler.AppendFormatted(GetPrimitiveString(item));
             first = false;
         }
 
         return handler.ToStringAndClear();
     }
+
+    private static string SerializeObject(
+        JsonElement value,
+        string separator,
+        ParameterStyle style,
+        string name,
+        bool explode)
+    {
+        DefaultInterpolatedStringHandler handler = new(0, 0, null, stackalloc char[128]);
+        bool first = true;
+
+        string prefix = style switch
+        {
+            ParameterStyle.Label => ".",
+            ParameterStyle.Matrix when explode => string.Empty,
+            _ => string.Empty,
+        };
+
+        if (prefix.Length > 0)
+        {
+            handler.AppendLiteral(prefix);
+        }
+
+        foreach (JsonProperty<JsonElement> prop in value.EnumerateObject())
+        {
+            if (!first)
+            {
+                if (explode)
+                {
+                    if (style == ParameterStyle.Matrix)
+                    {
+                        handler.AppendLiteral(";");
+                    }
+                    else
+                    {
+                        handler.AppendLiteral(separator);
+                    }
+                }
+                else
+                {
+                    handler.AppendLiteral(separator);
+                }
+            }
+
+            handler.AppendFormatted(prop.Name);
+            handler.AppendLiteral(explode ? "=" : separator);
+            handler.AppendFormatted(GetPrimitiveString(prop.Value));
+            first = false;
+        }
+
+        return handler.ToStringAndClear();
+    }
+
+    private static string GetPrimitiveString(JsonElement value) =>
+        value.ValueKind switch
+        {
+            JsonValueKind.String => value.GetString() ?? string.Empty,
+            JsonValueKind.Number => value.GetRawText(),
+            JsonValueKind.True => "true",
+            JsonValueKind.False => "false",
+            JsonValueKind.Null => string.Empty,
+            _ => value.ToString(),
+        };
 
     /// <summary>
     /// Custom <see cref="HttpContent"/> that writes the body directly from an

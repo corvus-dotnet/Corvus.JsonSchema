@@ -44,8 +44,8 @@ public class HttpClientTransportTests
         await using HttpClientTransport transport = new(client);
 
         ApiRequest request = new("/pets", OperationMethod.Get);
-        request.AddQueryParameter("limit", "10");
-        request.AddQueryParameter("offset", "20");
+        request.AddQueryParameter("limit", JsonElement.ParseValue("\"10\""u8));
+        request.AddQueryParameter("offset", JsonElement.ParseValue("\"20\""u8));
 
         await using ApiResponse response = await transport.SendAsync(in request);
 
@@ -70,7 +70,7 @@ public class HttpClientTransportTests
         await using HttpClientTransport transport = new(client);
 
         ApiRequest request = new("/pets", OperationMethod.Get);
-        request.AddHeader("X-Custom", "value123");
+        request.AddHeader("X-Custom", JsonElement.ParseValue("\"value123\""u8));
 
         await using ApiResponse response = await transport.SendAsync(in request);
 
@@ -152,7 +152,7 @@ public class HttpClientTransportTests
         await using HttpClientTransport transport = new(client);
 
         ApiRequest request = new("/search", OperationMethod.Get);
-        request.AddQueryParameter("q", "hello world&foo=bar");
+        request.AddQueryParameter("q", JsonElement.ParseValue("\"hello world&foo=bar\""u8));
 
         await using ApiResponse response = await transport.SendAsync(in request);
 

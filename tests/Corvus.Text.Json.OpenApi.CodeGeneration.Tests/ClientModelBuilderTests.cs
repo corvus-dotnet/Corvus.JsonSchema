@@ -120,6 +120,10 @@ public class ClientModelBuilderTests
         Assert.AreEqual(ParameterLocation.Query, limit.Location);
         Assert.IsFalse(limit.IsRequired);
         Assert.IsNotNull(limit.SchemaPointer);
+
+        // Query parameters default to form/true per OpenAPI spec
+        Assert.AreEqual(ParameterStyle.Form, limit.Style);
+        Assert.IsTrue(limit.Explode);
     }
 
     [TestMethod]
@@ -134,6 +138,10 @@ public class ClientModelBuilderTests
         Assert.AreEqual("petId", petId.GetName());
         Assert.AreEqual(ParameterLocation.Path, petId.Location);
         Assert.IsTrue(petId.IsRequired);
+
+        // Path parameters default to simple/false per OpenAPI spec
+        Assert.AreEqual(ParameterStyle.Simple, petId.Style);
+        Assert.IsFalse(petId.Explode);
     }
 
     [TestMethod]

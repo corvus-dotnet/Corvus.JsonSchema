@@ -3,6 +3,7 @@
 // </copyright>
 
 using Corvus.Text.Json;
+using Corvus.Text.Json.OpenApi;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
@@ -33,16 +34,22 @@ public readonly struct ClientParameter
     /// UTF-8 JSON pointer to the parameter's schema, or <see langword="null"/>
     /// if the parameter has no schema.
     /// </param>
+    /// <param name="style">The OpenAPI serialization style for this parameter.</param>
+    /// <param name="explode">Whether to explode array/object values.</param>
     public ClientParameter(
         JsonElement element,
         ParameterLocation location,
         bool isRequired,
-        byte[]? schemaPointer)
+        byte[]? schemaPointer,
+        ParameterStyle style,
+        bool explode)
     {
         this.Element = element;
         this.Location = location;
         this.IsRequired = isRequired;
         this.SchemaPointer = schemaPointer;
+        this.Style = style;
+        this.Explode = explode;
     }
 
     /// <summary>
@@ -64,6 +71,16 @@ public readonly struct ClientParameter
     /// Gets the UTF-8 JSON pointer to the parameter's schema, or <see langword="null"/>.
     /// </summary>
     public byte[]? SchemaPointer { get; }
+
+    /// <summary>
+    /// Gets the OpenAPI serialization style for this parameter.
+    /// </summary>
+    public ParameterStyle Style { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether array/object values are exploded.
+    /// </summary>
+    public bool Explode { get; }
 
     /// <summary>
     /// Gets the parameter name as declared in the spec.

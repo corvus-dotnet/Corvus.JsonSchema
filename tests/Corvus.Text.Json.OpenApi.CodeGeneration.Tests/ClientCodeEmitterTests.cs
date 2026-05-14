@@ -119,7 +119,7 @@ public class ClientCodeEmitterTests
         GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
 
         Assert.IsTrue(impl.Content.Contains("string petId", StringComparison.Ordinal));
-        Assert.IsTrue(impl.Content.Contains("path.Replace(\"{petId}\"", StringComparison.Ordinal));
+        Assert.IsTrue(impl.Content.Contains("request.AddPathParameter(\"petId\", petId", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -130,9 +130,67 @@ public class ClientCodeEmitterTests
 
         GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
 
-        // Body is a JsonElement — the transport writes it directly via WriteTo
+        // Without schema type map, body is a JsonElement
         Assert.IsTrue(impl.Content.Contains("JsonElement body", StringComparison.Ordinal));
         Assert.IsTrue(impl.Content.Contains("SendAsync(in request, in body", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_WithSchemaTypeMap_UsesTypedBody()
+    {
+        // The createPet request body schema pointer for /pets POST application/json
+        string pointer = "#/paths/~1pets/post/requestBody/content/application~1json/schema";
+
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal)
+        {
+            [pointer] = "Petstore.Client.NewPet",
+        };
+
+        ClientCodeEmitter emitter = new("Petstore.Client", schemaTypeMap: schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
+
+        // With schema type map, body should use the resolved type name
+        Assert.IsTrue(impl.Content.Contains("Petstore.Client.NewPet body", StringComparison.Ordinal));
+        Assert.IsTrue(impl.Content.Contains("SendAsync(in request, in body", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_WithSchemaTypeMap_InterfaceAlsoUsesTypedBody()
+    {
+        string pointer = "#/paths/~1pets/post/requestBody/content/application~1json/schema";
+
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal)
+        {
+            [pointer] = "Petstore.Client.NewPet",
+        };
+
+        ClientCodeEmitter emitter = new("Petstore.Client", schemaTypeMap: schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile iface = files.First(f => f.FileName.StartsWith("I", StringComparison.Ordinal));
+
+        // Interface signature should also use the resolved type
+        Assert.IsTrue(iface.Content.Contains("Petstore.Client.NewPet body", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_WithSchemaTypeMap_UnmappedPointerFallsBackToJsonElement()
+    {
+        // Provide a map that does NOT contain the createPet pointer
+        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal)
+        {
+            ["#/components/schemas/SomethingElse"] = "Petstore.Client.SomethingElse",
+        };
+
+        ClientCodeEmitter emitter = new("Petstore.Client", schemaTypeMap: schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
+
+        // Should fall back to JsonElement since the pointer isn't in the map
+        Assert.IsTrue(impl.Content.Contains("JsonElement body", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -155,10 +213,11 @@ public class ClientCodeEmitterTests
 
         GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
 
-        // GET for listPets and showPetById
-        Assert.IsTrue(impl.Content.Contains("new(path, OperationMethod.Get)", StringComparison.Ordinal));
+        // GET for listPets and showPetById — path template is now passed directly
+        Assert.IsTrue(impl.Content.Contains("new(\"/pets\", OperationMethod.Get)", StringComparison.Ordinal)
+            || impl.Content.Contains("new(\"/pets/{petId}\", OperationMethod.Get)", StringComparison.Ordinal));
         // POST for createPet
-        Assert.IsTrue(impl.Content.Contains("new(path, OperationMethod.Post)", StringComparison.Ordinal));
+        Assert.IsTrue(impl.Content.Contains("new(\"/pets\", OperationMethod.Post)", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -212,5 +271,47 @@ public class ClientCodeEmitterTests
         // Should have summary from the spec
         Assert.IsTrue(iface.Content.Contains("List all pets", StringComparison.Ordinal));
         Assert.IsTrue(iface.Content.Contains("Create a pet", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_QueryParameterIncludesStyleAndExplode()
+    {
+        ClientCodeEmitter emitter = new("Petstore.Client");
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
+
+        // The limit query parameter should be emitted with form style, explode true (defaults)
+        Assert.IsTrue(impl.Content.Contains(
+            "AddQueryParameter(\"limit\", limitValue, ParameterStyle.Form, true)",
+            StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_PathParameterIncludesStyleAndExplode()
+    {
+        ClientCodeEmitter emitter = new("Petstore.Client");
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
+
+        // The petId path parameter should be emitted with simple style, explode false (defaults)
+        Assert.IsTrue(impl.Content.Contains(
+            "AddPathParameter(\"petId\", petId, ParameterStyle.Simple, false)",
+            StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_PathTemplatePassedDirectlyToApiRequest()
+    {
+        ClientCodeEmitter emitter = new("Petstore.Client");
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
+
+        // The path template should be passed directly to ApiRequest, not pre-resolved
+        Assert.IsTrue(impl.Content.Contains(
+            "new(\"/pets/{petId}\", OperationMethod.Get)",
+            StringComparison.Ordinal));
     }
 }
