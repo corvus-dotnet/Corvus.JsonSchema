@@ -263,7 +263,7 @@ function Install-Vellum($repoRoot, $vellumVersion,$VellumGitHubRepo,$VellumBaseP
 
             $xml.Save($tempNugetConfig)
 
-            Install-DotNetTool @dotnetToolBaseArgs -AdditionalArgs @("--add-source", $vellumDownloadPath) -Verbose
+            Install-DotNetTool @dotnetToolBaseArgs -AdditionalArgs @("--configfile", $tempNugetConfig) -Verbose
         }
         else {
             Write-Build White "Required version of vellum .NET tool already installed ($latestVersion)"
