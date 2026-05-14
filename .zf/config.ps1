@@ -123,22 +123,19 @@ task PostTest {
 task BuildWebsite {
     $websiteDir = Join-Path $here "docs\website"
 
-    $websiteBuildArgs = @("-SkipDotNetBuild")
+    $websiteBuildArgs = @{ SkipDotNetBuild = $true }
 
     if ($VellumDownloadToken) {
-        $websiteBuildArgs += @(
-            "-VellumDownloadToken"
-            (ConvertTo-SecureString $VellumDownloadToken -AsPlainText)
-        )
+        $websiteBuildArgs += @{ VellumDownloadToken = (ConvertTo-SecureString $VellumDownloadToken -AsPlainText) }
     }
 
     $basePathPrefix = $env:BUILDVAR_BasePathPrefix
     if ($basePathPrefix) {
-        $websiteBuildArgs += "-BasePathPrefix", $basePathPrefix
+        $websiteBuildArgs += @{ BasePathPrefix = $basePathPrefix }
     }
 
     if ($env:BUILDVAR_IsPreviewDeployment -ieq "true") {
-        $websiteBuildArgs += "-IsPreviewDeployment"
+        $websiteBuildArgs += @{ IsPreviewDeployment = $true }
     }
 
     Write-Host "Building documentation website..."

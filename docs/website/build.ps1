@@ -31,6 +31,11 @@
     When set, the build produces a preview site with full robots blocking
     (noindex meta tag retained, robots.txt Disallow). When not set in CI,
     the build produces a production site (meta tag stripped, robots.txt Allow).
+.PARAMETER BasePathPrefix
+    When set, contains the base path used when the site is not hosted in the root.
+.PARAMETER VellumDownloadToken
+    When set, must contain a valid GitHub token with permissions to access the
+    GitHub repo hosting the Vellum static site generator tool.
 #>
 [CmdletBinding()]
 param (
