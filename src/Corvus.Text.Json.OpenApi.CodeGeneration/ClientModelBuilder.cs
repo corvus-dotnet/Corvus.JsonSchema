@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
@@ -224,7 +223,7 @@ public static class ClientModelBuilder
 
     // Schema pointer construction -------------------------------------------
     // All build JSON Pointer strings using RFC 6901 escaping (~ → ~0, / → ~1).
-    // We construct in UTF-8 with a stack-allocated buffer, then transcode once.
+    // We construct in UTF-8 with Utf8ValueStringBuilder, then transcode once.
 
     /// <summary>
     /// Builds: #/paths/&lt;path&gt;/&lt;method&gt;/parameters/&lt;index&gt;/schema.
@@ -234,29 +233,25 @@ public static class ClientModelBuilder
         OperationMethod method,
         int index)
     {
-        byte[]? rented = null;
-        Span<byte> buffer = stackalloc byte[256];
-        int pos = 0;
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
         using UnescapedUtf8JsonString pathName = pathProperty.Utf8NameSpan;
 
         try
         {
-            Append(ref buffer, ref rented, ref pos, "#/paths/"u8);
-            AppendEncodedSegment(ref buffer, ref rented, ref pos, pathName.Span);
-            Append(ref buffer, ref rented, ref pos, "/"u8);
-            AppendMethodUtf8(ref buffer, ref rented, ref pos, method);
-            Append(ref buffer, ref rented, ref pos, "/parameters/"u8);
-            AppendInt(ref buffer, ref rented, ref pos, index);
-            Append(ref buffer, ref rented, ref pos, "/schema"u8);
+            sb.Append("#/paths/"u8);
+            AppendEncodedSegment(ref sb, pathName.Span);
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/parameters/"u8);
+            sb.Append(index);
+            sb.Append("/schema"u8);
 
-            return Encoding.UTF8.GetString(buffer[..pos]);
+            return Encoding.UTF8.GetString(sb.AsSpan());
         }
         finally
         {
-            if (rented is not null)
-            {
-                ArrayPool<byte>.Shared.Return(rented);
-            }
+            sb.Dispose();
         }
     }
 
@@ -269,31 +264,27 @@ public static class ClientModelBuilder
         ReadOnlySpan<byte> parentSegmentUtf8,
         JsonProperty<JsonElement> mediaTypeProperty)
     {
-        byte[]? rented = null;
-        Span<byte> buffer = stackalloc byte[256];
-        int pos = 0;
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
         using UnescapedUtf8JsonString pathName = pathProperty.Utf8NameSpan;
         using UnescapedUtf8JsonString mediaTypeName = mediaTypeProperty.Utf8NameSpan;
 
         try
         {
-            Append(ref buffer, ref rented, ref pos, "#/paths/"u8);
-            AppendEncodedSegment(ref buffer, ref rented, ref pos, pathName.Span);
-            Append(ref buffer, ref rented, ref pos, "/"u8);
-            AppendMethodUtf8(ref buffer, ref rented, ref pos, method);
-            Append(ref buffer, ref rented, ref pos, parentSegmentUtf8);
-            Append(ref buffer, ref rented, ref pos, "/content/"u8);
-            AppendEncodedSegment(ref buffer, ref rented, ref pos, mediaTypeName.Span);
-            Append(ref buffer, ref rented, ref pos, "/schema"u8);
+            sb.Append("#/paths/"u8);
+            AppendEncodedSegment(ref sb, pathName.Span);
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append(parentSegmentUtf8);
+            sb.Append("/content/"u8);
+            AppendEncodedSegment(ref sb, mediaTypeName.Span);
+            sb.Append("/schema"u8);
 
-            return Encoding.UTF8.GetString(buffer[..pos]);
+            return Encoding.UTF8.GetString(sb.AsSpan());
         }
         finally
         {
-            if (rented is not null)
-            {
-                ArrayPool<byte>.Shared.Return(rented);
-            }
+            sb.Dispose();
         }
     }
 
@@ -306,33 +297,29 @@ public static class ClientModelBuilder
         JsonProperty<JsonElement> responseProperty,
         JsonProperty<JsonElement> mediaTypeProperty)
     {
-        byte[]? rented = null;
-        Span<byte> buffer = stackalloc byte[256];
-        int pos = 0;
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
         using UnescapedUtf8JsonString pathName = pathProperty.Utf8NameSpan;
         using UnescapedUtf8JsonString statusCode = responseProperty.Utf8NameSpan;
         using UnescapedUtf8JsonString mediaTypeName = mediaTypeProperty.Utf8NameSpan;
 
         try
         {
-            Append(ref buffer, ref rented, ref pos, "#/paths/"u8);
-            AppendEncodedSegment(ref buffer, ref rented, ref pos, pathName.Span);
-            Append(ref buffer, ref rented, ref pos, "/"u8);
-            AppendMethodUtf8(ref buffer, ref rented, ref pos, method);
-            Append(ref buffer, ref rented, ref pos, "/responses/"u8);
-            AppendEncodedSegment(ref buffer, ref rented, ref pos, statusCode.Span);
-            Append(ref buffer, ref rented, ref pos, "/content/"u8);
-            AppendEncodedSegment(ref buffer, ref rented, ref pos, mediaTypeName.Span);
-            Append(ref buffer, ref rented, ref pos, "/schema"u8);
+            sb.Append("#/paths/"u8);
+            AppendEncodedSegment(ref sb, pathName.Span);
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/responses/"u8);
+            AppendEncodedSegment(ref sb, statusCode.Span);
+            sb.Append("/content/"u8);
+            AppendEncodedSegment(ref sb, mediaTypeName.Span);
+            sb.Append("/schema"u8);
 
-            return Encoding.UTF8.GetString(buffer[..pos]);
+            return Encoding.UTF8.GetString(sb.AsSpan());
         }
         finally
         {
-            if (rented is not null)
-            {
-                ArrayPool<byte>.Shared.Return(rented);
-            }
+            sb.Dispose();
         }
     }
 
@@ -340,9 +327,7 @@ public static class ClientModelBuilder
     /// Appends a UTF-8 segment with RFC 6901 JSON Pointer escaping (~ → ~0, / → ~1).
     /// </summary>
     private static void AppendEncodedSegment(
-        ref Span<byte> buffer,
-        ref byte[]? rented,
-        ref int pos,
+        ref Utf8ValueStringBuilder sb,
         ReadOnlySpan<byte> segment)
     {
         while (segment.Length > 0)
@@ -350,22 +335,22 @@ public static class ClientModelBuilder
             int specialIndex = segment.IndexOfAny((byte)'~', (byte)'/');
             if (specialIndex < 0)
             {
-                Append(ref buffer, ref rented, ref pos, segment);
+                sb.Append(segment);
                 break;
             }
 
             if (specialIndex > 0)
             {
-                Append(ref buffer, ref rented, ref pos, segment[..specialIndex]);
+                sb.Append(segment[..specialIndex]);
             }
 
             if (segment[specialIndex] == (byte)'~')
             {
-                Append(ref buffer, ref rented, ref pos, "~0"u8);
+                sb.Append("~0"u8);
             }
             else
             {
-                Append(ref buffer, ref rented, ref pos, "~1"u8);
+                sb.Append("~1"u8);
             }
 
             segment = segment[(specialIndex + 1)..];
@@ -373,9 +358,7 @@ public static class ClientModelBuilder
     }
 
     private static void AppendMethodUtf8(
-        ref Span<byte> buffer,
-        ref byte[]? rented,
-        ref int pos,
+        ref Utf8ValueStringBuilder sb,
         OperationMethod method)
     {
         ReadOnlySpan<byte> methodSpan = method switch
@@ -393,59 +376,6 @@ public static class ClientModelBuilder
             _ => throw new ArgumentOutOfRangeException(nameof(method)),
         };
 
-        Append(ref buffer, ref rented, ref pos, methodSpan);
-    }
-
-    private static void AppendInt(
-        ref Span<byte> buffer,
-        ref byte[]? rented,
-        ref int pos,
-        int value)
-    {
-        // Max int digits is 11 characters (-2147483648)
-        // Format directly into the target buffer after ensuring capacity.
-        EnsureCapacity(ref buffer, ref rented, pos + 11);
-        if (System.Buffers.Text.Utf8Formatter.TryFormat(value, buffer[pos..], out int bytesWritten))
-        {
-            pos += bytesWritten;
-        }
-    }
-
-    private static void EnsureCapacity(ref Span<byte> buffer, ref byte[]? rented, int required)
-    {
-        if (required > buffer.Length)
-        {
-            Grow(ref buffer, ref rented, required);
-        }
-    }
-
-    private static void Append(
-        ref Span<byte> buffer,
-        ref byte[]? rented,
-        ref int pos,
-        ReadOnlySpan<byte> data)
-    {
-        if (pos + data.Length > buffer.Length)
-        {
-            Grow(ref buffer, ref rented, pos + data.Length);
-        }
-
-        data.CopyTo(buffer[pos..]);
-        pos += data.Length;
-    }
-
-    private static void Grow(ref Span<byte> buffer, ref byte[]? rented, int required)
-    {
-        int newSize = Math.Max(buffer.Length * 2, required);
-        byte[] newArray = ArrayPool<byte>.Shared.Rent(newSize);
-        buffer[..].CopyTo(newArray);
-
-        if (rented is not null)
-        {
-            ArrayPool<byte>.Shared.Return(rented);
-        }
-
-        rented = newArray;
-        buffer = newArray;
+        sb.Append(methodSpan);
     }
 }

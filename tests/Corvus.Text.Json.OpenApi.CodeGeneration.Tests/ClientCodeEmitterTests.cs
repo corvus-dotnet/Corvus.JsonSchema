@@ -139,7 +139,7 @@ public class ClientCodeEmitterTests
     public void Emit_WithSchemaTypeMap_UsesTypedBody()
     {
         // The createPet request body schema pointer for /pets POST application/json
-        string pointer = "#/paths/~1pets/post/requestBody/content/application~1json/schema";
+        const string pointer = "#/paths/~1pets/post/requestBody/content/application~1json/schema";
 
         Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal)
         {
@@ -159,7 +159,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_WithSchemaTypeMap_InterfaceAlsoUsesTypedBody()
     {
-        string pointer = "#/paths/~1pets/post/requestBody/content/application~1json/schema";
+        const string pointer = "#/paths/~1pets/post/requestBody/content/application~1json/schema";
 
         Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal)
         {
@@ -216,6 +216,7 @@ public class ClientCodeEmitterTests
         // GET for listPets and showPetById — path template is now passed directly
         Assert.IsTrue(impl.Content.Contains("new(\"/pets\", OperationMethod.Get)", StringComparison.Ordinal)
             || impl.Content.Contains("new(\"/pets/{petId}\", OperationMethod.Get)", StringComparison.Ordinal));
+
         // POST for createPet
         Assert.IsTrue(impl.Content.Contains("new(\"/pets\", OperationMethod.Post)", StringComparison.Ordinal));
     }
