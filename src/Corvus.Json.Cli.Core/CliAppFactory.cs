@@ -32,6 +32,9 @@ public static class CliAppFactory
                 c.AddCommand<JsonataCommand>("jsonata");
                 c.AddCommand<JMESPathCommand>("jmespath");
                 c.AddCommand<JsonPathCommand>("jsonpath");
+#if NET10_0_OR_GREATER
+                c.AddCommand<OpenApiCommand>("openapi");
+#endif
             });
         return app;
     }
