@@ -178,6 +178,7 @@ function Install-Vellum($repoRoot, $vellumVersion,$VellumGitHubRepo,$VellumBaseP
     $defaultVellumCmd = Join-Path $VellumBasePath 'bin' 'vellum'
 
     if ($vellumDownloadToken) {
+        Write-Host "Using explicit access token to download Vellum"
         if (Test-Path env:/GH_TOKEN) {
             # Store any the current value for the GH_TOKEN environment variable, before we override it
             $_savedGhToken = $env:GH_TOKEN
