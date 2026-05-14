@@ -119,7 +119,7 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         }
 
         // Emit client code with schema type resolution
-        ClientCodeEmitter emitter = new(rootNamespace, settings.ClientName, schemaTypeMap);
+        ClientCodeEmitter emitter = new(rootNamespace, schemaTypeMap ?? new Dictionary<string, string>(), settings.ClientName);
         IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
 
         // Write client files
