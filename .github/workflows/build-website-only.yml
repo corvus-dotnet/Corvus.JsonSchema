@@ -28,7 +28,7 @@ jobs:
         configuration: Release
       env:
         BUILDVAR_BasePathPrefix: "${{ format('/{0}', github.event.repository.name) }}"
-        GH_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
+        VELLUM_DOWNLOAD_TOKEN: "${{ secrets.ENDJIN_PACKAGES_TOKEN }}"
     - name: Deploy to GitHub Pages
       uses: JamesIves/github-pages-deploy-action@d92aa235d04922e8f08b40ce78cc5442fcfbfa2f   # v4.8.0
       if: github.ref == 'refs/heads/main'
