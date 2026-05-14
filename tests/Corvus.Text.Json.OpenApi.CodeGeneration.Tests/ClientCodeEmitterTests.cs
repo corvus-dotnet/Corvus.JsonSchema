@@ -12,6 +12,7 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration.Tests;
 public class ClientCodeEmitterTests
 {
     private static ClientModel petstoreModel;
+    private static Dictionary<string, string> petstoreSchemaTypeMap = null!;
 
     [ClassInitialize]
     public static void ClassInit(TestContext context)
@@ -22,7 +23,31 @@ public class ClientCodeEmitterTests
         JsonElement root = doc.RootElement.Clone();
 
         petstoreModel = ClientModelBuilder.Build(root, new OpenApi31Walker());
+
+        // Complete type map: every schema pointer the walker discovers must be mapped.
+        petstoreSchemaTypeMap = new(StringComparer.Ordinal)
+        {
+            // Parameter schemas
+            ["#/paths/~1pets/get/parameters/0/schema"] = "Petstore.Client.JsonInt32",
+            ["#/paths/~1pets~1{petId}/get/parameters/0/schema"] = "Petstore.Client.JsonString",
+
+            // Request body schemas
+            ["#/paths/~1pets/post/requestBody/content/application~1json/schema"] = "Petstore.Client.NewPet",
+
+            // Response body schemas
+            ["#/paths/~1pets/get/responses/200/content/application~1json/schema"] = "Petstore.Client.Pets",
+            ["#/paths/~1pets/get/responses/default/content/application~1json/schema"] = "Petstore.Client.Error",
+            ["#/paths/~1pets/post/responses/201/content/application~1json/schema"] = "Petstore.Client.Pet",
+            ["#/paths/~1pets/post/responses/default/content/application~1json/schema"] = "Petstore.Client.Error",
+            ["#/paths/~1pets~1{petId}/get/responses/200/content/application~1json/schema"] = "Petstore.Client.Pet",
+            ["#/paths/~1pets~1{petId}/get/responses/default/content/application~1json/schema"] = "Petstore.Client.Error",
+        };
     }
+
+    private static ClientCodeEmitter CreateEmitter(
+        IReadOnlyDictionary<string, string>? schemaTypeMap = null,
+        string? clientNamePrefix = null)
+        => new("Petstore.Client", schemaTypeMap ?? petstoreSchemaTypeMap, clientNamePrefix);
 
     private static GeneratedFile GetFile(IReadOnlyList<GeneratedFile> files, string name)
         => files.First(f => f.FileName == name);
@@ -30,7 +55,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ProducesCorrectFileCount()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         // 3 operations × 2 (request + response) + 1 interface + 1 implementation = 8
@@ -40,7 +65,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ProducesRequestFiles()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         Assert.IsTrue(files.Any(f => f.FileName == "ListPetsRequest.cs"));
@@ -51,7 +76,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ProducesResponseFiles()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         Assert.IsTrue(files.Any(f => f.FileName == "ListPetsResponse.cs"));
@@ -62,7 +87,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_InterfaceFileName()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         Assert.IsTrue(files.Any(f => f.FileName == "IApiPetsClient.cs"));
@@ -71,7 +96,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ImplementationFileName()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         Assert.IsTrue(files.Any(f => f.FileName == "ApiPetsClient.cs"));
@@ -80,7 +105,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_InterfaceContainsNamespace()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
@@ -90,7 +115,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_InterfaceContainsAllOperationMethods()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
@@ -103,7 +128,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_InterfaceMethodsReturnTypedResponses()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
@@ -119,7 +144,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ImplementationContainsTransportField()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
@@ -131,7 +156,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ImplementationContainsConstructor()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
@@ -143,7 +168,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_RequestStructImplementsIApiRequest()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
@@ -155,7 +180,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ResponseStructImplementsIApiResponse()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile resp = GetFile(files, "ListPetsResponse.cs");
@@ -167,7 +192,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_RequestHasStaticPathTemplate()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
@@ -179,7 +204,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_RequestHasStaticMethod()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
@@ -191,7 +216,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ListPetsRequestHasQueryParameters()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
@@ -203,49 +228,70 @@ public class ClientCodeEmitterTests
     }
 
     [TestMethod]
-    public void Emit_ListPetsRequestHasLimitField()
+    public void Emit_ListPetsRequestHasTypedLimitField()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
 
-        // limit is optional, so the type should be nullable
-        Assert.IsTrue(req.Content.Contains("Limit { get; init; }", StringComparison.Ordinal));
+        // limit is optional integer/int32, so the type should be nullable JsonInt32
+        Assert.IsTrue(
+            req.Content.Contains("Petstore.Client.JsonInt32? Limit { get; init; }", StringComparison.Ordinal));
     }
 
     [TestMethod]
     public void Emit_ListPetsRequestWriteQueryStringEmitsLimit()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
 
-        // The query string writer should reference the limit parameter name
+        // Int32 query param uses TryFormat with an 11-byte buffer.
         Assert.IsTrue(
-            req.Content.Contains("WriteQueryString", StringComparison.Ordinal));
+            req.Content.Contains("stackalloc byte[11]", StringComparison.Ordinal));
+        Assert.IsTrue(
+            req.Content.Contains(".TryFormat(buf", StringComparison.Ordinal));
         Assert.IsTrue(
             req.Content.Contains("\"limit=\"u8", StringComparison.Ordinal));
     }
 
     [TestMethod]
-    public void Emit_ShowPetByIdRequestHasPathParameter()
+    public void Emit_ShowPetByIdRequestPathWritesUriEscapedString()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile req = GetFile(files, "ShowPetByIdRequest.cs");
+
+        // String path param uses GetUtf8String + TryEscapeDataString.
+        Assert.IsTrue(
+            req.Content.Contains("GetUtf8String()", StringComparison.Ordinal));
+        Assert.IsTrue(
+            req.Content.Contains("Utf8Uri.TryEscapeDataString(", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_ShowPetByIdRequestHasTypedPathParameter()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ShowPetByIdRequest.cs");
 
         Assert.IsTrue(
             req.Content.Contains("HasPathParameters => true", StringComparison.Ordinal));
-        Assert.IsTrue(req.Content.Contains("PetId { get; init; }", StringComparison.Ordinal));
+
+        // petId is required string, so the type should be Petstore.Client.JsonString
+        Assert.IsTrue(
+            req.Content.Contains("Petstore.Client.JsonString PetId { get; init; }", StringComparison.Ordinal));
     }
 
     [TestMethod]
     public void Emit_ShowPetByIdRequestWriteResolvedPathEmitsSegments()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ShowPetByIdRequest.cs");
@@ -260,7 +306,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ShowPetByIdRequestPathTemplateIncludesParameter()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ShowPetByIdRequest.cs");
@@ -273,7 +319,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_CreatePetRequestHasPostMethod()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "CreatePetRequest.cs");
@@ -286,7 +332,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ResponseHasStatusCodeProperty()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile resp = GetFile(files, "ListPetsResponse.cs");
@@ -300,7 +346,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ResponseHasCreateAsyncFactory()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile resp = GetFile(files, "ListPetsResponse.cs");
@@ -314,7 +360,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ResponseHasDisposeAsync()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile resp = GetFile(files, "ListPetsResponse.cs");
@@ -325,47 +371,9 @@ public class ClientCodeEmitterTests
     }
 
     [TestMethod]
-    public void Emit_CreatePetClientUsesBodySendAsync()
+    public void Emit_CreatePetClientUsesTypedBodySendAsync()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
-        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
-
-        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
-
-        // Without schema type map, body is a JsonElement
-        Assert.IsTrue(
-            impl.Content.Contains("JsonElement body", StringComparison.Ordinal));
-        Assert.IsTrue(
-            impl.Content.Contains(
-                "SendAsync<CreatePetRequest, JsonElement, CreatePetResponse>",
-                StringComparison.Ordinal));
-    }
-
-    [TestMethod]
-    public void Emit_ListPetsClientUsesNoBodySendAsync()
-    {
-        ClientCodeEmitter emitter = new("Petstore.Client");
-        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
-
-        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
-
-        Assert.IsTrue(
-            impl.Content.Contains(
-                "SendAsync<ListPetsRequest, ListPetsResponse>",
-                StringComparison.Ordinal));
-    }
-
-    [TestMethod]
-    public void Emit_WithSchemaTypeMap_UsesTypedBody()
-    {
-        const string pointer = "#/paths/~1pets/post/requestBody/content/application~1json/schema";
-
-        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal)
-        {
-            [pointer] = "Petstore.Client.NewPet",
-        };
-
-        ClientCodeEmitter emitter = new("Petstore.Client", schemaTypeMap: schemaTypeMap);
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
@@ -379,16 +387,39 @@ public class ClientCodeEmitterTests
     }
 
     [TestMethod]
-    public void Emit_WithSchemaTypeMap_InterfaceAlsoUsesTypedBody()
+    public void Emit_ListPetsClientUsesNoBodySendAsync()
     {
-        const string pointer = "#/paths/~1pets/post/requestBody/content/application~1json/schema";
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
-        Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal)
-        {
-            [pointer] = "Petstore.Client.NewPet",
-        };
+        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
 
-        ClientCodeEmitter emitter = new("Petstore.Client", schemaTypeMap: schemaTypeMap);
+        Assert.IsTrue(
+            impl.Content.Contains(
+                "SendAsync<ListPetsRequest, ListPetsResponse>",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_UsesTypedBody()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
+
+        Assert.IsTrue(
+            impl.Content.Contains("Petstore.Client.NewPet body", StringComparison.Ordinal));
+        Assert.IsTrue(
+            impl.Content.Contains(
+                "SendAsync<CreatePetRequest, Petstore.Client.NewPet, CreatePetResponse>",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_InterfaceUsesTypedBody()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
@@ -398,14 +429,15 @@ public class ClientCodeEmitterTests
     }
 
     [TestMethod]
-    public void Emit_WithSchemaTypeMap_UnmappedPointerFallsBackToJsonElement()
+    public void Emit_UnmappedPointerFallsBackToJsonElement()
     {
+        // A map that doesn't contain the createPet request body pointer
         Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal)
         {
             ["#/components/schemas/SomethingElse"] = "Petstore.Client.SomethingElse",
         };
 
-        ClientCodeEmitter emitter = new("Petstore.Client", schemaTypeMap: schemaTypeMap);
+        ClientCodeEmitter emitter = CreateEmitter(schemaTypeMap: schemaTypeMap);
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
@@ -417,7 +449,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ContainsAutoGeneratedHeader()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         foreach (GeneratedFile file in files)
@@ -431,7 +463,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_WithCustomClientNamePrefix()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client", clientNamePrefix: "Petstore");
+        ClientCodeEmitter emitter = CreateEmitter(clientNamePrefix: "Petstore");
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         Assert.IsTrue(files.Any(f => f.FileName == "IPetstorePetsClient.cs"));
@@ -441,7 +473,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ImplementationImplementsInterface()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
@@ -452,7 +484,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_ImplementsDisposePattern()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
@@ -464,7 +496,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_InterfaceExtendsIAsyncDisposable()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
@@ -475,7 +507,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_MethodsHaveXmlDocs()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
@@ -489,7 +521,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_RequestHasWriteHeadersMethod()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
@@ -500,7 +532,7 @@ public class ClientCodeEmitterTests
     [TestMethod]
     public void Emit_AllFilesContainNamespace()
     {
-        ClientCodeEmitter emitter = new("Petstore.Client");
+        ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         foreach (GeneratedFile file in files)
