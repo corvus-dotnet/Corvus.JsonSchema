@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration;
@@ -13,14 +14,16 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <para>
 /// The emitter produces:
 /// <list type="bullet">
-/// <item>One client interface per tag group (e.g. <c>IPetsClient</c>).</item>
-/// <item>One client implementation per tag group (e.g. <c>PetsClient</c>).</item>
+/// <item>One client interface per tag group (e.g. <c>IPetstoreClient</c>).</item>
+/// <item>One client implementation per tag group (e.g. <c>PetstoreClient</c>).</item>
 /// </list>
 /// </para>
 /// <para>
-/// Generated client methods parse API responses directly into V5 types via
-/// <see cref="ParsedJsonDocument{T}"/>. The caller is responsible for disposing
-/// the parsed document when finished with the response data.
+/// Generated client methods dispatch to the <see cref="IApiTransport"/>:
+/// no-body operations use <see cref="IApiTransport.SendAsync(in ApiRequest, CancellationToken)"/>,
+/// while operations with a body use the generic
+/// <see cref="IApiTransport.SendAsync{TBody}(in ApiRequest, in TBody, CancellationToken)"/>
+/// overload, which writes the body directly into the transport's output stream.
 /// </para>
 /// </remarks>
 public sealed class ClientCodeEmitter
@@ -50,10 +53,9 @@ public sealed class ClientCodeEmitter
     public IReadOnlyList<GeneratedFile> Emit(ClientModel model)
     {
         List<GeneratedFile> files = [];
-        IReadOnlyDictionary<string, IReadOnlyList<ClientOperation>> groups =
-            model.GetOperationsByTag();
+        Dictionary<string, List<ClientOperation>> groups = GroupOperationsByTag(model.Operations);
 
-        foreach ((string tag, IReadOnlyList<ClientOperation> operations) in groups)
+        foreach ((string tag, List<ClientOperation> operations) in groups)
         {
             string clientName = GetClientName(tag);
             files.Add(EmitInterface(clientName, operations));
@@ -61,6 +63,45 @@ public sealed class ClientCodeEmitter
         }
 
         return files;
+    }
+
+    private static Dictionary<string, List<ClientOperation>> GroupOperationsByTag(
+        ClientOperation[] operations)
+    {
+        Dictionary<string, List<ClientOperation>> groups = new(StringComparer.Ordinal);
+
+        foreach (ClientOperation op in operations)
+        {
+            string[] tags = op.GetTags();
+
+            if (tags.Length == 0)
+            {
+                AddToGroup(groups, "default", op);
+            }
+            else
+            {
+                foreach (string tag in tags)
+                {
+                    AddToGroup(groups, tag, op);
+                }
+            }
+        }
+
+        return groups;
+
+        static void AddToGroup(
+            Dictionary<string, List<ClientOperation>> groups,
+            string tag,
+            ClientOperation op)
+        {
+            if (!groups.TryGetValue(tag, out List<ClientOperation>? list))
+            {
+                list = [];
+                groups[tag] = list;
+            }
+
+            list.Add(op);
+        }
     }
 
     private static string SanitizeIdentifier(string name)
@@ -95,25 +136,28 @@ public sealed class ClientCodeEmitter
         bool isInterface)
     {
         string methodName = op.GetMethodName();
-        string returnType = GetReturnType(op);
 
         // XML doc
-        if (op.Summary is not null)
+        string? summary = op.GetSummary();
+        if (summary is not null)
         {
-            w.WriteLine($"/// <summary>");
-            w.WriteLine($"/// {EscapeXml(op.Summary)}");
-            w.WriteLine($"/// </summary>");
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// {EscapeXml(summary)}");
+            w.WriteLine("/// </summary>");
         }
 
         // Parameters doc
         foreach (ClientParameter param in op.Parameters)
         {
-            w.WriteLine($"/// <param name=\"{param.Name}\">{EscapeXml(param.Description ?? $"The {param.Name} parameter.")}.</param>");
+            string paramName = param.GetName();
+            string paramDesc = param.GetDescription() ?? $"The {paramName} parameter.";
+            w.WriteLine($"/// <param name=\"{paramName}\">{EscapeXml(paramDesc)}.</param>");
         }
 
         if (op.RequestBody is not null)
         {
-            w.WriteLine($"/// <param name=\"body\">{EscapeXml(op.RequestBody.Description ?? "The request body.")}.</param>");
+            string bodyDesc = op.RequestBody.Value.GetDescription() ?? "The request body.";
+            w.WriteLine($"/// <param name=\"body\">{EscapeXml(bodyDesc)}.</param>");
         }
 
         w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
@@ -124,24 +168,23 @@ public sealed class ClientCodeEmitter
         foreach (ClientParameter param in op.Parameters)
         {
             string typeName = GetParameterTypeName(param);
-            string paramName = EscapeCSharpKeyword(param.Name);
+            string paramIdentifier = EscapeCSharpKeyword(param.GetName());
 
             if (param.IsRequired)
             {
-                paramParts.Add($"{typeName} {paramName}");
+                paramParts.Add($"{typeName} {paramIdentifier}");
             }
             else
             {
-                paramParts.Add($"{typeName} {paramName} = default");
+                paramParts.Add($"{typeName} {paramIdentifier} = default");
             }
         }
 
         if (op.RequestBody is not null)
         {
-            string bodyType = op.RequestBody.IsRequired
-                ? "ReadOnlyMemory<byte>"
-                : "ReadOnlyMemory<byte>?";
-            paramParts.Add($"{bodyType} body{(op.RequestBody.IsRequired ? string.Empty : " = default")}");
+            // Body is a JsonElement — the transport writes it directly via IJsonElement<T>.WriteTo.
+            // When V5 schema type resolution is integrated, this will be the specific generated type.
+            paramParts.Add("JsonElement body");
         }
 
         paramParts.Add("CancellationToken cancellationToken = default");
@@ -150,19 +193,12 @@ public sealed class ClientCodeEmitter
 
         if (isInterface)
         {
-            w.WriteLine($"Task<ApiResponse> {methodName}Async({parameters});");
+            w.WriteLine($"ValueTask<ApiResponse> {methodName}Async({parameters});");
         }
         else
         {
-            w.WriteLine($"public async Task<ApiResponse> {methodName}Async({parameters})");
+            w.WriteLine($"public ValueTask<ApiResponse> {methodName}Async({parameters})");
         }
-    }
-
-    private static string GetReturnType(ClientOperation op)
-    {
-        // For now, all methods return ApiResponse. The caller uses
-        // ParsedJsonDocument<T>.Parse(response.Body) to get typed results.
-        return "Task<ApiResponse>";
     }
 
     private static string GetParameterTypeName(ClientParameter param)
@@ -171,6 +207,20 @@ public sealed class ClientCodeEmitter
         // resolve schema pointers to typed parameter values.
         return param.IsRequired ? "string" : "string?";
     }
+
+    private static string OperationMethodExpression(OperationMethod method) =>
+        method switch
+        {
+            OperationMethod.Get => "OperationMethod.Get",
+            OperationMethod.Post => "OperationMethod.Post",
+            OperationMethod.Put => "OperationMethod.Put",
+            OperationMethod.Delete => "OperationMethod.Delete",
+            OperationMethod.Patch => "OperationMethod.Patch",
+            OperationMethod.Head => "OperationMethod.Head",
+            OperationMethod.Options => "OperationMethod.Options",
+            OperationMethod.Trace => "OperationMethod.Trace",
+            _ => $"(OperationMethod){(int)method}",
+        };
 
     private static string EscapeCSharpKeyword(string name) =>
         name switch
@@ -196,20 +246,6 @@ public sealed class ClientCodeEmitter
             .Replace("<", "&lt;", StringComparison.Ordinal)
             .Replace(">", "&gt;", StringComparison.Ordinal);
 
-    private static string HttpMethodConstant(OperationMethod method) =>
-        method switch
-        {
-            OperationMethod.Get => "GET",
-            OperationMethod.Post => "POST",
-            OperationMethod.Put => "PUT",
-            OperationMethod.Delete => "DELETE",
-            OperationMethod.Patch => "PATCH",
-            OperationMethod.Head => "HEAD",
-            OperationMethod.Options => "OPTIONS",
-            OperationMethod.Trace => "TRACE",
-            _ => method.ToString().ToUpperInvariant(),
-        };
-
     private string GetClientName(string tag)
     {
         string prefix = this.clientNamePrefix ?? "Api";
@@ -227,10 +263,10 @@ public sealed class ClientCodeEmitter
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
 
-        w.WriteLine($"/// <summary>");
+        w.WriteLine("/// <summary>");
         w.WriteLine($"/// Client interface for the {clientName} API operations.");
-        w.WriteLine($"/// </summary>");
-        w.WriteLine($"public interface I{clientName}Client : IDisposable, IAsyncDisposable");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public interface I{clientName}Client : IAsyncDisposable");
         w.OpenBrace();
 
         for (int i = 0; i < operations.Count; i++)
@@ -258,21 +294,21 @@ public sealed class ClientCodeEmitter
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
 
-        w.WriteLine($"/// <summary>");
+        w.WriteLine("/// <summary>");
         w.WriteLine($"/// Client implementation for the {clientName} API operations.");
-        w.WriteLine($"/// </summary>");
+        w.WriteLine("/// </summary>");
         w.WriteLine($"public sealed class {clientName}Client : I{clientName}Client");
         w.OpenBrace();
 
-        // Field
+        // Field — just the transport, no workspace needed (body serialization is the transport's job)
         w.WriteLine("private readonly IApiTransport transport;");
         w.WriteLine();
 
         // Constructor
-        w.WriteLine($"/// <summary>");
+        w.WriteLine("/// <summary>");
         w.WriteLine($"/// Initializes a new instance of the <see cref=\"{clientName}Client\"/> class.");
-        w.WriteLine($"/// </summary>");
-        w.WriteLine($"/// <param name=\"transport\">The API transport to use for sending requests.</param>");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"transport\">The API transport to use for sending requests.</param>");
         w.WriteLine($"public {clientName}Client(IApiTransport transport)");
         w.OpenBrace();
         w.WriteLine("this.transport = transport ?? throw new ArgumentNullException(nameof(transport));");
@@ -292,13 +328,7 @@ public sealed class ClientCodeEmitter
 
         w.WriteLine();
 
-        // Dispose
-        w.WriteLine("/// <inheritdoc/>");
-        w.WriteLine("public void Dispose()");
-        w.OpenBrace();
-        w.CloseBrace();
-        w.WriteLine();
-
+        // DisposeAsync
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine("public ValueTask DisposeAsync() => default;");
 
@@ -314,35 +344,38 @@ public sealed class ClientCodeEmitter
         EmitMethodSignature(w, op, isInterface: false);
         w.OpenBrace();
 
-        string httpMethod = HttpMethodConstant(op.Method);
+        string methodExpr = OperationMethodExpression(op.Method);
+        string pathTemplate = op.GetPathTemplate();
 
         // Build path with parameter substitution
-        w.WriteLine($"string path = \"{op.Path}\";");
+        w.WriteLine($"string path = \"{pathTemplate}\";");
 
         // Substitute path parameters
         foreach (ClientParameter param in op.Parameters.Where(p => p.Location == ParameterLocation.Path))
         {
-            string paramName = EscapeCSharpKeyword(param.Name);
-            w.WriteLine($"path = path.Replace(\"{{{param.Name}}}\", Uri.EscapeDataString({paramName}), StringComparison.Ordinal);");
+            string paramIdentifier = EscapeCSharpKeyword(param.GetName());
+            string rawName = param.GetName();
+            w.WriteLine($"path = path.Replace(\"{{{rawName}}}\", Uri.EscapeDataString({paramIdentifier}), StringComparison.Ordinal);");
         }
 
         w.WriteLine();
-        w.WriteLine($"ApiRequest request = new(path, \"{httpMethod}\");");
+        w.WriteLine($"ApiRequest request = new(path, {methodExpr});");
 
         // Add query parameters
         foreach (ClientParameter param in op.Parameters.Where(p => p.Location == ParameterLocation.Query))
         {
-            string paramName = EscapeCSharpKeyword(param.Name);
+            string paramIdentifier = EscapeCSharpKeyword(param.GetName());
+            string rawName = param.GetName();
 
             if (param.IsRequired)
             {
-                w.WriteLine($"request = request.WithQueryParameter(\"{param.Name}\", {paramName});");
+                w.WriteLine($"request.AddQueryParameter(\"{rawName}\", {paramIdentifier});");
             }
             else
             {
-                w.WriteLine($"if ({paramName} is not null)");
+                w.WriteLine($"if ({paramIdentifier} is not null)");
                 w.OpenBrace();
-                w.WriteLine($"request = request.WithQueryParameter(\"{param.Name}\", {paramName});");
+                w.WriteLine($"request.AddQueryParameter(\"{rawName}\", {paramIdentifier});");
                 w.CloseBrace();
             }
         }
@@ -350,43 +383,33 @@ public sealed class ClientCodeEmitter
         // Add header parameters
         foreach (ClientParameter param in op.Parameters.Where(p => p.Location == ParameterLocation.Header))
         {
-            string paramName = EscapeCSharpKeyword(param.Name);
+            string paramIdentifier = EscapeCSharpKeyword(param.GetName());
+            string rawName = param.GetName();
 
             if (param.IsRequired)
             {
-                w.WriteLine($"request = request.WithHeader(\"{param.Name}\", {paramName});");
+                w.WriteLine($"request.AddHeader(\"{rawName}\", {paramIdentifier});");
             }
             else
             {
-                w.WriteLine($"if ({paramName} is not null)");
+                w.WriteLine($"if ({paramIdentifier} is not null)");
                 w.OpenBrace();
-                w.WriteLine($"request = request.WithHeader(\"{param.Name}\", {paramName});");
-                w.CloseBrace();
-            }
-        }
-
-        // Add body
-        if (op.RequestBody is not null)
-        {
-            string contentType = op.RequestBody.Content.Count > 0
-                ? op.RequestBody.Content[0].MediaType
-                : "application/json";
-
-            if (op.RequestBody.IsRequired)
-            {
-                w.WriteLine($"request = request.WithBody(body, \"{contentType}\");");
-            }
-            else
-            {
-                w.WriteLine("if (body.HasValue)");
-                w.OpenBrace();
-                w.WriteLine($"request = request.WithBody(body.Value, \"{contentType}\");");
+                w.WriteLine($"request.AddHeader(\"{rawName}\", {paramIdentifier});");
                 w.CloseBrace();
             }
         }
 
         w.WriteLine();
-        w.WriteLine("return await this.transport.SendAsync(request, cancellationToken).ConfigureAwait(false);");
+
+        // Dispatch: use the generic overload for body, plain overload for no body
+        if (op.RequestBody is not null)
+        {
+            w.WriteLine("return this.transport.SendAsync(in request, in body, cancellationToken);");
+        }
+        else
+        {
+            w.WriteLine("return this.transport.SendAsync(in request, cancellationToken);");
+        }
 
         w.CloseBrace();
     }
@@ -400,6 +423,8 @@ public sealed class ClientCodeEmitter
         w.WriteLine();
         w.WriteLine("#nullable enable");
         w.WriteLine();
+        w.WriteLine("using Corvus.Text.Json;");
+        w.WriteLine("using Corvus.Text.Json.Internal;");
         w.WriteLine("using Corvus.Text.Json.OpenApi;");
         w.WriteLine();
     }

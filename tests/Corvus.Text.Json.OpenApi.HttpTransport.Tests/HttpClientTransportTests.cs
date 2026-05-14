@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Immutable;
 using System.Net;
 using System.Text;
 using Corvus.Text.Json.OpenApi;
@@ -14,54 +13,22 @@ namespace Corvus.Text.Json.OpenApi.HttpTransport.Tests;
 public class HttpClientTransportTests
 {
     [TestMethod]
-    public async Task SendAsync_Get_ReturnsBodyBytes()
+    public async Task SendAsync_Get_ReturnsStreamableResponse()
     {
         byte[] expected = """{"id":1,"name":"Fido"}"""u8.ToArray();
         using HttpClient client = CreateMockClient(HttpStatusCode.OK, expected);
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new("/pets/1", "GET");
-        using ApiResponse response = await transport.SendAsync(request);
+        ApiRequest request = new("/pets/1", OperationMethod.Get);
+        await using ApiResponse response = await transport.SendAsync(in request);
 
         Assert.AreEqual(200, response.StatusCode);
         Assert.IsTrue(response.IsSuccess);
-        CollectionAssert.AreEqual(expected, response.Body.ToArray());
-    }
 
-    [TestMethod]
-    public async Task SendAsync_Post_SendsBodyAndContentType()
-    {
-        byte[] requestBody = """{"name":"Rex"}"""u8.ToArray();
-        byte[] responseBody = """{"id":2}"""u8.ToArray();
-
-        HttpRequestMessage? captured = null;
-        byte[]? capturedBody = null;
-
-        using HttpClient client = CreateMockClient(
-            HttpStatusCode.Created,
-            responseBody,
-            onRequest: async req =>
-            {
-                captured = req;
-                if (req.Content is not null)
-                {
-                    capturedBody = await req.Content.ReadAsByteArrayAsync();
-                }
-            });
-
-        await using HttpClientTransport transport = new(client);
-
-        ApiRequest request = new ApiRequest("/pets", "POST")
-            .WithBody(requestBody, "application/json");
-
-        using ApiResponse response = await transport.SendAsync(request);
-
-        Assert.AreEqual(201, response.StatusCode);
-        Assert.IsNotNull(captured);
-        Assert.AreEqual(HttpMethod.Post, captured.Method);
-        Assert.IsNotNull(capturedBody);
-        CollectionAssert.AreEqual(requestBody, capturedBody);
-        Assert.AreEqual("application/json", captured.Content?.Headers.ContentType?.MediaType);
+        // Read the content stream
+        using MemoryStream ms = new();
+        await response.ContentStream.CopyToAsync(ms);
+        CollectionAssert.AreEqual(expected, ms.ToArray());
     }
 
     [TestMethod]
@@ -76,11 +43,11 @@ public class HttpClientTransportTests
 
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new ApiRequest("/pets", "GET")
-            .WithQueryParameter("limit", "10")
-            .WithQueryParameter("offset", "20");
+        ApiRequest request = new("/pets", OperationMethod.Get);
+        request.AddQueryParameter("limit", "10");
+        request.AddQueryParameter("offset", "20");
 
-        using ApiResponse response = await transport.SendAsync(request);
+        await using ApiResponse response = await transport.SendAsync(in request);
 
         Assert.IsNotNull(captured);
         string? uri = captured.RequestUri?.OriginalString;
@@ -102,31 +69,14 @@ public class HttpClientTransportTests
 
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new ApiRequest("/pets", "GET")
-            .WithHeader("X-Custom", "value123");
+        ApiRequest request = new("/pets", OperationMethod.Get);
+        request.AddHeader("X-Custom", "value123");
 
-        using ApiResponse response = await transport.SendAsync(request);
+        await using ApiResponse response = await transport.SendAsync(in request);
 
         Assert.IsNotNull(captured);
         Assert.IsTrue(captured.Headers.Contains("X-Custom"));
         Assert.AreEqual("value123", captured.Headers.GetValues("X-Custom").First());
-    }
-
-    [TestMethod]
-    public async Task SendAsync_ResponseHeaders_AreReturned()
-    {
-        using HttpClient client = CreateMockClient(
-            HttpStatusCode.OK,
-            "[]"u8.ToArray(),
-            responseHeaders: new Dictionary<string, string> { ["X-Request-Id"] = "abc-123" });
-
-        await using HttpClientTransport transport = new(client);
-
-        ApiRequest request = new("/pets", "GET");
-        using ApiResponse response = await transport.SendAsync(request);
-
-        Assert.IsTrue(response.Headers.ContainsKey("X-Request-Id"));
-        Assert.AreEqual("abc-123", response.Headers["X-Request-Id"]);
     }
 
     [TestMethod]
@@ -138,41 +88,27 @@ public class HttpClientTransportTests
 
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new("/pets/999", "GET");
-        using ApiResponse response = await transport.SendAsync(request);
+        ApiRequest request = new("/pets/999", OperationMethod.Get);
+        await using ApiResponse response = await transport.SendAsync(in request);
 
         Assert.AreEqual(404, response.StatusCode);
         Assert.IsFalse(response.IsSuccess);
     }
 
     [TestMethod]
-    public async Task SendAsync_EmptyBody_ReturnsEmptyMemory()
+    public async Task SendAsync_EmptyBody_ReturnsEmptyStream()
     {
         using HttpClient client = CreateMockClient(HttpStatusCode.NoContent, []);
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new("/pets/1", "DELETE");
-        using ApiResponse response = await transport.SendAsync(request);
+        ApiRequest request = new("/pets/1", OperationMethod.Delete);
+        await using ApiResponse response = await transport.SendAsync(in request);
 
         Assert.AreEqual(204, response.StatusCode);
-        Assert.AreEqual(0, response.Body.Length);
-    }
 
-    [TestMethod]
-    public async Task SendAsync_LargeBody_BufferGrowsCorrectly()
-    {
-        // Create a body larger than the initial 4096 buffer
-        byte[] largeBody = new byte[10_000];
-        Random.Shared.NextBytes(largeBody);
-
-        using HttpClient client = CreateMockClient(HttpStatusCode.OK, largeBody);
-        await using HttpClientTransport transport = new(client);
-
-        ApiRequest request = new("/data", "GET");
-        using ApiResponse response = await transport.SendAsync(request);
-
-        Assert.AreEqual(200, response.StatusCode);
-        CollectionAssert.AreEqual(largeBody, response.Body.ToArray());
+        using MemoryStream ms = new();
+        await response.ContentStream.CopyToAsync(ms);
+        Assert.AreEqual(0, ms.Length);
     }
 
     [TestMethod]
@@ -215,10 +151,10 @@ public class HttpClientTransportTests
 
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new ApiRequest("/search", "GET")
-            .WithQueryParameter("q", "hello world&foo=bar");
+        ApiRequest request = new("/search", OperationMethod.Get);
+        request.AddQueryParameter("q", "hello world&foo=bar");
 
-        using ApiResponse response = await transport.SendAsync(request);
+        await using ApiResponse response = await transport.SendAsync(in request);
 
         Assert.IsNotNull(captured);
         string? uri = captured.RequestUri?.OriginalString;
@@ -230,33 +166,62 @@ public class HttpClientTransportTests
     }
 
     [TestMethod]
-    public async Task SendAsync_Put_UsesCorrectMethod()
+    public async Task SendAsync_GenericOverload_WritesBodyViaWriteTo()
     {
         HttpRequestMessage? captured = null;
+        byte[]? capturedBody = null;
 
         using HttpClient client = CreateMockClient(
-            HttpStatusCode.OK,
-            "[]"u8.ToArray(),
-            onRequest: req => { captured = req; return Task.CompletedTask; });
+            HttpStatusCode.Created,
+            """{"id":2}"""u8.ToArray(),
+            onRequest: async req =>
+            {
+                captured = req;
+                if (req.Content is not null)
+                {
+                    capturedBody = await req.Content.ReadAsByteArrayAsync();
+                }
+            });
 
         await using HttpClientTransport transport = new(client);
 
-        ApiRequest request = new ApiRequest("/pets/1", "PUT")
-            .WithBody("""{"name":"Updated"}"""u8.ToArray());
+        // Create a JsonElement body from JSON
+        using ParsedJsonDocument<JsonElement> doc =
+            ParsedJsonDocument<JsonElement>.Parse("""{"name":"Rex"}""");
+        JsonElement body = doc.RootElement;
 
-        using ApiResponse response = await transport.SendAsync(request);
+        ApiRequest request = new("/pets", OperationMethod.Post);
+        await using ApiResponse response = await transport.SendAsync(in request, in body);
 
+        Assert.AreEqual(201, response.StatusCode);
         Assert.IsNotNull(captured);
-        Assert.AreEqual(HttpMethod.Put, captured.Method);
+        Assert.AreEqual(HttpMethod.Post, captured.Method);
+        Assert.IsNotNull(capturedBody);
+
+        // The body should be valid JSON containing the name
+        string bodyStr = Encoding.UTF8.GetString(capturedBody);
+        Assert.IsTrue(bodyStr.Contains("Rex", StringComparison.Ordinal));
+        Assert.AreEqual("application/json", captured.Content?.Headers.ContentType?.MediaType);
+    }
+
+    [TestMethod]
+    public async Task EnsureSuccess_ThrowsOnNonSuccessStatus()
+    {
+        using HttpClient client = CreateMockClient(HttpStatusCode.InternalServerError, "[]"u8.ToArray());
+        await using HttpClientTransport transport = new(client);
+
+        ApiRequest request = new("/fail", OperationMethod.Get);
+        await using ApiResponse response = await transport.SendAsync(in request);
+
+        Assert.ThrowsExactly<ApiException>(() => response.EnsureSuccess());
     }
 
     private static HttpClient CreateMockClient(
         HttpStatusCode statusCode,
         byte[] responseBody,
-        Func<HttpRequestMessage, Task>? onRequest = null,
-        Dictionary<string, string>? responseHeaders = null)
+        Func<HttpRequestMessage, Task>? onRequest = null)
     {
-        MockHandler handler = new(statusCode, responseBody, onRequest, responseHeaders);
+        MockHandler handler = new(statusCode, responseBody, onRequest);
         return new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
     }
 
@@ -265,18 +230,15 @@ public class HttpClientTransportTests
         private readonly HttpStatusCode statusCode;
         private readonly byte[] responseBody;
         private readonly Func<HttpRequestMessage, Task>? onRequest;
-        private readonly Dictionary<string, string>? responseHeaders;
 
         public MockHandler(
             HttpStatusCode statusCode,
             byte[] responseBody,
-            Func<HttpRequestMessage, Task>? onRequest = null,
-            Dictionary<string, string>? responseHeaders = null)
+            Func<HttpRequestMessage, Task>? onRequest = null)
         {
             this.statusCode = statusCode;
             this.responseBody = responseBody;
             this.onRequest = onRequest;
-            this.responseHeaders = responseHeaders;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(
@@ -288,20 +250,10 @@ public class HttpClientTransportTests
                 await this.onRequest(request).ConfigureAwait(false);
             }
 
-            HttpResponseMessage response = new(this.statusCode)
+            return new HttpResponseMessage(this.statusCode)
             {
                 Content = new ByteArrayContent(this.responseBody),
             };
-
-            if (this.responseHeaders is not null)
-            {
-                foreach (KeyValuePair<string, string> header in this.responseHeaders)
-                {
-                    response.Headers.TryAddWithoutValidation(header.Key, header.Value);
-                }
-            }
-
-            return response;
         }
     }
 }

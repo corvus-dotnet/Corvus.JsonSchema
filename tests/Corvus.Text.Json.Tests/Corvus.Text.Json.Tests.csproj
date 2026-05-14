@@ -204,6 +204,7 @@
     <Compile Include="JsonSchemaEvaluationMessageTests.cs" />
     <Compile Include="Canonicalization\JsonCanonicalizerTests.cs" />
     <Compile Include="Utf8JsonPointerToolsCoverageTests.cs" />
+    <Compile Include="Utf8JsonPointerEncodeSegmentTests.cs" />
     <Compile Include="JsonSchemaMatchingNumberTests.cs" />
     <Compile Include="JsonSchemaMatchingStringTests.cs" />
     <Compile Include="JsonSchemaResultsCollectorTests.cs" />

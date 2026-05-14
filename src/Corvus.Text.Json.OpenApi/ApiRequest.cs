@@ -2,43 +2,50 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Collections.Immutable;
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 
 namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
-/// Represents an outgoing API request built by generated client code
+/// Represents the metadata for an outgoing API request built by generated client code
 /// and dispatched by an <see cref="IApiTransport"/>.
 /// </summary>
-public sealed class ApiRequest
+/// <remarks>
+/// <para>
+/// This is a stack-allocated value type with inline storage for up to
+/// <see cref="MaxInlineParameters"/> query parameters and headers each.
+/// No heap allocation occurs on the request hot path for typical APIs.
+/// </para>
+/// <para>
+/// The request carries only metadata — path, method, query parameters, and headers.
+/// Request bodies are not stored in this struct. Instead, the transport's generic
+/// <see cref="IApiTransport.SendAsync{TBody}"/> overload accepts the typed body
+/// separately and writes it directly into the transport's output stream.
+/// </para>
+/// </remarks>
+public struct ApiRequest
 {
     /// <summary>
-    /// Initializes a new instance of the <see cref="ApiRequest"/> class.
+    /// The maximum number of query parameters or headers that can be stored
+    /// inline without heap allocation.
+    /// </summary>
+    public const int MaxInlineParameters = 8;
+
+    private KvpBuffer queryParams;
+    private KvpBuffer headers;
+    private int queryCount;
+    private int headerCount;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="ApiRequest"/> struct.
     /// </summary>
     /// <param name="path">The resolved path (template parameters already substituted).</param>
-    /// <param name="method">The HTTP method.</param>
-    public ApiRequest(string path, string method)
+    /// <param name="method">The operation method.</param>
+    public ApiRequest(string path, OperationMethod method)
     {
         this.Path = path;
         this.Method = method;
-        this.Headers = ImmutableDictionary<string, string>.Empty;
-        this.QueryParameters = ImmutableDictionary<string, string>.Empty;
-    }
-
-    private ApiRequest(
-        string path,
-        string method,
-        ImmutableDictionary<string, string> headers,
-        ImmutableDictionary<string, string> queryParameters,
-        ReadOnlyMemory<byte>? body,
-        string? contentType)
-    {
-        this.Path = path;
-        this.Method = method;
-        this.Headers = headers;
-        this.QueryParameters = queryParameters;
-        this.Body = body;
-        this.ContentType = contentType;
     }
 
     /// <summary>
@@ -47,54 +54,85 @@ public sealed class ApiRequest
     public string Path { get; }
 
     /// <summary>
-    /// Gets the HTTP method (GET, POST, PUT, DELETE, etc.).
+    /// Gets the operation method.
     /// </summary>
-    public string Method { get; }
+    public OperationMethod Method { get; }
 
     /// <summary>
     /// Gets the request headers.
     /// </summary>
-    public ImmutableDictionary<string, string> Headers { get; }
+    [UnscopedRef]
+    public readonly ReadOnlySpan<KeyValuePair<string, string>> Headers
+    {
+        get
+        {
+            ReadOnlySpan<KeyValuePair<string, string>> span = this.headers;
+            return span[..this.headerCount];
+        }
+    }
 
     /// <summary>
     /// Gets the query parameters.
     /// </summary>
-    public ImmutableDictionary<string, string> QueryParameters { get; }
+    [UnscopedRef]
+    public readonly ReadOnlySpan<KeyValuePair<string, string>> QueryParameters
+    {
+        get
+        {
+            ReadOnlySpan<KeyValuePair<string, string>> span = this.queryParams;
+            return span[..this.queryCount];
+        }
+    }
 
     /// <summary>
-    /// Gets the request body, if any.
-    /// </summary>
-    public ReadOnlyMemory<byte>? Body { get; }
-
-    /// <summary>
-    /// Gets the content type of the request body, if any.
-    /// </summary>
-    public string? ContentType { get; }
-
-    /// <summary>
-    /// Returns a new request with the specified header added.
+    /// Adds a header to this request.
     /// </summary>
     /// <param name="name">The header name.</param>
     /// <param name="value">The header value.</param>
-    /// <returns>A new <see cref="ApiRequest"/> with the header.</returns>
-    public ApiRequest WithHeader(string name, string value) =>
-        new(this.Path, this.Method, this.Headers.SetItem(name, value), this.QueryParameters, this.Body, this.ContentType);
+    /// <exception cref="InvalidOperationException">
+    /// More than <see cref="MaxInlineParameters"/> headers have been added.
+    /// </exception>
+    public void AddHeader(string name, string value)
+    {
+        if (this.headerCount >= MaxInlineParameters)
+        {
+            ThrowTooManyHeaders();
+        }
+
+        this.headers[this.headerCount++] = new(name, value);
+    }
 
     /// <summary>
-    /// Returns a new request with the specified query parameter added.
+    /// Adds a query parameter to this request.
     /// </summary>
     /// <param name="name">The query parameter name.</param>
     /// <param name="value">The query parameter value.</param>
-    /// <returns>A new <see cref="ApiRequest"/> with the query parameter.</returns>
-    public ApiRequest WithQueryParameter(string name, string value) =>
-        new(this.Path, this.Method, this.Headers, this.QueryParameters.SetItem(name, value), this.Body, this.ContentType);
+    /// <exception cref="InvalidOperationException">
+    /// More than <see cref="MaxInlineParameters"/> query parameters have been added.
+    /// </exception>
+    public void AddQueryParameter(string name, string value)
+    {
+        if (this.queryCount >= MaxInlineParameters)
+        {
+            ThrowTooManyQueryParameters();
+        }
 
-    /// <summary>
-    /// Returns a new request with the specified body.
-    /// </summary>
-    /// <param name="body">The body bytes.</param>
-    /// <param name="contentType">The content type.</param>
-    /// <returns>A new <see cref="ApiRequest"/> with the body.</returns>
-    public ApiRequest WithBody(ReadOnlyMemory<byte> body, string contentType = "application/json") =>
-        new(this.Path, this.Method, this.Headers, this.QueryParameters, body, contentType);
+        this.queryParams[this.queryCount++] = new(name, value);
+    }
+
+    [DoesNotReturn]
+    private static void ThrowTooManyHeaders() =>
+        throw new InvalidOperationException(
+            $"Cannot add more than {MaxInlineParameters} headers to an API request.");
+
+    [DoesNotReturn]
+    private static void ThrowTooManyQueryParameters() =>
+        throw new InvalidOperationException(
+            $"Cannot add more than {MaxInlineParameters} query parameters to an API request.");
+
+    [InlineArray(MaxInlineParameters)]
+    private struct KvpBuffer
+    {
+        private KeyValuePair<string, string> element0;
+    }
 }

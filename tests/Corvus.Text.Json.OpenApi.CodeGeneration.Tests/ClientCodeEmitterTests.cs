@@ -11,7 +11,7 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration.Tests;
 [TestClass]
 public class ClientCodeEmitterTests
 {
-    private static ClientModel petstoreModel = null!;
+    private static ClientModel petstoreModel;
 
     [ClassInitialize]
     public static void ClassInit(TestContext context)
@@ -107,7 +107,7 @@ public class ClientCodeEmitterTests
 
         // The limit parameter should be optional (not required in the spec)
         Assert.IsTrue(impl.Content.Contains("string? limit", StringComparison.Ordinal));
-        Assert.IsTrue(impl.Content.Contains("WithQueryParameter(\"limit\"", StringComparison.Ordinal));
+        Assert.IsTrue(impl.Content.Contains("AddQueryParameter(\"limit\"", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -130,8 +130,9 @@ public class ClientCodeEmitterTests
 
         GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
 
-        Assert.IsTrue(impl.Content.Contains("ReadOnlyMemory<byte> body", StringComparison.Ordinal));
-        Assert.IsTrue(impl.Content.Contains("WithBody(body", StringComparison.Ordinal));
+        // Body is a JsonElement — the transport writes it directly via WriteTo
+        Assert.IsTrue(impl.Content.Contains("JsonElement body", StringComparison.Ordinal));
+        Assert.IsTrue(impl.Content.Contains("SendAsync(in request, in body", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -155,9 +156,9 @@ public class ClientCodeEmitterTests
         GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
 
         // GET for listPets and showPetById
-        Assert.IsTrue(impl.Content.Contains("new(path, \"GET\")", StringComparison.Ordinal));
+        Assert.IsTrue(impl.Content.Contains("new(path, OperationMethod.Get)", StringComparison.Ordinal));
         // POST for createPet
-        Assert.IsTrue(impl.Content.Contains("new(path, \"POST\")", StringComparison.Ordinal));
+        Assert.IsTrue(impl.Content.Contains("new(path, OperationMethod.Post)", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -187,18 +188,16 @@ public class ClientCodeEmitterTests
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile impl = files.First(f => !f.FileName.StartsWith("I", StringComparison.Ordinal));
-        Assert.IsTrue(impl.Content.Contains("public void Dispose()", StringComparison.Ordinal));
         Assert.IsTrue(impl.Content.Contains("public ValueTask DisposeAsync()", StringComparison.Ordinal));
     }
 
     [TestMethod]
-    public void Emit_InterfaceExtendsIDisposable()
+    public void Emit_InterfaceExtendsIAsyncDisposable()
     {
         ClientCodeEmitter emitter = new("Petstore.Client");
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile iface = files.First(f => f.FileName.StartsWith("I", StringComparison.Ordinal));
-        Assert.IsTrue(iface.Content.Contains("IDisposable", StringComparison.Ordinal));
         Assert.IsTrue(iface.Content.Contains("IAsyncDisposable", StringComparison.Ordinal));
     }
 

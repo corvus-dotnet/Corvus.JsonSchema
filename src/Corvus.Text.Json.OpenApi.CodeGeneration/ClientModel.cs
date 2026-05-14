@@ -2,89 +2,100 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
+
 namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
 /// <summary>
 /// The complete client model extracted from an OpenAPI or AsyncAPI specification.
 /// This is the intermediate representation between the spec walker and the code emitter.
 /// </summary>
-public sealed class ClientModel
+/// <remarks>
+/// <para>
+/// The model stores <see cref="JsonElement"/> references into the parsed spec document.
+/// No strings are allocated during model construction; UTF-16 conversion happens only
+/// at the code-emitter boundary via the <c>Get*</c> methods on the model types.
+/// </para>
+/// <para>
+/// All element references are valid only while the source document is alive. The caller
+/// must keep the parsed document alive until the emitter has finished generating code.
+/// </para>
+/// </remarks>
+public readonly struct ClientModel
 {
+    private static ReadOnlySpan<byte> InfoUtf8 => "info"u8;
+
+    private static ReadOnlySpan<byte> TitleUtf8 => "title"u8;
+
+    private static ReadOnlySpan<byte> VersionUtf8 => "version"u8;
+
+    private static ReadOnlySpan<byte> DescriptionUtf8 => "description"u8;
+
     /// <summary>
-    /// Initializes a new instance of the <see cref="ClientModel"/> class.
+    /// Initializes a new instance of the <see cref="ClientModel"/> struct.
     /// </summary>
-    /// <param name="title">The API title from the spec info object.</param>
-    /// <param name="version">The API version from the spec info object.</param>
-    /// <param name="description">Optional API description from the spec info object.</param>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
     /// <param name="operations">The operations in the API.</param>
     /// <param name="schemaPointers">
-    /// JSON pointers to all schemas reachable from the selected operations.
+    /// UTF-8 JSON pointers to all schemas reachable from the selected operations.
     /// These will be fed to the V5 <c>JsonSchemaTypeBuilder</c> for type generation.
     /// </param>
     public ClientModel(
-        string? title,
-        string? version,
-        string? description,
-        IReadOnlyList<ClientOperation> operations,
-        IReadOnlyList<string> schemaPointers)
+        JsonElement specRoot,
+        ClientOperation[] operations,
+        byte[][] schemaPointers)
     {
-        this.Title = title;
-        this.Version = version;
-        this.Description = description;
+        this.SpecRoot = specRoot;
         this.Operations = operations;
         this.SchemaPointers = schemaPointers;
     }
 
     /// <summary>
-    /// Gets the API title.
+    /// Gets the root element of the parsed spec document.
     /// </summary>
-    public string? Title { get; }
-
-    /// <summary>
-    /// Gets the API version.
-    /// </summary>
-    public string? Version { get; }
-
-    /// <summary>
-    /// Gets the API description.
-    /// </summary>
-    public string? Description { get; }
+    public JsonElement SpecRoot { get; }
 
     /// <summary>
     /// Gets the operations in the API.
     /// </summary>
-    public IReadOnlyList<ClientOperation> Operations { get; }
+    public ClientOperation[] Operations { get; }
 
     /// <summary>
-    /// Gets the JSON pointers to all schemas reachable from the selected operations.
+    /// Gets the UTF-8 JSON pointers to all schemas reachable from the selected operations.
     /// </summary>
-    public IReadOnlyList<string> SchemaPointers { get; }
+    public byte[][] SchemaPointers { get; }
 
     /// <summary>
-    /// Gets the operations grouped by their first tag. Operations with no tags
-    /// are placed in a group with the key <c>"Default"</c>.
+    /// Gets the API title from the spec's info object.
     /// </summary>
-    /// <returns>A dictionary mapping tag names to their operations.</returns>
-    public IReadOnlyDictionary<string, IReadOnlyList<ClientOperation>> GetOperationsByTag()
+    /// <returns>The title, or <see langword="null"/> if not present.</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
+    public string? GetTitle() => this.TryGetInfoString(TitleUtf8);
+
+    /// <summary>
+    /// Gets the API version from the spec's info object.
+    /// </summary>
+    /// <returns>The version, or <see langword="null"/> if not present.</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
+    public string? GetVersion() => this.TryGetInfoString(VersionUtf8);
+
+    /// <summary>
+    /// Gets the API description from the spec's info object.
+    /// </summary>
+    /// <returns>The description, or <see langword="null"/> if not present.</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
+    public string? GetDescription() => this.TryGetInfoString(DescriptionUtf8);
+
+    private string? TryGetInfoString(ReadOnlySpan<byte> property)
     {
-        var groups = new Dictionary<string, List<ClientOperation>>(StringComparer.Ordinal);
-
-        foreach (ClientOperation op in this.Operations)
+        if (this.SpecRoot.TryGetProperty(InfoUtf8, out JsonElement info)
+            && info.ValueKind == JsonValueKind.Object
+            && info.TryGetProperty(property, out JsonElement value)
+            && value.ValueKind == JsonValueKind.String)
         {
-            string tag = op.Tags.Count > 0 ? op.Tags[0] : "Default";
-
-            if (!groups.TryGetValue(tag, out List<ClientOperation>? list))
-            {
-                list = [];
-                groups[tag] = list;
-            }
-
-            list.Add(op);
+            return value.GetString();
         }
 
-        return groups.ToDictionary(
-            kvp => kvp.Key,
-            kvp => (IReadOnlyList<ClientOperation>)kvp.Value,
-            StringComparer.Ordinal);
+        return null;
     }
 }

@@ -14,21 +14,14 @@ public class ApiException : Exception
     /// Initializes a new instance of the <see cref="ApiException"/> class.
     /// </summary>
     /// <param name="statusCode">The HTTP status code.</param>
-    /// <param name="body">The response body bytes.</param>
-    public ApiException(int statusCode, ReadOnlyMemory<byte> body)
+    public ApiException(int statusCode)
         : base($"The API returned status code {statusCode}.")
     {
         this.StatusCode = statusCode;
-        this.ResponseBody = body.ToArray();
     }
 
     /// <summary>
     /// Gets the HTTP status code.
     /// </summary>
     public int StatusCode { get; }
-
-    /// <summary>
-    /// Gets the response body as a byte array.
-    /// </summary>
-    public byte[] ResponseBody { get; }
 }

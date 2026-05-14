@@ -2,9 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
-using System.Collections.Immutable;
-using System.Text;
+using System.Net.Http.Headers;
+using System.Runtime.CompilerServices;
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 
 namespace Corvus.Text.Json.OpenApi.HttpTransport;
@@ -14,9 +14,10 @@ namespace Corvus.Text.Json.OpenApi.HttpTransport;
 /// </summary>
 /// <remarks>
 /// <para>
-/// Response bodies are read into <see cref="ArrayPool{T}"/>-rented buffers so that
-/// callers can parse them directly into <see cref="ParsedJsonDocument{T}"/> without
-/// an intermediate copy.
+/// Request bodies are written directly into the HTTP stream via
+/// WriteTo — no intermediate buffer is allocated.
+/// Response bodies are returned as a <see cref="Stream"/> for direct parsing
+/// into <see cref="ParsedJsonDocument{T}"/>.
 /// </para>
 /// <para>
 /// The transport does not own the <see cref="HttpClient"/> by default.
@@ -44,24 +45,24 @@ public sealed class HttpClientTransport : IApiTransport
     }
 
     /// <inheritdoc/>
-    public async ValueTask<ApiResponse> SendAsync(ApiRequest request, CancellationToken cancellationToken = default)
+    public ValueTask<ApiResponse> SendAsync(
+        in ApiRequest request,
+        CancellationToken cancellationToken = default)
     {
-        ArgumentNullException.ThrowIfNull(request);
+        HttpRequestMessage httpRequest = BuildHttpRequest(in request);
+        return SendCoreAsync(httpRequest, cancellationToken);
+    }
 
-        using HttpRequestMessage httpRequest = BuildHttpRequest(request);
-
-        HttpResponseMessage httpResponse = await this.httpClient
-            .SendAsync(httpRequest, HttpCompletionOption.ResponseContentRead, cancellationToken)
-            .ConfigureAwait(false);
-
-        try
-        {
-            return await ReadResponseAsync(httpResponse, cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            httpResponse.Dispose();
-        }
+    /// <inheritdoc/>
+    public ValueTask<ApiResponse> SendAsync<TBody>(
+        in ApiRequest request,
+        in TBody body,
+        CancellationToken cancellationToken = default)
+        where TBody : struct, IJsonElement<TBody>
+    {
+        HttpRequestMessage httpRequest = BuildHttpRequest(in request);
+        httpRequest.Content = new JsonElementContent<TBody>(body);
+        return SendCoreAsync(httpRequest, cancellationToken);
     }
 
     /// <inheritdoc/>
@@ -75,119 +76,147 @@ public sealed class HttpClientTransport : IApiTransport
         return default;
     }
 
-    private static HttpRequestMessage BuildHttpRequest(ApiRequest request)
+    private static HttpMethod MapMethod(OperationMethod method) =>
+        method switch
+        {
+            OperationMethod.Get => HttpMethod.Get,
+            OperationMethod.Post => HttpMethod.Post,
+            OperationMethod.Put => HttpMethod.Put,
+            OperationMethod.Delete => HttpMethod.Delete,
+            OperationMethod.Patch => HttpMethod.Patch,
+            OperationMethod.Head => HttpMethod.Head,
+            OperationMethod.Options => HttpMethod.Options,
+            OperationMethod.Trace => HttpMethod.Trace,
+            _ => new HttpMethod(method.ToString()),
+        };
+
+    private static HttpRequestMessage BuildHttpRequest(in ApiRequest request)
     {
         string uri = request.Path;
 
-        if (request.QueryParameters.Count > 0)
+        ReadOnlySpan<KeyValuePair<string, string>> queryParams = request.QueryParameters;
+        if (queryParams.Length > 0)
         {
-            StringBuilder sb = new(uri);
-            sb.Append('?');
-            bool first = true;
-            foreach (KeyValuePair<string, string> param in request.QueryParameters)
-            {
-                if (!first)
-                {
-                    sb.Append('&');
-                }
-
-                sb.Append(Uri.EscapeDataString(param.Key));
-                sb.Append('=');
-                sb.Append(Uri.EscapeDataString(param.Value));
-                first = false;
-            }
-
-            uri = sb.ToString();
+            uri = BuildUriWithQuery(uri, queryParams);
         }
 
-        HttpRequestMessage httpRequest = new(new HttpMethod(request.Method), uri);
+        HttpRequestMessage httpRequest = new(MapMethod(request.Method), uri);
 
         foreach (KeyValuePair<string, string> header in request.Headers)
         {
             httpRequest.Headers.TryAddWithoutValidation(header.Key, header.Value);
         }
 
-        if (request.Body is { } body)
-        {
-            httpRequest.Content = new ReadOnlyMemoryContent(body);
-            if (request.ContentType is not null)
-            {
-                httpRequest.Content.Headers.ContentType =
-                    new System.Net.Http.Headers.MediaTypeHeaderValue(request.ContentType);
-            }
-        }
-
         return httpRequest;
     }
 
-    private static async Task<ApiResponse> ReadResponseAsync(
-        HttpResponseMessage httpResponse,
+    private async ValueTask<ApiResponse> SendCoreAsync(
+        HttpRequestMessage httpRequest,
         CancellationToken cancellationToken)
     {
-        int statusCode = (int)httpResponse.StatusCode;
-
-        // Read response body into a rented buffer
-        using Stream stream = await httpResponse.Content
-            .ReadAsStreamAsync(cancellationToken)
+        // Use ResponseHeadersRead so the content stream is available immediately
+        // without buffering the entire response body.
+        HttpResponseMessage httpResponse = await this.httpClient
+            .SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
             .ConfigureAwait(false);
-
-        long? contentLength = httpResponse.Content.Headers.ContentLength;
-        int initialCapacity = contentLength.HasValue && contentLength.Value <= int.MaxValue
-            ? (int)contentLength.Value
-            : 4096;
-
-        byte[] rentedArray = ArrayPool<byte>.Shared.Rent(initialCapacity);
-        int totalRead = 0;
 
         try
         {
-            while (true)
-            {
-                if (totalRead == rentedArray.Length)
-                {
-                    // Grow the buffer
-                    byte[] newArray = ArrayPool<byte>.Shared.Rent(rentedArray.Length * 2);
-                    Buffer.BlockCopy(rentedArray, 0, newArray, 0, totalRead);
-                    ArrayPool<byte>.Shared.Return(rentedArray);
-                    rentedArray = newArray;
-                }
-
-                int bytesRead = await stream
-                    .ReadAsync(rentedArray.AsMemory(totalRead), cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (bytesRead == 0)
-                {
-                    break;
-                }
-
-                totalRead += bytesRead;
-            }
-
-            // Extract response headers
-            ImmutableDictionary<string, string>.Builder headers =
-                ImmutableDictionary.CreateBuilder<string, string>(StringComparer.OrdinalIgnoreCase);
-
-            foreach (KeyValuePair<string, IEnumerable<string>> header in httpResponse.Headers)
-            {
-                headers[header.Key] = string.Join(", ", header.Value);
-            }
-
-            foreach (KeyValuePair<string, IEnumerable<string>> header in httpResponse.Content.Headers)
-            {
-                headers[header.Key] = string.Join(", ", header.Value);
-            }
+            Stream contentStream = await httpResponse.Content
+#if NET
+                .ReadAsStreamAsync(cancellationToken)
+#else
+                .ReadAsStreamAsync()
+#endif
+                .ConfigureAwait(false);
 
             return new ApiResponse(
-                statusCode,
-                rentedArray.AsMemory(0, totalRead),
-                rentedArray,
-                headers.ToImmutable());
+                (int)httpResponse.StatusCode,
+                contentStream,
+                new HttpResponseOwner(httpRequest, httpResponse));
         }
         catch
         {
-            ArrayPool<byte>.Shared.Return(rentedArray);
+            httpResponse.Dispose();
+            httpRequest.Dispose();
             throw;
+        }
+    }
+
+    private static string BuildUriWithQuery(
+        string basePath,
+        ReadOnlySpan<KeyValuePair<string, string>> parameters)
+    {
+        DefaultInterpolatedStringHandler handler = new(0, 0, null, stackalloc char[256]);
+        handler.AppendLiteral(basePath);
+        handler.AppendLiteral("?");
+
+        bool first = true;
+        foreach (KeyValuePair<string, string> param in parameters)
+        {
+            if (!first)
+            {
+                handler.AppendLiteral("&");
+            }
+
+            handler.AppendFormatted(System.Uri.EscapeDataString(param.Key));
+            handler.AppendLiteral("=");
+            handler.AppendFormatted(System.Uri.EscapeDataString(param.Value));
+            first = false;
+        }
+
+        return handler.ToStringAndClear();
+    }
+
+    /// <summary>
+    /// Custom <see cref="HttpContent"/> that writes the body directly from an
+    /// <see cref="IJsonElement{T}"/> into the HTTP request stream via
+    /// <see cref="Utf8JsonWriter"/>. No intermediate buffer is allocated.
+    /// </summary>
+    private sealed class JsonElementContent<T> : HttpContent
+        where T : struct, IJsonElement<T>
+    {
+        private readonly T body;
+
+        public JsonElementContent(in T body)
+        {
+            this.body = body;
+            this.Headers.ContentType = new MediaTypeHeaderValue("application/json")
+            {
+                CharSet = "utf-8",
+            };
+        }
+
+        protected override Task SerializeToStreamAsync(
+            Stream stream,
+            System.Net.TransportContext? context)
+        {
+            using Utf8JsonWriter writer = new(stream);
+            this.body.WriteTo(writer);
+            writer.Flush();
+            return Task.CompletedTask;
+        }
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = 0;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Owns the <see cref="HttpRequestMessage"/> and <see cref="HttpResponseMessage"/>
+    /// lifetime. Disposed when the <see cref="ApiResponse"/> is disposed.
+    /// </summary>
+    private sealed class HttpResponseOwner(
+        HttpRequestMessage request,
+        HttpResponseMessage response) : IAsyncDisposable
+    {
+        public ValueTask DisposeAsync()
+        {
+            response.Dispose();
+            request.Dispose();
+            return default;
         }
     }
 }

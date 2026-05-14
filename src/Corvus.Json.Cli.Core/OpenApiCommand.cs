@@ -99,9 +99,9 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         // Build client model
         ClientModel model = ClientModelBuilder.Build(specRoot, walker, filter);
 
-        AnsiConsole.MarkupLine($"[green]API:[/] {model.Title ?? "(untitled)"} v{model.Version ?? "?"}");
-        AnsiConsole.MarkupLine($"[green]Operations:[/] {model.Operations.Count}");
-        AnsiConsole.MarkupLine($"[green]Schemas:[/] {model.SchemaPointers.Count}");
+        AnsiConsole.MarkupLine($"[green]API:[/] {model.GetTitle() ?? "(untitled)"} v{model.GetVersion() ?? "?"}");
+        AnsiConsole.MarkupLine($"[green]Operations:[/] {model.Operations.Length}");
+        AnsiConsole.MarkupLine($"[green]Schemas:[/] {model.SchemaPointers.Length}");
 
         // Emit client code
         ClientCodeEmitter emitter = new(rootNamespace, settings.ClientName);
