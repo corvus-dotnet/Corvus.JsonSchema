@@ -175,7 +175,7 @@ function Write-StepDuration($stepName, $sw) {
 
 # -- Helper: install Vellum tool
 function Install-Vellum($repoRoot, $vellumVersion,$VellumGitHubRepo,$VellumBasePath,$vellumDownloadToken) {
-    $defaultVellumCmd = Join-Path $VellumBasePath 'bin' 'vellum'
+    $defaultVellumCmd = Join-Path $VellumBasePath 'vellum'
 
     if ($vellumDownloadToken) {
         Write-Host "Using explicit access token to download Vellum"
