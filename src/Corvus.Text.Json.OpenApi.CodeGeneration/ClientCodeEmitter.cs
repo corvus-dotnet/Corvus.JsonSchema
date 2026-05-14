@@ -1220,22 +1220,28 @@ public sealed class ClientCodeEmitter
 
         List<string> paramParts = this.BuildParameterList(op);
         w.WriteLine(
-            $"public ValueTask<{responseName}> {methodName}Async(" +
+            $"public async ValueTask<{responseName}> {methodName}Async(" +
             $"{string.Join(", ", paramParts)})");
         w.OpenBrace();
 
         bool hasParams = op.Parameters.Length > 0;
+        bool hasBody = op.RequestBody is not null;
+
+        w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
+        w.WriteLine("try");
+        w.OpenBrace();
+
+        // Materialise body from Source → immutable typed element.
+        string? bodyTypeName = null;
+        if (hasBody)
+        {
+            bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
+            w.WriteLine(
+                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body).RootElement;");
+        }
 
         if (hasParams)
         {
-            // Create a workspace to materialise Source values into immutable typed elements.
-            // The workspace is unrented so it survives the synchronous transport consumption.
-            // The transport contract guarantees all request data is consumed synchronously
-            // before any async I/O, so disposing here is safe.
-            w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
-            w.WriteLine("try");
-            w.OpenBrace();
-
             // Materialise each parameter from Source → immutable typed element via CreateBuilder.
             ClientParameter[] requiredParams = op.Parameters.Where(p => p.IsRequired).ToArray();
             ClientParameter[] optionalParams = op.Parameters.Where(p => !p.IsRequired).ToArray();
@@ -1279,47 +1285,35 @@ public sealed class ClientCodeEmitter
             {
                 w.WriteLine(";");
             }
-
-            w.WriteLine();
-
-            EmitSendCall(w, op, requestName, responseName);
-
-            w.CloseBrace();
-            w.WriteLine("finally");
-            w.OpenBrace();
-            w.WriteLine("workspace.Dispose();");
-            w.CloseBrace();
         }
         else
         {
-            // No parameters — no workspace needed.
             w.WriteLine($"{requestName} request = new();");
-            w.WriteLine();
-            EmitSendCall(w, op, requestName, responseName);
+        }
+
+        w.WriteLine();
+
+        // Emit the awaited transport call.
+        if (hasBody)
+        {
+            w.WriteLine(
+                $"return await this.transport.SendAsync<{requestName}, {bodyTypeName}, " +
+                $"{responseName}>(in request, in bodyValue, cancellationToken).ConfigureAwait(false);");
+        }
+        else
+        {
+            w.WriteLine(
+                $"return await this.transport.SendAsync<{requestName}, " +
+                $"{responseName}>(in request, cancellationToken).ConfigureAwait(false);");
         }
 
         w.CloseBrace();
-    }
+        w.WriteLine("finally");
+        w.OpenBrace();
+        w.WriteLine("workspace.Dispose();");
+        w.CloseBrace();
 
-    private void EmitSendCall(
-        IndentedWriter w,
-        ClientOperation op,
-        string requestName,
-        string responseName)
-    {
-        if (op.RequestBody is not null)
-        {
-            string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
-            w.WriteLine(
-                $"return this.transport.SendAsync<{requestName}, {bodyTypeName}, " +
-                $"{responseName}>(in request, in body, cancellationToken);");
-        }
-        else
-        {
-            w.WriteLine(
-                $"return this.transport.SendAsync<{requestName}, " +
-                $"{responseName}>(in request, cancellationToken);");
-        }
+        w.CloseBrace();
     }
 
     private static void EmitMethodDoc(IndentedWriter w, ClientOperation op)
@@ -1367,7 +1361,7 @@ public sealed class ClientCodeEmitter
         if (op.RequestBody is not null)
         {
             string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
-            paramParts.Add($"{bodyTypeName} body");
+            paramParts.Add($"{bodyTypeName}.Source body");
         }
 
         paramParts.Add("CancellationToken cancellationToken = default");

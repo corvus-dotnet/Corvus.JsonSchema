@@ -379,7 +379,7 @@ public class ClientCodeEmitterTests
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
 
         Assert.IsTrue(
-            impl.Content.Contains("Petstore.Client.NewPet body", StringComparison.Ordinal));
+            impl.Content.Contains("Petstore.Client.NewPet.Source body", StringComparison.Ordinal));
         Assert.IsTrue(
             impl.Content.Contains(
                 "SendAsync<CreatePetRequest, Petstore.Client.NewPet, CreatePetResponse>",
@@ -409,7 +409,7 @@ public class ClientCodeEmitterTests
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
 
         Assert.IsTrue(
-            impl.Content.Contains("Petstore.Client.NewPet body", StringComparison.Ordinal));
+            impl.Content.Contains("Petstore.Client.NewPet.Source body", StringComparison.Ordinal));
         Assert.IsTrue(
             impl.Content.Contains(
                 "SendAsync<CreatePetRequest, Petstore.Client.NewPet, CreatePetResponse>",
@@ -425,7 +425,7 @@ public class ClientCodeEmitterTests
         GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
 
         Assert.IsTrue(
-            iface.Content.Contains("Petstore.Client.NewPet body", StringComparison.Ordinal));
+            iface.Content.Contains("Petstore.Client.NewPet.Source body", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -443,7 +443,7 @@ public class ClientCodeEmitterTests
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
 
         Assert.IsTrue(
-            impl.Content.Contains("JsonElement body", StringComparison.Ordinal));
+            impl.Content.Contains("JsonElement.Source body", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -680,20 +680,30 @@ public class ClientCodeEmitterTests
     }
 
     [TestMethod]
-    public void Emit_NoWorkspaceForParameterlessMethod()
+    public void Emit_BodyMaterialisedViaCreateBuilder()
     {
-        // CreatePet has no parameters (only a request body, which stays as a JSON type)
         ClientCodeEmitter emitter = CreateEmitter();
         IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
 
         GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
-        string content = impl.Content;
 
-        // CreatePetAsync should NOT have a workspace since it has no params
-        // But ListPetsAsync and ShowPetByIdAsync have params, so workspace exists.
-        // We check that CreatePetAsync body does not use workspace by verifying
-        // CreatePetRequest instantiation does not involve workspace.
+        // CreatePet body is materialised via CreateBuilder, same as parameters
         Assert.IsTrue(
-            content.Contains("CreatePetRequest request = new()", StringComparison.Ordinal));
+            impl.Content.Contains(
+                "Petstore.Client.NewPet.CreateBuilder(workspace, body).RootElement",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_BodyMethodPassesMaterialisedValueToSendAsync()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
+
+        // The materialised bodyValue (not the Source) is passed to SendAsync
+        Assert.IsTrue(
+            impl.Content.Contains("in bodyValue, cancellationToken", StringComparison.Ordinal));
     }
 }
