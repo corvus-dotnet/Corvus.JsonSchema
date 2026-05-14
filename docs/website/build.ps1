@@ -235,7 +235,7 @@ function Install-Vellum($vellumVersion,$VellumGitHubRepo,$VellumBasePath,$vellum
         # cmdlet, but we need to know whether to download the NuGet package first.
         $existingTool = Get-DotNetTool @dotnetToolBaseArgs -Verbose
         if (!$existingTool -or $existingTool.Version -ne $latestVersion) {
-            $vellumPackageFullName = "vellum.{1}.nupkg" -f $latestVersion
+            $vellumPackageFullName = "vellum.{0}.nupkg" -f $latestVersion
             Write-Build White "Downloading vellum .NET tool package $vellumPackageFullName"
             exec { & gh release download -R $VellumGitHubRepo $latestVersion -p $vellumPackageFullName -D $vellumDownloadPath --clobber }
         
