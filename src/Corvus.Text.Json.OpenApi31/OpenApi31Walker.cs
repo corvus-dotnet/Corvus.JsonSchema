@@ -256,17 +256,17 @@ public sealed class OpenApi31Walker : ISpecWalker
             return ParameterLocation.Query;
         }
 
-        if (inValue.ValueEquals("path"u8))
+        if (inValue.ValueEquals(OpenApiDocument.Parameter.InEntity.EnumValues.PathUtf8))
         {
             return ParameterLocation.Path;
         }
 
-        if (inValue.ValueEquals("header"u8))
+        if (inValue.ValueEquals(OpenApiDocument.Parameter.InEntity.EnumValues.HeaderUtf8))
         {
             return ParameterLocation.Header;
         }
 
-        if (inValue.ValueEquals("cookie"u8))
+        if (inValue.ValueEquals(OpenApiDocument.Parameter.InEntity.EnumValues.CookieUtf8))
         {
             return ParameterLocation.Cookie;
         }
@@ -298,37 +298,37 @@ public sealed class OpenApi31Walker : ISpecWalker
     {
         if (styleValue.ValueKind == JsonValueKind.String)
         {
-            if (styleValue.ValueEquals("form"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.Form))
             {
                 return ParameterStyle.Form;
             }
 
-            if (styleValue.ValueEquals("simple"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.Simple))
             {
                 return ParameterStyle.Simple;
             }
 
-            if (styleValue.ValueEquals("label"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.Label))
             {
                 return ParameterStyle.Label;
             }
 
-            if (styleValue.ValueEquals("matrix"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.Matrix))
             {
                 return ParameterStyle.Matrix;
             }
 
-            if (styleValue.ValueEquals("spaceDelimited"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.SpaceDelimited))
             {
                 return ParameterStyle.SpaceDelimited;
             }
 
-            if (styleValue.ValueEquals("pipeDelimited"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.PipeDelimited))
             {
                 return ParameterStyle.PipeDelimited;
             }
 
-            if (styleValue.ValueEquals("deepObject"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.DeepObject))
             {
                 return ParameterStyle.DeepObject;
             }
@@ -339,6 +339,30 @@ public sealed class OpenApi31Walker : ISpecWalker
             ParameterLocation.Query or ParameterLocation.Cookie => ParameterStyle.Form,
             _ => ParameterStyle.Simple,
         };
+    }
+
+    /// <summary>
+    /// UTF-8 constants for the OpenAPI <c>style</c> property values.
+    /// </summary>
+    /// <remarks>
+    /// The OpenAPI 3.1 schema does not expose style values as simple enum constants
+    /// (they are nested in a complex <c>oneOf</c> structure), so we define them here.
+    /// </remarks>
+    private static class ParameterStyleUtf8
+    {
+        public static ReadOnlySpan<byte> Form => "form"u8;
+
+        public static ReadOnlySpan<byte> Simple => "simple"u8;
+
+        public static ReadOnlySpan<byte> Label => "label"u8;
+
+        public static ReadOnlySpan<byte> Matrix => "matrix"u8;
+
+        public static ReadOnlySpan<byte> SpaceDelimited => "spaceDelimited"u8;
+
+        public static ReadOnlySpan<byte> PipeDelimited => "pipeDelimited"u8;
+
+        public static ReadOnlySpan<byte> DeepObject => "deepObject"u8;
     }
 
     private static IEnumerable<ExtractedSchema> EnumerateMediaTypeSchemas(

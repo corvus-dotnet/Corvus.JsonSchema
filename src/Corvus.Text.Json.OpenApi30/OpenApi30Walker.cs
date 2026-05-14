@@ -264,17 +264,17 @@ public sealed class OpenApi30Walker : ISpecWalker
             return ParameterLocation.Query;
         }
 
-        if (inValue.ValueEquals("path"u8))
+        if (inValue.ValueEquals(ParameterInUtf8.Path))
         {
             return ParameterLocation.Path;
         }
 
-        if (inValue.ValueEquals("header"u8))
+        if (inValue.ValueEquals(ParameterInUtf8.Header))
         {
             return ParameterLocation.Header;
         }
 
-        if (inValue.ValueEquals("cookie"u8))
+        if (inValue.ValueEquals(ParameterInUtf8.Cookie))
         {
             return ParameterLocation.Cookie;
         }
@@ -306,37 +306,37 @@ public sealed class OpenApi30Walker : ISpecWalker
     {
         if (styleValue.ValueKind == JsonValueKind.String)
         {
-            if (styleValue.ValueEquals("form"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.Form))
             {
                 return ParameterStyle.Form;
             }
 
-            if (styleValue.ValueEquals("simple"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.Simple))
             {
                 return ParameterStyle.Simple;
             }
 
-            if (styleValue.ValueEquals("label"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.Label))
             {
                 return ParameterStyle.Label;
             }
 
-            if (styleValue.ValueEquals("matrix"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.Matrix))
             {
                 return ParameterStyle.Matrix;
             }
 
-            if (styleValue.ValueEquals("spaceDelimited"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.SpaceDelimited))
             {
                 return ParameterStyle.SpaceDelimited;
             }
 
-            if (styleValue.ValueEquals("pipeDelimited"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.PipeDelimited))
             {
                 return ParameterStyle.PipeDelimited;
             }
 
-            if (styleValue.ValueEquals("deepObject"u8))
+            if (styleValue.ValueEquals(ParameterStyleUtf8.DeepObject))
             {
                 return ParameterStyle.DeepObject;
             }
@@ -347,6 +347,48 @@ public sealed class OpenApi30Walker : ISpecWalker
             ParameterLocation.Query or ParameterLocation.Cookie => ParameterStyle.Form,
             _ => ParameterStyle.Simple,
         };
+    }
+
+    /// <summary>
+    /// UTF-8 constants for the OpenAPI <c>in</c> property values.
+    /// </summary>
+    /// <remarks>
+    /// The OpenAPI 3.0 schema's <c>in</c> property is typed as <see cref="OpenApi30.JsonString"/>
+    /// without enum values accessible from a single generated type, so we define the constants here.
+    /// </remarks>
+    private static class ParameterInUtf8
+    {
+        public static ReadOnlySpan<byte> Path => "path"u8;
+
+        public static ReadOnlySpan<byte> Query => "query"u8;
+
+        public static ReadOnlySpan<byte> Header => "header"u8;
+
+        public static ReadOnlySpan<byte> Cookie => "cookie"u8;
+    }
+
+    /// <summary>
+    /// UTF-8 constants for the OpenAPI <c>style</c> property values.
+    /// </summary>
+    /// <remarks>
+    /// The OpenAPI 3.0 schema does not expose style values as simple enum constants,
+    /// so we define them here.
+    /// </remarks>
+    private static class ParameterStyleUtf8
+    {
+        public static ReadOnlySpan<byte> Form => "form"u8;
+
+        public static ReadOnlySpan<byte> Simple => "simple"u8;
+
+        public static ReadOnlySpan<byte> Label => "label"u8;
+
+        public static ReadOnlySpan<byte> Matrix => "matrix"u8;
+
+        public static ReadOnlySpan<byte> SpaceDelimited => "spaceDelimited"u8;
+
+        public static ReadOnlySpan<byte> PipeDelimited => "pipeDelimited"u8;
+
+        public static ReadOnlySpan<byte> DeepObject => "deepObject"u8;
     }
 
     private static IEnumerable<ExtractedSchema> EnumerateMediaTypeSchemas(
