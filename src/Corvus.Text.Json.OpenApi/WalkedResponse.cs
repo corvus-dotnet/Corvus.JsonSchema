@@ -7,33 +7,34 @@ namespace Corvus.Text.Json.OpenApi;
 /// <summary>
 /// A response extracted from an API operation by the spec walker.
 /// </summary>
+/// <remarks>
+/// <para>
+/// The <see cref="Property"/> carries both the status code
+/// (via <see cref="JsonProperty{TValue}.Name"/>) and the response element.
+/// No strings are allocated; values are accessible on demand.
+/// </para>
+/// </remarks>
 public readonly struct WalkedResponse
 {
     /// <summary>
     /// Initializes a new instance of the <see cref="WalkedResponse"/> struct.
     /// </summary>
-    /// <param name="statusCode">The status code key (e.g. <c>"200"</c>, <c>"default"</c>).</param>
-    /// <param name="description">The response description, if present.</param>
+    /// <param name="property">The response property (name = status code, value = response element).</param>
     /// <param name="content">The media type content entries.</param>
     public WalkedResponse(
-        string statusCode,
-        string? description,
+        JsonProperty<JsonElement> property,
         WalkedMediaTypeContent[] content)
     {
-        this.StatusCode = statusCode;
-        this.Description = description;
+        this.Property = property;
         this.Content = content;
     }
 
     /// <summary>
-    /// Gets the status code key.
+    /// Gets the response property from the responses map.
+    /// The property name is the status code (e.g. <c>200</c>, <c>default</c>),
+    /// and the value is the response element.
     /// </summary>
-    public string StatusCode { get; }
-
-    /// <summary>
-    /// Gets the description, or <see langword="null"/> if not present.
-    /// </summary>
-    public string? Description { get; }
+    public JsonProperty<JsonElement> Property { get; }
 
     /// <summary>
     /// Gets the media type content entries.

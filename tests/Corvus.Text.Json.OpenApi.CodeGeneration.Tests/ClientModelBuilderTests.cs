@@ -56,7 +56,7 @@ public class ClientModelBuilderTests
     public void Build_ExtractsOperationIds()
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
-        List<string?> ids = model.Operations.Select(o => o.OperationId).ToList();
+        List<string?> ids = model.Operations.Select(o => o.GetOperationId()).ToList();
 
         CollectionAssert.Contains(ids, "listPets");
         CollectionAssert.Contains(ids, "createPet");
@@ -68,10 +68,10 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation listPets = model.Operations.First(o => o.OperationId == "listPets");
+        ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.AreEqual(OperationMethod.Get, listPets.Method);
 
-        ClientOperation createPet = model.Operations.First(o => o.OperationId == "createPet");
+        ClientOperation createPet = model.Operations.First(o => o.GetOperationId() == "createPet");
         Assert.AreEqual(OperationMethod.Post, createPet.Method);
     }
 
@@ -80,11 +80,11 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation listPets = model.Operations.First(o => o.OperationId == "listPets");
-        Assert.AreEqual("/pets", listPets.PathTemplate);
+        ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
+        Assert.AreEqual("/pets", listPets.GetPathTemplate());
 
-        ClientOperation showPet = model.Operations.First(o => o.OperationId == "showPetById");
-        Assert.AreEqual("/pets/{petId}", showPet.PathTemplate);
+        ClientOperation showPet = model.Operations.First(o => o.GetOperationId() == "showPetById");
+        Assert.AreEqual("/pets/{petId}", showPet.GetPathTemplate());
     }
 
     [TestMethod]
@@ -92,8 +92,8 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation listPets = model.Operations.First(o => o.OperationId == "listPets");
-        string[] tags = listPets.Tags;
+        ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
+        string[] tags = listPets.GetTags();
         Assert.AreEqual(1, tags.Length);
         Assert.AreEqual("pets", tags[0]);
     }
@@ -103,8 +103,8 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation listPets = model.Operations.First(o => o.OperationId == "listPets");
-        Assert.AreEqual("List all pets", listPets.Summary);
+        ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
+        Assert.AreEqual("List all pets", listPets.GetSummary());
     }
 
     [TestMethod]
@@ -112,11 +112,11 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation listPets = model.Operations.First(o => o.OperationId == "listPets");
+        ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.AreEqual(1, listPets.Parameters.Length);
 
         ClientParameter limit = listPets.Parameters[0];
-        Assert.AreEqual("limit", limit.Name);
+        Assert.AreEqual("limit", limit.GetName());
         Assert.AreEqual(ParameterLocation.Query, limit.Location);
         Assert.IsFalse(limit.IsRequired);
         Assert.IsNotNull(limit.SchemaPointer);
@@ -131,11 +131,11 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation showPet = model.Operations.First(o => o.OperationId == "showPetById");
+        ClientOperation showPet = model.Operations.First(o => o.GetOperationId() == "showPetById");
         Assert.AreEqual(1, showPet.Parameters.Length);
 
         ClientParameter petId = showPet.Parameters[0];
-        Assert.AreEqual("petId", petId.Name);
+        Assert.AreEqual("petId", petId.GetName());
         Assert.AreEqual(ParameterLocation.Path, petId.Location);
         Assert.IsTrue(petId.IsRequired);
 
@@ -149,11 +149,11 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation createPet = model.Operations.First(o => o.OperationId == "createPet");
+        ClientOperation createPet = model.Operations.First(o => o.GetOperationId() == "createPet");
         Assert.IsNotNull(createPet.RequestBody);
         Assert.IsTrue(createPet.RequestBody.Value.IsRequired);
         Assert.AreEqual(1, createPet.RequestBody.Value.Content.Length);
-        Assert.AreEqual("application/json", createPet.RequestBody.Value.Content[0].MediaType);
+        Assert.AreEqual("application/json", createPet.RequestBody.Value.Content[0].GetMediaType());
         Assert.IsNotNull(createPet.RequestBody.Value.Content[0].SchemaPointer);
     }
 
@@ -162,18 +162,18 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation listPets = model.Operations.First(o => o.OperationId == "listPets");
+        ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
 
         // 200 and default
         Assert.AreEqual(2, listPets.Responses.Length);
 
-        ClientResponse ok = listPets.Responses.First(r => r.StatusCode == "200");
-        Assert.AreEqual("A list of pets", ok.Description);
+        ClientResponse ok = listPets.Responses.First(r => r.GetStatusCode() == "200");
+        Assert.AreEqual("A list of pets", ok.GetDescription());
         Assert.AreEqual(1, ok.Content.Length);
-        Assert.AreEqual("application/json", ok.Content[0].MediaType);
+        Assert.AreEqual("application/json", ok.Content[0].GetMediaType());
 
-        ClientResponse defaultResp = listPets.Responses.First(r => r.StatusCode == "default");
-        Assert.AreEqual("unexpected error", defaultResp.Description);
+        ClientResponse defaultResp = listPets.Responses.First(r => r.GetStatusCode() == "default");
+        Assert.AreEqual("unexpected error", defaultResp.GetDescription());
     }
 
     [TestMethod]
@@ -181,7 +181,7 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation listPets = model.Operations.First(o => o.OperationId == "listPets");
+        ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.IsNull(listPets.RequestBody);
     }
 
@@ -204,7 +204,7 @@ public class ClientModelBuilderTests
 
         // Only /pets (GET, POST) — not /pets/{petId}
         Assert.AreEqual(2, model.Operations.Length);
-        Assert.IsTrue(model.Operations.All(o => o.PathTemplate == "/pets"));
+        Assert.IsTrue(model.Operations.All(o => o.GetPathTemplate() == "/pets"));
     }
 
     [TestMethod]
@@ -212,7 +212,7 @@ public class ClientModelBuilderTests
     {
         ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
 
-        ClientOperation listPets = model.Operations.First(o => o.OperationId == "listPets");
+        ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.AreEqual("ListPets", listPets.GetMethodName());
     }
 }

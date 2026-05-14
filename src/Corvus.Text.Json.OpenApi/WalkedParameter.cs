@@ -10,9 +10,10 @@ namespace Corvus.Text.Json.OpenApi;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This carries the typed metadata the walker extracts (name, location,
-/// style, explode, required) so that downstream consumers such as
-/// <c>ClientModelBuilder</c> do not need to re-parse raw JSON.
+/// This carries the computed metadata the walker extracts (location,
+/// style, explode, required) alongside a <see cref="JsonElement"/> reference
+/// to the parameter node in the parsed document. No strings are allocated;
+/// the name is accessible on demand via the element.
 /// </para>
 /// </remarks>
 public readonly struct WalkedParameter
@@ -20,21 +21,21 @@ public readonly struct WalkedParameter
     /// <summary>
     /// Initializes a new instance of the <see cref="WalkedParameter"/> struct.
     /// </summary>
-    /// <param name="name">The parameter name as declared in the spec.</param>
+    /// <param name="element">The parameter element from the parsed document.</param>
     /// <param name="location">Where the parameter appears.</param>
     /// <param name="isRequired">Whether the parameter is required.</param>
     /// <param name="style">The serialization style.</param>
     /// <param name="explode">Whether to explode array/object values.</param>
     /// <param name="hasSchema">Whether the parameter declares a schema.</param>
     public WalkedParameter(
-        string name,
+        JsonElement element,
         ParameterLocation location,
         bool isRequired,
         ParameterStyle style,
         bool explode,
         bool hasSchema)
     {
-        this.Name = name;
+        this.Element = element;
         this.Location = location;
         this.IsRequired = isRequired;
         this.Style = style;
@@ -43,9 +44,10 @@ public readonly struct WalkedParameter
     }
 
     /// <summary>
-    /// Gets the parameter name.
+    /// Gets the parameter element from the parsed document.
+    /// Use this to access the parameter name and other properties on demand.
     /// </summary>
-    public string Name { get; }
+    public JsonElement Element { get; }
 
     /// <summary>
     /// Gets where the parameter appears (path, query, header, cookie).

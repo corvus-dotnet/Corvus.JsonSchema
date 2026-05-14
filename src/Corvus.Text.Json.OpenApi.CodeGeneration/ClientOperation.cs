@@ -10,71 +10,60 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <summary>
 /// Represents a single API operation in the client model.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Stores <see cref="JsonElement"/> references into the parsed document.
+/// No strings are allocated at construction time; use the <c>Get*</c> methods
+/// to extract string values at the code-emission boundary.
+/// </para>
+/// </remarks>
 public readonly struct ClientOperation
 {
+    private static readonly ReadOnlyMemory<byte> OperationIdUtf8 = "operationId"u8.ToArray();
+    private static readonly ReadOnlyMemory<byte> SummaryUtf8 = "summary"u8.ToArray();
+    private static readonly ReadOnlyMemory<byte> DescriptionUtf8 = "description"u8.ToArray();
+    private static readonly ReadOnlyMemory<byte> TagsUtf8 = "tags"u8.ToArray();
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ClientOperation"/> struct.
     /// </summary>
-    /// <param name="pathTemplate">The path template (e.g. <c>/pets/{petId}</c>).</param>
+    /// <param name="pathProperty">The path property (name = path template, value = path item).</param>
+    /// <param name="operation">The operation element from the parsed document.</param>
     /// <param name="method">The HTTP method or messaging action.</param>
-    /// <param name="operationId">The operation ID, or <see langword="null"/>.</param>
-    /// <param name="summary">The operation summary, or <see langword="null"/>.</param>
-    /// <param name="description">The operation description, or <see langword="null"/>.</param>
-    /// <param name="tags">Tags declared on the operation.</param>
     /// <param name="parameters">The parameters for this operation.</param>
     /// <param name="requestBody">The request body, if any.</param>
     /// <param name="responses">The declared responses.</param>
     public ClientOperation(
-        string pathTemplate,
+        JsonProperty<JsonElement> pathProperty,
+        JsonElement operation,
         OperationMethod method,
-        string? operationId,
-        string? summary,
-        string? description,
-        string[] tags,
         ClientParameter[] parameters,
         ClientRequestBody? requestBody,
         ClientResponse[] responses)
     {
-        this.PathTemplate = pathTemplate;
+        this.PathProperty = pathProperty;
+        this.Operation = operation;
         this.Method = method;
-        this.OperationId = operationId;
-        this.Summary = summary;
-        this.Description = description;
-        this.Tags = tags;
         this.Parameters = parameters;
         this.RequestBody = requestBody;
         this.Responses = responses;
     }
 
     /// <summary>
-    /// Gets the path template (e.g. <c>/pets/{petId}</c>).
+    /// Gets the path property from the paths map.
+    /// The property name is the path template (e.g. <c>/pets/{petId}</c>).
     /// </summary>
-    public string PathTemplate { get; }
+    public JsonProperty<JsonElement> PathProperty { get; }
+
+    /// <summary>
+    /// Gets the operation element from the parsed document.
+    /// </summary>
+    public JsonElement Operation { get; }
 
     /// <summary>
     /// Gets the HTTP method or messaging action.
     /// </summary>
     public OperationMethod Method { get; }
-
-    /// <summary>
-    /// Gets the operation ID, or <see langword="null"/> if not declared.
-    /// </summary>
-    public string? OperationId { get; }
-
-    /// <summary>
-    /// Gets the operation summary, or <see langword="null"/> if not declared.
-    /// </summary>
-    public string? Summary { get; }
-
-    /// <summary>
-    /// Gets the operation description, or <see langword="null"/> if not declared.
-    /// </summary>
-    public string? Description { get; }
-
-    /// <summary>
-    /// Gets the tags declared on this operation.
-    /// </summary>
-    public string[] Tags { get; }
 
     /// <summary>
     /// Gets the parameters for this operation.
@@ -92,15 +81,72 @@ public readonly struct ClientOperation
     public ClientResponse[] Responses { get; }
 
     /// <summary>
+    /// Gets the path template string. Allocates on each call.
+    /// </summary>
+    /// <returns>The path template (e.g. <c>/pets/{petId}</c>).</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
+    public string GetPathTemplate() => this.PathProperty.Name;
+
+    /// <summary>
+    /// Gets the operation ID, or <see langword="null"/> if not declared.
+    /// </summary>
+    /// <returns>The operation ID string, or <see langword="null"/>.</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
+    public string? GetOperationId() => GetOptionalString(this.Operation, OperationIdUtf8.Span);
+
+    /// <summary>
+    /// Gets the operation summary, or <see langword="null"/> if not declared.
+    /// </summary>
+    /// <returns>The summary string, or <see langword="null"/>.</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
+    public string? GetSummary() => GetOptionalString(this.Operation, SummaryUtf8.Span);
+
+    /// <summary>
+    /// Gets the operation description, or <see langword="null"/> if not declared.
+    /// </summary>
+    /// <returns>The description string, or <see langword="null"/>.</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
+    public string? GetDescription() => GetOptionalString(this.Operation, DescriptionUtf8.Span);
+
+    /// <summary>
+    /// Gets the tags declared on this operation.
+    /// </summary>
+    /// <returns>The tag strings, or an empty array.</returns>
+    /// <remarks>This allocates strings. Call only at the code-emission boundary.</remarks>
+    public string[] GetTags()
+    {
+        if (!this.Operation.TryGetProperty(TagsUtf8.Span, out JsonElement tags)
+            || tags.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        List<string> result = [];
+
+        foreach (JsonElement tag in tags.EnumerateArray())
+        {
+            if (tag.ValueKind == JsonValueKind.String)
+            {
+                result.Add(tag.GetString()!);
+            }
+        }
+
+        return [.. result];
+    }
+
+    /// <summary>
     /// Gets a suitable method name for this operation. Uses the operation ID
     /// if available, otherwise synthesizes from the method and path template.
     /// </summary>
     /// <returns>A PascalCase method name.</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
     public string GetMethodName()
     {
-        if (this.OperationId is not null)
+        string? operationId = this.GetOperationId();
+
+        if (operationId is not null)
         {
-            return ToPascalCase(this.OperationId);
+            return ToPascalCase(operationId);
         }
 
         // Synthesize from method + path: GET /pets/{petId} → GetPetsPetId
@@ -117,13 +163,24 @@ public readonly struct ClientOperation
             _ => this.Method.ToString().ToLowerInvariant(),
         };
 
-        string pathPart = this.PathTemplate
+        string pathPart = this.GetPathTemplate()
             .Replace("/", " ", StringComparison.Ordinal)
             .Replace("{", string.Empty, StringComparison.Ordinal)
             .Replace("}", string.Empty, StringComparison.Ordinal)
             .Trim();
 
         return ToPascalCase(methodPrefix + " " + pathPart);
+    }
+
+    private static string? GetOptionalString(JsonElement element, ReadOnlySpan<byte> propertyName)
+    {
+        if (element.TryGetProperty(propertyName, out JsonElement value)
+            && value.ValueKind == JsonValueKind.String)
+        {
+            return value.GetString();
+        }
+
+        return null;
     }
 
     private static string ToPascalCase(string input)

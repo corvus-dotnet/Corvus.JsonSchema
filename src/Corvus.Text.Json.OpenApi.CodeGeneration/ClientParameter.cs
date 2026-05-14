@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration;
@@ -9,12 +10,20 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <summary>
 /// Represents a parameter in an API operation.
 /// </summary>
+/// <remarks>
+/// <para>
+/// Stores a <see cref="JsonElement"/> reference to the parameter node in the
+/// parsed document. The name is accessible on demand via <see cref="GetName"/>.
+/// </para>
+/// </remarks>
 public readonly struct ClientParameter
 {
+    private static readonly ReadOnlyMemory<byte> NameUtf8 = "name"u8.ToArray();
+
     /// <summary>
     /// Initializes a new instance of the <see cref="ClientParameter"/> struct.
     /// </summary>
-    /// <param name="name">The parameter name as declared in the spec.</param>
+    /// <param name="element">The parameter element from the parsed document.</param>
     /// <param name="location">Where the parameter appears.</param>
     /// <param name="isRequired">Whether the parameter is required.</param>
     /// <param name="schemaPointer">
@@ -24,14 +33,14 @@ public readonly struct ClientParameter
     /// <param name="style">The OpenAPI serialization style for this parameter.</param>
     /// <param name="explode">Whether to explode array/object values.</param>
     public ClientParameter(
-        string name,
+        JsonElement element,
         ParameterLocation location,
         bool isRequired,
         string? schemaPointer,
         ParameterStyle style,
         bool explode)
     {
-        this.Name = name;
+        this.Element = element;
         this.Location = location;
         this.IsRequired = isRequired;
         this.SchemaPointer = schemaPointer;
@@ -40,9 +49,9 @@ public readonly struct ClientParameter
     }
 
     /// <summary>
-    /// Gets the parameter name as declared in the spec.
+    /// Gets the parameter element from the parsed document.
     /// </summary>
-    public string Name { get; }
+    public JsonElement Element { get; }
 
     /// <summary>
     /// Gets where the parameter appears (path, query, header, cookie).
@@ -68,4 +77,20 @@ public readonly struct ClientParameter
     /// Gets a value indicating whether array/object values are exploded.
     /// </summary>
     public bool Explode { get; }
+
+    /// <summary>
+    /// Gets the parameter name as declared in the spec.
+    /// </summary>
+    /// <returns>The parameter name.</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
+    public string GetName()
+    {
+        if (this.Element.TryGetProperty(NameUtf8.Span, out JsonElement name)
+            && name.ValueKind == JsonValueKind.String)
+        {
+            return name.GetString()!;
+        }
+
+        return "unknown";
+    }
 }

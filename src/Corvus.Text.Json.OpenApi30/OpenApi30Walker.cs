@@ -65,13 +65,9 @@ public sealed class OpenApi30Walker : ISpecWalker
                         pathProp,
                         operation,
                         method,
-                        GetOptionalString(typed.OperationId),
-                        GetOptionalString(typed.Summary),
-                        GetOptionalString(typed.Description),
                         ExtractParameters(typed),
                         ExtractRequestBody(typed),
-                        ExtractResponses(typed),
-                        ExtractTags(typed));
+                        ExtractResponses(typed));
                 }
             }
         }
@@ -160,26 +156,6 @@ public sealed class OpenApi30Walker : ISpecWalker
         }
     }
 
-    private static string[] ExtractTags(OpenApiDocument.Operation operation)
-    {
-        if (operation.Tags.ValueKind != JsonValueKind.Array)
-        {
-            return [];
-        }
-
-        List<string> result = [];
-
-        foreach (JsonElement tag in ((JsonElement)operation.Tags).EnumerateArray())
-        {
-            if (tag.ValueKind == JsonValueKind.String)
-            {
-                result.Add(tag.GetString()!);
-            }
-        }
-
-        return [.. result];
-    }
-
     private static WalkedParameter[] ExtractParameters(OpenApiDocument.Operation operation)
     {
         if (operation.Parameters.ValueKind != JsonValueKind.Array)
@@ -198,7 +174,6 @@ public sealed class OpenApi30Walker : ISpecWalker
 
             OpenApiDocument.Parameter typed = param;
 
-            string name = GetOptionalString((JsonElement)typed.Name) ?? "unknown";
             ParameterLocation location = ParseLocation((JsonElement)typed.In);
             bool required = typed.Required.ValueKind == JsonValueKind.True;
             bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
@@ -206,7 +181,7 @@ public sealed class OpenApi30Walker : ISpecWalker
             (ParameterStyle style, bool explode) = ParseStyleAndExplode(
                 (JsonElement)typed.Style, (JsonElement)typed.Explode, location);
 
-            result.Add(new WalkedParameter(name, location, required, style, explode, hasSchema));
+            result.Add(new WalkedParameter(param, location, required, style, explode, hasSchema));
         }
 
         return [.. result];
@@ -231,12 +206,7 @@ public sealed class OpenApi30Walker : ISpecWalker
             content = ExtractMediaTypeContent(contentMap);
         }
 
-        string? description = requestBody.TryGetProperty("description"u8, out JsonElement desc)
-            && desc.ValueKind == JsonValueKind.String
-            ? desc.GetString()
-            : null;
-
-        return new WalkedRequestBody(required, content, description);
+        return new WalkedRequestBody(requestBody, required, content);
     }
 
     private static WalkedResponse[] ExtractResponses(OpenApiDocument.Operation operation)
@@ -258,14 +228,11 @@ public sealed class OpenApi30Walker : ISpecWalker
 
             OpenApiDocument.Response response = responseProp.Value;
 
-            string statusCode = responseProp.Name;
-            string? description = GetOptionalString((JsonElement)response.Description);
-
             WalkedMediaTypeContent[] content = response.Content.ValueKind == JsonValueKind.Object
                 ? ExtractMediaTypeContent((JsonElement)response.Content)
                 : [];
 
-            result.Add(new WalkedResponse(statusCode, description, content));
+            result.Add(new WalkedResponse(responseProp, content));
         }
 
         return [.. result];
@@ -284,7 +251,7 @@ public sealed class OpenApi30Walker : ISpecWalker
         {
             OpenApiDocument.MediaType mediaType = mediaTypeProp.Value;
             bool hasSchema = mediaType.Schema.ValueKind == JsonValueKind.Object;
-            result.Add(new WalkedMediaTypeContent(mediaTypeProp.Name, hasSchema));
+            result.Add(new WalkedMediaTypeContent(mediaTypeProp, hasSchema));
         }
 
         return [.. result];
@@ -381,9 +348,6 @@ public sealed class OpenApi30Walker : ISpecWalker
             _ => ParameterStyle.Simple,
         };
     }
-
-    private static string? GetOptionalString(JsonElement element) =>
-        element.ValueKind == JsonValueKind.String ? element.GetString() : null;
 
     private static IEnumerable<ExtractedSchema> EnumerateMediaTypeSchemas(
         JsonElement contentMap, SchemaRole role)

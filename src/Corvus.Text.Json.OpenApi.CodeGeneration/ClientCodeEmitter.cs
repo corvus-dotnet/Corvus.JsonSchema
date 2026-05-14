@@ -82,7 +82,7 @@ public sealed class ClientCodeEmitter
 
         foreach (ClientOperation op in operations)
         {
-            string[] tags = op.Tags;
+            string[] tags = op.GetTags();
 
             if (tags.Length == 0)
             {
@@ -148,7 +148,7 @@ public sealed class ClientCodeEmitter
         string methodName = op.GetMethodName();
 
         // XML doc
-        string? summary = op.Summary;
+        string? summary = op.GetSummary();
         if (summary is not null)
         {
             w.WriteLine("/// <summary>");
@@ -159,14 +159,14 @@ public sealed class ClientCodeEmitter
         // Parameters doc
         foreach (ClientParameter param in op.Parameters)
         {
-            string paramName = param.Name;
+            string paramName = param.GetName();
             string paramDesc = $"The {paramName} parameter.";
             w.WriteLine($"/// <param name=\"{paramName}\">{EscapeXml(paramDesc)}.</param>");
         }
 
         if (op.RequestBody is not null)
         {
-            string bodyDesc = op.RequestBody.Value.Description ?? "The request body.";
+            string bodyDesc = op.RequestBody.Value.GetDescription() ?? "The request body.";
             w.WriteLine($"/// <param name=\"body\">{EscapeXml(bodyDesc)}.</param>");
         }
 
@@ -178,7 +178,7 @@ public sealed class ClientCodeEmitter
         foreach (ClientParameter param in op.Parameters)
         {
             string typeName = GetParameterTypeName(param);
-            string paramIdentifier = EscapeCSharpKeyword(param.Name);
+            string paramIdentifier = EscapeCSharpKeyword(param.GetName());
 
             if (param.IsRequired)
             {
@@ -241,9 +241,11 @@ public sealed class ClientCodeEmitter
     /// </summary>
     private string ResolveRequestBodyTypeName(ClientRequestBody requestBody)
     {
+        ReadOnlySpan<byte> applicationJson = "application/json"u8;
+
         foreach (ClientMediaTypeContent content in requestBody.Content)
         {
-            if (string.Equals(content.MediaType, "application/json", StringComparison.Ordinal))
+            if (content.MediaTypeEquals(applicationJson))
             {
                 string? resolved = this.ResolveSchemaTypeName(content.SchemaPointer);
                 if (resolved is not null)
@@ -413,8 +415,9 @@ public sealed class ClientCodeEmitter
         w.OpenBrace();
 
         string methodExpr = OperationMethodExpression(op.Method);
+        string pathTemplate = op.GetPathTemplate();
 
-        w.WriteLine($"ApiRequest request = new(\"{op.PathTemplate}\", {methodExpr});");
+        w.WriteLine($"ApiRequest request = new(\"{pathTemplate}\", {methodExpr});");
 
         // Add path parameters — the transport applies style/explode serialization
         // and substitutes {name} placeholders in the path template.
@@ -455,14 +458,14 @@ public sealed class ClientCodeEmitter
         ClientParameter param,
         string methodCall)
     {
-        string paramIdentifier = EscapeCSharpKeyword(param.Name);
-        string rawName = param.Name;
+        string paramName = param.GetName();
+        string paramIdentifier = EscapeCSharpKeyword(paramName);
         string styleExpr = ParameterStyleExpression(param.Style);
         string explodeExpr = param.Explode ? "true" : "false";
 
         if (param.IsRequired)
         {
-            w.WriteLine($"{methodCall}(\"{rawName}\", {paramIdentifier}, {styleExpr}, {explodeExpr});");
+            w.WriteLine($"{methodCall}(\"{paramName}\", {paramIdentifier}, {styleExpr}, {explodeExpr});");
         }
         else
         {
@@ -470,7 +473,7 @@ public sealed class ClientCodeEmitter
             // or T? for reference types (string). Both support the null pattern check.
             w.WriteLine($"if ({paramIdentifier} is {{ }} {paramIdentifier}Value)");
             w.OpenBrace();
-            w.WriteLine($"{methodCall}(\"{rawName}\", {paramIdentifier}Value, {styleExpr}, {explodeExpr});");
+            w.WriteLine($"{methodCall}(\"{paramName}\", {paramIdentifier}Value, {styleExpr}, {explodeExpr});");
             w.CloseBrace();
         }
     }
