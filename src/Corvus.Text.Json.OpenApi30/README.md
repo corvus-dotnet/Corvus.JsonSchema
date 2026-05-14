@@ -1,0 +1,27 @@
+# Corvus.Text.Json.OpenApi30
+
+Strongly-typed V5 model types for OpenAPI 3.0 specifications, generated from the official
+[OpenAPI 3.0 JSON Schema metaschema](https://spec.openapis.org/oas/3.0/schema/2021-09-28)
+using the Corvus.Text.Json source generator.
+
+These types parse and validate OpenAPI 3.0 documents with full JSON Schema fidelity, operating
+directly on pooled memory with zero-allocation property access.
+
+## Usage
+
+```csharp
+using Corvus.Text.Json;
+using Corvus.Text.Json.OpenApi30;
+
+using var doc = ParsedJsonDocument<OpenApiDocument>.Parse(specJson);
+OpenApiDocument api = doc.RootElement;
+
+// Access strongly-typed properties
+var info = api.Info;
+var title = info.Title;
+```
+
+## Related Packages
+
+- `Corvus.Text.Json` — Core library
+- `Corvus.Text.Json.OpenApi31` — OpenAPI 3.1 types
