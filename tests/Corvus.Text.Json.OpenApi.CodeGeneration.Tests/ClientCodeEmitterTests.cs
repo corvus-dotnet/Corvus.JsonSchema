@@ -586,4 +586,114 @@ public class ClientCodeEmitterTests
         Assert.IsTrue(
             resp.Content.Contains("TryGetDefault", StringComparison.Ordinal));
     }
+
+    // ---- Source-based client API signature tests ----
+    [TestMethod]
+    public void Emit_InterfaceUsesSourceTypeForOptionalParam()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
+
+        // ListPetsAsync has optional limit: Source type with default
+        Assert.IsTrue(
+            iface.Content.Contains(
+                "Petstore.Client.JsonInt32.Source limit = default",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_InterfaceUsesSourceTypeForRequiredParam()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
+
+        // ShowPetByIdAsync has required petId: Source type, no default
+        Assert.IsTrue(
+            iface.Content.Contains(
+                "Petstore.Client.JsonString.Source petId",
+                StringComparison.Ordinal));
+        Assert.IsFalse(
+            iface.Content.Contains(
+                "Petstore.Client.JsonString.Source petId =",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_ClientMethodCreatesWorkspaceForParams()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
+
+        // Methods with parameters should create an unrented workspace
+        Assert.IsTrue(
+            impl.Content.Contains(
+                "JsonWorkspace.CreateUnrented()",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_ClientMethodDisposesWorkspace()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
+
+        Assert.IsTrue(
+            impl.Content.Contains("workspace.Dispose()", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_ClientMethodMaterialisesRequiredParamViaCreateBuilder()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
+
+        // ShowPetById has required petId — should materialise directly
+        Assert.IsTrue(
+            impl.Content.Contains(
+                "Petstore.Client.JsonString.CreateBuilder(workspace, petId).RootElement",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_ClientMethodGuardsOptionalParamWithIsUndefined()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
+
+        // ListPets has optional limit — should guard with IsUndefined
+        Assert.IsTrue(
+            impl.Content.Contains(
+                "limit.IsUndefined",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_NoWorkspaceForParameterlessMethod()
+    {
+        // CreatePet has no parameters (only a request body, which stays as a JSON type)
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile impl = GetFile(files, "ApiPetsClient.cs");
+        string content = impl.Content;
+
+        // CreatePetAsync should NOT have a workspace since it has no params
+        // But ListPetsAsync and ShowPetByIdAsync have params, so workspace exists.
+        // We check that CreatePetAsync body does not use workspace by verifying
+        // CreatePetRequest instantiation does not involve workspace.
+        Assert.IsTrue(
+            content.Contains("CreatePetRequest request = new()", StringComparison.Ordinal));
+    }
 }

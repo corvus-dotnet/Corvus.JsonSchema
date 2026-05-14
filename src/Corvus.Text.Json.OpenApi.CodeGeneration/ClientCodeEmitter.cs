@@ -298,6 +298,12 @@ public sealed class ClientCodeEmitter
         return param.IsRequired ? resolved : $"{resolved}?";
     }
 
+    private string GetParameterSourceTypeName(ClientParameter param)
+    {
+        string resolved = this.ResolveSchemaTypeName(param.SchemaPointer);
+        return $"{resolved}.Source";
+    }
+
     private string ResolveSchemaTypeName(string? schemaPointer)
     {
         if (schemaPointer is not null
@@ -1218,33 +1224,89 @@ public sealed class ClientCodeEmitter
             $"{string.Join(", ", paramParts)})");
         w.OpenBrace();
 
-        string ctorArgs = BuildRequestConstructorArgs(op);
-        w.Write($"{requestName} request = new({ctorArgs})");
+        bool hasParams = op.Parameters.Length > 0;
 
-        ClientParameter[] optionalParams = op.Parameters.Where(p => !p.IsRequired).ToArray();
-
-        if (optionalParams.Length > 0)
+        if (hasParams)
         {
-            w.WriteLine();
+            // Create a workspace to materialise Source values into immutable typed elements.
+            // The workspace is unrented so it survives the synchronous transport consumption.
+            // The transport contract guarantees all request data is consumed synchronously
+            // before any async I/O, so disposing here is safe.
+            w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
+            w.WriteLine("try");
             w.OpenBrace();
 
-            foreach (ClientParameter param in optionalParams)
+            // Materialise each parameter from Source → immutable typed element via CreateBuilder.
+            ClientParameter[] requiredParams = op.Parameters.Where(p => p.IsRequired).ToArray();
+            ClientParameter[] optionalParams = op.Parameters.Where(p => !p.IsRequired).ToArray();
+
+            foreach (ClientParameter param in requiredParams)
             {
                 string fieldName = SanitizeIdentifier(param.GetName());
                 string paramIdentifier = EscapeCSharpKeyword(param.GetName());
-                w.WriteLine($"{fieldName} = {paramIdentifier},");
+                string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
+                w.WriteLine(
+                    $"{typeName} {fieldName}Value = {typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement;");
             }
 
-            w.CloseBrace().Write(";");
+            // Build request struct — required params via constructor, optional via init.
+            string ctorArgs = string.Join(
+                ", ",
+                requiredParams.Select(p => $"{SanitizeIdentifier(p.GetName())}Value"));
+
+            w.Write($"{requestName} request = new({ctorArgs})");
+
+            if (optionalParams.Length > 0)
+            {
+                w.WriteLine();
+                w.OpenBrace();
+
+                foreach (ClientParameter param in optionalParams)
+                {
+                    string fieldName = SanitizeIdentifier(param.GetName());
+                    string paramIdentifier = EscapeCSharpKeyword(param.GetName());
+                    string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
+
+                    w.WriteLine(
+                        $"{fieldName} = {paramIdentifier}.IsUndefined ? default : " +
+                        $"({typeName}){typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement,");
+                }
+
+                w.CloseBrace().Write(";");
+                w.WriteLine();
+            }
+            else
+            {
+                w.WriteLine(";");
+            }
+
             w.WriteLine();
+
+            EmitSendCall(w, op, requestName, responseName);
+
+            w.CloseBrace();
+            w.WriteLine("finally");
+            w.OpenBrace();
+            w.WriteLine("workspace.Dispose();");
+            w.CloseBrace();
         }
         else
         {
-            w.WriteLine(";");
+            // No parameters — no workspace needed.
+            w.WriteLine($"{requestName} request = new();");
+            w.WriteLine();
+            EmitSendCall(w, op, requestName, responseName);
         }
 
-        w.WriteLine();
+        w.CloseBrace();
+    }
 
+    private void EmitSendCall(
+        IndentedWriter w,
+        ClientOperation op,
+        string requestName,
+        string responseName)
+    {
         if (op.RequestBody is not null)
         {
             string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
@@ -1258,8 +1320,6 @@ public sealed class ClientCodeEmitter
                 $"return this.transport.SendAsync<{requestName}, " +
                 $"{responseName}>(in request, cancellationToken);");
         }
-
-        w.CloseBrace();
     }
 
     private static void EmitMethodDoc(IndentedWriter w, ClientOperation op)
@@ -1294,9 +1354,11 @@ public sealed class ClientCodeEmitter
 
         foreach (ClientParameter param in op.Parameters)
         {
-            string typeName = this.GetParameterTypeName(param);
+            string typeName = this.GetParameterSourceTypeName(param);
             string paramIdentifier = EscapeCSharpKeyword(param.GetName());
 
+            // Source is a ref struct — use = default for optional params.
+            // Source.IsUndefined is true when default-initialized.
             paramParts.Add(param.IsRequired
                 ? $"{typeName} {paramIdentifier}"
                 : $"{typeName} {paramIdentifier} = default");
@@ -1311,17 +1373,5 @@ public sealed class ClientCodeEmitter
         paramParts.Add("CancellationToken cancellationToken = default");
 
         return paramParts;
-    }
-
-    private static string BuildRequestConstructorArgs(ClientOperation op)
-    {
-        List<string> args = [];
-
-        foreach (ClientParameter param in op.Parameters.Where(p => p.IsRequired))
-        {
-            args.Add(EscapeCSharpKeyword(param.GetName()));
-        }
-
-        return string.Join(", ", args);
     }
 }
