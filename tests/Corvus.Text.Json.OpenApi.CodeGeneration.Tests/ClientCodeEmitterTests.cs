@@ -704,6 +704,6 @@ public class ClientCodeEmitterTests
 
         // The materialised bodyValue (not the Source) is passed to SendAsync
         Assert.IsTrue(
-            impl.Content.Contains("in bodyValue, cancellationToken", StringComparison.Ordinal));
+            impl.Content.Contains("bodyValue, cancellationToken", StringComparison.Ordinal));
     }
 }

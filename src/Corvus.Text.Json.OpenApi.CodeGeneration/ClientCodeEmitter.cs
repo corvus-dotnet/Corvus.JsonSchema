@@ -1298,13 +1298,13 @@ public sealed class ClientCodeEmitter
         {
             w.WriteLine(
                 $"return await this.transport.SendAsync<{requestName}, {bodyTypeName}, " +
-                $"{responseName}>(in request, in bodyValue, cancellationToken).ConfigureAwait(false);");
+                $"{responseName}>(request, bodyValue, cancellationToken).ConfigureAwait(false);");
         }
         else
         {
             w.WriteLine(
                 $"return await this.transport.SendAsync<{requestName}, " +
-                $"{responseName}>(in request, cancellationToken).ConfigureAwait(false);");
+                $"{responseName}>(request, cancellationToken).ConfigureAwait(false);");
         }
 
         w.CloseBrace();
