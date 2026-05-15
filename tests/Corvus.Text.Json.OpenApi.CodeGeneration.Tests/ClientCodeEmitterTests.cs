@@ -706,4 +706,342 @@ public class ClientCodeEmitterTests
         Assert.IsTrue(
             impl.Content.Contains("bodyValue, cancellationToken", StringComparison.Ordinal));
     }
+
+    // ---- Response TryGetDefault and MatchResult tests ----
+    private static ClientModel BuildModelFromJson(string json)
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        JsonElement root = doc.RootElement.Clone();
+        return ClientModelBuilder.Build(root, new OpenApi31Walker());
+    }
+
+    // Spec: multiple non-default responses (200 + 201) plus a default
+    private const string MultiStatusSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Multi", "version": "1.0" },
+          "paths": {
+            "/items": {
+              "post": {
+                "operationId": "createItem",
+                "responses": {
+                  "200": {
+                    "description": "Ok",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  },
+                  "201": {
+                    "description": "Created",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  },
+                  "default": {
+                    "description": "Error",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    // Spec: no non-default responses, only a default
+    private const string DefaultOnlySpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "DefaultOnly", "version": "1.0" },
+          "paths": {
+            "/items": {
+              "get": {
+                "operationId": "getItem",
+                "responses": {
+                  "default": {
+                    "description": "Any response",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    // Spec: no default response at all, only specific codes (200 + 404)
+    private const string NoDefaultSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "NoDefault", "version": "1.0" },
+          "paths": {
+            "/items/{id}": {
+              "get": {
+                "operationId": "getItemById",
+                "parameters": [
+                  { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "Found",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  },
+                  "404": {
+                    "description": "Not found",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public void Emit_TryGetDefault_MultipleNonDefault_ChecksAllSpecificCodes()
+    {
+        ClientModel model = BuildModelFromJson(MultiStatusSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/post/responses/200/content/application~1json/schema"] = "Test.OkBody",
+            ["#/paths/~1items/post/responses/201/content/application~1json/schema"] = "Test.CreatedBody",
+            ["#/paths/~1items/post/responses/default/content/application~1json/schema"] = "Test.ErrorBody",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        // TryGetDefault must check that StatusCode is not any of the specific codes
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "this.StatusCode != 200 && this.StatusCode != 201",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_TryGetDefault_DefaultOnly_AlwaysReturnsTrue()
+    {
+        ClientModel model = BuildModelFromJson(DefaultOnlySpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/get/responses/default/content/application~1json/schema"] = "Test.AnyBody",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        // With no specific status codes, TryGetDefault should unconditionally return true
+        Assert.IsTrue(
+            resp.Content.Contains("result = this.DefaultBody;", StringComparison.Ordinal));
+
+        // Should NOT contain any StatusCode != check
+        Assert.IsFalse(
+            resp.Content.Contains("this.StatusCode !=", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_TryGetDefault_NoDefault_NotEmitted()
+    {
+        ClientModel model = BuildModelFromJson(NoDefaultSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}/get/parameters/0/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{id}/get/responses/200/content/application~1json/schema"] = "Test.ItemBody",
+            ["#/paths/~1items~1{id}/get/responses/404/content/application~1json/schema"] = "Test.NotFoundBody",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile resp = GetFile(files, "GetItemByIdResponse.cs");
+
+        // No TryGetDefault method when there is no default response
+        Assert.IsFalse(
+            resp.Content.Contains("TryGetDefault", StringComparison.Ordinal));
+
+        // But specific TryGet methods should exist
+        Assert.IsTrue(
+            resp.Content.Contains("TryGetOk", StringComparison.Ordinal));
+        Assert.IsTrue(
+            resp.Content.Contains("TryGetNotFound", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_MatchResult_MultipleNonDefault_HasAllHandlers()
+    {
+        ClientModel model = BuildModelFromJson(MultiStatusSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/post/responses/200/content/application~1json/schema"] = "Test.OkBody",
+            ["#/paths/~1items/post/responses/201/content/application~1json/schema"] = "Test.CreatedBody",
+            ["#/paths/~1items/post/responses/default/content/application~1json/schema"] = "Test.ErrorBody",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        // Non-context overload: one handler per specific code, plus default
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ResponseMatcher<Test.OkBody, TResult> matchOk",
+                StringComparison.Ordinal));
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ResponseMatcher<Test.CreatedBody, TResult> matchCreated",
+                StringComparison.Ordinal));
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ResponseMatcher<Test.ErrorBody, TResult> matchDefault",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_MatchResult_MultipleNonDefault_ContextOverloadHasAllowsRefStruct()
+    {
+        ClientModel model = BuildModelFromJson(MultiStatusSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/post/responses/200/content/application~1json/schema"] = "Test.OkBody",
+            ["#/paths/~1items/post/responses/201/content/application~1json/schema"] = "Test.CreatedBody",
+            ["#/paths/~1items/post/responses/default/content/application~1json/schema"] = "Test.ErrorBody",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        // Context overload must have allows ref struct constraint
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "where TContext : allows ref struct",
+                StringComparison.Ordinal));
+
+        // Context overload uses ResponseMatcher with TContext
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ResponseMatcher<Test.OkBody, TContext, TResult> matchOk",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_MatchResult_MultipleNonDefault_BranchesOnStatusCode()
+    {
+        ClientModel model = BuildModelFromJson(MultiStatusSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/post/responses/200/content/application~1json/schema"] = "Test.OkBody",
+            ["#/paths/~1items/post/responses/201/content/application~1json/schema"] = "Test.CreatedBody",
+            ["#/paths/~1items/post/responses/default/content/application~1json/schema"] = "Test.ErrorBody",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        // Body dispatches to the correct handler
+        Assert.IsTrue(
+            resp.Content.Contains("if (this.StatusCode == 200)", StringComparison.Ordinal));
+        Assert.IsTrue(
+            resp.Content.Contains("return matchOk(this.OkBody)", StringComparison.Ordinal));
+        Assert.IsTrue(
+            resp.Content.Contains("if (this.StatusCode == 201)", StringComparison.Ordinal));
+        Assert.IsTrue(
+            resp.Content.Contains("return matchCreated(this.CreatedBody)", StringComparison.Ordinal));
+        Assert.IsTrue(
+            resp.Content.Contains("return matchDefault(this.DefaultBody)", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_MatchResult_DefaultOnly_SingleHandler()
+    {
+        ClientModel model = BuildModelFromJson(DefaultOnlySpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/get/responses/default/content/application~1json/schema"] = "Test.AnyBody",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        // Only one handler: matchDefault
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ResponseMatcher<Test.AnyBody, TResult> matchDefault)",
+                StringComparison.Ordinal));
+
+        // No matchOk or matchCreated etc.
+        Assert.IsFalse(
+            resp.Content.Contains("matchOk", StringComparison.Ordinal));
+
+        // Body immediately returns matchDefault
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "return matchDefault(this.DefaultBody);",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_MatchResult_NoDefault_UsesStatusCodeFallback()
+    {
+        ClientModel model = BuildModelFromJson(NoDefaultSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}/get/parameters/0/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{id}/get/responses/200/content/application~1json/schema"] = "Test.ItemBody",
+            ["#/paths/~1items~1{id}/get/responses/404/content/application~1json/schema"] = "Test.NotFoundBody",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile resp = GetFile(files, "GetItemByIdResponse.cs");
+
+        // Specific handlers exist
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ResponseMatcher<Test.ItemBody, TResult> matchOk",
+                StringComparison.Ordinal));
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ResponseMatcher<Test.NotFoundBody, TResult> matchNotFound",
+                StringComparison.Ordinal));
+
+        // Fallback handler takes int (status code), not a typed body
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ResponseMatcher<int, TResult> matchDefault)",
+                StringComparison.Ordinal));
+
+        // Fallback dispatches with StatusCode
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "return matchDefault(this.StatusCode);",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_MatchResult_NoDefault_ContextOverloadUsesStatusCodeFallback()
+    {
+        ClientModel model = BuildModelFromJson(NoDefaultSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}/get/parameters/0/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{id}/get/responses/200/content/application~1json/schema"] = "Test.ItemBody",
+            ["#/paths/~1items~1{id}/get/responses/404/content/application~1json/schema"] = "Test.NotFoundBody",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile resp = GetFile(files, "GetItemByIdResponse.cs");
+
+        // Context overload fallback handler takes int + TContext
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ResponseMatcher<int, TContext, TResult> matchDefault)",
+                StringComparison.Ordinal));
+
+        // And has the allows ref struct constraint
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "where TContext : allows ref struct",
+                StringComparison.Ordinal));
+    }
 }

@@ -1015,6 +1015,18 @@ public sealed class ClientCodeEmitter
         w.WriteLine();
         this.EmitCreateAsync(w, structName, op.Responses);
 
+        // Collect the specific (non-default) status codes so TryGetDefault can check them.
+        List<string> specificStatusCodes = [];
+
+        foreach (ClientResponse resp in op.Responses)
+        {
+            string statusCode = resp.GetStatusCode();
+            if (statusCode != "default" && this.ResolveResponseTypeName(resp) is not null)
+            {
+                specificStatusCodes.Add(statusCode);
+            }
+        }
+
         foreach (ClientResponse resp in op.Responses)
         {
             string statusCode = resp.GetStatusCode();
@@ -1032,15 +1044,43 @@ public sealed class ClientCodeEmitter
             w.WriteLine("/// </summary>");
             w.WriteLine(
                 "/// <param name=\"result\">The typed response body if the status matches.</param>");
-            w.WriteLine(
-                $"/// <returns><see langword=\"true\"/> if the status code is {statusCode}.</returns>");
+
+            if (statusCode == "default")
+            {
+                w.WriteLine(
+                    "/// <returns><see langword=\"true\"/> if the status code does not match any specific response.</returns>");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"/// <returns><see langword=\"true\"/> if the status code is {statusCode}.</returns>");
+            }
+
             w.WriteLine($"public bool TryGet{accessorName}(out {typeName} result)");
             w.OpenBrace();
 
             if (statusCode == "default")
             {
-                w.WriteLine($"result = this.{accessorName}Body;");
-                w.WriteLine("return true;");
+                // Only return true if none of the specific status codes match.
+                if (specificStatusCodes.Count > 0)
+                {
+                    string condition = string.Join(
+                        " && ",
+                        specificStatusCodes.Select(sc => $"this.StatusCode != {sc}"));
+                    w.WriteLine($"if ({condition})");
+                    w.OpenBrace();
+                    w.WriteLine($"result = this.{accessorName}Body;");
+                    w.WriteLine("return true;");
+                    w.CloseBrace();
+                    w.WriteLine();
+                    w.WriteLine("result = default;");
+                    w.WriteLine("return false;");
+                }
+                else
+                {
+                    w.WriteLine($"result = this.{accessorName}Body;");
+                    w.WriteLine("return true;");
+                }
             }
             else
             {
@@ -1056,6 +1096,9 @@ public sealed class ClientCodeEmitter
 
             w.CloseBrace();
         }
+
+        this.EmitMatchResult(w, structName, op.Responses, includeContext: false);
+        this.EmitMatchResult(w, structName, op.Responses, includeContext: true);
 
         w.WriteLine();
         w.WriteLine("/// <inheritdoc/>");
@@ -1148,6 +1191,197 @@ public sealed class ClientCodeEmitter
             ".ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);");
         w.WriteLine("response.parsedDocument = doc;");
         w.WriteLine($"response.{accessorName}Body = doc.RootElement;");
+    }
+
+    private void EmitMatchResult(
+        IndentedWriter w,
+        string structName,
+        ClientResponse[] responses,
+        bool includeContext)
+    {
+        // Build the list of typed responses (specific codes first, then default).
+        List<(string statusCode, string accessorName, string typeName)> typed = [];
+        (string accessorName, string typeName)? defaultEntry = null;
+
+        foreach (ClientResponse resp in responses)
+        {
+            string statusCode = resp.GetStatusCode();
+            string? typeName = this.ResolveResponseTypeName(resp);
+
+            if (typeName is null)
+            {
+                continue;
+            }
+
+            string accessorName = StatusCodeToName(statusCode);
+
+            if (statusCode == "default")
+            {
+                defaultEntry = (accessorName, typeName);
+            }
+            else
+            {
+                typed.Add((statusCode, accessorName, typeName));
+            }
+        }
+
+        // If there are no typed responses at all, skip emitting the method.
+        if (typed.Count == 0 && defaultEntry is null)
+        {
+            return;
+        }
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Matches the response against each status code and calls the corresponding handler.");
+        w.WriteLine("/// </summary>");
+
+        if (includeContext)
+        {
+            w.WriteLine(
+                "/// <typeparam name=\"TContext\">The type of the context to pass to the handler.</typeparam>");
+        }
+
+        w.WriteLine(
+            "/// <typeparam name=\"TResult\">The type of the result returned by the handler.</typeparam>");
+
+        if (includeContext)
+        {
+            w.WriteLine(
+                "/// <param name=\"context\">The context to pass to the handler.</param>");
+        }
+
+        foreach (var (statusCode, accessorName, typeName) in typed)
+        {
+            w.WriteLine(
+                $"/// <param name=\"match{accessorName}\">Handler for the {statusCode} response.</param>");
+        }
+
+        if (defaultEntry is not null)
+        {
+            w.WriteLine(
+                "/// <param name=\"matchDefault\">Handler for any unmatched status code.</param>");
+        }
+        else
+        {
+            w.WriteLine(
+                "/// <param name=\"matchDefault\">Handler for any unmatched status code.</param>");
+        }
+
+        w.WriteLine("/// <returns>The result of calling the matched handler.</returns>");
+
+        // Method signature
+        if (includeContext)
+        {
+            w.Write($"public TResult MatchResult<TContext, TResult>(");
+        }
+        else
+        {
+            w.Write($"public TResult MatchResult<TResult>(");
+        }
+
+        w.WriteLine();
+        w.PushIndent();
+
+        if (includeContext)
+        {
+            w.WriteLine("in TContext context,");
+        }
+
+        foreach (var (_, accessorName, typeName) in typed)
+        {
+            if (includeContext)
+            {
+                w.WriteLine($"ResponseMatcher<{typeName}, TContext, TResult> match{accessorName},");
+            }
+            else
+            {
+                w.WriteLine($"ResponseMatcher<{typeName}, TResult> match{accessorName},");
+            }
+        }
+
+        if (defaultEntry is not null)
+        {
+            if (includeContext)
+            {
+                w.WriteLine(
+                    $"ResponseMatcher<{defaultEntry.Value.typeName}, TContext, TResult> matchDefault)");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"ResponseMatcher<{defaultEntry.Value.typeName}, TResult> matchDefault)");
+            }
+        }
+        else
+        {
+            if (includeContext)
+            {
+                w.WriteLine($"ResponseMatcher<int, TContext, TResult> matchDefault)");
+            }
+            else
+            {
+                w.WriteLine($"ResponseMatcher<int, TResult> matchDefault)");
+            }
+        }
+
+        w.PopIndent();
+
+        if (includeContext)
+        {
+            w.WriteLine("where TContext : allows ref struct");
+        }
+
+        w.OpenBrace();
+
+        // Body: switch on StatusCode
+        foreach (var (statusCode, accessorName, _) in typed)
+        {
+            w.WriteLine($"if (this.StatusCode == {statusCode})");
+            w.OpenBrace();
+
+            if (includeContext)
+            {
+                w.WriteLine(
+                    $"return match{accessorName}(this.{accessorName}Body, context);");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"return match{accessorName}(this.{accessorName}Body);");
+            }
+
+            w.CloseBrace();
+            w.WriteLine();
+        }
+
+        // Default fallback
+        if (defaultEntry is not null)
+        {
+            if (includeContext)
+            {
+                w.WriteLine(
+                    $"return matchDefault(this.{defaultEntry.Value.accessorName}Body, context);");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"return matchDefault(this.{defaultEntry.Value.accessorName}Body);");
+            }
+        }
+        else
+        {
+            if (includeContext)
+            {
+                w.WriteLine("return matchDefault(this.StatusCode, context);");
+            }
+            else
+            {
+                w.WriteLine("return matchDefault(this.StatusCode);");
+            }
+        }
+
+        w.CloseBrace();
     }
 
     private GeneratedFile EmitInterface(
