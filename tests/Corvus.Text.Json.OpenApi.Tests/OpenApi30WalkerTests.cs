@@ -275,4 +275,106 @@ public class OpenApi30WalkerTests
         byte[] bytes = File.ReadAllBytes(path);
         return ParsedJsonDocument<JsonElement>.Parse(bytes);
     }
+
+    private static ParsedJsonDocument<JsonElement> ParseRefParamsSpec()
+    {
+        string path = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "ref-params-3.0.json");
+        byte[] bytes = File.ReadAllBytes(path);
+        return ParsedJsonDocument<JsonElement>.Parse(bytes);
+    }
+
+    [TestMethod]
+    public void Ref_ParameterRefIsResolved()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParseRefParamsSpec();
+        var walker = new OpenApi30Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry getOp = ops.First(o => o.Method == OperationMethod.Get);
+
+        WalkedParameter petId = FindParam(getOp.Parameters, "petId");
+        Assert.AreEqual(ParameterLocation.Path, petId.Location);
+        Assert.IsTrue(petId.IsRequired);
+        Assert.IsTrue(petId.HasSchema);
+    }
+
+    [TestMethod]
+    public void Ref_OperationLevelParameterRefIsResolved()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParseRefParamsSpec();
+        var walker = new OpenApi30Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry getOp = ops.First(o => o.Method == OperationMethod.Get);
+
+        WalkedParameter limit = FindParam(getOp.Parameters, "limit");
+        Assert.AreEqual(ParameterLocation.Query, limit.Location);
+        Assert.IsFalse(limit.IsRequired);
+        Assert.IsTrue(limit.HasSchema);
+    }
+
+    [TestMethod]
+    public void Ref_ResponseRefIsResolved()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParseRefParamsSpec();
+        var walker = new OpenApi30Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry getOp = ops.First(o => o.Method == OperationMethod.Get);
+
+        WalkedResponse okResponse = getOp.Responses.First(
+            r => r.Property.NameEquals("200"u8));
+        Assert.IsTrue(okResponse.Content.Length > 0, "Resolved response should have content");
+    }
+
+    [TestMethod]
+    public void Ref_RequestBodyRefIsResolved()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParseRefParamsSpec();
+        var walker = new OpenApi30Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry postOp = ops.First(o => o.Method == OperationMethod.Post);
+
+        Assert.IsNotNull(postOp.RequestBody, "Resolved request body should not be null");
+        Assert.IsTrue(postOp.RequestBody!.Value.IsRequired, "PetBody is required");
+        Assert.IsTrue(postOp.RequestBody!.Value.Content.Length > 0, "PetBody has content");
+    }
+
+    [TestMethod]
+    public void Ref_HeaderRefIsResolved()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParseRefParamsSpec();
+        var walker = new OpenApi30Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry getOp = ops.First(o => o.Method == OperationMethod.Get);
+
+        WalkedResponse defaultResponse = getOp.Responses.First(
+            r => r.Property.NameEquals("default"u8));
+        Assert.IsTrue(defaultResponse.Headers.Length > 0, "Should have resolved headers");
+        Assert.IsTrue(defaultResponse.Headers[0].HasSchema, "Resolved header should have schema");
+    }
+
+    [TestMethod]
+    public void Ref_ExtractSchemasFindsAllSchemas()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParseRefParamsSpec();
+        var walker = new OpenApi30Walker();
+        List<ExtractedSchema> schemas = walker.ExtractSchemas(doc.RootElement).ToList();
+
+        Assert.IsTrue(schemas.Count >= 4, $"Expected at least 4 schemas, found {schemas.Count}");
+
+        int paramSchemas = schemas.Count(s => s.Role == SchemaRole.Parameter);
+        Assert.IsTrue(paramSchemas >= 2, $"Expected at least 2 parameter schemas, found {paramSchemas}");
+
+        int responseSchemas = schemas.Count(s => s.Role == SchemaRole.ResponseBody);
+        Assert.IsTrue(responseSchemas >= 1, $"Expected at least 1 response body schema, found {responseSchemas}");
+
+        int requestSchemas = schemas.Count(s => s.Role == SchemaRole.RequestBody);
+        Assert.IsTrue(requestSchemas >= 1, $"Expected at least 1 request body schema, found {requestSchemas}");
+    }
 }

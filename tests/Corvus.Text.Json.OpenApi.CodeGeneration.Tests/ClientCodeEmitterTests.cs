@@ -3319,15 +3319,15 @@ public class ClientCodeEmitterTests
 
         GeneratedFile getReq = GetFile(files, "GetOrderRequest.cs");
 
-        // Should have all 3 params: orderId (path), X-Trace-Id (header), fields (query)
+        // Should have all 3 params: orderId (path, required), X-Trace-Id (header, optional), fields (query, optional)
         Assert.IsTrue(
             getReq.Content.Contains("Test.OrderId OrderId", StringComparison.Ordinal),
             "Missing inherited path param orderId");
         Assert.IsTrue(
-            getReq.Content.Contains("Test.TraceId XTraceId", StringComparison.Ordinal),
+            getReq.Content.Contains("Test.TraceId? XTraceId", StringComparison.Ordinal),
             "Missing inherited header param X-Trace-Id");
         Assert.IsTrue(
-            getReq.Content.Contains("Test.Fields Fields", StringComparison.Ordinal),
+            getReq.Content.Contains("Test.Fields? Fields", StringComparison.Ordinal),
             "Missing operation-level query param fields");
     }
 }
