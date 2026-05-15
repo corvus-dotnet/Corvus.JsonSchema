@@ -10,11 +10,10 @@ namespace Corvus.Text.Json.OpenApi;
 /// </summary>
 /// <remarks>
 /// <para>
-/// This classification is determined by the spec walker using the typed
+/// This classification is determined by the code generator using the typed
 /// schema model (schema <c>type</c> + <c>format</c> keywords). It is
-/// stored on <see cref="WalkedParameter"/> and flowed through to the
-/// code emitter, which uses it to select the correct serialization
-/// strategy without re-inspecting the raw JSON.
+/// used to select the correct serialization strategy without
+/// re-inspecting the raw JSON.
 /// </para>
 /// <para>
 /// Numeric kinds mirror the .NET type names and match the formats

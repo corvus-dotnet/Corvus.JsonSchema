@@ -13,7 +13,7 @@ namespace Corvus.Text.Json.OpenApi;
 /// <para>
 /// This resolver handles fragment-only URI-references (e.g. <c>#/components/parameters/PetId</c>)
 /// by navigating the JSON Pointer against the document root. It does not support
-/// external document references — use <see cref="CompoundReferenceResolver"/> for that.
+/// external document references.
 /// </para>
 /// </remarks>
 public sealed class LocalReferenceResolver : IOpenApiReferenceResolver
