@@ -107,7 +107,8 @@ public static class ClientModelBuilder
                 walked.IsRequired,
                 schemaPointer,
                 walked.Style,
-                walked.Explode);
+                walked.Explode,
+                walked.SerializationKind);
         }
 
         return result;

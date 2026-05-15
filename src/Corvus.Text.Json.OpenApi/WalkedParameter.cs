@@ -27,6 +27,10 @@ public readonly struct WalkedParameter
     /// <param name="style">The serialization style.</param>
     /// <param name="explode">Whether to explode array/object values.</param>
     /// <param name="hasSchema">Whether the parameter declares a schema.</param>
+    /// <param name="serializationKind">
+    /// The serialization classification for this parameter, determined by the
+    /// walker from the schema's <c>type</c> and <c>format</c> keywords.
+    /// </param>
     /// <param name="isPathLevel">
     /// Whether this parameter was declared at the path-item level rather than
     /// the operation level. Path-level parameters live at
@@ -45,6 +49,7 @@ public readonly struct WalkedParameter
         ParameterStyle style,
         bool explode,
         bool hasSchema,
+        ParameterSerializationKind serializationKind,
         bool isPathLevel = false,
         int sourceIndex = 0)
     {
@@ -54,6 +59,7 @@ public readonly struct WalkedParameter
         this.Style = style;
         this.Explode = explode;
         this.HasSchema = hasSchema;
+        this.SerializationKind = serializationKind;
         this.IsPathLevel = isPathLevel;
         this.SourceIndex = sourceIndex;
     }
@@ -88,6 +94,12 @@ public readonly struct WalkedParameter
     /// Gets a value indicating whether the parameter declares a schema.
     /// </summary>
     public bool HasSchema { get; }
+
+    /// <summary>
+    /// Gets the serialization classification for this parameter, determined
+    /// by the walker from the schema's <c>type</c> and <c>format</c> keywords.
+    /// </summary>
+    public ParameterSerializationKind SerializationKind { get; }
 
     /// <summary>
     /// Gets a value indicating whether this parameter was declared at the

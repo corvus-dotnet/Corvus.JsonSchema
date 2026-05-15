@@ -1971,6 +1971,7 @@ internal static partial class StandaloneEvaluatorGenerator
             "uint128" => "MatchUInt128",
             "half" => "MatchHalf",
             "single" => "MatchSingle",
+            "float" => "MatchSingle",
             "double" => "MatchDouble",
             "decimal" => "MatchDecimal",
 

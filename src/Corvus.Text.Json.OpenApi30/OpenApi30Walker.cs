@@ -232,6 +232,7 @@ public sealed class OpenApi30Walker : ISpecWalker
 
                 result.Add(new WalkedParameter(
                     resolved, location, required, style, explode, hasSchema,
+                    hasSchema ? SchemaClassifier.Classify((JsonElement)typed.Schema) : ParameterSerializationKind.String,
                     isPathLevel: true, sourceIndex: sourceIndex));
                 sourceIndex++;
             }
@@ -263,6 +264,7 @@ public sealed class OpenApi30Walker : ISpecWalker
                 int existingIndex = FindParameterIndex(result, (JsonElement)typed.Name, location);
                 WalkedParameter walkedParam = new(
                     (JsonElement)typed, location, required, style, explode, hasSchema,
+                    hasSchema ? SchemaClassifier.Classify((JsonElement)typed.Schema) : ParameterSerializationKind.String,
                     isPathLevel: false, sourceIndex: sourceIndex);
 
                 if (existingIndex >= 0)

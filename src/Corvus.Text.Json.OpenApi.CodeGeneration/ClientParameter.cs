@@ -32,13 +32,18 @@ public readonly struct ClientParameter
     /// </param>
     /// <param name="style">The OpenAPI serialization style for this parameter.</param>
     /// <param name="explode">Whether to explode array/object values.</param>
+    /// <param name="serializationKind">
+    /// The serialization classification, determined by the spec walker from
+    /// the schema's <c>type</c> and <c>format</c> keywords.
+    /// </param>
     public ClientParameter(
         JsonElement element,
         ParameterLocation location,
         bool isRequired,
         string? schemaPointer,
         ParameterStyle style,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind serializationKind)
     {
         this.Element = element;
         this.Location = location;
@@ -46,6 +51,7 @@ public readonly struct ClientParameter
         this.SchemaPointer = schemaPointer;
         this.Style = style;
         this.Explode = explode;
+        this.SerializationKind = serializationKind;
     }
 
     /// <summary>
@@ -77,6 +83,12 @@ public readonly struct ClientParameter
     /// Gets a value indicating whether array/object values are exploded.
     /// </summary>
     public bool Explode { get; }
+
+    /// <summary>
+    /// Gets the serialization classification for this parameter, determined
+    /// by the spec walker from the schema's <c>type</c> and <c>format</c> keywords.
+    /// </summary>
+    public ParameterSerializationKind SerializationKind { get; }
 
     /// <summary>
     /// Gets the parameter name as declared in the spec.

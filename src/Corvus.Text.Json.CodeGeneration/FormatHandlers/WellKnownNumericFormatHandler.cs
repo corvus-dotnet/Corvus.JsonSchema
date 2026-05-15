@@ -162,6 +162,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
 
             case "single":
+            case "float":
                 generator.AppendIndent(
                     "JsonSchemaEvaluation.MatchSingle(",
                     isNegativeIdentifier, ", ",
@@ -332,6 +333,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
 
             case "single":
+            case "float":
                 if (seenConstructorParameters.Add("float"))
                 {
                     generator
@@ -392,6 +394,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
         {
             "half" => true,
             "single" => true,
+            "float" => true,
             "double" => true,
             "decimal" => true,
             _ => false,
@@ -422,6 +425,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
 
             case "single":
+            case "float":
                 typeName = "float";
                 netStandardFallback = null;
                 isNetOnly = false;
@@ -637,6 +641,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
 
             case "single":
+            case "float":
                 if (seenConversionOperators.Add("float"))
                 {
                     generator
@@ -809,6 +814,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
 
             case "single":
+            case "float":
                 if (seenConversionOperators.Add("float"))
                 {
                     generator
@@ -978,6 +984,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
                 return true;
 
             case "single":
+            case "float":
                 if (seenConversionOperators.Add("float"))
                 {
                     generator
@@ -1032,6 +1039,7 @@ public class WellKnownNumericFormatHandler : INumberFormatHandler
             "uint128" => "UInt128",
             "half" => "Half",
             "single" => "Single",
+            "float" => "Single",
             "double" => "Double",
             "decimal" => "Decimal",
             _ => null,

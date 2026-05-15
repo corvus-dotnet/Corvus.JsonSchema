@@ -59,60 +59,6 @@ public sealed class ClientCodeEmitter
     }
 
     /// <summary>
-    /// Classifies how a parameter value should be serialized to UTF-8 bytes.
-    /// </summary>
-    private enum ParameterSerializationKind
-    {
-        /// <summary>
-        /// String value: use <c>GetUtf8String()</c> to get unescaped UTF-8 bytes directly.
-        /// </summary>
-        String,
-
-        /// <summary>
-        /// Boolean value: use <c>TryFormat</c> with a 5-byte buffer.
-        /// </summary>
-        Boolean,
-
-        /// <summary>
-        /// Bounded integer (int32): use <c>TryFormat</c> with an 11-byte buffer.
-        /// </summary>
-        Int32,
-
-        /// <summary>
-        /// Bounded integer (int64): use <c>TryFormat</c> with a 20-byte buffer.
-        /// </summary>
-        Int64,
-
-        /// <summary>
-        /// Bounded float (float): use <c>TryFormat</c> with a buffer.
-        /// </summary>
-        Float,
-
-        /// <summary>
-        /// Bounded float (double): use <c>TryFormat</c> with a buffer.
-        /// </summary>
-        Double,
-
-        /// <summary>
-        /// Unbounded scalar number (no format constraint): use
-        /// <c>JsonMarshal.GetRawUtf8Value</c> to get the raw UTF-8 bytes.
-        /// </summary>
-        UnboundedNumber,
-
-        /// <summary>
-        /// Object value: serialize with style/explode rules, or write the JSON
-        /// representation via <c>WriteTo(Utf8JsonWriter)</c> over the output buffer.
-        /// </summary>
-        Object,
-
-        /// <summary>
-        /// Array value: serialize with style/explode rules, or write the JSON
-        /// representation via <c>WriteTo(Utf8JsonWriter)</c> over the output buffer.
-        /// </summary>
-        Array,
-    }
-
-    /// <summary>
     /// Emits all generated files from the given client model.
     /// </summary>
     /// <param name="model">The client model to emit.</param>
@@ -370,80 +316,6 @@ public sealed class ClientCodeEmitter
         return "JsonElement";
     }
 
-    private static ParameterSerializationKind ClassifyParameter(ClientParameter param)
-    {
-        if (!param.Element.TryGetProperty("schema"u8, out JsonElement schema))
-        {
-            return ParameterSerializationKind.String;
-        }
-
-        if (!schema.TryGetProperty("type"u8, out JsonElement typeElement)
-            || typeElement.ValueKind != JsonValueKind.String)
-        {
-            return ParameterSerializationKind.String;
-        }
-
-        if (typeElement.ValueEquals("string"u8))
-        {
-            return ParameterSerializationKind.String;
-        }
-
-        if (typeElement.ValueEquals("boolean"u8))
-        {
-            return ParameterSerializationKind.Boolean;
-        }
-
-        if (typeElement.ValueEquals("integer"u8))
-        {
-            if (schema.TryGetProperty("format"u8, out JsonElement fmt)
-                && fmt.ValueKind == JsonValueKind.String)
-            {
-                if (fmt.ValueEquals("int32"u8))
-                {
-                    return ParameterSerializationKind.Int32;
-                }
-
-                if (fmt.ValueEquals("int64"u8))
-                {
-                    return ParameterSerializationKind.Int64;
-                }
-            }
-
-            return ParameterSerializationKind.UnboundedNumber;
-        }
-
-        if (typeElement.ValueEquals("number"u8))
-        {
-            if (schema.TryGetProperty("format"u8, out JsonElement fmt)
-                && fmt.ValueKind == JsonValueKind.String)
-            {
-                if (fmt.ValueEquals("float"u8))
-                {
-                    return ParameterSerializationKind.Float;
-                }
-
-                if (fmt.ValueEquals("double"u8))
-                {
-                    return ParameterSerializationKind.Double;
-                }
-            }
-
-            return ParameterSerializationKind.UnboundedNumber;
-        }
-
-        if (typeElement.ValueEquals("object"u8))
-        {
-            return ParameterSerializationKind.Object;
-        }
-
-        if (typeElement.ValueEquals("array"u8))
-        {
-            return ParameterSerializationKind.Array;
-        }
-
-        return ParameterSerializationKind.String;
-    }
-
     private string? ResolveResponseTypeName(ClientResponse resp)
     {
         ReadOnlySpan<byte> applicationJson = "application/json"u8;
@@ -649,9 +521,8 @@ public sealed class ClientCodeEmitter
                 }
             }
 
-            ParameterSerializationKind kind = matchingParam is not null
-                ? ClassifyParameter(matchingParam.Value)
-                : ParameterSerializationKind.String;
+            ParameterSerializationKind kind = matchingParam?.SerializationKind
+                ?? ParameterSerializationKind.String;
 
             EmitPathParamWrite(w, $"this.{fieldName}", fieldName, kind);
             remaining = remaining[(openBrace + 1 + closeBrace + 1)..];
@@ -712,16 +583,11 @@ public sealed class ClientCodeEmitter
     /// Returns the stackalloc buffer size for a bounded type, or -1 if
     /// the type doesn't use <c>TryFormat</c>.
     /// </summary>
-    private static int TryFormatBufferSize(ParameterSerializationKind kind) =>
-        kind switch
-        {
-            ParameterSerializationKind.Boolean => 5,
-            ParameterSerializationKind.Int32 => 11,
-            ParameterSerializationKind.Int64 => 20,
-            ParameterSerializationKind.Float => 32,
-            ParameterSerializationKind.Double => 32,
-            _ => -1,
-        };
+    private static int TryFormatBufferSize(ParameterSerializationKind kind)
+    {
+        int size = SchemaClassifier.GetMaxFormattedSize(kind);
+        return size > 0 ? size : -1;
+    }
 
     // ── Path parameter serialization (simple style, no explode) ─────────
     private static void EmitPathParamWrite(
@@ -741,10 +607,20 @@ public sealed class ClientCodeEmitter
                 EmitBooleanWrite(w, valueExpr);
                 break;
 
+            case ParameterSerializationKind.Byte:
+            case ParameterSerializationKind.UInt16:
+            case ParameterSerializationKind.UInt32:
+            case ParameterSerializationKind.UInt64:
+            case ParameterSerializationKind.UInt128:
+            case ParameterSerializationKind.SByte:
+            case ParameterSerializationKind.Int16:
             case ParameterSerializationKind.Int32:
             case ParameterSerializationKind.Int64:
-            case ParameterSerializationKind.Float:
+            case ParameterSerializationKind.Int128:
+            case ParameterSerializationKind.Half:
+            case ParameterSerializationKind.Single:
             case ParameterSerializationKind.Double:
+            case ParameterSerializationKind.Decimal:
                 EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
                 w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
                 break;
@@ -775,10 +651,20 @@ public sealed class ClientCodeEmitter
                 EmitBooleanWriteCounted(w, valueExpr);
                 break;
 
+            case ParameterSerializationKind.Byte:
+            case ParameterSerializationKind.UInt16:
+            case ParameterSerializationKind.UInt32:
+            case ParameterSerializationKind.UInt64:
+            case ParameterSerializationKind.UInt128:
+            case ParameterSerializationKind.SByte:
+            case ParameterSerializationKind.Int16:
             case ParameterSerializationKind.Int32:
             case ParameterSerializationKind.Int64:
-            case ParameterSerializationKind.Float:
+            case ParameterSerializationKind.Int128:
+            case ParameterSerializationKind.Half:
+            case ParameterSerializationKind.Single:
             case ParameterSerializationKind.Double:
+            case ParameterSerializationKind.Decimal:
                 EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
                 w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
                 w.WriteLine($"totalWritten += bw{uid};");
@@ -822,10 +708,20 @@ public sealed class ClientCodeEmitter
                 EmitBooleanHeaderWrite(w, valueExpr, uid);
                 break;
 
+            case ParameterSerializationKind.Byte:
+            case ParameterSerializationKind.UInt16:
+            case ParameterSerializationKind.UInt32:
+            case ParameterSerializationKind.UInt64:
+            case ParameterSerializationKind.UInt128:
+            case ParameterSerializationKind.SByte:
+            case ParameterSerializationKind.Int16:
             case ParameterSerializationKind.Int32:
             case ParameterSerializationKind.Int64:
-            case ParameterSerializationKind.Float:
+            case ParameterSerializationKind.Int128:
+            case ParameterSerializationKind.Half:
+            case ParameterSerializationKind.Single:
             case ParameterSerializationKind.Double:
+            case ParameterSerializationKind.Decimal:
                 EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
                 w.WriteLine(
                     $"callback(nameUtf8{uid}, buf{uid}[..bw{uid}], state);");
@@ -943,7 +839,7 @@ public sealed class ClientCodeEmitter
         {
             string paramName = param.GetName();
             string fieldName = SanitizeIdentifier(paramName);
-            ParameterSerializationKind kind = ClassifyParameter(param);
+            ParameterSerializationKind kind = param.SerializationKind;
 
             if (!param.IsRequired)
             {
@@ -997,7 +893,7 @@ public sealed class ClientCodeEmitter
         {
             string paramName = param.GetName();
             string fieldName = SanitizeIdentifier(paramName);
-            ParameterSerializationKind kind = ClassifyParameter(param);
+            ParameterSerializationKind kind = param.SerializationKind;
 
             w.WriteLine($"ReadOnlySpan<byte> nameUtf8{fieldName} = \"{paramName}\"u8;");
 
@@ -1040,7 +936,7 @@ public sealed class ClientCodeEmitter
         {
             string paramName = param.GetName();
             string fieldName = SanitizeIdentifier(paramName);
-            ParameterSerializationKind kind = ClassifyParameter(param);
+            ParameterSerializationKind kind = param.SerializationKind;
 
             if (!param.IsRequired)
             {
@@ -1100,10 +996,20 @@ public sealed class ClientCodeEmitter
                 EmitBooleanWriteCounted(w, valueExpr);
                 break;
 
+            case ParameterSerializationKind.Byte:
+            case ParameterSerializationKind.UInt16:
+            case ParameterSerializationKind.UInt32:
+            case ParameterSerializationKind.UInt64:
+            case ParameterSerializationKind.UInt128:
+            case ParameterSerializationKind.SByte:
+            case ParameterSerializationKind.Int16:
             case ParameterSerializationKind.Int32:
             case ParameterSerializationKind.Int64:
-            case ParameterSerializationKind.Float:
+            case ParameterSerializationKind.Int128:
+            case ParameterSerializationKind.Half:
+            case ParameterSerializationKind.Single:
             case ParameterSerializationKind.Double:
+            case ParameterSerializationKind.Decimal:
                 EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
                 w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
                 w.WriteLine($"totalWritten += bw{uid};");
