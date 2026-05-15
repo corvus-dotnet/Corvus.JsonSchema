@@ -9,6 +9,12 @@
     <NoWarn>$(NoWarn);NU1504;IDE0065;IDE0290;IDE0079;IDE0130;CS1591;CS1572;CS1573</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EndjinDisableAutoPackagesLock>true</EndjinDisableAutoPackagesLock>
+    <OpenApiSpecFile>TestData\canonicalization-spec.json</OpenApiSpecFile>
+    <GeneratedCodeOutputPath>Generated</GeneratedCodeOutputPath>
+    <!-- Exclude Generated/ from default compile globs; the IncludeGeneratedOpenApiTypes target
+         adds them after the generation target runs. This avoids duplicates on incremental builds
+         and ensures the files are picked up even when Generated/ doesn't exist at evaluation time. -->
+    <DefaultItemExcludes>$(DefaultItemExcludes);$(GeneratedCodeOutputPath)\**</DefaultItemExcludes>
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="..\..\src\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
@@ -19,4 +25,27 @@
     <PackageReference Include="StyleCop.Analyzers" PrivateAssets="All" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="All" />
   </ItemGroup>
+
+  <!-- Regenerate typed request structs and schema types from the OpenAPI spec before compilation. -->
+  <Target Name="GenerateOpenApiTypes" BeforeTargets="BeforeCompile;CoreCompile" Inputs="$(OpenApiSpecFile)" Outputs="$(GeneratedCodeOutputPath)\.generated-stamp">
+    <RemoveDir Directories="$(GeneratedCodeOutputPath)" />
+    <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 -- openapi &quot;$(OpenApiSpecFile)&quot; --rootNamespace CanonTests.Client --outputPath &quot;$(GeneratedCodeOutputPath)&quot;" />
+
+    <!-- Remove client, interface, and response files that are not needed for these tests. -->
+    <ItemGroup>
+      <_UnwantedGeneratedFiles Include="$(GeneratedCodeOutputPath)\Api*Client.cs" />
+      <_UnwantedGeneratedFiles Include="$(GeneratedCodeOutputPath)\IApi*Client.cs" />
+      <_UnwantedGeneratedFiles Include="$(GeneratedCodeOutputPath)\*Response.cs" />
+    </ItemGroup>
+    <Delete Files="@(_UnwantedGeneratedFiles)" />
+    <Touch Files="$(GeneratedCodeOutputPath)\.generated-stamp" AlwaysCreate="true" />
+  </Target>
+
+  <!-- Include the generated files after generation. Runs after GenerateOpenApiTypes, picking up
+       whatever .cs files are present (whether freshly generated or from a prior incremental build). -->
+  <Target Name="IncludeGeneratedOpenApiTypes" AfterTargets="GenerateOpenApiTypes" BeforeTargets="CoreCompile">
+    <ItemGroup>
+      <Compile Include="$(GeneratedCodeOutputPath)\**\*.cs" />
+    </ItemGroup>
+  </Target>
 </Project>
