@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 using PathStyles = Corvus.Text.Json.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity;
 using QueryStyles = Corvus.Text.Json.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity;
@@ -319,6 +320,13 @@ public sealed class OpenApi31Walker : ISpecWalker
         return [.. result];
     }
 
+    private static T? ResolveRef<T>(OpenApiDocument.Reference reference, IOpenApiReferenceResolver solver)
+        where T : struct, IJsonElement<T>
+    {
+        using UnescapedUtf8JsonString refUtf8 = reference.Ref.GetUtf8String();
+        return solver.TryResolve<T>(refUtf8.Span, out T r) ? r : null;
+    }
+
     private static bool TryResolveParameter(
         OpenApiDocument.ParameterOrReference paramOrRef,
         IOpenApiReferenceResolver referenceResolver,
@@ -327,15 +335,7 @@ public sealed class OpenApi31Walker : ISpecWalker
         OpenApiDocument.Parameter? result = paramOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.Parameter?>(
             in referenceResolver,
             static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver solver) =>
-            {
-                using UnescapedUtf8JsonString refUtf8 = reference.Ref.GetUtf8String();
-                if (solver.TryResolve<OpenApiDocument.Parameter>(refUtf8.Span, out var r))
-                {
-                    return r;
-                }
-
-                return null;
-            },
+                ResolveRef<OpenApiDocument.Parameter>(reference, solver),
             static (in OpenApiDocument.Parameter parameter, in IOpenApiReferenceResolver _) =>
                 parameter);
 
@@ -407,15 +407,7 @@ public sealed class OpenApi31Walker : ISpecWalker
         OpenApiDocument.RequestBody? result = requestBodyOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.RequestBody?>(
             in referenceResolver,
             static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver solver) =>
-            {
-                using UnescapedUtf8JsonString refUtf8 = reference.Ref.GetUtf8String();
-                if (solver.TryResolve<OpenApiDocument.RequestBody>(refUtf8.Span, out var r))
-                {
-                    return r;
-                }
-
-                return null;
-            },
+                ResolveRef<OpenApiDocument.RequestBody>(reference, solver),
             static (in OpenApiDocument.RequestBody requestBody, in IOpenApiReferenceResolver _) =>
                 requestBody);
 
@@ -470,15 +462,7 @@ public sealed class OpenApi31Walker : ISpecWalker
         OpenApiDocument.Response? result = responseOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.Response?>(
             in referenceResolver,
             static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver solver) =>
-            {
-                using UnescapedUtf8JsonString refUtf8 = reference.Ref.GetUtf8String();
-                if (solver.TryResolve<OpenApiDocument.Response>(refUtf8.Span, out var r))
-                {
-                    return r;
-                }
-
-                return null;
-            },
+                ResolveRef<OpenApiDocument.Response>(reference, solver),
             static (in OpenApiDocument.Response response, in IOpenApiReferenceResolver _) =>
                 response);
 
@@ -533,15 +517,7 @@ public sealed class OpenApi31Walker : ISpecWalker
         OpenApiDocument.Header? result = headerOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.Header?>(
             in referenceResolver,
             static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver solver) =>
-            {
-                using UnescapedUtf8JsonString refUtf8 = reference.Ref.GetUtf8String();
-                if (solver.TryResolve<OpenApiDocument.Header>(refUtf8.Span, out var r))
-                {
-                    return r;
-                }
-
-                return null;
-            },
+                ResolveRef<OpenApiDocument.Header>(reference, solver),
             static (in OpenApiDocument.Header header, in IOpenApiReferenceResolver _) =>
                 header);
 
