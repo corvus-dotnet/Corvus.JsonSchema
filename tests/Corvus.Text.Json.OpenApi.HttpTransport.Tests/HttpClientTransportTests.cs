@@ -246,6 +246,126 @@ public class HttpClientTransportTests
     }
 
     [TestMethod]
+    public async Task SendAsync_PutMethod_MapsCorrectly()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestPutRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestPutRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual(HttpMethod.Put, captured.Method);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_DeleteMethod_MapsCorrectly()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestDeleteRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestDeleteRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual(HttpMethod.Delete, captured.Method);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_PatchMethod_MapsCorrectly()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestPatchRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestPatchRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual(HttpMethod.Patch, captured.Method);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_HeadMethod_MapsCorrectly()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestHeadRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestHeadRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual(HttpMethod.Head, captured.Method);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_OptionsMethod_MapsCorrectly()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestOptionsRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestOptionsRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual(HttpMethod.Options, captured.Method);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_TraceMethod_MapsCorrectly()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestTraceRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestTraceRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual(HttpMethod.Trace, captured.Method);
+    }
+
+    [TestMethod]
     public async Task SendCoreAsync_WhenCreateAsyncThrows_DisposesHttpResponse()
     {
         using HttpClient client = CreateMockClient(
@@ -519,6 +639,126 @@ public class HttpClientTransportTests
         {
             writer.Write("/pets"u8);
         }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>PUT /pets — tests MapMethod for Put.</summary>
+    private readonly struct TestPutRequest : IApiRequest<TestPutRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Put;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>DELETE /pets — tests MapMethod for Delete.</summary>
+    private readonly struct TestDeleteRequest : IApiRequest<TestDeleteRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Delete;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>PATCH /pets — tests MapMethod for Patch.</summary>
+    private readonly struct TestPatchRequest : IApiRequest<TestPatchRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Patch;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>HEAD /pets — tests MapMethod for Head.</summary>
+    private readonly struct TestHeadRequest : IApiRequest<TestHeadRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Head;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>OPTIONS /pets — tests MapMethod for Options.</summary>
+    private readonly struct TestOptionsRequest : IApiRequest<TestOptionsRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Options;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>TRACE /pets — tests MapMethod for Trace.</summary>
+    private readonly struct TestTraceRequest : IApiRequest<TestTraceRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Trace;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
