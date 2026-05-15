@@ -109,16 +109,14 @@ public sealed class OpenApi31Walker : ISpecWalker
             // Response content schemas and headers
             if (operation.ResponsesValue.ValueKind == JsonValueKind.Object)
             {
-                foreach (JsonProperty<JsonElement> responseProp in
-                    ((JsonElement)operation.ResponsesValue).EnumerateObject())
+                foreach (var responseProp in operation.ResponsesValue.EnumerateObject())
                 {
                     if (responseProp.Value.ValueKind != JsonValueKind.Object)
                     {
                         continue;
                     }
 
-                    OpenApiDocument.ResponseOrReference responseOrRef = responseProp.Value;
-                    OpenApiDocument.Response? resolvedResponse = ResolveResponse(responseOrRef, referenceResolver);
+                    OpenApiDocument.Response? resolvedResponse = ResolveResponse(responseProp.Value, referenceResolver);
                     if (resolvedResponse is not { } response)
                     {
                         continue;
@@ -136,16 +134,14 @@ public sealed class OpenApi31Walker : ISpecWalker
                     // Response header schemas
                     if (response.Headers.ValueKind == JsonValueKind.Object)
                     {
-                        foreach (JsonProperty<JsonElement> headerProp in
-                            ((JsonElement)response.Headers).EnumerateObject())
+                        foreach (var headerProp in response.Headers.EnumerateObject())
                         {
                             if (headerProp.Value.ValueKind != JsonValueKind.Object)
                             {
                                 continue;
                             }
 
-                            OpenApiDocument.HeaderOrReference headerOrRef = headerProp.Value;
-                            OpenApiDocument.Header? resolvedHeader = ResolveHeader(headerOrRef, referenceResolver);
+                            OpenApiDocument.Header? resolvedHeader = ResolveHeader(headerProp.Value, referenceResolver);
                             if (resolvedHeader is { } header
                                 && header.SchemaValue.ValueKind == JsonValueKind.Object)
                             {
@@ -175,8 +171,7 @@ public sealed class OpenApi31Walker : ISpecWalker
             OpenApiDocument.Components components = doc.ComponentsValue;
             if (components.Schemas.ValueKind == JsonValueKind.Object)
             {
-                foreach (JsonProperty<JsonElement> schemaProp in
-                    ((JsonElement)components.Schemas).EnumerateObject())
+                foreach (var schemaProp in components.Schemas.EnumerateObject())
                 {
                     yield return new ExtractedSchema(schemaProp.Value, SchemaRole.ComponentSchema);
                 }
@@ -431,7 +426,7 @@ public sealed class OpenApi31Walker : ISpecWalker
     }
 
     private static WalkedResponseHeader[] ExtractResponseHeaders(
-        JsonElement headersMap,
+        OpenApiDocument.Response.HeadersEntity headersMap,
         IOpenApiReferenceResolver referenceResolver)
     {
         if (headersMap.ValueKind != JsonValueKind.Object)
@@ -441,7 +436,7 @@ public sealed class OpenApi31Walker : ISpecWalker
 
         List<WalkedResponseHeader> result = [];
 
-        foreach (JsonProperty<JsonElement> headerProp in headersMap.EnumerateObject())
+        foreach (JsonProperty<JsonElement> headerProp in ((JsonElement)headersMap).EnumerateObject())
         {
             if (headerProp.Value.ValueKind != JsonValueKind.Object)
             {
@@ -483,7 +478,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                 header);
     }
 
-    private static WalkedMediaTypeContent[] ExtractMediaTypeContent(JsonElement contentMap)
+    private static WalkedMediaTypeContent[] ExtractMediaTypeContent(OpenApiDocument.Content contentMap)
     {
         if (contentMap.ValueKind != JsonValueKind.Object)
         {
@@ -492,7 +487,7 @@ public sealed class OpenApi31Walker : ISpecWalker
 
         List<WalkedMediaTypeContent> result = [];
 
-        foreach (JsonProperty<JsonElement> mediaTypeProp in contentMap.EnumerateObject())
+        foreach (JsonProperty<JsonElement> mediaTypeProp in ((JsonElement)contentMap).EnumerateObject())
         {
             OpenApiDocument.MediaType mediaType = mediaTypeProp.Value;
             bool hasSchema = mediaType.SchemaValue.ValueKind == JsonValueKind.Object;
@@ -619,14 +614,13 @@ public sealed class OpenApi31Walker : ISpecWalker
     }
 
     private static IEnumerable<ExtractedSchema> EnumerateMediaTypeSchemas(
-        JsonElement contentMap, SchemaRole role)
+        OpenApiDocument.Content contentMap, SchemaRole role)
     {
-        foreach (JsonProperty<JsonElement> mediaTypeProp in contentMap.EnumerateObject())
+        foreach (var mediaTypeProp in contentMap.EnumerateObject())
         {
-            OpenApiDocument.MediaType mediaType = mediaTypeProp.Value;
-            if (mediaType.SchemaValue.ValueKind == JsonValueKind.Object)
+            if (mediaTypeProp.Value.SchemaValue.ValueKind == JsonValueKind.Object)
             {
-                yield return new ExtractedSchema((JsonElement)mediaType.SchemaValue, role);
+                yield return new ExtractedSchema((JsonElement)mediaTypeProp.Value.SchemaValue, role);
             }
         }
     }
