@@ -587,28 +587,18 @@ public sealed class OpenApi31Walker : ISpecWalker
     }
 
     private static (ParameterStyle Style, bool Explode) ParseStyleAndExplode(
-        JsonElement styleValue,
-        JsonElement explodeValue,
+        JsonString styleValue,
+        JsonBoolean explodeValue,
         ParameterLocation location)
     {
         ParameterStyle style = ParseStyle(styleValue, location);
-
-        bool explode;
-        if (explodeValue.ValueKind is JsonValueKind.True or JsonValueKind.False)
-        {
-            explode = explodeValue.ValueKind == JsonValueKind.True;
-        }
-        else
-        {
-            explode = style == ParameterStyle.Form;
-        }
-
+        bool explode = explodeValue.IsNotUndefined() ? (bool)explodeValue : style == ParameterStyle.Form;
         return (style, explode);
     }
 
-    private static ParameterStyle ParseStyle(JsonElement styleValue, ParameterLocation location)
+    private static ParameterStyle ParseStyle(JsonString styleValue, ParameterLocation location)
     {
-        if (styleValue.ValueKind == JsonValueKind.String)
+        if (styleValue.IsNotUndefined())
         {
             if (styleValue.ValueEquals(ParameterStyleUtf8.Form))
             {
