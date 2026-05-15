@@ -152,7 +152,13 @@ public static class ClientModelBuilder
                 entry.Method,
                 schemaPointers);
 
-            result[i] = new ClientResponse(walked.Property, content);
+            ClientResponseHeader[] headers = BuildResponseHeaders(
+                walked,
+                entry.Path,
+                entry.Method,
+                schemaPointers);
+
+            result[i] = new ClientResponse(walked.Property, content, headers);
         }
 
         return result;
@@ -216,6 +222,37 @@ public static class ClientModelBuilder
             }
 
             result[i] = new ClientMediaTypeContent(walkedContent.Property, schemaPointer);
+        }
+
+        return result;
+    }
+
+    private static ClientResponseHeader[] BuildResponseHeaders(
+        WalkedResponse walked,
+        JsonProperty<JsonElement> pathProperty,
+        OperationMethod method,
+        List<string> schemaPointers)
+    {
+        if (walked.Headers.Length == 0)
+        {
+            return [];
+        }
+
+        ClientResponseHeader[] result = new ClientResponseHeader[walked.Headers.Length];
+
+        for (int i = 0; i < walked.Headers.Length; i++)
+        {
+            WalkedResponseHeader walkedHeader = walked.Headers[i];
+
+            string? schemaPointer = null;
+            if (walkedHeader.HasSchema)
+            {
+                schemaPointer = BuildResponseHeaderSchemaPointer(
+                    pathProperty, method, walked.Property, walkedHeader.Property);
+                schemaPointers.Add(schemaPointer);
+            }
+
+            result[i] = new ClientResponseHeader(walkedHeader.Property, schemaPointer);
         }
 
         return result;
@@ -313,6 +350,41 @@ public static class ClientModelBuilder
             AppendEncodedSegment(ref sb, statusCode.Span);
             sb.Append("/content/"u8);
             AppendEncodedSegment(ref sb, mediaTypeName.Span);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds: #/paths/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/headers/&lt;headerName&gt;/schema.
+    /// </summary>
+    private static string BuildResponseHeaderSchemaPointer(
+        JsonProperty<JsonElement> pathProperty,
+        OperationMethod method,
+        JsonProperty<JsonElement> responseProperty,
+        JsonProperty<JsonElement> headerProperty)
+    {
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+        using UnescapedUtf8JsonString pathName = pathProperty.Utf8NameSpan;
+        using UnescapedUtf8JsonString statusCode = responseProperty.Utf8NameSpan;
+        using UnescapedUtf8JsonString headerName = headerProperty.Utf8NameSpan;
+
+        try
+        {
+            sb.Append("#/paths/"u8);
+            AppendEncodedSegment(ref sb, pathName.Span);
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/responses/"u8);
+            AppendEncodedSegment(ref sb, statusCode.Span);
+            sb.Append("/headers/"u8);
+            AppendEncodedSegment(ref sb, headerName.Span);
             sb.Append("/schema"u8);
 
             return Encoding.UTF8.GetString(sb.AsSpan());

@@ -46,6 +46,10 @@ public interface IApiResponse<TSelf> : IAsyncDisposable
     /// <param name="contentStream">
     /// The response content stream. The response takes ownership and will dispose it.
     /// </param>
+    /// <param name="responseHeaders">
+    /// Optional response headers from the transport. Generated response types
+    /// extract typed header values from this provider.
+    /// </param>
     /// <param name="owner">
     /// An optional disposable that owns transport resources (e.g. the HTTP response message).
     /// Will be disposed when the response is disposed.
@@ -62,6 +66,7 @@ public interface IApiResponse<TSelf> : IAsyncDisposable
     static abstract ValueTask<TSelf> CreateAsync(
         int statusCode,
         Stream contentStream,
+        IResponseHeaders? responseHeaders = null,
         IAsyncDisposable? owner = null,
         CancellationToken cancellationToken = default);
 }

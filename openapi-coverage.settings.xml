@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Configuration>
+  <CodeCoverage>
+    <ModulePaths>
+      <Include>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.HttpTransport\.dll$</ModulePath>
+      </Include>
+    </ModulePaths>
+  </CodeCoverage>
+</Configuration>

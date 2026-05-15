@@ -149,6 +149,16 @@
         "responses": {
           "200": {
             "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total number of items available",
+                "schema": { "type": "integer", "format": "int32" }
+              },
+              "X-Request-Id": {
+                "description": "Request correlation ID",
+                "schema": { "type": "string" }
+              }
+            },
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
@@ -380,6 +390,46 @@
                   },
                   "required": ["id", "name"]
                 }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/session/profile": {
+      "get": {
+        "operationId": "getSessionProfile",
+        "summary": "Cookie params: session, theme (optional), debug flag (optional)",
+        "tags": ["session"],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "cookie",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "theme",
+            "in": "cookie",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "debug",
+            "in": "cookie",
+            "schema": { "type": "boolean" }
+          },
+          {
+            "name": "max_age",
+            "in": "cookie",
+            "schema": { "type": "integer", "format": "int32" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
               }
             }
           }

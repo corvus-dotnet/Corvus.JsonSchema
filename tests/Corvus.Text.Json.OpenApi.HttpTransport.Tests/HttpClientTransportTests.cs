@@ -439,6 +439,7 @@ public class HttpClientTransportTests
         public static async ValueTask<TestResponse> CreateAsync(
             int statusCode,
             Stream contentStream,
+            IResponseHeaders? responseHeaders = null,
             IAsyncDisposable? owner = null,
             CancellationToken cancellationToken = default)
         {
@@ -472,6 +473,7 @@ public class HttpClientTransportTests
         public static ValueTask<ThrowingResponse> CreateAsync(
             int statusCode,
             Stream contentStream,
+            IResponseHeaders? responseHeaders = null,
             IAsyncDisposable? owner = null,
             CancellationToken cancellationToken = default)
         {
@@ -494,11 +496,15 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer) { }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>GET /pets with query parameters.</summary>
@@ -523,6 +529,8 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer)
         {
             writer.Write("/pets"u8);
@@ -536,6 +544,8 @@ public class HttpClientTransportTests
         }
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>GET /pets with X-Custom header.</summary>
@@ -558,6 +568,8 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => true;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer)
         {
             writer.Write("/pets"u8);
@@ -569,6 +581,8 @@ public class HttpClientTransportTests
         {
             callback("X-Custom"u8, Encoding.UTF8.GetBytes(this.headerValue), state);
         }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>POST /pets — body operation, no parameters.</summary>
@@ -584,11 +598,15 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer) { }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>GET /pets/{petId} — path parameter.</summary>
@@ -611,6 +629,8 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer)
         {
             byte[] path = Encoding.UTF8.GetBytes($"/pets/{this.petId}");
@@ -620,6 +640,8 @@ public class HttpClientTransportTests
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>GET /pets with HasQueryParameters=true but all optional (returns 0 bytes).</summary>
@@ -635,6 +657,8 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer)
         {
             writer.Write("/pets"u8);
@@ -643,6 +667,8 @@ public class HttpClientTransportTests
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>PUT /pets — tests MapMethod for Put.</summary>
@@ -658,11 +684,15 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer) { }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>DELETE /pets — tests MapMethod for Delete.</summary>
@@ -678,11 +708,15 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer) { }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>PATCH /pets — tests MapMethod for Patch.</summary>
@@ -698,11 +732,15 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer) { }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>HEAD /pets — tests MapMethod for Head.</summary>
@@ -718,11 +756,15 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer) { }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>OPTIONS /pets — tests MapMethod for Options.</summary>
@@ -738,11 +780,15 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer) { }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>TRACE /pets — tests MapMethod for Trace.</summary>
@@ -758,11 +804,15 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer) { }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 
     /// <summary>GET /pets/{petId} with query params too.</summary>
@@ -787,6 +837,8 @@ public class HttpClientTransportTests
 
         public static bool HasHeaderParameters => false;
 
+        public static bool HasCookieParameters => false;
+
         public void WriteResolvedPath(IBufferWriter<byte> writer)
         {
             byte[] path = Encoding.UTF8.GetBytes($"/pets/{this.petId}");
@@ -801,5 +853,7 @@ public class HttpClientTransportTests
         }
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
     }
 }

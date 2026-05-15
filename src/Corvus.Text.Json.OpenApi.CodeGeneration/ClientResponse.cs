@@ -25,12 +25,15 @@ public readonly struct ClientResponse
     /// </summary>
     /// <param name="responseProperty">The response property (name = status code, value = response element).</param>
     /// <param name="content">The content entries, one per media type.</param>
+    /// <param name="headers">The response header entries.</param>
     public ClientResponse(
         JsonProperty<JsonElement> responseProperty,
-        ClientMediaTypeContent[] content)
+        ClientMediaTypeContent[] content,
+        ClientResponseHeader[] headers)
     {
         this.ResponseProperty = responseProperty;
         this.Content = content;
+        this.Headers = headers;
     }
 
     /// <summary>
@@ -42,6 +45,11 @@ public readonly struct ClientResponse
     /// Gets the content entries, one per media type.
     /// </summary>
     public ClientMediaTypeContent[] Content { get; }
+
+    /// <summary>
+    /// Gets the response header entries.
+    /// </summary>
+    public ClientResponseHeader[] Headers { get; }
 
     /// <summary>
     /// Gets the status code pattern (e.g. <c>200</c>, <c>default</c>, <c>2XX</c>).

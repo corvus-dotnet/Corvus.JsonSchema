@@ -34,10 +34,10 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <see cref="BaseSchemaNameHeuristic"/> (1000) to take precedence.
 /// </para>
 /// <para>
-/// <b>Maintenance note:</b> This heuristic currently handles the three schema locations
-/// extracted by <c>ClientModelBuilder</c>: <c>responses</c>, <c>requestBody</c>, and
-/// <c>parameters</c>. When the walker is extended to extract schemas from additional
-/// OpenAPI locations (response headers, callbacks, path-level parameters, link schemas),
+/// <b>Maintenance note:</b> This heuristic currently handles the four schema locations
+/// extracted by <c>ClientModelBuilder</c>: <c>responses</c>, <c>requestBody</c>,
+/// <c>parameters</c>, and <c>response headers</c>. When the walker is extended to extract
+/// schemas from additional OpenAPI locations (callbacks, path-level parameters, link schemas),
 /// corresponding branches must be added to <see cref="TryParseOpenApiFragment"/>.
 /// </para>
 /// </remarks>
@@ -165,10 +165,29 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
             }
 
             ctx.StatusCode = remainder[..nextSlash];
+            ReadOnlySpan<char> afterStatusCode = remainder[(nextSlash + 1)..];
+
+            // Check for response header: headers/<name>/schema
+            if (afterStatusCode.StartsWith("headers/".AsSpan()))
+            {
+                ReadOnlySpan<char> afterHeaders = afterStatusCode["headers/".Length..];
+                int headerNameEnd = afterHeaders.IndexOf('/');
+                if (headerNameEnd < 0)
+                {
+                    return false;
+                }
+
+                ctx.HeaderName = afterHeaders[..headerNameEnd];
+                ctx.Position = SchemaPosition.ResponseHeader;
+
+                // Must be exactly "schema" after the header name
+                return afterHeaders[(headerNameEnd + 1)..].SequenceEqual("schema".AsSpan());
+            }
+
             ctx.Position = SchemaPosition.Response;
 
             // Verify this is a root schema (must end with /schema or /schema followed by nothing)
-            return IsRootSchema(remainder[(nextSlash + 1)..]);
+            return IsRootSchema(afterStatusCode);
         }
         else if (remainder.StartsWith("requestBody/".AsSpan()))
         {
@@ -361,6 +380,7 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
             SchemaPosition.Response => FormatStatusCode(ctx.StatusCode, buffer),
             SchemaPosition.RequestBody => WriteSpan("Body".AsSpan(), buffer),
             SchemaPosition.Parameter => FormatParameterSuffix(ctx.ParameterIndex, buffer),
+            SchemaPosition.ResponseHeader => FormatResponseHeaderSuffix(ctx.StatusCode, ctx.HeaderName, buffer),
             _ => 0,
         };
     }
@@ -466,6 +486,17 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         return written;
     }
 
+    private static int FormatResponseHeaderSuffix(
+        ReadOnlySpan<char> statusCode,
+        ReadOnlySpan<char> headerName,
+        Span<char> buffer)
+    {
+        // e.g. "OkXRateLimit" for 200 + X-Rate-Limit
+        int written = FormatStatusCode(statusCode, buffer);
+        written += PascalCaseSegment(headerName, buffer[written..]);
+        return written;
+    }
+
     private static int PascalCaseSegment(ReadOnlySpan<char> segment, Span<char> buffer)
     {
         if (segment.Length == 0 || buffer.Length == 0)
@@ -505,6 +536,7 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         Response,
         RequestBody,
         Parameter,
+        ResponseHeader,
     }
 
     private ref struct OpenApiSchemaContext
@@ -513,6 +545,7 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         public ReadOnlySpan<char> UrlPath;
         public ReadOnlySpan<char> StatusCode;
         public ReadOnlySpan<char> ParameterIndex;
+        public ReadOnlySpan<char> HeaderName;
         public SchemaPosition Position;
     }
 }

@@ -223,8 +223,28 @@ public sealed class OpenApi31Walker : ISpecWalker
 
             OpenApiDocument.ResponseOrReference response = responseProp.Value;
             WalkedMediaTypeContent[] content = ExtractMediaTypeContent(response.Content);
+            WalkedResponseHeader[] headers = ExtractResponseHeaders(response.Headers);
 
-            result.Add(new WalkedResponse(responseProp, content));
+            result.Add(new WalkedResponse(responseProp, content, headers));
+        }
+
+        return [.. result];
+    }
+
+    private static WalkedResponseHeader[] ExtractResponseHeaders(JsonElement headersMap)
+    {
+        if (headersMap.ValueKind != JsonValueKind.Object)
+        {
+            return [];
+        }
+
+        List<WalkedResponseHeader> result = [];
+
+        foreach (JsonProperty<JsonElement> headerProp in headersMap.EnumerateObject())
+        {
+            bool hasSchema = headerProp.Value.TryGetProperty("schema"u8, out JsonElement schema)
+                && schema.ValueKind == JsonValueKind.Object;
+            result.Add(new WalkedResponseHeader(headerProp, hasSchema));
         }
 
         return [.. result];

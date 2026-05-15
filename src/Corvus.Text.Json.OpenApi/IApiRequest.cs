@@ -73,6 +73,11 @@ public interface IApiRequest<TSelf>
     static abstract bool HasHeaderParameters { get; }
 
     /// <summary>
+    /// Gets a value indicating whether this operation has any cookie parameters.
+    /// </summary>
+    static abstract bool HasCookieParameters { get; }
+
+    /// <summary>
     /// Writes the resolved path (with parameter values substituted) to the buffer.
     /// </summary>
     /// <param name="writer">The buffer writer to write the UTF-8 path to.</param>
@@ -123,4 +128,24 @@ public interface IApiRequest<TSelf>
     /// </para>
     /// </remarks>
     void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state);
+
+    /// <summary>
+    /// Writes the cookie string to the buffer.
+    /// </summary>
+    /// <param name="writer">The buffer writer to write the UTF-8 cookie string to.</param>
+    /// <returns>
+    /// The number of bytes written. Returns <c>0</c> if no cookie parameters are present
+    /// (e.g. all optional parameters are unset).
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The generated implementation writes each cookie parameter as a <c>name=value</c>
+    /// pair, with pairs separated by <c>; </c> (semicolon-space) per RFC 6265.
+    /// The transport should set the result as the <c>Cookie</c> request header.
+    /// </para>
+    /// <para>
+    /// Cookie parameters use <c>form</c> style serialization by default (per OpenAPI 3.x).
+    /// </para>
+    /// </remarks>
+    int WriteCookies(IBufferWriter<byte> writer);
 }

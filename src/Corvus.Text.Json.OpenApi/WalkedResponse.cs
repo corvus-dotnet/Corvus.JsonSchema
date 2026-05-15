@@ -21,12 +21,15 @@ public readonly struct WalkedResponse
     /// </summary>
     /// <param name="property">The response property (name = status code, value = response element).</param>
     /// <param name="content">The media type content entries.</param>
+    /// <param name="headers">The response header entries.</param>
     public WalkedResponse(
         JsonProperty<JsonElement> property,
-        WalkedMediaTypeContent[] content)
+        WalkedMediaTypeContent[] content,
+        WalkedResponseHeader[] headers)
     {
         this.Property = property;
         this.Content = content;
+        this.Headers = headers;
     }
 
     /// <summary>
@@ -40,4 +43,9 @@ public readonly struct WalkedResponse
     /// Gets the media type content entries.
     /// </summary>
     public WalkedMediaTypeContent[] Content { get; }
+
+    /// <summary>
+    /// Gets the response header entries.
+    /// </summary>
+    public WalkedResponseHeader[] Headers { get; }
 }

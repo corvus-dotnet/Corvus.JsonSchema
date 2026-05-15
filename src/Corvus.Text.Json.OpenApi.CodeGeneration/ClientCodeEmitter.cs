@@ -488,6 +488,8 @@ public sealed class ClientCodeEmitter
             .Where(p => p.Location == ParameterLocation.Query).ToArray();
         ClientParameter[] headerParams = op.Parameters
             .Where(p => p.Location == ParameterLocation.Header).ToArray();
+        ClientParameter[] cookieParams = op.Parameters
+            .Where(p => p.Location == ParameterLocation.Cookie).ToArray();
 
         this.EmitRequestFields(w, op.Parameters);
         this.EmitRequestConstructor(w, structName, op.Parameters);
@@ -509,6 +511,9 @@ public sealed class ClientCodeEmitter
         w.WriteLine();
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine($"public static bool HasHeaderParameters => {(headerParams.Length > 0 ? "true" : "false")};");
+        w.WriteLine();
+        w.WriteLine("/// <inheritdoc/>");
+        w.WriteLine($"public static bool HasCookieParameters => {(cookieParams.Length > 0 ? "true" : "false")};");
 
         w.WriteLine();
         this.EmitWriteResolvedPath(w, pathTemplateUtf8, pathParams);
@@ -516,6 +521,8 @@ public sealed class ClientCodeEmitter
         this.EmitWriteQueryString(w, queryParams);
         w.WriteLine();
         this.EmitWriteHeaders(w, headerParams);
+        w.WriteLine();
+        this.EmitWriteCookies(w, cookieParams);
 
         w.CloseBrace();
 
@@ -1012,6 +1019,118 @@ public sealed class ClientCodeEmitter
         w.CloseBrace();
     }
 
+    private void EmitWriteCookies(IndentedWriter w, ClientParameter[] cookieParams)
+    {
+        w.WriteLine("/// <inheritdoc/>");
+        w.WriteLine("public int WriteCookies(IBufferWriter<byte> writer)");
+        w.OpenBrace();
+
+        if (cookieParams.Length == 0)
+        {
+            w.WriteLine("return 0;");
+            w.CloseBrace();
+            return;
+        }
+
+        w.WriteLine("int totalWritten = 0;");
+        w.WriteLine("bool first = true;");
+        w.WriteLine();
+
+        foreach (ClientParameter param in cookieParams)
+        {
+            string paramName = param.GetName();
+            string fieldName = SanitizeIdentifier(paramName);
+            ParameterSerializationKind kind = ClassifyParameter(param);
+
+            if (!param.IsRequired)
+            {
+                w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}Value)");
+                w.OpenBrace();
+                EmitCookieParamWrite(w, paramName, $"{fieldName}Value", fieldName, kind);
+                w.CloseBrace();
+                w.WriteLine();
+            }
+            else
+            {
+                EmitCookieParamWrite(w, paramName, $"this.{fieldName}", fieldName, kind);
+                w.WriteLine();
+            }
+        }
+
+        w.WriteLine("return totalWritten;");
+        w.CloseBrace();
+    }
+
+    private static void EmitCookieParamWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterSerializationKind kind)
+    {
+        // Cookie pairs are separated by "; " (RFC 6265 §4.2.1).
+        w.WriteLine("if (!first)");
+        w.OpenBrace();
+        w.WriteLine("writer.Write(\"; \"u8);");
+        w.WriteLine("totalWritten += 2;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        // Write "name=" prefix.
+        w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+        w.WriteLine($"totalWritten += {paramName.Length + 1};");
+
+        // Cookie values use form-style serialization (same as query, but no URI escaping).
+        EmitCookieScalarWrite(w, valueExpr, uid, kind);
+
+        w.WriteLine();
+        w.WriteLine("first = false;");
+    }
+
+    // ── Cookie parameter serialization (form style, no URI escaping) ────
+    private static void EmitCookieScalarWrite(
+        IndentedWriter w,
+        string valueExpr,
+        string uid,
+        ParameterSerializationKind kind)
+    {
+        switch (kind)
+        {
+            case ParameterSerializationKind.Boolean:
+                EmitBooleanWriteCounted(w, valueExpr);
+                break;
+
+            case ParameterSerializationKind.Int32:
+            case ParameterSerializationKind.Int64:
+            case ParameterSerializationKind.Float:
+            case ParameterSerializationKind.Double:
+                EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
+                w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
+                w.WriteLine($"totalWritten += bw{uid};");
+                break;
+
+            case ParameterSerializationKind.UnboundedNumber:
+                EmitUnboundedNumberToLocal(w, valueExpr, uid);
+                w.WriteLine($"writer.Write(raw{uid}.Span);");
+                w.WriteLine($"totalWritten += raw{uid}.Span.Length;");
+                break;
+
+            case ParameterSerializationKind.String:
+                EmitStringWrite(w, valueExpr, uid);
+
+                // No URI escaping for cookies — the value goes directly into the Cookie header.
+                w.WriteLine($"writer.Write(utf8{uid}.Span);");
+                w.WriteLine($"totalWritten += utf8{uid}.Span.Length;");
+                break;
+
+            case ParameterSerializationKind.Object:
+            case ParameterSerializationKind.Array:
+                // TODO: style+explode dependent serialization.
+                EmitJsonWriterFallbackCounted(w, valueExpr, uid);
+                break;
+        }
+    }
+
     private GeneratedFile EmitResponseStruct(ClientOperation op, string methodName)
     {
         string structName = $"{methodName}Response";
@@ -1051,6 +1170,9 @@ public sealed class ClientCodeEmitter
                 w.WriteLine($"public {typeName} {accessorName}Body {{ get; private set; }}");
             }
         }
+
+        // Emit response header properties for each response that has headers.
+        this.EmitResponseHeaderProperties(w, op.Responses);
 
         w.WriteLine();
         this.EmitCreateAsync(w, structName, op.Responses);
@@ -1166,6 +1288,7 @@ public sealed class ClientCodeEmitter
         w.PushIndent();
         w.WriteLine("int statusCode,");
         w.WriteLine("Stream contentStream,");
+        w.WriteLine("IResponseHeaders? responseHeaders = null,");
         w.WriteLine("IAsyncDisposable? owner = null,");
         w.WriteLine("CancellationToken cancellationToken = default)");
         w.PopIndent();
@@ -1175,6 +1298,9 @@ public sealed class ClientCodeEmitter
         w.WriteLine("response.StatusCode = statusCode;");
         w.WriteLine("response.owner = owner;");
         w.WriteLine();
+
+        // Read response headers if any response declares them.
+        this.EmitReadResponseHeaders(w, responses);
 
         foreach (ClientResponse resp in responses)
         {
@@ -1235,6 +1361,116 @@ public sealed class ClientCodeEmitter
         w.WriteLine("response.parsedDocument = doc;");
         w.WriteLine($"response.{accessorName}Body = doc.RootElement;");
         w.CloseBrace();
+    }
+
+    private void EmitResponseHeaderProperties(
+        IndentedWriter w,
+        ClientResponse[] responses)
+    {
+        // Collect unique header names across all responses.
+        // Multiple responses may declare the same header; we deduplicate by name.
+        HashSet<string> emittedHeaders = [];
+
+        foreach (ClientResponse resp in responses)
+        {
+            foreach (ClientResponseHeader header in resp.Headers)
+            {
+                string headerName = header.GetHeaderName();
+                string propertyName = HeaderNameToPropertyName(headerName);
+
+                if (!emittedHeaders.Add(propertyName))
+                {
+                    continue;
+                }
+
+                w.WriteLine();
+                w.WriteLine("/// <summary>");
+                w.WriteLine($"/// Gets the value of the <c>{headerName}</c> response header,");
+                w.WriteLine("/// or <see langword=\"null\"/> if the header was not present.");
+                w.WriteLine("/// </summary>");
+                w.WriteLine($"public string? {propertyName}Header {{ get; private set; }}");
+            }
+        }
+    }
+
+    private void EmitReadResponseHeaders(
+        IndentedWriter w,
+        ClientResponse[] responses)
+    {
+        // Collect unique header names across all responses.
+        HashSet<string> emittedHeaders = [];
+        List<(string headerName, string propertyName)> headers = [];
+
+        foreach (ClientResponse resp in responses)
+        {
+            foreach (ClientResponseHeader header in resp.Headers)
+            {
+                string headerName = header.GetHeaderName();
+                string propertyName = HeaderNameToPropertyName(headerName);
+
+                if (!emittedHeaders.Add(propertyName))
+                {
+                    continue;
+                }
+
+                headers.Add((headerName, propertyName));
+            }
+        }
+
+        if (headers.Count == 0)
+        {
+            return;
+        }
+
+        w.WriteLine("if (responseHeaders is not null)");
+        w.OpenBrace();
+
+        foreach ((string headerName, string propertyName) in headers)
+        {
+            string camelName = ToCamelCase(propertyName);
+            w.WriteLine($"if (responseHeaders.TryGetValue(\"{headerName}\", out string? {camelName}Value))");
+            w.OpenBrace();
+            w.WriteLine($"response.{propertyName}Header = {camelName}Value;");
+            w.CloseBrace();
+            w.WriteLine();
+        }
+
+        w.CloseBrace();
+        w.WriteLine();
+    }
+
+    private static string HeaderNameToPropertyName(string headerName)
+    {
+        // Convert header names like "X-Rate-Limit" → "XRateLimit"
+        Span<char> buffer = stackalloc char[headerName.Length];
+        int written = 0;
+        bool capitalizeNext = true;
+
+        for (int i = 0; i < headerName.Length; i++)
+        {
+            char c = headerName[i];
+
+            if (c == '-' || c == '_' || c == '.')
+            {
+                capitalizeNext = true;
+                continue;
+            }
+
+            buffer[written++] = capitalizeNext ? char.ToUpperInvariant(c) : c;
+            capitalizeNext = false;
+        }
+
+        return new string(buffer[..written]);
+    }
+
+    private static string ToCamelCase(string name)
+    {
+        if (name.Length == 0)
+        {
+            return name;
+        }
+
+        return char.ToLowerInvariant(name[0]) + name[1..];
     }
 
     private void EmitMatchResult(

@@ -37,6 +37,9 @@ public sealed class HttpClientTransport : IApiTransport
     [ThreadStatic]
     private static ArrayBufferWriter<byte>? t_uriWriter;
 
+    [ThreadStatic]
+    private static ArrayBufferWriter<byte>? t_cookieWriter;
+
     private readonly HttpClient httpClient;
     private readonly bool disposeClient;
 
@@ -125,6 +128,20 @@ public sealed class HttpClientTransport : IApiTransport
                 httpRequest.Headers);
         }
 
+        if (TRequest.HasCookieParameters)
+        {
+            ArrayBufferWriter<byte> cookieWriter = t_cookieWriter ??= new(256);
+            cookieWriter.Clear();
+            int cookieBytes = request.WriteCookies(cookieWriter);
+
+            if (cookieBytes > 0)
+            {
+                httpRequest.Headers.TryAddWithoutValidation(
+                    "Cookie",
+                    Encoding.UTF8.GetString(cookieWriter.WrittenSpan));
+            }
+        }
+
         return httpRequest;
     }
 
@@ -182,6 +199,7 @@ public sealed class HttpClientTransport : IApiTransport
             return await TResponse.CreateAsync(
                 (int)httpResponse.StatusCode,
                 contentStream,
+                new HttpResponseHeadersAdapter(httpResponse.Headers),
                 new HttpResponseOwner(httpResponse),
                 cancellationToken).ConfigureAwait(false);
         }
@@ -239,6 +257,30 @@ public sealed class HttpClientTransport : IApiTransport
         {
             response.Dispose();
             return default;
+        }
+    }
+
+    /// <summary>
+    /// Adapts <see cref="HttpResponseHeaders"/> to <see cref="IResponseHeaders"/>.
+    /// </summary>
+    private sealed class HttpResponseHeadersAdapter(
+        HttpResponseHeaders headers) : IResponseHeaders
+    {
+        public bool TryGetValue(string headerName, out string? value)
+        {
+            if (headers.TryGetValues(headerName, out IEnumerable<string>? values))
+            {
+                // Return the first value — OpenAPI headers are typically single-valued.
+                using IEnumerator<string> enumerator = values.GetEnumerator();
+                if (enumerator.MoveNext())
+                {
+                    value = enumerator.Current;
+                    return true;
+                }
+            }
+
+            value = null;
+            return false;
         }
     }
 }
