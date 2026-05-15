@@ -13,21 +13,32 @@ extracting schemas for code generation.
 
 ## Usage
 
+For OpenAPI 3.1, use the self-contained `OpenApi31CodeGenerator` which walks the
+strongly-typed model directly and emits C# source files:
+
+```csharp
+using Corvus.Text.Json.OpenApi;
+using Corvus.Text.Json.OpenApi31;
+
+// Collect schema pointers for the V5 code generator
+string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot);
+
+// Generate client code
+var gen = new OpenApi31CodeGenerator("MyApp.Client", schemaTypeMap);
+IReadOnlyList<GeneratedFile> files = gen.Generate(specRoot);
+```
+
+For OpenAPI 3.0, the `ISpecWalker` pipeline is used:
+
 ```csharp
 using Corvus.Text.Json.OpenApi;
 
-// Create a walker for your spec version
-ISpecWalker walker = new OpenApi31Walker();
-
-// Get the operation tree (optionally filtered)
-byte[] specBytes = File.ReadAllBytes("petstore.json");
+ISpecWalker walker = new OpenApi30Walker();
 var filter = new OperationFilter(includePaths: ["/pets/**"]);
-OperationNode root = walker.GetOperationTree(specBytes, filter);
 
-// Extract schemas for code generation
-foreach (ExtractedSchema schema in walker.ExtractSchemas(specBytes, filter))
+foreach (OperationEntry entry in walker.EnumerateOperations(specRoot, filter))
 {
-    Console.WriteLine($"{schema.SchemaReference} ({schema.Role}) from {schema.OperationId}");
+    Console.WriteLine($"{entry.OperationId} {entry.Method} {entry.PathTemplate}");
 }
 ```
 

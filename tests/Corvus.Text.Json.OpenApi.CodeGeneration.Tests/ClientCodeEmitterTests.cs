@@ -4,7 +4,7 @@
 
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
-using Corvus.Text.Json.OpenApi31;
+using Corvus.Text.Json.OpenApi30;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration.Tests;
 
@@ -18,11 +18,11 @@ public class ClientCodeEmitterTests
     public static void ClassInit(TestContext context)
     {
         string json = File.ReadAllText(
-            Path.Combine(AppContext.BaseDirectory, "TestData", "petstore-3.1.json"));
+            Path.Combine(AppContext.BaseDirectory, "TestData", "petstore-3.0.json"));
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
         JsonElement root = doc.RootElement.Clone();
 
-        petstoreModel = ClientModelBuilder.Build(root, new OpenApi31Walker());
+        petstoreModel = ClientModelBuilder.Build(root, new OpenApi30Walker());
 
         // Complete type map: every schema pointer the walker discovers must be mapped.
         petstoreSchemaTypeMap = new(StringComparer.Ordinal)
@@ -712,7 +712,7 @@ public class ClientCodeEmitterTests
     {
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
         JsonElement root = doc.RootElement.Clone();
-        return ClientModelBuilder.Build(root, new OpenApi31Walker());
+        return ClientModelBuilder.Build(root, new OpenApi30Walker());
     }
 
     // Spec: multiple non-default responses (200 + 201) plus a default

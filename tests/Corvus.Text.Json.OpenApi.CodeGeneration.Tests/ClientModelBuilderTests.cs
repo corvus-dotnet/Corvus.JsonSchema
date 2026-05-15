@@ -4,7 +4,7 @@
 
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
-using Corvus.Text.Json.OpenApi31;
+using Corvus.Text.Json.OpenApi30;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration.Tests;
 
@@ -17,7 +17,7 @@ public class ClientModelBuilderTests
     public static void ClassInit(TestContext context)
     {
         string json = File.ReadAllText(
-            Path.Combine(AppContext.BaseDirectory, "TestData", "petstore-3.1.json"));
+            Path.Combine(AppContext.BaseDirectory, "TestData", "petstore-3.0.json"));
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
         petstoreRoot = doc.RootElement.Clone();
     }
@@ -25,28 +25,28 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsApiTitle()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
         Assert.AreEqual("Petstore", model.GetTitle());
     }
 
     [TestMethod]
     public void Build_ExtractsApiVersion()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
         Assert.AreEqual("1.0.0", model.GetVersion());
     }
 
     [TestMethod]
     public void Build_ExtractsApiDescription()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
         Assert.AreEqual("A sample Petstore API", model.GetDescription());
     }
 
     [TestMethod]
     public void Build_FindsAllOperations()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         // listPets, createPet, showPetById
         Assert.AreEqual(3, model.Operations.Length);
@@ -55,7 +55,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsOperationIds()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
         List<string?> ids = model.Operations.Select(o => o.GetOperationId()).ToList();
 
         CollectionAssert.Contains(ids, "listPets");
@@ -66,7 +66,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsHttpMethods()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.AreEqual(OperationMethod.Get, listPets.Method);
@@ -78,7 +78,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsPaths()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.AreEqual("/pets", listPets.GetPathTemplate());
@@ -90,7 +90,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsTags()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         string[] tags = listPets.GetTags();
@@ -101,7 +101,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsSummary()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.AreEqual("List all pets", listPets.GetSummary());
@@ -110,7 +110,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsQueryParameter()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.AreEqual(1, listPets.Parameters.Length);
@@ -129,7 +129,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsPathParameter()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation showPet = model.Operations.First(o => o.GetOperationId() == "showPetById");
         Assert.AreEqual(1, showPet.Parameters.Length);
@@ -147,7 +147,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsRequestBody()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation createPet = model.Operations.First(o => o.GetOperationId() == "createPet");
         Assert.IsNotNull(createPet.RequestBody);
@@ -160,7 +160,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_ExtractsResponses()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
 
@@ -179,7 +179,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_NoRequestBodyForGetOperation()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.IsNull(listPets.RequestBody);
@@ -188,7 +188,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void Build_CollectsSchemaPointers()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         // Should have pointers for: inline parameter schemas, request body schemas,
         // response body schemas, and component schemas
@@ -200,7 +200,7 @@ public class ClientModelBuilderTests
     {
         OperationFilter filter = new(["/pets"]);
 
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker(), filter);
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker(), filter);
 
         // Only /pets (GET, POST) — not /pets/{petId}
         Assert.AreEqual(2, model.Operations.Length);
@@ -210,7 +210,7 @@ public class ClientModelBuilderTests
     [TestMethod]
     public void GetMethodName_UsesOperationId()
     {
-        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi31Walker());
+        ClientModel model = ClientModelBuilder.Build(petstoreRoot, new OpenApi30Walker());
 
         ClientOperation listPets = model.Operations.First(o => o.GetOperationId() == "listPets");
         Assert.AreEqual("ListPets", listPets.GetMethodName());
