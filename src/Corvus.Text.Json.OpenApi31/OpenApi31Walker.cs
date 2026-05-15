@@ -574,29 +574,16 @@ public sealed class OpenApi31Walker : ISpecWalker
         return [.. result];
     }
 
-    private static ParameterLocation ParseLocation(OpenApiDocument.Parameter.InEntity inValue)
-    {
-        return inValue.Match(
-            static () => ParameterLocation.Query,
-            static () => ParameterLocation.Header,
-            static () => ParameterLocation.Path,
-            static () => ParameterLocation.Cookie,
-            static () => ParameterLocation.Query);
-    }
-
     private static (ParameterLocation Location, ParameterStyle Style, bool Explode) ParseParameterTraits(
         OpenApiDocument.Parameter typed)
     {
-        ParameterLocation location = ParseLocation(typed.In);
-
-        ParameterStyle style = location switch
-        {
-            ParameterLocation.Header => ParameterStyle.Simple,
-            ParameterLocation.Cookie => ParameterStyle.Form,
-            ParameterLocation.Path => ParsePathStyle((JsonElement)typed),
-            ParameterLocation.Query => ParseQueryStyle((JsonElement)typed),
-            _ => ParameterStyle.Form,
-        };
+        (ParameterLocation location, ParameterStyle style) = typed.In.Match<OpenApiDocument.Parameter, (ParameterLocation, ParameterStyle)>(
+            in typed,
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle((JsonElement)p)),
+            static (_) => (ParameterLocation.Header, ParameterStyle.Simple),
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Path, ParsePathStyle((JsonElement)p)),
+            static (_) => (ParameterLocation.Cookie, ParameterStyle.Form),
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle((JsonElement)p)));
 
         bool explode = typed.Explode.IsNotUndefined() ? (bool)typed.Explode : style == ParameterStyle.Form;
         return (location, style, explode);
