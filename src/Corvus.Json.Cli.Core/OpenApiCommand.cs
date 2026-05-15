@@ -80,13 +80,6 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         // Detect or use specified version
         string specVersion = settings.SpecVersion ?? DetectSpecVersion(specRoot);
 
-        ISpecWalker walker = specVersion switch
-        {
-            "3.0" => new OpenApi30Walker(),
-            "3.1" => new OpenApi31Walker(),
-            _ => new OpenApi31Walker(),
-        };
-
         // Build filter
         OperationFilter? filter = null;
         if (settings.Filter is { Length: > 0 })
@@ -100,28 +93,58 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
             filter = new OperationFilter(patterns);
         }
 
-        // Build client model
-        ClientModel model = ClientModelBuilder.Build(specRoot, walker, filter);
-
-        AnsiConsole.MarkupLine($"[green]API:[/] {model.GetTitle() ?? "(untitled)"} v{model.GetVersion() ?? "?"}");
-        AnsiConsole.MarkupLine($"[green]Operations:[/] {model.Operations.Length}");
-        AnsiConsole.MarkupLine($"[green]Schemas:[/] {model.SchemaPointers.Length}");
-
-        // Generate V5 schema types into a "Models" subdirectory for easier navigation
+        IReadOnlyList<GeneratedFile> files;
         string modelsPath = Path.Combine(outputPath, "Models");
-        Dictionary<string, string>? schemaTypeMap = model.SchemaPointers.Length > 0
-            ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, model.SchemaPointers, cancellationToken)
-                .ConfigureAwait(false)
-            : null;
 
-        if (schemaTypeMap is not null)
+        if (specVersion is "3.1" or not "3.0")
         {
-            AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+            // OpenAPI 3.1 (or unknown) — use the typed code generator directly
+            string[] schemaPointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, filter);
+
+            AnsiConsole.MarkupLine($"[green]API:[/] {GetTitle(specRoot) ?? "(untitled)"} v{GetVersion(specRoot) ?? "?"}");
+            AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
+
+            Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
+                ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, cancellationToken)
+                    .ConfigureAwait(false)
+                : null;
+
+            if (schemaTypeMap is not null)
+            {
+                AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+            }
+
+            OpenApi31CodeGenerator generator = new(
+                rootNamespace,
+                schemaTypeMap ?? new Dictionary<string, string>(),
+                settings.ClientName);
+            files = generator.Generate(specRoot, filter);
+        }
+        else
+        {
+            // OpenAPI 3.0 — use the legacy pipeline until migrated
+            ISpecWalker walker = new OpenApi30Walker();
+            ClientModel model = ClientModelBuilder.Build(specRoot, walker, filter);
+
+            AnsiConsole.MarkupLine($"[green]API:[/] {model.GetTitle() ?? "(untitled)"} v{model.GetVersion() ?? "?"}");
+            AnsiConsole.MarkupLine($"[green]Operations:[/] {model.Operations.Length}");
+            AnsiConsole.MarkupLine($"[green]Schemas:[/] {model.SchemaPointers.Length}");
+
+            Dictionary<string, string>? schemaTypeMap = model.SchemaPointers.Length > 0
+                ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, model.SchemaPointers, cancellationToken)
+                    .ConfigureAwait(false)
+                : null;
+
+            if (schemaTypeMap is not null)
+            {
+                AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+            }
+
+            ClientCodeEmitter emitter = new(rootNamespace, schemaTypeMap ?? new Dictionary<string, string>(), settings.ClientName);
+            files = emitter.Emit(model);
         }
 
-        // Emit client code with schema type resolution
-        ClientCodeEmitter emitter = new(rootNamespace, schemaTypeMap ?? new Dictionary<string, string>(), settings.ClientName);
-        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        AnsiConsole.MarkupLine($"[green]Files:[/] {files.Count}");
 
         // Write client files
         Directory.CreateDirectory(outputPath);
@@ -134,7 +157,7 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
             AnsiConsole.MarkupLine($"  [blue]Wrote:[/] {filePath}");
         }
 
-        int totalFiles = files.Count + (schemaTypeMap?.Count ?? 0);
+        int totalFiles = files.Count;
         AnsiConsole.MarkupLine($"[green]Generated {totalFiles} files in {outputPath}[/]");
 
         return 0;
@@ -247,6 +270,30 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         }
 
         return "3.1";
+    }
+
+    private static string? GetTitle(JsonElement specRoot)
+    {
+        if (specRoot.TryGetProperty("info"u8, out JsonElement info)
+            && info.TryGetProperty("title"u8, out JsonElement title)
+            && title.ValueKind == JsonValueKind.String)
+        {
+            return title.GetString();
+        }
+
+        return null;
+    }
+
+    private static string? GetVersion(JsonElement specRoot)
+    {
+        if (specRoot.TryGetProperty("info"u8, out JsonElement info)
+            && info.TryGetProperty("version"u8, out JsonElement ver)
+            && ver.ValueKind == JsonValueKind.String)
+        {
+            return ver.GetString();
+        }
+
+        return null;
     }
 }
 

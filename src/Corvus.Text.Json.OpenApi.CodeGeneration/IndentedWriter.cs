@@ -9,7 +9,7 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <summary>
 /// A simple indented text writer for code generation.
 /// </summary>
-internal sealed class IndentedWriter
+public sealed class IndentedWriter
 {
     private readonly StringBuilder sb = new();
     private int indentLevel;

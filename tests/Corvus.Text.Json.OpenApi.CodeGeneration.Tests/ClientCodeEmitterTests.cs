@@ -2538,7 +2538,7 @@ public class ClientCodeEmitterTests
 
     // ── ClassifyParameter edge cases ───────────────────────────────────
     [TestMethod]
-    public void Emit_IntegerWithUnknownFormat_ClassifiesAsUnboundedNumber()
+    public void Emit_IntegerWithUint32Format_ClassifiesAsUInt32()
     {
         const string spec = """
             {
@@ -2569,13 +2569,13 @@ public class ClientCodeEmitterTests
         IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
         GeneratedFile req = GetFile(files, "GetItemRequest.cs");
 
-        // Unbounded number uses JsonMarshal.GetRawUtf8Value
+        // UInt32 uses TryFormat with a fixed-size buffer
         Assert.IsTrue(
-            req.Content.Contains("JsonMarshal.GetRawUtf8Value", StringComparison.Ordinal));
+            req.Content.Contains("TryFormat", StringComparison.Ordinal));
     }
 
     [TestMethod]
-    public void Emit_NumberWithUnknownFormat_ClassifiesAsUnboundedNumber()
+    public void Emit_NumberWithDecimalFormat_ClassifiesAsDecimal()
     {
         const string spec = """
             {
@@ -2606,9 +2606,9 @@ public class ClientCodeEmitterTests
         IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
         GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
 
-        // Unbounded number uses JsonMarshal.GetRawUtf8Value
+        // Decimal uses TryFormat with a fixed-size buffer
         Assert.IsTrue(
-            req.Content.Contains("JsonMarshal.GetRawUtf8Value", StringComparison.Ordinal));
+            req.Content.Contains("TryFormat", StringComparison.Ordinal));
     }
 
     [TestMethod]
