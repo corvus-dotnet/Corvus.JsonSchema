@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Text;
-using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration;
@@ -23,25 +22,24 @@ public static class SchemaPointerBuilder
     /// <summary>
     /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/parameters/&lt;index&gt;/schema</c>.
     /// </summary>
-    /// <param name="pathProperty">The path property from the paths map.</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
     /// <param name="method">The HTTP method.</param>
     /// <param name="index">The parameter index.</param>
     /// <param name="isPathLevel">Whether the parameter is path-level.</param>
     /// <returns>The JSON Pointer string.</returns>
     public static string BuildParameterSchemaPointer(
-        JsonProperty<JsonElement> pathProperty,
+        ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         int index,
         bool isPathLevel)
     {
         Span<byte> initialBuffer = stackalloc byte[256];
         Utf8ValueStringBuilder sb = new(initialBuffer);
-        using UnescapedUtf8JsonString pathName = pathProperty.Utf8NameSpan;
 
         try
         {
             sb.Append("#/paths/"u8);
-            AppendEncodedSegment(ref sb, pathName.Span);
+            AppendEncodedSegment(ref sb, pathNameUtf8);
 
             if (!isPathLevel)
             {
@@ -64,31 +62,29 @@ public static class SchemaPointerBuilder
     /// <summary>
     /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/&lt;parentSegment&gt;/content/&lt;mediaType&gt;/schema</c>.
     /// </summary>
-    /// <param name="pathProperty">The path property from the paths map.</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
     /// <param name="method">The HTTP method.</param>
     /// <param name="parentSegmentUtf8">The parent segment (e.g. <c>/requestBody</c>) as UTF-8.</param>
-    /// <param name="mediaTypeProperty">The media type property from the content map.</param>
+    /// <param name="mediaTypeNameUtf8">The UTF-8 media type name from the content map.</param>
     /// <returns>The JSON Pointer string.</returns>
     public static string BuildContentSchemaPointer(
-        JsonProperty<JsonElement> pathProperty,
+        ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         ReadOnlySpan<byte> parentSegmentUtf8,
-        JsonProperty<JsonElement> mediaTypeProperty)
+        ReadOnlySpan<byte> mediaTypeNameUtf8)
     {
         Span<byte> initialBuffer = stackalloc byte[256];
         Utf8ValueStringBuilder sb = new(initialBuffer);
-        using UnescapedUtf8JsonString pathName = pathProperty.Utf8NameSpan;
-        using UnescapedUtf8JsonString mediaTypeName = mediaTypeProperty.Utf8NameSpan;
 
         try
         {
             sb.Append("#/paths/"u8);
-            AppendEncodedSegment(ref sb, pathName.Span);
+            AppendEncodedSegment(ref sb, pathNameUtf8);
             sb.Append((byte)'/');
             AppendMethodUtf8(ref sb, method);
             sb.Append(parentSegmentUtf8);
             sb.Append("/content/"u8);
-            AppendEncodedSegment(ref sb, mediaTypeName.Span);
+            AppendEncodedSegment(ref sb, mediaTypeNameUtf8);
             sb.Append("/schema"u8);
 
             return Encoding.UTF8.GetString(sb.AsSpan());
@@ -102,33 +98,30 @@ public static class SchemaPointerBuilder
     /// <summary>
     /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/content/&lt;mediaType&gt;/schema</c>.
     /// </summary>
-    /// <param name="pathProperty">The path property from the paths map.</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
     /// <param name="method">The HTTP method.</param>
-    /// <param name="responseProperty">The response property from the responses map.</param>
-    /// <param name="mediaTypeProperty">The media type property from the content map.</param>
+    /// <param name="statusCodeUtf8">The UTF-8 status code from the responses map.</param>
+    /// <param name="mediaTypeNameUtf8">The UTF-8 media type name from the content map.</param>
     /// <returns>The JSON Pointer string.</returns>
     public static string BuildResponseContentSchemaPointer(
-        JsonProperty<JsonElement> pathProperty,
+        ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
-        JsonProperty<JsonElement> responseProperty,
-        JsonProperty<JsonElement> mediaTypeProperty)
+        ReadOnlySpan<byte> statusCodeUtf8,
+        ReadOnlySpan<byte> mediaTypeNameUtf8)
     {
         Span<byte> initialBuffer = stackalloc byte[256];
         Utf8ValueStringBuilder sb = new(initialBuffer);
-        using UnescapedUtf8JsonString pathName = pathProperty.Utf8NameSpan;
-        using UnescapedUtf8JsonString statusCode = responseProperty.Utf8NameSpan;
-        using UnescapedUtf8JsonString mediaTypeName = mediaTypeProperty.Utf8NameSpan;
 
         try
         {
             sb.Append("#/paths/"u8);
-            AppendEncodedSegment(ref sb, pathName.Span);
+            AppendEncodedSegment(ref sb, pathNameUtf8);
             sb.Append((byte)'/');
             AppendMethodUtf8(ref sb, method);
             sb.Append("/responses/"u8);
-            AppendEncodedSegment(ref sb, statusCode.Span);
+            AppendEncodedSegment(ref sb, statusCodeUtf8);
             sb.Append("/content/"u8);
-            AppendEncodedSegment(ref sb, mediaTypeName.Span);
+            AppendEncodedSegment(ref sb, mediaTypeNameUtf8);
             sb.Append("/schema"u8);
 
             return Encoding.UTF8.GetString(sb.AsSpan());
@@ -142,33 +135,30 @@ public static class SchemaPointerBuilder
     /// <summary>
     /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/headers/&lt;headerName&gt;/schema</c>.
     /// </summary>
-    /// <param name="pathProperty">The path property from the paths map.</param>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
     /// <param name="method">The HTTP method.</param>
-    /// <param name="responseProperty">The response property from the responses map.</param>
-    /// <param name="headerProperty">The header property from the response headers map.</param>
+    /// <param name="statusCodeUtf8">The UTF-8 status code from the responses map.</param>
+    /// <param name="headerNameUtf8">The UTF-8 header name from the response headers map.</param>
     /// <returns>The JSON Pointer string.</returns>
     public static string BuildResponseHeaderSchemaPointer(
-        JsonProperty<JsonElement> pathProperty,
+        ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
-        JsonProperty<JsonElement> responseProperty,
-        JsonProperty<JsonElement> headerProperty)
+        ReadOnlySpan<byte> statusCodeUtf8,
+        ReadOnlySpan<byte> headerNameUtf8)
     {
         Span<byte> initialBuffer = stackalloc byte[256];
         Utf8ValueStringBuilder sb = new(initialBuffer);
-        using UnescapedUtf8JsonString pathName = pathProperty.Utf8NameSpan;
-        using UnescapedUtf8JsonString statusCode = responseProperty.Utf8NameSpan;
-        using UnescapedUtf8JsonString headerName = headerProperty.Utf8NameSpan;
 
         try
         {
             sb.Append("#/paths/"u8);
-            AppendEncodedSegment(ref sb, pathName.Span);
+            AppendEncodedSegment(ref sb, pathNameUtf8);
             sb.Append((byte)'/');
             AppendMethodUtf8(ref sb, method);
             sb.Append("/responses/"u8);
-            AppendEncodedSegment(ref sb, statusCode.Span);
+            AppendEncodedSegment(ref sb, statusCodeUtf8);
             sb.Append("/headers/"u8);
-            AppendEncodedSegment(ref sb, headerName.Span);
+            AppendEncodedSegment(ref sb, headerNameUtf8);
             sb.Append("/schema"u8);
 
             return Encoding.UTF8.GetString(sb.AsSpan());

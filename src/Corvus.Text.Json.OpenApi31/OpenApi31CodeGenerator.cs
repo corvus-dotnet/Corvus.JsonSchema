@@ -58,10 +58,16 @@ public sealed class OpenApi31CodeGenerator
         this.clientNamePrefix = clientNamePrefix;
     }
 
-    // ── Internal record types (pre-extracted strings, no JsonElement) ────
+    // ── Walk-phase reference (typed model objects, no strings extracted) ──
+    private readonly record struct OperationRef(
+        JsonProperty<OpenApiDocument.PathItem> PathProp,
+        OpenApiDocument.Operation Operation,
+        OperationMethod Method,
+        OpenApiDocument.PathItem PathItem);
+
+    // ── Emit-boundary record types (strings for C# code generation) ─────
     private readonly record struct OperationInfo(
         string PathTemplate,
-        JsonProperty<JsonElement> PathProperty,
         OperationMethod Method,
         string MethodName,
         string? OperationId,
@@ -116,47 +122,27 @@ public sealed class OpenApi31CodeGenerator
         IOpenApiReferenceResolver? referenceResolver = null)
     {
         referenceResolver ??= new LocalReferenceResolver(specRoot);
+        OpenApiDocument doc = specRoot;
+
+        if (doc.PathsValue.IsUndefined())
+        {
+            return [];
+        }
+
         List<string> pointers = [];
 
-        foreach (OperationInfo op in WalkOperations(specRoot, filter, referenceResolver))
+        foreach (JsonProperty<OpenApiDocument.PathItem> pathProp in doc.PathsValue.EnumerateObject())
         {
-            foreach (ParameterInfo param in op.Parameters)
+            if (filter is not null)
             {
-                if (param.SchemaPointer is not null)
+                using UnescapedUtf16JsonString name = pathProp.Utf16NameSpan;
+                if (!filter.Matches(name.Span))
                 {
-                    pointers.Add(param.SchemaPointer);
+                    continue;
                 }
             }
 
-            if (op.RequestBody is { } rb)
-            {
-                foreach (ContentInfo content in rb.Content)
-                {
-                    if (content.SchemaPointer is not null)
-                    {
-                        pointers.Add(content.SchemaPointer);
-                    }
-                }
-            }
-
-            foreach (ResponseInfo resp in op.Responses)
-            {
-                foreach (ContentInfo content in resp.Content)
-                {
-                    if (content.SchemaPointer is not null)
-                    {
-                        pointers.Add(content.SchemaPointer);
-                    }
-                }
-
-                foreach (HeaderInfo header in resp.Headers)
-                {
-                    if (header.SchemaPointer is not null)
-                    {
-                        pointers.Add(header.SchemaPointer);
-                    }
-                }
-            }
+            CollectPathItemPointers(pathProp, pointers, referenceResolver);
         }
 
         return [.. pointers];
@@ -178,7 +164,12 @@ public sealed class OpenApi31CodeGenerator
         IOpenApiReferenceResolver? referenceResolver = null)
     {
         referenceResolver ??= new LocalReferenceResolver(specRoot);
-        List<OperationInfo> operations = [.. WalkOperations(specRoot, filter, referenceResolver)];
+        List<OperationInfo> operations = [];
+
+        foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter))
+        {
+            operations.Add(PrepareOperation(opRef, referenceResolver));
+        }
 
         List<GeneratedFile> files = [];
         Dictionary<string, List<OperationInfo>> groups = GroupOperationsByTag(operations);
@@ -201,12 +192,155 @@ public sealed class OpenApi31CodeGenerator
     }
 
     // ═══════════════════════════════════════════════════════════════════
-    // Walk logic — ported from OpenApi31Walker.cs
+    // Schema pointer collection — walks typed model directly
     // ═══════════════════════════════════════════════════════════════════
-    private static IEnumerable<OperationInfo> WalkOperations(
-        JsonElement specRoot,
-        OperationFilter? filter,
+    private static void CollectPathItemPointers(
+        JsonProperty<OpenApiDocument.PathItem> pathProp,
+        List<string> pointers,
         IOpenApiReferenceResolver referenceResolver)
+    {
+        OpenApiDocument.PathItem pathItem = pathProp.Value;
+
+        if (pathItem.Get.IsNotUndefined())
+        {
+            CollectOperationPointers(pathProp, pathItem.Get, OperationMethod.Get, pathItem, pointers, referenceResolver);
+        }
+
+        if (pathItem.Put.IsNotUndefined())
+        {
+            CollectOperationPointers(pathProp, pathItem.Put, OperationMethod.Put, pathItem, pointers, referenceResolver);
+        }
+
+        if (pathItem.Post.IsNotUndefined())
+        {
+            CollectOperationPointers(pathProp, pathItem.Post, OperationMethod.Post, pathItem, pointers, referenceResolver);
+        }
+
+        if (pathItem.Delete.IsNotUndefined())
+        {
+            CollectOperationPointers(pathProp, pathItem.Delete, OperationMethod.Delete, pathItem, pointers, referenceResolver);
+        }
+
+        if (pathItem.Options.IsNotUndefined())
+        {
+            CollectOperationPointers(pathProp, pathItem.Options, OperationMethod.Options, pathItem, pointers, referenceResolver);
+        }
+
+        if (pathItem.Head.IsNotUndefined())
+        {
+            CollectOperationPointers(pathProp, pathItem.Head, OperationMethod.Head, pathItem, pointers, referenceResolver);
+        }
+
+        if (pathItem.Patch.IsNotUndefined())
+        {
+            CollectOperationPointers(pathProp, pathItem.Patch, OperationMethod.Patch, pathItem, pointers, referenceResolver);
+        }
+
+        if (pathItem.Trace.IsNotUndefined())
+        {
+            CollectOperationPointers(pathProp, pathItem.Trace, OperationMethod.Trace, pathItem, pointers, referenceResolver);
+        }
+    }
+
+    private static void CollectOperationPointers(
+        JsonProperty<OpenApiDocument.PathItem> pathProp,
+        OpenApiDocument.Operation operation,
+        OperationMethod method,
+        OpenApiDocument.PathItem pathItem,
+        List<string> pointers,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
+
+        // Parameter schema pointers (with path/operation merge)
+        foreach ((OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel) in
+            MergeParameters(operation, pathItem, referenceResolver))
+        {
+            if (param.SchemaValue.IsNotUndefined())
+            {
+                pointers.Add(SchemaPointerBuilder.BuildParameterSchemaPointer(
+                    pathName.Span, method, sourceIndex, isPathLevel));
+            }
+        }
+
+        // Request body content schema pointers
+        if (operation.RequestBody.IsNotUndefined()
+            && TryResolveRequestBody(operation.RequestBody, referenceResolver, out OpenApiDocument.RequestBody requestBody)
+            && requestBody.ContentValue.IsNotUndefined())
+        {
+            foreach (var mediaTypeProp in requestBody.ContentValue.EnumerateObject())
+            {
+                if (mediaTypeProp.Value.SchemaValue.IsNotUndefined())
+                {
+                    using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+                    pointers.Add(SchemaPointerBuilder.BuildContentSchemaPointer(
+                        pathName.Span, method, "/requestBody"u8, mediaTypeName.Span));
+                }
+            }
+        }
+
+        // Response content and header schema pointers
+        if (operation.ResponsesValue.IsNotUndefined())
+        {
+            foreach (var responseProp in operation.ResponsesValue.EnumerateObject())
+            {
+                if (responseProp.Value.IsUndefined())
+                {
+                    continue;
+                }
+
+                if (!TryResolveResponse(responseProp.Value, referenceResolver, out OpenApiDocument.Response response))
+                {
+                    continue;
+                }
+
+                using UnescapedUtf8JsonString statusCode = responseProp.Utf8NameSpan;
+
+                if (response.ContentValue.IsNotUndefined())
+                {
+                    foreach (var mediaTypeProp in response.ContentValue.EnumerateObject())
+                    {
+                        if (mediaTypeProp.Value.SchemaValue.IsNotUndefined())
+                        {
+                            using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+                            pointers.Add(SchemaPointerBuilder.BuildResponseContentSchemaPointer(
+                                pathName.Span, method, statusCode.Span, mediaTypeName.Span));
+                        }
+                    }
+                }
+
+                if (response.Headers.IsNotUndefined())
+                {
+                    foreach (var headerProp in response.Headers.EnumerateObject())
+                    {
+                        if (headerProp.Value.IsUndefined())
+                        {
+                            continue;
+                        }
+
+                        if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header))
+                        {
+                            continue;
+                        }
+
+                        if (header.SchemaValue.IsNotUndefined())
+                        {
+                            using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
+                            pointers.Add(SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
+                                pathName.Span, method, statusCode.Span, headerName.Span));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Walk logic — yields typed model references
+    // ═══════════════════════════════════════════════════════════════════
+    private static IEnumerable<OperationRef> WalkOperationRefs(
+        JsonElement specRoot,
+        OperationFilter? filter)
     {
         OpenApiDocument doc = specRoot;
 
@@ -215,7 +349,7 @@ public sealed class OpenApi31CodeGenerator
             yield break;
         }
 
-        foreach (var pathProp in doc.PathsValue.EnumerateObject())
+        foreach (JsonProperty<OpenApiDocument.PathItem> pathProp in doc.PathsValue.EnumerateObject())
         {
             if (filter is not null)
             {
@@ -226,154 +360,163 @@ public sealed class OpenApi31CodeGenerator
                 }
             }
 
-            OpenApiDocument.PathItem pathItem = pathProp.Value;
-            JsonProperty<JsonElement> path = pathProp.AsJsonElementProperty();
-
-            foreach (OperationInfo entry in WalkPathItemOperations(
-                path, pathItem, referenceResolver))
+            foreach (OperationRef entry in WalkPathItemRefs(pathProp))
             {
                 yield return entry;
             }
         }
     }
 
-    private static IEnumerable<OperationInfo> WalkPathItemOperations(
-        JsonProperty<JsonElement> path,
-        OpenApiDocument.PathItem pathItem,
-        IOpenApiReferenceResolver referenceResolver)
+    private static IEnumerable<OperationRef> WalkPathItemRefs(
+        JsonProperty<OpenApiDocument.PathItem> pathProp)
     {
+        OpenApiDocument.PathItem pathItem = pathProp.Value;
+
         if (pathItem.Get.IsNotUndefined())
         {
-            yield return CreateOperationInfo(path, pathItem.Get, OperationMethod.Get, pathItem, referenceResolver);
+            yield return new OperationRef(pathProp, pathItem.Get, OperationMethod.Get, pathItem);
         }
 
         if (pathItem.Put.IsNotUndefined())
         {
-            yield return CreateOperationInfo(path, pathItem.Put, OperationMethod.Put, pathItem, referenceResolver);
+            yield return new OperationRef(pathProp, pathItem.Put, OperationMethod.Put, pathItem);
         }
 
         if (pathItem.Post.IsNotUndefined())
         {
-            yield return CreateOperationInfo(path, pathItem.Post, OperationMethod.Post, pathItem, referenceResolver);
+            yield return new OperationRef(pathProp, pathItem.Post, OperationMethod.Post, pathItem);
         }
 
         if (pathItem.Delete.IsNotUndefined())
         {
-            yield return CreateOperationInfo(path, pathItem.Delete, OperationMethod.Delete, pathItem, referenceResolver);
+            yield return new OperationRef(pathProp, pathItem.Delete, OperationMethod.Delete, pathItem);
         }
 
         if (pathItem.Options.IsNotUndefined())
         {
-            yield return CreateOperationInfo(path, pathItem.Options, OperationMethod.Options, pathItem, referenceResolver);
+            yield return new OperationRef(pathProp, pathItem.Options, OperationMethod.Options, pathItem);
         }
 
         if (pathItem.Head.IsNotUndefined())
         {
-            yield return CreateOperationInfo(path, pathItem.Head, OperationMethod.Head, pathItem, referenceResolver);
+            yield return new OperationRef(pathProp, pathItem.Head, OperationMethod.Head, pathItem);
         }
 
         if (pathItem.Patch.IsNotUndefined())
         {
-            yield return CreateOperationInfo(path, pathItem.Patch, OperationMethod.Patch, pathItem, referenceResolver);
+            yield return new OperationRef(pathProp, pathItem.Patch, OperationMethod.Patch, pathItem);
         }
 
         if (pathItem.Trace.IsNotUndefined())
         {
-            yield return CreateOperationInfo(path, pathItem.Trace, OperationMethod.Trace, pathItem, referenceResolver);
+            yield return new OperationRef(pathProp, pathItem.Trace, OperationMethod.Trace, pathItem);
         }
     }
 
-    private static OperationInfo CreateOperationInfo(
-        JsonProperty<JsonElement> path,
+    // ═══════════════════════════════════════════════════════════════════
+    // Parameter merging — typed dedup via JsonString equality
+    // ═══════════════════════════════════════════════════════════════════
+    private static List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel)> MergeParameters(
         OpenApiDocument.Operation operation,
-        OperationMethod method,
         OpenApiDocument.PathItem pathItem,
         IOpenApiReferenceResolver referenceResolver)
     {
-        string pathTemplate = path.Name;
-        string? operationId = operation.OperationId.IsNotUndefined()
-            ? operation.OperationId.GetString()
-            : null;
-        string? summary = operation.Summary.IsNotUndefined()
-            ? operation.Summary.GetString()
-            : null;
-        string? description = operation.Description.IsNotUndefined()
-            ? operation.Description.GetString()
-            : null;
-        string[] tags = ExtractTags(operation);
-        string methodName = GetMethodName(operationId, method, pathTemplate);
+        bool hasOperationParams = operation.Parameters.IsNotUndefined();
+        bool hasPathParams = pathItem.Parameters.IsNotUndefined();
 
-        ParameterInfo[] parameters = ExtractParameters(
-            operation, pathItem, path, method, referenceResolver);
-        RequestBodyInfo? requestBody = ExtractRequestBody(
-            operation, path, method, referenceResolver);
-        ResponseInfo[] responses = ExtractResponses(
-            operation, path, method, referenceResolver);
-
-        return new OperationInfo(
-            pathTemplate,
-            path,
-            method,
-            methodName,
-            operationId,
-            summary,
-            description,
-            tags,
-            parameters,
-            requestBody,
-            responses);
-    }
-
-    private static string[] ExtractTags(OpenApiDocument.Operation operation)
-    {
-        if (operation.Tags.IsUndefined())
+        if (!hasOperationParams && !hasPathParams)
         {
             return [];
         }
 
-        List<string> result = [];
+        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel, ParameterLocation Location)> result = [];
 
-        foreach (var tag in operation.Tags.EnumerateArray())
+        if (hasPathParams)
         {
-            if (tag.ValueKind == JsonValueKind.String)
+            int sourceIndex = 0;
+            foreach (OpenApiDocument.ParameterOrReference paramOrRef in pathItem.Parameters.EnumerateArray())
             {
-                result.Add(tag.GetString()!);
+                if (paramOrRef.IsUndefined())
+                {
+                    sourceIndex++;
+                    continue;
+                }
+
+                if (TryResolveParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
+                {
+                    ParameterLocation location = GetParameterLocation(typed);
+                    result.Add((typed, sourceIndex, true, location));
+                }
+
+                sourceIndex++;
             }
         }
 
-        return [.. result];
-    }
-
-    private static string GetMethodName(
-        string? operationId,
-        OperationMethod method,
-        string pathTemplate)
-    {
-        if (operationId is not null)
+        if (hasOperationParams)
         {
-            return CodeEmitHelpers.ToPascalCase(operationId);
+            int sourceIndex = 0;
+            foreach (OpenApiDocument.ParameterOrReference paramOrRef in operation.Parameters.EnumerateArray())
+            {
+                if (paramOrRef.IsUndefined())
+                {
+                    sourceIndex++;
+                    continue;
+                }
+
+                if (TryResolveParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
+                {
+                    ParameterLocation location = GetParameterLocation(typed);
+                    int existingIndex = FindParameterIndex(result, typed.Name, location);
+
+                    var entry = (typed, sourceIndex, false, location);
+
+                    if (existingIndex >= 0)
+                    {
+                        result[existingIndex] = entry;
+                    }
+                    else
+                    {
+                        result.Add(entry);
+                    }
+                }
+
+                sourceIndex++;
+            }
         }
 
-        string methodPrefix = method switch
+        return [.. result.Select(r => (r.Parameter, r.SourceIndex, r.IsPathLevel))];
+    }
+
+    private static ParameterLocation GetParameterLocation(OpenApiDocument.Parameter typed)
+    {
+        return typed.In.Match<OpenApiDocument.Parameter, ParameterLocation>(
+            in typed,
+            static (_) => ParameterLocation.Query,
+            static (_) => ParameterLocation.Header,
+            static (_) => ParameterLocation.Path,
+            static (_) => ParameterLocation.Cookie,
+            static (_) => ParameterLocation.Query);
+    }
+
+    private static int FindParameterIndex(
+        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel, ParameterLocation Location)> parameters,
+        JsonString name,
+        ParameterLocation location)
+    {
+        for (int i = 0; i < parameters.Count; i++)
         {
-            OperationMethod.Get => "get",
-            OperationMethod.Put => "put",
-            OperationMethod.Post => "post",
-            OperationMethod.Delete => "delete",
-            OperationMethod.Options => "options",
-            OperationMethod.Head => "head",
-            OperationMethod.Patch => "patch",
-            OperationMethod.Trace => "trace",
-            _ => method.ToString().ToLowerInvariant(),
-        };
+            if (parameters[i].Location != location)
+            {
+                continue;
+            }
 
-        string pathPart = pathTemplate
-            .Replace("/", " ", StringComparison.Ordinal)
-            .Replace("{", string.Empty, StringComparison.Ordinal)
-            .Replace("}", string.Empty, StringComparison.Ordinal)
-            .Trim();
+            if (name.Equals(parameters[i].Parameter.Name))
+            {
+                return i;
+            }
+        }
 
-        return CodeEmitHelpers.ToPascalCase(methodPrefix + " " + pathPart);
+        return -1;
     }
 
     // ── $ref resolution ─────────────────────────────────────────────────
@@ -474,165 +617,20 @@ public sealed class OpenApi31CodeGenerator
         return false;
     }
 
-    // ── Parameter extraction ────────────────────────────────────────────
-    private static ParameterInfo[] ExtractParameters(
-        OpenApiDocument.Operation operation,
-        OpenApiDocument.PathItem pathItem,
-        JsonProperty<JsonElement> pathProperty,
-        OperationMethod method,
-        IOpenApiReferenceResolver referenceResolver)
-    {
-        bool hasOperationParams = operation.Parameters.IsNotUndefined();
-        bool hasPathParams = pathItem.Parameters.IsNotUndefined();
-
-        if (!hasOperationParams && !hasPathParams)
-        {
-            return [];
-        }
-
-        // We track name+location+isPathLevel+sourceIndex alongside the ParameterInfo
-        // to support the merge-by-name+location logic.
-        List<(ParameterInfo Info, JsonElement NameElement, ParameterLocation Location, bool IsPathLevel, int SourceIndex)> result = [];
-
-        if (hasPathParams)
-        {
-            int sourceIndex = 0;
-            foreach (OpenApiDocument.ParameterOrReference paramOrRef in pathItem.Parameters.EnumerateArray())
-            {
-                if (paramOrRef.IsUndefined())
-                {
-                    sourceIndex++;
-                    continue;
-                }
-
-                if (!TryResolveParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
-                {
-                    throw new InvalidOperationException(
-                        $"Unable to resolve parameter $ref at index {sourceIndex} in path-level parameters.");
-                }
-
-                (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(typed);
-                bool required = typed.Required.ValueKind == JsonValueKind.True;
-                bool hasSchema = typed.SchemaValue.IsNotUndefined();
-                ParameterSerializationKind serializationKind = hasSchema
-                    ? SchemaClassifier.Classify((JsonElement)typed.SchemaValue)
-                    : ParameterSerializationKind.String;
-
-                string? schemaPointer = hasSchema
-                    ? SchemaPointerBuilder.BuildParameterSchemaPointer(
-                        pathProperty, method, sourceIndex, isPathLevel: true)
-                    : null;
-
-                string name = typed.Name.GetString()!;
-
-                result.Add((
-                    new ParameterInfo(
-                        name, location, required, style, explode,
-                        serializationKind, schemaPointer),
-                    (JsonElement)typed.Name,
-                    location,
-                    true,
-                    sourceIndex));
-
-                sourceIndex++;
-            }
-        }
-
-        if (hasOperationParams)
-        {
-            int sourceIndex = 0;
-            foreach (OpenApiDocument.ParameterOrReference paramOrRef in operation.Parameters.EnumerateArray())
-            {
-                if (paramOrRef.IsUndefined())
-                {
-                    sourceIndex++;
-                    continue;
-                }
-
-                if (!TryResolveParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
-                {
-                    throw new InvalidOperationException(
-                        $"Unable to resolve parameter $ref at index {sourceIndex} in operation-level parameters.");
-                }
-
-                (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(typed);
-                bool required = typed.Required.ValueKind == JsonValueKind.True;
-                bool hasSchema = typed.SchemaValue.IsNotUndefined();
-                ParameterSerializationKind serializationKind = hasSchema
-                    ? SchemaClassifier.Classify((JsonElement)typed.SchemaValue)
-                    : ParameterSerializationKind.String;
-
-                string? schemaPointer = hasSchema
-                    ? SchemaPointerBuilder.BuildParameterSchemaPointer(
-                        pathProperty, method, sourceIndex, isPathLevel: false)
-                    : null;
-
-                string name = typed.Name.GetString()!;
-
-                // Replace any path-level param with matching name+location.
-                int existingIndex = FindParameterIndex(result, (JsonElement)typed.Name, location);
-
-                var entry = (
-                    new ParameterInfo(
-                        name, location, required, style, explode,
-                        serializationKind, schemaPointer),
-                    (JsonElement)typed.Name,
-                    location,
-                    false,
-                    sourceIndex);
-
-                if (existingIndex >= 0)
-                {
-                    result[existingIndex] = entry;
-                }
-                else
-                {
-                    result.Add(entry);
-                }
-
-                sourceIndex++;
-            }
-        }
-
-        return [.. result.Select(r => r.Info)];
-    }
-
-    private static int FindParameterIndex(
-        List<(ParameterInfo Info, JsonElement NameElement, ParameterLocation Location, bool IsPathLevel, int SourceIndex)> parameters,
-        JsonElement name,
-        ParameterLocation location)
-    {
-        if (name.ValueKind != JsonValueKind.String)
-        {
-            return -1;
-        }
-
-        for (int i = 0; i < parameters.Count; i++)
-        {
-            if (parameters[i].Location != location)
-            {
-                continue;
-            }
-
-            if (name.Equals(parameters[i].NameElement))
-            {
-                return i;
-            }
-        }
-
-        return -1;
-    }
-
+    // ── Parameter trait parsing ──────────────────────────────────────────
     private static (ParameterLocation Location, ParameterStyle Style, bool Explode) ParseParameterTraits(
         OpenApiDocument.Parameter typed)
     {
-        (ParameterLocation location, ParameterStyle style) = typed.In.Match<OpenApiDocument.Parameter, (ParameterLocation, ParameterStyle)>(
-            in typed,
-            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle((JsonElement)p)),
-            static (_) => (ParameterLocation.Header, ParameterStyle.Simple),
-            static (OpenApiDocument.Parameter p) => (ParameterLocation.Path, ParsePathStyle((JsonElement)p)),
-            static (_) => (ParameterLocation.Cookie, ParameterStyle.Form),
-            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle((JsonElement)p)));
+        ParameterLocation location = GetParameterLocation(typed);
+
+        ParameterStyle style = location switch
+        {
+            ParameterLocation.Query => ParseQueryStyle((JsonElement)typed),
+            ParameterLocation.Path => ParsePathStyle((JsonElement)typed),
+            ParameterLocation.Header => ParameterStyle.Simple,
+            ParameterLocation.Cookie => ParameterStyle.Form,
+            _ => ParameterStyle.Simple,
+        };
 
         bool explode = typed.Explode.IsNotUndefined() ? (bool)typed.Explode : style == ParameterStyle.Form;
         return (location, style, explode);
@@ -665,10 +663,96 @@ public sealed class OpenApi31CodeGenerator
                 ParameterStyle.Form);
     }
 
-    // ── Request body extraction ─────────────────────────────────────────
-    private static RequestBodyInfo? ExtractRequestBody(
+    // ═══════════════════════════════════════════════════════════════════
+    // Preparation — converts typed model to emit-boundary records
+    // ═══════════════════════════════════════════════════════════════════
+    private static OperationInfo PrepareOperation(
+        OperationRef opRef,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        using UnescapedUtf8JsonString pathName = opRef.PathProp.Utf8NameSpan;
+        ReadOnlySpan<byte> pathNameUtf8 = pathName.Span;
+
+        // Extract strings at the emit boundary
+        string pathTemplate = opRef.PathProp.Name;
+        string? operationId = opRef.Operation.OperationId.IsNotUndefined()
+            ? opRef.Operation.OperationId.GetString()
+            : null;
+        string? summary = opRef.Operation.Summary.IsNotUndefined()
+            ? opRef.Operation.Summary.GetString()
+            : null;
+        string? description = opRef.Operation.Description.IsNotUndefined()
+            ? opRef.Operation.Description.GetString()
+            : null;
+        string[] tags = ExtractTags(opRef.Operation);
+        string methodName = GetMethodName(operationId, opRef.Method, pathTemplate);
+
+        ParameterInfo[] parameters = PrepareParameters(
+            opRef.Operation, opRef.PathItem, pathNameUtf8, opRef.Method, referenceResolver);
+        RequestBodyInfo? requestBody = PrepareRequestBody(
+            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver);
+        ResponseInfo[] responses = PrepareResponses(
+            opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver);
+
+        return new OperationInfo(
+            pathTemplate,
+            opRef.Method,
+            methodName,
+            operationId,
+            summary,
+            description,
+            tags,
+            parameters,
+            requestBody,
+            responses);
+    }
+
+    private static ParameterInfo[] PrepareParameters(
         OpenApiDocument.Operation operation,
-        JsonProperty<JsonElement> pathProperty,
+        OpenApiDocument.PathItem pathItem,
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        var merged = MergeParameters(operation, pathItem, referenceResolver);
+
+        if (merged.Count == 0)
+        {
+            return [];
+        }
+
+        ParameterInfo[] result = new ParameterInfo[merged.Count];
+
+        for (int i = 0; i < merged.Count; i++)
+        {
+            (OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel) = merged[i];
+
+            (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
+            bool required = param.Required.ValueKind == JsonValueKind.True;
+            bool hasSchema = param.SchemaValue.IsNotUndefined();
+            ParameterSerializationKind serializationKind = hasSchema
+                ? SchemaClassifier.Classify((JsonElement)param.SchemaValue)
+                : ParameterSerializationKind.String;
+
+            string? schemaPointer = hasSchema
+                ? SchemaPointerBuilder.BuildParameterSchemaPointer(
+                    pathNameUtf8, method, sourceIndex, isPathLevel)
+                : null;
+
+            // Extract name at the emit boundary
+            string name = param.Name.GetString()!;
+
+            result[i] = new ParameterInfo(
+                name, location, required, style, explode,
+                serializationKind, schemaPointer);
+        }
+
+        return result;
+    }
+
+    private static RequestBodyInfo? PrepareRequestBody(
+        OpenApiDocument.Operation operation,
+        ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         IOpenApiReferenceResolver referenceResolver)
     {
@@ -689,16 +773,15 @@ public sealed class OpenApi31CodeGenerator
             ? requestBody.Description.GetString()
             : null;
 
-        ContentInfo[] content = ExtractMediaTypeContent(
-            requestBody.ContentValue, pathProperty, method, "/requestBody"u8);
+        ContentInfo[] content = PrepareContentEntries(
+            requestBody.ContentValue, pathNameUtf8, method, "/requestBody"u8);
 
         return new RequestBodyInfo(description, required, content);
     }
 
-    // ── Response extraction ─────────────────────────────────────────────
-    private static ResponseInfo[] ExtractResponses(
+    private static ResponseInfo[] PrepareResponses(
         OpenApiDocument.Operation operation,
-        JsonProperty<JsonElement> pathProperty,
+        ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         IOpenApiReferenceResolver referenceResolver)
     {
@@ -722,14 +805,16 @@ public sealed class OpenApi31CodeGenerator
                     "Unable to resolve response $ref.");
             }
 
-            JsonProperty<JsonElement> respProp = responseProp.AsJsonElementProperty();
-            string statusCode = respProp.Name;
+            // Extract status code at the emit boundary
+            string statusCode = responseProp.Name;
 
-            ContentInfo[] content = ExtractResponseContentEntries(
-                response.ContentValue, pathProperty, method, respProp);
+            using UnescapedUtf8JsonString statusCodeUtf8 = responseProp.Utf8NameSpan;
 
-            HeaderInfo[] headers = ExtractResponseHeaders(
-                response.Headers, pathProperty, method, respProp, referenceResolver);
+            ContentInfo[] content = PrepareResponseContentEntries(
+                response.ContentValue, pathNameUtf8, method, statusCodeUtf8.Span);
+
+            HeaderInfo[] headers = PrepareResponseHeaders(
+                response.Headers, pathNameUtf8, method, statusCodeUtf8.Span, referenceResolver);
 
             result.Add(new ResponseInfo(statusCode, content, headers));
         }
@@ -737,9 +822,9 @@ public sealed class OpenApi31CodeGenerator
         return [.. result];
     }
 
-    private static ContentInfo[] ExtractMediaTypeContent(
+    private static ContentInfo[] PrepareContentEntries(
         OpenApiDocument.Content contentMap,
-        JsonProperty<JsonElement> pathProperty,
+        ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
         ReadOnlySpan<byte> parentSegmentUtf8)
     {
@@ -752,27 +837,29 @@ public sealed class OpenApi31CodeGenerator
 
         foreach (var mediaTypeProp in contentMap.EnumerateObject())
         {
-            OpenApiDocument.MediaType mediaType = mediaTypeProp.Value;
-            bool hasSchema = mediaType.SchemaValue.IsNotUndefined();
-            string mediaTypeName = mediaTypeProp.AsJsonElementProperty().Name;
+            bool hasSchema = mediaTypeProp.Value.SchemaValue.IsNotUndefined();
 
-            string? schemaPointer = hasSchema
-                ? SchemaPointerBuilder.BuildContentSchemaPointer(
-                    pathProperty, method, parentSegmentUtf8,
-                    mediaTypeProp.AsJsonElementProperty())
-                : null;
+            string? schemaPointer = null;
+            if (hasSchema)
+            {
+                using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+                schemaPointer = SchemaPointerBuilder.BuildContentSchemaPointer(
+                    pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
+            }
 
-            result.Add(new ContentInfo(mediaTypeName, schemaPointer));
+            // Extract media type name at the emit boundary
+            string mediaType = mediaTypeProp.Name;
+            result.Add(new ContentInfo(mediaType, schemaPointer));
         }
 
         return [.. result];
     }
 
-    private static ContentInfo[] ExtractResponseContentEntries(
+    private static ContentInfo[] PrepareResponseContentEntries(
         OpenApiDocument.Content contentMap,
-        JsonProperty<JsonElement> pathProperty,
+        ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
-        JsonProperty<JsonElement> responseProperty)
+        ReadOnlySpan<byte> statusCodeUtf8)
     {
         if (contentMap.IsUndefined())
         {
@@ -783,27 +870,29 @@ public sealed class OpenApi31CodeGenerator
 
         foreach (var mediaTypeProp in contentMap.EnumerateObject())
         {
-            OpenApiDocument.MediaType mediaType = mediaTypeProp.Value;
-            bool hasSchema = mediaType.SchemaValue.IsNotUndefined();
-            string mediaTypeName = mediaTypeProp.AsJsonElementProperty().Name;
+            bool hasSchema = mediaTypeProp.Value.SchemaValue.IsNotUndefined();
 
-            string? schemaPointer = hasSchema
-                ? SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                    pathProperty, method, responseProperty,
-                    mediaTypeProp.AsJsonElementProperty())
-                : null;
+            string? schemaPointer = null;
+            if (hasSchema)
+            {
+                using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+                schemaPointer = SchemaPointerBuilder.BuildResponseContentSchemaPointer(
+                    pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
+            }
 
-            result.Add(new ContentInfo(mediaTypeName, schemaPointer));
+            // Extract media type name at the emit boundary
+            string mediaType = mediaTypeProp.Name;
+            result.Add(new ContentInfo(mediaType, schemaPointer));
         }
 
         return [.. result];
     }
 
-    private static HeaderInfo[] ExtractResponseHeaders(
+    private static HeaderInfo[] PrepareResponseHeaders(
         OpenApiDocument.Response.HeadersEntity headersMap,
-        JsonProperty<JsonElement> pathProperty,
+        ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,
-        JsonProperty<JsonElement> responseProperty,
+        ReadOnlySpan<byte> statusCodeUtf8,
         IOpenApiReferenceResolver referenceResolver)
     {
         if (headersMap.IsUndefined())
@@ -829,18 +918,74 @@ public sealed class OpenApi31CodeGenerator
             }
 
             bool hasSchema = header.SchemaValue.IsNotUndefined();
-            string headerName = headerProp.AsJsonElementProperty().Name;
 
-            string? schemaPointer = hasSchema
-                ? SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                    pathProperty, method, responseProperty,
-                    headerProp.AsJsonElementProperty())
-                : null;
+            string? schemaPointer = null;
+            if (hasSchema)
+            {
+                using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
+                schemaPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
+                    pathNameUtf8, method, statusCodeUtf8, headerName.Span);
+            }
 
-            result.Add(new HeaderInfo(headerName, schemaPointer));
+            // Extract header name at the emit boundary
+            string name = headerProp.Name;
+            result.Add(new HeaderInfo(name, schemaPointer));
         }
 
         return [.. result];
+    }
+
+    // ── String helpers ──────────────────────────────────────────────────
+    private static string[] ExtractTags(OpenApiDocument.Operation operation)
+    {
+        if (operation.Tags.IsUndefined())
+        {
+            return [];
+        }
+
+        List<string> result = [];
+
+        foreach (var tag in operation.Tags.EnumerateArray())
+        {
+            if (tag.ValueKind == JsonValueKind.String)
+            {
+                result.Add(tag.GetString()!);
+            }
+        }
+
+        return [.. result];
+    }
+
+    private static string GetMethodName(
+        string? operationId,
+        OperationMethod method,
+        string pathTemplate)
+    {
+        if (operationId is not null)
+        {
+            return CodeEmitHelpers.ToPascalCase(operationId);
+        }
+
+        string methodPrefix = method switch
+        {
+            OperationMethod.Get => "get",
+            OperationMethod.Put => "put",
+            OperationMethod.Post => "post",
+            OperationMethod.Delete => "delete",
+            OperationMethod.Options => "options",
+            OperationMethod.Head => "head",
+            OperationMethod.Patch => "patch",
+            OperationMethod.Trace => "trace",
+            _ => method.ToString().ToLowerInvariant(),
+        };
+
+        string pathPart = pathTemplate
+            .Replace("/", " ", StringComparison.Ordinal)
+            .Replace("{", string.Empty, StringComparison.Ordinal)
+            .Replace("}", string.Empty, StringComparison.Ordinal)
+            .Trim();
+
+        return CodeEmitHelpers.ToPascalCase(methodPrefix + " " + pathPart);
     }
 
     // ── Default server URL ──────────────────────────────────────────────
