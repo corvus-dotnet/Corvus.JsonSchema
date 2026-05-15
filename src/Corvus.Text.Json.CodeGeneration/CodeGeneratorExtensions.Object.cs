@@ -88,21 +88,24 @@ internal static partial class CodeGeneratorExtensions
 
             if (typeDeclaration.FallbackObjectPropertyType() is FallbackObjectPropertyType objectPropertyType)
             {
-                if (objectPropertyType.ReducedType.IsBuiltInJsonNotAnyType())
+                if (objectPropertyType.ReducedType.IsBuiltInJsonNotAnyType()
+                    && !typeDeclaration.HasLocalPatternProperties())
                 {
                     return generator;
                 }
             }
             else if (typeDeclaration.LocalEvaluatedPropertyType() is FallbackObjectPropertyType localObjectPropertyType)
             {
-                if (localObjectPropertyType.ReducedType.IsBuiltInJsonNotAnyType())
+                if (localObjectPropertyType.ReducedType.IsBuiltInJsonNotAnyType()
+                    && !typeDeclaration.HasLocalPatternProperties())
                 {
                     return generator;
                 }
             }
             else if (typeDeclaration.LocalAndAppliedEvaluatedPropertyType() is FallbackObjectPropertyType localAndAppliedObjectPropertyType)
             {
-                if (localAndAppliedObjectPropertyType.ReducedType.IsBuiltInJsonNotAnyType())
+                if (localAndAppliedObjectPropertyType.ReducedType.IsBuiltInJsonNotAnyType()
+                    && !typeDeclaration.HasLocalPatternProperties())
                 {
                     return generator;
                 }
@@ -161,28 +164,55 @@ internal static partial class CodeGeneratorExtensions
         {
             if (objectPropertyType.ReducedType.IsBuiltInJsonNotAnyType())
             {
-                return generator;
-            }
+                if (!typeDeclaration.HasLocalPatternProperties())
+                {
+                    return generator;
+                }
 
-            fqdtn = objectPropertyType.ReducedType.FullyQualifiedDotnetTypeName();
+                fqdtn = typeDeclaration.SingleLocalPatternPropertyType() is TypeDeclaration singleType
+                    ? singleType.FullyQualifiedDotnetTypeName()
+                    : WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+            }
+            else
+            {
+                fqdtn = objectPropertyType.ReducedType.FullyQualifiedDotnetTypeName();
+            }
         }
         else if (typeDeclaration.LocalEvaluatedPropertyType() is FallbackObjectPropertyType localObjectPropertyType)
         {
             if (localObjectPropertyType.ReducedType.IsBuiltInJsonNotAnyType())
             {
-                return generator;
-            }
+                if (!typeDeclaration.HasLocalPatternProperties())
+                {
+                    return generator;
+                }
 
-            fqdtn = localObjectPropertyType.ReducedType.FullyQualifiedDotnetTypeName();
+                fqdtn = typeDeclaration.SingleLocalPatternPropertyType() is TypeDeclaration singleLocalType
+                    ? singleLocalType.FullyQualifiedDotnetTypeName()
+                    : WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+            }
+            else
+            {
+                fqdtn = localObjectPropertyType.ReducedType.FullyQualifiedDotnetTypeName();
+            }
         }
         else if (typeDeclaration.LocalAndAppliedEvaluatedPropertyType() is FallbackObjectPropertyType localAndAppliedObjectPropertyType)
         {
             if (localAndAppliedObjectPropertyType.ReducedType.IsBuiltInJsonNotAnyType())
             {
-                return generator;
-            }
+                if (!typeDeclaration.HasLocalPatternProperties())
+                {
+                    return generator;
+                }
 
-            fqdtn = localAndAppliedObjectPropertyType.ReducedType.FullyQualifiedDotnetTypeName();
+                fqdtn = typeDeclaration.SingleLocalPatternPropertyType() is TypeDeclaration singleAppliedType
+                    ? singleAppliedType.FullyQualifiedDotnetTypeName()
+                    : WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+            }
+            else
+            {
+                fqdtn = localAndAppliedObjectPropertyType.ReducedType.FullyQualifiedDotnetTypeName();
+            }
         }
         else
         {
@@ -586,7 +616,9 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+                fqdtn = typeDeclaration.SingleLocalPatternPropertyType() is TypeDeclaration singleType
+                    ? singleType.FullyQualifiedDotnetTypeName()
+                    : WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
             }
             else
             {
@@ -603,7 +635,9 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+                fqdtn = typeDeclaration.SingleLocalPatternPropertyType() is TypeDeclaration singleLocalType
+                    ? singleLocalType.FullyQualifiedDotnetTypeName()
+                    : WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
             }
             else
             {
@@ -620,7 +654,9 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+                fqdtn = typeDeclaration.SingleLocalPatternPropertyType() is TypeDeclaration singleAppliedType
+                    ? singleAppliedType.FullyQualifiedDotnetTypeName()
+                    : WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
             }
             else
             {
@@ -917,7 +953,9 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+                fqdtn = typeDeclaration.SingleLocalPatternPropertyType() is TypeDeclaration singleType
+                    ? singleType.FullyQualifiedDotnetTypeName()
+                    : WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
             }
             else
             {
@@ -934,7 +972,9 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+                fqdtn = typeDeclaration.SingleLocalPatternPropertyType() is TypeDeclaration singleLocalType
+                    ? singleLocalType.FullyQualifiedDotnetTypeName()
+                    : WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
             }
             else
             {
@@ -951,7 +991,9 @@ internal static partial class CodeGeneratorExtensions
                     return generator;
                 }
 
-                fqdtn = WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
+                fqdtn = typeDeclaration.SingleLocalPatternPropertyType() is TypeDeclaration singleAppliedType
+                    ? singleAppliedType.FullyQualifiedDotnetTypeName()
+                    : WellKnownTypeDeclarations.JsonAny.DotnetTypeName();
             }
             else
             {

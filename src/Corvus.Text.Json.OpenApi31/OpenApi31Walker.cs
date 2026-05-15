@@ -94,12 +94,12 @@ public sealed class OpenApi31Walker : ISpecWalker
             OpenApiDocument.RequestBodyOrReference requestBodyOrRef = operation.RequestBody;
             if (requestBodyOrRef.ValueKind == JsonValueKind.Object)
             {
-                OpenApiDocument.RequestBodyOrReference? resolvedBody = ResolveRequestBody(requestBodyOrRef, referenceResolver);
+                OpenApiDocument.RequestBody? resolvedBody = ResolveRequestBody(requestBodyOrRef, referenceResolver);
                 if (resolvedBody is { } requestBody
-                    && requestBody.Content.ValueKind == JsonValueKind.Object)
+                    && requestBody.ContentValue.ValueKind == JsonValueKind.Object)
                 {
                     foreach (ExtractedSchema schema in EnumerateMediaTypeSchemas(
-                        requestBody.Content, SchemaRole.RequestBody))
+                        requestBody.ContentValue, SchemaRole.RequestBody))
                     {
                         yield return schema;
                     }
@@ -118,16 +118,16 @@ public sealed class OpenApi31Walker : ISpecWalker
                     }
 
                     OpenApiDocument.ResponseOrReference responseOrRef = responseProp.Value;
-                    OpenApiDocument.ResponseOrReference? resolvedResponse = ResolveResponse(responseOrRef, referenceResolver);
+                    OpenApiDocument.Response? resolvedResponse = ResolveResponse(responseOrRef, referenceResolver);
                     if (resolvedResponse is not { } response)
                     {
                         continue;
                     }
 
-                    if (response.Content.ValueKind == JsonValueKind.Object)
+                    if (response.ContentValue.ValueKind == JsonValueKind.Object)
                     {
                         foreach (ExtractedSchema schema in EnumerateMediaTypeSchemas(
-                            response.Content, SchemaRole.ResponseBody))
+                            response.ContentValue, SchemaRole.ResponseBody))
                         {
                             yield return schema;
                         }
@@ -145,12 +145,12 @@ public sealed class OpenApi31Walker : ISpecWalker
                             }
 
                             OpenApiDocument.HeaderOrReference headerOrRef = headerProp.Value;
-                            OpenApiDocument.HeaderOrReference? resolvedHeader = ResolveHeader(headerOrRef, referenceResolver);
+                            OpenApiDocument.Header? resolvedHeader = ResolveHeader(headerOrRef, referenceResolver);
                             if (resolvedHeader is { } header
-                                && header.Schema.ValueKind == JsonValueKind.Object)
+                                && header.SchemaValue.ValueKind == JsonValueKind.Object)
                             {
                                 yield return new ExtractedSchema(
-                                    (JsonElement)header.Schema, SchemaRole.Header);
+                                    (JsonElement)header.SchemaValue, SchemaRole.Header);
                             }
                         }
                     }
@@ -160,11 +160,11 @@ public sealed class OpenApi31Walker : ISpecWalker
             // Parameter schemas (merged from path-level and operation-level, already resolved)
             foreach (WalkedParameter walkedParam in entry.Parameters)
             {
-                OpenApiDocument.ParameterOrReference parameter = walkedParam.Element;
-                if (parameter.Schema.ValueKind == JsonValueKind.Object)
+                OpenApiDocument.Parameter parameter = walkedParam.Element;
+                if (parameter.SchemaValue.ValueKind == JsonValueKind.Object)
                 {
                     yield return new ExtractedSchema(
-                        (JsonElement)parameter.Schema, SchemaRole.Parameter);
+                        (JsonElement)parameter.SchemaValue, SchemaRole.Parameter);
                 }
             }
         }
@@ -203,7 +203,7 @@ public sealed class OpenApi31Walker : ISpecWalker
         if (hasPathParams)
         {
             int sourceIndex = 0;
-            foreach (JsonElement param in ((JsonElement)pathItem.Parameters).EnumerateArray())
+            foreach (JsonElement param in pathItem.Parameters.EnumerateArray())
             {
                 if (param.ValueKind != JsonValueKind.Object)
                 {
@@ -212,7 +212,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                 }
 
                 OpenApiDocument.ParameterOrReference paramOrRef = param;
-                (JsonElement element, OpenApiDocument.ParameterOrReference typed)? resolved =
+                (JsonElement element, OpenApiDocument.Parameter typed)? resolved =
                     ResolveParameter(paramOrRef, referenceResolver);
 
                 if (resolved is not null)
@@ -220,7 +220,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                     var (element, typed) = resolved.Value;
                     ParameterLocation location = ParseLocation(typed.In);
                     bool required = typed.Required.ValueKind == JsonValueKind.True;
-                    bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
+                    bool hasSchema = typed.SchemaValue.ValueKind == JsonValueKind.Object;
 
                     (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
 
@@ -238,7 +238,7 @@ public sealed class OpenApi31Walker : ISpecWalker
         if (hasOperationParams)
         {
             int sourceIndex = 0;
-            foreach (JsonElement param in ((JsonElement)operation.Parameters).EnumerateArray())
+            foreach (JsonElement param in operation.Parameters.EnumerateArray())
             {
                 if (param.ValueKind != JsonValueKind.Object)
                 {
@@ -247,7 +247,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                 }
 
                 OpenApiDocument.ParameterOrReference paramOrRef = param;
-                (JsonElement element, OpenApiDocument.ParameterOrReference typed)? resolved =
+                (JsonElement element, OpenApiDocument.Parameter typed)? resolved =
                     ResolveParameter(paramOrRef, referenceResolver);
 
                 if (resolved is not null)
@@ -255,7 +255,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                     var (element, typed) = resolved.Value;
                     ParameterLocation location = ParseLocation(typed.In);
                     bool required = typed.Required.ValueKind == JsonValueKind.True;
-                    bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
+                    bool hasSchema = typed.SchemaValue.ValueKind == JsonValueKind.Object;
 
                     (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
 
@@ -282,17 +282,17 @@ public sealed class OpenApi31Walker : ISpecWalker
         return [.. result];
     }
 
-    private static (JsonElement Element, OpenApiDocument.ParameterOrReference Typed)? ResolveParameter(
+    private static (JsonElement Element, OpenApiDocument.Parameter Typed)? ResolveParameter(
         OpenApiDocument.ParameterOrReference paramOrRef,
         IOpenApiReferenceResolver referenceResolver)
     {
-        return paramOrRef.Match<IOpenApiReferenceResolver, (JsonElement, OpenApiDocument.ParameterOrReference)?>(
+        return paramOrRef.Match<IOpenApiReferenceResolver, (JsonElement, OpenApiDocument.Parameter)?>(
             in referenceResolver,
             static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver resolver) =>
             {
                 string? refString = reference.Ref.GetString();
                 if (refString is not null
-                    && resolver.TryResolve<OpenApiDocument.ParameterOrReference>(refString, out var resolved))
+                    && resolver.TryResolve<OpenApiDocument.Parameter>(refString, out var resolved))
                 {
                     return ((JsonElement)resolved, resolved);
                 }
@@ -300,7 +300,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                 return null;
             },
             static (in OpenApiDocument.Parameter parameter, in IOpenApiReferenceResolver _) =>
-                ((JsonElement)parameter, (OpenApiDocument.ParameterOrReference)(JsonElement)parameter));
+                ((JsonElement)parameter, parameter));
     }
 
     private static int FindParameterIndex(
@@ -320,7 +320,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                 continue;
             }
 
-            OpenApiDocument.ParameterOrReference existing = parameters[i].Element;
+            OpenApiDocument.Parameter existing = parameters[i].Element;
             if (existing.Name.ValueKind == JsonValueKind.String
                 && name.Equals(existing.Name))
             {
@@ -341,29 +341,29 @@ public sealed class OpenApi31Walker : ISpecWalker
             return null;
         }
 
-        OpenApiDocument.RequestBodyOrReference? resolved = ResolveRequestBody(requestBodyOrRef, referenceResolver);
+        OpenApiDocument.RequestBody? resolved = ResolveRequestBody(requestBodyOrRef, referenceResolver);
         if (resolved is not { } requestBody)
         {
             return null;
         }
 
         bool required = requestBody.Required.ValueKind == JsonValueKind.True;
-        WalkedMediaTypeContent[] content = ExtractMediaTypeContent(requestBody.Content);
+        WalkedMediaTypeContent[] content = ExtractMediaTypeContent(requestBody.ContentValue);
 
         return new WalkedRequestBody((JsonElement)requestBody, required, content);
     }
 
-    private static OpenApiDocument.RequestBodyOrReference? ResolveRequestBody(
+    private static OpenApiDocument.RequestBody? ResolveRequestBody(
         OpenApiDocument.RequestBodyOrReference requestBodyOrRef,
         IOpenApiReferenceResolver referenceResolver)
     {
-        return requestBodyOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.RequestBodyOrReference?>(
+        return requestBodyOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.RequestBody?>(
             in referenceResolver,
             static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver resolver) =>
             {
                 string? refString = reference.Ref.GetString();
                 if (refString is not null
-                    && resolver.TryResolve<OpenApiDocument.RequestBodyOrReference>(refString, out var resolved))
+                    && resolver.TryResolve<OpenApiDocument.RequestBody>(refString, out var resolved))
                 {
                     return resolved;
                 }
@@ -371,7 +371,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                 return null;
             },
             static (in OpenApiDocument.RequestBody requestBody, in IOpenApiReferenceResolver _) =>
-                (OpenApiDocument.RequestBodyOrReference)(JsonElement)requestBody);
+                requestBody);
     }
 
     private static WalkedResponse[] ExtractResponses(
@@ -394,13 +394,13 @@ public sealed class OpenApi31Walker : ISpecWalker
             }
 
             OpenApiDocument.ResponseOrReference responseOrRef = responseProp.Value;
-            OpenApiDocument.ResponseOrReference? resolved = ResolveResponse(responseOrRef, referenceResolver);
+            OpenApiDocument.Response? resolved = ResolveResponse(responseOrRef, referenceResolver);
             if (resolved is not { } response)
             {
                 continue;
             }
 
-            WalkedMediaTypeContent[] content = ExtractMediaTypeContent(response.Content);
+            WalkedMediaTypeContent[] content = ExtractMediaTypeContent(response.ContentValue);
             WalkedResponseHeader[] headers = ExtractResponseHeaders(response.Headers, referenceResolver);
 
             result.Add(new WalkedResponse(responseProp, content, headers));
@@ -409,17 +409,17 @@ public sealed class OpenApi31Walker : ISpecWalker
         return [.. result];
     }
 
-    private static OpenApiDocument.ResponseOrReference? ResolveResponse(
+    private static OpenApiDocument.Response? ResolveResponse(
         OpenApiDocument.ResponseOrReference responseOrRef,
         IOpenApiReferenceResolver referenceResolver)
     {
-        return responseOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.ResponseOrReference?>(
+        return responseOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.Response?>(
             in referenceResolver,
             static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver resolver) =>
             {
                 string? refString = reference.Ref.GetString();
                 if (refString is not null
-                    && resolver.TryResolve<OpenApiDocument.ResponseOrReference>(refString, out var resolved))
+                    && resolver.TryResolve<OpenApiDocument.Response>(refString, out var resolved))
                 {
                     return resolved;
                 }
@@ -427,7 +427,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                 return null;
             },
             static (in OpenApiDocument.Response response, in IOpenApiReferenceResolver _) =>
-                (OpenApiDocument.ResponseOrReference)(JsonElement)response);
+                response);
     }
 
     private static WalkedResponseHeader[] ExtractResponseHeaders(
@@ -449,30 +449,30 @@ public sealed class OpenApi31Walker : ISpecWalker
             }
 
             OpenApiDocument.HeaderOrReference headerOrRef = headerProp.Value;
-            OpenApiDocument.HeaderOrReference? resolved = ResolveHeader(headerOrRef, referenceResolver);
+            OpenApiDocument.Header? resolved = ResolveHeader(headerOrRef, referenceResolver);
             if (resolved is not { } header)
             {
                 continue;
             }
 
-            bool hasSchema = header.Schema.ValueKind == JsonValueKind.Object;
+            bool hasSchema = header.SchemaValue.ValueKind == JsonValueKind.Object;
             result.Add(new WalkedResponseHeader(headerProp, hasSchema));
         }
 
         return [.. result];
     }
 
-    private static OpenApiDocument.HeaderOrReference? ResolveHeader(
+    private static OpenApiDocument.Header? ResolveHeader(
         OpenApiDocument.HeaderOrReference headerOrRef,
         IOpenApiReferenceResolver referenceResolver)
     {
-        return headerOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.HeaderOrReference?>(
+        return headerOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.Header?>(
             in referenceResolver,
             static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver resolver) =>
             {
                 string? refString = reference.Ref.GetString();
                 if (refString is not null
-                    && resolver.TryResolve<OpenApiDocument.HeaderOrReference>(refString, out var resolved))
+                    && resolver.TryResolve<OpenApiDocument.Header>(refString, out var resolved))
                 {
                     return resolved;
                 }
@@ -480,7 +480,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                 return null;
             },
             static (in OpenApiDocument.Header header, in IOpenApiReferenceResolver _) =>
-                (OpenApiDocument.HeaderOrReference)(JsonElement)header);
+                header);
     }
 
     private static WalkedMediaTypeContent[] ExtractMediaTypeContent(JsonElement contentMap)

@@ -1016,4 +1016,51 @@ public static class TypeDeclarationExtensions
     {
         return typeDeclaration.PatternProperties() is not null;
     }
+
+    /// <summary>
+    /// Gets the inferred element type for a type whose fallback property type is
+    /// <c>JsonNotAny</c> (due to <c>additionalProperties: false</c> or
+    /// <c>unevaluatedProperties: false</c>) but which has local pattern properties.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If there is exactly one distinct reduced pattern property type across all local
+    /// pattern property entries, that type is returned. If there are multiple distinct
+    /// types, <see langword="null"/> is returned, indicating the caller should fall back
+    /// to <c>JsonAny</c>.
+    /// </para>
+    /// </remarks>
+    /// <param name="typeDeclaration">The type declaration to inspect.</param>
+    /// <returns>
+    /// The single pattern property type if there is exactly one, or <see langword="null"/>
+    /// if there are zero or multiple distinct types.
+    /// </returns>
+    public static TypeDeclaration? SingleLocalPatternPropertyType(this TypeDeclaration typeDeclaration)
+    {
+        if (typeDeclaration.PatternProperties() is not { } patternProperties)
+        {
+            return null;
+        }
+
+        TypeDeclaration? singleType = null;
+
+        foreach (IReadOnlyCollection<PatternPropertyDeclaration> declarations in patternProperties.Values)
+        {
+            foreach (PatternPropertyDeclaration declaration in declarations)
+            {
+                TypeDeclaration reducedType = declaration.ReducedPatternPropertyType;
+
+                if (singleType is null)
+                {
+                    singleType = reducedType;
+                }
+                else if (singleType != reducedType)
+                {
+                    return null;
+                }
+            }
+        }
+
+        return singleType;
+    }
 }
