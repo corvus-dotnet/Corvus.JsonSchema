@@ -3,6 +3,8 @@
 // </copyright>
 
 using Corvus.Text.Json.OpenApi;
+using PathStyles = Corvus.Text.Json.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity;
+using QueryStyles = Corvus.Text.Json.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity;
 
 namespace Corvus.Text.Json.OpenApi31;
 
@@ -260,11 +262,9 @@ public sealed class OpenApi31Walker : ISpecWalker
                         $"Unable to resolve parameter $ref at index {sourceIndex} in path-level parameters.");
                 }
 
-                ParameterLocation location = ParseLocation(typed.In);
+                (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(typed);
                 bool required = typed.Required.ValueKind == JsonValueKind.True;
                 bool hasSchema = typed.SchemaValue.IsNotUndefined();
-
-                (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
 
                 result.Add(new WalkedParameter(
                     (JsonElement)typed, location, required, style, explode, hasSchema,
@@ -293,11 +293,9 @@ public sealed class OpenApi31Walker : ISpecWalker
                         $"Unable to resolve parameter $ref at index {sourceIndex} in operation-level parameters.");
                 }
 
-                ParameterLocation location = ParseLocation(typed.In);
+                (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(typed);
                 bool required = typed.Required.ValueKind == JsonValueKind.True;
                 bool hasSchema = typed.SchemaValue.IsNotUndefined();
-
-                (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
 
                 // Replace any path-level param with matching name+in.
                 int existingIndex = FindParameterIndex(result, typed.Name, location);
@@ -586,85 +584,49 @@ public sealed class OpenApi31Walker : ISpecWalker
             static () => ParameterLocation.Query);
     }
 
-    private static (ParameterStyle Style, bool Explode) ParseStyleAndExplode(
-        JsonString styleValue,
-        JsonBoolean explodeValue,
-        ParameterLocation location)
+    private static (ParameterLocation Location, ParameterStyle Style, bool Explode) ParseParameterTraits(
+        OpenApiDocument.Parameter typed)
     {
-        ParameterStyle style = ParseStyle(styleValue, location);
-        bool explode = explodeValue.IsNotUndefined() ? (bool)explodeValue : style == ParameterStyle.Form;
-        return (style, explode);
-    }
+        ParameterLocation location = ParseLocation(typed.In);
 
-    private static ParameterStyle ParseStyle(JsonString styleValue, ParameterLocation location)
-    {
-        if (styleValue.IsNotUndefined())
+        ParameterStyle style = location switch
         {
-            if (styleValue.ValueEquals(ParameterStyleUtf8.Form))
-            {
-                return ParameterStyle.Form;
-            }
-
-            if (styleValue.ValueEquals(ParameterStyleUtf8.Simple))
-            {
-                return ParameterStyle.Simple;
-            }
-
-            if (styleValue.ValueEquals(ParameterStyleUtf8.Label))
-            {
-                return ParameterStyle.Label;
-            }
-
-            if (styleValue.ValueEquals(ParameterStyleUtf8.Matrix))
-            {
-                return ParameterStyle.Matrix;
-            }
-
-            if (styleValue.ValueEquals(ParameterStyleUtf8.SpaceDelimited))
-            {
-                return ParameterStyle.SpaceDelimited;
-            }
-
-            if (styleValue.ValueEquals(ParameterStyleUtf8.PipeDelimited))
-            {
-                return ParameterStyle.PipeDelimited;
-            }
-
-            if (styleValue.ValueEquals(ParameterStyleUtf8.DeepObject))
-            {
-                return ParameterStyle.DeepObject;
-            }
-        }
-
-        return location switch
-        {
-            ParameterLocation.Query or ParameterLocation.Cookie => ParameterStyle.Form,
-            _ => ParameterStyle.Simple,
+            ParameterLocation.Header => ParameterStyle.Simple,
+            ParameterLocation.Cookie => ParameterStyle.Form,
+            ParameterLocation.Path => ParsePathStyle((JsonElement)typed),
+            ParameterLocation.Query => ParseQueryStyle((JsonElement)typed),
+            _ => ParameterStyle.Form,
         };
+
+        bool explode = typed.Explode.IsNotUndefined() ? (bool)typed.Explode : style == ParameterStyle.Form;
+        return (location, style, explode);
     }
 
-    /// <summary>
-    /// UTF-8 constants for the OpenAPI <c>style</c> property values.
-    /// </summary>
-    /// <remarks>
-    /// The OpenAPI 3.1 schema does not expose style values as simple enum constants
-    /// (they are nested in a complex <c>oneOf</c> structure), so we define them here.
-    /// </remarks>
-    private static class ParameterStyleUtf8
+    private static ParameterStyle ParsePathStyle(PathStyles pathStyles)
     {
-        public static ReadOnlySpan<byte> Form => "form"u8;
+        return pathStyles.Match(
+            static (in PathStyles.RequiredRequired rr) =>
+                rr.Style.Match(
+                    static () => ParameterStyle.Matrix,
+                    static () => ParameterStyle.Label,
+                    static () => ParameterStyle.Simple,
+                    static () => ParameterStyle.Simple),
+            static (in PathStyles _) =>
+                ParameterStyle.Simple);
+    }
 
-        public static ReadOnlySpan<byte> Simple => "simple"u8;
-
-        public static ReadOnlySpan<byte> Label => "label"u8;
-
-        public static ReadOnlySpan<byte> Matrix => "matrix"u8;
-
-        public static ReadOnlySpan<byte> SpaceDelimited => "spaceDelimited"u8;
-
-        public static ReadOnlySpan<byte> PipeDelimited => "pipeDelimited"u8;
-
-        public static ReadOnlySpan<byte> DeepObject => "deepObject"u8;
+    private static ParameterStyle ParseQueryStyle(QueryStyles queryStyles)
+    {
+        return queryStyles.Match(
+            static (in QueryStyles.ThenEntity then) =>
+                then.Style.Match(
+                    static () => ParameterStyle.Form,
+                    static () => ParameterStyle.SpaceDelimited,
+                    static () => ParameterStyle.PipeDelimited,
+                    static () => ParameterStyle.DeepObject,
+                    static () => ParameterStyle.Form),
+            static (in QueryStyles _) =>
+                ParameterStyle.Form);
     }
 
     private static IEnumerable<ExtractedSchema> EnumerateMediaTypeSchemas(
