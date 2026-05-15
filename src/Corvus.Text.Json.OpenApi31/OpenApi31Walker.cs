@@ -246,15 +246,13 @@ public sealed class OpenApi31Walker : ISpecWalker
         if (hasPathParams)
         {
             int sourceIndex = 0;
-            foreach (JsonElement param in pathItem.Parameters.EnumerateArray())
+            foreach (OpenApiDocument.ParameterOrReference paramOrRef in pathItem.Parameters.EnumerateArray())
             {
-                if (param.ValueKind != JsonValueKind.Object)
+                if (paramOrRef.ValueKind != JsonValueKind.Object)
                 {
                     sourceIndex++;
                     continue;
                 }
-
-                OpenApiDocument.ParameterOrReference paramOrRef = param;
 
                 if (!TryResolveParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
                 {
@@ -281,15 +279,13 @@ public sealed class OpenApi31Walker : ISpecWalker
         if (hasOperationParams)
         {
             int sourceIndex = 0;
-            foreach (JsonElement param in operation.Parameters.EnumerateArray())
+            foreach (OpenApiDocument.ParameterOrReference paramOrRef in operation.Parameters.EnumerateArray())
             {
-                if (param.ValueKind != JsonValueKind.Object)
+                if (paramOrRef.ValueKind != JsonValueKind.Object)
                 {
                     sourceIndex++;
                     continue;
                 }
-
-                OpenApiDocument.ParameterOrReference paramOrRef = param;
 
                 if (!TryResolveParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
                 {
