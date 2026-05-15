@@ -96,7 +96,8 @@ public static class ClientModelBuilder
             string? schemaPointer = null;
             if (walked.HasSchema)
             {
-                schemaPointer = BuildParameterSchemaPointer(entry.Path, entry.Method, i);
+                schemaPointer = BuildParameterSchemaPointer(
+                    entry.Path, entry.Method, walked.SourceIndex, walked.IsPathLevel);
                 schemaPointers.Add(schemaPointer);
             }
 
@@ -268,7 +269,8 @@ public static class ClientModelBuilder
     private static string BuildParameterSchemaPointer(
         JsonProperty<JsonElement> pathProperty,
         OperationMethod method,
-        int index)
+        int index,
+        bool isPathLevel)
     {
         Span<byte> initialBuffer = stackalloc byte[256];
         Utf8ValueStringBuilder sb = new(initialBuffer);
@@ -278,8 +280,13 @@ public static class ClientModelBuilder
         {
             sb.Append("#/paths/"u8);
             AppendEncodedSegment(ref sb, pathName.Span);
-            sb.Append((byte)'/');
-            AppendMethodUtf8(ref sb, method);
+
+            if (!isPathLevel)
+            {
+                sb.Append((byte)'/');
+                AppendMethodUtf8(ref sb, method);
+            }
+
             sb.Append("/parameters/"u8);
             sb.Append(index);
             sb.Append("/schema"u8);

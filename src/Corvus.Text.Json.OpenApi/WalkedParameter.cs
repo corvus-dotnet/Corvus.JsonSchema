@@ -27,13 +27,26 @@ public readonly struct WalkedParameter
     /// <param name="style">The serialization style.</param>
     /// <param name="explode">Whether to explode array/object values.</param>
     /// <param name="hasSchema">Whether the parameter declares a schema.</param>
+    /// <param name="isPathLevel">
+    /// Whether this parameter was declared at the path-item level rather than
+    /// the operation level. Path-level parameters live at
+    /// <c>#/paths/&lt;path&gt;/parameters/&lt;i&gt;</c> rather than
+    /// <c>#/paths/&lt;path&gt;/&lt;method&gt;/parameters/&lt;i&gt;</c>.
+    /// </param>
+    /// <param name="sourceIndex">
+    /// The zero-based index of this parameter in its source array (path-item
+    /// <c>parameters</c> or operation <c>parameters</c>). Used to construct
+    /// correct JSON Pointer references to the parameter schema.
+    /// </param>
     public WalkedParameter(
         JsonElement element,
         ParameterLocation location,
         bool isRequired,
         ParameterStyle style,
         bool explode,
-        bool hasSchema)
+        bool hasSchema,
+        bool isPathLevel = false,
+        int sourceIndex = 0)
     {
         this.Element = element;
         this.Location = location;
@@ -41,6 +54,8 @@ public readonly struct WalkedParameter
         this.Style = style;
         this.Explode = explode;
         this.HasSchema = hasSchema;
+        this.IsPathLevel = isPathLevel;
+        this.SourceIndex = sourceIndex;
     }
 
     /// <summary>
@@ -73,4 +88,16 @@ public readonly struct WalkedParameter
     /// Gets a value indicating whether the parameter declares a schema.
     /// </summary>
     public bool HasSchema { get; }
+
+    /// <summary>
+    /// Gets a value indicating whether this parameter was declared at the
+    /// path-item level rather than the operation level.
+    /// </summary>
+    public bool IsPathLevel { get; }
+
+    /// <summary>
+    /// Gets the zero-based index of this parameter in its source array
+    /// (path-item or operation <c>parameters</c>).
+    /// </summary>
+    public int SourceIndex { get; }
 }

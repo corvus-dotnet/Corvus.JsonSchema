@@ -382,7 +382,7 @@ public class ClientCodeEmitterTests
             impl.Content.Contains("Petstore.Client.NewPet.Source body", StringComparison.Ordinal));
         Assert.IsTrue(
             impl.Content.Contains(
-                "SendAsync<CreatePetRequest, Petstore.Client.NewPet, CreatePetResponse>",
+                "SendWithBodyAsyncCore<CreatePetRequest, Petstore.Client.NewPet, CreatePetResponse>",
                 StringComparison.Ordinal));
     }
 
@@ -396,7 +396,7 @@ public class ClientCodeEmitterTests
 
         Assert.IsTrue(
             impl.Content.Contains(
-                "SendAsync<ListPetsRequest, ListPetsResponse>",
+                "SendAsyncCore<ListPetsRequest, ListPetsResponse>",
                 StringComparison.Ordinal));
     }
 
@@ -412,7 +412,7 @@ public class ClientCodeEmitterTests
             impl.Content.Contains("Petstore.Client.NewPet.Source body", StringComparison.Ordinal));
         Assert.IsTrue(
             impl.Content.Contains(
-                "SendAsync<CreatePetRequest, Petstore.Client.NewPet, CreatePetResponse>",
+                "SendWithBodyAsyncCore<CreatePetRequest, Petstore.Client.NewPet, CreatePetResponse>",
                 StringComparison.Ordinal));
     }
 
@@ -3168,5 +3168,166 @@ public class ClientCodeEmitterTests
         ClientModel model = BuildModelFromJson(spec);
         Assert.IsNotNull(model.Operations[0].RequestBody);
         Assert.AreEqual(0, model.Operations[0].RequestBody!.Value.Content.Length);
+    }
+
+    // ── Path-level parameters ──────────────────────────────────────────
+    private const string PathLevelParamsSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "PathLevel", "version": "1.0" },
+          "paths": {
+            "/orders/{orderId}": {
+              "parameters": [
+                {
+                  "name": "orderId",
+                  "in": "path",
+                  "required": true,
+                  "schema": { "type": "string", "format": "uuid" }
+                },
+                {
+                  "name": "X-Trace-Id",
+                  "in": "header",
+                  "schema": { "type": "string" }
+                }
+              ],
+              "get": {
+                "operationId": "getOrder",
+                "tags": ["orders"],
+                "parameters": [
+                  {
+                    "name": "fields",
+                    "in": "query",
+                    "schema": { "type": "string" }
+                  }
+                ],
+                "responses": {
+                  "200": {
+                    "description": "OK",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              },
+              "put": {
+                "operationId": "updateOrder",
+                "tags": ["orders"],
+                "parameters": [
+                  {
+                    "name": "X-Trace-Id",
+                    "in": "header",
+                    "required": true,
+                    "schema": { "type": "string", "format": "uuid" }
+                  }
+                ],
+                "requestBody": {
+                  "required": true,
+                  "content": { "application/json": { "schema": { "type": "object" } } }
+                },
+                "responses": {
+                  "200": {
+                    "description": "OK",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public void PathLevel_GetOperationInheritsPathParameters()
+    {
+        ClientModel model = BuildModelFromJson(PathLevelParamsSpec);
+
+        ClientOperation getOp = model.Operations.First(o => o.GetMethodName() == "GetOrder");
+        Assert.AreEqual(3, getOp.Parameters.Length);
+    }
+
+    [TestMethod]
+    public void PathLevel_PutOperationOverridesPathParameter()
+    {
+        ClientModel model = BuildModelFromJson(PathLevelParamsSpec);
+
+        ClientOperation putOp = model.Operations.First(o => o.GetMethodName() == "UpdateOrder");
+
+        // PUT inherits orderId (path), overrides X-Trace-Id (header) = 2
+        Assert.AreEqual(2, putOp.Parameters.Length);
+    }
+
+    [TestMethod]
+    public void PathLevel_PathLevelParamUsesPathLevelPointer()
+    {
+        ClientModel model = BuildModelFromJson(PathLevelParamsSpec);
+
+        ClientOperation getOp = model.Operations.First(o => o.GetMethodName() == "GetOrder");
+
+        // orderId is path-level — pointer omits HTTP method
+        ClientParameter orderId = getOp.Parameters.First(p => p.GetName() == "orderId");
+        Assert.IsTrue(
+            orderId.SchemaPointer!.Contains("/parameters/0/schema", StringComparison.Ordinal),
+            $"Expected path-level pointer, got: {orderId.SchemaPointer}");
+        Assert.IsFalse(
+            orderId.SchemaPointer!.Contains("/get/", StringComparison.Ordinal),
+            $"Path-level pointer should not contain method segment: {orderId.SchemaPointer}");
+    }
+
+    [TestMethod]
+    public void PathLevel_OperationLevelParamUsesOperationPointer()
+    {
+        ClientModel model = BuildModelFromJson(PathLevelParamsSpec);
+
+        ClientOperation getOp = model.Operations.First(o => o.GetMethodName() == "GetOrder");
+
+        // fields is operation-level — pointer includes HTTP method
+        ClientParameter fields = getOp.Parameters.First(p => p.GetName() == "fields");
+        Assert.IsTrue(
+            fields.SchemaPointer!.Contains("/get/parameters/", StringComparison.Ordinal),
+            $"Expected operation-level pointer with method, got: {fields.SchemaPointer}");
+    }
+
+    [TestMethod]
+    public void PathLevel_OverriddenParamUsesOperationPointer()
+    {
+        ClientModel model = BuildModelFromJson(PathLevelParamsSpec);
+
+        ClientOperation putOp = model.Operations.First(o => o.GetMethodName() == "UpdateOrder");
+
+        // X-Trace-Id is overridden — should use operation-level pointer
+        ClientParameter traceId = putOp.Parameters.First(p => p.GetName() == "X-Trace-Id");
+        Assert.IsTrue(
+            traceId.SchemaPointer!.Contains("/put/parameters/", StringComparison.Ordinal),
+            $"Expected operation-level pointer for override, got: {traceId.SchemaPointer}");
+    }
+
+    [TestMethod]
+    public void PathLevel_EmittedRequestIncludesInheritedParams()
+    {
+        ClientModel model = BuildModelFromJson(PathLevelParamsSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1orders~1{orderId}/parameters/0/schema"] = "Test.OrderId",
+            ["#/paths/~1orders~1{orderId}/parameters/1/schema"] = "Test.TraceId",
+            ["#/paths/~1orders~1{orderId}/get/parameters/0/schema"] = "Test.Fields",
+            ["#/paths/~1orders~1{orderId}/put/parameters/0/schema"] = "Test.UuidTraceId",
+            ["#/paths/~1orders~1{orderId}/put/requestBody/content/application~1json/schema"] = "Test.OrderUpdate",
+            ["#/paths/~1orders~1{orderId}/get/responses/200/content/application~1json/schema"] = "Test.Order",
+            ["#/paths/~1orders~1{orderId}/put/responses/200/content/application~1json/schema"] = "Test.Order",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile getReq = GetFile(files, "GetOrderRequest.cs");
+
+        // Should have all 3 params: orderId (path), X-Trace-Id (header), fields (query)
+        Assert.IsTrue(
+            getReq.Content.Contains("Test.OrderId OrderId", StringComparison.Ordinal),
+            "Missing inherited path param orderId");
+        Assert.IsTrue(
+            getReq.Content.Contains("Test.TraceId XTraceId", StringComparison.Ordinal),
+            "Missing inherited header param X-Trace-Id");
+        Assert.IsTrue(
+            getReq.Content.Contains("Test.Fields Fields", StringComparison.Ordinal),
+            "Missing operation-level query param fields");
     }
 }

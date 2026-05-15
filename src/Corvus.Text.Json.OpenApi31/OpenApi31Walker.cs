@@ -65,7 +65,7 @@ public sealed class OpenApi31Walker : ISpecWalker
                         pathProp,
                         operation,
                         method,
-                        ExtractParameters(typed),
+                        ExtractParameters(typed, pathItem),
                         ExtractRequestBody(typed),
                         ExtractResponses(typed));
                 }
@@ -128,17 +128,14 @@ public sealed class OpenApi31Walker : ISpecWalker
                 }
             }
 
-            // Parameter schemas
-            if (operation.Parameters.ValueKind == JsonValueKind.Array)
+            // Parameter schemas (merged from path-level and operation-level)
+            foreach (WalkedParameter walkedParam in entry.Parameters)
             {
-                foreach (JsonElement param in ((JsonElement)operation.Parameters).EnumerateArray())
+                OpenApiDocument.ParameterOrReference parameter = walkedParam.Element;
+                if (parameter.Schema.ValueKind == JsonValueKind.Object)
                 {
-                    OpenApiDocument.ParameterOrReference parameter = param;
-                    if (parameter.Schema.ValueKind == JsonValueKind.Object)
-                    {
-                        yield return new ExtractedSchema(
-                            (JsonElement)parameter.Schema, SchemaRole.Parameter);
-                    }
+                    yield return new ExtractedSchema(
+                        (JsonElement)parameter.Schema, SchemaRole.Parameter);
                 }
             }
         }
@@ -158,34 +155,116 @@ public sealed class OpenApi31Walker : ISpecWalker
         }
     }
 
-    private static WalkedParameter[] ExtractParameters(OpenApiDocument.Operation operation)
+    private static WalkedParameter[] ExtractParameters(
+        OpenApiDocument.Operation operation,
+        OpenApiDocument.PathItem pathItem)
     {
-        if (operation.Parameters.ValueKind != JsonValueKind.Array)
+        bool hasOperationParams = operation.Parameters.ValueKind == JsonValueKind.Array;
+        bool hasPathParams = pathItem.Parameters.ValueKind == JsonValueKind.Array;
+
+        if (!hasOperationParams && !hasPathParams)
         {
             return [];
         }
 
         List<WalkedParameter> result = [];
 
-        foreach (JsonElement param in ((JsonElement)operation.Parameters).EnumerateArray())
+        // Start with path-level parameters.
+        if (hasPathParams)
         {
-            if (param.ValueKind != JsonValueKind.Object)
+            int sourceIndex = 0;
+            foreach (JsonElement param in ((JsonElement)pathItem.Parameters).EnumerateArray())
+            {
+                if (param.ValueKind != JsonValueKind.Object)
+                {
+                    sourceIndex++;
+                    continue;
+                }
+
+                OpenApiDocument.ParameterOrReference typed = param;
+
+                ParameterLocation location = ParseLocation(typed.In);
+                bool required = typed.Required.ValueKind == JsonValueKind.True;
+                bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
+
+                (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
+
+                result.Add(new WalkedParameter(
+                    param, location, required, style, explode, hasSchema,
+                    isPathLevel: true, sourceIndex: sourceIndex));
+                sourceIndex++;
+            }
+        }
+
+        // Add operation-level parameters, replacing any path-level parameter
+        // that shares the same name+in combination (operation wins per OpenAPI spec).
+        if (hasOperationParams)
+        {
+            int sourceIndex = 0;
+            foreach (JsonElement param in ((JsonElement)operation.Parameters).EnumerateArray())
+            {
+                if (param.ValueKind != JsonValueKind.Object)
+                {
+                    sourceIndex++;
+                    continue;
+                }
+
+                OpenApiDocument.ParameterOrReference typed = param;
+
+                ParameterLocation location = ParseLocation(typed.In);
+                bool required = typed.Required.ValueKind == JsonValueKind.True;
+                bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
+
+                (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
+
+                // Replace any path-level param with matching name+in.
+                int existingIndex = FindParameterIndex(result, typed.Name, location);
+                WalkedParameter walkedParam = new(
+                    param, location, required, style, explode, hasSchema,
+                    isPathLevel: false, sourceIndex: sourceIndex);
+
+                if (existingIndex >= 0)
+                {
+                    result[existingIndex] = walkedParam;
+                }
+                else
+                {
+                    result.Add(walkedParam);
+                }
+
+                sourceIndex++;
+            }
+        }
+
+        return [.. result];
+    }
+
+    private static int FindParameterIndex(
+        List<WalkedParameter> parameters,
+        JsonElement name,
+        ParameterLocation location)
+    {
+        if (name.ValueKind != JsonValueKind.String)
+        {
+            return -1;
+        }
+
+        for (int i = 0; i < parameters.Count; i++)
+        {
+            if (parameters[i].Location != location)
             {
                 continue;
             }
 
-            OpenApiDocument.ParameterOrReference typed = param;
-
-            ParameterLocation location = ParseLocation(typed.In);
-            bool required = typed.Required.ValueKind == JsonValueKind.True;
-            bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
-
-            (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
-
-            result.Add(new WalkedParameter(param, location, required, style, explode, hasSchema));
+            OpenApiDocument.ParameterOrReference existing = parameters[i].Element;
+            if (existing.Name.ValueKind == JsonValueKind.String
+                && name.Equals(existing.Name))
+            {
+                return i;
+            }
         }
 
-        return [.. result];
+        return -1;
     }
 
     private static WalkedRequestBody? ExtractRequestBody(OpenApiDocument.Operation operation)

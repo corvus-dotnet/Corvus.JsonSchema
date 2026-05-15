@@ -34,11 +34,12 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <see cref="BaseSchemaNameHeuristic"/> (1000) to take precedence.
 /// </para>
 /// <para>
-/// <b>Maintenance note:</b> This heuristic currently handles the four schema locations
+/// <b>Maintenance note:</b> This heuristic currently handles the five schema locations
 /// extracted by <c>ClientModelBuilder</c>: <c>responses</c>, <c>requestBody</c>,
-/// <c>parameters</c>, and <c>response headers</c>. When the walker is extended to extract
-/// schemas from additional OpenAPI locations (callbacks, path-level parameters, link schemas),
-/// corresponding branches must be added to <see cref="TryParseOpenApiFragment"/>.
+/// <c>parameters</c> (operation-level and path-level), and <c>response headers</c>.
+/// When the walker is extended to extract schemas from additional OpenAPI locations
+/// (callbacks, link schemas), corresponding branches must be added to
+/// <see cref="TryParseOpenApiFragment"/>.
 /// </para>
 /// </remarks>
 public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
@@ -130,26 +131,39 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         ReadOnlySpan<char> remainder = fragment["/paths/".Length..];
 
         // The URL path is the next segment (encoded with ~1 for /).
-        // It ends at the next unescaped / that is followed by an HTTP method.
+        // It ends at the next unescaped / that is followed by an HTTP method
+        // or by "parameters" (for path-level parameters).
         int methodStart = FindMethodSegment(remainder);
-        if (methodStart < 0)
+        if (methodStart >= 0)
         {
-            return false;
+            ctx.UrlPath = remainder[..methodStart];
+
+            remainder = remainder[(methodStart + 1)..];
+
+            // Extract the HTTP method
+            int nextSlash = remainder.IndexOf('/');
+            if (nextSlash < 0)
+            {
+                return false;
+            }
+
+            ctx.Method = remainder[..nextSlash];
+            remainder = remainder[(nextSlash + 1)..];
         }
-
-        ctx.UrlPath = remainder[..methodStart];
-
-        remainder = remainder[(methodStart + 1)..];
-
-        // Extract the HTTP method
-        int nextSlash = remainder.IndexOf('/');
-        if (nextSlash < 0)
+        else
         {
-            return false;
-        }
+            // No HTTP method found — check for path-level parameters.
+            // Format: /paths/<url>/parameters/<idx>/schema
+            int paramStart = FindSegment(remainder, "parameters");
+            if (paramStart < 0)
+            {
+                return false;
+            }
 
-        ctx.Method = remainder[..nextSlash];
-        remainder = remainder[(nextSlash + 1)..];
+            ctx.UrlPath = remainder[..paramStart];
+            ctx.Method = [];
+            remainder = remainder[(paramStart + 1)..];
+        }
 
         // Now determine the position: responses, requestBody, or parameters
         if (remainder.StartsWith("responses/".AsSpan()))
@@ -157,7 +171,7 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
             remainder = remainder["responses/".Length..];
 
             // Extract status code (e.g. "200", "default")
-            nextSlash = remainder.IndexOf('/');
+            int nextSlash = remainder.IndexOf('/');
             if (nextSlash < 0)
             {
                 // No content — just a response code with no schema (e.g. 204)
@@ -197,7 +211,7 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         else if (remainder.StartsWith("parameters/".AsSpan()))
         {
             remainder = remainder["parameters/".Length..];
-            nextSlash = remainder.IndexOf('/');
+            int nextSlash = remainder.IndexOf('/');
             if (nextSlash < 0)
             {
                 return false;
@@ -236,11 +250,15 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
 
     private static int FindMethodSegment(ReadOnlySpan<char> pathAndRest)
     {
+        return FindSegment(pathAndRest, null);
+    }
+
+    private static int FindSegment(ReadOnlySpan<char> pathAndRest, string? targetSegment)
+    {
         // The URL path segment is encoded: / → ~1, ~ → ~0.
-        // We need to find where the URL path ends and the method begins.
-        // The method is one of: get, put, post, delete, patch, options, head, trace.
-        // We scan for /<method>/ patterns.
-        ReadOnlySpan<char> methods = stackalloc char[0]; // dummy
+        // We need to find where the URL path ends and the next segment begins.
+        // If targetSegment is null, we look for an HTTP method.
+        // Otherwise, we look for the exact target segment name.
         int searchStart = 0;
 
         while (searchStart < pathAndRest.Length)
@@ -253,14 +271,24 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
 
             slash += searchStart;
 
-            // Check if the segment after this slash is an HTTP method
+            // Check if the segment after this slash matches
             ReadOnlySpan<char> after = pathAndRest[(slash + 1)..];
             int endOfSegment = after.IndexOf('/');
             ReadOnlySpan<char> segment = endOfSegment >= 0 ? after[..endOfSegment] : after;
 
-            if (IsHttpMethod(segment))
+            if (targetSegment is null)
             {
-                return slash;
+                if (IsHttpMethod(segment))
+                {
+                    return slash;
+                }
+            }
+            else
+            {
+                if (segment.SequenceEqual(targetSegment.AsSpan()))
+                {
+                    return slash;
+                }
             }
 
             searchStart = slash + 1;

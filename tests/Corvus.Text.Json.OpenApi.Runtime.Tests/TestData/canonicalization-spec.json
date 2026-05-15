@@ -435,6 +435,97 @@
           }
         }
       }
+    },
+    "/orders/{orderId}": {
+      "parameters": [
+        {
+          "name": "orderId",
+          "in": "path",
+          "required": true,
+          "schema": { "type": "string", "format": "uuid" }
+        },
+        {
+          "name": "X-Trace-Id",
+          "in": "header",
+          "schema": { "type": "string" }
+        }
+      ],
+      "get": {
+        "operationId": "getOrder",
+        "summary": "Get order — inherits path-level orderId and X-Trace-Id",
+        "tags": ["orders"],
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orderId": { "type": "string", "format": "uuid" },
+                    "status": { "type": "string" },
+                    "total": { "type": "number" }
+                  },
+                  "required": ["orderId", "status", "total"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateOrder",
+        "summary": "Update order — inherits path-level params, overrides X-Trace-Id",
+        "tags": ["orders"],
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string", "format": "uuid" }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": { "type": "string" },
+                  "total": { "type": "number" }
+                },
+                "required": ["status"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orderId": { "type": "string", "format": "uuid" },
+                    "status": { "type": "string" },
+                    "total": { "type": "number" }
+                  },
+                  "required": ["orderId", "status", "total"]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

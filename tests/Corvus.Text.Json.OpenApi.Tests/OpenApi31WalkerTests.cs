@@ -211,4 +211,129 @@ public class OpenApi31WalkerTests
         List<ExtractedSchema> schemas = walker.ExtractSchemas(emptyRoot).ToList();
         Assert.AreEqual(0, schemas.Count);
     }
+
+    [TestMethod]
+    public void PathLevelParams_GetOperationInheritsPathParameters()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsePathLevelParamsSpec();
+        var walker = new OpenApi31Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry getOp = ops.First(o => o.Method == OperationMethod.Get);
+
+        // GET inherits orderId (path) + X-Trace-Id (header) from path, plus own fields (query) = 3
+        Assert.AreEqual(3, getOp.Parameters.Length);
+    }
+
+    [TestMethod]
+    public void PathLevelParams_PutOperationOverridesPathParameter()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsePathLevelParamsSpec();
+        var walker = new OpenApi31Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry putOp = ops.First(o => o.Method == OperationMethod.Put);
+
+        // PUT inherits orderId (path) from path, overrides X-Trace-Id (header) = 2
+        Assert.AreEqual(2, putOp.Parameters.Length);
+    }
+
+    [TestMethod]
+    public void PathLevelParams_InheritedParamIsMarkedPathLevel()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsePathLevelParamsSpec();
+        var walker = new OpenApi31Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry getOp = ops.First(o => o.Method == OperationMethod.Get);
+
+        WalkedParameter orderId = FindParam(getOp.Parameters, "orderId");
+        Assert.IsTrue(orderId.IsPathLevel);
+    }
+
+    [TestMethod]
+    public void PathLevelParams_OperationLevelParamIsNotMarkedPathLevel()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsePathLevelParamsSpec();
+        var walker = new OpenApi31Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry getOp = ops.First(o => o.Method == OperationMethod.Get);
+
+        WalkedParameter fields = FindParam(getOp.Parameters, "fields");
+        Assert.IsFalse(fields.IsPathLevel);
+    }
+
+    [TestMethod]
+    public void PathLevelParams_OverriddenParamUsesOperationLevelDefinition()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsePathLevelParamsSpec();
+        var walker = new OpenApi31Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry putOp = ops.First(o => o.Method == OperationMethod.Put);
+
+        WalkedParameter traceId = FindParam(putOp.Parameters, "X-Trace-Id");
+        Assert.IsFalse(traceId.IsPathLevel);
+        Assert.IsTrue(traceId.IsRequired);
+    }
+
+    [TestMethod]
+    public void PathLevelParams_SourceIndexPreservesOriginalArrayPosition()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsePathLevelParamsSpec();
+        var walker = new OpenApi31Walker();
+        List<OperationEntry> ops = walker.EnumerateOperations(doc.RootElement).ToList();
+
+        OperationEntry getOp = ops.First(o => o.Method == OperationMethod.Get);
+
+        WalkedParameter orderId = FindParam(getOp.Parameters, "orderId");
+        Assert.AreEqual(0, orderId.SourceIndex);
+
+        WalkedParameter traceId = FindParam(getOp.Parameters, "X-Trace-Id");
+        Assert.AreEqual(1, traceId.SourceIndex);
+
+        WalkedParameter fields = FindParam(getOp.Parameters, "fields");
+        Assert.AreEqual(0, fields.SourceIndex);
+    }
+
+    [TestMethod]
+    public void PathLevelParams_ExtractSchemasIncludesPathLevelParameterSchemas()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsePathLevelParamsSpec();
+        var walker = new OpenApi31Walker();
+        List<ExtractedSchema> schemas = walker.ExtractSchemas(doc.RootElement).ToList();
+
+        int paramSchemas = schemas.Count(s => s.Role == SchemaRole.Parameter);
+        Assert.IsTrue(paramSchemas >= 3, $"Expected at least 3 parameter schemas, found {paramSchemas}");
+    }
+
+    private static WalkedParameter FindParam(ReadOnlyMemory<WalkedParameter> parameters, string name)
+    {
+        ReadOnlyMemory<byte> nameUtf8 = "name"u8.ToArray();
+        ReadOnlySpan<WalkedParameter> span = parameters.Span;
+
+        for (int i = 0; i < span.Length; i++)
+        {
+            if (span[i].Element.TryGetProperty(nameUtf8.Span, out JsonElement n)
+                && n.ValueKind == JsonValueKind.String
+                && n.GetString() == name)
+            {
+                return span[i];
+            }
+        }
+
+        Assert.Fail($"Parameter '{name}' not found");
+        return default; // unreachable
+    }
+
+    private static ParsedJsonDocument<JsonElement> ParsePathLevelParamsSpec()
+    {
+        string path = Path.Combine(
+            AppContext.BaseDirectory,
+            "TestData",
+            "path-level-params-3.1.json");
+        byte[] bytes = File.ReadAllBytes(path);
+        return ParsedJsonDocument<JsonElement>.Parse(bytes);
+    }
 }
