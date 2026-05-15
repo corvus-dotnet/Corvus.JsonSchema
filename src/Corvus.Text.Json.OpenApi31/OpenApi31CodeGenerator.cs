@@ -621,16 +621,13 @@ public sealed class OpenApi31CodeGenerator
     private static (ParameterLocation Location, ParameterStyle Style, bool Explode) ParseParameterTraits(
         OpenApiDocument.Parameter typed)
     {
-        ParameterLocation location = GetParameterLocation(typed);
-
-        ParameterStyle style = location switch
-        {
-            ParameterLocation.Query => ParseQueryStyle((JsonElement)typed),
-            ParameterLocation.Path => ParsePathStyle((JsonElement)typed),
-            ParameterLocation.Header => ParameterStyle.Simple,
-            ParameterLocation.Cookie => ParameterStyle.Form,
-            _ => ParameterStyle.Simple,
-        };
+        (ParameterLocation location, ParameterStyle style) = typed.In.Match<OpenApiDocument.Parameter, (ParameterLocation, ParameterStyle)>(
+            in typed,
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle((JsonElement)p)),
+            static (OpenApiDocument.Parameter _) => (ParameterLocation.Header, ParameterStyle.Simple),
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Path, ParsePathStyle((JsonElement)p)),
+            static (OpenApiDocument.Parameter _) => (ParameterLocation.Cookie, ParameterStyle.Form),
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle((JsonElement)p)));
 
         bool explode = typed.Explode.IsNotUndefined() ? (bool)typed.Explode : style == ParameterStyle.Form;
         return (location, style, explode);
