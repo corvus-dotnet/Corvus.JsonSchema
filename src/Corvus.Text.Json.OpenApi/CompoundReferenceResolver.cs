@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Internal;
+
 namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
@@ -45,6 +47,38 @@ public sealed class CompoundReferenceResolver : IOpenApiReferenceResolver
 
     /// <inheritdoc/>
     public bool TryResolve(string refValue, out JsonElement result)
+    {
+        for (int i = 0; i < this.resolvers.Length; i++)
+        {
+            if (this.resolvers[i].TryResolve(refValue, out result))
+            {
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public bool TryResolve<TTarget>(string refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>
+    {
+        for (int i = 0; i < this.resolvers.Length; i++)
+        {
+            if (this.resolvers[i].TryResolve(refValue, out result))
+            {
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public bool TryResolve<TTarget>(ReadOnlySpan<byte> refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>
     {
         for (int i = 0; i < this.resolvers.Length; i++)
         {

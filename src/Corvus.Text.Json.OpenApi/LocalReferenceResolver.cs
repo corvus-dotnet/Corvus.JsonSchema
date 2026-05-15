@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.OpenApi;
@@ -59,5 +58,43 @@ public sealed class LocalReferenceResolver : IOpenApiReferenceResolver
         // Strip the '#' to get the JSON Pointer
         ReadOnlySpan<char> pointer = refValue.AsSpan(1);
         return this.documentRoot.TryResolvePointer(pointer, out result);
+    }
+
+    /// <inheritdoc/>
+    public bool TryResolve<TTarget>(string refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>
+    {
+        if (this.TryResolve(refValue, out JsonElement element))
+        {
+            IJsonElement ie = element;
+            TTarget candidate = TTarget.CreateInstance(ie.ParentDocument, ie.ParentDocumentIndex);
+            if (candidate.EvaluateSchema())
+            {
+                result = candidate;
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
+    }
+
+    /// <inheritdoc/>
+    public bool TryResolve<TTarget>(ReadOnlySpan<byte> refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>
+    {
+        if (this.TryResolve(refValue, out JsonElement element))
+        {
+            IJsonElement ie = element;
+            TTarget candidate = TTarget.CreateInstance(ie.ParentDocument, ie.ParentDocumentIndex);
+            if (candidate.EvaluateSchema())
+            {
+                result = candidate;
+                return true;
+            }
+        }
+
+        result = default;
+        return false;
     }
 }

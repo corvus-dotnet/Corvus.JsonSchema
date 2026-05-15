@@ -2,6 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json.Internal;
+
 namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
@@ -38,4 +40,32 @@ public interface IOpenApiReferenceResolver
     /// <param name="result">When this method returns <see langword="true"/>, contains the resolved element.</param>
     /// <returns><see langword="true"/> if the reference was resolved successfully; otherwise, <see langword="false"/>.</returns>
     bool TryResolve(string refValue, out JsonElement result);
+
+    /// <summary>
+    /// Attempts to resolve a <c>$ref</c> URI-reference to a strongly-typed target,
+    /// validating that the resolved element conforms to the target type's schema.
+    /// </summary>
+    /// <typeparam name="TTarget">The expected target type. The resolved element must
+    /// pass <c>EvaluateSchema()</c> for this type.</typeparam>
+    /// <param name="refValue">The <c>$ref</c> value as a string (the raw URI-reference).</param>
+    /// <param name="result">When this method returns <see langword="true"/>, contains
+    /// the resolved and validated instance of <typeparamref name="TTarget"/>.</param>
+    /// <returns><see langword="true"/> if the reference was resolved and the target validates
+    /// against its schema; otherwise, <see langword="false"/>.</returns>
+    bool TryResolve<TTarget>(string refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>;
+
+    /// <summary>
+    /// Attempts to resolve a <c>$ref</c> URI-reference to a strongly-typed target,
+    /// validating that the resolved element conforms to the target type's schema.
+    /// </summary>
+    /// <typeparam name="TTarget">The expected target type. The resolved element must
+    /// pass <c>EvaluateSchema()</c> for this type.</typeparam>
+    /// <param name="refValue">The <c>$ref</c> value as a UTF-8 byte span (the raw URI-reference).</param>
+    /// <param name="result">When this method returns <see langword="true"/>, contains
+    /// the resolved and validated instance of <typeparamref name="TTarget"/>.</param>
+    /// <returns><see langword="true"/> if the reference was resolved and the target validates
+    /// against its schema; otherwise, <see langword="false"/>.</returns>
+    bool TryResolve<TTarget>(ReadOnlySpan<byte> refValue, out TTarget result)
+        where TTarget : struct, IJsonElement<TTarget>;
 }

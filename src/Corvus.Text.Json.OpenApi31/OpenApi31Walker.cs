@@ -90,23 +90,13 @@ public sealed class OpenApi31Walker : ISpecWalker
         {
             OpenApiDocument.Operation operation = entry.Operation;
 
-            // Request body content schemas (resolve $ref)
-            OpenApiDocument.RequestBodyOrReference requestBody = operation.RequestBody;
-            if (requestBody.ValueKind == JsonValueKind.Object)
+            // Request body content schemas
+            OpenApiDocument.RequestBodyOrReference requestBodyOrRef = operation.RequestBody;
+            if (requestBodyOrRef.ValueKind == JsonValueKind.Object)
             {
-                JsonElement requestBodyElement = (JsonElement)requestBody;
-                if (requestBody.TryGetAsRequiredRef(out _))
-                {
-                    JsonElement refProp = requestBody.Ref;
-                    if (refProp.ValueKind == JsonValueKind.String
-                        && referenceResolver.TryResolve(refProp.GetString()!, out JsonElement resolved))
-                    {
-                        requestBodyElement = resolved;
-                        requestBody = resolved;
-                    }
-                }
-
-                if (requestBody.Content.ValueKind == JsonValueKind.Object)
+                OpenApiDocument.RequestBodyOrReference? resolvedBody = ResolveRequestBody(requestBodyOrRef, referenceResolver);
+                if (resolvedBody is { } requestBody
+                    && requestBody.Content.ValueKind == JsonValueKind.Object)
                 {
                     foreach (ExtractedSchema schema in EnumerateMediaTypeSchemas(
                         requestBody.Content, SchemaRole.RequestBody))
@@ -116,25 +106,22 @@ public sealed class OpenApi31Walker : ISpecWalker
                 }
             }
 
-            // Response content schemas and headers (resolve $ref)
+            // Response content schemas and headers
             if (operation.ResponsesValue.ValueKind == JsonValueKind.Object)
             {
                 foreach (JsonProperty<JsonElement> responseProp in
                     ((JsonElement)operation.ResponsesValue).EnumerateObject())
                 {
-                    OpenApiDocument.ResponseOrReference response = responseProp.Value;
-                    JsonElement responseElement = responseProp.Value;
-
-                    // Resolve $ref on response
-                    if (response.TryGetAsRequiredRef(out _))
+                    if (responseProp.Value.ValueKind != JsonValueKind.Object)
                     {
-                        JsonElement refProp = response.Ref;
-                        if (refProp.ValueKind == JsonValueKind.String
-                            && referenceResolver.TryResolve(refProp.GetString()!, out JsonElement resolved))
-                        {
-                            response = resolved;
-                            responseElement = resolved;
-                        }
+                        continue;
+                    }
+
+                    OpenApiDocument.ResponseOrReference responseOrRef = responseProp.Value;
+                    OpenApiDocument.ResponseOrReference? resolvedResponse = ResolveResponse(responseOrRef, referenceResolver);
+                    if (resolvedResponse is not { } response)
+                    {
+                        continue;
                     }
 
                     if (response.Content.ValueKind == JsonValueKind.Object)
@@ -146,27 +133,21 @@ public sealed class OpenApi31Walker : ISpecWalker
                         }
                     }
 
-                    // Response header schemas (resolve $ref on each header)
+                    // Response header schemas
                     if (response.Headers.ValueKind == JsonValueKind.Object)
                     {
                         foreach (JsonProperty<JsonElement> headerProp in
                             ((JsonElement)response.Headers).EnumerateObject())
                         {
-                            OpenApiDocument.HeaderOrReference header = headerProp.Value;
-                            JsonElement headerElement = headerProp.Value;
-
-                            if (header.TryGetAsRequiredRef(out _))
+                            if (headerProp.Value.ValueKind != JsonValueKind.Object)
                             {
-                                JsonElement refProp = header.Ref;
-                                if (refProp.ValueKind == JsonValueKind.String
-                                    && referenceResolver.TryResolve(refProp.GetString()!, out JsonElement resolvedHeader))
-                                {
-                                    header = resolvedHeader;
-                                    headerElement = resolvedHeader;
-                                }
+                                continue;
                             }
 
-                            if (header.Schema.ValueKind == JsonValueKind.Object)
+                            OpenApiDocument.HeaderOrReference headerOrRef = headerProp.Value;
+                            OpenApiDocument.HeaderOrReference? resolvedHeader = ResolveHeader(headerOrRef, referenceResolver);
+                            if (resolvedHeader is { } header
+                                && header.Schema.ValueKind == JsonValueKind.Object)
                             {
                                 yield return new ExtractedSchema(
                                     (JsonElement)header.Schema, SchemaRole.Header);
@@ -230,19 +211,24 @@ public sealed class OpenApi31Walker : ISpecWalker
                     continue;
                 }
 
-                JsonElement resolved = ResolveParameterRef(param, referenceResolver);
+                OpenApiDocument.ParameterOrReference paramOrRef = param;
+                (JsonElement element, OpenApiDocument.ParameterOrReference typed)? resolved =
+                    ResolveParameter(paramOrRef, referenceResolver);
 
-                OpenApiDocument.ParameterOrReference typed = resolved;
+                if (resolved is not null)
+                {
+                    var (element, typed) = resolved.Value;
+                    ParameterLocation location = ParseLocation(typed.In);
+                    bool required = typed.Required.ValueKind == JsonValueKind.True;
+                    bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
 
-                ParameterLocation location = ParseLocation(typed.In);
-                bool required = typed.Required.ValueKind == JsonValueKind.True;
-                bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
+                    (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
 
-                (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
+                    result.Add(new WalkedParameter(
+                        element, location, required, style, explode, hasSchema,
+                        isPathLevel: true, sourceIndex: sourceIndex));
+                }
 
-                result.Add(new WalkedParameter(
-                    resolved, location, required, style, explode, hasSchema,
-                    isPathLevel: true, sourceIndex: sourceIndex));
                 sourceIndex++;
             }
         }
@@ -260,29 +246,33 @@ public sealed class OpenApi31Walker : ISpecWalker
                     continue;
                 }
 
-                JsonElement resolved = ResolveParameterRef(param, referenceResolver);
+                OpenApiDocument.ParameterOrReference paramOrRef = param;
+                (JsonElement element, OpenApiDocument.ParameterOrReference typed)? resolved =
+                    ResolveParameter(paramOrRef, referenceResolver);
 
-                OpenApiDocument.ParameterOrReference typed = resolved;
-
-                ParameterLocation location = ParseLocation(typed.In);
-                bool required = typed.Required.ValueKind == JsonValueKind.True;
-                bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
-
-                (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
-
-                // Replace any path-level param with matching name+in.
-                int existingIndex = FindParameterIndex(result, typed.Name, location);
-                WalkedParameter walkedParam = new(
-                    resolved, location, required, style, explode, hasSchema,
-                    isPathLevel: false, sourceIndex: sourceIndex);
-
-                if (existingIndex >= 0)
+                if (resolved is not null)
                 {
-                    result[existingIndex] = walkedParam;
-                }
-                else
-                {
-                    result.Add(walkedParam);
+                    var (element, typed) = resolved.Value;
+                    ParameterLocation location = ParseLocation(typed.In);
+                    bool required = typed.Required.ValueKind == JsonValueKind.True;
+                    bool hasSchema = typed.Schema.ValueKind == JsonValueKind.Object;
+
+                    (ParameterStyle style, bool explode) = ParseStyleAndExplode(typed.Style, typed.Explode, location);
+
+                    // Replace any path-level param with matching name+in.
+                    int existingIndex = FindParameterIndex(result, typed.Name, location);
+                    WalkedParameter walkedParam = new(
+                        element, location, required, style, explode, hasSchema,
+                        isPathLevel: false, sourceIndex: sourceIndex);
+
+                    if (existingIndex >= 0)
+                    {
+                        result[existingIndex] = walkedParam;
+                    }
+                    else
+                    {
+                        result.Add(walkedParam);
+                    }
                 }
 
                 sourceIndex++;
@@ -292,23 +282,25 @@ public sealed class OpenApi31Walker : ISpecWalker
         return [.. result];
     }
 
-    private static JsonElement ResolveParameterRef(
-        JsonElement element,
+    private static (JsonElement Element, OpenApiDocument.ParameterOrReference Typed)? ResolveParameter(
+        OpenApiDocument.ParameterOrReference paramOrRef,
         IOpenApiReferenceResolver referenceResolver)
     {
-        OpenApiDocument.ParameterOrReference paramOrRef = element;
-        if (paramOrRef.TryGetAsRequiredRef(out _))
-        {
-            // It's a $ref — resolve it
-            JsonElement refProp = paramOrRef.Ref;
-            if (refProp.ValueKind == JsonValueKind.String
-                && referenceResolver.TryResolve(refProp.GetString()!, out JsonElement resolved))
+        return paramOrRef.Match<IOpenApiReferenceResolver, (JsonElement, OpenApiDocument.ParameterOrReference)?>(
+            in referenceResolver,
+            static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver resolver) =>
             {
-                return resolved;
-            }
-        }
+                string? refString = reference.Ref.GetString();
+                if (refString is not null
+                    && resolver.TryResolve<OpenApiDocument.ParameterOrReference>(refString, out var resolved))
+                {
+                    return ((JsonElement)resolved, resolved);
+                }
 
-        return element;
+                return null;
+            },
+            static (in OpenApiDocument.Parameter parameter, in IOpenApiReferenceResolver _) =>
+                ((JsonElement)parameter, (OpenApiDocument.ParameterOrReference)(JsonElement)parameter));
     }
 
     private static int FindParameterIndex(
@@ -343,34 +335,43 @@ public sealed class OpenApi31Walker : ISpecWalker
         OpenApiDocument.Operation operation,
         IOpenApiReferenceResolver referenceResolver)
     {
-        OpenApiDocument.RequestBodyOrReference requestBody = operation.RequestBody;
-        JsonElement requestBodyElement = (JsonElement)requestBody;
-
-        if (requestBodyElement.ValueKind != JsonValueKind.Object)
+        OpenApiDocument.RequestBodyOrReference requestBodyOrRef = operation.RequestBody;
+        if (requestBodyOrRef.ValueKind != JsonValueKind.Object)
         {
             return null;
         }
 
-        // Resolve $ref if present
-        if (requestBody.TryGetAsRequiredRef(out _))
+        OpenApiDocument.RequestBodyOrReference? resolved = ResolveRequestBody(requestBodyOrRef, referenceResolver);
+        if (resolved is not { } requestBody)
         {
-            JsonElement refProp = requestBody.Ref;
-            if (refProp.ValueKind == JsonValueKind.String
-                && referenceResolver.TryResolve(refProp.GetString()!, out JsonElement resolved))
-            {
-                requestBodyElement = resolved;
-                requestBody = resolved;
-            }
-            else
-            {
-                return null;
-            }
+            return null;
         }
 
         bool required = requestBody.Required.ValueKind == JsonValueKind.True;
         WalkedMediaTypeContent[] content = ExtractMediaTypeContent(requestBody.Content);
 
-        return new WalkedRequestBody(requestBodyElement, required, content);
+        return new WalkedRequestBody((JsonElement)requestBody, required, content);
+    }
+
+    private static OpenApiDocument.RequestBodyOrReference? ResolveRequestBody(
+        OpenApiDocument.RequestBodyOrReference requestBodyOrRef,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        return requestBodyOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.RequestBodyOrReference?>(
+            in referenceResolver,
+            static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver resolver) =>
+            {
+                string? refString = reference.Ref.GetString();
+                if (refString is not null
+                    && resolver.TryResolve<OpenApiDocument.RequestBodyOrReference>(refString, out var resolved))
+                {
+                    return resolved;
+                }
+
+                return null;
+            },
+            static (in OpenApiDocument.RequestBody requestBody, in IOpenApiReferenceResolver _) =>
+                (OpenApiDocument.RequestBodyOrReference)(JsonElement)requestBody);
     }
 
     private static WalkedResponse[] ExtractResponses(
@@ -392,23 +393,11 @@ public sealed class OpenApi31Walker : ISpecWalker
                 continue;
             }
 
-            OpenApiDocument.ResponseOrReference response = responseProp.Value;
-            JsonElement responseElement = responseProp.Value;
-
-            // Resolve $ref if present
-            if (response.TryGetAsRequiredRef(out _))
+            OpenApiDocument.ResponseOrReference responseOrRef = responseProp.Value;
+            OpenApiDocument.ResponseOrReference? resolved = ResolveResponse(responseOrRef, referenceResolver);
+            if (resolved is not { } response)
             {
-                JsonElement refProp = response.Ref;
-                if (refProp.ValueKind == JsonValueKind.String
-                    && referenceResolver.TryResolve(refProp.GetString()!, out JsonElement resolved))
-                {
-                    response = resolved;
-                    responseElement = resolved;
-                }
-                else
-                {
-                    continue;
-                }
+                continue;
             }
 
             WalkedMediaTypeContent[] content = ExtractMediaTypeContent(response.Content);
@@ -418,6 +407,27 @@ public sealed class OpenApi31Walker : ISpecWalker
         }
 
         return [.. result];
+    }
+
+    private static OpenApiDocument.ResponseOrReference? ResolveResponse(
+        OpenApiDocument.ResponseOrReference responseOrRef,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        return responseOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.ResponseOrReference?>(
+            in referenceResolver,
+            static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver resolver) =>
+            {
+                string? refString = reference.Ref.GetString();
+                if (refString is not null
+                    && resolver.TryResolve<OpenApiDocument.ResponseOrReference>(refString, out var resolved))
+                {
+                    return resolved;
+                }
+
+                return null;
+            },
+            static (in OpenApiDocument.Response response, in IOpenApiReferenceResolver _) =>
+                (OpenApiDocument.ResponseOrReference)(JsonElement)response);
     }
 
     private static WalkedResponseHeader[] ExtractResponseHeaders(
@@ -433,30 +443,44 @@ public sealed class OpenApi31Walker : ISpecWalker
 
         foreach (JsonProperty<JsonElement> headerProp in headersMap.EnumerateObject())
         {
-            JsonElement headerElement = headerProp.Value;
-
-            // Resolve $ref if present
-            OpenApiDocument.HeaderOrReference header = headerElement;
-            if (header.TryGetAsRequiredRef(out _))
+            if (headerProp.Value.ValueKind != JsonValueKind.Object)
             {
-                JsonElement refProp = header.Ref;
-                if (refProp.ValueKind == JsonValueKind.String
-                    && referenceResolver.TryResolve(refProp.GetString()!, out JsonElement resolved))
-                {
-                    headerElement = resolved;
-                }
-                else
-                {
-                    continue;
-                }
+                continue;
             }
 
-            bool hasSchema = headerElement.TryGetProperty("schema"u8, out JsonElement schema)
-                && schema.ValueKind == JsonValueKind.Object;
+            OpenApiDocument.HeaderOrReference headerOrRef = headerProp.Value;
+            OpenApiDocument.HeaderOrReference? resolved = ResolveHeader(headerOrRef, referenceResolver);
+            if (resolved is not { } header)
+            {
+                continue;
+            }
+
+            bool hasSchema = header.Schema.ValueKind == JsonValueKind.Object;
             result.Add(new WalkedResponseHeader(headerProp, hasSchema));
         }
 
         return [.. result];
+    }
+
+    private static OpenApiDocument.HeaderOrReference? ResolveHeader(
+        OpenApiDocument.HeaderOrReference headerOrRef,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        return headerOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.HeaderOrReference?>(
+            in referenceResolver,
+            static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver resolver) =>
+            {
+                string? refString = reference.Ref.GetString();
+                if (refString is not null
+                    && resolver.TryResolve<OpenApiDocument.HeaderOrReference>(refString, out var resolved))
+                {
+                    return resolved;
+                }
+
+                return null;
+            },
+            static (in OpenApiDocument.Header header, in IOpenApiReferenceResolver _) =>
+                (OpenApiDocument.HeaderOrReference)(JsonElement)header);
     }
 
     private static WalkedMediaTypeContent[] ExtractMediaTypeContent(JsonElement contentMap)
