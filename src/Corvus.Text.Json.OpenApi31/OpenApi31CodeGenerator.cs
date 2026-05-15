@@ -6,8 +6,6 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
-using PathStyles = Corvus.Text.Json.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity;
-using QueryStyles = Corvus.Text.Json.OpenApi31.OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity;
 
 namespace Corvus.Text.Json.OpenApi31;
 
@@ -603,40 +601,40 @@ public sealed class OpenApi31CodeGenerator
     {
         (ParameterLocation location, ParameterStyle style) = typed.In.Match<OpenApiDocument.Parameter, (ParameterLocation, ParameterStyle)>(
             in typed,
-            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle((JsonElement)p)),
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p))),
             static (OpenApiDocument.Parameter _) => (ParameterLocation.Header, ParameterStyle.Simple),
-            static (OpenApiDocument.Parameter p) => (ParameterLocation.Path, ParsePathStyle((JsonElement)p)),
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Path, ParsePathStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.From(p))),
             static (OpenApiDocument.Parameter _) => (ParameterLocation.Cookie, ParameterStyle.Form),
-            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle((JsonElement)p)));
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p))));
 
         bool explode = typed.Explode.IsNotUndefined() ? (bool)typed.Explode : style == ParameterStyle.Form;
         return (location, style, explode);
     }
 
-    private static ParameterStyle ParsePathStyle(PathStyles pathStyles)
+    private static ParameterStyle ParsePathStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity pathStyles)
     {
         return pathStyles.Match(
-            static (in PathStyles.RequiredRequired rr) =>
+            static (in OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired rr) =>
                 rr.Style.Match(
                     static () => ParameterStyle.Matrix,
                     static () => ParameterStyle.Label,
                     static () => ParameterStyle.Simple,
                     static () => ParameterStyle.Simple),
-            static (in PathStyles _) =>
+            static (in OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity _) =>
                 ParameterStyle.Simple);
     }
 
-    private static ParameterStyle ParseQueryStyle(QueryStyles queryStyles)
+    private static ParameterStyle ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity queryStyles)
     {
         return queryStyles.Match(
-            static (in QueryStyles.ThenEntity then) =>
+            static (in OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.ThenEntity then) =>
                 then.Style.Match(
                     static () => ParameterStyle.Form,
                     static () => ParameterStyle.SpaceDelimited,
                     static () => ParameterStyle.PipeDelimited,
                     static () => ParameterStyle.DeepObject,
                     static () => ParameterStyle.Form),
-            static (in QueryStyles _) =>
+            static (in OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity _) =>
                 ParameterStyle.Form);
     }
 
