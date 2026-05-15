@@ -429,7 +429,7 @@ public sealed class OpenApi31CodeGenerator
             return [];
         }
 
-        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel, ParameterLocation Location)> result = [];
+        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel)> result = [];
 
         if (hasPathParams)
         {
@@ -444,8 +444,7 @@ public sealed class OpenApi31CodeGenerator
 
                 if (TryResolveParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
                 {
-                    ParameterLocation location = GetParameterLocation(typed);
-                    result.Add((typed, sourceIndex, true, location));
+                    result.Add((typed, sourceIndex, true));
                 }
 
                 sourceIndex++;
@@ -465,18 +464,15 @@ public sealed class OpenApi31CodeGenerator
 
                 if (TryResolveParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
                 {
-                    ParameterLocation location = GetParameterLocation(typed);
-                    int existingIndex = FindParameterIndex(result, typed.Name, location);
-
-                    var entry = (typed, sourceIndex, false, location);
+                    int existingIndex = FindParameterIndex(result, typed);
 
                     if (existingIndex >= 0)
                     {
-                        result[existingIndex] = entry;
+                        result[existingIndex] = (typed, sourceIndex, false);
                     }
                     else
                     {
-                        result.Add(entry);
+                        result.Add((typed, sourceIndex, false));
                     }
                 }
 
@@ -484,33 +480,17 @@ public sealed class OpenApi31CodeGenerator
             }
         }
 
-        return [.. result.Select(r => (r.Parameter, r.SourceIndex, r.IsPathLevel))];
-    }
-
-    private static ParameterLocation GetParameterLocation(OpenApiDocument.Parameter typed)
-    {
-        return typed.In.Match<OpenApiDocument.Parameter, ParameterLocation>(
-            in typed,
-            static (_) => ParameterLocation.Query,
-            static (_) => ParameterLocation.Header,
-            static (_) => ParameterLocation.Path,
-            static (_) => ParameterLocation.Cookie,
-            static (_) => ParameterLocation.Query);
+        return result;
     }
 
     private static int FindParameterIndex(
-        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel, ParameterLocation Location)> parameters,
-        JsonString name,
-        ParameterLocation location)
+        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel)> parameters,
+        OpenApiDocument.Parameter newParam)
     {
         for (int i = 0; i < parameters.Count; i++)
         {
-            if (parameters[i].Location != location)
-            {
-                continue;
-            }
-
-            if (name.Equals(parameters[i].Parameter.Name))
+            if (newParam.In.Equals(parameters[i].Parameter.In)
+                && newParam.Name.Equals(parameters[i].Parameter.Name))
             {
                 return i;
             }
