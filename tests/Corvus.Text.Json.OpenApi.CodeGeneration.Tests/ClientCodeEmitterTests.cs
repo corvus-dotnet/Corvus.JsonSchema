@@ -1044,4 +1044,636 @@ public class ClientCodeEmitterTests
                 "where TContext : allows ref struct",
                 StringComparison.Ordinal));
     }
+
+    // Spec with two tags and PUT/DELETE methods to cover multi-tag grouping and
+    // OperationMethodExpression for Put/Delete, plus operation summary emission.
+    private const string MultiTagSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Multi", "version": "1.0" },
+          "paths": {
+            "/users": {
+              "put": {
+                "operationId": "updateUser",
+                "tags": ["users"],
+                "summary": "Update a <user> & their profile",
+                "requestBody": {
+                  "required": true,
+                  "content": { "application/json": { "schema": { "type": "object" } } }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Ok",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              },
+              "delete": {
+                "operationId": "deleteUser",
+                "tags": ["users"],
+                "responses": {
+                  "204": { "description": "Deleted" }
+                }
+              }
+            },
+            "/orders": {
+              "patch": {
+                "operationId": "patchOrder",
+                "tags": ["orders"],
+                "responses": {
+                  "200": {
+                    "description": "Ok",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              },
+              "head": {
+                "operationId": "headOrder",
+                "tags": ["orders"],
+                "responses": {
+                  "200": { "description": "Ok" }
+                }
+              }
+            },
+            "/health": {
+              "options": {
+                "operationId": "optionsHealth",
+                "tags": ["admin"],
+                "responses": {
+                  "200": { "description": "Ok" }
+                }
+              },
+              "trace": {
+                "operationId": "traceHealth",
+                "tags": ["admin"],
+                "responses": {
+                  "200": { "description": "Ok" }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public void Emit_MultiTagSpec_ProducesMultipleClientInterfaces()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1users/put/requestBody/content/application~1json/schema"] = "Test.UserBody",
+            ["#/paths/~1users/put/responses/200/content/application~1json/schema"] = "Test.UserResult",
+            ["#/paths/~1orders/patch/responses/200/content/application~1json/schema"] = "Test.OrderResult",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        // 3 tags → 3 interface files + 3 implementation files
+        Assert.IsTrue(files.Any(f => f.FileName == "IApiUsersClient.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "ApiUsersClient.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "IApiOrdersClient.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "ApiOrdersClient.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "IApiAdminClient.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "ApiAdminClient.cs"));
+    }
+
+    [TestMethod]
+    public void Emit_PutMethod_EmitsCorrectOperationMethodExpression()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1users/put/requestBody/content/application~1json/schema"] = "Test.UserBody",
+            ["#/paths/~1users/put/responses/200/content/application~1json/schema"] = "Test.UserResult",
+            ["#/paths/~1orders/patch/responses/200/content/application~1json/schema"] = "Test.OrderResult",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile req = GetFile(files, "UpdateUserRequest.cs");
+        Assert.IsTrue(req.Content.Contains("OperationMethod.Put", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_DeleteMethod_EmitsCorrectOperationMethodExpression()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1users/put/requestBody/content/application~1json/schema"] = "Test.UserBody",
+            ["#/paths/~1users/put/responses/200/content/application~1json/schema"] = "Test.UserResult",
+            ["#/paths/~1orders/patch/responses/200/content/application~1json/schema"] = "Test.OrderResult",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile req = GetFile(files, "DeleteUserRequest.cs");
+        Assert.IsTrue(req.Content.Contains("OperationMethod.Delete", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_PatchMethod_EmitsCorrectOperationMethodExpression()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1users/put/requestBody/content/application~1json/schema"] = "Test.UserBody",
+            ["#/paths/~1users/put/responses/200/content/application~1json/schema"] = "Test.UserResult",
+            ["#/paths/~1orders/patch/responses/200/content/application~1json/schema"] = "Test.OrderResult",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile req = GetFile(files, "PatchOrderRequest.cs");
+        Assert.IsTrue(req.Content.Contains("OperationMethod.Patch", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_HeadMethod_EmitsCorrectOperationMethodExpression()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1users/put/requestBody/content/application~1json/schema"] = "Test.UserBody",
+            ["#/paths/~1users/put/responses/200/content/application~1json/schema"] = "Test.UserResult",
+            ["#/paths/~1orders/patch/responses/200/content/application~1json/schema"] = "Test.OrderResult",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile req = GetFile(files, "HeadOrderRequest.cs");
+        Assert.IsTrue(req.Content.Contains("OperationMethod.Head", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_OptionsMethod_EmitsCorrectOperationMethodExpression()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1users/put/requestBody/content/application~1json/schema"] = "Test.UserBody",
+            ["#/paths/~1users/put/responses/200/content/application~1json/schema"] = "Test.UserResult",
+            ["#/paths/~1orders/patch/responses/200/content/application~1json/schema"] = "Test.OrderResult",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile req = GetFile(files, "OptionsHealthRequest.cs");
+        Assert.IsTrue(req.Content.Contains("OperationMethod.Options", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_TraceMethod_EmitsCorrectOperationMethodExpression()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1users/put/requestBody/content/application~1json/schema"] = "Test.UserBody",
+            ["#/paths/~1users/put/responses/200/content/application~1json/schema"] = "Test.UserResult",
+            ["#/paths/~1orders/patch/responses/200/content/application~1json/schema"] = "Test.OrderResult",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile req = GetFile(files, "TraceHealthRequest.cs");
+        Assert.IsTrue(req.Content.Contains("OperationMethod.Trace", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_OperationWithSummary_EmitsXmlRemarks()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1users/put/requestBody/content/application~1json/schema"] = "Test.UserBody",
+            ["#/paths/~1users/put/responses/200/content/application~1json/schema"] = "Test.UserResult",
+            ["#/paths/~1orders/patch/responses/200/content/application~1json/schema"] = "Test.OrderResult",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile req = GetFile(files, "UpdateUserRequest.cs");
+
+        // Summary with XML-escaped content
+        Assert.IsTrue(
+            req.Content.Contains(
+                "/// <remarks>Update a &lt;user&gt; &amp; their profile</remarks>",
+                StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Emit_CustomClientNamePrefix()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1users/put/requestBody/content/application~1json/schema"] = "Test.UserBody",
+            ["#/paths/~1users/put/responses/200/content/application~1json/schema"] = "Test.UserResult",
+            ["#/paths/~1orders/patch/responses/200/content/application~1json/schema"] = "Test.OrderResult",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map, "MyService");
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        Assert.IsTrue(files.Any(f => f.FileName == "IMyServiceUsersClient.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "MyServiceUsersClient.cs"));
+    }
+
+    [TestMethod]
+    public void Emit_SchemaPointerNotInMap_FallsBackToJsonElement()
+    {
+        // Use empty schema map — no pointers resolve
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+
+        ClientModel model = BuildModelFromJson(DefaultOnlySpec);
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        // Fallback type is JsonElement
+        Assert.IsTrue(
+            resp.Content.Contains("JsonElement DefaultBody", StringComparison.Ordinal));
+    }
+
+    // Spec with no operationId — forces synthesized method name path
+    private const string NoOperationIdSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "NoOpId", "version": "1.0" },
+          "paths": {
+            "/items/{itemId}/details": {
+              "get": {
+                "tags": ["items"],
+                "responses": {
+                  "200": {
+                    "description": "Ok",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public void Emit_NoOperationId_SynthesizesMethodName()
+    {
+        ClientModel model = BuildModelFromJson(NoOperationIdSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{itemId}~1details/get/responses/200/content/application~1json/schema"] = "Test.ItemDetail",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        // Synthesized from "get /items/{itemId}/details" → GetItemsItemIdDetails
+        Assert.IsTrue(files.Any(f => f.FileName == "GetItemsItemIdDetailsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "GetItemsItemIdDetailsResponse.cs"));
+    }
+
+    [TestMethod]
+    public void Emit_NoOperationId_SynthesizedNameIncludesHttpMethod()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "Test", "version": "1.0" },
+              "paths": {
+                "/items/{id}": {
+                  "delete": {
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": {
+                      "204": { "description": "Deleted" }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        ClientModel model = BuildModelFromJson(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}/delete/parameters/0/schema"] = "Test.JsonString",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        // Synthesized from "delete /items/{id}" → DeleteItemsId
+        Assert.IsTrue(files.Any(f => f.FileName == "DeleteItemsIdRequest.cs"));
+    }
+
+    [TestMethod]
+    public void Emit_CSharpKeywordParameterNames_AreEscapedInConstructor()
+    {
+        // Keywords used as required path params will appear as constructor parameters
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "Keywords", "version": "1.0" },
+              "paths": {
+                "/items/{ref}/{string}": {
+                  "get": {
+                    "operationId": "search",
+                    "tags": ["search"],
+                    "parameters": [
+                      { "name": "ref", "in": "path", "required": true, "schema": { "type": "string" } },
+                      { "name": "string", "in": "path", "required": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": {
+                      "200": {
+                        "description": "Ok",
+                        "content": { "application/json": { "schema": { "type": "object" } } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        ClientModel model = BuildModelFromJson(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{ref}~1{string}/get/parameters/0/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{ref}~1{string}/get/parameters/1/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{ref}~1{string}/get/responses/200/content/application~1json/schema"] = "Test.Result",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile req = GetFile(files, "SearchRequest.cs");
+
+        // Constructor parameters should be @-escaped for C# keywords
+        Assert.IsTrue(req.Content.Contains("@ref", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("@string", StringComparison.Ordinal));
+
+        // Field names should be PascalCase (SanitizeIdentifier)
+        Assert.IsTrue(req.Content.Contains("this.Ref = @ref;", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("this.String = @string;", StringComparison.Ordinal));
+    }
+
+    // Spec with wildcard status code (2XX)
+    private const string WildcardStatusSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Wildcard", "version": "1.0" },
+          "paths": {
+            "/items": {
+              "get": {
+                "operationId": "listItems",
+                "tags": ["items"],
+                "responses": {
+                  "2XX": {
+                    "description": "Success",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public void Emit_WildcardStatusCode_UsesStatusNxxNaming()
+    {
+        ClientModel model = BuildModelFromJson(WildcardStatusSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/get/responses/2XX/content/application~1json/schema"] = "Test.Items",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile resp = GetFile(files, "ListItemsResponse.cs");
+
+        // 2XX → Status2xx naming
+        Assert.IsTrue(resp.Content.Contains("Status2xxBody", StringComparison.Ordinal));
+        Assert.IsTrue(resp.Content.Contains("TryGetStatus2xx", StringComparison.Ordinal));
+    }
+
+    // Spec with unusual numeric status code (422)
+    private const string NumericStatusSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "Numeric", "version": "1.0" },
+          "paths": {
+            "/items": {
+              "post": {
+                "operationId": "createItem",
+                "tags": ["items"],
+                "requestBody": {
+                  "required": true,
+                  "content": { "application/json": { "schema": { "type": "object" } } }
+                },
+                "responses": {
+                  "201": {
+                    "description": "Created",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  },
+                  "422": {
+                    "description": "Unprocessable",
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public void Emit_KnownStatusCode422_UsesSemanticName()
+    {
+        ClientModel model = BuildModelFromJson(NumericStatusSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/post/requestBody/content/application~1json/schema"] = "Test.NewItem",
+            ["#/paths/~1items/post/responses/201/content/application~1json/schema"] = "Test.CreatedItem",
+            ["#/paths/~1items/post/responses/422/content/application~1json/schema"] = "Test.ValidationError",
+        };
+
+        ClientCodeEmitter emitter = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        // 422 has a known semantic name
+        Assert.IsTrue(resp.Content.Contains("UnprocessableEntityBody", StringComparison.Ordinal));
+        Assert.IsTrue(resp.Content.Contains("TryGetUnprocessableEntity", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void ClientOperation_GetDescription_ReturnsDescription()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "Test", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "description": "Returns all available items",
+                    "tags": ["items"],
+                    "responses": {
+                      "200": { "description": "Ok" }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        ClientModel model = BuildModelFromJson(spec);
+        ClientOperation op = model.Operations[0];
+
+        Assert.AreEqual("Returns all available items", op.GetDescription());
+    }
+
+    [TestMethod]
+    public void ClientOperation_GetDescription_ReturnsNullWhenMissing()
+    {
+        ClientModel model = BuildModelFromJson(DefaultOnlySpec);
+        ClientOperation op = model.Operations[0];
+
+        Assert.IsNull(op.GetDescription());
+    }
+
+    [TestMethod]
+    public void ClientOperation_GetTags_ReturnsEmptyWhenNoTags()
+    {
+        // DefaultOnlySpec has no tags
+        ClientModel model = BuildModelFromJson(DefaultOnlySpec);
+        ClientOperation op = model.Operations[0];
+
+        Assert.AreEqual(0, op.GetTags().Length);
+    }
+
+    [TestMethod]
+    public void ClientOperation_GetTags_ReturnsTagStrings()
+    {
+        ClientModel model = BuildModelFromJson(MultiTagSpec);
+
+        // Find an operation that has tags
+        ClientOperation op = model.Operations.First(
+            o => o.GetOperationId() == "updateUser");
+
+        string[] tags = op.GetTags();
+        Assert.AreEqual(1, tags.Length);
+        Assert.AreEqual("users", tags[0]);
+    }
+
+    [TestMethod]
+    public void ClientModel_GetDefaultServerUrl_ReturnsPetstoreUrl()
+    {
+        Assert.AreEqual("https://petstore.example.com/v1", petstoreModel.GetDefaultServerUrl());
+    }
+
+    [TestMethod]
+    public void ClientModel_GetDefaultServerUrl_ReturnsNullWhenNoServers()
+    {
+        ClientModel model = BuildModelFromJson(DefaultOnlySpec);
+        Assert.IsNull(model.GetDefaultServerUrl());
+    }
+
+    [TestMethod]
+    public void EmitInterface_IncludesDefaultServerUrlUtf8_WhenServerPresent()
+    {
+        ClientCodeEmitter emitter = CreateEmitter();
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(petstoreModel);
+
+        GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
+        string content = iface.Content;
+
+        StringAssert.Contains(
+            content,
+            """static ReadOnlySpan<byte> DefaultServerUrlUtf8 => "https://petstore.example.com/v1"u8;""");
+        StringAssert.Contains(
+            content,
+            "/// The default server URL from the OpenAPI specification.");
+    }
+
+    [TestMethod]
+    public void EmitInterface_OmitsDefaultServerUrlUtf8_WhenNoServers()
+    {
+        ClientModel model = BuildModelFromJson(DefaultOnlySpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        ClientCodeEmitter emitter = new("Test", map);
+
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile iface = GetFile(files, "IApiDefaultClient.cs");
+
+        Assert.IsFalse(
+            iface.Content.Contains("DefaultServerUrlUtf8", StringComparison.Ordinal),
+            "Should not contain DefaultServerUrlUtf8 when no servers in spec");
+    }
+
+    private const string ServerVariablesSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "VarApi", "version": "1.0" },
+          "servers": [
+            {
+              "url": "https://{host}.example.com/{basePath}",
+              "variables": {
+                "host": { "default": "api" },
+                "basePath": { "default": "v2" }
+              }
+            }
+          ],
+          "paths": {
+            "/items": {
+              "get": {
+                "operationId": "listItems",
+                "responses": {
+                  "200": {
+                    "description": "OK"
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    [TestMethod]
+    public void ClientModel_GetDefaultServerUrl_ReturnsTemplateWithVariables()
+    {
+        ClientModel model = BuildModelFromJson(ServerVariablesSpec);
+        Assert.AreEqual("https://{host}.example.com/{basePath}", model.GetDefaultServerUrl());
+    }
+
+    [TestMethod]
+    public void EmitInterface_EmitsServerUrlTemplate_WithVariables()
+    {
+        ClientModel model = BuildModelFromJson(ServerVariablesSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        ClientCodeEmitter emitter = new("Test", map);
+
+        IReadOnlyList<GeneratedFile> files = emitter.Emit(model);
+        GeneratedFile iface = GetFile(files, "IApiDefaultClient.cs");
+
+        StringAssert.Contains(
+            iface.Content,
+            """DefaultServerUrlUtf8 => "https://{host}.example.com/{basePath}"u8;""");
+    }
 }

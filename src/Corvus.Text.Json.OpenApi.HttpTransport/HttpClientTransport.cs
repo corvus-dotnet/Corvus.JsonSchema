@@ -107,11 +107,11 @@ public sealed class HttpClientTransport : IApiTransport
     private static HttpRequestMessage BuildHttpRequest<TRequest>(in TRequest request)
         where TRequest : struct, IApiRequest<TRequest>
     {
-        string uri = BuildUri(in request);
+        string relativePath = BuildUri(in request);
 
-        HttpRequestMessage httpRequest = new(
-            MapMethod(TRequest.Method),
-            new Uri(uri, new UriCreationOptions { DangerousDisablePathAndQueryCanonicalization = true }));
+        // Use the string-accepting constructor. HttpClient.SendAsync resolves
+        // this relative path against HttpClient.BaseAddress automatically.
+        HttpRequestMessage httpRequest = new(MapMethod(TRequest.Method), relativePath);
 
         if (TRequest.HasHeaderParameters)
         {

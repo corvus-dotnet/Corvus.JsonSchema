@@ -197,6 +197,73 @@ public class HttpClientTransportTests
         Assert.IsTrue(uri.EndsWith("/pets/42", StringComparison.Ordinal), $"Expected URI ending with '/pets/42' but got '{uri}'");
     }
 
+    [TestMethod]
+    public async Task SendAsync_AllOptionalQueryParams_DiscardsQuestionMark()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestAllOptionalQueryRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestAllOptionalQueryRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        string? uri = captured.RequestUri?.OriginalString;
+        Assert.IsNotNull(uri);
+
+        // When all optional query params return 0 bytes, the URI should not contain '?'
+        Assert.IsTrue(uri.EndsWith("/pets", StringComparison.Ordinal), $"Expected URI ending with '/pets' but got '{uri}'");
+        Assert.IsFalse(uri.Contains('?'), $"Expected no '?' in URI but got '{uri}'");
+    }
+
+    [TestMethod]
+    public async Task SendAsync_PathAndQueryParameters_BothResolved()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestPathAndQueryRequest request = new(42, 10);
+        await using TestResponse response =
+            await transport.SendAsync<TestPathAndQueryRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        string? uri = captured.RequestUri?.OriginalString;
+        Assert.IsNotNull(uri);
+        Assert.IsTrue(uri.Contains("/pets/42", StringComparison.Ordinal), $"Expected '/pets/42' in '{uri}'");
+        Assert.IsTrue(uri.Contains("?limit=10", StringComparison.Ordinal), $"Expected '?limit=10' in '{uri}'");
+    }
+
+    [TestMethod]
+    public async Task SendCoreAsync_WhenCreateAsyncThrows_DisposesHttpResponse()
+    {
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray());
+
+        await using HttpClientTransport transport = new(client);
+
+        TestGetRequest request = default;
+
+        // ThrowingResponse.CreateAsync always throws, exercising the catch block
+        await Assert.ThrowsExactlyAsync<InvalidOperationException>(async () =>
+        {
+            await using ThrowingResponse response =
+                await transport.SendAsync<TestGetRequest, ThrowingResponse>(in request);
+        });
+    }
+
     private static HttpClient CreateMockClient(
         HttpStatusCode statusCode,
         byte[] responseBody,
@@ -268,6 +335,27 @@ public class HttpClientTransportTests
                 StatusCode = statusCode,
                 ContentLength = (int)ms.Length,
             };
+        }
+
+        public ValueTask DisposeAsync() => default;
+    }
+
+    /// <summary>
+    /// Response type that always throws from CreateAsync — tests the catch block in SendCoreAsync.
+    /// </summary>
+    private struct ThrowingResponse : IApiResponse<ThrowingResponse>
+    {
+        public int StatusCode { get; private set; }
+
+        public bool IsSuccess => false;
+
+        public static ValueTask<ThrowingResponse> CreateAsync(
+            int statusCode,
+            Stream contentStream,
+            IAsyncDisposable? owner = null,
+            CancellationToken cancellationToken = default)
+        {
+            throw new InvalidOperationException("Simulated CreateAsync failure");
         }
 
         public ValueTask DisposeAsync() => default;
@@ -410,6 +498,67 @@ public class HttpClientTransportTests
         }
 
         public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>GET /pets with HasQueryParameters=true but all optional (returns 0 bytes).</summary>
+    private readonly struct TestAllOptionalQueryRequest : IApiRequest<TestAllOptionalQueryRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Get;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => true;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer)
+        {
+            writer.Write("/pets"u8);
+        }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+    }
+
+    /// <summary>GET /pets/{petId} with query params too.</summary>
+    private readonly struct TestPathAndQueryRequest : IApiRequest<TestPathAndQueryRequest>
+    {
+        private readonly int petId;
+        private readonly int limit;
+
+        public TestPathAndQueryRequest(int petId, int limit)
+        {
+            this.petId = petId;
+            this.limit = limit;
+        }
+
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets/{petId}"u8;
+
+        public static OperationMethod Method => OperationMethod.Get;
+
+        public static bool HasPathParameters => true;
+
+        public static bool HasQueryParameters => true;
+
+        public static bool HasHeaderParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer)
+        {
+            byte[] path = Encoding.UTF8.GetBytes($"/pets/{this.petId}");
+            writer.Write(path);
+        }
+
+        public int WriteQueryString(IBufferWriter<byte> writer)
+        {
+            byte[] query = Encoding.UTF8.GetBytes($"limit={this.limit}");
+            writer.Write(query);
+            return query.Length;
+        }
 
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
     }

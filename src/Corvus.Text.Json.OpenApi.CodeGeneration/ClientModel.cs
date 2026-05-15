@@ -25,6 +25,10 @@ public readonly struct ClientModel
 {
     private static ReadOnlySpan<byte> InfoUtf8 => "info"u8;
 
+    private static ReadOnlySpan<byte> ServersUtf8 => "servers"u8;
+
+    private static ReadOnlySpan<byte> UrlUtf8 => "url"u8;
+
     private static ReadOnlySpan<byte> TitleUtf8 => "title"u8;
 
     private static ReadOnlySpan<byte> VersionUtf8 => "version"u8;
@@ -85,6 +89,29 @@ public readonly struct ClientModel
     /// <returns>The description, or <see langword="null"/> if not present.</returns>
     /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
     public string? GetDescription() => this.TryGetInfoString(DescriptionUtf8);
+
+    /// <summary>
+    /// Gets the default server URL from the spec's <c>servers[0].url</c>.
+    /// </summary>
+    /// <returns>The URL, or <see langword="null"/> if <c>servers</c> is absent or empty.</returns>
+    /// <remarks>This allocates a string. Call only at the code-emission boundary.</remarks>
+    public string? GetDefaultServerUrl()
+    {
+        if (this.SpecRoot.TryGetProperty(ServersUtf8, out JsonElement servers)
+            && servers.ValueKind == JsonValueKind.Array
+            && servers.GetArrayLength() > 0)
+        {
+            JsonElement first = servers.EnumerateArray().First();
+            if (first.ValueKind == JsonValueKind.Object
+                && first.TryGetProperty(UrlUtf8, out JsonElement url)
+                && url.ValueKind == JsonValueKind.String)
+            {
+                return url.GetString();
+            }
+        }
+
+        return null;
+    }
 
     private string? TryGetInfoString(ReadOnlySpan<byte> property)
     {

@@ -121,6 +121,7 @@ public sealed class ClientCodeEmitter
     {
         List<GeneratedFile> files = [];
         Dictionary<string, List<ClientOperation>> groups = GroupOperationsByTag(model.Operations);
+        string? defaultServerUrl = model.GetDefaultServerUrl();
 
         foreach (ClientOperation op in model.Operations)
         {
@@ -132,7 +133,7 @@ public sealed class ClientCodeEmitter
         foreach ((string tag, List<ClientOperation> operations) in groups)
         {
             string clientName = GetClientName(tag);
-            files.Add(this.EmitInterface(clientName, operations));
+            files.Add(this.EmitInterface(clientName, operations, defaultServerUrl));
             files.Add(this.EmitImplementation(clientName, operations));
         }
 
@@ -227,6 +228,10 @@ public sealed class ClientCodeEmitter
         text.Replace("&", "&amp;", StringComparison.Ordinal)
             .Replace("<", "&lt;", StringComparison.Ordinal)
             .Replace(">", "&gt;", StringComparison.Ordinal);
+
+    private static string EscapeStringLiteral(string text) =>
+        text.Replace("\\", "\\\\", StringComparison.Ordinal)
+            .Replace("\"", "\\\"", StringComparison.Ordinal);
 
     private static string OperationMethodExpression(OperationMethod method) =>
         method switch
@@ -1386,7 +1391,8 @@ public sealed class ClientCodeEmitter
 
     private GeneratedFile EmitInterface(
         string clientName,
-        IReadOnlyList<ClientOperation> operations)
+        IReadOnlyList<ClientOperation> operations,
+        string? defaultServerUrl)
     {
         IndentedWriter w = new();
 
@@ -1399,6 +1405,16 @@ public sealed class ClientCodeEmitter
         w.WriteLine("/// </summary>");
         w.WriteLine($"public interface I{clientName}Client : IAsyncDisposable");
         w.OpenBrace();
+
+        if (defaultServerUrl is not null)
+        {
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// The default server URL from the OpenAPI specification.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine(
+                $"static ReadOnlySpan<byte> DefaultServerUrlUtf8 => \"{EscapeStringLiteral(defaultServerUrl)}\"u8;");
+            w.WriteLine();
+        }
 
         for (int i = 0; i < operations.Count; i++)
         {
