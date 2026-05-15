@@ -205,6 +205,41 @@ public sealed class ClientCodeEmitter
         return new string(chars, 0, written);
     }
 
+    private static string SanitizeParameterName(string name)
+    {
+        // If the name is already a valid C# identifier, use it as-is.
+        bool needsSanitizing = false;
+        if (name.Length == 0 || (!char.IsLetter(name[0]) && name[0] != '_'))
+        {
+            needsSanitizing = true;
+        }
+        else
+        {
+            foreach (char c in name)
+            {
+                if (!char.IsLetterOrDigit(c) && c != '_')
+                {
+                    needsSanitizing = true;
+                    break;
+                }
+            }
+        }
+
+        if (!needsSanitizing)
+        {
+            return name;
+        }
+
+        // Otherwise sanitize (PascalCase) and lower-case the first char for camelCase.
+        string pascal = SanitizeIdentifier(name);
+        if (pascal.Length == 0)
+        {
+            return "_param";
+        }
+
+        return string.Concat(char.ToLowerInvariant(pascal[0]).ToString(), pascal.AsSpan(1));
+    }
+
     private static string EscapeCSharpKeyword(string name) =>
         name switch
         {
@@ -523,10 +558,10 @@ public sealed class ClientCodeEmitter
 
         foreach (ClientParameter param in requiredParams)
         {
-            string paramName = param.GetName();
-            w.WriteLine($"/// <param name=\"{paramName}\">The {paramName} parameter.</param>");
+            string sanitizedParam = SanitizeParameterName(param.GetName());
+            w.WriteLine($"/// <param name=\"{sanitizedParam}\">The {param.GetName()} parameter.</param>");
             string typeName = this.GetParameterTypeName(param);
-            paramParts.Add($"{typeName} {EscapeCSharpKeyword(paramName)}");
+            paramParts.Add($"{typeName} {EscapeCSharpKeyword(sanitizedParam)}");
         }
 
         w.WriteLine($"public {structName}({string.Join(", ", paramParts)})");
@@ -535,7 +570,7 @@ public sealed class ClientCodeEmitter
         foreach (ClientParameter param in requiredParams)
         {
             string fieldName = SanitizeIdentifier(param.GetName());
-            string paramIdentifier = EscapeCSharpKeyword(param.GetName());
+            string paramIdentifier = EscapeCSharpKeyword(SanitizeParameterName(param.GetName()));
             w.WriteLine($"this.{fieldName} = {paramIdentifier};");
         }
 
@@ -1191,11 +1226,15 @@ public sealed class ClientCodeEmitter
         string typeName,
         string accessorName)
     {
+        // Use a scope block to avoid variable name collisions when multiple
+        // status codes each declare their own parsed document.
+        w.OpenBrace();
         w.WriteLine(
             $"var doc = await ParsedJsonDocument<{typeName}>" +
             ".ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);");
         w.WriteLine("response.parsedDocument = doc;");
         w.WriteLine($"response.{accessorName}Body = doc.RootElement;");
+        w.CloseBrace();
     }
 
     private void EmitMatchResult(
@@ -1484,6 +1523,9 @@ public sealed class ClientCodeEmitter
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine("public ValueTask DisposeAsync() => default;");
 
+        w.WriteLine();
+        EmitSendAsyncCoreHelpers(w);
+
         w.CloseBrace();
 
         return new GeneratedFile($"{clientName}Client.cs", w.ToString());
@@ -1498,8 +1540,13 @@ public sealed class ClientCodeEmitter
         EmitMethodDoc(w, op);
 
         List<string> paramParts = this.BuildParameterList(op);
+
+        // The public method is NON-async because Source is a ref struct
+        // and ref structs cannot appear as parameters in async methods.
+        // We materialise all Source values synchronously, then delegate
+        // to a shared async helper.
         w.WriteLine(
-            $"public async ValueTask<{responseName}> {methodName}Async(" +
+            $"public ValueTask<{responseName}> {methodName}Async(" +
             $"{string.Join(", ", paramParts)})");
         w.OpenBrace();
 
@@ -1507,8 +1554,6 @@ public sealed class ClientCodeEmitter
         bool hasBody = op.RequestBody is not null;
 
         w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
-        w.WriteLine("try");
-        w.OpenBrace();
 
         // Materialise body from Source → immutable typed element.
         string? bodyTypeName = null;
@@ -1528,7 +1573,7 @@ public sealed class ClientCodeEmitter
             foreach (ClientParameter param in requiredParams)
             {
                 string fieldName = SanitizeIdentifier(param.GetName());
-                string paramIdentifier = EscapeCSharpKeyword(param.GetName());
+                string paramIdentifier = EscapeCSharpKeyword(SanitizeParameterName(param.GetName()));
                 string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
                 w.WriteLine(
                     $"{typeName} {fieldName}Value = {typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement;");
@@ -1549,7 +1594,7 @@ public sealed class ClientCodeEmitter
                 foreach (ClientParameter param in optionalParams)
                 {
                     string fieldName = SanitizeIdentifier(param.GetName());
-                    string paramIdentifier = EscapeCSharpKeyword(param.GetName());
+                    string paramIdentifier = EscapeCSharpKeyword(SanitizeParameterName(param.GetName()));
                     string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
 
                     w.WriteLine(
@@ -1572,26 +1617,69 @@ public sealed class ClientCodeEmitter
 
         w.WriteLine();
 
-        // Emit the awaited transport call.
+        // Delegate to the shared async helper.
         if (hasBody)
         {
             w.WriteLine(
-                $"return await this.transport.SendAsync<{requestName}, {bodyTypeName}, " +
-                $"{responseName}>(request, bodyValue, cancellationToken).ConfigureAwait(false);");
+                $"return SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
+                $"{responseName}>(workspace, request, bodyValue, cancellationToken);");
         }
         else
         {
             w.WriteLine(
-                $"return await this.transport.SendAsync<{requestName}, " +
-                $"{responseName}>(request, cancellationToken).ConfigureAwait(false);");
+                $"return SendAsyncCore<{requestName}, " +
+                $"{responseName}>(workspace, request, cancellationToken);");
         }
 
+        w.CloseBrace();
+    }
+
+    private static void EmitSendAsyncCoreHelpers(IndentedWriter w)
+    {
+        // No-body variant
+        w.WriteLine("private async ValueTask<TResponse> SendAsyncCore<TRequest, TResponse>(");
+        w.PushIndent();
+        w.WriteLine("JsonWorkspace workspace,");
+        w.WriteLine("TRequest request,");
+        w.WriteLine("CancellationToken cancellationToken)");
+        w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
+        w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
+        w.PopIndent();
+        w.OpenBrace();
+        w.WriteLine("try");
+        w.OpenBrace();
+        w.WriteLine(
+            "return await this.transport.SendAsync<TRequest, TResponse>(in request, cancellationToken).ConfigureAwait(false);");
         w.CloseBrace();
         w.WriteLine("finally");
         w.OpenBrace();
         w.WriteLine("workspace.Dispose();");
         w.CloseBrace();
+        w.CloseBrace();
 
+        w.WriteLine();
+
+        // With-body variant
+        w.WriteLine("private async ValueTask<TResponse> SendWithBodyAsyncCore<TRequest, TBody, TResponse>(");
+        w.PushIndent();
+        w.WriteLine("JsonWorkspace workspace,");
+        w.WriteLine("TRequest request,");
+        w.WriteLine("TBody body,");
+        w.WriteLine("CancellationToken cancellationToken)");
+        w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
+        w.WriteLine("where TBody : struct, IJsonElement<TBody>");
+        w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
+        w.PopIndent();
+        w.OpenBrace();
+        w.WriteLine("try");
+        w.OpenBrace();
+        w.WriteLine(
+            "return await this.transport.SendAsync<TRequest, TBody, TResponse>(in request, in body, cancellationToken).ConfigureAwait(false);");
+        w.CloseBrace();
+        w.WriteLine("finally");
+        w.OpenBrace();
+        w.WriteLine("workspace.Dispose();");
+        w.CloseBrace();
         w.CloseBrace();
     }
 
@@ -1608,8 +1696,8 @@ public sealed class ClientCodeEmitter
 
         foreach (ClientParameter param in op.Parameters)
         {
-            string paramName = param.GetName();
-            w.WriteLine($"/// <param name=\"{paramName}\">The {paramName} parameter.</param>");
+            string sanitizedParam = SanitizeParameterName(param.GetName());
+            w.WriteLine($"/// <param name=\"{sanitizedParam}\">The {param.GetName()} parameter.</param>");
         }
 
         if (op.RequestBody is not null)
@@ -1628,7 +1716,7 @@ public sealed class ClientCodeEmitter
         foreach (ClientParameter param in op.Parameters)
         {
             string typeName = this.GetParameterSourceTypeName(param);
-            string paramIdentifier = EscapeCSharpKeyword(param.GetName());
+            string paramIdentifier = EscapeCSharpKeyword(SanitizeParameterName(param.GetName()));
 
             // Source is a ref struct — use = default for optional params.
             // Source.IsUndefined is true when default-initialized.

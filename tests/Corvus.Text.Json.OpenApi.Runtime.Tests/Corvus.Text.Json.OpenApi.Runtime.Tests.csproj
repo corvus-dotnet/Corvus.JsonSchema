@@ -37,13 +37,7 @@
     <RemoveDir Directories="$(GeneratedCodeOutputPath)" />
     <Exec Command="dotnet run --project &quot;$(MSBuildThisFileDirectory)..\..\src\Corvus.Json.CodeGenerator\Corvus.Json.CodeGenerator.csproj&quot; -f net10.0 --no-build -- openapi &quot;$(OpenApiSpecFile)&quot; --rootNamespace CanonTests.Client --outputPath &quot;$(GeneratedCodeOutputPath)&quot;" />
 
-    <!-- Remove client, interface, and response files that are not needed for these tests. -->
-    <ItemGroup>
-      <_UnwantedGeneratedFiles Include="$(GeneratedCodeOutputPath)\Api*Client.cs" />
-      <_UnwantedGeneratedFiles Include="$(GeneratedCodeOutputPath)\IApi*Client.cs" />
-      <_UnwantedGeneratedFiles Include="$(GeneratedCodeOutputPath)\*Response.cs" />
-    </ItemGroup>
-    <Delete Files="@(_UnwantedGeneratedFiles)" />
+
   </Target>
 
   <!-- Include the generated files after generation. Runs after GenerateOpenApiTypes, picking up

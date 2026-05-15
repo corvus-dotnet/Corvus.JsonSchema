@@ -634,9 +634,11 @@ public class CSharpLanguageProvider : IHierarchicalLanguageProvider
         string fqdtn = typeDeclaration.FullyQualifiedDotnetTypeName();
         string baseName = typeDeclaration.DotnetTypeName();
 
-        // And now resolve any matching names from definitions containers
-        if (!typeDeclaration.DoNotGenerate() &&
-            typeDeclaration.IsInDefinitionsContainer())
+        // And now resolve any matching fully-qualified names.
+        // This handles definitions containers (the original case) and also inline schemas
+        // at different locations that derive the same type name from their structure — e.g.
+        // multiple OpenAPI response schemas with identical inline objects.
+        if (!typeDeclaration.DoNotGenerate())
         {
             int index = 1;
             while (existingDeclarations.Any(t => t != typeDeclaration && !t.DoNotGenerate() && t.HasDotnetTypeName() && t.FullyQualifiedDotnetTypeName() == fqdtn))

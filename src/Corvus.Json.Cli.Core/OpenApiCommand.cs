@@ -107,9 +107,10 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         AnsiConsole.MarkupLine($"[green]Operations:[/] {model.Operations.Length}");
         AnsiConsole.MarkupLine($"[green]Schemas:[/] {model.SchemaPointers.Length}");
 
-        // Generate V5 schema types from the discovered schema pointers
+        // Generate V5 schema types into a "Models" subdirectory for easier navigation
+        string modelsPath = Path.Combine(outputPath, "Models");
         Dictionary<string, string>? schemaTypeMap = model.SchemaPointers.Length > 0
-            ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, outputPath, model.SchemaPointers, cancellationToken)
+            ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, model.SchemaPointers, cancellationToken)
                 .ConfigureAwait(false)
             : null;
 
@@ -181,6 +182,7 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         foreach (string pointer in schemaPointers)
         {
             JsonReference reference = new(specFilePath, pointer);
+            AnsiConsole.MarkupLine($"  [dim]Registering schema:[/] {pointer}");
 
             TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
                 reference, defaultVocabulary, rebaseAsRoot: false)
@@ -190,11 +192,16 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
             typesToGenerate.Add(rootType);
         }
 
-        // Generate code — this assigns type names via naming heuristics
+        AnsiConsole.MarkupLine($"[yellow]Registered {typesToGenerate.Count} type declarations, generating code...[/]");
+
+        // Generate code — register OpenAPI naming heuristic for contextual inline schema names
         CSharpLanguageProvider.Options options = new(rootNamespace);
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+        languageProvider.RegisterNameHeuristics(OpenApiSchemaNameHeuristic.Instance);
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(languageProvider, typesToGenerate, cancellationToken);
+
+        AnsiConsole.MarkupLine($"[yellow]Code generation complete, writing {generatedCode.Count} files...[/]");
 
         // Write schema type files
         Directory.CreateDirectory(outputPath);

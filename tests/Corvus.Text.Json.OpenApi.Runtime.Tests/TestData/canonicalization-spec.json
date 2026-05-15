@@ -1,14 +1,18 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "URI Canonicalization Tests",
+    "title": "Runtime Tests",
     "version": "1.0.0"
   },
+  "servers": [
+    { "url": "https://api.example.com/v1" }
+  ],
   "paths": {
     "/items/{itemId}": {
       "get": {
         "operationId": "getItem",
         "summary": "Get item by string ID with mixed param types",
+        "tags": ["items"],
         "parameters": [
           {
             "name": "itemId",
@@ -42,7 +46,76 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" }
+                  },
+                  "required": ["id", "name"]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer", "format": "int32" },
+                    "message": { "type": "string" }
+                  },
+                  "required": ["code", "message"]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": { "type": "string" }
+                  },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteItem",
+        "summary": "Delete an item (204 no content)",
+        "tags": ["items"],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": { "type": "integer", "format": "int32" },
+                    "message": { "type": "string" }
+                  },
+                  "required": ["code", "message"]
+                }
               }
             }
           }
@@ -52,7 +125,8 @@
     "/items/{itemId}/tags/{tagName}": {
       "get": {
         "operationId": "getItemTag",
-        "summary": "Two path params: int64 + string",
+        "summary": "Two path params: int64 + string, with trailing literal path",
+        "tags": ["items"],
         "parameters": [
           {
             "name": "itemId",
@@ -84,10 +158,36 @@
         }
       }
     },
+    "/items/{itemId}/details": {
+      "get": {
+        "operationId": "getItemDetails",
+        "summary": "Path with trailing literal after param",
+        "tags": ["items"],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
     "/search": {
       "get": {
         "operationId": "search",
         "summary": "Required + optional query params",
+        "tags": ["search"],
         "parameters": [
           {
             "name": "q",
@@ -112,6 +212,174 @@
             "content": {
               "application/json": {
                 "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/flags/{active}": {
+      "get": {
+        "operationId": "getByFlag",
+        "summary": "Boolean path param",
+        "tags": ["flags"],
+        "parameters": [
+          {
+            "name": "active",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "boolean" }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "X-Request-Count",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "integer", "format": "int32" }
+          },
+          {
+            "name": "X-Debug",
+            "in": "header",
+            "schema": { "type": "boolean" }
+          },
+          {
+            "name": "X-Score",
+            "in": "header",
+            "schema": { "type": "number", "format": "double" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pages/{pageNum}": {
+      "get": {
+        "operationId": "getPage",
+        "summary": "Int32 path param with unbounded number query",
+        "tags": ["pages"],
+        "parameters": [
+          {
+            "name": "pageNum",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "integer", "format": "int32" }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": { "type": "integer" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": { "type": "object" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items": {
+      "post": {
+        "operationId": "createItem",
+        "summary": "Create an item with request body",
+        "tags": ["items"],
+        "requestBody": {
+          "description": "The item to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "price": { "type": "number", "format": "double" }
+                },
+                "required": ["name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" }
+                  },
+                  "required": ["id", "name"]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": { "type": "array", "items": { "type": "string" } }
+                  },
+                  "required": ["errors"]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateItem",
+        "summary": "Update an item",
+        "tags": ["items"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": { "type": "string" },
+                  "name": { "type": "string" }
+                },
+                "required": ["id", "name"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": { "type": "string" },
+                    "name": { "type": "string" }
+                  },
+                  "required": ["id", "name"]
+                }
               }
             }
           }

@@ -23,6 +23,7 @@
     <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.AppendHelpers.cs" Link="Common\Utf8ValueStringBuilder.AppendHelpers.cs" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
   </ItemGroup>
