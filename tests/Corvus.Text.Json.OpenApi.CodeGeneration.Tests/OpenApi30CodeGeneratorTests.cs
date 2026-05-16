@@ -3837,4 +3837,103 @@ public class OpenApi30CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(root);
         Assert.IsTrue(files.Count > 0);
     }
+
+    // ── Server with no URL defined ────────────────────────────────────
+    [TestMethod]
+    public void Generate_ServerWithNoUrl_NoDefaultServerUrl()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "servers": [{}],
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "tags": ["items"],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile iface = GetFile(files, "IApiItemsClient.cs");
+        Assert.IsFalse(iface.Content.Contains("DefaultServerUrl", StringComparison.Ordinal));
+    }
+
+    // ── Path template with trailing literal after last parameter ──────
+    [TestMethod]
+    public void Generate_PathTrailingLiteral_EmitsTrailingSegment()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items/{id}/details": {
+                  "get": {
+                    "operationId": "getItemDetails",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}~1details/get/parameters/0/schema"] = "Test.JsonString",
+        };
+        OpenApi30CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "GetItemDetailsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("\"/details\"u8", StringComparison.Ordinal));
+    }
+
+    // ── Response with undefined content map ───────────────────────────
+    [TestMethod]
+    public void Generate_ResponseWithDescriptionOnly_NoBodyProperty()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "post": {
+                    "operationId": "createItem",
+                    "tags": ["items"],
+                    "requestBody": {
+                      "content": {
+                        "application/json": {
+                          "schema": { "type": "object" }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "201": { "description": "created" },
+                      "500": { "description": "server error" }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+        Assert.IsFalse(resp.Content.Contains("InternalServerErrorBody", StringComparison.Ordinal));
+    }
 }
