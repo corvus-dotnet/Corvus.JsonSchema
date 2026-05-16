@@ -1246,7 +1246,7 @@ public sealed class OpenApi31CodeGenerator
 
         if (pathParams.Length == 0)
         {
-            w.WriteLine($"writer.Write(\"{pathTemplate}\"u8);");
+            w.WriteLine("throw new InvalidOperationException(\"This operation has no path parameters. Use PathTemplateUtf8 directly.\");");
         }
         else
         {
@@ -1318,7 +1318,7 @@ public sealed class OpenApi31CodeGenerator
 
         if (queryParams.Length == 0)
         {
-            w.WriteLine("return 0;");
+            w.WriteLine("throw new InvalidOperationException(\"This operation has no query parameters.\");");
             w.CloseBrace();
             return;
         }
@@ -1357,6 +1357,13 @@ public sealed class OpenApi31CodeGenerator
         w.WriteLine("public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state)");
         w.OpenBrace();
 
+        if (headerParams.Length == 0)
+        {
+            w.WriteLine("throw new InvalidOperationException(\"This operation has no header parameters.\");");
+            w.CloseBrace();
+            return;
+        }
+
         foreach (ParameterInfo param in headerParams)
         {
             string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
@@ -1390,7 +1397,7 @@ public sealed class OpenApi31CodeGenerator
 
         if (cookieParams.Length == 0)
         {
-            w.WriteLine("return 0;");
+            w.WriteLine("throw new InvalidOperationException(\"This operation has no cookie parameters.\");");
             w.CloseBrace();
             return;
         }

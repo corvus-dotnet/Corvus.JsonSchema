@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
 using System.Net;
 using System.Text;
 using CanonTests.Client;
@@ -2109,5 +2110,77 @@ public class GeneratedClientEndToEndTests
 
             return Task.FromResult(response);
         }
+    }
+
+    // ── Throwing stub tests ─────────────────────────────────────────────
+    // Operations that lack a given parameter location emit throwing stubs.
+    // These tests verify that calling the stub throws InvalidOperationException.
+    [TestMethod]
+    public void CreateItemRequest_WriteResolvedPath_ThrowsWhenNoPathParams()
+    {
+        CreateItemRequest request = default;
+        Assert.IsFalse(CreateItemRequest.HasPathParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteResolvedPath(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void CreateItemRequest_WriteQueryString_ThrowsWhenNoQueryParams()
+    {
+        CreateItemRequest request = default;
+        Assert.IsFalse(CreateItemRequest.HasQueryParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteQueryString(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void CreateItemRequest_WriteHeaders_ThrowsWhenNoHeaderParams()
+    {
+        CreateItemRequest request = default;
+        Assert.IsFalse(CreateItemRequest.HasHeaderParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(
+            () => request.WriteHeaders(static (ReadOnlySpan<byte> _, ReadOnlySpan<byte> _, int _) => { }, 0));
+    }
+
+    [TestMethod]
+    public void CreateItemRequest_WriteCookies_ThrowsWhenNoCookieParams()
+    {
+        CreateItemRequest request = default;
+        Assert.IsFalse(CreateItemRequest.HasCookieParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteCookies(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void DeleteItemRequest_WriteQueryString_ThrowsWhenNoQueryParams()
+    {
+        DeleteItemRequest request = new(JsonElement.ParseValue("\"item-1\""u8));
+        Assert.IsFalse(DeleteItemRequest.HasQueryParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteQueryString(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void GetByFlagRequest_WriteCookies_ThrowsWhenNoCookieParams()
+    {
+        GetByFlagRequest request = new(
+            JsonElement.ParseValue("true"u8),
+            JsonElement.ParseValue("\"trace-1\""u8),
+            JsonElement.ParseValue("1"u8));
+        Assert.IsFalse(GetByFlagRequest.HasCookieParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteCookies(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void SearchRequest_WriteResolvedPath_ThrowsWhenNoPathParams()
+    {
+        SearchRequest request = new(JsonElement.ParseValue("\"test\""u8));
+        Assert.IsFalse(SearchRequest.HasPathParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteResolvedPath(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void GetSessionProfileRequest_WriteHeaders_ThrowsWhenNoHeaderParams()
+    {
+        GetSessionProfileRequest request = new(JsonElement.ParseValue("\"session-id\""u8));
+        Assert.IsFalse(GetSessionProfileRequest.HasHeaderParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(
+            () => request.WriteHeaders(static (ReadOnlySpan<byte> _, ReadOnlySpan<byte> _, int _) => { }, 0));
     }
 }
