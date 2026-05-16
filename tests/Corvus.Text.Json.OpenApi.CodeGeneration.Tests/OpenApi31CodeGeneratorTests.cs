@@ -4318,4 +4318,777 @@ public class OpenApi31CodeGeneratorTests
         Assert.IsFalse(req.Content.Contains("\"color=\"u8", StringComparison.Ordinal), "Form+explode object should not prefix with name=");
         Assert.IsTrue(req.Content.Contains("\"=\"u8", StringComparison.Ordinal), "Form+explode object should emit = between key and value");
     }
+
+    // ── Query object non-explode variants ────────────────────────────────
+    [TestMethod]
+    public void Generate_QueryParam_FormNonExplodeObject_EmitsCommaSeparated()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "FormNonExplodeObj", "version": "1.0" },
+              "paths": {
+                "/search": {
+                  "get": {
+                    "operationId": "search",
+                    "tags": ["search"],
+                    "parameters": [
+                      { "name": "color", "in": "query", "style": "form", "explode": false, "schema": { "type": "object" } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1search/get/parameters/0/schema"] = "Test.JsonObject",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "SearchRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateObject", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("\"color=\"u8", StringComparison.Ordinal), "Non-explode object should prefix with name=");
+        Assert.IsTrue(req.Content.Contains("\",\"u8", StringComparison.Ordinal), "Non-explode form object should use comma separator");
+    }
+
+    [TestMethod]
+    public void Generate_QueryParam_SpaceDelimitedNonExplodeObject_EmitsSpaceSeparator()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "SpaceDelimObj", "version": "1.0" },
+              "paths": {
+                "/search": {
+                  "get": {
+                    "operationId": "search",
+                    "tags": ["search"],
+                    "parameters": [
+                      { "name": "color", "in": "query", "style": "spaceDelimited", "explode": false, "schema": { "type": "object" } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1search/get/parameters/0/schema"] = "Test.JsonObject",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "SearchRequest.cs");
+        Assert.IsTrue(req.Content.Contains("\"%20\"u8", StringComparison.Ordinal), "spaceDelimited non-explode object should use %20 separator");
+    }
+
+    [TestMethod]
+    public void Generate_QueryParam_PipeDelimitedNonExplodeObject_EmitsPipeSeparator()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "PipeDelimObj", "version": "1.0" },
+              "paths": {
+                "/search": {
+                  "get": {
+                    "operationId": "search",
+                    "tags": ["search"],
+                    "parameters": [
+                      { "name": "color", "in": "query", "style": "pipeDelimited", "explode": false, "schema": { "type": "object" } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1search/get/parameters/0/schema"] = "Test.JsonObject",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "SearchRequest.cs");
+        Assert.IsTrue(req.Content.Contains("\"%7C\"u8", StringComparison.Ordinal), "pipeDelimited non-explode object should use %7C separator");
+    }
+
+    // ── Cookie array tests ───────────────────────────────────────────────
+    [TestMethod]
+    public void Generate_CookieParam_ArrayExplode_EmitsRepeatedName()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "CookieArrayExplode", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "test",
+                    "tags": ["test"],
+                    "parameters": [
+                      { "name": "tags", "in": "cookie", "explode": true, "schema": { "type": "array", "items": { "type": "string" } } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1test/get/parameters/0/schema"] = "Test.JsonArray",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "TestRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateArray", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("\"; \"u8", StringComparison.Ordinal), "Cookie explode array should use '; ' separator");
+        Assert.IsTrue(req.Content.Contains("\"tags=\"u8", StringComparison.Ordinal), "Cookie explode array should repeat name= for each item");
+    }
+
+    [TestMethod]
+    public void Generate_CookieParam_ArrayNonExplode_EmitsCommaList()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "CookieArrayNonExplode", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "test",
+                    "tags": ["test"],
+                    "parameters": [
+                      { "name": "tags", "in": "cookie", "explode": false, "schema": { "type": "array", "items": { "type": "string" } } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1test/get/parameters/0/schema"] = "Test.JsonArray",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "TestRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateArray", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("\",\"u8", StringComparison.Ordinal), "Cookie non-explode array should use comma separator within values");
+        Assert.IsTrue(req.Content.Contains("\"tags=\"u8", StringComparison.Ordinal), "Cookie non-explode array should emit name= once");
+    }
+
+    // ── Cookie object explode test ───────────────────────────────────────
+    [TestMethod]
+    public void Generate_CookieParam_ObjectExplode_EmitsKeyValueCookies()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "CookieObjectExplode", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "test",
+                    "tags": ["test"],
+                    "parameters": [
+                      { "name": "prefs", "in": "cookie", "explode": true, "schema": { "type": "object" } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1test/get/parameters/0/schema"] = "Test.JsonObject",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "TestRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateObject", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("\"; \"u8", StringComparison.Ordinal), "Cookie explode object should use '; ' separator");
+        Assert.IsTrue(req.Content.Contains("\"=\"u8", StringComparison.Ordinal), "Cookie explode object should emit = between key and value");
+    }
+
+    // ── Response header array/object tests ───────────────────────────────
+    [TestMethod]
+    public void Generate_ResponseHeader_ArraySchema_EmitsCreateBuilder()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "HeaderArray", "version": "1.0" },
+              "paths": {
+                "/data": {
+                  "get": {
+                    "operationId": "getData",
+                    "tags": ["data"],
+                    "responses": {
+                      "200": {
+                        "description": "Ok",
+                        "content": { "application/json": { "schema": { "type": "object" } } },
+                        "headers": {
+                          "X-Tags": { "schema": { "type": "array", "items": { "type": "string" } } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1data/get/responses/200/content/application~1json/schema"] = "Test.Data",
+            ["#/paths/~1data/get/responses/200/headers/X-Tags/schema"] = "Test.Tags",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("CreateBuilder<string>", StringComparison.Ordinal), "Array header should use CreateBuilder<string>");
+        Assert.IsTrue(resp.Content.Contains("remaining.IndexOf(',')", StringComparison.Ordinal), "Array header should split on comma");
+        Assert.IsTrue(resp.Content.Contains("arrayBuilder.AddItem", StringComparison.Ordinal), "Array header should add items");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseHeader_ObjectSchema_EmitsCreateBuilder()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "HeaderObject", "version": "1.0" },
+              "paths": {
+                "/data": {
+                  "get": {
+                    "operationId": "getData",
+                    "tags": ["data"],
+                    "responses": {
+                      "200": {
+                        "description": "Ok",
+                        "content": { "application/json": { "schema": { "type": "object" } } },
+                        "headers": {
+                          "X-Meta": { "schema": { "type": "object", "properties": { "key": { "type": "string" } } } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1data/get/responses/200/content/application~1json/schema"] = "Test.Data",
+            ["#/paths/~1data/get/responses/200/headers/X-Meta/schema"] = "Test.Meta",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("CreateBuilder<string>", StringComparison.Ordinal), "Object header should use CreateBuilder<string>");
+        Assert.IsTrue(resp.Content.Contains("objectBuilder.AddProperty", StringComparison.Ordinal), "Object header should add properties");
+        Assert.IsTrue(resp.Content.Contains("remaining.IndexOf(',')", StringComparison.Ordinal), "Non-explode object header should split on comma");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseHeader_ObjectExplode_EmitsEqualsKvParsing()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "HeaderObjectExplode", "version": "1.0" },
+              "paths": {
+                "/data": {
+                  "get": {
+                    "operationId": "getData",
+                    "tags": ["data"],
+                    "responses": {
+                      "200": {
+                        "description": "Ok",
+                        "content": { "application/json": { "schema": { "type": "object" } } },
+                        "headers": {
+                          "X-Meta": { "explode": true, "schema": { "type": "object" } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1data/get/responses/200/content/application~1json/schema"] = "Test.Data",
+            ["#/paths/~1data/get/responses/200/headers/X-Meta/schema"] = "Test.Meta",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("CreateBuilder<string>", StringComparison.Ordinal), "Object explode header should use CreateBuilder<string>");
+        Assert.IsTrue(resp.Content.Contains("pair.IndexOf('=')", StringComparison.Ordinal), "Object explode header should split on equals");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseHeader_BooleanSchema_EmitsBoolParse()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "HeaderBool", "version": "1.0" },
+              "paths": {
+                "/data": {
+                  "get": {
+                    "operationId": "getData",
+                    "tags": ["data"],
+                    "responses": {
+                      "200": {
+                        "description": "Ok",
+                        "content": { "application/json": { "schema": { "type": "object" } } },
+                        "headers": {
+                          "X-Active": { "schema": { "type": "boolean" } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1data/get/responses/200/content/application~1json/schema"] = "Test.Data",
+            ["#/paths/~1data/get/responses/200/headers/X-Active/schema"] = "Test.JsonBoolean",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("bool.Parse(rawValue)", StringComparison.Ordinal), "Boolean header should emit bool.Parse(rawValue)");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseHeader_Int32Schema_EmitsParseNumber()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "HeaderInt32", "version": "1.0" },
+              "paths": {
+                "/data": {
+                  "get": {
+                    "operationId": "getData",
+                    "tags": ["data"],
+                    "responses": {
+                      "200": {
+                        "description": "Ok",
+                        "content": { "application/json": { "schema": { "type": "object" } } },
+                        "headers": {
+                          "X-Count": { "schema": { "type": "integer", "format": "int32" } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1data/get/responses/200/content/application~1json/schema"] = "Test.Data",
+            ["#/paths/~1data/get/responses/200/headers/X-Count/schema"] = "Test.JsonInt32",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("HeaderValueParser.ParseNumber", StringComparison.Ordinal), "Int32 header should emit HeaderValueParser.ParseNumber");
+    }
+
+    // ── Deep nesting warning tests ───────────────────────────────────────
+    [TestMethod]
+    public void Generate_ResponseHeader_ArrayDeepNesting_EmitsWarning()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "HeaderArrayDeep", "version": "1.0" },
+              "paths": {
+                "/data": {
+                  "get": {
+                    "operationId": "getData",
+                    "tags": ["data"],
+                    "responses": {
+                      "200": {
+                        "description": "Ok",
+                        "content": { "application/json": { "schema": { "type": "object" } } },
+                        "headers": {
+                          "X-Items": { "schema": { "type": "array", "items": { "type": "object" } } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1data/get/responses/200/content/application~1json/schema"] = "Test.Data",
+            ["#/paths/~1data/get/responses/200/headers/X-Items/schema"] = "Test.Items",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("#warning Deep nesting detected", StringComparison.Ordinal), "Array with object items should emit deep nesting warning");
+        Assert.IsTrue(resp.Content.Contains("StyleValueSplitter.NextSeparator", StringComparison.Ordinal), "Array with deep nesting should use depth-aware splitter");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseHeader_ObjectDeepNesting_EmitsWarning()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "HeaderObjectDeep", "version": "1.0" },
+              "paths": {
+                "/data": {
+                  "get": {
+                    "operationId": "getData",
+                    "tags": ["data"],
+                    "responses": {
+                      "200": {
+                        "description": "Ok",
+                        "content": { "application/json": { "schema": { "type": "object" } } },
+                        "headers": {
+                          "X-Meta": { "schema": { "type": "object", "properties": { "nested": { "type": "object" } } } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1data/get/responses/200/content/application~1json/schema"] = "Test.Data",
+            ["#/paths/~1data/get/responses/200/headers/X-Meta/schema"] = "Test.Meta",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("#warning Deep nesting detected", StringComparison.Ordinal), "Object with nested object property should emit deep nesting warning");
+        Assert.IsTrue(resp.Content.Contains("StyleValueSplitter.NextSeparator", StringComparison.Ordinal), "Object with deep nesting should use depth-aware splitter");
+    }
+
+    [TestMethod]
+    public void Generate_HeaderParam_ArrayKind_EmitsEnumerateArray()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "HeaderArr", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "testHeaderArr",
+                    "tags": ["test"],
+                    "parameters": [
+                      { "name": "X-Tags", "in": "header", "required": true, "schema": { "type": "array", "items": { "type": "string" } } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1test/get/parameters/0/schema"] = "Test.JsonArray",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "TestHeaderArrRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateArray", StringComparison.Ordinal), "Header array should emit EnumerateArray");
+        Assert.IsTrue(req.Content.Contains("headerBuf[headerLen++] = (byte)','", StringComparison.Ordinal), "Header array should use comma separator");
+    }
+
+    [TestMethod]
+    public void Generate_PathParam_SimpleArray_EmitsCommaSeparator()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "PathSimpleArr", "version": "1.0" },
+              "paths": {
+                "/items/{ids}": {
+                  "get": {
+                    "operationId": "getByIds",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "ids", "in": "path", "required": true, "schema": { "type": "array", "items": { "type": "string" } } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{ids}/get/parameters/0/schema"] = "Test.JsonArray",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "GetByIdsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateArray", StringComparison.Ordinal), "Path simple array should emit EnumerateArray");
+        Assert.IsTrue(req.Content.Contains("\",\"u8", StringComparison.Ordinal), "Path simple array should use comma separator");
+    }
+
+    [TestMethod]
+    public void Generate_PathParam_LabelExplodeObject_EmitsDotSeparatedKvPairs()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "PathLabelObj", "version": "1.0" },
+              "paths": {
+                "/items/{color}": {
+                  "get": {
+                    "operationId": "getByColor",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "color", "in": "path", "required": true, "style": "label", "explode": true, "schema": { "type": "object" } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{color}/get/parameters/0/schema"] = "Test.JsonObject",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "GetByColorRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateObject", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("\".\"u8", StringComparison.Ordinal), "Label+explode object should use dot prefix and separator");
+        Assert.IsTrue(req.Content.Contains("\"=\"u8", StringComparison.Ordinal), "Label+explode object should use = between key and value");
+    }
+
+    [TestMethod]
+    public void Generate_PathParam_MatrixExplodeObject_EmitsSemicolonSeparatedKvPairs()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "PathMatrixObj", "version": "1.0" },
+              "paths": {
+                "/items/{color}": {
+                  "get": {
+                    "operationId": "getByColor",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "color", "in": "path", "required": true, "style": "matrix", "explode": true, "schema": { "type": "object" } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{color}/get/parameters/0/schema"] = "Test.JsonObject",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "GetByColorRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateObject", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("\";\"u8", StringComparison.Ordinal), "Matrix+explode object should use semicolon prefix and separator");
+    }
+
+    [TestMethod]
+    public void Generate_PathParam_MatrixNonExplodeObject_EmitsSemicolonNamePrefix()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "PathMatrixObjNE", "version": "1.0" },
+              "paths": {
+                "/items/{color}": {
+                  "get": {
+                    "operationId": "getByColor",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "color", "in": "path", "required": true, "style": "matrix", "explode": false, "schema": { "type": "object" } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{color}/get/parameters/0/schema"] = "Test.JsonObject",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "GetByColorRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateObject", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("\";color=\"u8", StringComparison.Ordinal), "Matrix+non-explode object should use ;name= prefix");
+        Assert.IsTrue(req.Content.Contains("\",\"u8", StringComparison.Ordinal), "Matrix+non-explode object should use comma separator");
+    }
+
+    [TestMethod]
+    public void Generate_QueryParam_FormNonExplodeArray_EmitsCommaSeparated()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "FormNonExplodeArr", "version": "1.0" },
+              "paths": {
+                "/search": {
+                  "get": {
+                    "operationId": "search",
+                    "tags": ["search"],
+                    "parameters": [
+                      { "name": "tags", "in": "query", "style": "form", "explode": false, "schema": { "type": "array", "items": { "type": "string" } } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1search/get/parameters/0/schema"] = "Test.JsonArray",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "SearchRequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateArray", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("\"tags=\"u8", StringComparison.Ordinal), "Form non-explode array should emit name= prefix once");
+        Assert.IsTrue(req.Content.Contains("\",\"u8", StringComparison.Ordinal), "Form non-explode array should use comma separator");
+    }
+
+    [TestMethod]
+    public void Generate_CookieParam_ObjectNonExplode_EmitsCommaSeparated()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "CookieObjNE", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "testCookieObjNE",
+                    "tags": ["test"],
+                    "parameters": [
+                      { "name": "prefs", "in": "cookie", "required": true, "explode": false, "schema": { "type": "object" } }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1test/get/parameters/0/schema"] = "Test.JsonObject",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "TestCookieObjNERequest.cs");
+        Assert.IsTrue(req.Content.Contains("EnumerateObject", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("\"prefs=\"u8", StringComparison.Ordinal), "Cookie non-explode object should emit name= prefix");
+        Assert.IsTrue(req.Content.Contains("\",\"u8", StringComparison.Ordinal), "Cookie non-explode object should use comma between key-value pairs");
+    }
 }
