@@ -2055,15 +2055,18 @@ public class OpenApi31CodeGeneratorTests
 
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
 
-        // X-Rate-Limit appears in both 200 and 429 but should only generate one property
+        // X-Rate-Limit appears in both 200 and 429 but should only generate one property declaration.
+        // With lazy typed headers, the property is a full getter (not an auto-property).
         int count = 0;
         int idx = 0;
-        while ((idx = resp.Content.IndexOf("XRateLimitHeader { get;", idx, StringComparison.Ordinal)) >= 0)
+        const string marker = "XRateLimitHeader";
+        while ((idx = resp.Content.IndexOf(marker, idx, StringComparison.Ordinal)) >= 0)
         {
             count++;
-            idx += "XRateLimitHeader { get;".Length;
+            idx += marker.Length;
         }
 
+        // Property declaration appears once; backing fields (lowercase) don't match this search.
         Assert.AreEqual(1, count, "XRateLimitHeader property should appear exactly once");
     }
 
@@ -3531,7 +3534,10 @@ public class OpenApi31CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(root);
         GeneratedFile resp = GetFile(files, "ListItemsResponse.cs");
 
-        // Header property should appear only once
+        // Header property should appear only once (deduped across responses).
+        // With lazy typed headers, the property declaration is a full getter body,
+        // and the backing fields use lowercase (xRequestIdHeaderValue, xRequestIdHeaderParsed).
+        // Count the property name with 'Header' suffix which appears in the property declaration.
         int count = 0;
         int idx = 0;
         while ((idx = resp.Content.IndexOf("XRequestIdHeader", idx, StringComparison.Ordinal)) >= 0)
@@ -3540,9 +3546,9 @@ public class OpenApi31CodeGeneratorTests
             idx += "XRequestIdHeader".Length;
         }
 
-        // Property declaration + assignment in ReadHeaders = 2, but NOT 4 (which would mean duplicated)
-        Assert.IsTrue(count >= 2, "Header property should be declared and used");
-        Assert.IsTrue(count <= 3, "Header should be deduped across responses");
+        // Property declaration appears once; there's no separate assignment in ReadHeaders
+        // (the lazy pattern reads from responseHeaders reference on access).
+        Assert.AreEqual(1, count, "Header property should appear exactly once (deduped)");
     }
 
     // ── Integer with no format → UnboundedNumber ───────────────────────

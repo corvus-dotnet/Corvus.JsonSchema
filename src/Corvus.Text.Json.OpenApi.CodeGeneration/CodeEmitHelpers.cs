@@ -1440,6 +1440,180 @@ public static class CodeEmitHelpers
     }
 
     /// <summary>
+    /// Emits a lazy response header property that parses the raw header string
+    /// into a typed value on first access.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="propertyName">The PascalCase property name (e.g. "XRequestId").</param>
+    /// <param name="fieldName">The camelCase field name (e.g. "xRequestId").</param>
+    /// <param name="headerName">The raw HTTP header name (e.g. "X-Request-Id").</param>
+    /// <param name="typeName">The fully qualified .NET type name for the header value.</param>
+    /// <param name="explode">Whether the header uses explode serialization.</param>
+    /// <param name="kind">The serialization kind of the header schema.</param>
+    public static void EmitResponseHeaderLazyProperty(
+        IndentedWriter w,
+        string propertyName,
+        string fieldName,
+        string headerName,
+        string typeName,
+        bool explode,
+        ParameterSerializationKind kind)
+    {
+        // Backing fields: cached parsed value and a flag to avoid re-parsing.
+        w.WriteLine($"private {typeName}? {fieldName}HeaderValue;");
+        w.WriteLine($"private bool {fieldName}HeaderParsed;");
+        w.WriteLine();
+
+        // Property getter: lazily parse the raw header string on first access.
+        w.WriteLine($"public {typeName}? {propertyName}Header");
+        w.OpenBrace();
+        w.WriteLine("get");
+        w.OpenBrace();
+
+        // If already parsed, return cached value.
+        w.WriteLine($"if (this.{fieldName}HeaderParsed)");
+        w.OpenBrace();
+        w.WriteLine($"return this.{fieldName}HeaderValue;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine($"this.{fieldName}HeaderParsed = true;");
+        w.WriteLine();
+
+        // Try to get the raw header string.
+        w.WriteLine($"if (this.responseHeaders is not null");
+        w.WriteLine($"    && this.responseHeaders.TryGetValue(\"{headerName}\", out string? rawValue)");
+        w.WriteLine("    && rawValue is not null)");
+        w.OpenBrace();
+
+        // Parse based on serialization kind.
+        // Headers always use style: simple.
+        // Scalar: parse the raw string directly.
+        // Array: split on comma, parse each element.
+        // Object: split on comma, interpret as key,value pairs (or key=value with explode).
+        if (kind is ParameterSerializationKind.Array)
+        {
+            EmitResponseHeaderArrayParse(w, fieldName, typeName, explode);
+        }
+        else if (kind is ParameterSerializationKind.Object)
+        {
+            EmitResponseHeaderObjectParse(w, fieldName, typeName, explode);
+        }
+        else
+        {
+            // Scalar: wrap the raw string in a JSON value and parse it.
+            EmitResponseHeaderScalarParse(w, fieldName, typeName, kind);
+        }
+
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine($"return this.{fieldName}HeaderValue;");
+        w.CloseBrace();
+        w.CloseBrace();
+    }
+
+    private static void EmitResponseHeaderScalarParse(
+        IndentedWriter w,
+        string fieldName,
+        string typeName,
+        ParameterSerializationKind kind)
+    {
+        // For string types, use the raw value directly as JSON.
+        // For numeric/boolean types, parse the raw value.
+        if (kind is ParameterSerializationKind.String)
+        {
+            // Wrap in quotes to make valid JSON, then parse.
+            w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
+            w.WriteLine("    System.Text.Encoding.UTF8.GetBytes($\"\\\"{{rawValue}}\\\"\"));");
+        }
+        else if (kind is ParameterSerializationKind.Boolean)
+        {
+            w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
+            w.WriteLine("    System.Text.Encoding.UTF8.GetBytes(rawValue));");
+        }
+        else
+        {
+            // Numeric types: the raw string IS the JSON representation.
+            w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
+            w.WriteLine("    System.Text.Encoding.UTF8.GetBytes(rawValue));");
+        }
+    }
+
+    private static void EmitResponseHeaderArrayParse(
+        IndentedWriter w,
+        string fieldName,
+        string typeName,
+        bool explode)
+    {
+        // style: simple arrays are comma-separated (explode has no effect on separator for simple).
+        // Build a JSON array from the comma-separated values.
+        _ = explode; // simple style array separator is always comma regardless of explode
+        w.WriteLine("string[] elements = rawValue.Split(',');");
+        w.WriteLine("System.Text.StringBuilder jsonBuilder = new();");
+        w.WriteLine("jsonBuilder.Append('[');");
+        w.WriteLine("for (int i = 0; i < elements.Length; i++)");
+        w.OpenBrace();
+        w.WriteLine("if (i > 0) jsonBuilder.Append(',');");
+        w.WriteLine("jsonBuilder.Append('\"');");
+        w.WriteLine("jsonBuilder.Append(elements[i].Trim());");
+        w.WriteLine("jsonBuilder.Append('\"');");
+        w.CloseBrace();
+        w.WriteLine("jsonBuilder.Append(']');");
+        w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
+        w.WriteLine("    System.Text.Encoding.UTF8.GetBytes(jsonBuilder.ToString()));");
+    }
+
+    private static void EmitResponseHeaderObjectParse(
+        IndentedWriter w,
+        string fieldName,
+        string typeName,
+        bool explode)
+    {
+        // style: simple objects:
+        // explode=false: comma-separated alternating key,value: "R,100,G,200,B,150"
+        // explode=true: comma-separated key=value: "R=100,G=200,B=150"
+        // Build a JSON object from the parsed pairs.
+        w.WriteLine("System.Text.StringBuilder jsonBuilder = new();");
+        w.WriteLine("jsonBuilder.Append('{');");
+
+        if (explode)
+        {
+            w.WriteLine("string[] pairs = rawValue.Split(',');");
+            w.WriteLine("for (int i = 0; i < pairs.Length; i++)");
+            w.OpenBrace();
+            w.WriteLine("if (i > 0) jsonBuilder.Append(',');");
+            w.WriteLine("int eqIdx = pairs[i].IndexOf('=');");
+            w.WriteLine("if (eqIdx >= 0)");
+            w.OpenBrace();
+            w.WriteLine("jsonBuilder.Append('\"');");
+            w.WriteLine("jsonBuilder.Append(pairs[i].AsSpan(0, eqIdx).Trim().ToString());");
+            w.WriteLine("jsonBuilder.Append(\"\\\":\\\"\");");
+            w.WriteLine("jsonBuilder.Append(pairs[i].AsSpan(eqIdx + 1).Trim().ToString());");
+            w.WriteLine("jsonBuilder.Append('\"');");
+            w.CloseBrace();
+            w.CloseBrace();
+        }
+        else
+        {
+            w.WriteLine("string[] parts = rawValue.Split(',');");
+            w.WriteLine("for (int i = 0; i + 1 < parts.Length; i += 2)");
+            w.OpenBrace();
+            w.WriteLine("if (i > 0) jsonBuilder.Append(',');");
+            w.WriteLine("jsonBuilder.Append('\"');");
+            w.WriteLine("jsonBuilder.Append(parts[i].Trim());");
+            w.WriteLine("jsonBuilder.Append(\"\\\":\\\"\");");
+            w.WriteLine("jsonBuilder.Append(parts[i + 1].Trim());");
+            w.WriteLine("jsonBuilder.Append('\"');");
+            w.CloseBrace();
+        }
+
+        w.WriteLine("jsonBuilder.Append('}');");
+        w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
+        w.WriteLine("    System.Text.Encoding.UTF8.GetBytes(jsonBuilder.ToString()));");
+    }
+
+    /// <summary>
     /// Emits the <c>SendAsyncCore</c> and <c>SendWithBodyAsyncCore</c> helper methods.
     /// </summary>
     /// <param name="w">The writer.</param>

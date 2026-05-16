@@ -101,7 +101,9 @@ public sealed class OpenApi31CodeGenerator
 
     private readonly record struct HeaderInfo(
         string HeaderName,
-        string? SchemaPointer);
+        string? SchemaPointer,
+        bool Explode,
+        ParameterSerializationKind SerializationKind);
 
     /// <summary>
     /// Walks the OpenAPI 3.1 specification and collects all schema
@@ -902,9 +904,27 @@ public sealed class OpenApi31CodeGenerator
                     pathNameUtf8, method, statusCodeUtf8, headerName.Span);
             }
 
+            // Extract explode and serialization kind for response header deserialization.
+            // Headers always use style: simple. Explode defaults to false.
+            bool explode = false;
+
+            if (hasSchema)
+            {
+                JsonElement headerElement = (JsonElement)header;
+                if (headerElement.TryGetProperty("explode", out JsonElement explodeProp)
+                    && explodeProp.ValueKind == JsonValueKind.True)
+                {
+                    explode = true;
+                }
+            }
+
+            ParameterSerializationKind serializationKind = hasSchema
+                ? SchemaClassifier.Classify((JsonElement)header.SchemaValue)
+                : ParameterSerializationKind.String;
+
             // Extract header name at the emit boundary
             string name = headerProp.Name;
-            result.Add(new HeaderInfo(name, schemaPointer));
+            result.Add(new HeaderInfo(name, schemaPointer, explode, serializationKind));
         }
 
         return [.. result];
@@ -1409,6 +1429,15 @@ public sealed class OpenApi31CodeGenerator
 
         w.WriteLine("private IAsyncDisposable? owner;");
         w.WriteLine("private IDisposable? parsedDocument;");
+
+        // Only emit the responseHeaders field if any response has typed headers.
+        bool hasTypedHeaders = op.Responses.Any(
+            r => r.Headers.Any(h => h.SchemaPointer is not null));
+        if (hasTypedHeaders)
+        {
+            w.WriteLine("private IResponseHeaders? responseHeaders;");
+        }
+
         w.WriteLine();
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine("public int StatusCode { get; private set; }");
@@ -1618,12 +1647,33 @@ public sealed class OpenApi31CodeGenerator
                     continue;
                 }
 
+                string? typeName = header.SchemaPointer is not null
+                    ? this.ResolveSchemaTypeName(header.SchemaPointer)
+                    : null;
+
                 w.WriteLine();
                 w.WriteLine("/// <summary>");
                 w.WriteLine($"/// Gets the value of the <c>{header.HeaderName}</c> response header,");
                 w.WriteLine("/// or <see langword=\"null\"/> if the header was not present.");
                 w.WriteLine("/// </summary>");
-                w.WriteLine($"public string? {propertyName}Header {{ get; private set; }}");
+
+                if (typeName is not null)
+                {
+                    string fieldName = CodeEmitHelpers.ToCamelCase(propertyName);
+
+                    CodeEmitHelpers.EmitResponseHeaderLazyProperty(
+                        w,
+                        propertyName,
+                        fieldName,
+                        header.HeaderName,
+                        typeName,
+                        header.Explode,
+                        header.SerializationKind);
+                }
+                else
+                {
+                    w.WriteLine($"public string? {propertyName}Header {{ get; private set; }}");
+                }
             }
         }
     }
@@ -1632,8 +1682,34 @@ public sealed class OpenApi31CodeGenerator
         IndentedWriter w,
         ResponseInfo[] responses)
     {
+        // Check if any response has headers at all.
+        bool hasHeaders = false;
+
+        foreach (ResponseInfo resp in responses)
+        {
+            if (resp.Headers.Length > 0)
+            {
+                hasHeaders = true;
+                break;
+            }
+        }
+
+        if (!hasHeaders)
+        {
+            return;
+        }
+
+        // Store the reference for lazy typed header parsing.
+        bool hasTypedHeaders = responses.Any(
+            r => r.Headers.Any(h => h.SchemaPointer is not null));
+        if (hasTypedHeaders)
+        {
+            w.WriteLine("response.responseHeaders = responseHeaders;");
+            w.WriteLine();
+        }
+
+        // For untyped headers (no schema), eagerly read the raw string value.
         HashSet<string> emittedHeaders = [];
-        List<(string headerName, string propertyName)> headers = [];
 
         foreach (ResponseInfo resp in responses)
         {
@@ -1646,30 +1722,21 @@ public sealed class OpenApi31CodeGenerator
                     continue;
                 }
 
-                headers.Add((header.HeaderName, propertyName));
+                // Only eagerly read headers that have no schema (raw string properties).
+                if (header.SchemaPointer is null)
+                {
+                    string camelName = CodeEmitHelpers.ToCamelCase(propertyName);
+                    w.WriteLine("if (responseHeaders is not null)");
+                    w.OpenBrace();
+                    w.WriteLine($"if (responseHeaders.TryGetValue(\"{header.HeaderName}\", out string? {camelName}Value))");
+                    w.OpenBrace();
+                    w.WriteLine($"response.{propertyName}Header = {camelName}Value;");
+                    w.CloseBrace();
+                    w.CloseBrace();
+                    w.WriteLine();
+                }
             }
         }
-
-        if (headers.Count == 0)
-        {
-            return;
-        }
-
-        w.WriteLine("if (responseHeaders is not null)");
-        w.OpenBrace();
-
-        foreach ((string headerName, string propertyName) in headers)
-        {
-            string camelName = CodeEmitHelpers.ToCamelCase(propertyName);
-            w.WriteLine($"if (responseHeaders.TryGetValue(\"{headerName}\", out string? {camelName}Value))");
-            w.OpenBrace();
-            w.WriteLine($"response.{propertyName}Header = {camelName}Value;");
-            w.CloseBrace();
-            w.WriteLine();
-        }
-
-        w.CloseBrace();
-        w.WriteLine();
     }
 
     private void EmitMatchResult(

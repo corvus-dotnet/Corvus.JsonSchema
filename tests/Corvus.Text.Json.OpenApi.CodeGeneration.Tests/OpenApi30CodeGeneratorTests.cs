@@ -2048,10 +2048,10 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
         int count = 0;
         int idx = 0;
-        while ((idx = resp.Content.IndexOf("XRateLimitHeader { get;", idx, StringComparison.Ordinal)) >= 0)
+        while ((idx = resp.Content.IndexOf("XRateLimitHeader", idx, StringComparison.Ordinal)) >= 0)
         {
             count++;
-            idx += "XRateLimitHeader { get;".Length;
+            idx += "XRateLimitHeader".Length;
         }
 
         Assert.AreEqual(1, count, "XRateLimitHeader property should appear exactly once");
@@ -3566,8 +3566,7 @@ public class OpenApi30CodeGeneratorTests
             idx += "XRequestIdHeader".Length;
         }
 
-        Assert.IsTrue(count >= 2, "Header property should be declared and used");
-        Assert.IsTrue(count <= 3, "Header should be deduped across responses");
+        Assert.AreEqual(1, count, "Header property should appear exactly once (deduped)");
     }
 
     [TestMethod]
