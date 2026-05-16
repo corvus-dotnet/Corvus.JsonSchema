@@ -1,0 +1,435 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "Naming Heuristic Test API",
+    "version": "1.0.0"
+  },
+  "paths": {
+    "/items": {
+      "get": {
+        "operationId": "listItems",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": { "type": "integer", "minimum": 1 }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items200": { "type": "string" } }
+                }
+              }
+            },
+            "headers": {
+              "x-next": {
+                "schema": { "type": "object", "properties": { "href": { "type": "string" }, "rel": { "type": "string" } } }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items201": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "202": {
+            "description": "Accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items202": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "301": {
+            "description": "Moved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items301": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "304": {
+            "description": "Not Modified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items304": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items400": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items401": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Forbidden",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items403": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items404": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items409": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items422": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too Many Requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items429": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items500": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "Bad Gateway",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items502": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Service Unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "items503": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Default error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "itemsDefault": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "createItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "postBody": { "type": "string" } }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "postCreated": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "replaceItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "putResult": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "deleteResult": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patchItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "patchResult": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "optionsItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "optionsResult": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "operationId": "headItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "headResult": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "trace": {
+        "operationId": "traceItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "traceResult": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      },
+      "parameters": [
+        {
+          "name": "x-tenant",
+          "in": "header",
+          "schema": { "type": "string", "maxLength": 100 }
+        }
+      ]
+    },
+    "/items/{itemId}": {
+      "get": {
+        "operationId": "getItem",
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "string", "pattern": "^[a-z]+$" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "itemDetail": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{itemId}/details": {
+      "get": {
+        "operationId": "getItemDetails",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "detailInfo": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{itemId}/sub-items/{subId}": {
+      "get": {
+        "operationId": "getSubItem",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "subItem": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "204": {
+            "description": "No content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "noContentInfo": { "type": "string" } }
+                }
+              }
+            }
+          },
+          "418": {
+            "description": "Unknown status code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "teapot": { "type": "boolean" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/data~items": {
+      "get": {
+        "operationId": "getTildeItems",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "tildeData": { "type": "string" } }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
