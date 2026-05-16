@@ -1270,8 +1270,10 @@ public sealed class OpenApi31CodeGenerator
 
             ParameterSerializationKind kind = matchingParam?.SerializationKind
                 ?? ParameterSerializationKind.String;
+            ParameterStyle style = matchingParam?.Style ?? ParameterStyle.Simple;
+            bool explode = matchingParam?.Explode ?? false;
 
-            CodeEmitHelpers.EmitPathParamWrite(w, $"this.{fieldName}", fieldName, kind);
+            CodeEmitHelpers.EmitPathParamWrite(w, paramName, $"this.{fieldName}", fieldName, kind, style, explode);
             remaining = remaining[(openBrace + 1 + closeBrace + 1)..];
         }
     }
@@ -1302,13 +1304,13 @@ public sealed class OpenApi31CodeGenerator
             {
                 w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}Value)");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"{fieldName}Value", fieldName, kind);
+                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"{fieldName}Value", fieldName, kind, param.Style, param.Explode);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind);
+                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
                 w.WriteLine();
             }
         }
@@ -1334,13 +1336,13 @@ public sealed class OpenApi31CodeGenerator
             {
                 w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}HeaderValue)");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitHeaderScalarWrite(w, $"{fieldName}HeaderValue", fieldName, kind);
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"{fieldName}HeaderValue", fieldName, kind, param.Style, param.Explode);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitHeaderScalarWrite(w, $"this.{fieldName}", fieldName, kind);
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
                 w.WriteLine();
             }
         }
@@ -1374,13 +1376,13 @@ public sealed class OpenApi31CodeGenerator
             {
                 w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}Value)");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"{fieldName}Value", fieldName, kind);
+                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"{fieldName}Value", fieldName, kind, param.Style, param.Explode);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind);
+                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
                 w.WriteLine();
             }
         }

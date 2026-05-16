@@ -202,7 +202,7 @@ public class CodeEmitHelpersTests
     public void EmitPathParamWrite_AllKindCategories_ProducesOutput(ParameterSerializationKind kind)
     {
         IndentedWriter w = new();
-        CodeEmitHelpers.EmitPathParamWrite(w, "value", "p0", kind);
+        CodeEmitHelpers.EmitPathParamWrite(w, "color", "value", "p0", kind, ParameterStyle.Simple, false);
         Assert.IsTrue(w.ToString().Length > 0, $"EmitPathParamWrite should produce output for {kind}");
     }
 

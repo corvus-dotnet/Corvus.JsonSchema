@@ -452,57 +452,168 @@ public static class CodeEmitHelpers
     // ── Compound parameter serialization per location ───────────────────
 
     /// <summary>
-    /// Emits path parameter serialization (simple style, no explode).
+    /// Emits path parameter serialization with style and explode support.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name (used for matrix style).</param>
+    /// <param name="valueExpr">The C# expression for the value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="kind">The serialization kind.</param>
+    /// <param name="style">The parameter style.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitPathParamWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterSerializationKind kind,
+        ParameterStyle style,
+        bool explode)
+    {
+        if (kind == ParameterSerializationKind.Array)
+        {
+            EmitPathArrayWrite(w, paramName, valueExpr, uid, style, explode);
+            return;
+        }
+
+        if (kind == ParameterSerializationKind.Object)
+        {
+            EmitPathObjectWrite(w, paramName, valueExpr, uid, style, explode);
+            return;
+        }
+
+        // For scalar types, emit the style prefix, then the value.
+        EmitPathStylePrefix(w, paramName, style);
+        EmitPathScalarValue(w, valueExpr, uid, kind);
+    }
+
+    /// <summary>
+    /// Emits query parameter serialization with style and explode support.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name as it appears in the query string.</param>
+    /// <param name="valueExpr">The C# expression for the value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="kind">The serialization kind.</param>
+    /// <param name="style">The parameter style.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitQueryParamWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterSerializationKind kind,
+        ParameterStyle style,
+        bool explode)
+    {
+        if (kind == ParameterSerializationKind.Array)
+        {
+            EmitQueryArrayWrite(w, paramName, valueExpr, uid, style, explode);
+            return;
+        }
+
+        if (kind == ParameterSerializationKind.Object)
+        {
+            EmitQueryObjectWrite(w, paramName, valueExpr, uid, style, explode);
+            return;
+        }
+
+        // For scalar types, form style: name=value with & separator.
+        w.WriteLine("if (!first)");
+        w.OpenBrace();
+        w.WriteLine("writer.Write(\"&\"u8);");
+        w.WriteLine("totalWritten++;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+        w.WriteLine($"totalWritten += {paramName.Length + 1};");
+
+        EmitQueryScalarWrite(w, valueExpr, uid, kind);
+
+        w.WriteLine();
+        w.WriteLine("first = false;");
+    }
+
+    /// <summary>
+    /// Emits header parameter serialization with style and explode support.
     /// </summary>
     /// <param name="w">The writer.</param>
     /// <param name="valueExpr">The C# expression for the value.</param>
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="kind">The serialization kind.</param>
-    public static void EmitPathParamWrite(
+    /// <param name="style">The parameter style (always Simple for headers).</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitHeaderParamWrite(
         IndentedWriter w,
         string valueExpr,
         string uid,
-        ParameterSerializationKind kind)
+        ParameterSerializationKind kind,
+        ParameterStyle style,
+        bool explode)
     {
-        switch (kind)
+        if (kind == ParameterSerializationKind.Array)
         {
-            case ParameterSerializationKind.String:
-                EmitStringWrite(w, valueExpr, uid);
-                EmitUriEscapeAndWrite(w, $"utf8{uid}.Span", uid);
-                break;
-
-            case ParameterSerializationKind.Boolean:
-                EmitBooleanWrite(w, valueExpr);
-                break;
-
-            case ParameterSerializationKind.Byte:
-            case ParameterSerializationKind.UInt16:
-            case ParameterSerializationKind.UInt32:
-            case ParameterSerializationKind.UInt64:
-            case ParameterSerializationKind.UInt128:
-            case ParameterSerializationKind.SByte:
-            case ParameterSerializationKind.Int16:
-            case ParameterSerializationKind.Int32:
-            case ParameterSerializationKind.Int64:
-            case ParameterSerializationKind.Int128:
-            case ParameterSerializationKind.Half:
-            case ParameterSerializationKind.Single:
-            case ParameterSerializationKind.Double:
-            case ParameterSerializationKind.Decimal:
-                EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
-                w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
-                break;
-
-            case ParameterSerializationKind.UnboundedNumber:
-                EmitUnboundedNumberToLocal(w, valueExpr, uid);
-                w.WriteLine($"writer.Write(raw{uid}.Span);");
-                break;
-
-            case ParameterSerializationKind.Object:
-            case ParameterSerializationKind.Array:
-                EmitJsonWriterFallback(w, valueExpr, uid);
-                break;
+            EmitHeaderArrayWrite(w, valueExpr, uid, explode);
+            return;
         }
+
+        if (kind == ParameterSerializationKind.Object)
+        {
+            EmitHeaderObjectWrite(w, valueExpr, uid, explode);
+            return;
+        }
+
+        // For scalar types, headers always use simple style.
+        EmitHeaderScalarWrite(w, valueExpr, uid, kind);
+    }
+
+    /// <summary>
+    /// Emits cookie parameter serialization with style and explode support.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name as it appears in the cookie.</param>
+    /// <param name="valueExpr">The C# expression for the value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="kind">The serialization kind.</param>
+    /// <param name="style">The parameter style (always Form for cookies).</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitCookieParamWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterSerializationKind kind,
+        ParameterStyle style,
+        bool explode)
+    {
+        if (kind == ParameterSerializationKind.Array)
+        {
+            EmitCookieArrayWrite(w, paramName, valueExpr, uid, explode);
+            return;
+        }
+
+        if (kind == ParameterSerializationKind.Object)
+        {
+            EmitCookieObjectWrite(w, paramName, valueExpr, uid, explode);
+            return;
+        }
+
+        // For scalar types, cookies always use form style: name=value with "; " separator.
+        w.WriteLine("if (!first)");
+        w.OpenBrace();
+        w.WriteLine("writer.Write(\"; \"u8);");
+        w.WriteLine("totalWritten += 2;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+        w.WriteLine($"totalWritten += {paramName.Length + 1};");
+
+        EmitCookieScalarWrite(w, valueExpr, uid, kind);
+
+        w.WriteLine();
+        w.WriteLine("first = false;");
     }
 
     /// <summary>
@@ -675,66 +786,637 @@ public static class CodeEmitHelpers
         }
     }
 
+    // ── Style-aware path parameter helpers ───────────────────────────────
+
     /// <summary>
-    /// Emits a query parameter write with the <c>name=</c> prefix and separator handling.
+    /// Emits the prefix for a path parameter based on style.
     /// </summary>
     /// <param name="w">The writer.</param>
-    /// <param name="paramName">The parameter name as it appears in the query string.</param>
-    /// <param name="valueExpr">The C# expression for the value.</param>
-    /// <param name="uid">A unique identifier for variable naming.</param>
-    /// <param name="kind">The serialization kind.</param>
-    public static void EmitQueryParamWrite(
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="style">The parameter style.</param>
+    public static void EmitPathStylePrefix(
         IndentedWriter w,
         string paramName,
-        string valueExpr,
-        string uid,
-        ParameterSerializationKind kind)
+        ParameterStyle style)
     {
-        w.WriteLine("if (!first)");
-        w.OpenBrace();
-        w.WriteLine("writer.Write(\"&\"u8);");
-        w.WriteLine("totalWritten++;");
-        w.CloseBrace();
-        w.WriteLine();
+        switch (style)
+        {
+            case ParameterStyle.Label:
+                w.WriteLine("writer.Write(\".\"u8);");
+                break;
 
-        w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
-        w.WriteLine($"totalWritten += {paramName.Length + 1};");
+            case ParameterStyle.Matrix:
+                w.WriteLine($"writer.Write(\";{paramName}=\"u8);");
+                break;
 
-        EmitQueryScalarWrite(w, valueExpr, uid, kind);
-
-        w.WriteLine();
-        w.WriteLine("first = false;");
+            default:
+                break;
+        }
     }
 
     /// <summary>
-    /// Emits a cookie parameter write with the <c>name=</c> prefix and separator handling.
+    /// Emits a single scalar value for path parameters (no prefix, no counting).
     /// </summary>
     /// <param name="w">The writer.</param>
-    /// <param name="paramName">The parameter name as it appears in the cookie.</param>
     /// <param name="valueExpr">The C# expression for the value.</param>
     /// <param name="uid">A unique identifier for variable naming.</param>
     /// <param name="kind">The serialization kind.</param>
-    public static void EmitCookieParamWrite(
+    public static void EmitPathScalarValue(
         IndentedWriter w,
-        string paramName,
         string valueExpr,
         string uid,
         ParameterSerializationKind kind)
     {
-        w.WriteLine("if (!first)");
+        switch (kind)
+        {
+            case ParameterSerializationKind.String:
+                EmitStringWrite(w, valueExpr, uid);
+                EmitUriEscapeAndWrite(w, $"utf8{uid}.Span", uid);
+                break;
+
+            case ParameterSerializationKind.Boolean:
+                EmitBooleanWrite(w, valueExpr);
+                break;
+
+            case ParameterSerializationKind.Byte:
+            case ParameterSerializationKind.UInt16:
+            case ParameterSerializationKind.UInt32:
+            case ParameterSerializationKind.UInt64:
+            case ParameterSerializationKind.UInt128:
+            case ParameterSerializationKind.SByte:
+            case ParameterSerializationKind.Int16:
+            case ParameterSerializationKind.Int32:
+            case ParameterSerializationKind.Int64:
+            case ParameterSerializationKind.Int128:
+            case ParameterSerializationKind.Half:
+            case ParameterSerializationKind.Single:
+            case ParameterSerializationKind.Double:
+            case ParameterSerializationKind.Decimal:
+                EmitTryFormatToLocal(w, valueExpr, uid, TryFormatBufferSize(kind));
+                w.WriteLine($"writer.Write(buf{uid}[..bw{uid}]);");
+                break;
+
+            case ParameterSerializationKind.UnboundedNumber:
+                EmitUnboundedNumberToLocal(w, valueExpr, uid);
+                w.WriteLine($"writer.Write(raw{uid}.Span);");
+                break;
+        }
+    }
+
+    /// <summary>
+    /// Emits path array serialization with style and explode support.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="valueExpr">The C# expression for the array value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="style">The parameter style.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitPathArrayWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterStyle style,
+        bool explode)
+    {
+        // Determine prefix and separator based on style + explode.
+        // simple: prefix=none, sep=","
+        // label+!explode: prefix=".", sep=","
+        // label+explode: prefix=".", sep="."
+        // matrix+!explode: prefix=";name=", sep=","
+        // matrix+explode: prefix=";", sep=";name="  (each element gets ;name=value)
+        string prefix = style switch
+        {
+            ParameterStyle.Label => ".",
+            ParameterStyle.Matrix when !explode => $";{paramName}=",
+            ParameterStyle.Matrix => ";",
+            _ => string.Empty,
+        };
+
+        string separator = style switch
+        {
+            ParameterStyle.Label when explode => ".",
+            ParameterStyle.Matrix when explode => $";{paramName}=",
+            _ => ",",
+        };
+
+        if (prefix.Length > 0)
+        {
+            w.WriteLine($"writer.Write(\"{prefix}\"u8);");
+        }
+
+        // If matrix+explode, the first element needs "name=" prefix
+        // (subsequent ones get it as part of the separator).
+        if (style == ParameterStyle.Matrix && explode)
+        {
+            w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+        }
+
+        w.WriteLine($"bool firstItem{uid} = true;");
+        w.WriteLine($"foreach (var item{uid} in ((JsonElement){valueExpr}).EnumerateArray())");
         w.OpenBrace();
-        w.WriteLine("writer.Write(\"; \"u8);");
-        w.WriteLine("totalWritten += 2;");
+        w.WriteLine($"if (!firstItem{uid})");
+        w.OpenBrace();
+        w.WriteLine($"writer.Write(\"{separator}\"u8);");
         w.CloseBrace();
         w.WriteLine();
+        EmitElementScalarWrite(w, $"item{uid}", uid);
+        w.WriteLine($"firstItem{uid} = false;");
+        w.CloseBrace();
+    }
 
-        w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
-        w.WriteLine($"totalWritten += {paramName.Length + 1};");
+    /// <summary>
+    /// Emits path object serialization with style and explode support.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="valueExpr">The C# expression for the object value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="style">The parameter style.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitPathObjectWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterStyle style,
+        bool explode)
+    {
+        // For objects:
+        // simple+!explode: key,value,key,value (sep=",", kvSep=",")
+        // simple+explode: key=value,key=value (sep=",", kvSep="=")
+        // label+!explode: .key,value,key,value (prefix=".", sep=",", kvSep=",")
+        // label+explode: .key=value.key=value (prefix=".", sep=".", kvSep="=")
+        // matrix+!explode: ;name=key,value,key,value (prefix=";name=", sep=",", kvSep=",")
+        // matrix+explode: ;key=value;key=value (prefix=";", sep=";", kvSep="=")
+        string prefix = style switch
+        {
+            ParameterStyle.Label => ".",
+            ParameterStyle.Matrix when !explode => $";{paramName}=",
+            ParameterStyle.Matrix => ";",
+            _ => string.Empty,
+        };
 
-        EmitCookieScalarWrite(w, valueExpr, uid, kind);
+        string separator = style switch
+        {
+            ParameterStyle.Label when explode => ".",
+            ParameterStyle.Matrix when explode => ";",
+            _ => ",",
+        };
 
+        string kvSeparator = explode ? "=" : ",";
+
+        if (prefix.Length > 0)
+        {
+            w.WriteLine($"writer.Write(\"{prefix}\"u8);");
+        }
+
+        w.WriteLine($"bool firstProp{uid} = true;");
+        w.WriteLine($"foreach (var prop{uid} in ((JsonElement){valueExpr}).EnumerateObject())");
+        w.OpenBrace();
+        w.WriteLine($"if (!firstProp{uid})");
+        w.OpenBrace();
+        w.WriteLine($"writer.Write(\"{separator}\"u8);");
+        w.CloseBrace();
         w.WriteLine();
-        w.WriteLine("first = false;");
+        w.WriteLine($"writer.Write(System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name));");
+        w.WriteLine($"writer.Write(\"{kvSeparator}\"u8);");
+        EmitElementScalarWrite(w, $"prop{uid}.Value", uid);
+        w.WriteLine($"firstProp{uid} = false;");
+        w.CloseBrace();
+    }
+
+    // ── Style-aware query parameter helpers ──────────────────────────────
+
+    /// <summary>
+    /// Emits query array serialization with style and explode support.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="valueExpr">The C# expression for the array value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="style">The parameter style.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitQueryArrayWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterStyle style,
+        bool explode)
+    {
+        // form+!explode: name=val1,val2,val3
+        // form+explode: name=val1&name=val2&name=val3
+        // spaceDelimited+!explode: name=val1%20val2%20val3
+        // pipeDelimited+!explode: name=val1|val2|val3 (pipe gets URI-encoded to %7C)
+        if (style == ParameterStyle.Form && explode)
+        {
+            // Each element becomes a separate name=value pair.
+            w.WriteLine($"foreach (var item{uid} in ((JsonElement){valueExpr}).EnumerateArray())");
+            w.OpenBrace();
+            w.WriteLine("if (!first)");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\"&\"u8);");
+            w.WriteLine("totalWritten++;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+            w.WriteLine($"totalWritten += {paramName.Length + 1};");
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            w.WriteLine("first = false;");
+            w.CloseBrace();
+        }
+        else
+        {
+            // Non-exploded: name=val1<sep>val2<sep>val3
+            string itemSep = style switch
+            {
+                ParameterStyle.SpaceDelimited => "%20",
+                ParameterStyle.PipeDelimited => "%7C",
+                _ => ",",
+            };
+
+            w.WriteLine("if (!first)");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\"&\"u8);");
+            w.WriteLine("totalWritten++;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+            w.WriteLine($"totalWritten += {paramName.Length + 1};");
+
+            w.WriteLine($"bool firstItem{uid} = true;");
+            w.WriteLine($"foreach (var item{uid} in ((JsonElement){valueExpr}).EnumerateArray())");
+            w.OpenBrace();
+            w.WriteLine($"if (!firstItem{uid})");
+            w.OpenBrace();
+            w.WriteLine($"writer.Write(\"{itemSep}\"u8);");
+            w.WriteLine($"totalWritten += {itemSep.Length};");
+            w.CloseBrace();
+            w.WriteLine();
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            w.WriteLine($"firstItem{uid} = false;");
+            w.CloseBrace();
+
+            w.WriteLine();
+            w.WriteLine("first = false;");
+        }
+    }
+
+    /// <summary>
+    /// Emits query object serialization with style and explode support.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="valueExpr">The C# expression for the object value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="style">The parameter style.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitQueryObjectWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterStyle style,
+        bool explode)
+    {
+        if (style == ParameterStyle.DeepObject)
+        {
+            // deepObject+explode: name[key1]=val1&name[key2]=val2
+            // The brackets get percent-encoded: name%5Bkey1%5D=val1&name%5Bkey2%5D=val2
+            w.WriteLine($"foreach (var prop{uid} in ((JsonElement){valueExpr}).EnumerateObject())");
+            w.OpenBrace();
+            w.WriteLine("if (!first)");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\"&\"u8);");
+            w.WriteLine("totalWritten++;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"writer.Write(\"{paramName}%5B\"u8);");
+            w.WriteLine($"totalWritten += {paramName.Length + 3};");
+            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
+            w.WriteLine($"writer.Write(keyBytes{uid});");
+            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine("writer.Write(\"%5D=\"u8);");
+            w.WriteLine("totalWritten += 4;");
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            w.WriteLine("first = false;");
+            w.CloseBrace();
+        }
+        else if (explode)
+        {
+            // form+explode: key1=val1&key2=val2
+            // spaceDelimited/pipeDelimited+explode: same as form+explode
+            w.WriteLine($"foreach (var prop{uid} in ((JsonElement){valueExpr}).EnumerateObject())");
+            w.OpenBrace();
+            w.WriteLine("if (!first)");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\"&\"u8);");
+            w.WriteLine("totalWritten++;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
+            w.WriteLine($"writer.Write(keyBytes{uid});");
+            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine("writer.Write(\"=\"u8);");
+            w.WriteLine("totalWritten++;");
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            w.WriteLine("first = false;");
+            w.CloseBrace();
+        }
+        else
+        {
+            // form+!explode: name=key1,val1,key2,val2
+            // spaceDelimited+!explode: name=key1%20val1%20key2%20val2
+            // pipeDelimited+!explode: name=key1%7Cval1%7Ckey2%7Cval2
+            string kvSep = style switch
+            {
+                ParameterStyle.SpaceDelimited => "%20",
+                ParameterStyle.PipeDelimited => "%7C",
+                _ => ",",
+            };
+
+            w.WriteLine("if (!first)");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\"&\"u8);");
+            w.WriteLine("totalWritten++;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+            w.WriteLine($"totalWritten += {paramName.Length + 1};");
+
+            w.WriteLine($"bool firstProp{uid} = true;");
+            w.WriteLine($"foreach (var prop{uid} in ((JsonElement){valueExpr}).EnumerateObject())");
+            w.OpenBrace();
+            w.WriteLine($"if (!firstProp{uid})");
+            w.OpenBrace();
+            w.WriteLine($"writer.Write(\"{kvSep}\"u8);");
+            w.WriteLine($"totalWritten += {kvSep.Length};");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
+            w.WriteLine($"writer.Write(keyBytes{uid});");
+            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine($"writer.Write(\"{kvSep}\"u8);");
+            w.WriteLine($"totalWritten += {kvSep.Length};");
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            w.WriteLine($"firstProp{uid} = false;");
+            w.CloseBrace();
+
+            w.WriteLine();
+            w.WriteLine("first = false;");
+        }
+    }
+
+    // ── Style-aware header parameter helpers ─────────────────────────────
+
+    /// <summary>
+    /// Emits header array serialization (always simple style).
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="valueExpr">The C# expression for the array value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitHeaderArrayWrite(
+        IndentedWriter w,
+        string valueExpr,
+        string uid,
+        bool explode)
+    {
+        // Headers always use simple style. simple+!explode = comma-separated, simple+explode = same.
+        w.WriteLine("Span<byte> headerBuf = stackalloc byte[512];");
+        w.WriteLine("int headerLen = 0;");
+        w.WriteLine($"bool firstItem{uid} = true;");
+        w.WriteLine($"foreach (var item{uid} in ((JsonElement){valueExpr}).EnumerateArray())");
+        w.OpenBrace();
+        w.WriteLine($"if (!firstItem{uid})");
+        w.OpenBrace();
+        w.WriteLine("headerBuf[headerLen++] = (byte)',';");
+        w.CloseBrace();
+        w.WriteLine();
+        EmitElementToHeaderBuffer(w, $"item{uid}", uid);
+        w.WriteLine($"firstItem{uid} = false;");
+        w.CloseBrace();
+        w.WriteLine($"callback(nameUtf8{uid}, headerBuf[..headerLen], state);");
+    }
+
+    /// <summary>
+    /// Emits header object serialization (always simple style).
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="valueExpr">The C# expression for the object value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitHeaderObjectWrite(
+        IndentedWriter w,
+        string valueExpr,
+        string uid,
+        bool explode)
+    {
+        // simple+!explode: key,value,key,value
+        // simple+explode: key=value,key=value
+        string kvSep = explode ? "=" : ",";
+
+        w.WriteLine("Span<byte> headerBuf = stackalloc byte[512];");
+        w.WriteLine("int headerLen = 0;");
+        w.WriteLine($"bool firstProp{uid} = true;");
+        w.WriteLine($"foreach (var prop{uid} in ((JsonElement){valueExpr}).EnumerateObject())");
+        w.OpenBrace();
+        w.WriteLine($"if (!firstProp{uid})");
+        w.OpenBrace();
+        w.WriteLine("headerBuf[headerLen++] = (byte)',';");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine($"int keyLen{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name, headerBuf[headerLen..]);");
+        w.WriteLine($"headerLen += keyLen{uid};");
+        w.WriteLine($"headerBuf[headerLen++] = (byte)'{kvSep}';");
+        EmitElementToHeaderBuffer(w, $"prop{uid}.Value", uid);
+        w.WriteLine($"firstProp{uid} = false;");
+        w.CloseBrace();
+        w.WriteLine($"callback(nameUtf8{uid}, headerBuf[..headerLen], state);");
+    }
+
+    // ── Style-aware cookie parameter helpers ─────────────────────────────
+
+    /// <summary>
+    /// Emits cookie array serialization (always form style).
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="valueExpr">The C# expression for the array value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitCookieArrayWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        bool explode)
+    {
+        if (explode)
+        {
+            // form+explode: name=val1; name=val2; name=val3
+            w.WriteLine($"foreach (var item{uid} in ((JsonElement){valueExpr}).EnumerateArray())");
+            w.OpenBrace();
+            w.WriteLine("if (!first)");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\"; \"u8);");
+            w.WriteLine("totalWritten += 2;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+            w.WriteLine($"totalWritten += {paramName.Length + 1};");
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            w.WriteLine("first = false;");
+            w.CloseBrace();
+        }
+        else
+        {
+            // form+!explode: name=val1,val2,val3
+            w.WriteLine("if (!first)");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\"; \"u8);");
+            w.WriteLine("totalWritten += 2;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+            w.WriteLine($"totalWritten += {paramName.Length + 1};");
+
+            w.WriteLine($"bool firstItem{uid} = true;");
+            w.WriteLine($"foreach (var item{uid} in ((JsonElement){valueExpr}).EnumerateArray())");
+            w.OpenBrace();
+            w.WriteLine($"if (!firstItem{uid})");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\",\"u8);");
+            w.WriteLine("totalWritten++;");
+            w.CloseBrace();
+            w.WriteLine();
+            EmitElementScalarWriteCounted(w, $"item{uid}", uid);
+            w.WriteLine($"firstItem{uid} = false;");
+            w.CloseBrace();
+
+            w.WriteLine();
+            w.WriteLine("first = false;");
+        }
+    }
+
+    /// <summary>
+    /// Emits cookie object serialization (always form style).
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name.</param>
+    /// <param name="valueExpr">The C# expression for the object value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    public static void EmitCookieObjectWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        bool explode)
+    {
+        if (explode)
+        {
+            // form+explode: key1=val1; key2=val2
+            w.WriteLine($"foreach (var prop{uid} in ((JsonElement){valueExpr}).EnumerateObject())");
+            w.OpenBrace();
+            w.WriteLine("if (!first)");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\"; \"u8);");
+            w.WriteLine("totalWritten += 2;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
+            w.WriteLine($"writer.Write(keyBytes{uid});");
+            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine("writer.Write(\"=\"u8);");
+            w.WriteLine("totalWritten++;");
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            w.WriteLine("first = false;");
+            w.CloseBrace();
+        }
+        else
+        {
+            // form+!explode: name=key1,val1,key2,val2
+            w.WriteLine("if (!first)");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\"; \"u8);");
+            w.WriteLine("totalWritten += 2;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
+            w.WriteLine($"totalWritten += {paramName.Length + 1};");
+
+            w.WriteLine($"bool firstProp{uid} = true;");
+            w.WriteLine($"foreach (var prop{uid} in ((JsonElement){valueExpr}).EnumerateObject())");
+            w.OpenBrace();
+            w.WriteLine($"if (!firstProp{uid})");
+            w.OpenBrace();
+            w.WriteLine("writer.Write(\",\"u8);");
+            w.WriteLine("totalWritten++;");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"byte[] keyBytes{uid} = System.Text.Encoding.UTF8.GetBytes(prop{uid}.Name);");
+            w.WriteLine($"writer.Write(keyBytes{uid});");
+            w.WriteLine($"totalWritten += keyBytes{uid}.Length;");
+            w.WriteLine("writer.Write(\",\"u8);");
+            w.WriteLine("totalWritten++;");
+            EmitElementScalarWriteCounted(w, $"prop{uid}.Value", uid);
+            w.WriteLine($"firstProp{uid} = false;");
+            w.CloseBrace();
+
+            w.WriteLine();
+            w.WriteLine("first = false;");
+        }
+    }
+
+    // ── Element-level serialization helpers ──────────────────────────────
+
+    /// <summary>
+    /// Emits code to write a JSON element's scalar value to a <c>writer</c> (path-style, no counting).
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="itemExpr">The C# expression for the JSON element.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    public static void EmitElementScalarWrite(
+        IndentedWriter w,
+        string itemExpr,
+        string uid)
+    {
+        // Write the element's raw value as UTF-8 text.
+        w.WriteLine($"writer.Write(System.Text.Encoding.UTF8.GetBytes({itemExpr}.ToString()));");
+    }
+
+    /// <summary>
+    /// Emits code to write a JSON element's scalar value to a <c>writer</c> with <c>totalWritten</c> tracking.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="itemExpr">The C# expression for the JSON element.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    public static void EmitElementScalarWriteCounted(
+        IndentedWriter w,
+        string itemExpr,
+        string uid)
+    {
+        w.WriteLine($"byte[] elBytes{uid} = System.Text.Encoding.UTF8.GetBytes({itemExpr}.ToString());");
+        w.WriteLine($"writer.Write(elBytes{uid});");
+        w.WriteLine($"totalWritten += elBytes{uid}.Length;");
+    }
+
+    /// <summary>
+    /// Emits code to write a JSON element's scalar value to a header buffer span.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="itemExpr">The C# expression for the JSON element.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    public static void EmitElementToHeaderBuffer(
+        IndentedWriter w,
+        string itemExpr,
+        string uid)
+    {
+        w.WriteLine($"int elLen{uid} = System.Text.Encoding.UTF8.GetBytes({itemExpr}.ToString(), headerBuf[headerLen..]);");
+        w.WriteLine($"headerLen += elLen{uid};");
     }
 
     /// <summary>
