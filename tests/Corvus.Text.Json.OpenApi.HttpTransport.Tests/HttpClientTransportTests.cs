@@ -384,6 +384,114 @@ public class HttpClientTransportTests
         });
     }
 
+    [TestMethod]
+    public async Task SendAsync_CookieParameters_WrittenToHeader()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestCookieRequest request = new("session", "abc123");
+        await using TestResponse response =
+            await transport.SendAsync<TestCookieRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.IsTrue(captured.Headers.Contains("Cookie"));
+        string cookie = captured.Headers.GetValues("Cookie").First();
+        Assert.AreEqual("session=abc123", cookie);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_CookiesWriteZeroBytes_NoCookieHeader()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestEmptyCookieRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestEmptyCookieRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.IsFalse(captured.Headers.Contains("Cookie"));
+    }
+
+    [TestMethod]
+    public async Task SendAsync_AsyncApiMethod_CreatesCustomHttpMethod()
+    {
+        HttpRequestMessage? captured = null;
+
+        using HttpClient client = CreateMockClient(
+            HttpStatusCode.OK,
+            "[]"u8.ToArray(),
+            onRequest: req => { captured = req; return Task.CompletedTask; });
+
+        await using HttpClientTransport transport = new(client);
+
+        TestPublishRequest request = default;
+        await using TestResponse response =
+            await transport.SendAsync<TestPublishRequest, TestResponse>(in request);
+
+        Assert.IsNotNull(captured);
+        Assert.AreEqual("Publish", captured.Method.Method);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_ResponseHeaders_PassedAndReadable()
+    {
+        using MockHandler handler = new(
+            HttpStatusCode.OK,
+            """{"id":1}"""u8.ToArray(),
+            responseHeaders: new Dictionary<string, string>
+            {
+                ["X-Request-Id"] = "req-42",
+                ["X-Rate-Limit"] = "100",
+            });
+        using HttpClient client = new(handler) { BaseAddress = new Uri("http://localhost") };
+
+        await using HttpClientTransport transport = new(client);
+
+        TestGetRequest request = default;
+        await using HeaderCapturingResponse response =
+            await transport.SendAsync<TestGetRequest, HeaderCapturingResponse>(in request);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual("req-42", response.CapturedRequestId);
+        Assert.AreEqual("100", response.CapturedRateLimit);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_ResponseHeaders_MissingHeaderReturnsNull()
+    {
+        using MockHandler handler = new(
+            HttpStatusCode.OK,
+            """{"id":1}"""u8.ToArray(),
+            responseHeaders: new Dictionary<string, string>
+            {
+                ["X-Request-Id"] = "req-42",
+            });
+        using HttpClient client = new(handler) { BaseAddress = new Uri("http://localhost") };
+
+        await using HttpClientTransport transport = new(client);
+
+        TestGetRequest request = default;
+        await using HeaderCapturingResponse response =
+            await transport.SendAsync<TestGetRequest, HeaderCapturingResponse>(in request);
+
+        Assert.AreEqual("req-42", response.CapturedRequestId);
+        Assert.IsNull(response.CapturedRateLimit);
+    }
+
     private static HttpClient CreateMockClient(
         HttpStatusCode statusCode,
         byte[] responseBody,
@@ -398,15 +506,18 @@ public class HttpClientTransportTests
         private readonly HttpStatusCode statusCode;
         private readonly byte[] responseBody;
         private readonly Func<HttpRequestMessage, Task>? onRequest;
+        private readonly Dictionary<string, string>? responseHeaders;
 
         public MockHandler(
             HttpStatusCode statusCode,
             byte[] responseBody,
-            Func<HttpRequestMessage, Task>? onRequest = null)
+            Func<HttpRequestMessage, Task>? onRequest = null,
+            Dictionary<string, string>? responseHeaders = null)
         {
             this.statusCode = statusCode;
             this.responseBody = responseBody;
             this.onRequest = onRequest;
+            this.responseHeaders = responseHeaders;
         }
 
         protected override async Task<HttpResponseMessage> SendAsync(
@@ -418,10 +529,20 @@ public class HttpClientTransportTests
                 await this.onRequest(request).ConfigureAwait(false);
             }
 
-            return new HttpResponseMessage(this.statusCode)
+            HttpResponseMessage response = new(this.statusCode)
             {
                 Content = new ByteArrayContent(this.responseBody),
             };
+
+            if (this.responseHeaders is not null)
+            {
+                foreach (KeyValuePair<string, string> kvp in this.responseHeaders)
+                {
+                    response.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value);
+                }
+            }
+
+            return response;
         }
     }
 
@@ -855,5 +976,139 @@ public class HttpClientTransportTests
         public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
+    }
+
+    /// <summary>GET /pets with cookie parameters.</summary>
+    private readonly struct TestCookieRequest : IApiRequest<TestCookieRequest>
+    {
+        private readonly string cookieName;
+        private readonly string cookieValue;
+
+        public TestCookieRequest(string cookieName, string cookieValue)
+        {
+            this.cookieName = cookieName;
+            this.cookieValue = cookieValue;
+        }
+
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Get;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public static bool HasCookieParameters => true;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer)
+        {
+            byte[] cookie = Encoding.UTF8.GetBytes($"{this.cookieName}={this.cookieValue}");
+            writer.Write(cookie);
+            return cookie.Length;
+        }
+    }
+
+    /// <summary>GET /pets with HasCookieParameters=true but WriteCookies returns 0.</summary>
+    private readonly struct TestEmptyCookieRequest : IApiRequest<TestEmptyCookieRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/pets"u8;
+
+        public static OperationMethod Method => OperationMethod.Get;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public static bool HasCookieParameters => true;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
+    }
+
+    /// <summary>Publish /events — tests the unknown-method fallback in MapMethod.</summary>
+    private readonly struct TestPublishRequest : IApiRequest<TestPublishRequest>
+    {
+        public static ReadOnlySpan<byte> PathTemplateUtf8 => "/events"u8;
+
+        public static OperationMethod Method => OperationMethod.Publish;
+
+        public static bool HasPathParameters => false;
+
+        public static bool HasQueryParameters => false;
+
+        public static bool HasHeaderParameters => false;
+
+        public static bool HasCookieParameters => false;
+
+        public void WriteResolvedPath(IBufferWriter<byte> writer) { }
+
+        public int WriteQueryString(IBufferWriter<byte> writer) => 0;
+
+        public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state) { }
+
+        public int WriteCookies(IBufferWriter<byte> writer) => 0;
+    }
+
+    /// <summary>
+    /// Response that captures response headers via <see cref="IResponseHeaders"/>.
+    /// </summary>
+    private struct HeaderCapturingResponse : IApiResponse<HeaderCapturingResponse>
+    {
+        public int StatusCode { get; private set; }
+
+        public bool IsSuccess => this.StatusCode >= 200 && this.StatusCode < 300;
+
+        public string? CapturedRequestId { get; private set; }
+
+        public string? CapturedRateLimit { get; private set; }
+
+        public static async ValueTask<HeaderCapturingResponse> CreateAsync(
+            int statusCode,
+            Stream contentStream,
+            IResponseHeaders? responseHeaders = null,
+            IAsyncDisposable? owner = null,
+            CancellationToken cancellationToken = default)
+        {
+            // Drain the stream to avoid leaks.
+            using MemoryStream ms = new();
+            await contentStream.CopyToAsync(ms, cancellationToken).ConfigureAwait(false);
+
+            string? requestId = null;
+            string? rateLimit = null;
+            if (responseHeaders is not null)
+            {
+                responseHeaders.TryGetValue("X-Request-Id", out requestId);
+                responseHeaders.TryGetValue("X-Rate-Limit", out rateLimit);
+            }
+
+            if (owner is not null)
+            {
+                await owner.DisposeAsync().ConfigureAwait(false);
+            }
+
+            return new HeaderCapturingResponse
+            {
+                StatusCode = statusCode,
+                CapturedRequestId = requestId,
+                CapturedRateLimit = rateLimit,
+            };
+        }
+
+        public ValueTask DisposeAsync() => default;
     }
 }
