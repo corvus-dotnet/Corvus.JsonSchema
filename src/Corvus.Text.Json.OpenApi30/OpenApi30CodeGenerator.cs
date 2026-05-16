@@ -258,6 +258,12 @@ public sealed class OpenApi30CodeGenerator
         {
             foreach (var mediaTypeProp in requestBody.Content.EnumerateObject())
             {
+                // Skip binary/stream content types — no JSON Schema type needed.
+                if (CodeEmitHelpers.IsOctetStreamMediaType(mediaTypeProp.Name))
+                {
+                    continue;
+                }
+
                 if (mediaTypeProp.Value.Schema.IsNotUndefined())
                 {
                     using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
@@ -291,6 +297,12 @@ public sealed class OpenApi30CodeGenerator
                 {
                     foreach (var mediaTypeProp in response.Content.EnumerateObject())
                     {
+                        // Skip binary/stream content types — no JSON Schema type needed.
+                        if (CodeEmitHelpers.IsOctetStreamMediaType(mediaTypeProp.Name))
+                        {
+                            continue;
+                        }
+
                         if (mediaTypeProp.Value.Schema.IsNotUndefined())
                         {
                             using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
@@ -866,7 +878,9 @@ public sealed class OpenApi30CodeGenerator
 
         foreach (var mediaTypeProp in contentMap.EnumerateObject())
         {
-            bool hasSchema = mediaTypeProp.Value.Schema.IsNotUndefined();
+            string mediaType = mediaTypeProp.Name;
+            bool hasSchema = mediaTypeProp.Value.Schema.IsNotUndefined()
+                && !CodeEmitHelpers.IsOctetStreamMediaType(mediaType);
 
             string? schemaPointer = null;
             if (hasSchema)
@@ -876,8 +890,6 @@ public sealed class OpenApi30CodeGenerator
                     pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
             }
 
-            // Extract media type name at the emit boundary
-            string mediaType = mediaTypeProp.Name;
             result.Add(new ContentInfo(mediaType, schemaPointer));
         }
 
@@ -899,7 +911,9 @@ public sealed class OpenApi30CodeGenerator
 
         foreach (var mediaTypeProp in contentMap.EnumerateObject())
         {
-            bool hasSchema = mediaTypeProp.Value.Schema.IsNotUndefined();
+            string mediaType = mediaTypeProp.Name;
+            bool hasSchema = mediaTypeProp.Value.Schema.IsNotUndefined()
+                && !CodeEmitHelpers.IsOctetStreamMediaType(mediaType);
 
             string? schemaPointer = null;
             if (hasSchema)
@@ -909,8 +923,6 @@ public sealed class OpenApi30CodeGenerator
                     pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
             }
 
-            // Extract media type name at the emit boundary
-            string mediaType = mediaTypeProp.Name;
             result.Add(new ContentInfo(mediaType, schemaPointer));
         }
 
@@ -1133,7 +1145,7 @@ public sealed class OpenApi30CodeGenerator
     {
         foreach (ContentInfo content in requestBody.Content)
         {
-            if (string.Equals(content.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
             {
                 return this.ResolveSchemaTypeName(content.SchemaPointer);
             }
@@ -1142,17 +1154,51 @@ public sealed class OpenApi30CodeGenerator
         return "JsonElement";
     }
 
+    /// <summary>
+    /// Returns <see langword="true"/> if the request body's primary content type
+    /// is <c>application/octet-stream</c> (a raw binary stream).
+    /// </summary>
+    private static bool IsOctetStreamRequestBody(RequestBodyInfo requestBody)
+    {
+        foreach (ContentInfo content in requestBody.Content)
+        {
+            if (CodeEmitHelpers.IsOctetStreamMediaType(content.MediaType))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private string? ResolveResponseTypeName(ResponseInfo resp)
     {
         foreach (ContentInfo content in resp.Content)
         {
-            if (string.Equals(content.MediaType, "application/json", StringComparison.OrdinalIgnoreCase))
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
             {
                 return this.ResolveSchemaTypeName(content.SchemaPointer);
             }
         }
 
         return null;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the response's content type
+    /// is <c>application/octet-stream</c> (a raw binary stream).
+    /// </summary>
+    private static bool IsOctetStreamResponse(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (CodeEmitHelpers.IsOctetStreamMediaType(content.MediaType))
+            {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     // ── Request struct emission ─────────────────────────────────────────
@@ -1490,7 +1536,14 @@ public sealed class OpenApi30CodeGenerator
         w.OpenBrace();
 
         w.WriteLine("private IAsyncDisposable? owner;");
-        w.WriteLine("private IDisposable? parsedDocument;");
+
+        // Only emit parsedDocument field when at least one response has a JSON body.
+        bool hasJsonBody = op.Responses.Any(r =>
+            r.Content.Any(c => c.SchemaPointer is not null && !CodeEmitHelpers.IsOctetStreamMediaType(c.MediaType)));
+        if (hasJsonBody)
+        {
+            w.WriteLine("private IDisposable? parsedDocument;");
+        }
 
         bool hasTypedHeaders = op.Responses.Any(
             r => r.Headers.Any(h => h.SchemaPointer is not null));
@@ -1510,15 +1563,28 @@ public sealed class OpenApi30CodeGenerator
         foreach (ResponseInfo resp in op.Responses)
         {
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
-            string? typeName = this.ResolveResponseTypeName(resp);
+            bool isStream = IsOctetStreamResponse(resp);
 
-            if (typeName is not null)
+            if (isStream)
             {
                 w.WriteLine();
                 w.WriteLine("/// <summary>");
-                w.WriteLine($"/// Gets the {resp.StatusCode} response body.");
+                w.WriteLine($"/// Gets the {resp.StatusCode} response stream.");
                 w.WriteLine("/// </summary>");
-                w.WriteLine($"public {typeName} {accessorName}Body {{ get; private set; }}");
+                w.WriteLine($"public Stream? {accessorName}Stream {{ get; private set; }}");
+            }
+            else
+            {
+                string? typeName = this.ResolveResponseTypeName(resp);
+
+                if (typeName is not null)
+                {
+                    w.WriteLine();
+                    w.WriteLine("/// <summary>");
+                    w.WriteLine($"/// Gets the {resp.StatusCode} response body.");
+                    w.WriteLine("/// </summary>");
+                    w.WriteLine($"public {typeName} {accessorName}Body {{ get; private set; }}");
+                }
             }
         }
 
@@ -1532,7 +1598,8 @@ public sealed class OpenApi30CodeGenerator
 
         foreach (ResponseInfo resp in op.Responses)
         {
-            if (resp.StatusCode != "default" && this.ResolveResponseTypeName(resp) is not null)
+            bool isStream = IsOctetStreamResponse(resp);
+            if (resp.StatusCode != "default" && (isStream || this.ResolveResponseTypeName(resp) is not null))
             {
                 specificStatusCodes.Add(resp.StatusCode);
             }
@@ -1541,19 +1608,25 @@ public sealed class OpenApi30CodeGenerator
         foreach (ResponseInfo resp in op.Responses)
         {
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
-            string? typeName = this.ResolveResponseTypeName(resp);
+            bool isStream = IsOctetStreamResponse(resp);
+            string? typeName = isStream ? "Stream?" : this.ResolveResponseTypeName(resp);
 
-            if (typeName is null)
+            if (!isStream && typeName is null)
             {
                 continue;
             }
 
+            string methodSuffix = isStream ? $"{accessorName}Stream" : accessorName;
+            string returnType = isStream ? "Stream?" : typeName!;
+            string memberAccess = isStream ? $"this.{accessorName}Stream" : $"this.{accessorName}Body";
+            string memberAccessNonNull = isStream ? $"this.{accessorName}Stream!" : $"this.{accessorName}Body";
+
             w.WriteLine();
             w.WriteLine("/// <summary>");
-            w.WriteLine($"/// Tries to get the {resp.StatusCode} response body.");
+            w.WriteLine($"/// Tries to get the {resp.StatusCode} response {(isStream ? "stream" : "body")}.");
             w.WriteLine("/// </summary>");
             w.WriteLine(
-                "/// <param name=\"result\">The typed response body if the status matches.</param>");
+                $"/// <param name=\"result\">The {(isStream ? "response stream" : "typed response body")} if the status matches.</param>");
 
             if (resp.StatusCode == "default")
             {
@@ -1566,7 +1639,8 @@ public sealed class OpenApi30CodeGenerator
                     $"/// <returns><see langword=\"true\"/> if the status code is {resp.StatusCode}.</returns>");
             }
 
-            w.WriteLine($"public bool TryGet{accessorName}(out {typeName} result)");
+            string notNullWhenAttr = isStream ? "[NotNullWhen(true)] " : "";
+            w.WriteLine($"public bool TryGet{methodSuffix}({notNullWhenAttr}out {returnType} result)");
             w.OpenBrace();
 
             if (resp.StatusCode == "default")
@@ -1578,7 +1652,7 @@ public sealed class OpenApi30CodeGenerator
                         specificStatusCodes.Select(sc => $"this.StatusCode != {sc}"));
                     w.WriteLine($"if ({condition})");
                     w.OpenBrace();
-                    w.WriteLine($"result = this.{accessorName}Body;");
+                    w.WriteLine($"result = {memberAccessNonNull};");
                     w.WriteLine("return true;");
                     w.CloseBrace();
                     w.WriteLine();
@@ -1587,7 +1661,7 @@ public sealed class OpenApi30CodeGenerator
                 }
                 else
                 {
-                    w.WriteLine($"result = this.{accessorName}Body;");
+                    w.WriteLine($"result = {memberAccessNonNull};");
                     w.WriteLine("return true;");
                 }
             }
@@ -1595,7 +1669,7 @@ public sealed class OpenApi30CodeGenerator
             {
                 w.WriteLine($"if (this.StatusCode == {resp.StatusCode})");
                 w.OpenBrace();
-                w.WriteLine($"result = this.{accessorName}Body;");
+                w.WriteLine($"result = {memberAccessNonNull};");
                 w.WriteLine("return true;");
                 w.CloseBrace();
                 w.WriteLine();
@@ -1619,7 +1693,11 @@ public sealed class OpenApi30CodeGenerator
             w.WriteLine("this.workspace.Dispose();");
         }
 
-        w.WriteLine("this.parsedDocument?.Dispose();");
+        if (hasJsonBody)
+        {
+            w.WriteLine("this.parsedDocument?.Dispose();");
+        }
+
         w.WriteLine("if (this.owner is not null)");
         w.OpenBrace();
         w.WriteLine("await this.owner.DisposeAsync().ConfigureAwait(false);");
@@ -1636,8 +1714,20 @@ public sealed class OpenApi30CodeGenerator
         string structName,
         ResponseInfo[] responses)
     {
+        bool hasAnyJsonBody = responses.Any(
+            r => !IsOctetStreamResponse(r) && this.ResolveResponseTypeName(r) is not null);
+
         w.WriteLine("/// <inheritdoc/>");
-        w.WriteLine($"public static async ValueTask<{structName}> CreateAsync(");
+
+        if (hasAnyJsonBody)
+        {
+            w.WriteLine($"public static async ValueTask<{structName}> CreateAsync(");
+        }
+        else
+        {
+            w.WriteLine($"public static ValueTask<{structName}> CreateAsync(");
+        }
+
         w.PushIndent();
         w.WriteLine("int statusCode,");
         w.WriteLine("Stream contentStream,");
@@ -1657,17 +1747,41 @@ public sealed class OpenApi30CodeGenerator
         foreach (ResponseInfo resp in responses)
         {
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
-            string? typeName = this.ResolveResponseTypeName(resp);
 
-            if (typeName is null || resp.StatusCode == "default")
+            if (resp.StatusCode == "default")
+            {
+                continue;
+            }
+
+            bool isStream = IsOctetStreamResponse(resp);
+            string? typeName = isStream ? null : this.ResolveResponseTypeName(resp);
+
+            if (!isStream && typeName is null)
             {
                 continue;
             }
 
             w.WriteLine($"if (statusCode == {resp.StatusCode})");
             w.OpenBrace();
-            CodeEmitHelpers.EmitParseResponseBody(w, typeName, accessorName);
-            w.WriteLine("return response;");
+
+            if (isStream)
+            {
+                CodeEmitHelpers.EmitStreamResponseBody(w, accessorName);
+            }
+            else
+            {
+                CodeEmitHelpers.EmitParseResponseBody(w, typeName!, accessorName);
+            }
+
+            if (hasAnyJsonBody)
+            {
+                w.WriteLine("return response;");
+            }
+            else
+            {
+                w.WriteLine("return ValueTask.FromResult(response);");
+            }
+
             w.CloseBrace();
             w.WriteLine();
         }
@@ -1685,16 +1799,34 @@ public sealed class OpenApi30CodeGenerator
 
         if (defaultResp is not null)
         {
-            string? defaultTypeName = this.ResolveResponseTypeName(defaultResp.Value);
+            bool isDefaultStream = IsOctetStreamResponse(defaultResp.Value);
 
-            if (defaultTypeName is not null)
+            if (isDefaultStream)
             {
                 string accessorName = CodeEmitHelpers.StatusCodeToName("default");
-                CodeEmitHelpers.EmitParseResponseBody(w, defaultTypeName, accessorName);
+                CodeEmitHelpers.EmitStreamResponseBody(w, accessorName);
+            }
+            else
+            {
+                string? defaultTypeName = this.ResolveResponseTypeName(defaultResp.Value);
+
+                if (defaultTypeName is not null)
+                {
+                    string accessorName = CodeEmitHelpers.StatusCodeToName("default");
+                    CodeEmitHelpers.EmitParseResponseBody(w, defaultTypeName, accessorName);
+                }
             }
         }
 
-        w.WriteLine("return response;");
+        if (hasAnyJsonBody)
+        {
+            w.WriteLine("return response;");
+        }
+        else
+        {
+            w.WriteLine("return ValueTask.FromResult(response);");
+        }
+
         w.CloseBrace();
     }
 
@@ -1811,12 +1943,13 @@ public sealed class OpenApi30CodeGenerator
         ResponseInfo[] responses,
         bool includeContext)
     {
-        List<(string statusCode, string accessorName, string typeName)> typed = [];
-        (string accessorName, string typeName)? defaultEntry = null;
+        List<(string statusCode, string accessorName, string typeName, bool isStream)> typed = [];
+        (string accessorName, string typeName, bool isStream)? defaultEntry = null;
 
         foreach (ResponseInfo resp in responses)
         {
-            string? typeName = this.ResolveResponseTypeName(resp);
+            bool isStream = IsOctetStreamResponse(resp);
+            string? typeName = isStream ? "Stream?" : this.ResolveResponseTypeName(resp);
 
             if (typeName is null)
             {
@@ -1827,11 +1960,11 @@ public sealed class OpenApi30CodeGenerator
 
             if (resp.StatusCode == "default")
             {
-                defaultEntry = (accessorName, typeName);
+                defaultEntry = (accessorName, typeName, isStream);
             }
             else
             {
-                typed.Add((resp.StatusCode, accessorName, typeName));
+                typed.Add((resp.StatusCode, accessorName, typeName, isStream));
             }
         }
 
@@ -1860,7 +1993,7 @@ public sealed class OpenApi30CodeGenerator
                 "/// <param name=\"context\">The context to pass to the handler.</param>");
         }
 
-        foreach (var (statusCode, accessorName, _) in typed)
+        foreach (var (statusCode, accessorName, _, _) in typed)
         {
             w.WriteLine(
                 $"/// <param name=\"match{accessorName}\">Handler for the {statusCode} response.</param>");
@@ -1896,7 +2029,7 @@ public sealed class OpenApi30CodeGenerator
             w.WriteLine("in TContext context,");
         }
 
-        foreach (var (_, accessorName, typeName) in typed)
+        foreach (var (_, accessorName, typeName, _) in typed)
         {
             if (includeContext)
             {
@@ -1942,20 +2075,22 @@ public sealed class OpenApi30CodeGenerator
 
         w.OpenBrace();
 
-        foreach (var (statusCode, accessorName, _) in typed)
+        foreach (var (statusCode, accessorName, _, isStream) in typed)
         {
+            string member = isStream ? $"{accessorName}Stream" : $"{accessorName}Body";
+
             w.WriteLine($"if (this.StatusCode == {statusCode})");
             w.OpenBrace();
 
             if (includeContext)
             {
                 w.WriteLine(
-                    $"return match{accessorName}(this.{accessorName}Body, context);");
+                    $"return match{accessorName}(this.{member}, context);");
             }
             else
             {
                 w.WriteLine(
-                    $"return match{accessorName}(this.{accessorName}Body);");
+                    $"return match{accessorName}(this.{member});");
             }
 
             w.CloseBrace();
@@ -1964,15 +2099,19 @@ public sealed class OpenApi30CodeGenerator
 
         if (defaultEntry is not null)
         {
+            string defaultMember = defaultEntry.Value.isStream
+                ? $"{defaultEntry.Value.accessorName}Stream"
+                : $"{defaultEntry.Value.accessorName}Body";
+
             if (includeContext)
             {
                 w.WriteLine(
-                    $"return matchDefault(this.{defaultEntry.Value.accessorName}Body, context);");
+                    $"return matchDefault(this.{defaultMember}, context);");
             }
             else
             {
                 w.WriteLine(
-                    $"return matchDefault(this.{defaultEntry.Value.accessorName}Body);");
+                    $"return matchDefault(this.{defaultMember});");
             }
         }
         else
@@ -2110,12 +2249,13 @@ public sealed class OpenApi30CodeGenerator
 
         bool hasParams = op.Parameters.Length > 0;
         bool hasBody = op.RequestBody is not null;
+        bool isStreamBody = hasBody && IsOctetStreamRequestBody(op.RequestBody!.Value);
 
         w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
 
-        // Materialise body from Source → immutable typed element.
+        // Materialise body from Source → immutable typed element (JSON only).
         string? bodyTypeName = null;
-        if (hasBody)
+        if (hasBody && !isStreamBody)
         {
             bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
             w.WriteLine(
@@ -2175,7 +2315,17 @@ public sealed class OpenApi30CodeGenerator
 
         w.WriteLine();
 
-        if (hasBody)
+        if (isStreamBody)
+        {
+            // Find the actual content type string from the spec for the stream body.
+            string streamContentType = op.RequestBody!.Value.Content
+                .First(c => CodeEmitHelpers.IsOctetStreamMediaType(c.MediaType)).MediaType;
+            w.WriteLine(
+                $"return SendWithStreamBodyAsyncCore<{requestName}, " +
+                $"{responseName}>(workspace, request, body, " +
+                $"\"{CodeEmitHelpers.EscapeStringLiteral(streamContentType)}\", cancellationToken);");
+        }
+        else if (hasBody)
         {
             w.WriteLine(
                 $"return SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
@@ -2232,8 +2382,15 @@ public sealed class OpenApi30CodeGenerator
 
         if (op.RequestBody is not null)
         {
-            string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
-            paramParts.Add($"{bodyTypeName}.Source body");
+            if (IsOctetStreamRequestBody(op.RequestBody.Value))
+            {
+                paramParts.Add("Stream body");
+            }
+            else
+            {
+                string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
+                paramParts.Add($"{bodyTypeName}.Source body");
+            }
         }
 
         paramParts.Add("CancellationToken cancellationToken = default");

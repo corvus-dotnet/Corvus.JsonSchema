@@ -83,6 +83,21 @@ public sealed class HttpClientTransport : IApiTransport
     }
 
     /// <inheritdoc/>
+    public ValueTask<TResponse> SendAsync<TRequest, TResponse>(
+        in TRequest request,
+        Stream body,
+        string contentType,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TResponse : struct, IApiResponse<TResponse>
+    {
+        HttpRequestMessage httpRequest = BuildHttpRequest(in request);
+        httpRequest.Content = new StreamContent(body);
+        httpRequest.Content.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        return SendCoreAsync<TResponse>(httpRequest, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.disposeClient)

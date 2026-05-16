@@ -1124,6 +1124,66 @@
           }
         }
       }
+    },
+    "/files/download": {
+      "get": {
+        "operationId": "downloadFile",
+        "summary": "Download a binary file",
+        "tags": ["files"],
+        "responses": {
+          "200": {
+            "description": "The binary file content",
+            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          }
+        }
+      }
+    },
+    "/files/upload": {
+      "post": {
+        "operationId": "uploadFile",
+        "summary": "Upload a binary file",
+        "tags": ["files"],
+        "requestBody": {
+          "required": true,
+          "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+        },
+        "responses": {
+          "201": {
+            "description": "Upload accepted",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "id": { "type": "string" } } } } }
+          }
+        }
+      }
+    },
+    "/files/download-mixed": {
+      "get": {
+        "operationId": "downloadMixed",
+        "summary": "Download file with mixed content types (binary or JSON error)",
+        "tags": ["files"],
+        "responses": {
+          "200": {
+            "description": "The binary file content",
+            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          },
+          "404": {
+            "description": "Not found error",
+            "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+          }
+        }
+      }
+    },
+    "/files/vendor-json": {
+      "get": {
+        "operationId": "getVendorJson",
+        "summary": "Get data with vendor JSON content type",
+        "tags": ["files"],
+        "responses": {
+          "200": {
+            "description": "Vendor JSON response",
+            "content": { "application/vnd.api+json": { "schema": { "type": "object", "properties": { "data": { "type": "string" } } } } }
+          }
+        }
+      }
     }
   }
 }

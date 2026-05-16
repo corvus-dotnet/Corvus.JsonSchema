@@ -164,6 +164,7 @@ public static class CodeEmitHelpers
         w.WriteLine("#nullable enable");
         w.WriteLine();
         w.WriteLine("using System.Buffers;");
+        w.WriteLine("using System.Diagnostics.CodeAnalysis;");
         w.WriteLine("using Corvus.Runtime.InteropServices;");
         w.WriteLine("using Corvus.Text.Json;");
         w.WriteLine("using Corvus.Text.Json.Internal;");
@@ -1424,19 +1425,18 @@ public static class CodeEmitHelpers
     /// </summary>
     /// <param name="w">The writer.</param>
     /// <param name="typeName">The fully qualified .NET type name.</param>
-    /// <param name="accessorName">The property name on the response struct.</param>
+    /// <param name="accessorName">The property name on the response struct (e.g. "Ok", "Default").</param>
     public static void EmitParseResponseBody(
         IndentedWriter w,
         string typeName,
         string accessorName)
     {
-        w.OpenBrace();
+        string docVar = $"{char.ToLowerInvariant(accessorName[0])}{accessorName.Substring(1)}Doc";
         w.WriteLine(
-            $"var doc = await ParsedJsonDocument<{typeName}>" +
+            $"var {docVar} = await ParsedJsonDocument<{typeName}>" +
             ".ParseAsync(contentStream, default, cancellationToken).ConfigureAwait(false);");
-        w.WriteLine("response.parsedDocument = doc;");
-        w.WriteLine($"response.{accessorName}Body = doc.RootElement;");
-        w.CloseBrace();
+        w.WriteLine($"response.parsedDocument = {docVar};");
+        w.WriteLine($"response.{accessorName}Body = {docVar}.RootElement;");
     }
 
     /// <summary>
@@ -1744,5 +1744,65 @@ public static class CodeEmitHelpers
         w.WriteLine("workspace.Dispose();");
         w.CloseBrace();
         w.CloseBrace();
+
+        w.WriteLine();
+
+        w.WriteLine("private async ValueTask<TResponse> SendWithStreamBodyAsyncCore<TRequest, TResponse>(");
+        w.PushIndent();
+        w.WriteLine("JsonWorkspace workspace,");
+        w.WriteLine("TRequest request,");
+        w.WriteLine("Stream body,");
+        w.WriteLine("string contentType,");
+        w.WriteLine("CancellationToken cancellationToken)");
+        w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
+        w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
+        w.PopIndent();
+        w.OpenBrace();
+        w.WriteLine("try");
+        w.OpenBrace();
+        w.WriteLine(
+            "return await this.transport.SendAsync<TRequest, TResponse>(in request, body, contentType, cancellationToken).ConfigureAwait(false);");
+        w.CloseBrace();
+        w.WriteLine("finally");
+        w.OpenBrace();
+        w.WriteLine("workspace.Dispose();");
+        w.CloseBrace();
+        w.CloseBrace();
+    }
+
+    /// <summary>
+    /// Emits the response body handling for an <c>application/octet-stream</c> response,
+    /// storing the content stream directly without JSON parsing.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="accessorName">The accessor name (e.g. "Ok").</param>
+    public static void EmitStreamResponseBody(
+        IndentedWriter w,
+        string accessorName)
+    {
+        w.WriteLine($"response.{accessorName}Stream = contentStream;");
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the given media type should be treated as JSON.
+    /// Matches <c>application/json</c> exactly, and any type with a <c>+json</c>
+    /// structured syntax suffix (e.g. <c>application/vnd.api+json</c>).
+    /// </summary>
+    /// <param name="mediaType">The media type string.</param>
+    /// <returns><see langword="true"/> if the media type represents JSON content.</returns>
+    public static bool IsJsonMediaType(string mediaType)
+    {
+        return string.Equals(mediaType, "application/json", StringComparison.OrdinalIgnoreCase)
+            || mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the given media type represents a binary octet stream.
+    /// </summary>
+    /// <param name="mediaType">The media type string.</param>
+    /// <returns><see langword="true"/> if the media type is <c>application/octet-stream</c>.</returns>
+    public static bool IsOctetStreamMediaType(string mediaType)
+    {
+        return string.Equals(mediaType, "application/octet-stream", StringComparison.OrdinalIgnoreCase);
     }
 }

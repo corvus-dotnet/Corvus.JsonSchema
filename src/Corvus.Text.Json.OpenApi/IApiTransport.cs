@@ -73,4 +73,27 @@ public interface IApiTransport : IAsyncDisposable
         where TRequest : struct, IApiRequest<TRequest>
         where TBody : struct, IJsonElement<TBody>
         where TResponse : struct, IApiResponse<TResponse>;
+
+    /// <summary>
+    /// Sends a typed API request with a raw stream body and returns a typed response.
+    /// </summary>
+    /// <typeparam name="TRequest">The generated request type for this operation.</typeparam>
+    /// <typeparam name="TResponse">The generated response type for this operation.</typeparam>
+    /// <param name="request">The request, passed by <c>in</c> reference.</param>
+    /// <param name="body">The request body as a raw stream (e.g. for
+    /// <c>application/octet-stream</c> content).</param>
+    /// <param name="contentType">The content type to set on the request
+    /// (e.g. <c>application/octet-stream</c>).</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>
+    /// A <typeparamref name="TResponse"/> containing the parsed, typed response.
+    /// The caller must dispose the response when finished.
+    /// </returns>
+    ValueTask<TResponse> SendAsync<TRequest, TResponse>(
+        in TRequest request,
+        Stream body,
+        string contentType,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TResponse : struct, IApiResponse<TResponse>;
 }

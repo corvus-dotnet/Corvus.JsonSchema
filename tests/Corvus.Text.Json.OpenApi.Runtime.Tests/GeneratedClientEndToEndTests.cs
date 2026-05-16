@@ -2052,9 +2052,26 @@ public class GeneratedClientEndToEndTests
             this.Transport = new HttpClientTransport(this.client);
         }
 
+        public TestHarness(
+            HttpStatusCode statusCode,
+            byte[] binaryResponseBody,
+            string binaryContentType)
+        {
+            this.handler = new MockHandler(statusCode, binaryResponseBody, binaryContentType);
+            this.client = new HttpClient(this.handler)
+            {
+                BaseAddress = new Uri("http://localhost"),
+            };
+            this.Transport = new HttpClientTransport(this.client);
+        }
+
         public HttpClientTransport Transport { get; }
 
         public HttpRequestMessage? CapturedRequest => this.handler.CapturedRequest;
+
+        public byte[]? CapturedRequestBody => this.handler.CapturedRequestBody;
+
+        public string? CapturedRequestContentType => this.handler.CapturedRequestContentType;
 
         public void Dispose()
         {
@@ -2073,6 +2090,8 @@ public class GeneratedClientEndToEndTests
         private readonly HttpStatusCode statusCode;
         private readonly string responseBody;
         private readonly Dictionary<string, string>? responseHeaders;
+        private readonly byte[]? binaryResponseBody;
+        private readonly string? binaryContentType;
 
         public MockHandler(
             HttpStatusCode statusCode,
@@ -2085,20 +2104,52 @@ public class GeneratedClientEndToEndTests
             this.InnerHandler = new HttpClientHandler();
         }
 
+        public MockHandler(
+            HttpStatusCode statusCode,
+            byte[] binaryResponseBody,
+            string binaryContentType)
+        {
+            this.statusCode = statusCode;
+            this.responseBody = string.Empty;
+            this.binaryResponseBody = binaryResponseBody;
+            this.binaryContentType = binaryContentType;
+            this.InnerHandler = new HttpClientHandler();
+        }
+
         public HttpRequestMessage? CapturedRequest { get; private set; }
 
-        protected override Task<HttpResponseMessage> SendAsync(
+        public byte[]? CapturedRequestBody { get; private set; }
+
+        public string? CapturedRequestContentType { get; private set; }
+
+        protected override async Task<HttpResponseMessage> SendAsync(
             HttpRequestMessage request,
             CancellationToken cancellationToken)
         {
             this.CapturedRequest = request;
 
-            HttpResponseMessage response = new(this.statusCode)
+            if (request.Content is not null)
             {
-                Content = string.IsNullOrEmpty(this.responseBody)
-                    ? new ByteArrayContent([])
-                    : new StringContent(this.responseBody, Encoding.UTF8, "application/json"),
-            };
+                this.CapturedRequestBody = await request.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
+                this.CapturedRequestContentType = request.Content.Headers.ContentType?.MediaType;
+            }
+
+            HttpContent content;
+            if (this.binaryResponseBody is not null)
+            {
+                content = new ByteArrayContent(this.binaryResponseBody);
+                content.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(this.binaryContentType!);
+            }
+            else if (string.IsNullOrEmpty(this.responseBody))
+            {
+                content = new ByteArrayContent([]);
+            }
+            else
+            {
+                content = new StringContent(this.responseBody, Encoding.UTF8, "application/json");
+            }
+
+            HttpResponseMessage response = new(this.statusCode) { Content = content };
 
             if (this.responseHeaders is not null)
             {
@@ -2108,7 +2159,7 @@ public class GeneratedClientEndToEndTests
                 }
             }
 
-            return Task.FromResult(response);
+            return response;
         }
     }
 
@@ -2631,5 +2682,268 @@ public class GeneratedClientEndToEndTests
         Assert.IsFalse(CookieArrayRequest.HasHeaderParameters);
         Assert.ThrowsExactly<InvalidOperationException>(
             () => request.WriteHeaders(static (ReadOnlySpan<byte> _, ReadOnlySpan<byte> _, int _) => { }, 0));
+    }
+
+    // ── Stream and vendor JSON E2E tests ──────────────────────────────────
+    // These tests verify octet-stream (binary) request/response bodies,
+    // mixed (stream + JSON) responses, and vendor +json content types.
+    [TestMethod]
+    public async Task DownloadFile_200_ReturnsStream()
+    {
+        byte[] binaryData = [0x00, 0x01, 0x02, 0xFF, 0xFE];
+        using var harness = new TestHarness(HttpStatusCode.OK, binaryData, "application/octet-stream");
+
+        await using DownloadFileResponse response = await harness.Transport
+            .SendAsync<DownloadFileRequest, DownloadFileResponse>(
+                default(DownloadFileRequest),
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+        Assert.IsTrue(response.TryGetOkStream(out Stream? stream));
+        Assert.IsNotNull(stream);
+
+        using MemoryStream ms = new();
+        await stream.CopyToAsync(ms);
+        CollectionAssert.AreEqual(binaryData, ms.ToArray());
+    }
+
+    [TestMethod]
+    public async Task DownloadFile_200_MatchResult_CallsOkHandler()
+    {
+        byte[] binaryData = [0xCA, 0xFE];
+        using var harness = new TestHarness(HttpStatusCode.OK, binaryData, "application/octet-stream");
+
+        await using DownloadFileResponse response = await harness.Transport
+            .SendAsync<DownloadFileRequest, DownloadFileResponse>(
+                default(DownloadFileRequest),
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchOk: stream => stream is not null ? "got-stream" : "null-stream",
+            matchDefault: statusCode => $"unmatched-{statusCode}");
+
+        Assert.AreEqual("got-stream", result);
+    }
+
+    [TestMethod]
+    public async Task DownloadFile_404_MatchResult_CallsDefaultHandler()
+    {
+        using var harness = new TestHarness(HttpStatusCode.NotFound, string.Empty);
+
+        await using DownloadFileResponse response = await harness.Transport
+            .SendAsync<DownloadFileRequest, DownloadFileResponse>(
+                default(DownloadFileRequest),
+                CancellationToken.None);
+
+        Assert.AreEqual(404, response.StatusCode);
+        Assert.IsFalse(response.IsSuccess);
+        Assert.IsFalse(response.TryGetOkStream(out _));
+
+        string result = response.MatchResult(
+            matchOk: _ => "ok",
+            matchDefault: statusCode => $"default-{statusCode}");
+
+        Assert.AreEqual("default-404", result);
+    }
+
+    [TestMethod]
+    public async Task DownloadFile_RequestPathIsCorrect()
+    {
+        byte[] binaryData = [0x01];
+        using var harness = new TestHarness(HttpStatusCode.OK, binaryData, "application/octet-stream");
+
+        await using DownloadFileResponse response = await harness.Transport
+            .SendAsync<DownloadFileRequest, DownloadFileResponse>(
+                default(DownloadFileRequest),
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.AreEqual("http://localhost/files/download", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.AreEqual(HttpMethod.Get, harness.CapturedRequest.Method);
+    }
+
+    [TestMethod]
+    public async Task UploadFile_201_ParsesJsonResponse()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Created, """{"id":"f-123"}""");
+
+        byte[] fileContent = [0xDE, 0xAD, 0xBE, 0xEF];
+        using MemoryStream uploadStream = new(fileContent);
+
+        await using UploadFileResponse response = await harness.Transport
+            .SendAsync<UploadFileRequest, UploadFileResponse>(
+                default(UploadFileRequest),
+                uploadStream,
+                "application/octet-stream",
+                CancellationToken.None);
+
+        Assert.AreEqual(201, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+        Assert.IsTrue(response.TryGetCreated(out var body));
+        Assert.AreEqual("f-123", (string)body.Id);
+    }
+
+    [TestMethod]
+    public async Task UploadFile_RequestBodyIsSentCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Created, """{"id":"x"}""");
+
+        byte[] fileContent = [0x01, 0x02, 0x03, 0x04, 0x05];
+        using MemoryStream uploadStream = new(fileContent);
+
+        await using UploadFileResponse response = await harness.Transport
+            .SendAsync<UploadFileRequest, UploadFileResponse>(
+                default(UploadFileRequest),
+                uploadStream,
+                "application/octet-stream",
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.AreEqual("http://localhost/files/upload", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest.Method);
+        Assert.AreEqual("application/octet-stream", harness.CapturedRequestContentType);
+        CollectionAssert.AreEqual(fileContent, harness.CapturedRequestBody);
+    }
+
+    [TestMethod]
+    public async Task DownloadMixed_200_ReturnsStream()
+    {
+        byte[] binaryData = [0xAA, 0xBB, 0xCC];
+        using var harness = new TestHarness(HttpStatusCode.OK, binaryData, "application/octet-stream");
+
+        await using DownloadMixedResponse response = await harness.Transport
+            .SendAsync<DownloadMixedRequest, DownloadMixedResponse>(
+                default(DownloadMixedRequest),
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+        Assert.IsTrue(response.TryGetOkStream(out Stream? stream));
+        Assert.IsNotNull(stream);
+
+        using MemoryStream ms = new();
+        await stream.CopyToAsync(ms);
+        CollectionAssert.AreEqual(binaryData, ms.ToArray());
+    }
+
+    [TestMethod]
+    public async Task DownloadMixed_404_ReturnsJsonErrorBody()
+    {
+        using var harness = new TestHarness(HttpStatusCode.NotFound, """{"error":"File not found"}""");
+
+        await using DownloadMixedResponse response = await harness.Transport
+            .SendAsync<DownloadMixedRequest, DownloadMixedResponse>(
+                default(DownloadMixedRequest),
+                CancellationToken.None);
+
+        Assert.AreEqual(404, response.StatusCode);
+        Assert.IsFalse(response.IsSuccess);
+        Assert.IsFalse(response.TryGetOkStream(out _));
+        Assert.IsTrue(response.TryGetNotFound(out var errorBody));
+        Assert.AreEqual("File not found", (string)errorBody.Error);
+    }
+
+    [TestMethod]
+    public async Task DownloadMixed_200_MatchResult_CallsStreamHandler()
+    {
+        byte[] binaryData = [0x01, 0x02];
+        using var harness = new TestHarness(HttpStatusCode.OK, binaryData, "application/octet-stream");
+
+        await using DownloadMixedResponse response = await harness.Transport
+            .SendAsync<DownloadMixedRequest, DownloadMixedResponse>(
+                default(DownloadMixedRequest),
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchOk: stream => stream is not null ? "stream" : "null",
+            matchNotFound: error => $"error-{(string)error.Error}",
+            matchDefault: statusCode => $"default-{statusCode}");
+
+        Assert.AreEqual("stream", result);
+    }
+
+    [TestMethod]
+    public async Task DownloadMixed_404_MatchResult_CallsNotFoundHandler()
+    {
+        using var harness = new TestHarness(HttpStatusCode.NotFound, """{"error":"gone"}""");
+
+        await using DownloadMixedResponse response = await harness.Transport
+            .SendAsync<DownloadMixedRequest, DownloadMixedResponse>(
+                default(DownloadMixedRequest),
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchOk: _ => "ok",
+            matchNotFound: error => $"not-found-{(string)error.Error}",
+            matchDefault: statusCode => $"default-{statusCode}");
+
+        Assert.AreEqual("not-found-gone", result);
+    }
+
+    [TestMethod]
+    public async Task DownloadMixed_500_MatchResult_CallsDefaultHandler()
+    {
+        using var harness = new TestHarness(HttpStatusCode.InternalServerError, string.Empty);
+
+        await using DownloadMixedResponse response = await harness.Transport
+            .SendAsync<DownloadMixedRequest, DownloadMixedResponse>(
+                default(DownloadMixedRequest),
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchOk: _ => "ok",
+            matchNotFound: _ => "not-found",
+            matchDefault: statusCode => $"default-{statusCode}");
+
+        Assert.AreEqual("default-500", result);
+    }
+
+    [TestMethod]
+    public async Task GetVendorJson_200_ParsesBody()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"data":"vendor-response"}""");
+
+        await using GetVendorJsonResponse response = await harness.Transport
+            .SendAsync<GetVendorJsonRequest, GetVendorJsonResponse>(
+                default(GetVendorJsonRequest),
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+        Assert.IsTrue(response.TryGetOk(out var body));
+        Assert.AreEqual("vendor-response", (string)body.Data);
+    }
+
+    [TestMethod]
+    public async Task GetVendorJson_RequestPathIsCorrect()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"data":"x"}""");
+
+        await using GetVendorJsonResponse response = await harness.Transport
+            .SendAsync<GetVendorJsonRequest, GetVendorJsonResponse>(
+                default(GetVendorJsonRequest),
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.AreEqual("http://localhost/files/vendor-json", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.AreEqual(HttpMethod.Get, harness.CapturedRequest.Method);
+    }
+
+    [TestMethod]
+    public async Task GetVendorJson_200_MatchResult_CallsOkHandler()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"data":"d"}""");
+
+        await using GetVendorJsonResponse response = await harness.Transport
+            .SendAsync<GetVendorJsonRequest, GetVendorJsonResponse>(
+                default(GetVendorJsonRequest),
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchOk: body => $"data={body.Data}",
+            matchDefault: statusCode => $"default-{statusCode}");
+
+        Assert.AreEqual("data=d", result);
     }
 }
