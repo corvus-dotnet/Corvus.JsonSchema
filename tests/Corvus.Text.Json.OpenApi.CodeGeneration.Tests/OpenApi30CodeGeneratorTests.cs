@@ -3629,4 +3629,212 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
         Assert.IsTrue(req.Content.Contains("X", StringComparison.Ordinal));
     }
+
+    // ── Non-JSON body content falls back to JsonElement ────────────────
+    [TestMethod]
+    public void Generate_NonJsonBodyContent_FallsBackToJsonElement()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/upload": {
+                  "post": {
+                    "operationId": "uploadFile",
+                    "tags": ["files"],
+                    "requestBody": {
+                      "content": {
+                        "text/plain": {
+                          "schema": { "type": "string" }
+                        }
+                      }
+                    },
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile client = GetFile(files, "ApiFilesClient.cs");
+        Assert.IsTrue(client.Content.Contains("JsonElement", StringComparison.Ordinal));
+    }
+
+    // ── Malformed path template (unclosed brace) ──────────────────────
+    [TestMethod]
+    public void Generate_MalformedTemplate_UnclosedBrace_EmitsLiteralRemainder()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items/{id}/{bad": {
+                  "get": {
+                    "operationId": "getItem",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}~1{bad}/get/parameters/0/schema"] = "Test.JsonString",
+        };
+        OpenApi30CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "GetItemRequest.cs");
+        Assert.IsTrue(req.Content.Contains("\"{bad\"u8", StringComparison.Ordinal));
+    }
+
+    // ── Response with non-JSON content returns null type ───────────────
+    [TestMethod]
+    public void Generate_NonJsonResponse_NoTypedAccessor()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/download": {
+                  "get": {
+                    "operationId": "downloadFile",
+                    "tags": ["files"],
+                    "responses": {
+                      "200": {
+                        "description": "binary",
+                        "content": {
+                          "application/octet-stream": {
+                            "schema": { "type": "string", "format": "binary" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile resp = GetFile(files, "DownloadFileResponse.cs");
+        Assert.IsFalse(resp.Content.Contains("GetOk()", StringComparison.Ordinal));
+    }
+
+    // ── Empty response (no content) ───────────────────────────────────
+    [TestMethod]
+    public void Generate_EmptyResponse_NoContentAccessor()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items/{id}": {
+                  "delete": {
+                    "operationId": "deleteItem",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "id", "in": "path", "required": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": {
+                      "204": { "description": "deleted" }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}/delete/parameters/0/schema"] = "Test.JsonString",
+        };
+        OpenApi30CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile resp = GetFile(files, "DeleteItemResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("StatusCode", StringComparison.Ordinal));
+        Assert.IsFalse(resp.Content.Contains("Body { get;", StringComparison.Ordinal));
+    }
+
+    // ── Cookie parameter ──────────────────────────────────────────────
+    [TestMethod]
+    public void Generate_CookieParam_EmitsCookieWrite()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "session_id", "in": "cookie", "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/get/parameters/0/schema"] = "Test.JsonString",
+        };
+        OpenApi30CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("WriteCookies", StringComparison.Ordinal));
+    }
+
+    // ── Tilde in path segment triggers ~0 encoding ────────────────────
+    [TestMethod]
+    public void Generate_TildeInPath_SchemaPointerUsesTildeEncoding()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items~special": {
+                  "get": {
+                    "operationId": "getSpecial",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "q", "in": "query", "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~0special/get/parameters/0/schema"] = "Test.JsonString",
+        };
+        OpenApi30CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        Assert.IsTrue(files.Count > 0);
+    }
 }
