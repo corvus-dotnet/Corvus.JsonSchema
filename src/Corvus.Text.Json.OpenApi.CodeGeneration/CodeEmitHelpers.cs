@@ -1577,7 +1577,7 @@ public static class CodeEmitHelpers
         bool hasDeepNesting)
     {
         // style: simple arrays are comma-separated (explode has no effect on separator for simple).
-        // Use CreateBuilder<TContext> with rawValue as context — static lambda, zero captures.
+        // Use CreateBuilder (empty) + RootElement.AddItem in a loop.
         _ = explode;
         string elementSourceExpr = GetElementSourceExpression(elementKind, "element");
 
@@ -1593,19 +1593,21 @@ public static class CodeEmitHelpers
             ? "Corvus.Text.Json.OpenApi.StyleValueSplitter.NextSeparator(remaining)"
             : "remaining.IndexOf(',')";
 
-        w.Write($"this.{fieldName}HeaderValue = {typeName}.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref {typeName}.Builder arrayBuilder) =>");
-        w.WriteLine();
+        // Build an empty array, then add items via the Mutable root element.
+        // The builder is not disposed — the workspace owns the document lifetime.
         w.OpenBrace();
-        w.WriteLine("System.ReadOnlySpan<char> remaining = ctx;");
+        w.WriteLine($"var builder = {typeName}.CreateBuilder(this.workspace);");
+        w.WriteLine($"{typeName}.Mutable root = builder.RootElement;");
+        w.WriteLine("System.ReadOnlySpan<char> remaining = rawValue;");
         w.WriteLine("while (!remaining.IsEmpty)");
         w.OpenBrace();
         w.WriteLine($"int commaIdx = {separatorExpr};");
         w.WriteLine("System.ReadOnlySpan<char> element = commaIdx >= 0 ? remaining.Slice(0, commaIdx).Trim() : remaining.Trim();");
-        w.WriteLine($"arrayBuilder.AddItem({elementSourceExpr});");
+        w.WriteLine($"root.AddItem({elementSourceExpr});");
         w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
         w.CloseBrace();
-        w.CloseBraceNoNewline();
-        w.WriteLine(").RootElement;");
+        w.WriteLine($"this.{fieldName}HeaderValue = root;");
+        w.CloseBrace();
     }
 
     private static void EmitResponseHeaderObjectParse(

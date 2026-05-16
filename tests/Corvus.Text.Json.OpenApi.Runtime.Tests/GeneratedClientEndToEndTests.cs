@@ -1292,6 +1292,145 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
+    public async Task GetItemTag_ResponseHeader_ArrayParsedLazily()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"tag":"v"}""",
+            new Dictionary<string, string> { ["X-Tags"] = "alpha, beta, gamma" });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNotNull(response.XTagsHeader);
+        var tags = response.XTagsHeader.Value;
+        Assert.AreEqual(3, tags.GetArrayLength());
+        Assert.AreEqual("alpha", (string)tags[0]);
+        Assert.AreEqual("beta", (string)tags[1]);
+        Assert.AreEqual("gamma", (string)tags[2]);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_ArraySingleElement()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"tag":"v"}""",
+            new Dictionary<string, string> { ["X-Tags"] = "solo" });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNotNull(response.XTagsHeader);
+        var tags = response.XTagsHeader.Value;
+        Assert.AreEqual(1, tags.GetArrayLength());
+        Assert.AreEqual("solo", (string)tags[0]);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_ArrayMissing()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"tag":"v"}""");
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNull(response.XTagsHeader);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_ObjectParsedLazily()
+    {
+        // style: simple, explode: false for objects → key,value,key,value
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"tag":"v"}""",
+            new Dictionary<string, string> { ["X-Metadata"] = "env, production, region, us-east" });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNotNull(response.XMetadataHeader);
+        var metadata = response.XMetadataHeader.Value;
+        Assert.IsTrue(metadata.TryGetProperty("env", out var envVal));
+        Assert.AreEqual("production", envVal.GetString());
+        Assert.IsTrue(metadata.TryGetProperty("region", out var regionVal));
+        Assert.AreEqual("us-east", regionVal.GetString());
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_ObjectSinglePair()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"tag":"v"}""",
+            new Dictionary<string, string> { ["X-Metadata"] = "key, value" });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNotNull(response.XMetadataHeader);
+        var metadata = response.XMetadataHeader.Value;
+        Assert.IsTrue(metadata.TryGetProperty("key", out var val));
+        Assert.AreEqual("value", val.GetString());
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_ObjectMissing()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"tag":"v"}""");
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNull(response.XMetadataHeader);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_AllFourHeadersPresent()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"tag":"v"}""",
+            new Dictionary<string, string>
+            {
+                ["X-Total-Count"] = "42",
+                ["X-Request-Id"] = "req-123",
+                ["X-Tags"] = "a, b",
+                ["X-Metadata"] = "k1, v1",
+            });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.AreEqual(42, (int)response.XTotalCountHeader!.Value);
+        Assert.AreEqual("req-123", (string)response.XRequestIdHeader!.Value);
+
+        var tags = response.XTagsHeader!.Value;
+        Assert.AreEqual(2, tags.GetArrayLength());
+        Assert.AreEqual("a", (string)tags[0]);
+        Assert.AreEqual("b", (string)tags[1]);
+
+        var metadata = response.XMetadataHeader!.Value;
+        Assert.IsTrue(metadata.TryGetProperty("k1", out var v1));
+        Assert.AreEqual("v1", v1.GetString());
+    }
+
+    [TestMethod]
     public async Task GetItemDetails_PathWithTrailingLiteral()
     {
         using var harness = new TestHarness(HttpStatusCode.OK, """{"detail":"some detail"}""");

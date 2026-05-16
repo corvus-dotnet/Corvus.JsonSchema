@@ -157,6 +157,23 @@
               "X-Request-Id": {
                 "description": "Request correlation ID",
                 "schema": { "type": "string" }
+              },
+              "X-Tags": {
+                "description": "Array of tag names",
+                "schema": {
+                  "type": "array",
+                  "items": { "type": "string" }
+                }
+              },
+              "X-Metadata": {
+                "description": "Object with string properties",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "region": { "type": "string" },
+                    "version": { "type": "string" }
+                  }
+                }
               }
             },
             "content": {
