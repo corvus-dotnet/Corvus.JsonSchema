@@ -2021,7 +2021,7 @@ public sealed class OpenApi31CodeGenerator
                     string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
 
                     w.WriteLine(
-                        $"{fieldName} = {paramIdentifier}.IsUndefined ? default : " +
+                        $"{fieldName} = {paramIdentifier}.IsUndefined ? null : " +
                         $"({typeName}){typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement,");
                 }
 

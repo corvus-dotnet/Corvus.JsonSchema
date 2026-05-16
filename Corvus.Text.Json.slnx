@@ -75,7 +75,6 @@
     <Project Path="tests/Corvus.Text.Json.JsonLogic.Tests/Corvus.Text.Json.JsonLogic.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi.CodeGeneration.Tests/Corvus.Text.Json.OpenApi.CodeGeneration.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi.HttpTransport.Tests/Corvus.Text.Json.OpenApi.HttpTransport.Tests.csproj" />
-    <Project Path="tests/Corvus.Text.Json.OpenApi.Tests/Corvus.Text.Json.OpenApi.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi30.Tests/Corvus.Text.Json.OpenApi30.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.OpenApi31.Tests/Corvus.Text.Json.OpenApi31.Tests.csproj" />
     <Project Path="tests/Corvus.Text.Json.Patch.Tests/Corvus.Text.Json.Patch.Tests.csproj" />

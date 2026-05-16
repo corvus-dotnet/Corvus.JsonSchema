@@ -239,7 +239,7 @@ public class UriCanonicalizationTests
     {
         SearchRequest request = new(JsonString.ParseValue("\"x\""u8))
         {
-            Rating = JsonFloat.ParseValue("2.5"u8),
+            Rating = JsonSingle.ParseValue("2.5"u8),
         };
         string query = WriteQuery(request);
         Assert.AreEqual("q=x&rating=2.5", query);
@@ -274,7 +274,7 @@ public class UriCanonicalizationTests
         SearchRequest request = new(JsonString.ParseValue("\"hello world\""u8))
         {
             Page = JsonInt32.ParseValue("5"u8),
-            Rating = JsonFloat.ParseValue("1.5"u8),
+            Rating = JsonSingle.ParseValue("1.5"u8),
         };
 
         ArrayBufferWriter<byte> writer = new(256);
