@@ -543,6 +543,587 @@
           }
         }
       }
+    },
+    "/complex/path-array-simple/{ids}": {
+      "get": {
+        "operationId": "pathArraySimple",
+        "summary": "Path array param, simple style (default, explode=false)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "path",
+            "required": true,
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/path-array-label/{ids}": {
+      "get": {
+        "operationId": "pathArrayLabel",
+        "summary": "Path array param, label style",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "path",
+            "required": true,
+            "style": "label",
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/path-array-matrix/{ids}": {
+      "get": {
+        "operationId": "pathArrayMatrix",
+        "summary": "Path array param, matrix style",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "path",
+            "required": true,
+            "style": "matrix",
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/path-object-simple/{dims}": {
+      "get": {
+        "operationId": "pathObjectSimple",
+        "summary": "Path object param, simple style (default, explode=false)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/path-object-simple-explode/{dims}": {
+      "get": {
+        "operationId": "pathObjectSimpleExplode",
+        "summary": "Path object param, simple+explode",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/path-object-label/{dims}": {
+      "get": {
+        "operationId": "pathObjectLabel",
+        "summary": "Path object param, label style (explode=false)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "style": "label",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/path-object-label-explode/{dims}": {
+      "get": {
+        "operationId": "pathObjectLabelExplode",
+        "summary": "Path object param, label+explode",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "style": "label",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/path-object-matrix/{dims}": {
+      "get": {
+        "operationId": "pathObjectMatrix",
+        "summary": "Path object param, matrix style (explode=false)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "style": "matrix",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/path-object-matrix-explode/{dims}": {
+      "get": {
+        "operationId": "pathObjectMatrixExplode",
+        "summary": "Path object param, matrix+explode",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "style": "matrix",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/query-array-explode": {
+      "get": {
+        "operationId": "queryArrayExplode",
+        "summary": "Query array param, form+explode (default)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "query",
+            "required": true,
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/query-array-nonexplode": {
+      "get": {
+        "operationId": "queryArrayNonexplode",
+        "summary": "Query array param, form+explode=false",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "query",
+            "required": true,
+            "explode": false,
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/query-array-space": {
+      "get": {
+        "operationId": "queryArraySpace",
+        "summary": "Query array param, spaceDelimited",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "query",
+            "required": true,
+            "style": "spaceDelimited",
+            "explode": false,
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/query-array-pipe": {
+      "get": {
+        "operationId": "queryArrayPipe",
+        "summary": "Query array param, pipeDelimited",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "query",
+            "required": true,
+            "style": "pipeDelimited",
+            "explode": false,
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/query-object-explode": {
+      "get": {
+        "operationId": "queryObjectExplode",
+        "summary": "Query object param, form+explode (default)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/query-object-nonexplode": {
+      "get": {
+        "operationId": "queryObjectNonexplode",
+        "summary": "Query object param, form+explode=false",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "query",
+            "required": true,
+            "explode": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/query-object-deep": {
+      "get": {
+        "operationId": "queryObjectDeep",
+        "summary": "Query object param, deepObject style",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "query",
+            "required": true,
+            "style": "deepObject",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/header-array": {
+      "get": {
+        "operationId": "headerArray",
+        "summary": "Header array param, simple (default)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "X-Tags",
+            "in": "header",
+            "required": true,
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/header-object": {
+      "get": {
+        "operationId": "headerObject",
+        "summary": "Header object param, simple+explode=false (default)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "X-Dims",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/header-object-explode": {
+      "get": {
+        "operationId": "headerObjectExplode",
+        "summary": "Header object param, simple+explode",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "X-Dims",
+            "in": "header",
+            "required": true,
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/cookie-array": {
+      "get": {
+        "operationId": "cookieArray",
+        "summary": "Cookie array param, form+explode (default)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "cookie",
+            "required": true,
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/cookie-array-nonexplode": {
+      "get": {
+        "operationId": "cookieArrayNonexplode",
+        "summary": "Cookie array param, form+explode=false",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "cookie",
+            "required": true,
+            "explode": false,
+            "schema": { "type": "array", "items": { "type": "string" } }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/cookie-object": {
+      "get": {
+        "operationId": "cookieObject",
+        "summary": "Cookie object param, form+explode (default)",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "prefs",
+            "in": "cookie",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
+    },
+    "/complex/cookie-object-nonexplode": {
+      "get": {
+        "operationId": "cookieObjectNonexplode",
+        "summary": "Cookie object param, form+explode=false",
+        "tags": ["complex-params"],
+        "parameters": [
+          {
+            "name": "prefs",
+            "in": "cookie",
+            "required": true,
+            "explode": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": { "type": "integer", "format": "int32" },
+                "height": { "type": "integer", "format": "int32" }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": { "application/json": { "schema": { "type": "object" } } }
+          }
+        }
+      }
     }
   }
 }

@@ -2112,6 +2112,413 @@ public class GeneratedClientEndToEndTests
         }
     }
 
+    // ── Complex param (array/object) E2E tests ────────────────────────────
+    // These tests verify serialization of array and object parameters across
+    // all OpenAPI locations (path, query, header, cookie) and styles.
+    // ── Path array ──────────────────────────────────────────────────────
+    [TestMethod]
+    public async Task PathArraySimple_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new PathArraySimpleRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<PathArraySimpleRequest, PathArraySimpleResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/path-array-simple/a,b,c",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task PathArrayLabel_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new PathArrayLabelRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<PathArrayLabelRequest, PathArrayLabelResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/path-array-label/.a,b,c",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task PathArrayMatrix_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new PathArrayMatrixRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<PathArrayMatrixRequest, PathArrayMatrixResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/path-array-matrix/;ids=a,b,c",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    // ── Path object ─────────────────────────────────────────────────────
+    [TestMethod]
+    public async Task PathObjectSimple_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new PathObjectSimpleRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<PathObjectSimpleRequest, PathObjectSimpleResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/path-object-simple/width,10,height,20",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task PathObjectSimpleExplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new PathObjectSimpleExplodeRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<PathObjectSimpleExplodeRequest, PathObjectSimpleExplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/path-object-simple-explode/width=10,height=20",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task PathObjectLabel_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new PathObjectLabelRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<PathObjectLabelRequest, PathObjectLabelResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/path-object-label/.width,10,height,20",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task PathObjectLabelExplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new PathObjectLabelExplodeRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<PathObjectLabelExplodeRequest, PathObjectLabelExplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/path-object-label-explode/.width=10.height=20",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task PathObjectMatrix_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new PathObjectMatrixRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<PathObjectMatrixRequest, PathObjectMatrixResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/path-object-matrix/;dims=width,10,height,20",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task PathObjectMatrixExplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new PathObjectMatrixExplodeRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<PathObjectMatrixExplodeRequest, PathObjectMatrixExplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/path-object-matrix-explode/;width=10;height=20",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    // ── Query array ─────────────────────────────────────────────────────
+    [TestMethod]
+    public async Task QueryArrayExplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new QueryArrayExplodeRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<QueryArrayExplodeRequest, QueryArrayExplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/query-array-explode?colors=a&colors=b&colors=c",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task QueryArrayNonexplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new QueryArrayNonexplodeRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<QueryArrayNonexplodeRequest, QueryArrayNonexplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/query-array-nonexplode?colors=a,b,c",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task QueryArraySpace_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new QueryArraySpaceRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<QueryArraySpaceRequest, QueryArraySpaceResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/query-array-space?colors=a%20b%20c",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task QueryArrayPipe_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new QueryArrayPipeRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<QueryArrayPipeRequest, QueryArrayPipeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/query-array-pipe?colors=a%7Cb%7Cc",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    // ── Query object ────────────────────────────────────────────────────
+    [TestMethod]
+    public async Task QueryObjectExplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new QueryObjectExplodeRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<QueryObjectExplodeRequest, QueryObjectExplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/query-object-explode?width=10&height=20",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task QueryObjectNonexplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new QueryObjectNonexplodeRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<QueryObjectNonexplodeRequest, QueryObjectNonexplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/query-object-nonexplode?dims=width,10,height,20",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task QueryObjectDeep_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new QueryObjectDeepRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<QueryObjectDeepRequest, QueryObjectDeepResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(
+            "http://localhost/complex/query-object-deep?dims%5Bwidth%5D=10&dims%5Bheight%5D=20",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    // ── Header array / object ───────────────────────────────────────────
+    [TestMethod]
+    public async Task HeaderArray_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new HeaderArrayRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<HeaderArrayRequest, HeaderArrayResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsTrue(harness.CapturedRequest!.Headers.Contains("X-Tags"));
+        Assert.AreEqual(
+            "a,b,c",
+            harness.CapturedRequest.Headers.GetValues("X-Tags").First());
+    }
+
+    [TestMethod]
+    public async Task HeaderObject_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new HeaderObjectRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<HeaderObjectRequest, HeaderObjectResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsTrue(harness.CapturedRequest!.Headers.Contains("X-Dims"));
+        Assert.AreEqual(
+            "width,10,height,20",
+            harness.CapturedRequest.Headers.GetValues("X-Dims").First());
+    }
+
+    [TestMethod]
+    public async Task HeaderObjectExplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new HeaderObjectExplodeRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<HeaderObjectExplodeRequest, HeaderObjectExplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsTrue(harness.CapturedRequest!.Headers.Contains("X-Dims"));
+        Assert.AreEqual(
+            "width=10,height=20",
+            harness.CapturedRequest.Headers.GetValues("X-Dims").First());
+    }
+
+    // ── Cookie array / object ───────────────────────────────────────────
+    [TestMethod]
+    public async Task CookieArray_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new CookieArrayRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<CookieArrayRequest, CookieArrayResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsTrue(harness.CapturedRequest!.Headers.Contains("Cookie"));
+        Assert.AreEqual(
+            "colors=a; colors=b; colors=c",
+            harness.CapturedRequest.Headers.GetValues("Cookie").First());
+    }
+
+    [TestMethod]
+    public async Task CookieArrayNonexplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new CookieArrayNonexplodeRequest(
+            JsonElement.ParseValue("""["a","b","c"]"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<CookieArrayNonexplodeRequest, CookieArrayNonexplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsTrue(harness.CapturedRequest!.Headers.Contains("Cookie"));
+        Assert.AreEqual(
+            "colors=a,b,c",
+            harness.CapturedRequest.Headers.GetValues("Cookie").First());
+    }
+
+    [TestMethod]
+    public async Task CookieObject_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new CookieObjectRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<CookieObjectRequest, CookieObjectResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsTrue(harness.CapturedRequest!.Headers.Contains("Cookie"));
+        Assert.AreEqual(
+            "width=10; height=20",
+            harness.CapturedRequest.Headers.GetValues("Cookie").First());
+    }
+
+    [TestMethod]
+    public async Task CookieObjectNonexplode_SerializesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""");
+
+        var request = new CookieObjectNonexplodeRequest(
+            JsonElement.ParseValue("""{"width":10,"height":20}"""u8));
+
+        await using var response = await harness.Transport
+            .SendAsync<CookieObjectNonexplodeRequest, CookieObjectNonexplodeResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsTrue(harness.CapturedRequest!.Headers.Contains("Cookie"));
+        Assert.AreEqual(
+            "prefs=width,10,height,20",
+            harness.CapturedRequest.Headers.GetValues("Cookie").First());
+    }
+
     // ── Throwing stub tests ─────────────────────────────────────────────
     // Operations that lack a given parameter location emit throwing stubs.
     // These tests verify that calling the stub throws InvalidOperationException.
@@ -2180,6 +2587,48 @@ public class GeneratedClientEndToEndTests
     {
         GetSessionProfileRequest request = new(JsonElement.ParseValue("\"session-id\""u8));
         Assert.IsFalse(GetSessionProfileRequest.HasHeaderParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(
+            () => request.WriteHeaders(static (ReadOnlySpan<byte> _, ReadOnlySpan<byte> _, int _) => { }, 0));
+    }
+
+    // ── Throwing stub tests for complex-params operations ───────────────
+    [TestMethod]
+    public void PathArraySimpleRequest_WriteQueryString_ThrowsWhenNoQueryParams()
+    {
+        PathArraySimpleRequest request = new(JsonElement.ParseValue("""["a"]"""u8));
+        Assert.IsFalse(PathArraySimpleRequest.HasQueryParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteQueryString(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void PathArraySimpleRequest_WriteCookies_ThrowsWhenNoCookieParams()
+    {
+        PathArraySimpleRequest request = new(JsonElement.ParseValue("""["a"]"""u8));
+        Assert.IsFalse(PathArraySimpleRequest.HasCookieParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteCookies(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void QueryArrayExplodeRequest_WriteResolvedPath_ThrowsWhenNoPathParams()
+    {
+        QueryArrayExplodeRequest request = new(JsonElement.ParseValue("""["a"]"""u8));
+        Assert.IsFalse(QueryArrayExplodeRequest.HasPathParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteResolvedPath(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void HeaderArrayRequest_WriteCookies_ThrowsWhenNoCookieParams()
+    {
+        HeaderArrayRequest request = new(JsonElement.ParseValue("""["a"]"""u8));
+        Assert.IsFalse(HeaderArrayRequest.HasCookieParameters);
+        Assert.ThrowsExactly<InvalidOperationException>(() => request.WriteCookies(new ArrayBufferWriter<byte>()));
+    }
+
+    [TestMethod]
+    public void CookieArrayRequest_WriteHeaders_ThrowsWhenNoHeaderParams()
+    {
+        CookieArrayRequest request = new(JsonElement.ParseValue("""["a"]"""u8));
+        Assert.IsFalse(CookieArrayRequest.HasHeaderParameters);
         Assert.ThrowsExactly<InvalidOperationException>(
             () => request.WriteHeaders(static (ReadOnlySpan<byte> _, ReadOnlySpan<byte> _, int _) => { }, 0));
     }
