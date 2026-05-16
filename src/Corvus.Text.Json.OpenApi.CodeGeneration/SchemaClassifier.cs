@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Text.Json.OpenApi;
+namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
 /// <summary>
 /// Classifies a JSON Schema element for parameter serialization purposes.
@@ -216,5 +216,64 @@ public static class SchemaClassifier
         }
 
         return ParameterSerializationKind.UnboundedNumber;
+    }
+
+    /// <summary>
+    /// Checks whether a schema classified as <see cref="ParameterSerializationKind.Object"/>
+    /// or <see cref="ParameterSerializationKind.Array"/> contains nested composite types
+    /// (objects or arrays within its property values or array items).
+    /// </summary>
+    /// <param name="schema">The schema element.</param>
+    /// <returns>
+    /// <see langword="true"/> if the schema has nested composite types whose behaviour
+    /// is undefined under OpenAPI style serialization.
+    /// </returns>
+    /// <remarks>
+    /// <para>
+    /// The OpenAPI specification states that behaviour is undefined for deeply nested
+    /// objects and arrays in style serialization (query, path, header, cookie).
+    /// When this method returns <see langword="true"/>, the code generator should emit
+    /// a <c>#warning</c> directive to alert consumers.
+    /// </para>
+    /// </remarks>
+    public static bool HasDeepNesting(JsonElement schema)
+    {
+        // For objects: check if any declared property has a composite schema.
+        if (schema.TryGetProperty("properties"u8, out JsonElement properties)
+            && properties.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var prop in properties.EnumerateObject())
+            {
+                if (IsCompositeType(prop.Value))
+                {
+                    return true;
+                }
+            }
+        }
+
+        // For objects: check additionalProperties if it is a schema (not bool).
+        if (schema.TryGetProperty("additionalProperties"u8, out JsonElement addlProps)
+            && addlProps.ValueKind == JsonValueKind.Object
+            && IsCompositeType(addlProps))
+        {
+            return true;
+        }
+
+        // For arrays: check if items schema is composite.
+        if (schema.TryGetProperty("items"u8, out JsonElement items)
+            && items.ValueKind == JsonValueKind.Object
+            && IsCompositeType(items))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    private static bool IsCompositeType(JsonElement schema)
+    {
+        return schema.TryGetProperty("type"u8, out JsonElement typeElement)
+            && typeElement.ValueKind == JsonValueKind.String
+            && (typeElement.ValueEquals("object"u8) || typeElement.ValueEquals("array"u8));
     }
 }

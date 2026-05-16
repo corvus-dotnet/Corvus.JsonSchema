@@ -4,7 +4,7 @@
 
 using Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.OpenApi;
+namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
 /// <summary>
 /// Resolves OpenAPI <c>$ref</c> URI-references to JSON elements.

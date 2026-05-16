@@ -10,7 +10,6 @@ using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Text.Json.CodeGeneration;
-using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi31;
 using Corvus.Text.Json.OpenApi30;

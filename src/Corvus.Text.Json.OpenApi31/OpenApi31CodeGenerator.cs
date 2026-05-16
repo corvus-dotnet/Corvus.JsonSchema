@@ -83,7 +83,8 @@ public sealed class OpenApi31CodeGenerator
         ParameterStyle Style,
         bool Explode,
         ParameterSerializationKind SerializationKind,
-        string? SchemaPointer);
+        string? SchemaPointer,
+        bool HasDeepNesting);
 
     private readonly record struct RequestBodyInfo(
         string? Description,
@@ -103,7 +104,8 @@ public sealed class OpenApi31CodeGenerator
         string HeaderName,
         string? SchemaPointer,
         bool Explode,
-        ParameterSerializationKind SerializationKind);
+        ParameterSerializationKind SerializationKind,
+        bool HasDeepNesting);
 
     /// <summary>
     /// Walks the OpenAPI 3.1 specification and collects all schema
@@ -707,9 +709,14 @@ public sealed class OpenApi31CodeGenerator
             (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
             bool required = param.Required.ValueKind == JsonValueKind.True;
             bool hasSchema = param.SchemaValue.IsNotUndefined();
+            JsonElement schemaElement = hasSchema ? (JsonElement)param.SchemaValue : default;
             ParameterSerializationKind serializationKind = hasSchema
-                ? SchemaClassifier.Classify((JsonElement)param.SchemaValue)
+                ? SchemaClassifier.Classify(schemaElement)
                 : ParameterSerializationKind.String;
+
+            bool deepNesting = hasSchema
+                && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
+                && SchemaClassifier.HasDeepNesting(schemaElement);
 
             string? schemaPointer = hasSchema
                 ? SchemaPointerBuilder.BuildParameterSchemaPointer(
@@ -721,7 +728,7 @@ public sealed class OpenApi31CodeGenerator
 
             result[i] = new ParameterInfo(
                 name, location, required, style, explode,
-                serializationKind, schemaPointer);
+                serializationKind, schemaPointer, deepNesting);
         }
 
         return result;
@@ -918,13 +925,18 @@ public sealed class OpenApi31CodeGenerator
                 }
             }
 
+            JsonElement schemaEl = hasSchema ? (JsonElement)header.SchemaValue : default;
             ParameterSerializationKind serializationKind = hasSchema
-                ? SchemaClassifier.Classify((JsonElement)header.SchemaValue)
+                ? SchemaClassifier.Classify(schemaEl)
                 : ParameterSerializationKind.String;
+
+            bool deepNesting = hasSchema
+                && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
+                && SchemaClassifier.HasDeepNesting(schemaEl);
 
             // Extract header name at the emit boundary
             string name = headerProp.Name;
-            result.Add(new HeaderInfo(name, schemaPointer, explode, serializationKind));
+            result.Add(new HeaderInfo(name, schemaPointer, explode, serializationKind, deepNesting));
         }
 
         return [.. result];
@@ -1675,7 +1687,8 @@ public sealed class OpenApi31CodeGenerator
                         header.HeaderName,
                         typeName,
                         header.Explode,
-                        header.SerializationKind);
+                        header.SerializationKind,
+                        header.HasDeepNesting);
                 }
                 else
                 {

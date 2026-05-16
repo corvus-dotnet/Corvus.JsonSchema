@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Text.Json.OpenApi;
+namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
 /// <summary>
 /// Classifies how a parameter value should be serialized to UTF-8 bytes

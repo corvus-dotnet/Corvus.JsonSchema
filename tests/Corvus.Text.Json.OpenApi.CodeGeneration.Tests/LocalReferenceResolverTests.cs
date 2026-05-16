@@ -4,7 +4,7 @@
 
 using System.Text;
 using Corvus.Text.Json;
-using Corvus.Text.Json.OpenApi;
+using Corvus.Text.Json.OpenApi.CodeGeneration;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration.Tests;
 

@@ -2,7 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-namespace Corvus.Text.Json.OpenApi;
+namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
 /// <summary>
 /// The serialization style for an OpenAPI parameter, determining how the value

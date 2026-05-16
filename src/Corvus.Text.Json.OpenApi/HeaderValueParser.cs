@@ -21,7 +21,7 @@ namespace Corvus.Text.Json.OpenApi;
 /// The document is registered with the workspace for lifetime management.
 /// </para>
 /// </remarks>
-internal static class HeaderValueParser
+public static class HeaderValueParser
 {
     /// <summary>
     /// Parses a raw header string as a JSON number value.

@@ -4,7 +4,7 @@
 
 using Corvus.Text.Json.Internal;
 
-namespace Corvus.Text.Json.OpenApi;
+namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
 /// <summary>
 /// Resolves local (<c>#/...</c>) OpenAPI <c>$ref</c> references within a single document.

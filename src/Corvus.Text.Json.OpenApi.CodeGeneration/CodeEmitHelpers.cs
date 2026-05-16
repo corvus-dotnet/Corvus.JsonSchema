@@ -1457,7 +1457,8 @@ public static class CodeEmitHelpers
         string headerName,
         string typeName,
         bool explode,
-        ParameterSerializationKind kind)
+        ParameterSerializationKind kind,
+        bool hasDeepNesting = false)
     {
         // Backing fields: cached parsed value and a flag to avoid re-parsing.
         w.WriteLine($"private {typeName}? {fieldName}HeaderValue;");
@@ -1494,12 +1495,12 @@ public static class CodeEmitHelpers
         if (kind is ParameterSerializationKind.Array)
         {
             // TODO: Pass the actual element schema kind when available.
-            EmitResponseHeaderArrayParse(w, fieldName, typeName, explode, ParameterSerializationKind.String);
+            EmitResponseHeaderArrayParse(w, fieldName, typeName, explode, ParameterSerializationKind.String, hasDeepNesting);
         }
         else if (kind is ParameterSerializationKind.Object)
         {
             // TODO: Pass the actual value schema kind when available.
-            EmitResponseHeaderObjectParse(w, fieldName, typeName, explode, ParameterSerializationKind.String);
+            EmitResponseHeaderObjectParse(w, fieldName, typeName, explode, ParameterSerializationKind.String, hasDeepNesting);
         }
         else
         {
@@ -1572,19 +1573,33 @@ public static class CodeEmitHelpers
         string fieldName,
         string typeName,
         bool explode,
-        ParameterSerializationKind elementKind)
+        ParameterSerializationKind elementKind,
+        bool hasDeepNesting)
     {
         // style: simple arrays are comma-separated (explode has no effect on separator for simple).
         // Use CreateBuilder<TContext> with rawValue as context — static lambda, zero captures.
         _ = explode;
         string elementSourceExpr = GetElementSourceExpression(elementKind, "element");
+
+        if (hasDeepNesting)
+        {
+            w.WriteLine("#warning Deep nesting detected in array header schema. Nested object/array values are treated as JSON-encoded strings.");
+        }
+
+        // When hasDeepNesting is true, elements may contain JSON-encoded values with
+        // commas inside braces/brackets/strings. Use StyleValueSplitter.NextSeparator
+        // to split only at depth-zero commas.
+        string separatorExpr = hasDeepNesting
+            ? "Corvus.Text.Json.OpenApi.StyleValueSplitter.NextSeparator(remaining)"
+            : "remaining.IndexOf(',')";
+
         w.Write($"this.{fieldName}HeaderValue = {typeName}.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref {typeName}.Builder arrayBuilder) =>");
         w.WriteLine();
         w.OpenBrace();
         w.WriteLine("System.ReadOnlySpan<char> remaining = ctx;");
         w.WriteLine("while (!remaining.IsEmpty)");
         w.OpenBrace();
-        w.WriteLine("int commaIdx = remaining.IndexOf(',');");
+        w.WriteLine($"int commaIdx = {separatorExpr};");
         w.WriteLine("System.ReadOnlySpan<char> element = commaIdx >= 0 ? remaining.Slice(0, commaIdx).Trim() : remaining.Trim();");
         w.WriteLine($"arrayBuilder.AddItem({elementSourceExpr});");
         w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
@@ -1598,13 +1613,26 @@ public static class CodeEmitHelpers
         string fieldName,
         string typeName,
         bool explode,
-        ParameterSerializationKind valueKind)
+        ParameterSerializationKind valueKind,
+        bool hasDeepNesting)
     {
         // style: simple objects:
         // explode=false: comma-separated alternating key,value: "R,100,G,200,B,150"
         // explode=true: comma-separated key=value: "R=100,G=200,B=150"
         // Use CreateBuilder<TContext> with rawValue as context — static lambda, zero captures.
         string valueSourceExpr = GetElementSourceExpression(valueKind, "value");
+
+        if (hasDeepNesting)
+        {
+            w.WriteLine("#warning Deep nesting detected in object header schema. Nested object/array values are treated as JSON-encoded strings.");
+        }
+
+        // When hasDeepNesting is true, values may contain JSON-encoded content with
+        // commas inside braces/brackets/strings. Use StyleValueSplitter.NextSeparator
+        // to split only at depth-zero commas.
+        string separatorExpr = hasDeepNesting
+            ? "Corvus.Text.Json.OpenApi.StyleValueSplitter.NextSeparator(remaining)"
+            : "remaining.IndexOf(',')";
 
         w.Write($"this.{fieldName}HeaderValue = {typeName}.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref {typeName}.Builder objectBuilder) =>");
         w.WriteLine();
@@ -1615,7 +1643,7 @@ public static class CodeEmitHelpers
         {
             w.WriteLine("while (!remaining.IsEmpty)");
             w.OpenBrace();
-            w.WriteLine("int commaIdx = remaining.IndexOf(',');");
+            w.WriteLine($"int commaIdx = {separatorExpr};");
             w.WriteLine("System.ReadOnlySpan<char> pair = commaIdx >= 0 ? remaining.Slice(0, commaIdx) : remaining;");
             w.WriteLine("int eqIdx = pair.IndexOf('=');");
             w.WriteLine("if (eqIdx >= 0)");
@@ -1629,13 +1657,20 @@ public static class CodeEmitHelpers
         }
         else
         {
+            // For non-explode with deep nesting, keys are always simple strings so the first
+            // comma is always a depth-zero separator. But the value may be JSON-encoded, so
+            // the second comma must use depth-aware splitting.
             w.WriteLine("while (!remaining.IsEmpty)");
             w.OpenBrace();
+
+            // Key separator is always simple (keys are simple strings).
             w.WriteLine("int commaIdx = remaining.IndexOf(',');");
             w.WriteLine("System.ReadOnlySpan<char> key = commaIdx >= 0 ? remaining.Slice(0, commaIdx).Trim() : remaining.Trim();");
             w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
             w.WriteLine("if (remaining.IsEmpty) break;");
-            w.WriteLine("commaIdx = remaining.IndexOf(',');");
+
+            // Value separator uses depth-aware splitting when deep nesting is present.
+            w.WriteLine($"commaIdx = {separatorExpr};");
             w.WriteLine("System.ReadOnlySpan<char> value = commaIdx >= 0 ? remaining.Slice(0, commaIdx).Trim() : remaining.Trim();");
             w.WriteLine($"objectBuilder.AddProperty(key, {valueSourceExpr});");
             w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");

@@ -4,7 +4,7 @@
 
 using System.Text.RegularExpressions;
 
-namespace Corvus.Text.Json.OpenApi;
+namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
 /// <summary>
 /// Filters operations by path (OpenAPI) or channel (AsyncAPI) using glob-style patterns.
