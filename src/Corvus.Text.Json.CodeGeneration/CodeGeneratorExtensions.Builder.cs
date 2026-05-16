@@ -1881,7 +1881,7 @@ internal static partial class CodeGeneratorExtensions
         }
 
         bool hasFallbackArrayType =
-            typeDeclaration.ExplicitArrayItemsType() is not null;
+            typeDeclaration.ArrayItemsType() is not null;
 
         bool hasFallbackObjectType =
             typeDeclaration.LocalEvaluatedPropertyType() is not null ||
