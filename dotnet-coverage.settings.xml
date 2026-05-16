@@ -23,6 +23,11 @@
         <ModulePath>.*Corvus\.Text\.Json\.Patch\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.Yaml\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Yaml\.SystemTextJson\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.CodeGeneration\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.HttpTransport\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi30\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi31\.dll$</ModulePath>
       </Include>
     </ModulePaths>
     <Sources>

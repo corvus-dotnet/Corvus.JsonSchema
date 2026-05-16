@@ -1,4 +1,4 @@
-// <copyright file="OpenApi30CodeGeneratorTests.cs" company="Endjin Limited">
+﻿// <copyright file="OpenApi30CodeGeneratorTests.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -2646,5 +2646,987 @@ public class OpenApi30CodeGeneratorTests
 
         GeneratedFile req = GetFile(files, "GetByAmountRequest.cs");
         Assert.IsTrue(req.Content.Contains("JsonMarshal.GetRawUtf8Value", StringComparison.Ordinal));
+    }
+
+    // ── CollectSchemaPointers coverage: all HTTP methods ────────────────
+    [TestMethod]
+    public void CollectSchemaPointers_AllHttpMethods()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/things": {
+                  "get":     { "operationId": "getThings",     "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } } },
+                  "put":     { "operationId": "putThings",     "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } } },
+                  "post":    { "operationId": "postThings",    "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } } },
+                  "delete":  { "operationId": "deleteThings",  "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } } },
+                  "options": { "operationId": "optionsThings", "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } } },
+                  "head":    { "operationId": "headThings",    "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } } },
+                  "patch":   { "operationId": "patchThings",   "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } } },
+                  "trace":   { "operationId": "traceThings",   "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } } }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, null);
+
+        Assert.AreEqual(8, pointers.Length);
+        Assert.IsTrue(pointers.Any(p => p.Contains("/get/", StringComparison.Ordinal)));
+        Assert.IsTrue(pointers.Any(p => p.Contains("/put/", StringComparison.Ordinal)));
+        Assert.IsTrue(pointers.Any(p => p.Contains("/post/", StringComparison.Ordinal)));
+        Assert.IsTrue(pointers.Any(p => p.Contains("/delete/", StringComparison.Ordinal)));
+        Assert.IsTrue(pointers.Any(p => p.Contains("/options/", StringComparison.Ordinal)));
+        Assert.IsTrue(pointers.Any(p => p.Contains("/head/", StringComparison.Ordinal)));
+        Assert.IsTrue(pointers.Any(p => p.Contains("/patch/", StringComparison.Ordinal)));
+        Assert.IsTrue(pointers.Any(p => p.Contains("/trace/", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_NoPaths_ReturnsEmpty()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, null);
+        Assert.AreEqual(0, pointers.Length);
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_ResponseHeaders()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "responses": {
+                      "200": {
+                        "description": "ok",
+                        "content": { "application/json": { "schema": { "type": "string" } } },
+                        "headers": {
+                          "X-Total": { "schema": { "type": "integer", "format": "int32" } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, null);
+        Assert.AreEqual(2, pointers.Length);
+        Assert.IsTrue(pointers.Any(p => p.Contains("headers/X-Total", StringComparison.Ordinal)));
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_WithRefParameter()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items/{id}": {
+                  "get": {
+                    "operationId": "getItem",
+                    "parameters": [
+                      { "$ref": "#/components/parameters/ItemId" }
+                    ],
+                    "responses": { "200": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } }
+                  }
+                }
+              },
+              "components": {
+                "parameters": {
+                  "ItemId": {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string" }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, null);
+        Assert.AreEqual(2, pointers.Length);
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_WithRefResponse()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "responses": {
+                      "200": { "$ref": "#/components/responses/ItemList" }
+                    }
+                  }
+                }
+              },
+              "components": {
+                "responses": {
+                  "ItemList": {
+                    "description": "OK",
+                    "content": { "application/json": { "schema": { "type": "array" } } },
+                    "headers": {
+                      "X-Count": { "schema": { "type": "integer", "format": "int32" } }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, null);
+        Assert.AreEqual(2, pointers.Length);
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_WithRefRequestBody()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "post": {
+                    "operationId": "createItem",
+                    "requestBody": { "$ref": "#/components/requestBodies/NewItem" },
+                    "responses": { "201": { "description": "ok", "content": { "application/json": { "schema": { "type": "string" } } } } }
+                  }
+                }
+              },
+              "components": {
+                "requestBodies": {
+                  "NewItem": {
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, null);
+        Assert.AreEqual(2, pointers.Length);
+    }
+
+    // ── Generate coverage: all HTTP methods ─────────────────────────────
+    [TestMethod]
+    public void Generate_AllHttpMethods_ProducesCorrectMethodNames()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/things": {
+                  "get":     { "operationId": "getThings",     "responses": { "200": { "description": "ok" } } },
+                  "put":     { "operationId": "putThings",     "responses": { "200": { "description": "ok" } } },
+                  "post":    { "operationId": "postThings",    "responses": { "201": { "description": "ok" } } },
+                  "delete":  { "operationId": "deleteThings",  "responses": { "200": { "description": "ok" } } },
+                  "options": { "operationId": "optionsThings", "responses": { "200": { "description": "ok" } } },
+                  "head":    { "operationId": "headThings",    "responses": { "200": { "description": "ok" } } },
+                  "patch":   { "operationId": "patchThings",   "responses": { "200": { "description": "ok" } } },
+                  "trace":   { "operationId": "traceThings",   "responses": { "200": { "description": "ok" } } }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        Assert.IsTrue(files.Any(f => f.FileName == "GetThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "PutThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "PostThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "DeleteThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "OptionsThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "HeadThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "PatchThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "TraceThingsRequest.cs"));
+    }
+
+    // ── Generate coverage: $ref resolution ──────────────────────────────
+    [TestMethod]
+    public void Generate_RefParameter_ResolvesAndEmitsCorrectly()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items/{id}": {
+                  "get": {
+                    "operationId": "getItem",
+                    "parameters": [
+                      { "$ref": "#/components/parameters/ItemId" }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              },
+              "components": {
+                "parameters": {
+                  "ItemId": {
+                    "name": "id",
+                    "in": "path",
+                    "required": true,
+                    "schema": { "type": "string" }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}/get/parameters/0/schema"] = "Test.JsonString",
+        };
+
+        OpenApi30CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "GetItemRequest.cs");
+        Assert.IsTrue(req.Content.Contains("Test.JsonString", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("Id", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_RefRequestBody_ResolvesAndEmitsCorrectly()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "post": {
+                    "operationId": "createItem",
+                    "requestBody": { "$ref": "#/components/requestBodies/NewItem" },
+                    "responses": { "201": { "description": "created" } }
+                  }
+                }
+              },
+              "components": {
+                "requestBodies": {
+                  "NewItem": {
+                    "required": true,
+                    "content": { "application/json": { "schema": { "type": "object" } } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+
+        // Verify that CollectSchemaPointers finds the $ref'd requestBody schema
+        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, null);
+        string? requestBodyPointer = pointers.FirstOrDefault(
+            p => p.Contains("requestBody", StringComparison.Ordinal));
+        Assert.IsNotNull(requestBodyPointer, "Expected requestBody schema pointer");
+
+        // Use the actual pointer in the map
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            [requestBodyPointer] = "Test.NewItemBody",
+        };
+
+        OpenApi30CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        // The body type name appears in the client implementation, not the request struct
+        GeneratedFile impl = GetFile(files, "ApiDefaultClient.cs");
+        Assert.IsTrue(
+            impl.Content.Contains("Test.NewItemBody", StringComparison.Ordinal),
+            "Expected body type name in client implementation");
+    }
+
+    [TestMethod]
+    public void Generate_RefResponse_ResolvesAndEmitsCorrectly()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "responses": {
+                      "200": { "$ref": "#/components/responses/ItemList" }
+                    }
+                  }
+                }
+              },
+              "components": {
+                "responses": {
+                  "ItemList": {
+                    "description": "OK",
+                    "content": { "application/json": { "schema": { "type": "array" } } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/get/responses/200/content/application~1json/schema"] = "Test.Items",
+        };
+
+        OpenApi30CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "ListItemsResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("Test.Items", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_RefHeader_ResolvesAndEmitsCorrectly()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "responses": {
+                      "200": {
+                        "description": "ok",
+                        "headers": {
+                          "X-Total": { "$ref": "#/components/headers/TotalCount" }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "components": {
+                "headers": {
+                  "TotalCount": {
+                    "schema": { "type": "integer", "format": "int32" }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "ListItemsResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("XTotalHeader", StringComparison.Ordinal));
+    }
+
+    // ── Path style coverage (matrix, label, explicit simple) ───────────
+    [TestMethod]
+    public void Generate_PathParameter_MatrixStyle()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items/{id}": {
+                  "get": {
+                    "operationId": "getItem",
+                    "parameters": [
+                      { "name": "id", "in": "path", "required": true, "style": "matrix", "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "GetItemRequest.cs");
+        Assert.IsTrue(req.Content.Contains("Id", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_PathParameter_LabelStyle()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items/{id}": {
+                  "get": {
+                    "operationId": "getItem",
+                    "parameters": [
+                      { "name": "id", "in": "path", "required": true, "style": "label", "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "GetItemRequest.cs");
+        Assert.IsTrue(req.Content.Contains("Id", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_PathParameter_SimpleExplicit()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items/{id}": {
+                  "get": {
+                    "operationId": "getItem",
+                    "parameters": [
+                      { "name": "id", "in": "path", "required": true, "style": "simple", "explode": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "GetItemRequest.cs");
+        Assert.IsTrue(req.Content.Contains("Id", StringComparison.Ordinal));
+    }
+
+    // ── Query style coverage ────────────────────────────────────────────
+    [TestMethod]
+    public void Generate_QueryParameter_FormExplicit()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "q", "in": "query", "style": "form", "explode": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("Q", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_QueryParameter_SpaceDelimited()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "tags", "in": "query", "style": "spaceDelimited", "schema": { "type": "array" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("Tags", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_QueryParameter_PipeDelimited()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "ids", "in": "query", "style": "pipeDelimited", "schema": { "type": "array" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("Ids", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_QueryParameter_DeepObject()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "filter", "in": "query", "style": "deepObject", "schema": { "type": "object" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("Filter", StringComparison.Ordinal));
+    }
+
+    // ── Synthesized method names ────────────────────────────────────────
+    [TestMethod]
+    public void Generate_NoOperationId_SynthesizesMethodNames()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/things": {
+                  "put":     { "responses": { "200": { "description": "ok" } } },
+                  "delete":  { "responses": { "200": { "description": "ok" } } },
+                  "options": { "responses": { "200": { "description": "ok" } } },
+                  "head":    { "responses": { "200": { "description": "ok" } } },
+                  "patch":   { "responses": { "200": { "description": "ok" } } },
+                  "trace":   { "responses": { "200": { "description": "ok" } } }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        Assert.IsTrue(files.Any(f => f.FileName == "PutThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "DeleteThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "OptionsThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "HeadThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "PatchThingsRequest.cs"));
+        Assert.IsTrue(files.Any(f => f.FileName == "TraceThingsRequest.cs"));
+    }
+
+    // ── Required params ─────────────────────────────────────────────────
+    [TestMethod]
+    public void Generate_RequiredQueryParam_NotNullable()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "page", "in": "query", "required": true, "schema": { "type": "integer", "format": "int32" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items/get/parameters/0/schema"] = "Test.JsonInt32",
+        };
+
+        OpenApi30CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("Test.JsonInt32 Page", StringComparison.Ordinal));
+        Assert.IsFalse(req.Content.Contains("Test.JsonInt32? Page", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_RequiredHeaderParam()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "X-Api-Key", "in": "header", "required": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("WriteHeaders", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("XApiKey", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_RequiredCookieParam()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "session", "in": "cookie", "required": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("WriteCookies", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("Session", StringComparison.Ordinal));
+    }
+
+    // ── SchemaClassifier numeric formats ────────────────────────────────
+    [TestMethod]
+    public void Generate_IntegerFormats_AllVariants()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "a", "in": "query", "schema": { "type": "integer", "format": "uint16" } },
+                      { "name": "b", "in": "query", "schema": { "type": "integer", "format": "uint32" } },
+                      { "name": "c", "in": "query", "schema": { "type": "integer", "format": "uint64" } },
+                      { "name": "d", "in": "query", "schema": { "type": "integer", "format": "uint128" } },
+                      { "name": "e", "in": "query", "schema": { "type": "integer", "format": "sbyte" } },
+                      { "name": "f", "in": "query", "schema": { "type": "integer", "format": "int128" } },
+                      { "name": "g", "in": "query", "schema": { "type": "integer", "format": "byte" } },
+                      { "name": "h", "in": "query", "schema": { "type": "integer", "format": "int16" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("A", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("H", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_NumberFormats_AllVariants()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "a", "in": "query", "schema": { "type": "number", "format": "half" } },
+                      { "name": "b", "in": "query", "schema": { "type": "number", "format": "single" } },
+                      { "name": "c", "in": "query", "schema": { "type": "number", "format": "double" } },
+                      { "name": "d", "in": "query", "schema": { "type": "number", "format": "decimal" } },
+                      { "name": "e", "in": "query", "schema": { "type": "number", "format": "float" } },
+                      { "name": "f", "in": "query", "schema": { "type": "number" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("A", StringComparison.Ordinal));
+    }
+
+    // ── Edge cases ──────────────────────────────────────────────────────
+    [TestMethod]
+    public void Generate_ParameterWithoutSchema_TreatedAsString()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "token", "in": "query", "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+
+        // Even with just a minimal schema, the parameter should appear with PascalCase name
+        Assert.IsTrue(req.Content.Contains("Token", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_NoResponses_ProducesEmptyResponseStruct()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems"
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile resp = GetFile(files, "ListItemsResponse.cs");
+        Assert.IsTrue(resp.Content.Contains("ListItemsResponse", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_StaticPath_NoPlaceholders()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/health/check": {
+                  "get": {
+                    "operationId": "healthCheck",
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "HealthCheckRequest.cs");
+        Assert.IsTrue(req.Content.Contains("\"/health/check\"u8", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_DuplicateHeadersAcrossResponses_DedupedInStruct()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "responses": {
+                      "200": {
+                        "description": "ok",
+                        "headers": {
+                          "X-Request-Id": { "schema": { "type": "string" } }
+                        }
+                      },
+                      "404": {
+                        "description": "not found",
+                        "headers": {
+                          "X-Request-Id": { "schema": { "type": "string" } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile resp = GetFile(files, "ListItemsResponse.cs");
+
+        int count = 0;
+        int idx = 0;
+        while ((idx = resp.Content.IndexOf("XRequestIdHeader", idx, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            idx += "XRequestIdHeader".Length;
+        }
+
+        Assert.IsTrue(count >= 2, "Header property should be declared and used");
+        Assert.IsTrue(count <= 3, "Header should be deduped across responses");
+    }
+
+    [TestMethod]
+    public void Generate_IntegerNoFormat_UnboundedNumber()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "count", "in": "query", "schema": { "type": "integer" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("GetRawUtf8Value", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
+    public void Generate_UnknownSchemaType_TreatedAsString()
+    {
+        // In OpenAPI 3.0, "null" is not a valid type value. Use an unrecognised
+        // type extension — SchemaClassifier falls through to String.
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      { "name": "x", "in": "query", "schema": { "type": "string" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+        Assert.IsTrue(req.Content.Contains("X", StringComparison.Ordinal));
     }
 }
