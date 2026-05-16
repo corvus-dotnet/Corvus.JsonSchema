@@ -41,19 +41,27 @@ public sealed class HttpClientTransport : IApiTransport
     private static ArrayBufferWriter<byte>? t_cookieWriter;
 
     private readonly HttpClient httpClient;
+    private readonly IHttpAuthenticationProvider? authenticationProvider;
     private readonly bool disposeClient;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="HttpClientTransport"/> class.
     /// </summary>
     /// <param name="httpClient">The <see cref="HttpClient"/> to use for sending requests.</param>
+    /// <param name="authenticationProvider">An optional authentication provider that is
+    /// called to mutate each <see cref="HttpRequestMessage"/> before it is sent. Pass
+    /// <see langword="null"/> (the default) for unauthenticated requests.</param>
     /// <param name="disposeClient">
     /// <see langword="true"/> to dispose <paramref name="httpClient"/> when this transport
     /// is disposed; <see langword="false"/> (the default) to leave it to the caller.
     /// </param>
-    public HttpClientTransport(HttpClient httpClient, bool disposeClient = false)
+    public HttpClientTransport(
+        HttpClient httpClient,
+        IHttpAuthenticationProvider? authenticationProvider = null,
+        bool disposeClient = false)
     {
         this.httpClient = httpClient ?? throw new ArgumentNullException(nameof(httpClient));
+        this.authenticationProvider = authenticationProvider;
         this.disposeClient = disposeClient;
     }
 
@@ -201,6 +209,13 @@ public sealed class HttpClientTransport : IApiTransport
         CancellationToken cancellationToken)
         where TResponse : struct, IApiResponse<TResponse>
     {
+        if (this.authenticationProvider is not null)
+        {
+            await this.authenticationProvider
+                .AuthenticateAsync(httpRequest, cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         HttpResponseMessage httpResponse = await this.httpClient
             .SendAsync(httpRequest, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
             .ConfigureAwait(false);
