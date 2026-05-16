@@ -191,4 +191,143 @@ public class CodeEmitHelpersTests
     {
         Assert.AreEqual(-1, CodeEmitHelpers.TryFormatBufferSize(ParameterSerializationKind.String));
     }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.String)]
+    [DataRow(ParameterSerializationKind.Boolean)]
+    [DataRow(ParameterSerializationKind.Int32)]
+    [DataRow(ParameterSerializationKind.Double)]
+    [DataRow(ParameterSerializationKind.UnboundedNumber)]
+    [DataRow(ParameterSerializationKind.Object)]
+    public void EmitPathParamWrite_AllKindCategories_ProducesOutput(ParameterSerializationKind kind)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitPathParamWrite(w, "value", "p0", kind);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitPathParamWrite should produce output for {kind}");
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.String)]
+    [DataRow(ParameterSerializationKind.Boolean)]
+    [DataRow(ParameterSerializationKind.Int32)]
+    [DataRow(ParameterSerializationKind.Double)]
+    [DataRow(ParameterSerializationKind.UnboundedNumber)]
+    [DataRow(ParameterSerializationKind.Object)]
+    public void EmitQueryScalarWrite_AllKindCategories_ProducesOutput(ParameterSerializationKind kind)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitQueryScalarWrite(w, "value", "q0", kind);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitQueryScalarWrite should produce output for {kind}");
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.String)]
+    [DataRow(ParameterSerializationKind.Boolean)]
+    [DataRow(ParameterSerializationKind.Int32)]
+    [DataRow(ParameterSerializationKind.Double)]
+    [DataRow(ParameterSerializationKind.UnboundedNumber)]
+    [DataRow(ParameterSerializationKind.Object)]
+    public void EmitHeaderScalarWrite_AllKindCategories_ProducesOutput(ParameterSerializationKind kind)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitHeaderScalarWrite(w, "value", "h0", kind);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitHeaderScalarWrite should produce output for {kind}");
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.String)]
+    [DataRow(ParameterSerializationKind.Boolean)]
+    [DataRow(ParameterSerializationKind.Int32)]
+    [DataRow(ParameterSerializationKind.Double)]
+    [DataRow(ParameterSerializationKind.UnboundedNumber)]
+    [DataRow(ParameterSerializationKind.Object)]
+    public void EmitCookieScalarWrite_AllKindCategories_ProducesOutput(ParameterSerializationKind kind)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitCookieScalarWrite(w, "value", "c0", kind);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitCookieScalarWrite should produce output for {kind}");
+    }
+
+    [TestMethod]
+    [DataRow("abstract")]
+    [DataRow("as")]
+    [DataRow("base")]
+    [DataRow("bool")]
+    [DataRow("break")]
+    [DataRow("byte")]
+    [DataRow("case")]
+    [DataRow("catch")]
+    [DataRow("char")]
+    [DataRow("checked")]
+    [DataRow("class")]
+    [DataRow("const")]
+    [DataRow("continue")]
+    [DataRow("decimal")]
+    [DataRow("default")]
+    [DataRow("delegate")]
+    [DataRow("do")]
+    [DataRow("double")]
+    [DataRow("else")]
+    [DataRow("enum")]
+    [DataRow("event")]
+    [DataRow("explicit")]
+    [DataRow("extern")]
+    [DataRow("false")]
+    [DataRow("finally")]
+    [DataRow("fixed")]
+    [DataRow("float")]
+    [DataRow("for")]
+    [DataRow("foreach")]
+    [DataRow("goto")]
+    [DataRow("if")]
+    [DataRow("implicit")]
+    [DataRow("in")]
+    [DataRow("int")]
+    [DataRow("interface")]
+    [DataRow("internal")]
+    [DataRow("is")]
+    [DataRow("lock")]
+    [DataRow("long")]
+    [DataRow("namespace")]
+    [DataRow("new")]
+    [DataRow("null")]
+    [DataRow("object")]
+    [DataRow("operator")]
+    [DataRow("out")]
+    [DataRow("override")]
+    [DataRow("params")]
+    [DataRow("private")]
+    [DataRow("protected")]
+    [DataRow("public")]
+    [DataRow("readonly")]
+    [DataRow("ref")]
+    [DataRow("return")]
+    [DataRow("sbyte")]
+    [DataRow("sealed")]
+    [DataRow("short")]
+    [DataRow("sizeof")]
+    [DataRow("stackalloc")]
+    [DataRow("static")]
+    [DataRow("string")]
+    [DataRow("struct")]
+    [DataRow("switch")]
+    [DataRow("this")]
+    [DataRow("throw")]
+    [DataRow("true")]
+    [DataRow("try")]
+    [DataRow("typeof")]
+    [DataRow("uint")]
+    [DataRow("ulong")]
+    [DataRow("unchecked")]
+    [DataRow("unsafe")]
+    [DataRow("ushort")]
+    [DataRow("using")]
+    [DataRow("virtual")]
+    [DataRow("void")]
+    [DataRow("volatile")]
+    [DataRow("while")]
+    public void EscapeCSharpKeyword_ReservedWords_AllPrefixAt(string keyword)
+    {
+        Assert.AreEqual($"@{keyword}", CodeEmitHelpers.EscapeCSharpKeyword(keyword));
+    }
 }
