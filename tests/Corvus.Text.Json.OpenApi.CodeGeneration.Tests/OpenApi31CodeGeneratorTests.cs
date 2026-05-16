@@ -5091,4 +5091,273 @@ public class OpenApi31CodeGeneratorTests
         Assert.IsTrue(req.Content.Contains("\"prefs=\"u8", StringComparison.Ordinal), "Cookie non-explode object should emit name= prefix");
         Assert.IsTrue(req.Content.Contains("\",\"u8", StringComparison.Ordinal), "Cookie non-explode object should use comma between key-value pairs");
     }
+
+    // ── Octet-stream / vendor +json code generation ──────────────────────
+    private const string StreamSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "StreamTest", "version": "1.0" },
+          "paths": {
+            "/download": {
+              "get": {
+                "operationId": "downloadFile",
+                "tags": ["files"],
+                "responses": {
+                  "200": {
+                    "description": "Binary file",
+                    "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+                  }
+                }
+              }
+            },
+            "/upload": {
+              "post": {
+                "operationId": "uploadFile",
+                "tags": ["files"],
+                "requestBody": {
+                  "required": true,
+                  "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+                },
+                "responses": {
+                  "201": {
+                    "description": "Created",
+                    "content": { "application/json": { "schema": { "type": "object", "properties": { "id": { "type": "string" } } } } }
+                  }
+                }
+              }
+            },
+            "/mixed": {
+              "get": {
+                "operationId": "downloadMixed",
+                "tags": ["files"],
+                "responses": {
+                  "200": {
+                    "description": "Binary file",
+                    "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+                  },
+                  "404": {
+                    "description": "Not found",
+                    "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+                  }
+                }
+              }
+            },
+            "/vendor": {
+              "get": {
+                "operationId": "getVendorData",
+                "tags": ["files"],
+                "responses": {
+                  "200": {
+                    "description": "Vendor JSON",
+                    "content": { "application/vnd.api+json": { "schema": { "type": "object", "properties": { "data": { "type": "string" } } } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    private static IReadOnlyList<GeneratedFile> GenerateStreamSpec()
+    {
+        JsonElement root = ParseSpec(StreamSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1upload/post/responses/201/content/application~1json/schema"] = "Test.UploadResult",
+            ["#/paths/~1mixed/get/responses/404/content/application~1json/schema"] = "Test.ErrorResponse",
+            ["#/paths/~1vendor/get/responses/200/content/application~1vnd.api+json/schema"] = "Test.VendorData",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        return gen.Generate(root);
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_ExcludesOctetStreamSchemas()
+    {
+        JsonElement root = ParseSpec(StreamSpec);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root);
+
+        // Octet-stream schemas should NOT appear
+        Assert.IsFalse(
+            pointers.Any(p => p.Contains("octet-stream", StringComparison.Ordinal)),
+            "Octet-stream schemas should be excluded from schema pointer collection");
+
+        // JSON schemas should still appear
+        Assert.IsTrue(
+            pointers.Any(p => p.Contains("application~1json", StringComparison.Ordinal)),
+            "JSON schemas should still be collected");
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_IncludesVendorJsonSchemas()
+    {
+        JsonElement root = ParseSpec(StreamSpec);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root);
+
+        Assert.IsTrue(
+            pointers.Any(p => p.Contains("vnd.api+json", StringComparison.Ordinal)),
+            "Vendor +json schemas should be collected like regular JSON");
+    }
+
+    [TestMethod]
+    public void StreamResponse_NoParsedDocumentField()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "DownloadFileResponse.cs");
+
+        Assert.IsFalse(
+            resp.Content.Contains("parsedDocument", StringComparison.Ordinal),
+            "Stream-only response should not have a parsedDocument field");
+    }
+
+    [TestMethod]
+    public void StreamResponse_HasStreamProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "DownloadFileResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("public Stream? OkStream", StringComparison.Ordinal),
+            "Stream response should have a Stream? property");
+    }
+
+    [TestMethod]
+    public void StreamResponse_HasTryGetOkStreamWithNotNullWhen()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "DownloadFileResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("[NotNullWhen(true)] out Stream? result", StringComparison.Ordinal),
+            "Stream TryGet should use [NotNullWhen(true)]");
+    }
+
+    [TestMethod]
+    public void StreamResponse_MatchResultUsesStreamType()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "DownloadFileResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("ResponseMatcher<Stream?, TResult>", StringComparison.Ordinal),
+            "Stream response MatchResult should use Stream? as body type");
+    }
+
+    [TestMethod]
+    public void StreamResponse_IsNotAsync()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "DownloadFileResponse.cs");
+
+        Assert.IsFalse(
+            resp.Content.Contains("async ValueTask<DownloadFileResponse>", StringComparison.Ordinal),
+            "Stream-only CreateAsync should not be async");
+        Assert.IsTrue(
+            resp.Content.Contains("ValueTask.FromResult(response)", StringComparison.Ordinal),
+            "Non-async CreateAsync should use ValueTask.FromResult");
+    }
+
+    [TestMethod]
+    public void StreamRequestBody_ClientMethodAcceptsStream()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile client = GetFile(files, "ApiFilesClient.cs");
+
+        Assert.IsTrue(
+            client.Content.Contains("Stream body", StringComparison.Ordinal),
+            "Upload operation should accept a Stream body parameter");
+        Assert.IsTrue(
+            client.Content.Contains("string contentType", StringComparison.Ordinal),
+            "Upload operation should accept a contentType parameter");
+    }
+
+    [TestMethod]
+    public void StreamRequestBody_InterfaceMethodAcceptsStream()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile iface = GetFile(files, "IApiFilesClient.cs");
+
+        Assert.IsTrue(
+            iface.Content.Contains("Stream body", StringComparison.Ordinal),
+            "Interface upload method should accept Stream body");
+    }
+
+    [TestMethod]
+    public void StreamRequestBody_ResponseHasParsedDocumentForJsonBody()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "UploadFileResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("parsedDocument", StringComparison.Ordinal),
+            "Upload response has JSON body (201) so should have parsedDocument");
+        Assert.IsFalse(
+            resp.Content.Contains("OkStream", StringComparison.Ordinal),
+            "Upload response should not have stream properties (only JSON response)");
+    }
+
+    [TestMethod]
+    public void MixedResponse_HasBothStreamAndJsonAccessors()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "DownloadMixedResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("TryGetOkStream", StringComparison.Ordinal),
+            "Mixed response should have TryGetOkStream for 200");
+        Assert.IsTrue(
+            resp.Content.Contains("TryGetNotFound", StringComparison.Ordinal),
+            "Mixed response should have TryGetNotFound for 404 JSON body");
+    }
+
+    [TestMethod]
+    public void MixedResponse_HasParsedDocumentField()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "DownloadMixedResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("parsedDocument", StringComparison.Ordinal),
+            "Mixed response with JSON body should have parsedDocument");
+    }
+
+    [TestMethod]
+    public void MixedResponse_StreamAccessorHasNotNullWhen()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "DownloadMixedResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("[NotNullWhen(true)] out Stream? result", StringComparison.Ordinal),
+            "Mixed stream TryGet should use [NotNullWhen(true)]");
+    }
+
+    [TestMethod]
+    public void VendorJson_TreatedAsRegularJson()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "GetVendorDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("TryGetOk", StringComparison.Ordinal),
+            "Vendor +json response should have standard TryGetOk accessor");
+        Assert.IsFalse(
+            resp.Content.Contains("OkStream", StringComparison.Ordinal),
+            "Vendor +json should not generate stream accessors");
+        Assert.IsTrue(
+            resp.Content.Contains("parsedDocument", StringComparison.Ordinal),
+            "Vendor +json should parse as JSON (parsedDocument field present)");
+    }
+
+    [TestMethod]
+    public void VendorJson_UsesCorrectSchemaType()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateStreamSpec();
+        GeneratedFile resp = GetFile(files, "GetVendorDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("Test.VendorData", StringComparison.Ordinal),
+            "Vendor +json response should use the mapped schema type");
+    }
 }
