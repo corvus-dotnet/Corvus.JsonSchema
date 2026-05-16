@@ -102,6 +102,19 @@ public sealed class IndentedWriter
         return this;
     }
 
+    /// <summary>
+    /// Closes a brace block without a trailing newline: pops indent and writes <c>}</c>.
+    /// Use when the closing brace is followed by more content on the same line
+    /// (e.g. <c>})).RootElement;</c>).
+    /// </summary>
+    /// <returns>This writer, for fluent chaining.</returns>
+    public IndentedWriter CloseBraceNoNewline()
+    {
+        this.PopIndent();
+        this.Write("}");
+        return this;
+    }
+
     /// <inheritdoc/>
     public override string ToString() => this.sb.ToString();
 

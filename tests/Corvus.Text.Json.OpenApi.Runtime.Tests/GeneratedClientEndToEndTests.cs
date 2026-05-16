@@ -1178,6 +1178,119 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual("default:403", result);
     }
 
+    // ── Response header lazy parsing tests ──────────────────────────────
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_IntegerParsedLazily()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"tag":"v"}""",
+            new Dictionary<string, string> { ["X-Total-Count"] = "42" });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        // Accessing XTotalCountHeader should lazily parse the integer value.
+        Assert.IsNotNull(response.XTotalCountHeader);
+        Assert.AreEqual(42, (int)response.XTotalCountHeader.Value);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_StringParsedLazily()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"tag":"v"}""",
+            new Dictionary<string, string> { ["X-Request-Id"] = "req-abc-123" });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNotNull(response.XRequestIdHeader);
+        Assert.AreEqual("req-abc-123", (string)response.XRequestIdHeader.Value);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_MissingHeaderReturnsNull()
+    {
+        // No response headers set at all.
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"tag":"v"}""");
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNull(response.XTotalCountHeader);
+        Assert.IsNull(response.XRequestIdHeader);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_CachedOnSecondAccess()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"tag":"v"}""",
+            new Dictionary<string, string> { ["X-Total-Count"] = "99" });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        // First access parses, second access returns cached value.
+        var first = response.XTotalCountHeader;
+        var second = response.XTotalCountHeader;
+
+        Assert.IsNotNull(first);
+        Assert.IsNotNull(second);
+        Assert.AreEqual((int)first.Value, (int)second.Value);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_BothHeadersPresent()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"tag":"v"}""",
+            new Dictionary<string, string>
+            {
+                ["X-Total-Count"] = "7",
+                ["X-Request-Id"] = "id-xyz",
+            });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.AreEqual(7, (int)response.XTotalCountHeader!.Value);
+        Assert.AreEqual("id-xyz", (string)response.XRequestIdHeader!.Value);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_ResponseHeader_NonMatchingStatusStillParsesHeaders()
+    {
+        // Even for a 404 (no body parsed), headers should still be available.
+        using var harness = new TestHarness(
+            HttpStatusCode.NotFound,
+            string.Empty,
+            new Dictionary<string, string> { ["X-Request-Id"] = "err-404" });
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
+                CancellationToken.None);
+
+        Assert.AreEqual(404, response.StatusCode);
+        Assert.IsFalse(response.IsSuccess);
+        Assert.AreEqual("err-404", (string)response.XRequestIdHeader!.Value);
+    }
+
     [TestMethod]
     public async Task GetItemDetails_PathWithTrailingLiteral()
     {
@@ -1782,8 +1895,16 @@ public class GeneratedClientEndToEndTests
         private readonly HttpClient client;
 
         public TestHarness(HttpStatusCode statusCode, string responseBody)
+            : this(statusCode, responseBody, null)
         {
-            this.handler = new MockHandler(statusCode, responseBody);
+        }
+
+        public TestHarness(
+            HttpStatusCode statusCode,
+            string responseBody,
+            Dictionary<string, string>? responseHeaders)
+        {
+            this.handler = new MockHandler(statusCode, responseBody, responseHeaders);
             this.client = new HttpClient(this.handler)
             {
                 BaseAddress = new Uri("http://localhost"),
@@ -1811,11 +1932,16 @@ public class GeneratedClientEndToEndTests
     {
         private readonly HttpStatusCode statusCode;
         private readonly string responseBody;
+        private readonly Dictionary<string, string>? responseHeaders;
 
-        public MockHandler(HttpStatusCode statusCode, string responseBody)
+        public MockHandler(
+            HttpStatusCode statusCode,
+            string responseBody,
+            Dictionary<string, string>? responseHeaders = null)
         {
             this.statusCode = statusCode;
             this.responseBody = responseBody;
+            this.responseHeaders = responseHeaders;
             this.InnerHandler = new HttpClientHandler();
         }
 
@@ -1833,6 +1959,14 @@ public class GeneratedClientEndToEndTests
                     ? new ByteArrayContent([])
                     : new StringContent(this.responseBody, Encoding.UTF8, "application/json"),
             };
+
+            if (this.responseHeaders is not null)
+            {
+                foreach (var (key, value) in this.responseHeaders)
+                {
+                    response.Headers.TryAddWithoutValidation(key, value);
+                }
+            }
 
             return Task.FromResult(response);
         }

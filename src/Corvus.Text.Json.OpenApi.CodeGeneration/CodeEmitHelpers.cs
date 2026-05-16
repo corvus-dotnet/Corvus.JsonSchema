@@ -1493,11 +1493,13 @@ public static class CodeEmitHelpers
         // Object: split on comma, interpret as key,value pairs (or key=value with explode).
         if (kind is ParameterSerializationKind.Array)
         {
-            EmitResponseHeaderArrayParse(w, fieldName, typeName, explode);
+            // TODO: Pass the actual element schema kind when available.
+            EmitResponseHeaderArrayParse(w, fieldName, typeName, explode, ParameterSerializationKind.String);
         }
         else if (kind is ParameterSerializationKind.Object)
         {
-            EmitResponseHeaderObjectParse(w, fieldName, typeName, explode);
+            // TODO: Pass the actual value schema kind when available.
+            EmitResponseHeaderObjectParse(w, fieldName, typeName, explode, ParameterSerializationKind.String);
         }
         else
         {
@@ -1519,98 +1521,143 @@ public static class CodeEmitHelpers
         string typeName,
         ParameterSerializationKind kind)
     {
-        // For string types, use the raw value directly as JSON.
-        // For numeric/boolean types, parse the raw value.
         if (kind is ParameterSerializationKind.String)
         {
-            // Wrap in quotes to make valid JSON, then parse.
-            w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
-            w.WriteLine("    System.Text.Encoding.UTF8.GetBytes($\"\\\"{{rawValue}}\\\"\"));");
+            // String: use FixedJsonValueDocument via HeaderValueParser (zero-alloc, handles escaping).
+            w.WriteLine($"this.{fieldName}HeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<{typeName}>(rawValue, this.workspace);");
         }
-        else if (kind is ParameterSerializationKind.Boolean)
+        else if (IsNumericKind(kind))
         {
-            w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
-            w.WriteLine("    System.Text.Encoding.UTF8.GetBytes(rawValue));");
+            // Numeric: use FixedJsonValueDocument via HeaderValueParser (zero-alloc).
+            w.WriteLine($"this.{fieldName}HeaderValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<{typeName}>(rawValue, this.workspace);");
         }
         else
         {
-            // Numeric types: the raw string IS the JSON representation.
-            w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
-            w.WriteLine("    System.Text.Encoding.UTF8.GetBytes(rawValue));");
+            // Boolean and other non-numeric/non-string: use CreateBuilder with Source implicit conversion.
+            string sourceExpr = GetScalarSourceExpression(kind);
+            w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.CreateBuilder(this.workspace, {sourceExpr}).RootElement;");
         }
+    }
+
+    private static bool IsNumericKind(ParameterSerializationKind kind)
+    {
+        return kind is ParameterSerializationKind.Byte
+            or ParameterSerializationKind.UInt16
+            or ParameterSerializationKind.UInt32
+            or ParameterSerializationKind.UInt64
+            or ParameterSerializationKind.UInt128
+            or ParameterSerializationKind.SByte
+            or ParameterSerializationKind.Int16
+            or ParameterSerializationKind.Int32
+            or ParameterSerializationKind.Int64
+            or ParameterSerializationKind.Int128
+            or ParameterSerializationKind.Half
+            or ParameterSerializationKind.Single
+            or ParameterSerializationKind.Double
+            or ParameterSerializationKind.Decimal
+            or ParameterSerializationKind.UnboundedNumber;
+    }
+
+    private static string GetScalarSourceExpression(ParameterSerializationKind kind)
+    {
+        return kind switch
+        {
+            ParameterSerializationKind.Boolean => "bool.Parse(rawValue)",
+            _ => "rawValue",
+        };
     }
 
     private static void EmitResponseHeaderArrayParse(
         IndentedWriter w,
         string fieldName,
         string typeName,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind elementKind)
     {
         // style: simple arrays are comma-separated (explode has no effect on separator for simple).
-        // Build a JSON array from the comma-separated values.
-        _ = explode; // simple style array separator is always comma regardless of explode
-        w.WriteLine("string[] elements = rawValue.Split(',');");
-        w.WriteLine("System.Text.StringBuilder jsonBuilder = new();");
-        w.WriteLine("jsonBuilder.Append('[');");
-        w.WriteLine("for (int i = 0; i < elements.Length; i++)");
+        // Use CreateBuilder<TContext> with rawValue as context — static lambda, zero captures.
+        _ = explode;
+        string elementSourceExpr = GetElementSourceExpression(elementKind, "element");
+        w.Write($"this.{fieldName}HeaderValue = {typeName}.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref {typeName}.Builder arrayBuilder) =>");
+        w.WriteLine();
         w.OpenBrace();
-        w.WriteLine("if (i > 0) jsonBuilder.Append(',');");
-        w.WriteLine("jsonBuilder.Append('\"');");
-        w.WriteLine("jsonBuilder.Append(elements[i].Trim());");
-        w.WriteLine("jsonBuilder.Append('\"');");
+        w.WriteLine("System.ReadOnlySpan<char> remaining = ctx;");
+        w.WriteLine("while (!remaining.IsEmpty)");
+        w.OpenBrace();
+        w.WriteLine("int commaIdx = remaining.IndexOf(',');");
+        w.WriteLine("System.ReadOnlySpan<char> element = commaIdx >= 0 ? remaining.Slice(0, commaIdx).Trim() : remaining.Trim();");
+        w.WriteLine($"arrayBuilder.AddItem({elementSourceExpr});");
+        w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
         w.CloseBrace();
-        w.WriteLine("jsonBuilder.Append(']');");
-        w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
-        w.WriteLine("    System.Text.Encoding.UTF8.GetBytes(jsonBuilder.ToString()));");
+        w.CloseBraceNoNewline();
+        w.WriteLine(").RootElement;");
     }
 
     private static void EmitResponseHeaderObjectParse(
         IndentedWriter w,
         string fieldName,
         string typeName,
-        bool explode)
+        bool explode,
+        ParameterSerializationKind valueKind)
     {
         // style: simple objects:
         // explode=false: comma-separated alternating key,value: "R,100,G,200,B,150"
         // explode=true: comma-separated key=value: "R=100,G=200,B=150"
-        // Build a JSON object from the parsed pairs.
-        w.WriteLine("System.Text.StringBuilder jsonBuilder = new();");
-        w.WriteLine("jsonBuilder.Append('{');");
+        // Use CreateBuilder<TContext> with rawValue as context — static lambda, zero captures.
+        string valueSourceExpr = GetElementSourceExpression(valueKind, "value");
+
+        w.Write($"this.{fieldName}HeaderValue = {typeName}.CreateBuilder<string>(this.workspace, rawValue, static (in string ctx, ref {typeName}.Builder objectBuilder) =>");
+        w.WriteLine();
+        w.OpenBrace();
+        w.WriteLine("System.ReadOnlySpan<char> remaining = ctx;");
 
         if (explode)
         {
-            w.WriteLine("string[] pairs = rawValue.Split(',');");
-            w.WriteLine("for (int i = 0; i < pairs.Length; i++)");
+            w.WriteLine("while (!remaining.IsEmpty)");
             w.OpenBrace();
-            w.WriteLine("if (i > 0) jsonBuilder.Append(',');");
-            w.WriteLine("int eqIdx = pairs[i].IndexOf('=');");
+            w.WriteLine("int commaIdx = remaining.IndexOf(',');");
+            w.WriteLine("System.ReadOnlySpan<char> pair = commaIdx >= 0 ? remaining.Slice(0, commaIdx) : remaining;");
+            w.WriteLine("int eqIdx = pair.IndexOf('=');");
             w.WriteLine("if (eqIdx >= 0)");
             w.OpenBrace();
-            w.WriteLine("jsonBuilder.Append('\"');");
-            w.WriteLine("jsonBuilder.Append(pairs[i].AsSpan(0, eqIdx).Trim().ToString());");
-            w.WriteLine("jsonBuilder.Append(\"\\\":\\\"\");");
-            w.WriteLine("jsonBuilder.Append(pairs[i].AsSpan(eqIdx + 1).Trim().ToString());");
-            w.WriteLine("jsonBuilder.Append('\"');");
+            w.WriteLine("System.ReadOnlySpan<char> key = pair.Slice(0, eqIdx).Trim();");
+            w.WriteLine("System.ReadOnlySpan<char> value = pair.Slice(eqIdx + 1).Trim();");
+            w.WriteLine($"objectBuilder.AddProperty(key, {valueSourceExpr});");
             w.CloseBrace();
+            w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
             w.CloseBrace();
         }
         else
         {
-            w.WriteLine("string[] parts = rawValue.Split(',');");
-            w.WriteLine("for (int i = 0; i + 1 < parts.Length; i += 2)");
+            w.WriteLine("while (!remaining.IsEmpty)");
             w.OpenBrace();
-            w.WriteLine("if (i > 0) jsonBuilder.Append(',');");
-            w.WriteLine("jsonBuilder.Append('\"');");
-            w.WriteLine("jsonBuilder.Append(parts[i].Trim());");
-            w.WriteLine("jsonBuilder.Append(\"\\\":\\\"\");");
-            w.WriteLine("jsonBuilder.Append(parts[i + 1].Trim());");
-            w.WriteLine("jsonBuilder.Append('\"');");
+            w.WriteLine("int commaIdx = remaining.IndexOf(',');");
+            w.WriteLine("System.ReadOnlySpan<char> key = commaIdx >= 0 ? remaining.Slice(0, commaIdx).Trim() : remaining.Trim();");
+            w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
+            w.WriteLine("if (remaining.IsEmpty) break;");
+            w.WriteLine("commaIdx = remaining.IndexOf(',');");
+            w.WriteLine("System.ReadOnlySpan<char> value = commaIdx >= 0 ? remaining.Slice(0, commaIdx).Trim() : remaining.Trim();");
+            w.WriteLine($"objectBuilder.AddProperty(key, {valueSourceExpr});");
+            w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
             w.CloseBrace();
         }
 
-        w.WriteLine("jsonBuilder.Append('}');");
-        w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.ParseValue(");
-        w.WriteLine("    System.Text.Encoding.UTF8.GetBytes(jsonBuilder.ToString()));");
+        w.CloseBraceNoNewline();
+        w.WriteLine(").RootElement;");
+    }
+
+    private static string GetElementSourceExpression(ParameterSerializationKind kind, string varName)
+    {
+        return kind switch
+        {
+            ParameterSerializationKind.String => varName,
+            ParameterSerializationKind.Boolean => $"bool.Parse({varName})",
+            ParameterSerializationKind.Int32 => $"int.Parse({varName})",
+            ParameterSerializationKind.Int64 => $"long.Parse({varName})",
+            ParameterSerializationKind.Single => $"float.Parse({varName})",
+            ParameterSerializationKind.Double => $"double.Parse({varName})",
+            _ => varName,
+        };
     }
 
     /// <summary>

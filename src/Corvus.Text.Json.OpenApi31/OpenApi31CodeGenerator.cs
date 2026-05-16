@@ -1436,6 +1436,7 @@ public sealed class OpenApi31CodeGenerator
         if (hasTypedHeaders)
         {
             w.WriteLine("private IResponseHeaders? responseHeaders;");
+            w.WriteLine("private JsonWorkspace workspace;");
         }
 
         w.WriteLine();
@@ -1551,6 +1552,12 @@ public sealed class OpenApi31CodeGenerator
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine("public async ValueTask DisposeAsync()");
         w.OpenBrace();
+
+        if (hasTypedHeaders)
+        {
+            w.WriteLine("this.workspace.Dispose();");
+        }
+
         w.WriteLine("this.parsedDocument?.Dispose();");
         w.WriteLine("if (this.owner is not null)");
         w.OpenBrace();
@@ -1705,6 +1712,7 @@ public sealed class OpenApi31CodeGenerator
         if (hasTypedHeaders)
         {
             w.WriteLine("response.responseHeaders = responseHeaders;");
+            w.WriteLine("response.workspace = JsonWorkspace.CreateUnrented();");
             w.WriteLine();
         }
 

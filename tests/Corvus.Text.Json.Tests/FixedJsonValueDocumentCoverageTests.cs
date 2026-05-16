@@ -1058,4 +1058,225 @@ public class FixedJsonValueDocumentCoverageTests
         using UnescapedUtf16JsonString result = d.GetUtf16JsonString(0, JsonTokenType.String);
         Assert.AreEqual("simple", result.Span.ToString());
     }
+
+    // --- ForNumberFromSpan(ReadOnlySpan<char>) ---
+
+    [TestMethod]
+    public void ForNumberFromSpan_Chars_Integer()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForNumberFromSpan("42");
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(JsonValueKind.Number, root.ValueKind);
+        Assert.AreEqual(42, root.GetInt32());
+    }
+
+    [TestMethod]
+    public void ForNumberFromSpan_Chars_Decimal()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForNumberFromSpan("3.14");
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(JsonValueKind.Number, root.ValueKind);
+        Assert.AreEqual(3.14, root.GetDouble(), 0.001);
+    }
+
+    [TestMethod]
+    public void ForNumberFromSpan_Chars_Negative()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForNumberFromSpan("-100");
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(-100, root.GetInt32());
+    }
+
+    [TestMethod]
+    public void ForNumberFromSpan_Chars_Exponent()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForNumberFromSpan("1.5e2");
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(150.0, root.GetDouble(), 0.001);
+    }
+
+    // --- ForStringFromSpan(ReadOnlySpan<char>) (pre-quoted input) ---
+
+    [TestMethod]
+    public void ForStringFromSpan_Chars_Simple()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForStringFromSpan("\"hello\"");
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(JsonValueKind.String, root.ValueKind);
+        Assert.AreEqual("hello", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForStringFromSpan_Chars_WithEscapes()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForStringFromSpan("\"line\\nbreak\"");
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("line\nbreak", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForStringFromSpan_Chars_NonAscii()
+    {
+        // Non-ASCII chars need multi-byte UTF-8 transcoding.
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForStringFromSpan("\"caf\u00e9\"");
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("caf\u00e9", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForStringFromSpan_Chars_LongString_TriggersArrayPool()
+    {
+        // Trigger ArrayPool path: string > StackallocByteThreshold (256 bytes).
+        string longContent = new string('a', 300);
+        string quoted = $"\"{longContent}\"";
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForStringFromSpan(quoted);
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(longContent, root.GetString());
+    }
+
+    // --- ForUnescapedString(ReadOnlySpan<char>) ---
+
+    [TestMethod]
+    public void ForUnescapedString_Chars_Simple()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("hello".AsSpan());
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(JsonValueKind.String, root.ValueKind);
+        Assert.AreEqual("hello", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Chars_Empty()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString(ReadOnlySpan<char>.Empty);
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(JsonValueKind.String, root.ValueKind);
+        Assert.AreEqual(string.Empty, root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Chars_ContainingQuotes()
+    {
+        // Double-quote in content must be escaped to \u0022 in JSON.
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("say \"hi\"".AsSpan());
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("say \"hi\"", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Chars_ContainingBackslash()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("path\\to\\file".AsSpan());
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("path\\to\\file", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Chars_ContainingControlChars()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("line\nbreak\ttab".AsSpan());
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("line\nbreak\ttab", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Chars_ContainingNullChar()
+    {
+        // Null char (U+0000) must be escaped to \u0000.
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("a\0b".AsSpan());
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("a\0b", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Chars_NonAscii()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("caf\u00e9".AsSpan());
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("caf\u00e9", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Chars_LongString_TriggersArrayPool()
+    {
+        string longContent = new string('z', 300);
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString(longContent.AsSpan());
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(longContent, root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Chars_LongWithEscapes_TriggersArrayPool()
+    {
+        // Long string with escape-needing chars to trigger ArrayPool in slow path.
+        string longContent = new string('"', 100);
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString(longContent.AsSpan());
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(longContent, root.GetString());
+    }
+
+    // --- ForUnescapedString(ReadOnlySpan<byte>) ---
+
+    [TestMethod]
+    public void ForUnescapedString_Utf8_Simple()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("hello"u8);
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(JsonValueKind.String, root.ValueKind);
+        Assert.AreEqual("hello", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Utf8_Empty()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString(ReadOnlySpan<byte>.Empty);
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(string.Empty, root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Utf8_ContainingQuotes()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("say \"hi\""u8);
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("say \"hi\"", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Utf8_ContainingBackslash()
+    {
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString("path\\to\\file"u8);
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("path\\to\\file", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Utf8_ContainingControlChars()
+    {
+        byte[] input = [(byte)'a', (byte)'\n', (byte)'b', (byte)'\t', (byte)'c'];
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString(input);
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual("a\nb\tc", root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Utf8_LongString_TriggersArrayPool()
+    {
+        byte[] longContent = new byte[300];
+        longContent.AsSpan().Fill((byte)'x');
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString(longContent);
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(new string('x', 300), root.GetString());
+    }
+
+    [TestMethod]
+    public void ForUnescapedString_Utf8_LongWithEscapes_TriggersArrayPool()
+    {
+        // 100 backslashes — each needs escaping; triggers ArrayPool in slow path.
+        byte[] longContent = new byte[100];
+        longContent.AsSpan().Fill((byte)'\\');
+        using FixedJsonValueDocument<JsonElement> doc = FixedJsonValueDocument<JsonElement>.ForUnescapedString(longContent);
+        JsonElement root = doc.RootElement;
+        Assert.AreEqual(new string('\\', 100), root.GetString());
+    }
 }

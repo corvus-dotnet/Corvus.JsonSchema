@@ -99,6 +99,211 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
         return Pool.RentFromSpan(rawQuotedUtf8String, JsonTokenType.String);
     }
 
+    /// <summary>
+    /// Creates a <see cref="FixedJsonValueDocument{T}"/> for a number value from a char span,
+    /// transcoding UTF-16 to UTF-8 (zero heap allocation).
+    /// </summary>
+    /// <param name="chars">The number text as chars (e.g., "42", "3.14"). Must contain only ASCII digits,
+    /// sign, decimal point, and exponent characters.</param>
+    /// <returns>A pooled document instance wrapping the number value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FixedJsonValueDocument<T> ForNumberFromSpan(ReadOnlySpan<char> chars)
+    {
+        // Numbers are always ASCII — byte count equals char count.
+        Span<byte> utf8 = stackalloc byte[chars.Length];
+        int written = JsonReaderHelper.TranscodeHelper(chars, utf8);
+        return Pool.RentFromSpan(utf8.Slice(0, written), JsonTokenType.Number);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="FixedJsonValueDocument{T}"/> for a string value from a char span.
+    /// The input is the pre-quoted, pre-escaped JSON string representation (e.g., <c>"hello"</c>
+    /// or <c>"line\nbreak"</c>).
+    /// </summary>
+    /// <param name="rawQuotedChars">The quoted, escaped JSON string as chars (including surrounding double-quotes).</param>
+    /// <returns>A pooled document instance wrapping the string value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FixedJsonValueDocument<T> ForStringFromSpan(ReadOnlySpan<char> rawQuotedChars)
+    {
+        // Escaped chars are ASCII; non-ASCII chars encode to at most 3 bytes each.
+        int maxBytes = rawQuotedChars.Length * JsonConstants.MaxExpansionFactorWhileTranscoding;
+        byte[]? rentedTranscode = null;
+        Span<byte> utf8 = maxBytes <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedTranscode = ArrayPool<byte>.Shared.Rent(maxBytes));
+        try
+        {
+            int written = JsonReaderHelper.TranscodeHelper(rawQuotedChars, utf8);
+            return Pool.RentFromSpan(utf8.Slice(0, written), JsonTokenType.String);
+        }
+        finally
+        {
+            if (rentedTranscode is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedTranscode);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Creates a <see cref="FixedJsonValueDocument{T}"/> for a string value from an unescaped
+    /// char span. JSON escaping and surrounding quotes are applied automatically.
+    /// </summary>
+    /// <param name="value">The raw, unescaped string content (no surrounding quotes).</param>
+    /// <returns>A pooled document instance wrapping the string value.</returns>
+    public static FixedJsonValueDocument<T> ForUnescapedString(ReadOnlySpan<char> value)
+    {
+        int firstEscapeIndex = JsonWriterHelper.NeedsEscaping(value, encoder: null);
+
+        if (firstEscapeIndex == -1)
+        {
+            // Fast path: no escaping needed — transcode directly with surrounding quotes.
+            int maxBytes = (value.Length * JsonConstants.MaxExpansionFactorWhileTranscoding) + 2;
+            byte[]? rentedTranscode = null;
+            Span<byte> utf8 = maxBytes <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rentedTranscode = ArrayPool<byte>.Shared.Rent(maxBytes));
+            try
+            {
+                utf8[0] = JsonConstants.Quote;
+                int written = JsonReaderHelper.TranscodeHelper(value, utf8.Slice(1));
+                utf8[written + 1] = JsonConstants.Quote;
+                return Pool.RentFromSpan(utf8.Slice(0, written + 2), JsonTokenType.String);
+            }
+            finally
+            {
+                if (rentedTranscode is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedTranscode);
+                }
+            }
+        }
+
+        return ForUnescapedStringSlow(value, firstEscapeIndex);
+    }
+
+    /// <summary>
+    /// Creates a <see cref="FixedJsonValueDocument{T}"/> for a string value from an unescaped
+    /// UTF-8 span. JSON escaping and surrounding quotes are applied automatically.
+    /// </summary>
+    /// <param name="utf8Value">The raw, unescaped UTF-8 string content (no surrounding quotes).</param>
+    /// <returns>A pooled document instance wrapping the string value.</returns>
+    public static FixedJsonValueDocument<T> ForUnescapedString(ReadOnlySpan<byte> utf8Value)
+    {
+        int firstEscapeIndex = JsonWriterHelper.NeedsEscaping(utf8Value, encoder: null);
+
+        if (firstEscapeIndex == -1)
+        {
+            // Fast path: no escaping needed — wrap with surrounding quotes directly.
+            byte[]? rentedBuffer = null;
+            int totalLength = utf8Value.Length + 2;
+            Span<byte> buffer = totalLength <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rentedBuffer = ArrayPool<byte>.Shared.Rent(totalLength));
+            try
+            {
+                buffer[0] = JsonConstants.Quote;
+                utf8Value.CopyTo(buffer.Slice(1));
+                buffer[utf8Value.Length + 1] = JsonConstants.Quote;
+                return Pool.RentFromSpan(buffer.Slice(0, totalLength), JsonTokenType.String);
+            }
+            finally
+            {
+                if (rentedBuffer is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedBuffer);
+                }
+            }
+        }
+
+        return ForUnescapedStringSlow(utf8Value, firstEscapeIndex);
+    }
+
+    private static FixedJsonValueDocument<T> ForUnescapedStringSlow(ReadOnlySpan<char> value, int firstEscapeIndex)
+    {
+        // Escape into a char buffer, then transcode to UTF-8 with quotes.
+        int maxEscapedLength = JsonWriterHelper.GetMaxEscapedLength(value.Length, firstEscapeIndex);
+        char[]? rentedEscaped = null;
+        Span<char> escapedValue = maxEscapedLength <= JsonConstants.StackallocCharThreshold
+            ? stackalloc char[JsonConstants.StackallocCharThreshold]
+            : (rentedEscaped = ArrayPool<char>.Shared.Rent(maxEscapedLength));
+        try
+        {
+            JsonWriterHelper.EscapeString(value, escapedValue, firstEscapeIndex, encoder: null, out int escapedWritten);
+            ReadOnlySpan<char> escaped = escapedValue.Slice(0, escapedWritten);
+
+            // Transcode escaped chars to UTF-8 with surrounding quotes.
+            int maxBytes = (escapedWritten * JsonConstants.MaxExpansionFactorWhileTranscoding) + 2;
+            byte[]? rentedUtf8 = null;
+            Span<byte> utf8 = maxBytes <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rentedUtf8 = ArrayPool<byte>.Shared.Rent(maxBytes));
+            try
+            {
+                utf8[0] = JsonConstants.Quote;
+                int bytesWritten = JsonReaderHelper.TranscodeHelper(escaped, utf8.Slice(1));
+                utf8[bytesWritten + 1] = JsonConstants.Quote;
+                return Pool.RentFromSpan(utf8.Slice(0, bytesWritten + 2), JsonTokenType.String);
+            }
+            finally
+            {
+                if (rentedUtf8 is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedUtf8);
+                }
+            }
+        }
+        finally
+        {
+            if (rentedEscaped is not null)
+            {
+                ArrayPool<char>.Shared.Return(rentedEscaped);
+            }
+        }
+    }
+
+    private static FixedJsonValueDocument<T> ForUnescapedStringSlow(ReadOnlySpan<byte> utf8Value, int firstEscapeIndex)
+    {
+        // Escape into a byte buffer, then wrap with quotes.
+        int maxEscapedLength = JsonWriterHelper.GetMaxEscapedLength(utf8Value.Length, firstEscapeIndex);
+        byte[]? rentedEscaped = null;
+        Span<byte> escapedValue = maxEscapedLength <= JsonConstants.StackallocByteThreshold
+            ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+            : (rentedEscaped = ArrayPool<byte>.Shared.Rent(maxEscapedLength));
+        try
+        {
+            JsonWriterHelper.EscapeString(utf8Value, escapedValue, firstEscapeIndex, encoder: null, out int escapedWritten);
+
+            // Wrap escaped bytes with surrounding quotes.
+            int totalLength = escapedWritten + 2;
+            byte[]? rentedFinal = null;
+            Span<byte> finalBuffer = totalLength <= JsonConstants.StackallocByteThreshold
+                ? stackalloc byte[JsonConstants.StackallocByteThreshold]
+                : (rentedFinal = ArrayPool<byte>.Shared.Rent(totalLength));
+            try
+            {
+                finalBuffer[0] = JsonConstants.Quote;
+                escapedValue.Slice(0, escapedWritten).CopyTo(finalBuffer.Slice(1));
+                finalBuffer[escapedWritten + 1] = JsonConstants.Quote;
+                return Pool.RentFromSpan(finalBuffer.Slice(0, totalLength), JsonTokenType.String);
+            }
+            finally
+            {
+                if (rentedFinal is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(rentedFinal);
+                }
+            }
+        }
+        finally
+        {
+            if (rentedEscaped is not null)
+            {
+                ArrayPool<byte>.Shared.Return(rentedEscaped);
+            }
+        }
+    }
+
 #if NET
     /// <summary>
     /// Gets the root element of the document.
