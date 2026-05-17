@@ -820,8 +820,7 @@ public sealed class OpenApi30CodeGenerator
 
         if (!TryResolveRequestBody(requestBodyOrRef, referenceResolver, out OpenApiDocument.RequestBody requestBody))
         {
-            throw new InvalidOperationException(
-                "Unable to resolve request body $ref.");
+            ThrowHelper.ThrowUnableToResolveRequestBodyRef();
         }
 
         bool required = requestBody.Required.ValueKind == JsonValueKind.True;
@@ -860,8 +859,7 @@ public sealed class OpenApi30CodeGenerator
                 referenceResolver,
                 out OpenApiDocument.Response response))
             {
-                throw new InvalidOperationException(
-                    "Unable to resolve response $ref.");
+                ThrowHelper.ThrowUnableToResolveResponseRef();
             }
 
             // Extract status code at the emit boundary
@@ -970,8 +968,7 @@ public sealed class OpenApi30CodeGenerator
 
             if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header))
             {
-                throw new InvalidOperationException(
-                    "Unable to resolve header $ref.");
+                ThrowHelper.ThrowUnableToResolveHeaderRef();
             }
 
             bool hasSchema = header.Schema.IsNotUndefined();
@@ -1388,7 +1385,7 @@ public sealed class OpenApi30CodeGenerator
 
         if (pathParams.Length == 0)
         {
-            w.WriteLine("throw new InvalidOperationException(\"This operation has no path parameters. Use PathTemplateUtf8 directly.\");");
+            w.WriteLine("ThrowHelper.ThrowNoPathParameters();");
         }
         else
         {
@@ -1460,7 +1457,8 @@ public sealed class OpenApi30CodeGenerator
 
         if (queryParams.Length == 0)
         {
-            w.WriteLine("throw new InvalidOperationException(\"This operation has no query parameters.\");");
+            w.WriteLine("ThrowHelper.ThrowNoQueryParameters();");
+            w.WriteLine("return default;");
             w.CloseBrace();
             return;
         }
@@ -1503,7 +1501,7 @@ public sealed class OpenApi30CodeGenerator
 
         if (headerParams.Length == 0 && !hasAccept)
         {
-            w.WriteLine("throw new InvalidOperationException(\"This operation has no header parameters.\");");
+            w.WriteLine("ThrowHelper.ThrowNoHeaderParameters();");
             w.CloseBrace();
             return;
         }
@@ -1547,7 +1545,8 @@ public sealed class OpenApi30CodeGenerator
 
         if (cookieParams.Length == 0)
         {
-            w.WriteLine("throw new InvalidOperationException(\"This operation has no cookie parameters.\");");
+            w.WriteLine("ThrowHelper.ThrowNoCookieParameters();");
+            w.WriteLine("return default;");
             w.CloseBrace();
             return;
         }
