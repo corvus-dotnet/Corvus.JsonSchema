@@ -1217,6 +1217,12 @@ public sealed class OpenApi31CodeGenerator
         ParameterInfo[] cookieParams = op.Parameters
             .Where(p => p.Location == ParameterLocation.Cookie).ToArray();
 
+        // Collect distinct response media types for the Accept header.
+        string[] acceptMediaTypes = CodeEmitHelpers.GetAcceptMediaTypes(
+            op.Responses
+                .SelectMany(r => r.Content)
+                .Select(c => (c.MediaType, c.SchemaPointer)));
+
         this.EmitRequestFields(w, op.Parameters);
         this.EmitRequestConstructor(w, structName, op.Parameters);
 
@@ -1233,8 +1239,10 @@ public sealed class OpenApi31CodeGenerator
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine($"public static bool HasQueryParameters => {(queryParams.Length > 0 ? "true" : "false")};");
         w.WriteLine();
+        bool hasAcceptHeader = acceptMediaTypes.Length > 0;
+
         w.WriteLine("/// <inheritdoc/>");
-        w.WriteLine($"public static bool HasHeaderParameters => {(headerParams.Length > 0 ? "true" : "false")};");
+        w.WriteLine($"public static bool HasHeaderParameters => {(headerParams.Length > 0 || hasAcceptHeader ? "true" : "false")};");
         w.WriteLine();
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine($"public static bool HasCookieParameters => {(cookieParams.Length > 0 ? "true" : "false")};");
@@ -1244,7 +1252,7 @@ public sealed class OpenApi31CodeGenerator
         w.WriteLine();
         this.EmitWriteQueryString(w, queryParams);
         w.WriteLine();
-        this.EmitWriteHeaders(w, headerParams);
+        this.EmitWriteHeaders(w, headerParams, acceptMediaTypes);
         w.WriteLine();
         this.EmitWriteCookies(w, cookieParams);
 
@@ -1425,17 +1433,25 @@ public sealed class OpenApi31CodeGenerator
         w.CloseBrace();
     }
 
-    private void EmitWriteHeaders(IndentedWriter w, ParameterInfo[] headerParams)
+    private void EmitWriteHeaders(IndentedWriter w, ParameterInfo[] headerParams, string[] acceptMediaTypes)
     {
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine("public void WriteHeaders<TState>(HeaderCallback<TState> callback, TState state)");
         w.OpenBrace();
 
-        if (headerParams.Length == 0)
+        bool hasAccept = acceptMediaTypes.Length > 0;
+
+        if (headerParams.Length == 0 && !hasAccept)
         {
             w.WriteLine("throw new InvalidOperationException(\"This operation has no header parameters.\");");
             w.CloseBrace();
             return;
+        }
+
+        if (hasAccept)
+        {
+            CodeEmitHelpers.EmitAcceptHeader(w, acceptMediaTypes);
+            w.WriteLine();
         }
 
         foreach (ParameterInfo param in headerParams)

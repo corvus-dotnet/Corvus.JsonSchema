@@ -5648,4 +5648,147 @@ public class OpenApi31CodeGeneratorTests
             resp.Content.Contains("ReadStreamToRentedBuffer(contentStream", StringComparison.Ordinal),
             "CreateAsync should call ReadStreamToRentedBuffer for text/plain responses");
     }
+
+    // --- Accept header tests ---
+    [TestMethod]
+    public void AcceptHeader_JsonOnlyResponse_EmitsAcceptApplicationJson()
+    {
+        OpenApi31CodeGenerator gen = new("Petstore.Client", PetstoreSchemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+        GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("""callback("Accept"u8, "application/json"u8, state)""", StringComparison.Ordinal),
+            "JSON-only response should emit Accept: application/json");
+    }
+
+    [TestMethod]
+    public void AcceptHeader_JsonOnlyResponse_HasHeaderParametersIsTrue()
+    {
+        OpenApi31CodeGenerator gen = new("Petstore.Client", PetstoreSchemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+        GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("HasHeaderParameters => true", StringComparison.Ordinal),
+            "Request with Accept header should have HasHeaderParameters => true");
+    }
+
+    [TestMethod]
+    public void AcceptHeader_TextPlainResponse_EmitsAcceptTextPlain()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile req = GetFile(files, "EchoTextRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("""callback("Accept"u8, "text/plain"u8, state)""", StringComparison.Ordinal),
+            "text/plain response should emit Accept: text/plain");
+    }
+
+    [TestMethod]
+    public void AcceptHeader_MixedTextAndJson_EmitsJsonFirst()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile req = GetFile(files, "GetTextOrJsonRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("""callback("Accept"u8, "application/json, text/plain"u8, state)""", StringComparison.Ordinal),
+            "Mixed response should emit Accept with JSON first: application/json, text/plain");
+    }
+
+    [TestMethod]
+    public void AcceptHeader_MixedTextAndJson_HasHeaderParametersIsTrue()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile req = GetFile(files, "GetTextOrJsonRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("HasHeaderParameters => true", StringComparison.Ordinal),
+            "Request with Accept header should have HasHeaderParameters => true");
+    }
+
+    [TestMethod]
+    public void AcceptHeader_TextWildcard_EmitsAcceptTextStar()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile req = GetFile(files, "GetWildcardRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("""callback("Accept"u8, "text/*"u8, state)""", StringComparison.Ordinal),
+            "text/* wildcard response should emit Accept: text/*");
+    }
+
+    [TestMethod]
+    public void AcceptHeader_NoResponseContent_HasHeaderParametersFalse()
+    {
+        // An operation with no response content at all should have no Accept header
+        JsonElement root = ParseSpec("""
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "Test", "version": "1.0" },
+              "paths": {
+                "/fire": {
+                  "post": {
+                    "operationId": "fireAndForget",
+                    "tags": ["test"],
+                    "responses": {
+                      "204": { "description": "No content" }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        OpenApi31CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "FireAndForgetRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("HasHeaderParameters => false", StringComparison.Ordinal),
+            "Operation with no response content should have HasHeaderParameters => false");
+        Assert.IsFalse(
+            req.Content.Contains("Accept", StringComparison.Ordinal),
+            "Operation with no response content should not emit Accept header");
+    }
+
+    [TestMethod]
+    public void AcceptHeader_WithExistingHeaderParams_EmitsAcceptAndHeaderParams()
+    {
+        JsonElement root = ParseSpec("""
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "Test", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "searchItems",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "name": "X-Api-Key", "in": "header", "required": true, "schema": { "type": "string" } }
+                    ],
+                    "responses": {
+                      "200": {
+                        "description": "Items",
+                        "content": { "application/json": { "schema": { "type": "array", "items": { "type": "object" } } } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        OpenApi31CodeGenerator gen = new("Test", new Dictionary<string, string>());
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+        GeneratedFile req = GetFile(files, "SearchItemsRequest.cs");
+
+        // Should have both Accept header and declared header params
+        Assert.IsTrue(
+            req.Content.Contains("""callback("Accept"u8, "application/json"u8, state)""", StringComparison.Ordinal),
+            "Should emit Accept header when response has content");
+        Assert.IsTrue(
+            req.Content.Contains("\"X-Api-Key\"u8", StringComparison.Ordinal),
+            "Should still emit declared header parameters");
+    }
 }

@@ -1997,4 +1997,43 @@ public static class CodeEmitHelpers
         ContentCategory category = ClassifyMediaType(mediaType);
         return category == ContentCategory.OctetStream || category == ContentCategory.TextPlain;
     }
+
+    /// <summary>
+    /// Collects distinct response media types from an operation's responses,
+    /// ordered by preference (JSON first, then text, then stream).
+    /// </summary>
+    /// <param name="responses">
+    /// An enumerable of <c>(string MediaType, ...)</c> tuples from the response content entries.
+    /// </param>
+    /// <returns>
+    /// An array of distinct media type strings suitable for the <c>Accept</c> header.
+    /// Wildcard types like <c>*/*</c> are excluded — they don't add value in Accept.
+    /// Returns an empty array if there are no concrete media types.
+    /// </returns>
+    public static string[] GetAcceptMediaTypes(IEnumerable<(string MediaType, string? SchemaPointer)> responses)
+    {
+        return responses
+            .Select(r => r.MediaType)
+            .Where(m => !string.Equals(m, "*/*", StringComparison.Ordinal))
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .OrderBy(m => ClassifyMediaType(m) switch
+            {
+                ContentCategory.Json => 0,
+                ContentCategory.TextPlain => 1,
+                ContentCategory.OctetStream => 2,
+                _ => 3,
+            })
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Emits code that writes the <c>Accept</c> header via the header callback.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="mediaTypes">The ordered media types for the Accept header value.</param>
+    public static void EmitAcceptHeader(IndentedWriter w, string[] mediaTypes)
+    {
+        string acceptValue = string.Join(", ", mediaTypes);
+        w.WriteLine($"callback(\"Accept\"u8, \"{acceptValue}\"u8, state);");
+    }
 }
