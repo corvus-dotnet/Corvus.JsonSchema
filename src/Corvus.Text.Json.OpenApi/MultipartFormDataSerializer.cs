@@ -258,9 +258,9 @@ public static class MultipartFormDataSerializer
         writer.Write(binaryPart.ContentType);
         writer.Write("\r\n\r\n");
 
-        // Flush text writer before writing raw bytes.
+        // Flush text writer before writing raw bytes via callback.
         writer.Flush();
-        output.Write(binaryPart.Content.Span);
+        binaryPart.WriteContent(output);
 
         writer.Write("\r\n");
     }

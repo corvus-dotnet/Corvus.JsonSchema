@@ -7,7 +7,14 @@ namespace Corvus.Text.Json.OpenApi;
 /// <summary>
 /// Describes a binary part for a <c>multipart/form-data</c> request.
 /// </summary>
-/// <param name="Content">The binary content of the part.</param>
+/// <param name="WriteContent">
+/// A callback that writes the binary content directly to the output stream.
+/// This enables streaming from files, network resources, or other sources
+/// without requiring an intermediate in-memory buffer.
+/// <para>
+/// For in-memory data, use <c>s => s.Write(bytes)</c>.
+/// </para>
+/// </param>
 /// <param name="ContentType">
 /// The MIME type for the part (e.g. <c>"application/octet-stream"</c>,
 /// <c>"image/png"</c>).
@@ -17,6 +24,6 @@ namespace Corvus.Text.Json.OpenApi;
 /// When specified, the part header includes <c>; filename="..."</c>.
 /// </param>
 public readonly record struct BinaryPartData(
-    ReadOnlyMemory<byte> Content,
+    Action<Stream> WriteContent,
     string ContentType = "application/octet-stream",
     string? FileName = null);
