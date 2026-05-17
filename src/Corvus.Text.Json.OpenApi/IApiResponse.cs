@@ -46,6 +46,11 @@ public interface IApiResponse<TSelf> : IAsyncDisposable
     /// <param name="contentStream">
     /// The response content stream. The response takes ownership and will dispose it.
     /// </param>
+    /// <param name="contentType">
+    /// The value of the <c>Content-Type</c> response header, or <see langword="null"/>
+    /// if no content type was provided. Used to select the correct parsing strategy
+    /// when a status code can return multiple content types (e.g. JSON or text/plain).
+    /// </param>
     /// <param name="responseHeaders">
     /// Optional response headers from the transport. Generated response types
     /// extract typed header values from this provider.
@@ -66,6 +71,7 @@ public interface IApiResponse<TSelf> : IAsyncDisposable
     static abstract ValueTask<TSelf> CreateAsync(
         int statusCode,
         Stream contentStream,
+        string? contentType = null,
         IResponseHeaders? responseHeaders = null,
         IAsyncDisposable? owner = null,
         CancellationToken cancellationToken = default);

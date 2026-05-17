@@ -226,9 +226,12 @@ public sealed class HttpClientTransport : IApiTransport
                 .ReadAsStreamAsync(cancellationToken)
                 .ConfigureAwait(false);
 
+            string? contentType = httpResponse.Content.Headers.ContentType?.MediaType;
+
             return await TResponse.CreateAsync(
                 (int)httpResponse.StatusCode,
                 contentStream,
+                contentType,
                 new HttpResponseHeadersAdapter(httpResponse.Headers),
                 new HttpResponseOwner(httpResponse),
                 cancellationToken).ConfigureAwait(false);
@@ -300,13 +303,10 @@ public sealed class HttpClientTransport : IApiTransport
         {
             if (headers.TryGetValues(headerName, out IEnumerable<string>? values))
             {
-                // Return the first value — OpenAPI headers are typically single-valued.
-                using IEnumerator<string> enumerator = values.GetEnumerator();
-                if (enumerator.MoveNext())
-                {
-                    value = enumerator.Current;
-                    return true;
-                }
+                // Per RFC 9110 §5.3, multiple values for the same header
+                // are semantically equivalent to a single comma-separated value.
+                value = string.Join(", ", values);
+                return true;
             }
 
             value = null;

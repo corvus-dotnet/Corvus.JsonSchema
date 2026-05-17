@@ -5791,4 +5791,182 @@ public class OpenApi31CodeGeneratorTests
             req.Content.Contains("\"X-Api-Key\"u8", StringComparison.Ordinal),
             "Should still emit declared header parameters");
     }
+
+    // ── Content-Type branching tests ────────────────────────────────────
+    private const string MultiContentSpec = """
+        {
+          "openapi": "3.1.0",
+          "info": { "title": "MultiContent", "version": "1.0" },
+          "paths": {
+            "/data": {
+              "get": {
+                "operationId": "getData",
+                "tags": ["data"],
+                "responses": {
+                  "200": {
+                    "description": "Success",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": { "id": { "type": "integer" } }
+                        }
+                      },
+                      "text/plain": {
+                        "schema": { "type": "string" }
+                      }
+                    }
+                  },
+                  "default": {
+                    "description": "Error",
+                    "content": {
+                      "application/json": {
+                        "schema": {
+                          "type": "object",
+                          "properties": { "error": { "type": "string" } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    private static IReadOnlyList<GeneratedFile> GenerateMultiContentSpec()
+    {
+        JsonElement root = ParseSpec(MultiContentSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1data/get/responses/200/content/application~1json/schema"] = "Test.DataResponse",
+            ["#/paths/~1data/get/responses/default/content/application~1json/schema"] = "Test.ErrorResponse",
+        };
+
+        OpenApi31CodeGenerator gen = new("Test", map);
+        return gen.Generate(root);
+    }
+
+    [TestMethod]
+    public void MultiContent_CreateAsync_HasContentTypeParameter()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateMultiContentSpec();
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("string? contentType = null,", StringComparison.Ordinal),
+            "CreateAsync should include contentType parameter for multi-content response");
+    }
+
+    [TestMethod]
+    public void MultiContent_CreateAsync_BranchesOnContentType()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateMultiContentSpec();
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "contentType.StartsWith(\"text/\", StringComparison.OrdinalIgnoreCase)",
+                StringComparison.Ordinal),
+            "CreateAsync should branch on text/ content type");
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "contentType.EndsWith(\"+json\", StringComparison.OrdinalIgnoreCase)",
+                StringComparison.Ordinal),
+            "CreateAsync should branch on JSON content type");
+    }
+
+    [TestMethod]
+    public void MultiContent_ResponseStruct_HasTextFields()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateMultiContentSpec();
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("private byte[]? okTextBuffer;", StringComparison.Ordinal),
+            "Response struct should have okTextBuffer field for text/plain");
+        Assert.IsTrue(
+            resp.Content.Contains("public string? OkText", StringComparison.Ordinal),
+            "Response struct should have OkText property for text/plain");
+    }
+
+    [TestMethod]
+    public void MultiContent_ResponseStruct_HasJsonBody()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateMultiContentSpec();
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("public Test.DataResponse OkBody", StringComparison.Ordinal),
+            "Response struct should have OkBody property for JSON");
+    }
+
+    [TestMethod]
+    public void MultiContent_ResponseStruct_HasBothTryGetMethods()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateMultiContentSpec();
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("public bool TryGetOk(", StringComparison.Ordinal),
+            "Response struct should have TryGetOk for JSON");
+        Assert.IsTrue(
+            resp.Content.Contains("public bool TryGetOkString(", StringComparison.Ordinal),
+            "Response struct should have TryGetOkString for text/plain");
+    }
+
+    [TestMethod]
+    public void MultiContent_MatchResult_HasSeparateHandlers()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateMultiContentSpec();
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("matchOk,", StringComparison.Ordinal),
+            "MatchResult should have matchOk parameter for JSON");
+        Assert.IsTrue(
+            resp.Content.Contains("matchOkString,", StringComparison.Ordinal),
+            "MatchResult should have matchOkString parameter for text/plain");
+    }
+
+    [TestMethod]
+    public void MultiContent_MatchResult_DispatchesOnTextBuffer()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateMultiContentSpec();
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("this.okTextBuffer is not null", StringComparison.Ordinal),
+            "MatchResult should detect text content by checking okTextBuffer");
+        Assert.IsTrue(
+            resp.Content.Contains("matchOkString(this.OkText", StringComparison.Ordinal),
+            "MatchResult should call matchOkString when text buffer is populated");
+        Assert.IsTrue(
+            resp.Content.Contains("matchOk(this.OkBody", StringComparison.Ordinal),
+            "MatchResult should fall back to matchOk for JSON");
+    }
+
+    [TestMethod]
+    public void MultiContent_MatchResult_DefaultIsSingleCategory()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateMultiContentSpec();
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        // Default response is JSON-only, so no branching needed
+        Assert.IsTrue(
+            resp.Content.Contains("matchDefault(this.DefaultBody", StringComparison.Ordinal),
+            "Default (single-category) should dispatch directly to matchDefault");
+    }
+
+    [TestMethod]
+    public void MultiContent_DisposeAsync_ReturnsTextBuffer()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateMultiContentSpec();
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("ArrayPool<byte>.Shared.Return(this.okTextBuffer)", StringComparison.Ordinal),
+            "DisposeAsync should return the text buffer to the pool");
+    }
 }

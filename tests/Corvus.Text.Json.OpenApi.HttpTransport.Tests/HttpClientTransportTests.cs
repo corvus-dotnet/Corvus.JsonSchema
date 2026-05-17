@@ -452,10 +452,10 @@ public class HttpClientTransportTests
         using MockHandler handler = new(
             HttpStatusCode.OK,
             """{"id":1}"""u8.ToArray(),
-            responseHeaders: new Dictionary<string, string>
+            responseHeaders: new Dictionary<string, string[]>
             {
-                ["X-Request-Id"] = "req-42",
-                ["X-Rate-Limit"] = "100",
+                ["X-Request-Id"] = ["req-42"],
+                ["X-Rate-Limit"] = ["100"],
             });
         using HttpClient client = new(handler) { BaseAddress = new Uri("http://localhost") };
 
@@ -476,9 +476,9 @@ public class HttpClientTransportTests
         using MockHandler handler = new(
             HttpStatusCode.OK,
             """{"id":1}"""u8.ToArray(),
-            responseHeaders: new Dictionary<string, string>
+            responseHeaders: new Dictionary<string, string[]>
             {
-                ["X-Request-Id"] = "req-42",
+                ["X-Request-Id"] = ["req-42"],
             });
         using HttpClient client = new(handler) { BaseAddress = new Uri("http://localhost") };
 
@@ -490,6 +490,27 @@ public class HttpClientTransportTests
 
         Assert.AreEqual("req-42", response.CapturedRequestId);
         Assert.IsNull(response.CapturedRateLimit);
+    }
+
+    [TestMethod]
+    public async Task SendAsync_ResponseHeaders_MultipleValues_AreCommaJoined()
+    {
+        using MockHandler handler = new(
+            HttpStatusCode.OK,
+            """{"id":1}"""u8.ToArray(),
+            responseHeaders: new Dictionary<string, string[]>
+            {
+                ["X-Request-Id"] = ["val-A", "val-B", "val-C"],
+            });
+        using HttpClient client = new(handler) { BaseAddress = new Uri("http://localhost") };
+
+        await using HttpClientTransport transport = new(client);
+
+        TestGetRequest request = default;
+        await using HeaderCapturingResponse response =
+            await transport.SendAsync<TestGetRequest, HeaderCapturingResponse>(in request);
+
+        Assert.AreEqual("val-A, val-B, val-C", response.CapturedRequestId);
     }
 
     private static HttpClient CreateMockClient(
@@ -506,13 +527,13 @@ public class HttpClientTransportTests
         private readonly HttpStatusCode statusCode;
         private readonly byte[] responseBody;
         private readonly Func<HttpRequestMessage, Task>? onRequest;
-        private readonly Dictionary<string, string>? responseHeaders;
+        private readonly Dictionary<string, string[]>? responseHeaders;
 
         public MockHandler(
             HttpStatusCode statusCode,
             byte[] responseBody,
             Func<HttpRequestMessage, Task>? onRequest = null,
-            Dictionary<string, string>? responseHeaders = null)
+            Dictionary<string, string[]>? responseHeaders = null)
         {
             this.statusCode = statusCode;
             this.responseBody = responseBody;
@@ -536,7 +557,7 @@ public class HttpClientTransportTests
 
             if (this.responseHeaders is not null)
             {
-                foreach (KeyValuePair<string, string> kvp in this.responseHeaders)
+                foreach (KeyValuePair<string, string[]> kvp in this.responseHeaders)
                 {
                     response.Headers.TryAddWithoutValidation(kvp.Key, kvp.Value);
                 }
@@ -560,6 +581,7 @@ public class HttpClientTransportTests
         public static async ValueTask<TestResponse> CreateAsync(
             int statusCode,
             Stream contentStream,
+            string? contentType = null,
             IResponseHeaders? responseHeaders = null,
             IAsyncDisposable? owner = null,
             CancellationToken cancellationToken = default)
@@ -594,6 +616,7 @@ public class HttpClientTransportTests
         public static ValueTask<ThrowingResponse> CreateAsync(
             int statusCode,
             Stream contentStream,
+            string? contentType = null,
             IResponseHeaders? responseHeaders = null,
             IAsyncDisposable? owner = null,
             CancellationToken cancellationToken = default)
@@ -1080,6 +1103,7 @@ public class HttpClientTransportTests
         public static async ValueTask<HeaderCapturingResponse> CreateAsync(
             int statusCode,
             Stream contentStream,
+            string? contentType = null,
             IResponseHeaders? responseHeaders = null,
             IAsyncDisposable? owner = null,
             CancellationToken cancellationToken = default)

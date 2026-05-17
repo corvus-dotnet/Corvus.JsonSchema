@@ -1226,6 +1226,26 @@ public sealed class OpenApi30CodeGenerator
         return ResponseBodyKind.Json;
     }
 
+    /// <summary>
+    /// Returns the distinct content categories present in a response's content entries.
+    /// </summary>
+    private static ContentCategory[] GetDistinctContentCategories(ResponseInfo resp)
+    {
+        return resp.Content
+            .Select(c => CodeEmitHelpers.ClassifyMediaType(c.MediaType))
+            .Distinct()
+            .ToArray();
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the response has multiple content types
+    /// from different categories (e.g., JSON and text/plain).
+    /// </summary>
+    private static bool HasMultipleContentCategories(ResponseInfo resp)
+    {
+        return GetDistinctContentCategories(resp).Length > 1;
+    }
+
     // ── Request struct emission ─────────────────────────────────────────
     private GeneratedFile EmitRequestStruct(OperationInfo op)
     {
@@ -1580,8 +1600,9 @@ public sealed class OpenApi30CodeGenerator
 
         // Only emit parsedDocument field when at least one response has a JSON body.
         bool hasJsonBody = op.Responses.Any(r =>
-            r.Content.Any(c => c.SchemaPointer is not null && !CodeEmitHelpers.IsRawStreamMediaType(c.MediaType)));
-        bool hasTextBody = op.Responses.Any(r => GetResponseBodyKind(r) == ResponseBodyKind.Text);
+            r.Content.Any(c => c.SchemaPointer is not null && CodeEmitHelpers.IsJsonMediaType(c.MediaType)));
+        bool hasTextBody = op.Responses.Any(r =>
+            r.Content.Any(c => CodeEmitHelpers.IsTextPlainMediaType(c.MediaType)));
         if (hasJsonBody)
         {
             w.WriteLine("private IDisposable? parsedDocument;");
@@ -1590,7 +1611,8 @@ public sealed class OpenApi30CodeGenerator
         // Emit private backing fields for text/plain responses.
         foreach (ResponseInfo resp in op.Responses)
         {
-            if (GetResponseBodyKind(resp) == ResponseBodyKind.Text)
+            ContentCategory[] categories = GetDistinctContentCategories(resp);
+            if (categories.Contains(ContentCategory.TextPlain))
             {
                 string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
                 CodeEmitHelpers.EmitTextPlainFields(w, accessorName);
@@ -1615,30 +1637,33 @@ public sealed class OpenApi30CodeGenerator
         foreach (ResponseInfo resp in op.Responses)
         {
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
-            ResponseBodyKind kind = GetResponseBodyKind(resp);
+            ContentCategory[] categories = GetDistinctContentCategories(resp);
 
-            if (kind == ResponseBodyKind.Stream)
+            foreach (ContentCategory cat in categories)
             {
-                w.WriteLine();
-                w.WriteLine("/// <summary>");
-                w.WriteLine($"/// Gets the {resp.StatusCode} response stream.");
-                w.WriteLine("/// </summary>");
-                w.WriteLine($"public Stream? {accessorName}Stream {{ get; private set; }}");
-            }
-            else if (kind == ResponseBodyKind.Text)
-            {
-                CodeEmitHelpers.EmitTextPlainProperties(w, accessorName);
-            }
-            else
-            {
-                string? typeName = this.ResolveResponseTypeName(resp);
-                if (typeName is not null)
+                if (cat == ContentCategory.OctetStream)
                 {
                     w.WriteLine();
                     w.WriteLine("/// <summary>");
-                    w.WriteLine($"/// Gets the {resp.StatusCode} response body.");
+                    w.WriteLine($"/// Gets the {resp.StatusCode} response stream.");
                     w.WriteLine("/// </summary>");
-                    w.WriteLine($"public {typeName} {accessorName}Body {{ get; private set; }}");
+                    w.WriteLine($"public Stream? {accessorName}Stream {{ get; private set; }}");
+                }
+                else if (cat == ContentCategory.TextPlain)
+                {
+                    CodeEmitHelpers.EmitTextPlainProperties(w, accessorName);
+                }
+                else if (cat == ContentCategory.Json)
+                {
+                    string? typeName = this.ResolveResponseTypeName(resp);
+                    if (typeName is not null)
+                    {
+                        w.WriteLine();
+                        w.WriteLine("/// <summary>");
+                        w.WriteLine($"/// Gets the {resp.StatusCode} response body.");
+                        w.WriteLine("/// </summary>");
+                        w.WriteLine($"public {typeName} {accessorName}Body {{ get; private set; }}");
+                    }
                 }
             }
         }
@@ -1655,9 +1680,10 @@ public sealed class OpenApi30CodeGenerator
         {
             if (resp.StatusCode != "default")
             {
-                ResponseBodyKind respKind = GetResponseBodyKind(resp);
-                bool hasContent = respKind != ResponseBodyKind.Json
-                    || this.ResolveResponseTypeName(resp) is not null;
+                ContentCategory[] cats = GetDistinctContentCategories(resp);
+                bool hasContent = cats.Length > 0
+                    && !(cats.Length == 1 && cats[0] == ContentCategory.Json
+                         && this.ResolveResponseTypeName(resp) is null);
                 if (hasContent)
                 {
                     specificStatusCodes.Add(resp.StatusCode);
@@ -1668,40 +1694,37 @@ public sealed class OpenApi30CodeGenerator
         foreach (ResponseInfo resp in op.Responses)
         {
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
-            ResponseBodyKind respKind = GetResponseBodyKind(resp);
-            string? typeName = respKind == ResponseBodyKind.Json
-                ? this.ResolveResponseTypeName(resp) : null;
+            ContentCategory[] categories = GetDistinctContentCategories(resp);
 
-            if (respKind == ResponseBodyKind.Json && typeName is null)
+            foreach (ContentCategory cat in categories)
             {
-                continue;
-            }
+                if (cat == ContentCategory.OctetStream)
+                {
+                    EmitTryGetMethod(
+                        w, resp, accessorName, "Stream", "Stream?",
+                        $"this.{accessorName}Stream!", "response stream",
+                        specificStatusCodes, useNotNullWhen: true);
+                }
 
-            // Emit TryGetXxxStream for Stream kind only.
-            if (respKind == ResponseBodyKind.Stream)
-            {
-                EmitTryGetMethod(
-                    w, resp, accessorName, "Stream", "Stream?",
-                    $"this.{accessorName}Stream!", "response stream",
-                    specificStatusCodes, useNotNullWhen: true);
-            }
+                if (cat == ContentCategory.TextPlain)
+                {
+                    EmitTryGetMethod(
+                        w, resp, accessorName, "String", "string?",
+                        $"this.{accessorName}Text!", "response text",
+                        specificStatusCodes, useNotNullWhen: true);
+                }
 
-            // Emit TryGetXxxString for Text kind.
-            if (respKind == ResponseBodyKind.Text)
-            {
-                EmitTryGetMethod(
-                    w, resp, accessorName, "String", "string?",
-                    $"this.{accessorName}Text!", "response text",
-                    specificStatusCodes, useNotNullWhen: true);
-            }
-
-            // Emit TryGetXxx for JSON kind.
-            if (respKind == ResponseBodyKind.Json)
-            {
-                EmitTryGetMethod(
-                    w, resp, accessorName, string.Empty, typeName!,
-                    $"this.{accessorName}Body", "typed response body",
-                    specificStatusCodes, useNotNullWhen: false);
+                if (cat == ContentCategory.Json)
+                {
+                    string? typeName = this.ResolveResponseTypeName(resp);
+                    if (typeName is not null)
+                    {
+                        EmitTryGetMethod(
+                            w, resp, accessorName, string.Empty, typeName,
+                            $"this.{accessorName}Body", "typed response body",
+                            specificStatusCodes, useNotNullWhen: false);
+                    }
+                }
             }
         }
 
@@ -1726,7 +1749,8 @@ public sealed class OpenApi30CodeGenerator
         // Return rented text/plain buffers.
         foreach (ResponseInfo resp in op.Responses)
         {
-            if (GetResponseBodyKind(resp) == ResponseBodyKind.Text)
+            ContentCategory[] cats = GetDistinctContentCategories(resp);
+            if (cats.Contains(ContentCategory.TextPlain))
             {
                 string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
                 CodeEmitHelpers.EmitTextPlainBufferReturn(w, accessorName);
@@ -1757,7 +1781,8 @@ public sealed class OpenApi30CodeGenerator
     {
         // Determine if any response needs async processing (JSON parsing is async; streams and text are not).
         bool hasAnyJsonBody = responses.Any(
-            r => GetResponseBodyKind(r) == ResponseBodyKind.Json && this.ResolveResponseTypeName(r) is not null);
+            r => r.Content.Any(c => CodeEmitHelpers.IsJsonMediaType(c.MediaType))
+                 && this.ResolveResponseTypeName(r) is not null);
 
         w.WriteLine("/// <inheritdoc/>");
 
@@ -1774,6 +1799,7 @@ public sealed class OpenApi30CodeGenerator
         w.PushIndent();
         w.WriteLine("int statusCode,");
         w.WriteLine("Stream contentStream,");
+        w.WriteLine("string? contentType = null,");
         w.WriteLine("IResponseHeaders? responseHeaders = null,");
         w.WriteLine("IAsyncDisposable? owner = null,");
         w.WriteLine("CancellationToken cancellationToken = default)");
@@ -1796,11 +1822,11 @@ public sealed class OpenApi30CodeGenerator
                 continue;
             }
 
-            ResponseBodyKind kind = GetResponseBodyKind(resp);
-            string? typeName = kind == ResponseBodyKind.Json
-                ? this.ResolveResponseTypeName(resp) : null;
+            ContentCategory[] categories = GetDistinctContentCategories(resp);
 
-            if (kind == ResponseBodyKind.Json && typeName is null)
+            // Skip if the only category is JSON with no resolved type.
+            if (categories.Length == 1 && categories[0] == ContentCategory.Json
+                && this.ResolveResponseTypeName(resp) is null)
             {
                 continue;
             }
@@ -1808,17 +1834,15 @@ public sealed class OpenApi30CodeGenerator
             w.WriteLine($"if (statusCode == {resp.StatusCode})");
             w.OpenBrace();
 
-            if (kind == ResponseBodyKind.Text)
+            if (categories.Length == 1)
             {
-                CodeEmitHelpers.EmitTextPlainResponseBody(w, accessorName);
-            }
-            else if (kind == ResponseBodyKind.Stream)
-            {
-                CodeEmitHelpers.EmitStreamResponseBody(w, accessorName);
+                // Single content category — no Content-Type branching needed.
+                this.EmitResponseBodyForCategory(w, categories[0], resp, accessorName);
             }
             else
             {
-                CodeEmitHelpers.EmitParseResponseBody(w, typeName!, accessorName);
+                // Multiple content categories — branch on Content-Type.
+                this.EmitContentTypeBranching(w, resp, accessorName, categories);
             }
 
             if (hasAnyJsonBody)
@@ -1847,25 +1871,16 @@ public sealed class OpenApi30CodeGenerator
 
         if (defaultResp is not null)
         {
-            ResponseBodyKind defaultKind = GetResponseBodyKind(defaultResp.Value);
             string accessorName = CodeEmitHelpers.StatusCodeToName("default");
+            ContentCategory[] defaultCategories = GetDistinctContentCategories(defaultResp.Value);
 
-            if (defaultKind == ResponseBodyKind.Text)
+            if (defaultCategories.Length == 1)
             {
-                CodeEmitHelpers.EmitTextPlainResponseBody(w, accessorName);
+                this.EmitResponseBodyForCategory(w, defaultCategories[0], defaultResp.Value, accessorName);
             }
-            else if (defaultKind == ResponseBodyKind.Stream)
+            else if (defaultCategories.Length > 1)
             {
-                CodeEmitHelpers.EmitStreamResponseBody(w, accessorName);
-            }
-            else
-            {
-                string? defaultTypeName = this.ResolveResponseTypeName(defaultResp.Value);
-
-                if (defaultTypeName is not null)
-                {
-                    CodeEmitHelpers.EmitParseResponseBody(w, defaultTypeName, accessorName);
-                }
+                this.EmitContentTypeBranching(w, defaultResp.Value, accessorName, defaultCategories);
             }
         }
 
@@ -1879,6 +1894,67 @@ public sealed class OpenApi30CodeGenerator
         }
 
         w.CloseBrace();
+    }
+
+    private void EmitResponseBodyForCategory(
+        IndentedWriter w,
+        ContentCategory category,
+        ResponseInfo resp,
+        string accessorName)
+    {
+        switch (category)
+        {
+            case ContentCategory.TextPlain:
+                CodeEmitHelpers.EmitTextPlainResponseBody(w, accessorName);
+                break;
+            case ContentCategory.OctetStream:
+                CodeEmitHelpers.EmitStreamResponseBody(w, accessorName);
+                break;
+            case ContentCategory.Json:
+                string? typeName = this.ResolveResponseTypeName(resp);
+                if (typeName is not null)
+                {
+                    CodeEmitHelpers.EmitParseResponseBody(w, typeName, accessorName);
+                }
+
+                break;
+        }
+    }
+
+    private void EmitContentTypeBranching(
+        IndentedWriter w,
+        ResponseInfo resp,
+        string accessorName,
+        ContentCategory[] categories)
+    {
+        bool first = true;
+
+        foreach (ContentCategory category in categories)
+        {
+            // Skip JSON if we can't resolve the type.
+            if (category == ContentCategory.Json && this.ResolveResponseTypeName(resp) is null)
+            {
+                continue;
+            }
+
+            string condition = CodeEmitHelpers.ContentTypeCondition(category);
+
+            if (first)
+            {
+                w.WriteLine($"if ({condition})");
+                first = false;
+            }
+            else
+            {
+                w.WriteLine($"else if ({condition})");
+            }
+
+            w.OpenBrace();
+            this.EmitResponseBodyForCategory(w, category, resp, accessorName);
+            w.CloseBrace();
+        }
+
+        w.WriteLine();
     }
 
     private void EmitResponseHeaderProperties(
@@ -1994,45 +2070,51 @@ public sealed class OpenApi30CodeGenerator
         ResponseInfo[] responses,
         bool includeContext)
     {
-        List<(string statusCode, string accessorName, string typeName, ResponseBodyKind kind)> typed = [];
-        (string accessorName, string typeName, ResponseBodyKind kind)? defaultEntry = null;
+        // Build the full matrix of (status code × content category) entries.
+        List<(string statusCode, string paramName, string typeName, ContentCategory category)> typed = [];
+        List<(string paramName, string typeName, ContentCategory category)> defaultEntries = [];
 
         foreach (ResponseInfo resp in responses)
         {
-            ResponseBodyKind kind = GetResponseBodyKind(resp);
-
-            string? typeName = kind switch
-            {
-                ResponseBodyKind.Stream => "Stream?",
-                ResponseBodyKind.Text => "string?",
-                _ => this.ResolveResponseTypeName(resp),
-            };
-
-            if (typeName is null)
-            {
-                continue;
-            }
-
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
+            ContentCategory[] categories = GetDistinctContentCategories(resp);
 
-            if (resp.StatusCode == "default")
+            foreach (ContentCategory category in categories)
             {
-                defaultEntry = (accessorName, typeName, kind);
-            }
-            else
-            {
-                typed.Add((resp.StatusCode, accessorName, typeName, kind));
+                string? jsonTypeName = category == ContentCategory.Json
+                    ? this.ResolveResponseTypeName(resp)
+                    : null;
+
+                string typeName = CodeEmitHelpers.GetMatchTypeName(category, jsonTypeName);
+
+                if (string.IsNullOrEmpty(typeName))
+                {
+                    continue;
+                }
+
+                string suffix = CodeEmitHelpers.MatchParamSuffix(category);
+                string paramName = $"{accessorName}{suffix}";
+
+                if (resp.StatusCode == "default")
+                {
+                    defaultEntries.Add((paramName, typeName, category));
+                }
+                else
+                {
+                    typed.Add((resp.StatusCode, paramName, typeName, category));
+                }
             }
         }
 
-        if (typed.Count == 0 && defaultEntry is null)
+        if (typed.Count == 0 && defaultEntries.Count == 0)
         {
             return;
         }
 
         w.WriteLine();
         w.WriteLine("/// <summary>");
-        w.WriteLine("/// Matches the response against each status code and calls the corresponding handler.");
+        w.WriteLine("/// Matches the response against each status code and content type,");
+        w.WriteLine("/// and calls the corresponding handler.");
         w.WriteLine("/// </summary>");
 
         if (includeContext)
@@ -2050,18 +2132,19 @@ public sealed class OpenApi30CodeGenerator
                 "/// <param name=\"context\">The context to pass to the handler.</param>");
         }
 
-        foreach (var (statusCode, accessorName, _, _) in typed)
+        foreach (var (statusCode, paramName, _, _) in typed)
         {
             w.WriteLine(
-                $"/// <param name=\"match{accessorName}\">Handler for the {statusCode} response.</param>");
+                $"/// <param name=\"match{paramName}\">Handler for the {statusCode} response.</param>");
         }
 
-        if (defaultEntry is not null)
+        foreach (var (paramName, _, _) in defaultEntries)
         {
             w.WriteLine(
-                "/// <param name=\"matchDefault\">Handler for any unmatched status code.</param>");
+                $"/// <param name=\"match{paramName}\">Handler for a default response.</param>");
         }
-        else
+
+        if (defaultEntries.Count == 0)
         {
             w.WriteLine(
                 "/// <param name=\"matchDefault\">Handler for any unmatched status code.</param>");
@@ -2086,32 +2169,37 @@ public sealed class OpenApi30CodeGenerator
             w.WriteLine("in TContext context,");
         }
 
-        foreach (var (_, accessorName, typeName, _) in typed)
+        foreach (var (_, paramName, typeName, _) in typed)
         {
             if (includeContext)
             {
-                w.WriteLine($"ResponseMatcher<{typeName}, TContext, TResult> match{accessorName},");
+                w.WriteLine($"ResponseMatcher<{typeName}, TContext, TResult> match{paramName},");
             }
             else
             {
-                w.WriteLine($"ResponseMatcher<{typeName}, TResult> match{accessorName},");
+                w.WriteLine($"ResponseMatcher<{typeName}, TResult> match{paramName},");
             }
         }
 
-        if (defaultEntry is not null)
+        // Default entries (from a spec-level default response).
+        for (int i = 0; i < defaultEntries.Count; i++)
         {
+            var (paramName, typeName, _) = defaultEntries[i];
+            bool isLast = i == defaultEntries.Count - 1;
+            string trailing = isLast ? ")" : ",";
+
             if (includeContext)
             {
-                w.WriteLine(
-                    $"ResponseMatcher<{defaultEntry.Value.typeName}, TContext, TResult> matchDefault)");
+                w.WriteLine($"ResponseMatcher<{typeName}, TContext, TResult> match{paramName}{trailing}");
             }
             else
             {
-                w.WriteLine(
-                    $"ResponseMatcher<{defaultEntry.Value.typeName}, TResult> matchDefault)");
+                w.WriteLine($"ResponseMatcher<{typeName}, TResult> match{paramName}{trailing}");
             }
         }
-        else
+
+        // The unmatched fallback (when no spec default response covers it).
+        if (defaultEntries.Count == 0)
         {
             if (includeContext)
             {
@@ -2132,42 +2220,41 @@ public sealed class OpenApi30CodeGenerator
 
         w.OpenBrace();
 
-        foreach (var (statusCode, accessorName, _, kind) in typed)
+        // Group typed entries by status code for the dispatch body.
+        foreach (var group in typed.GroupBy(t => t.statusCode))
         {
-            string member = GetMemberNameForMatchResult(accessorName, kind);
+            string statusCode = group.Key;
+            var entries = group.ToList();
 
             w.WriteLine($"if (this.StatusCode == {statusCode})");
             w.OpenBrace();
 
-            if (includeContext)
+            if (entries.Count == 1)
             {
-                w.WriteLine(
-                    $"return match{accessorName}(this.{member}, context);");
+                // Single content category — direct dispatch.
+                EmitMatchCall(w, entries[0].paramName, entries[0].category,
+                    CodeEmitHelpers.StatusCodeToName(statusCode), includeContext);
             }
             else
             {
-                w.WriteLine(
-                    $"return match{accessorName}(this.{member});");
+                // Multiple content categories — branch on populated fields.
+                EmitMultiCategoryMatchDispatch(w, entries, statusCode, includeContext);
             }
 
             w.CloseBrace();
             w.WriteLine();
         }
 
-        if (defaultEntry is not null)
+        if (defaultEntries.Count > 0)
         {
-            string defaultMember = GetMemberNameForMatchResult(
-                defaultEntry.Value.accessorName, defaultEntry.Value.kind);
-
-            if (includeContext)
+            if (defaultEntries.Count == 1)
             {
-                w.WriteLine(
-                    $"return matchDefault(this.{defaultMember}, context);");
+                EmitMatchCall(w, defaultEntries[0].paramName, defaultEntries[0].category,
+                    "Default", includeContext);
             }
             else
             {
-                w.WriteLine(
-                    $"return matchDefault(this.{defaultMember});");
+                EmitMultiCategoryDefaultMatchDispatch(w, defaultEntries, includeContext);
             }
         }
         else
@@ -2183,6 +2270,96 @@ public sealed class OpenApi30CodeGenerator
         }
 
         w.CloseBrace();
+    }
+
+    private static void EmitMatchCall(
+        IndentedWriter w,
+        string paramName,
+        ContentCategory category,
+        string accessorName,
+        bool includeContext)
+    {
+        string member = CodeEmitHelpers.GetMemberNameForMatchResult(accessorName, category);
+
+        if (includeContext)
+        {
+            w.WriteLine($"return match{paramName}(this.{member}, context);");
+        }
+        else
+        {
+            w.WriteLine($"return match{paramName}(this.{member});");
+        }
+    }
+
+    private static void EmitMultiCategoryMatchDispatch(
+        IndentedWriter w,
+        List<(string statusCode, string paramName, string typeName, ContentCategory category)> entries,
+        string statusCode,
+        bool includeContext)
+    {
+        string accessorName = CodeEmitHelpers.StatusCodeToName(statusCode);
+
+        // Emit if/else if chain for non-fallback categories, with JSON as fallback.
+        ContentCategory? fallback = null;
+        string? fallbackParamName = null;
+
+        foreach (var entry in entries)
+        {
+            string? condition = CodeEmitHelpers.ContentCategoryDetectionCondition(
+                accessorName, entry.category);
+
+            if (condition is null)
+            {
+                // This is the fallback (JSON) — emit last.
+                fallback = entry.category;
+                fallbackParamName = entry.paramName;
+                continue;
+            }
+
+            w.WriteLine($"if ({condition})");
+            w.OpenBrace();
+            EmitMatchCall(w, entry.paramName, entry.category, accessorName, includeContext);
+            w.CloseBrace();
+            w.WriteLine();
+        }
+
+        if (fallback is not null)
+        {
+            EmitMatchCall(w, fallbackParamName!, fallback.Value, accessorName, includeContext);
+        }
+    }
+
+    private static void EmitMultiCategoryDefaultMatchDispatch(
+        IndentedWriter w,
+        List<(string paramName, string typeName, ContentCategory category)> entries,
+        bool includeContext)
+    {
+        ContentCategory? fallback = null;
+        string? fallbackParamName = null;
+
+        foreach (var entry in entries)
+        {
+            string? condition = CodeEmitHelpers.ContentCategoryDetectionCondition(
+                "Default", entry.category);
+
+            if (condition is null)
+            {
+                fallback = entry.category;
+                fallbackParamName = entry.paramName;
+                continue;
+            }
+
+            w.WriteLine($"if ({condition})");
+            w.OpenBrace();
+            EmitMatchCall(w, entry.paramName, entry.category, "Default", includeContext);
+            w.CloseBrace();
+            w.WriteLine();
+        }
+
+        if (fallback is not null)
+        {
+            EmitMatchCall(w, fallbackParamName!, fallback.Value, "Default", includeContext);
+        }
     }
 
     // ── Interface emission ──────────────────────────────────────────────
@@ -2538,15 +2715,5 @@ public sealed class OpenApi30CodeGenerator
 
         /// <summary>Text/plain — exposed as both Stream and string.</summary>
         Text,
-    }
-
-    private static string GetMemberNameForMatchResult(string accessorName, ResponseBodyKind kind)
-    {
-        return kind switch
-        {
-            ResponseBodyKind.Stream => $"{accessorName}Stream",
-            ResponseBodyKind.Text => $"{accessorName}Text",
-            _ => $"{accessorName}Body",
-        };
     }
 }

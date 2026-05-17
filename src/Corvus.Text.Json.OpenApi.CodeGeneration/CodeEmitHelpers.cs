@@ -2036,4 +2036,90 @@ public static class CodeEmitHelpers
         string acceptValue = string.Join(", ", mediaTypes);
         w.WriteLine($"callback(\"Accept\"u8, \"{acceptValue}\"u8, state);");
     }
+
+    /// <summary>
+    /// Returns a C# condition expression that tests the <c>contentType</c> parameter
+    /// against the media types for a given <see cref="ContentCategory"/>.
+    /// </summary>
+    /// <param name="category">The content category to match.</param>
+    /// <returns>A C# boolean expression string.</returns>
+    public static string ContentTypeCondition(ContentCategory category)
+    {
+        return category switch
+        {
+            ContentCategory.Json =>
+                "contentType is not null && (string.Equals(contentType, \"application/json\", StringComparison.OrdinalIgnoreCase) || contentType.EndsWith(\"+json\", StringComparison.OrdinalIgnoreCase))",
+            ContentCategory.TextPlain =>
+                "contentType is not null && contentType.StartsWith(\"text/\", StringComparison.OrdinalIgnoreCase)",
+            ContentCategory.OctetStream =>
+                "contentType is null || !contentType.StartsWith(\"text/\", StringComparison.OrdinalIgnoreCase)",
+            _ => "true",
+        };
+    }
+
+    /// <summary>
+    /// Gets the suffix appended to match parameter names for non-JSON content categories.
+    /// </summary>
+    /// <param name="category">The content category.</param>
+    /// <returns>An empty string for JSON, "String" for text, "Stream" for binary.</returns>
+    public static string MatchParamSuffix(ContentCategory category)
+    {
+        return category switch
+        {
+            ContentCategory.TextPlain => "String",
+            ContentCategory.OctetStream => "Stream",
+            _ => string.Empty,
+        };
+    }
+
+    /// <summary>
+    /// Gets the member name on the response struct to pass to the match handler.
+    /// </summary>
+    /// <param name="accessorName">The PascalCase accessor name (e.g. "Ok").</param>
+    /// <param name="category">The content category.</param>
+    /// <returns>The member expression to use in the match body.</returns>
+    public static string GetMemberNameForMatchResult(string accessorName, ContentCategory category)
+    {
+        return category switch
+        {
+            ContentCategory.OctetStream => $"{accessorName}Stream",
+            ContentCategory.TextPlain => $"{accessorName}Text",
+            _ => $"{accessorName}Body",
+        };
+    }
+
+    /// <summary>
+    /// Gets the type name for a match handler parameter.
+    /// </summary>
+    /// <param name="category">The content category.</param>
+    /// <param name="jsonTypeName">The resolved JSON type name (only used for JSON category).</param>
+    /// <returns>The C# type name for the match handler parameter.</returns>
+    public static string GetMatchTypeName(ContentCategory category, string? jsonTypeName)
+    {
+        return category switch
+        {
+            ContentCategory.OctetStream => "Stream?",
+            ContentCategory.TextPlain => "string?",
+            _ => jsonTypeName ?? string.Empty,
+        };
+    }
+
+    /// <summary>
+    /// Gets the C# condition expression for detecting which content category
+    /// was populated in a response struct at runtime, used for multi-category match dispatch.
+    /// </summary>
+    /// <param name="accessorName">The PascalCase accessor name (e.g. "Ok").</param>
+    /// <param name="category">The content category to detect.</param>
+    /// <returns>A C# boolean expression string, or <see langword="null"/> for the fallback category.</returns>
+    public static string? ContentCategoryDetectionCondition(string accessorName, ContentCategory category)
+    {
+        string camelName = ToCamelCase(accessorName);
+
+        return category switch
+        {
+            ContentCategory.TextPlain => $"this.{camelName}TextBuffer is not null",
+            ContentCategory.OctetStream => $"this.{accessorName}Stream is not null",
+            _ => null, // JSON is the fallback — no condition needed.
+        };
+    }
 }
