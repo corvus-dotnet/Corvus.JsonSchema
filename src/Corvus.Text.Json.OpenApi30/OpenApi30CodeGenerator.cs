@@ -1136,7 +1136,7 @@ public sealed class OpenApi30CodeGenerator
     private string GetParameterTypeName(ParameterInfo param)
     {
         string resolved = this.ResolveSchemaTypeName(param.SchemaPointer);
-        return param.IsRequired ? resolved : $"{resolved}?";
+        return resolved;
     }
 
     private string GetParameterSourceTypeName(ParameterInfo param)
@@ -1476,9 +1476,9 @@ public sealed class OpenApi30CodeGenerator
 
             if (!param.IsRequired)
             {
-                w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}Value)");
+                w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"{fieldName}Value", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitQueryParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
                 w.CloseBrace();
                 w.WriteLine();
             }
@@ -1523,9 +1523,9 @@ public sealed class OpenApi30CodeGenerator
 
             if (!param.IsRequired)
             {
-                w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}HeaderValue)");
+                w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitHeaderParamWrite(w, $"{fieldName}HeaderValue", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
                 w.CloseBrace();
                 w.WriteLine();
             }
@@ -1564,9 +1564,9 @@ public sealed class OpenApi30CodeGenerator
 
             if (!param.IsRequired)
             {
-                w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}Value)");
+                w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"{fieldName}Value", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
                 w.CloseBrace();
                 w.WriteLine();
             }
@@ -1587,7 +1587,7 @@ public sealed class OpenApi30CodeGenerator
         ParameterInfo[] validatable = allParams.Where(p => p.SchemaPointer is not null).ToArray();
 
         w.WriteLine("/// <inheritdoc/>");
-        w.WriteLine("public void Validate(RequestValidationMode mode = RequestValidationMode.Basic)");
+        w.WriteLine("public void Validate(ValidationMode mode = ValidationMode.Basic)");
         w.OpenBrace();
 
         if (validatable.Length == 0)
@@ -1596,13 +1596,11 @@ public sealed class OpenApi30CodeGenerator
             return;
         }
 
-        w.WriteLine("if (mode == RequestValidationMode.None)");
+        w.WriteLine("if (mode == ValidationMode.None)");
         w.OpenBrace();
         w.WriteLine("return;");
         w.CloseBrace();
-        w.WriteLine();
-
-        w.WriteLine("if (mode == RequestValidationMode.Detailed)");
+        w.WriteLine("else if (mode == ValidationMode.Detailed)");
         w.OpenBrace();
 
         foreach (ParameterInfo param in validatable)
@@ -1620,10 +1618,10 @@ public sealed class OpenApi30CodeGenerator
             }
             else
             {
-                w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}Value)");
+                w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
                 w.WriteLine($"using JsonSchemaResultsCollector collector{fieldName} = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
-                w.WriteLine($"if (!{fieldName}Value.EvaluateSchema(collector{fieldName}))");
+                w.WriteLine($"if (!this.{fieldName}.EvaluateSchema(collector{fieldName}))");
                 w.OpenBrace();
                 w.WriteLine($"ThrowHelper.ThrowRequestParameterValidationFailed(\"{param.Name}\", SchemaValidationDetail.FormatResults(collector{fieldName}));");
                 w.CloseBrace();
@@ -1650,7 +1648,7 @@ public sealed class OpenApi30CodeGenerator
             }
             else
             {
-                w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}Value && !{fieldName}Value.EvaluateSchema())");
+                w.WriteLine($"if (this.{fieldName}.IsNotUndefined() && !this.{fieldName}.EvaluateSchema())");
                 w.OpenBrace();
                 w.WriteLine($"ThrowHelper.ThrowRequestParameterValidationFailed(\"{param.Name}\");");
                 w.CloseBrace();
@@ -1660,6 +1658,122 @@ public sealed class OpenApi30CodeGenerator
 
         w.CloseBrace();
         w.CloseBrace();
+    }
+
+    private void EmitResponseValidate(IndentedWriter w, ResponseInfo[] responses)
+    {
+        // Collect responses that have a JSON body with a resolved type name.
+        List<(string StatusCode, string AccessorName)> validatable = [];
+
+        foreach (ResponseInfo resp in responses)
+        {
+            ContentCategory[] categories = GetDistinctContentCategories(resp);
+            if (categories.Contains(ContentCategory.Json))
+            {
+                string? typeName = this.ResolveResponseTypeName(resp);
+                if (typeName is not null)
+                {
+                    validatable.Add((resp.StatusCode, CodeEmitHelpers.StatusCodeToName(resp.StatusCode)));
+                }
+            }
+        }
+
+        w.WriteLine("/// <inheritdoc/>");
+        w.WriteLine("public void Validate(ValidationMode mode = ValidationMode.Basic)");
+        w.OpenBrace();
+
+        if (validatable.Count == 0)
+        {
+            w.CloseBrace();
+            return;
+        }
+
+        w.WriteLine("if (mode == ValidationMode.None)");
+        w.OpenBrace();
+        w.WriteLine("return;");
+        w.CloseBrace();
+        w.WriteLine("else if (mode == ValidationMode.Detailed)");
+        w.OpenBrace();
+        EmitResponseValidateBodies(w, validatable, detailed: true);
+        w.CloseBrace();
+        w.WriteLine("else");
+        w.OpenBrace();
+        EmitResponseValidateBodies(w, validatable, detailed: false);
+        w.CloseBrace();
+
+        w.CloseBrace();
+    }
+
+    private static void EmitResponseValidateBodies(
+        IndentedWriter w,
+        List<(string StatusCode, string AccessorName)> validatable,
+        bool detailed)
+    {
+        // Separate named status codes from the default fallback.
+        List<(string StatusCode, string AccessorName)> named = [];
+        (string StatusCode, string AccessorName)? defaultResp = null;
+
+        foreach ((string statusCode, string accessorName) in validatable)
+        {
+            if (statusCode == "default")
+            {
+                defaultResp = (statusCode, accessorName);
+            }
+            else
+            {
+                named.Add((statusCode, accessorName));
+            }
+        }
+
+        // Emit if / else if chain for named status codes.
+        for (int i = 0; i < named.Count; i++)
+        {
+            (string statusCode, string accessorName) = named[i];
+            string prefix = i == 0 ? "if" : "else if";
+            w.WriteLine($"{prefix} (this.StatusCode == {statusCode})");
+            w.OpenBrace();
+            EmitBodyValidation(w, accessorName, statusCode, detailed);
+            w.CloseBrace();
+        }
+
+        // Emit the default as else (or standalone if no named codes).
+        if (defaultResp is { } def)
+        {
+            if (named.Count > 0)
+            {
+                w.WriteLine("else");
+                w.OpenBrace();
+                EmitBodyValidation(w, def.AccessorName, "this.StatusCode", detailed);
+                w.CloseBrace();
+            }
+            else
+            {
+                EmitBodyValidation(w, def.AccessorName, "this.StatusCode", detailed);
+            }
+        }
+    }
+
+    private static void EmitBodyValidation(
+        IndentedWriter w,
+        string accessorName,
+        string statusCodeExpr,
+        bool detailed)
+    {
+        if (detailed)
+        {
+            w.WriteLine($"using JsonSchemaResultsCollector collector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+            w.WriteLine($"if (!this.{accessorName}Body.EvaluateSchema(collector))");
+            w.OpenBrace();
+            w.WriteLine($"ThrowHelper.ThrowResponseBodyValidationFailed({statusCodeExpr}, SchemaValidationDetail.FormatResults(collector));");
+            w.CloseBrace();
+        }
+        else
+        {
+            w.WriteLine($"if (!this.{accessorName}Body.EvaluateSchema())");
+            w.OpenBrace();
+            w.WriteLine($"ThrowHelper.ThrowResponseBodyValidationFailed({statusCodeExpr});");
+            w.CloseBrace();
+        }
     }
 
     // ── Response struct emission ────────────────────────────────────────
@@ -1812,6 +1926,9 @@ public sealed class OpenApi30CodeGenerator
 
         this.EmitMatchResult(w, structName, op.Responses, includeContext: false);
         this.EmitMatchResult(w, structName, op.Responses, includeContext: true);
+
+        w.WriteLine();
+        this.EmitResponseValidate(w, op.Responses);
 
         w.WriteLine();
         w.WriteLine("/// <inheritdoc/>");
@@ -2611,7 +2728,7 @@ public sealed class OpenApi30CodeGenerator
                     string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
 
                     w.WriteLine(
-                        $"{fieldName} = {paramIdentifier}.IsUndefined ? null : " +
+                        $"{fieldName} = {paramIdentifier}.IsUndefined ? default : " +
                         $"({typeName}){typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement,");
                 }
 
@@ -2637,7 +2754,7 @@ public sealed class OpenApi30CodeGenerator
         if (hasBody && !isRawStreamBody)
         {
             w.WriteLine();
-            w.WriteLine("if (validationMode == RequestValidationMode.Detailed)");
+            w.WriteLine("if (validationMode == ValidationMode.Detailed)");
             w.OpenBrace();
             w.WriteLine("using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
             w.WriteLine("if (!bodyValue.EvaluateSchema(bodyCollector))");
@@ -2645,7 +2762,7 @@ public sealed class OpenApi30CodeGenerator
             w.WriteLine("ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));");
             w.CloseBrace();
             w.CloseBrace();
-            w.WriteLine("else if (validationMode != RequestValidationMode.None && !bodyValue.EvaluateSchema())");
+            w.WriteLine("else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())");
             w.OpenBrace();
             w.WriteLine("ThrowHelper.ThrowRequestBodyValidationFailed();");
             w.CloseBrace();
@@ -2661,19 +2778,19 @@ public sealed class OpenApi30CodeGenerator
             w.WriteLine(
                 $"return SendWithStreamBodyAsyncCore<{requestName}, " +
                 $"{responseName}>(workspace, request, body, " +
-                $"\"{CodeEmitHelpers.EscapeStringLiteral(streamContentType)}\", cancellationToken);");
+                $"\"{CodeEmitHelpers.EscapeStringLiteral(streamContentType)}\", responseValidationMode, cancellationToken);");
         }
         else if (hasBody)
         {
             w.WriteLine(
                 $"return SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
-                $"{responseName}>(workspace, request, bodyValue, cancellationToken);");
+                $"{responseName}>(workspace, request, bodyValue, responseValidationMode, cancellationToken);");
         }
         else
         {
             w.WriteLine(
                 $"return SendAsyncCore<{requestName}, " +
-                $"{responseName}>(workspace, request, cancellationToken);");
+                $"{responseName}>(workspace, request, responseValidationMode, cancellationToken);");
         }
 
         w.CloseBrace();
@@ -2732,7 +2849,8 @@ public sealed class OpenApi30CodeGenerator
         }
 
         paramParts.Add("CancellationToken cancellationToken = default");
-        paramParts.Add("RequestValidationMode validationMode = RequestValidationMode.Basic");
+        paramParts.Add("ValidationMode validationMode = ValidationMode.Basic");
+        paramParts.Add("ValidationMode responseValidationMode = ValidationMode.None");
 
         return paramParts;
     }

@@ -602,6 +602,8 @@ public class HttpClientTransportTests
         }
 
         public ValueTask DisposeAsync() => default;
+
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>
@@ -625,6 +627,8 @@ public class HttpClientTransportTests
         }
 
         public ValueTask DisposeAsync() => default;
+
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>GET /pets/1 — no parameters.</summary>
@@ -650,7 +654,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>GET /pets with query parameters.</summary>
@@ -693,7 +697,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>GET /pets with X-Custom header.</summary>
@@ -732,7 +736,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>POST /pets — body operation, no parameters.</summary>
@@ -758,7 +762,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>GET /pets/{petId} — path parameter.</summary>
@@ -795,7 +799,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>GET /pets with HasQueryParameters=true but all optional (returns 0 bytes).</summary>
@@ -824,7 +828,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>PUT /pets — tests MapMethod for Put.</summary>
@@ -850,7 +854,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>DELETE /pets — tests MapMethod for Delete.</summary>
@@ -876,7 +880,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>PATCH /pets — tests MapMethod for Patch.</summary>
@@ -902,7 +906,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>HEAD /pets — tests MapMethod for Head.</summary>
@@ -928,7 +932,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>OPTIONS /pets — tests MapMethod for Options.</summary>
@@ -954,7 +958,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>TRACE /pets — tests MapMethod for Trace.</summary>
@@ -980,7 +984,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>GET /pets/{petId} with query params too.</summary>
@@ -1024,7 +1028,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>GET /pets with cookie parameters.</summary>
@@ -1064,7 +1068,7 @@ public class HttpClientTransportTests
             return cookie.Length;
         }
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>GET /pets with HasCookieParameters=true but WriteCookies returns 0.</summary>
@@ -1090,7 +1094,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>Publish /events — tests the unknown-method fallback in MapMethod.</summary>
@@ -1116,7 +1120,7 @@ public class HttpClientTransportTests
 
         public int WriteCookies(IBufferWriter<byte> writer) => 0;
 
-        public void Validate(RequestValidationMode mode = RequestValidationMode.Basic) { }
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 
     /// <summary>
@@ -1166,5 +1170,7 @@ public class HttpClientTransportTests
         }
 
         public ValueTask DisposeAsync() => default;
+
+        public void Validate(ValidationMode mode = ValidationMode.Basic) { }
     }
 }

@@ -1705,6 +1705,7 @@ public static class CodeEmitHelpers
         w.PushIndent();
         w.WriteLine("JsonWorkspace workspace,");
         w.WriteLine("TRequest request,");
+        w.WriteLine("ValidationMode responseValidationMode,");
         w.WriteLine("CancellationToken cancellationToken)");
         w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
         w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
@@ -1713,7 +1714,9 @@ public static class CodeEmitHelpers
         w.WriteLine("try");
         w.OpenBrace();
         w.WriteLine(
-            "return await this.transport.SendAsync<TRequest, TResponse>(in request, cancellationToken).ConfigureAwait(false);");
+            "TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, cancellationToken).ConfigureAwait(false);");
+        w.WriteLine("response.Validate(responseValidationMode);");
+        w.WriteLine("return response;");
         w.CloseBrace();
         w.WriteLine("finally");
         w.OpenBrace();
@@ -1728,6 +1731,7 @@ public static class CodeEmitHelpers
         w.WriteLine("JsonWorkspace workspace,");
         w.WriteLine("TRequest request,");
         w.WriteLine("TBody body,");
+        w.WriteLine("ValidationMode responseValidationMode,");
         w.WriteLine("CancellationToken cancellationToken)");
         w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
         w.WriteLine("where TBody : struct, IJsonElement<TBody>");
@@ -1737,7 +1741,9 @@ public static class CodeEmitHelpers
         w.WriteLine("try");
         w.OpenBrace();
         w.WriteLine(
-            "return await this.transport.SendAsync<TRequest, TBody, TResponse>(in request, in body, cancellationToken).ConfigureAwait(false);");
+            "TResponse response = await this.transport.SendAsync<TRequest, TBody, TResponse>(in request, in body, cancellationToken).ConfigureAwait(false);");
+        w.WriteLine("response.Validate(responseValidationMode);");
+        w.WriteLine("return response;");
         w.CloseBrace();
         w.WriteLine("finally");
         w.OpenBrace();
@@ -1753,6 +1759,7 @@ public static class CodeEmitHelpers
         w.WriteLine("TRequest request,");
         w.WriteLine("Stream body,");
         w.WriteLine("string contentType,");
+        w.WriteLine("ValidationMode responseValidationMode,");
         w.WriteLine("CancellationToken cancellationToken)");
         w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
         w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
@@ -1761,7 +1768,9 @@ public static class CodeEmitHelpers
         w.WriteLine("try");
         w.OpenBrace();
         w.WriteLine(
-            "return await this.transport.SendAsync<TRequest, TResponse>(in request, body, contentType, cancellationToken).ConfigureAwait(false);");
+            "TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, body, contentType, cancellationToken).ConfigureAwait(false);");
+        w.WriteLine("response.Validate(responseValidationMode);");
+        w.WriteLine("return response;");
         w.CloseBrace();
         w.WriteLine("finally");
         w.OpenBrace();

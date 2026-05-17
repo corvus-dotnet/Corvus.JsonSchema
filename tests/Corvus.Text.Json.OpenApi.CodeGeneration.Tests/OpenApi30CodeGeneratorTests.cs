@@ -516,7 +516,7 @@ public class OpenApi30CodeGeneratorTests
 
         Assert.IsTrue(
             req.Content.Contains(
-                "Petstore.Client.JsonInt32? Limit { get; init; }", StringComparison.Ordinal));
+                "Petstore.Client.JsonInt32 Limit { get; init; }", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1829,27 +1829,27 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
-    public void Generate_OptionalCookieParam_EmitsNullableCheck()
+    public void Generate_OptionalCookieParam_EmitsIsNotUndefinedCheck()
     {
         JsonElement spec = ParseSpec(RequiredParamsSpec30);
         OpenApi30CodeGenerator gen = new("Test", RequiredParamsMap30);
         IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
 
         GeneratedFile req = GetFile(files, "SearchItemsRequest.cs");
-        Assert.IsTrue(req.Content.Contains("Test.JsonString? Pref { get; init; }", StringComparison.Ordinal));
-        Assert.IsTrue(req.Content.Contains("this.Pref is { } PrefValue", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("Test.JsonString Pref { get; init; }", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("this.Pref.IsNotUndefined()", StringComparison.Ordinal));
     }
 
     [TestMethod]
-    public void Generate_OptionalHeaderParam_EmitsNullableCheck()
+    public void Generate_OptionalHeaderParam_EmitsIsNotUndefinedCheck()
     {
         JsonElement spec = ParseSpec(RequiredParamsSpec30);
         OpenApi30CodeGenerator gen = new("Test", RequiredParamsMap30);
         IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
 
         GeneratedFile req = GetFile(files, "SearchItemsRequest.cs");
-        Assert.IsTrue(req.Content.Contains("Test.JsonString? XTrace { get; init; }", StringComparison.Ordinal));
-        Assert.IsTrue(req.Content.Contains("this.XTrace is { } XTraceHeaderValue", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("Test.JsonString XTrace { get; init; }", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("this.XTrace.IsNotUndefined()", StringComparison.Ordinal));
     }
 
     [TestMethod]

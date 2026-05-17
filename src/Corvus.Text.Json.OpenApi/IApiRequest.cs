@@ -153,13 +153,13 @@ public interface IApiRequest<TSelf>
     /// Validates all request parameters against their JSON schemas.
     /// </summary>
     /// <param name="mode">
-    /// The level of validation to perform. Defaults to <see cref="RequestValidationMode.Basic"/>
-    /// which uses a fast boolean check. Use <see cref="RequestValidationMode.Detailed"/>
+    /// The level of validation to perform. Defaults to <see cref="ValidationMode.Basic"/>
+    /// which uses a fast boolean check. Use <see cref="ValidationMode.Detailed"/>
     /// for JSON-formatted diagnostics in the exception message, or
-    /// <see cref="RequestValidationMode.None"/> to skip validation entirely.
+    /// <see cref="ValidationMode.None"/> to skip validation entirely.
     /// </param>
     /// <exception cref="ArgumentException">
     /// A parameter value does not conform to its schema.
     /// </exception>
-    void Validate(RequestValidationMode mode = RequestValidationMode.Basic);
+    void Validate(ValidationMode mode = ValidationMode.Basic);
 }

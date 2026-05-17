@@ -516,7 +516,7 @@ public class OpenApi31CodeGeneratorTests
 
         Assert.IsTrue(
             req.Content.Contains(
-                "Petstore.Client.JsonInt32? Limit { get; init; }", StringComparison.Ordinal));
+                "Petstore.Client.JsonInt32 Limit { get; init; }", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -1833,7 +1833,7 @@ public class OpenApi31CodeGeneratorTests
     }
 
     [TestMethod]
-    public void Generate_OptionalCookieParam_EmitsNullableCheck()
+    public void Generate_OptionalCookieParam_EmitsIsNotUndefinedCheck()
     {
         JsonElement spec = ParseSpec(RequiredParamsSpec31);
         OpenApi31CodeGenerator gen = new("Test", RequiredParamsMap31);
@@ -1841,21 +1841,21 @@ public class OpenApi31CodeGeneratorTests
 
         GeneratedFile req = GetFile(files, "SearchItemsRequest.cs");
 
-        // Optional cookie: nullable type and "is { }" check
-        Assert.IsTrue(req.Content.Contains("Test.JsonString? Pref { get; init; }", StringComparison.Ordinal));
-        Assert.IsTrue(req.Content.Contains("this.Pref is { } PrefValue", StringComparison.Ordinal));
+        // Optional cookie: non-nullable type and IsNotUndefined() check
+        Assert.IsTrue(req.Content.Contains("Test.JsonString Pref { get; init; }", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("this.Pref.IsNotUndefined()", StringComparison.Ordinal));
     }
 
     [TestMethod]
-    public void Generate_OptionalHeaderParam_EmitsNullableCheck()
+    public void Generate_OptionalHeaderParam_EmitsIsNotUndefinedCheck()
     {
         JsonElement spec = ParseSpec(RequiredParamsSpec31);
         OpenApi31CodeGenerator gen = new("Test", RequiredParamsMap31);
         IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
 
         GeneratedFile req = GetFile(files, "SearchItemsRequest.cs");
-        Assert.IsTrue(req.Content.Contains("Test.JsonString? XTrace { get; init; }", StringComparison.Ordinal));
-        Assert.IsTrue(req.Content.Contains("this.XTrace is { } XTraceHeaderValue", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("Test.JsonString XTrace { get; init; }", StringComparison.Ordinal));
+        Assert.IsTrue(req.Content.Contains("this.XTrace.IsNotUndefined()", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -5980,7 +5980,7 @@ public class OpenApi31CodeGeneratorTests
         GeneratedFile req = GetFile(files, "ShowPetByIdRequest.cs");
 
         Assert.IsTrue(
-            req.Content.Contains("public void Validate(RequestValidationMode mode = RequestValidationMode.Basic)", StringComparison.Ordinal),
+            req.Content.Contains("public void Validate(ValidationMode mode = ValidationMode.Basic)", StringComparison.Ordinal),
             "Request should contain the Validate method");
         Assert.IsTrue(
             req.Content.Contains("this.PetId.EvaluateSchema()", StringComparison.Ordinal),
@@ -6031,11 +6031,11 @@ public class OpenApi31CodeGeneratorTests
         GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
 
         Assert.IsTrue(
-            req.Content.Contains("if (this.Limit is { } LimitValue", StringComparison.Ordinal),
-            "Optional param should use pattern match to check presence");
+            req.Content.Contains("if (this.Limit.IsNotUndefined())", StringComparison.Ordinal),
+            "Optional param should use IsNotUndefined() to check presence");
         Assert.IsTrue(
-            req.Content.Contains("LimitValue.EvaluateSchema()", StringComparison.Ordinal),
-            "Optional param should validate the unwrapped value");
+            req.Content.Contains("this.Limit.EvaluateSchema()", StringComparison.Ordinal),
+            "Optional param should validate the field directly");
     }
 
     [TestMethod]
@@ -6047,7 +6047,7 @@ public class OpenApi31CodeGeneratorTests
         GeneratedFile req = GetFile(files, "CreatePetRequest.cs");
 
         Assert.IsTrue(
-            req.Content.Contains("public void Validate(RequestValidationMode mode = RequestValidationMode.Basic)", StringComparison.Ordinal),
+            req.Content.Contains("public void Validate(ValidationMode mode = ValidationMode.Basic)", StringComparison.Ordinal),
             "Request with no params should still have Validate");
         Assert.IsFalse(
             req.Content.Contains("EvaluateSchema", StringComparison.Ordinal),
@@ -6064,7 +6064,7 @@ public class OpenApi31CodeGeneratorTests
 
         Assert.IsTrue(
             req.Content.Contains(
-                "if (mode == RequestValidationMode.None)",
+                "if (mode == ValidationMode.None)",
                 StringComparison.Ordinal),
             "Validate should early-return for None mode");
     }

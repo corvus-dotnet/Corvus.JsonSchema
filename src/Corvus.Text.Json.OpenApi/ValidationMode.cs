@@ -1,14 +1,14 @@
-// <copyright file="RequestValidationMode.cs" company="Endjin Limited">
+// <copyright file="ValidationMode.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
-/// Controls the level of JSON Schema validation applied to request parameters
-/// and body before sending an API request.
+/// Controls the level of JSON Schema validation applied to request parameters,
+/// request bodies, and response bodies.
 /// </summary>
-public enum RequestValidationMode
+public enum ValidationMode
 {
     /// <summary>
     /// No validation is performed. Use when you trust the inputs or have

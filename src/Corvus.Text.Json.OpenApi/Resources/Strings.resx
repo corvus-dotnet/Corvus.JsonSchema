@@ -92,5 +92,11 @@
   <data name="UnableToResolveHeaderRef" xml:space="preserve">
     <value>Unable to resolve header $ref.</value>
   </data>
+  <data name="ResponseBodyValidationFailed" xml:space="preserve">
+    <value>The response body for status code {0} failed schema validation.</value>
+  </data>
+  <data name="ResponseBodyValidationFailedWithDetail" xml:space="preserve">
+    <value>The response body for status code {0} failed schema validation: {1}</value>
+  </data>
 
 </root>

@@ -3255,7 +3255,7 @@ public class GeneratedClientEndToEndTests
     {
         // Even with a default-constructed required param (likely invalid), None should not throw.
         GetItemRequest request = default;
-        request.Validate(RequestValidationMode.None);
+        request.Validate(ValidationMode.None);
     }
 
     [TestMethod]
@@ -3265,7 +3265,7 @@ public class GeneratedClientEndToEndTests
         GetItemRequest request = new(JsonString.ParseValue("true"u8));
 
         ArgumentException ex = Assert.ThrowsExactly<ArgumentException>(() =>
-            request.Validate(RequestValidationMode.Basic));
+            request.Validate(ValidationMode.Basic));
 
         StringAssert.Contains(ex.Message, "itemId");
     }
@@ -3276,7 +3276,7 @@ public class GeneratedClientEndToEndTests
         GetItemRequest request = new(JsonString.ParseValue("true"u8));
 
         ArgumentException ex = Assert.ThrowsExactly<ArgumentException>(() =>
-            request.Validate(RequestValidationMode.Detailed));
+            request.Validate(ValidationMode.Detailed));
 
         StringAssert.Contains(ex.Message, "itemId");
         StringAssert.Contains(ex.Message, "evaluationPath");
@@ -3293,7 +3293,7 @@ public class GeneratedClientEndToEndTests
         };
 
         ArgumentException ex = Assert.ThrowsExactly<ArgumentException>(() =>
-            request.Validate(RequestValidationMode.Basic));
+            request.Validate(ValidationMode.Basic));
 
         StringAssert.Contains(ex.Message, "limit");
     }

@@ -75,4 +75,18 @@ public interface IApiResponse<TSelf> : IAsyncDisposable
         IResponseHeaders? responseHeaders = null,
         IAsyncDisposable? owner = null,
         CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Validates the active response body against its JSON Schema.
+    /// </summary>
+    /// <param name="mode">
+    /// The level of validation to perform. Defaults to <see cref="ValidationMode.Basic"/>
+    /// which uses a fast boolean check. Use <see cref="ValidationMode.Detailed"/>
+    /// for JSON-formatted diagnostics in the exception message, or
+    /// <see cref="ValidationMode.None"/> to skip validation entirely.
+    /// </param>
+    /// <exception cref="InvalidOperationException">
+    /// The response body does not conform to its schema.
+    /// </exception>
+    void Validate(ValidationMode mode = ValidationMode.Basic);
 }

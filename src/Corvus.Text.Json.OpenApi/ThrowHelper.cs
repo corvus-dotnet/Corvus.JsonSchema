@@ -150,4 +150,32 @@ public static class ThrowHelper
     {
         throw new InvalidOperationException(SR.UnableToResolveHeaderRef);
     }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the
+    /// response body for a given status code failed schema validation.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code of the response that failed validation.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowResponseBodyValidationFailed(int statusCode)
+    {
+        throw new InvalidOperationException(
+            SR.Format(SR.ResponseBodyValidationFailed, statusCode));
+    }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the
+    /// response body for a given status code failed schema validation, with detailed
+    /// diagnostic information.
+    /// </summary>
+    /// <param name="statusCode">The HTTP status code of the response that failed validation.</param>
+    /// <param name="detail">A JSON-formatted string containing validation diagnostics.</param>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowResponseBodyValidationFailed(int statusCode, string detail)
+    {
+        throw new InvalidOperationException(
+            SR.Format(SR.ResponseBodyValidationFailedWithDetail, statusCode, detail));
+    }
 }
