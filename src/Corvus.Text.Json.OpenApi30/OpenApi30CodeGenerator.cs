@@ -2630,6 +2630,29 @@ public sealed class OpenApi30CodeGenerator
 
         w.WriteLine();
 
+        // Validate parameters.
+        w.WriteLine("request.Validate(validationMode);");
+
+        // Validate JSON body if present (skip text/plain and stream bodies).
+        if (hasBody && !isRawStreamBody)
+        {
+            w.WriteLine();
+            w.WriteLine("if (validationMode == RequestValidationMode.Detailed)");
+            w.OpenBrace();
+            w.WriteLine("using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+            w.WriteLine("if (!bodyValue.EvaluateSchema(bodyCollector))");
+            w.OpenBrace();
+            w.WriteLine("ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));");
+            w.CloseBrace();
+            w.CloseBrace();
+            w.WriteLine("else if (validationMode != RequestValidationMode.None && !bodyValue.EvaluateSchema())");
+            w.OpenBrace();
+            w.WriteLine("ThrowHelper.ThrowRequestBodyValidationFailed();");
+            w.CloseBrace();
+        }
+
+        w.WriteLine();
+
         if (isRawStreamBody)
         {
             // Find the actual content type string from the spec for the raw stream body.
@@ -2709,6 +2732,7 @@ public sealed class OpenApi30CodeGenerator
         }
 
         paramParts.Add("CancellationToken cancellationToken = default");
+        paramParts.Add("RequestValidationMode validationMode = RequestValidationMode.Basic");
 
         return paramParts;
     }
