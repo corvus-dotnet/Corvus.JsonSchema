@@ -4595,4 +4595,287 @@ public class OpenApi30CodeGeneratorTests
             resp.Content.Contains("Test.VendorData", StringComparison.Ordinal),
             "Vendor +json response should use the mapped schema type");
     }
+
+    // ── text/plain codegen tests ────────────────────────────────────────
+    private const string TextPlainSpec = """
+        {
+          "openapi": "3.0.3",
+          "info": { "title": "TextTest", "version": "1.0" },
+          "paths": {
+            "/echo": {
+              "post": {
+                "operationId": "echoText",
+                "tags": ["text"],
+                "requestBody": {
+                  "required": true,
+                  "content": { "text/plain": { "schema": { "type": "string" } } }
+                },
+                "responses": {
+                  "200": {
+                    "description": "Echo",
+                    "content": { "text/plain": { "schema": { "type": "string" } } }
+                  }
+                }
+              }
+            },
+            "/textmixed": {
+              "get": {
+                "operationId": "getTextOrJson",
+                "tags": ["text"],
+                "responses": {
+                  "200": {
+                    "description": "Text response",
+                    "content": { "text/plain": { "schema": { "type": "string" } } }
+                  },
+                  "400": {
+                    "description": "Error",
+                    "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+                  }
+                }
+              }
+            },
+            "/wildcard": {
+              "get": {
+                "operationId": "getWildcard",
+                "tags": ["text"],
+                "responses": {
+                  "200": {
+                    "description": "Any text",
+                    "content": { "text/*": { "schema": { "type": "string" } } }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    private static IReadOnlyList<GeneratedFile> GenerateTextPlainSpec()
+    {
+        JsonElement root = ParseSpec(TextPlainSpec);
+        Dictionary<string, string> map = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1textmixed/get/responses/400/content/application~1json/schema"] = "Test.ErrorResponse",
+        };
+
+        OpenApi30CodeGenerator gen = new("Test", map);
+        return gen.Generate(root);
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_ExcludesTextPlainSchemas()
+    {
+        JsonElement root = ParseSpec(TextPlainSpec);
+        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root);
+
+        Assert.IsFalse(
+            pointers.Any(p => p.Contains("text~1plain", StringComparison.Ordinal)),
+            "text/plain schemas should be excluded from schema pointer collection");
+
+        Assert.IsTrue(
+            pointers.Any(p => p.Contains("application~1json", StringComparison.Ordinal)),
+            "JSON schemas should still be collected");
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_ExcludesTextWildcardSchemas()
+    {
+        JsonElement root = ParseSpec(TextPlainSpec);
+        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root);
+
+        Assert.IsFalse(
+            pointers.Any(p => p.Contains("text~1*", StringComparison.Ordinal)),
+            "text/* wildcard schemas should be excluded from schema pointer collection");
+    }
+
+    [TestMethod]
+    public void TextResponse_NoParsedDocumentField()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsFalse(
+            resp.Content.Contains("parsedDocument", StringComparison.Ordinal),
+            "Text-only response should not have a parsedDocument field");
+    }
+
+    [TestMethod]
+    public void TextResponse_HasLazyTextProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("OkText", StringComparison.Ordinal),
+            "Text response should have an OkText property");
+    }
+
+    [TestMethod]
+    public void TextResponse_HasUtf8BytesProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("OkUtf8Bytes", StringComparison.Ordinal),
+            "Text response should have an OkUtf8Bytes span property");
+    }
+
+    [TestMethod]
+    public void TextResponse_HasTryGetOkString()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("TryGetOkString", StringComparison.Ordinal),
+            "Text response should have a TryGetOkString method");
+    }
+
+    [TestMethod]
+    public void TextResponse_NoTryGetOkStream()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsFalse(
+            resp.Content.Contains("TryGetOkStream", StringComparison.Ordinal),
+            "Text response should NOT have a TryGetOkStream method");
+    }
+
+    [TestMethod]
+    public void TextResponse_NoStreamProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsFalse(
+            resp.Content.Contains("OkStream", StringComparison.Ordinal),
+            "Text response should NOT have a Stream property");
+    }
+
+    [TestMethod]
+    public void TextResponse_HasArrayPoolReturn()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("ArrayPool<byte>.Shared.Return", StringComparison.Ordinal),
+            "Text response DisposeAsync should return rented buffer to ArrayPool");
+    }
+
+    [TestMethod]
+    public void TextResponse_HasReadStreamToRentedBufferHelper()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("ReadStreamToRentedBuffer", StringComparison.Ordinal),
+            "Text response should contain the ReadStreamToRentedBuffer helper method");
+    }
+
+    [TestMethod]
+    public void TextResponse_HasBackingFields()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("okTextBuffer", StringComparison.Ordinal),
+            "Text response should have a buffer backing field");
+        Assert.IsTrue(
+            resp.Content.Contains("okTextLength", StringComparison.Ordinal),
+            "Text response should have a length backing field");
+        Assert.IsTrue(
+            resp.Content.Contains("okTextCached", StringComparison.Ordinal),
+            "Text response should have a cached string backing field");
+    }
+
+    [TestMethod]
+    public void TextRequest_UsesStreamBody()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile client = GetFile(files, "IApiTextClient.cs");
+
+        Assert.IsTrue(
+            client.Content.Contains("Stream body", StringComparison.Ordinal),
+            "Text/plain request body should use Stream parameter");
+    }
+
+    [TestMethod]
+    public void TextRequest_UsesTextPlainContentType()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile client = GetFile(files, "ApiTextClient.cs");
+
+        Assert.IsTrue(
+            client.Content.Contains("text/plain", StringComparison.Ordinal),
+            "Text/plain request should pass text/plain content type");
+    }
+
+    [TestMethod]
+    public void TextMixedResponse_HasBothParsedDocAndTextFields()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "GetTextOrJsonResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("parsedDocument", StringComparison.Ordinal),
+            "Mixed text+JSON response should have a parsedDocument field for the JSON path");
+        Assert.IsTrue(
+            resp.Content.Contains("OkText", StringComparison.Ordinal),
+            "Mixed text+JSON response should have an OkText property for the text path");
+    }
+
+    [TestMethod]
+    public void TextMixedResponse_HasBothTryGetMethods()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "GetTextOrJsonResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("TryGetOkString", StringComparison.Ordinal),
+            "Mixed response should have TryGetOkString");
+        Assert.IsTrue(
+            resp.Content.Contains("TryGetBadRequest", StringComparison.Ordinal),
+            "Mixed response should have TryGetBadRequest for the JSON status");
+    }
+
+    [TestMethod]
+    public void TextWildcard_TreatedAsTextPlain()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "GetWildcardResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("OkText", StringComparison.Ordinal),
+            "text/* wildcard response should be treated as text/plain with OkText property");
+        Assert.IsFalse(
+            resp.Content.Contains("OkStream", StringComparison.Ordinal),
+            "text/* wildcard should NOT produce a stream property");
+    }
+
+    [TestMethod]
+    public void TextResponse_MatchResult_UsesStringType()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("string?", StringComparison.Ordinal),
+            "Text response MatchResult should use string? as the type");
+    }
+
+    [TestMethod]
+    public void TextResponse_CreateAsync_CallsReadStreamToRentedBuffer()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateTextPlainSpec();
+        GeneratedFile resp = GetFile(files, "EchoTextResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("ReadStreamToRentedBuffer(contentStream", StringComparison.Ordinal),
+            "CreateAsync should call ReadStreamToRentedBuffer for text/plain responses");
+    }
 }
