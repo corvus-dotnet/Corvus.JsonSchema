@@ -745,9 +745,9 @@ public sealed class OpenApi31CodeGenerator
             (OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel) = merged[i];
 
             (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
-            bool required = param.Required.ValueKind == JsonValueKind.True;
+            bool required = param.Required;
             bool hasSchema = param.SchemaValue.IsNotUndefined();
-            JsonElement schemaElement = hasSchema ? (JsonElement)param.SchemaValue : default;
+            JsonElement schemaElement = hasSchema ? JsonElement.From(param.SchemaValue) : default;
             ParameterSerializationKind serializationKind = hasSchema
                 ? SchemaClassifier.Classify(schemaElement)
                 : ParameterSerializationKind.String;
@@ -789,7 +789,7 @@ public sealed class OpenApi31CodeGenerator
             ThrowHelper.ThrowUnableToResolveRequestBodyRef();
         }
 
-        bool required = requestBody.Required.ValueKind == JsonValueKind.True;
+        bool required = requestBody.Required;
         string? description = requestBody.Description.IsNotUndefined()
             ? requestBody.Description.GetString()
             : null;
@@ -993,15 +993,10 @@ public sealed class OpenApi31CodeGenerator
 
             if (hasSchema)
             {
-                JsonElement headerElement = (JsonElement)header;
-                if (headerElement.TryGetProperty("explode", out JsonElement explodeProp)
-                    && explodeProp.ValueKind == JsonValueKind.True)
-                {
-                    explode = true;
-                }
+                explode = header.Explode.ValueKind == JsonValueKind.True;
             }
 
-            JsonElement schemaEl = hasSchema ? (JsonElement)header.SchemaValue : default;
+            JsonElement schemaEl = hasSchema ? JsonElement.From(header.SchemaValue) : default;
             ParameterSerializationKind serializationKind = hasSchema
                 ? SchemaClassifier.Classify(schemaEl)
                 : ParameterSerializationKind.String;

@@ -786,9 +786,9 @@ public sealed class OpenApi30CodeGenerator
             (OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel) = merged[i];
 
             (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
-            bool required = param.Required.ValueKind == JsonValueKind.True;
+            bool required = param.Required;
             bool hasSchema = param.Schema.IsNotUndefined();
-            JsonElement schemaElement = hasSchema ? (JsonElement)param.Schema : default;
+            JsonElement schemaElement = hasSchema ? JsonElement.From(param.Schema) : default;
             ParameterSerializationKind serializationKind = hasSchema
                 ? SchemaClassifier.Classify(schemaElement)
                 : ParameterSerializationKind.String;
@@ -830,7 +830,7 @@ public sealed class OpenApi30CodeGenerator
             ThrowHelper.ThrowUnableToResolveRequestBodyRef();
         }
 
-        bool required = requestBody.Required.ValueKind == JsonValueKind.True;
+        bool required = requestBody.Required;
         string? description = requestBody.Description.IsNotUndefined()
             ? requestBody.Description.GetString()
             : null;
@@ -1031,15 +1031,10 @@ public sealed class OpenApi30CodeGenerator
 
             if (hasSchema)
             {
-                JsonElement headerElement = (JsonElement)header;
-                if (headerElement.TryGetProperty("explode", out JsonElement explodeProp)
-                    && explodeProp.ValueKind == JsonValueKind.True)
-                {
-                    explode = true;
-                }
+                explode = header.Explode.ValueKind == JsonValueKind.True;
             }
 
-            JsonElement schemaEl = hasSchema ? (JsonElement)header.Schema : default;
+            JsonElement schemaEl = hasSchema ? JsonElement.From(header.Schema) : default;
             ParameterSerializationKind serializationKind = hasSchema
                 ? SchemaClassifier.Classify(schemaEl)
                 : ParameterSerializationKind.String;
