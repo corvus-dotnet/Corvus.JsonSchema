@@ -120,6 +120,7 @@ public sealed class OpenApi31CodeGenerator
     /// <returns>An array of JSON Pointer strings.</returns>
     public static string[] CollectSchemaPointers(
         JsonElement specRoot,
+        out Dictionary<string, string> parameterNames,
         OperationFilter? filter = null,
         IOpenApiReferenceResolver? referenceResolver = null)
     {
@@ -128,10 +129,12 @@ public sealed class OpenApi31CodeGenerator
 
         if (doc.PathsValue.IsUndefined())
         {
+            parameterNames = new Dictionary<string, string>();
             return [];
         }
 
         List<string> pointers = [];
+        Dictionary<string, string> paramNames = new(StringComparer.Ordinal);
 
         foreach (JsonProperty<OpenApiDocument.PathItem> pathProp in doc.PathsValue.EnumerateObject())
         {
@@ -144,9 +147,10 @@ public sealed class OpenApi31CodeGenerator
                 }
             }
 
-            CollectPathItemPointers(pathProp, pointers, referenceResolver);
+            CollectPathItemPointers(pathProp, pointers, paramNames, referenceResolver);
         }
 
+        parameterNames = paramNames;
         return [.. pointers];
     }
 
@@ -199,48 +203,49 @@ public sealed class OpenApi31CodeGenerator
     private static void CollectPathItemPointers(
         JsonProperty<OpenApiDocument.PathItem> pathProp,
         List<string> pointers,
+        Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver)
     {
         OpenApiDocument.PathItem pathItem = pathProp.Value;
 
         if (pathItem.Get.IsNotUndefined())
         {
-            CollectOperationPointers(pathProp, pathItem.Get, OperationMethod.Get, pathItem, pointers, referenceResolver);
+            CollectOperationPointers(pathProp, pathItem.Get, OperationMethod.Get, pathItem, pointers, parameterNames, referenceResolver);
         }
 
         if (pathItem.Put.IsNotUndefined())
         {
-            CollectOperationPointers(pathProp, pathItem.Put, OperationMethod.Put, pathItem, pointers, referenceResolver);
+            CollectOperationPointers(pathProp, pathItem.Put, OperationMethod.Put, pathItem, pointers, parameterNames, referenceResolver);
         }
 
         if (pathItem.Post.IsNotUndefined())
         {
-            CollectOperationPointers(pathProp, pathItem.Post, OperationMethod.Post, pathItem, pointers, referenceResolver);
+            CollectOperationPointers(pathProp, pathItem.Post, OperationMethod.Post, pathItem, pointers, parameterNames, referenceResolver);
         }
 
         if (pathItem.Delete.IsNotUndefined())
         {
-            CollectOperationPointers(pathProp, pathItem.Delete, OperationMethod.Delete, pathItem, pointers, referenceResolver);
+            CollectOperationPointers(pathProp, pathItem.Delete, OperationMethod.Delete, pathItem, pointers, parameterNames, referenceResolver);
         }
 
         if (pathItem.Options.IsNotUndefined())
         {
-            CollectOperationPointers(pathProp, pathItem.Options, OperationMethod.Options, pathItem, pointers, referenceResolver);
+            CollectOperationPointers(pathProp, pathItem.Options, OperationMethod.Options, pathItem, pointers, parameterNames, referenceResolver);
         }
 
         if (pathItem.Head.IsNotUndefined())
         {
-            CollectOperationPointers(pathProp, pathItem.Head, OperationMethod.Head, pathItem, pointers, referenceResolver);
+            CollectOperationPointers(pathProp, pathItem.Head, OperationMethod.Head, pathItem, pointers, parameterNames, referenceResolver);
         }
 
         if (pathItem.Patch.IsNotUndefined())
         {
-            CollectOperationPointers(pathProp, pathItem.Patch, OperationMethod.Patch, pathItem, pointers, referenceResolver);
+            CollectOperationPointers(pathProp, pathItem.Patch, OperationMethod.Patch, pathItem, pointers, parameterNames, referenceResolver);
         }
 
         if (pathItem.Trace.IsNotUndefined())
         {
-            CollectOperationPointers(pathProp, pathItem.Trace, OperationMethod.Trace, pathItem, pointers, referenceResolver);
+            CollectOperationPointers(pathProp, pathItem.Trace, OperationMethod.Trace, pathItem, pointers, parameterNames, referenceResolver);
         }
     }
 
@@ -250,6 +255,7 @@ public sealed class OpenApi31CodeGenerator
         OperationMethod method,
         OpenApiDocument.PathItem pathItem,
         List<string> pointers,
+        Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver)
     {
         using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
@@ -260,8 +266,20 @@ public sealed class OpenApi31CodeGenerator
         {
             if (param.SchemaValue.IsNotUndefined())
             {
-                pointers.Add(SchemaPointerBuilder.BuildParameterSchemaPointer(
-                    pathName.Span, method, sourceIndex, isPathLevel));
+                string pointer = SchemaPointerBuilder.BuildParameterSchemaPointer(
+                    pathName.Span, method, sourceIndex, isPathLevel);
+                pointers.Add(pointer);
+
+                // Record the parameter name keyed by fragment (pointer without '#')
+                // so the heuristic can look it up from reference.Fragment without allocating.
+                if (param.Name.IsNotUndefined())
+                {
+                    string? name = param.Name.GetString();
+                    if (name is not null)
+                    {
+                        parameterNames[pointer.AsSpan(1).ToString()] = name;
+                    }
+                }
             }
         }
 

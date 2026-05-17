@@ -136,6 +136,7 @@ public sealed class OpenApi30CodeGenerator
     /// <returns>An array of JSON Pointer strings.</returns>
     public static string[] CollectSchemaPointers(
         JsonElement specRoot,
+        out Dictionary<string, string> parameterNames,
         OperationFilter? filter = null,
         IOpenApiReferenceResolver? referenceResolver = null)
     {
@@ -144,10 +145,12 @@ public sealed class OpenApi30CodeGenerator
 
         if (doc.PathsValue.IsUndefined())
         {
+            parameterNames = new Dictionary<string, string>();
             return [];
         }
 
         List<string> pointers = [];
+        Dictionary<string, string> paramNames = new(StringComparer.Ordinal);
 
         foreach (JsonProperty<JsonElement> pathProp in doc.PathsValue.EnumerateObject())
         {
@@ -160,9 +163,10 @@ public sealed class OpenApi30CodeGenerator
                 }
             }
 
-            CollectPathItemPointers(pathProp, pointers, referenceResolver);
+            CollectPathItemPointers(pathProp, pointers, paramNames, referenceResolver);
         }
 
+        parameterNames = paramNames;
         return [.. pointers];
     }
 
@@ -215,6 +219,7 @@ public sealed class OpenApi30CodeGenerator
     private static void CollectPathItemPointers(
         JsonProperty<JsonElement> pathProp,
         List<string> pointers,
+        Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver)
     {
         OpenApiDocument.PathItem pathItem = OpenApiDocument.PathItem.From(pathProp.Value);
@@ -225,7 +230,7 @@ public sealed class OpenApi30CodeGenerator
                 && operationElement.ValueKind == JsonValueKind.Object)
             {
                 OpenApiDocument.Operation operation = operationElement;
-                CollectOperationPointers(pathProp, operation, method, pathItem, pointers, referenceResolver);
+                CollectOperationPointers(pathProp, operation, method, pathItem, pointers, parameterNames, referenceResolver);
             }
         }
     }
@@ -236,6 +241,7 @@ public sealed class OpenApi30CodeGenerator
         OperationMethod method,
         OpenApiDocument.PathItem pathItem,
         List<string> pointers,
+        Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver)
     {
         using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
@@ -246,8 +252,20 @@ public sealed class OpenApi30CodeGenerator
         {
             if (param.Schema.IsNotUndefined())
             {
-                pointers.Add(SchemaPointerBuilder.BuildParameterSchemaPointer(
-                    pathName.Span, method, sourceIndex, isPathLevel));
+                string pointer = SchemaPointerBuilder.BuildParameterSchemaPointer(
+                    pathName.Span, method, sourceIndex, isPathLevel);
+                pointers.Add(pointer);
+
+                // Record the parameter name so the naming heuristic can use it.
+                // Key is the fragment (pointer without leading '#') for direct lookup.
+                if (param.Name.IsNotUndefined())
+                {
+                    string? name = param.Name.GetString();
+                    if (name is not null)
+                    {
+                        parameterNames[pointer.AsSpan(1).ToString()] = name;
+                    }
+                }
             }
         }
 

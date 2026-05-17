@@ -37,7 +37,7 @@ public class OpenApiSchemaNameHeuristicTests
         JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
 
         string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(
-            LoadSpec(SpecPath));
+            LoadSpec(SpecPath), out _);
 
         Dictionary<string, TypeDeclaration> pointerToType = new(StringComparer.Ordinal);
         List<TypeDeclaration> typesToGenerate = [];

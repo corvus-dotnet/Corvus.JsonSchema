@@ -1,4 +1,4 @@
-﻿// <copyright file="OpenApi31CodeGeneratorTests.cs" company="Endjin Limited">
+// <copyright file="OpenApi31CodeGeneratorTests.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
@@ -61,16 +61,20 @@ public class OpenApi31CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_FindsParameterSchemas()
     {
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, out var parameterNames);
 
         CollectionAssert.Contains(pointers, "#/paths/~1pets/get/parameters/0/schema");
         CollectionAssert.Contains(pointers, "#/paths/~1pets~1{petId}/get/parameters/0/schema");
+
+        // Parameter names are recorded for naming heuristics (keyed by fragment without '#')
+        Assert.AreEqual("limit", parameterNames["/paths/~1pets/get/parameters/0/schema"]);
+        Assert.AreEqual("petId", parameterNames["/paths/~1pets~1{petId}/get/parameters/0/schema"]);
     }
 
     [TestMethod]
     public void CollectSchemaPointers_FindsRequestBodySchemas()
     {
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
 
         CollectionAssert.Contains(
             pointers, "#/paths/~1pets/post/requestBody/content/application~1json/schema");
@@ -79,7 +83,7 @@ public class OpenApi31CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_FindsResponseSchemas()
     {
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
 
         CollectionAssert.Contains(
             pointers, "#/paths/~1pets/get/responses/200/content/application~1json/schema");
@@ -92,7 +96,7 @@ public class OpenApi31CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_FindsResponseHeaderSchemas()
     {
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
 
         CollectionAssert.Contains(
             pointers, "#/paths/~1pets/get/responses/200/headers/x-next/schema");
@@ -102,7 +106,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_WithFilter_OnlyIncludesMatchingPaths()
     {
         OperationFilter filter = new(["/pets"]);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, filter);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, out _, filter);
 
         // /pets operations only — no /pets/{petId}
         Assert.IsTrue(pointers.Any(p => p.StartsWith("#/paths/~1pets/", StringComparison.Ordinal)));
@@ -119,9 +123,10 @@ public class OpenApi31CodeGeneratorTests
             }
             """);
 
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(emptySpec);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(emptySpec, out var parameterNames);
 
         Assert.AreEqual(0, pointers.Length);
+        Assert.AreEqual(0, parameterNames.Count);
     }
 
     [TestMethod]
@@ -1416,7 +1421,7 @@ public class OpenApi31CodeGeneratorTests
         JsonElement root = ParseSpec(spec);
 
         // Collect pointers — should see the operation-level parameter, not the path-level one
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _);
 
         // The operation-level parameter should take precedence
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/parameters/0/schema");
@@ -1430,7 +1435,7 @@ public class OpenApi31CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_Petstore_ReturnsCorrectCount()
     {
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
 
         // 2 param schemas + 1 request body + 6 response bodies + 1 response header = 10
         Assert.AreEqual(10, pointers.Length);
@@ -1439,7 +1444,7 @@ public class OpenApi31CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_Petstore_AllPointersAreUnique()
     {
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
         HashSet<string> unique = new(pointers, StringComparer.Ordinal);
 
         Assert.AreEqual(pointers.Length, unique.Count, "Duplicate schema pointers found");
@@ -1518,7 +1523,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_RefParameter_ResolvesAndCollects()
     {
         JsonElement spec = ParseSpec(RefSpec31);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec, out _);
 
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/parameters/0/schema");
     }
@@ -1527,7 +1532,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_RefRequestBody_ResolvesAndCollects()
     {
         JsonElement spec = ParseSpec(RefSpec31);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec, out _);
 
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/requestBody/content/application~1json/schema");
     }
@@ -1536,7 +1541,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_RefResponse_ResolvesAndCollects()
     {
         JsonElement spec = ParseSpec(RefSpec31);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec, out _);
 
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/responses/200/content/application~1json/schema");
     }
@@ -1545,7 +1550,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_RefHeader_ResolvesAndCollects()
     {
         JsonElement spec = ParseSpec(RefSpec31);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec, out _);
 
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/responses/200/headers/X-Request-Id/schema");
     }
@@ -2074,7 +2079,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_ResponseHeaders_CollectsAll()
     {
         JsonElement spec = ParseSpec(ResponseHeaderSpec31);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(spec, out _);
 
         CollectionAssert.Contains(pointers, "#/paths/~1data/get/responses/200/headers/X-Rate-Limit/schema");
         CollectionAssert.Contains(pointers, "#/paths/~1data/get/responses/200/headers/X-Request-Id/schema");
@@ -2688,7 +2693,7 @@ public class OpenApi31CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, null);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _, null);
 
         // Each method has one response schema → 8 pointers
         Assert.AreEqual(8, pointers.Length);
@@ -2713,7 +2718,7 @@ public class OpenApi31CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, null);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _, null);
         Assert.AreEqual(0, pointers.Length);
     }
 
@@ -2743,7 +2748,7 @@ public class OpenApi31CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, null);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _, null);
 
         // Should have response content schema AND header schema
         Assert.AreEqual(2, pointers.Length);
@@ -2782,7 +2787,7 @@ public class OpenApi31CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, null);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _, null);
 
         // Parameter schema + response content schema
         Assert.AreEqual(2, pointers.Length);
@@ -2820,7 +2825,7 @@ public class OpenApi31CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, null);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _, null);
 
         // Response content schema + header schema
         Assert.AreEqual(2, pointers.Length);
@@ -2853,7 +2858,7 @@ public class OpenApi31CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, null);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _, null);
 
         // RequestBody schema + response content schema
         Assert.AreEqual(2, pointers.Length);
@@ -2973,7 +2978,7 @@ public class OpenApi31CodeGeneratorTests
         JsonElement root = ParseSpec(spec);
 
         // Verify that CollectSchemaPointers finds the $ref'd requestBody schema
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, null);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _, null);
         string? requestBodyPointer = pointers.FirstOrDefault(
             p => p.Contains("requestBody", StringComparison.Ordinal));
         Assert.IsNotNull(requestBodyPointer, "Expected requestBody schema pointer");
@@ -5176,7 +5181,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_ExcludesOctetStreamSchemas()
     {
         JsonElement root = ParseSpec(StreamSpec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _);
 
         // Octet-stream schemas should NOT appear
         Assert.IsFalse(
@@ -5193,7 +5198,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_IncludesVendorJsonSchemas()
     {
         JsonElement root = ParseSpec(StreamSpec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _);
 
         Assert.IsTrue(
             pointers.Any(p => p.Contains("vnd.api+json", StringComparison.Ordinal)),
@@ -5431,7 +5436,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_ExcludesTextPlainSchemas()
     {
         JsonElement root = ParseSpec(TextPlainSpec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _);
 
         Assert.IsFalse(
             pointers.Any(p => p.Contains("text~1plain", StringComparison.Ordinal)),
@@ -5446,7 +5451,7 @@ public class OpenApi31CodeGeneratorTests
     public void CollectSchemaPointers_ExcludesTextWildcardSchemas()
     {
         JsonElement root = ParseSpec(TextPlainSpec);
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root);
+        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(root, out _);
 
         Assert.IsFalse(
             pointers.Any(p => p.Contains("text~1*", StringComparison.Ordinal)),

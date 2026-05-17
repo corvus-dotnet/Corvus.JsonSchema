@@ -98,13 +98,13 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         if (specVersion is "3.1" or not "3.0")
         {
             // OpenAPI 3.1 (or unknown) — use the typed code generator directly
-            string[] schemaPointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, filter);
+            string[] schemaPointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
 
             AnsiConsole.MarkupLine($"[green]API:[/] {GetTitle(specRoot) ?? "(untitled)"} v{GetVersion(specRoot) ?? "?"}");
             AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
 
             Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
-                ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, cancellationToken)
+                ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
                     .ConfigureAwait(false)
                 : null;
 
@@ -122,13 +122,13 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         else
         {
             // OpenAPI 3.0 — use the typed code generator directly
-            string[] schemaPointers = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, filter);
+            string[] schemaPointers = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
 
             AnsiConsole.MarkupLine($"[green]API:[/] {GetTitle(specRoot) ?? "(untitled)"} v{GetVersion(specRoot) ?? "?"}");
             AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
 
             Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
-                ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, cancellationToken)
+                ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
                     .ConfigureAwait(false)
                 : null;
 
@@ -169,6 +169,7 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         string rootNamespace,
         string outputPath,
         string[] schemaPointers,
+        Dictionary<string, string> parameterNames,
         CancellationToken cancellationToken)
     {
         string specFilePath = Path.GetFullPath(specFile);
@@ -220,7 +221,7 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         // Generate code — register OpenAPI naming heuristic for contextual inline schema names
         CSharpLanguageProvider.Options options = new(rootNamespace);
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
-        languageProvider.RegisterNameHeuristics(OpenApiSchemaNameHeuristic.Instance);
+        languageProvider.RegisterNameHeuristics(new OpenApiSchemaNameHeuristic(parameterNames));
         IReadOnlyCollection<GeneratedCodeFile> generatedCode =
             typeBuilder.GenerateCodeUsing(languageProvider, typesToGenerate, cancellationToken);
 

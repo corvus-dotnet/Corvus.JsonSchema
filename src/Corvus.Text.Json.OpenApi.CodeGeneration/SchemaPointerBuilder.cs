@@ -26,7 +26,7 @@ public static class SchemaPointerBuilder
     /// <param name="method">The HTTP method.</param>
     /// <param name="index">The parameter index.</param>
     /// <param name="isPathLevel">Whether the parameter is path-level.</param>
-    /// <returns>The JSON Pointer string.</returns>
+    /// <returns>The JSON Pointer string (including leading <c>#</c>).</returns>
     public static string BuildParameterSchemaPointer(
         ReadOnlySpan<byte> pathNameUtf8,
         OperationMethod method,

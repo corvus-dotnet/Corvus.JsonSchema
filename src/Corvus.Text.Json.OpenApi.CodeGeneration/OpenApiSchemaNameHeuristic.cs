@@ -26,6 +26,7 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// <item><c>/paths/~1items/post/responses/201/.../schema</c> → <c>PostItemsCreated</c></item>
 /// <item><c>/paths/~1items/post/requestBody/.../schema</c> → <c>PostItemsBody</c></item>
 /// <item><c>/paths/~1items~1{itemId}/get/responses/404/.../schema</c> → <c>GetItemsByItemIdNotFound</c></item>
+/// <item><c>/paths/~1items/get/parameters/0/schema</c> → <c>GetItemsLimit</c> (when parameter name is "limit")</item>
 /// </list>
 /// </para>
 /// <para>
@@ -44,12 +45,23 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// </remarks>
 public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
 {
-    private OpenApiSchemaNameHeuristic()
+    private readonly Dictionary<string, string>? parameterNames;
+
+    /// <summary>
+    /// Initializes a new instance of the <see cref="OpenApiSchemaNameHeuristic"/> class.
+    /// </summary>
+    /// <param name="parameterNames">
+    /// A dictionary mapping schema pointer fragment (e.g. <c>/paths/~1pets/get/parameters/0/schema</c>)
+    /// to the OpenAPI parameter name (e.g. <c>limit</c>). When provided, parameter schemas
+    /// use the parameter name in the generated type name instead of the positional index.
+    /// </param>
+    public OpenApiSchemaNameHeuristic(Dictionary<string, string>? parameterNames = null)
     {
+        this.parameterNames = parameterNames;
     }
 
     /// <summary>
-    /// Gets a singleton instance of the <see cref="OpenApiSchemaNameHeuristic"/>.
+    /// Gets a default instance with no parameter name mapping.
     /// </summary>
     public static OpenApiSchemaNameHeuristic Instance { get; } = new();
 
@@ -90,6 +102,15 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         if (!TryParseOpenApiFragment(fragment, out OpenApiSchemaContext ctx))
         {
             return false;
+        }
+
+        // If this is a parameter schema and we have a name mapping, use the actual
+        // parameter name (e.g. "limit") instead of the positional index.
+        if (ctx.Position == SchemaPosition.Parameter
+            && this.parameterNames is { } names
+            && names.GetAlternateLookup<ReadOnlySpan<char>>().TryGetValue(fragment, out string? paramName))
+        {
+            ctx.ParameterName = paramName.AsSpan();
         }
 
         // Build the name: {Method}{Path}{Suffix}
@@ -407,7 +428,7 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         {
             SchemaPosition.Response => FormatStatusCode(ctx.StatusCode, buffer),
             SchemaPosition.RequestBody => WriteSpan("Body".AsSpan(), buffer),
-            SchemaPosition.Parameter => FormatParameterSuffix(ctx.ParameterIndex, buffer),
+            SchemaPosition.Parameter => FormatParameterSuffix(ctx, buffer),
             SchemaPosition.ResponseHeader => FormatResponseHeaderSuffix(ctx.StatusCode, ctx.HeaderName, buffer),
             _ => 0,
         };
@@ -507,10 +528,15 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         return written;
     }
 
-    private static int FormatParameterSuffix(ReadOnlySpan<char> index, Span<char> buffer)
+    private static int FormatParameterSuffix(in OpenApiSchemaContext ctx, Span<char> buffer)
     {
+        if (!ctx.ParameterName.IsEmpty)
+        {
+            return PascalCaseSegment(ctx.ParameterName, buffer);
+        }
+
         int written = WriteSpan("Param".AsSpan(), buffer);
-        written += WriteSpan(index, buffer[written..]);
+        written += WriteSpan(ctx.ParameterIndex, buffer[written..]);
         return written;
     }
 
@@ -573,6 +599,7 @@ public sealed class OpenApiSchemaNameHeuristic : INameHeuristicBeforeSubschema
         public ReadOnlySpan<char> UrlPath;
         public ReadOnlySpan<char> StatusCode;
         public ReadOnlySpan<char> ParameterIndex;
+        public ReadOnlySpan<char> ParameterName;
         public ReadOnlySpan<char> HeaderName;
         public SchemaPosition Position;
     }
