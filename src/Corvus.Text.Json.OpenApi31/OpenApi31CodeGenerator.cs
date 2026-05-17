@@ -1272,6 +1272,8 @@ public sealed class OpenApi31CodeGenerator
         this.EmitWriteHeaders(w, headerParams, acceptMediaTypes);
         w.WriteLine();
         this.EmitWriteCookies(w, cookieParams);
+        w.WriteLine();
+        this.EmitValidate(w, op.Parameters);
 
         w.CloseBrace();
 
@@ -1536,6 +1538,87 @@ public sealed class OpenApi31CodeGenerator
         }
 
         w.WriteLine("return totalWritten;");
+        w.CloseBrace();
+    }
+
+    private void EmitValidate(IndentedWriter w, ParameterInfo[] allParams)
+    {
+        // Filter to params that have a schema (and thus a typed property).
+        ParameterInfo[] validatable = allParams.Where(p => p.SchemaPointer is not null).ToArray();
+
+        w.WriteLine("/// <inheritdoc/>");
+        w.WriteLine("public void Validate(RequestValidationMode mode = RequestValidationMode.Basic)");
+        w.OpenBrace();
+
+        if (validatable.Length == 0)
+        {
+            w.CloseBrace();
+            return;
+        }
+
+        w.WriteLine("if (mode == RequestValidationMode.None)");
+        w.OpenBrace();
+        w.WriteLine("return;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        w.WriteLine("if (mode == RequestValidationMode.Detailed)");
+        w.OpenBrace();
+
+        foreach (ParameterInfo param in validatable)
+        {
+            string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
+
+            if (param.IsRequired)
+            {
+                w.WriteLine($"using JsonSchemaResultsCollector collector{fieldName} = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+                w.WriteLine($"if (!this.{fieldName}.EvaluateSchema(collector{fieldName}))");
+                w.OpenBrace();
+                w.WriteLine($"ThrowHelper.ThrowRequestParameterValidationFailed(\"{param.Name}\", SchemaValidationDetail.FormatResults(collector{fieldName}));");
+                w.CloseBrace();
+                w.WriteLine();
+            }
+            else
+            {
+                w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}Value)");
+                w.OpenBrace();
+                w.WriteLine($"using JsonSchemaResultsCollector collector{fieldName} = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);");
+                w.WriteLine($"if (!{fieldName}Value.EvaluateSchema(collector{fieldName}))");
+                w.OpenBrace();
+                w.WriteLine($"ThrowHelper.ThrowRequestParameterValidationFailed(\"{param.Name}\", SchemaValidationDetail.FormatResults(collector{fieldName}));");
+                w.CloseBrace();
+                w.CloseBrace();
+                w.WriteLine();
+            }
+        }
+
+        w.CloseBrace();
+        w.WriteLine("else");
+        w.OpenBrace();
+
+        foreach (ParameterInfo param in validatable)
+        {
+            string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
+
+            if (param.IsRequired)
+            {
+                w.WriteLine($"if (!this.{fieldName}.EvaluateSchema())");
+                w.OpenBrace();
+                w.WriteLine($"ThrowHelper.ThrowRequestParameterValidationFailed(\"{param.Name}\");");
+                w.CloseBrace();
+                w.WriteLine();
+            }
+            else
+            {
+                w.WriteLine($"if (this.{fieldName} is {{ }} {fieldName}Value && !{fieldName}Value.EvaluateSchema())");
+                w.OpenBrace();
+                w.WriteLine($"ThrowHelper.ThrowRequestParameterValidationFailed(\"{param.Name}\");");
+                w.CloseBrace();
+                w.WriteLine();
+            }
+        }
+
+        w.CloseBrace();
         w.CloseBrace();
     }
 

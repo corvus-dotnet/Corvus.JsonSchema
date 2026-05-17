@@ -2,8 +2,8 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Text;
 using Corvus.Text.Json;
+using Corvus.Text.Json.OpenApi.Internal;
 
 namespace Corvus.Text.Json.OpenApi;
 
@@ -31,72 +31,31 @@ public static class SchemaValidationDetail
     /// </remarks>
     public static string FormatResults(JsonSchemaResultsCollector collector)
     {
-        StringBuilder sb = new();
-        sb.Append('[');
+        using JsonWorkspace workspace = JsonWorkspace.Create();
+        using JsonDocumentBuilder<ValidationDetail.Mutable> builder =
+            ValidationDetail.CreateBuilder(workspace);
 
-        bool first = true;
+        ValidationDetail.Mutable root = builder.RootElement;
+
         foreach (JsonSchemaResultsCollector.Result result in collector.EnumerateResults())
         {
-            if (first)
-            {
-                first = false;
-            }
-            else
-            {
-                sb.Append(',');
-            }
-
-            sb.Append("{\"valid\":");
-            sb.Append(result.IsMatch ? "true" : "false");
-
-            sb.Append(",\"evaluationPath\":\"");
-            AppendJsonEscaped(sb, result.GetEvaluationLocationText());
-
-            sb.Append("\",\"schemaLocation\":\"");
-            AppendJsonEscaped(sb, result.GetSchemaEvaluationLocationText());
-
-            sb.Append("\",\"instanceLocation\":\"");
-            AppendJsonEscaped(sb, result.GetDocumentEvaluationLocationText());
-
             string message = result.GetMessageText();
-            if (message.Length > 0)
-            {
-                sb.Append("\",\"message\":\"");
-                AppendJsonEscaped(sb, message);
-            }
+            string evaluationPath = result.GetEvaluationLocationText();
+            string instanceLocation = result.GetDocumentEvaluationLocationText();
+            string schemaLocation = result.GetSchemaEvaluationLocationText();
+            bool isMatch = result.IsMatch;
 
-            sb.Append("\"}");
+            root.AddItem(
+                new ValidationDetail.ValidationDetailItem.Source(
+                    (ref ValidationDetail.ValidationDetailItem.Builder b) =>
+                        b.Create(
+                            evaluationPath,
+                            instanceLocation,
+                            schemaLocation,
+                            isMatch,
+                            message.Length > 0 ? (Internal.JsonString.Source)message : default)));
         }
 
-        sb.Append(']');
-        return sb.ToString();
-    }
-
-    private static void AppendJsonEscaped(StringBuilder sb, string value)
-    {
-        foreach (char c in value)
-        {
-            switch (c)
-            {
-                case '"':
-                    sb.Append("\\\"");
-                    break;
-                case '\\':
-                    sb.Append("\\\\");
-                    break;
-                case '\n':
-                    sb.Append("\\n");
-                    break;
-                case '\r':
-                    sb.Append("\\r");
-                    break;
-                case '\t':
-                    sb.Append("\\t");
-                    break;
-                default:
-                    sb.Append(c);
-                    break;
-            }
-        }
+        return root.ToString();
     }
 }
