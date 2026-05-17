@@ -6,6 +6,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Text.Json.OpenApi31;
 
@@ -75,7 +76,17 @@ public sealed class OpenApi31CodeGenerator
         string[] Tags,
         ParameterInfo[] Parameters,
         RequestBodyInfo? RequestBody,
-        ResponseInfo[] Responses);
+        ResponseInfo[] Responses,
+        ServerInfo? EffectiveServer);
+
+    private readonly record struct ServerInfo(
+        string UrlTemplate,
+        ServerVariableInfo[] Variables);
+
+    private readonly record struct ServerVariableInfo(
+        string Name,
+        string DefaultValue,
+        string[]? AllowedValues);
 
     private readonly record struct ParameterInfo(
         string Name,
@@ -181,15 +192,15 @@ public sealed class OpenApi31CodeGenerator
     {
         referenceResolver ??= new LocalReferenceResolver(specRoot);
         List<OperationInfo> operations = [];
+        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
 
         foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter))
         {
-            operations.Add(PrepareOperation(opRef, referenceResolver));
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
         }
 
         List<GeneratedFile> files = [];
         Dictionary<string, List<OperationInfo>> groups = GroupOperationsByTag(operations);
-        string? defaultServerUrl = GetDefaultServerUrl(specRoot);
 
         foreach (OperationInfo op in operations)
         {
@@ -200,7 +211,7 @@ public sealed class OpenApi31CodeGenerator
         foreach ((string tag, List<OperationInfo> tagOps) in groups)
         {
             string clientName = this.GetClientName(tag);
-            files.Add(this.EmitInterface(clientName, tagOps, defaultServerUrl));
+            files.Add(this.EmitInterface(clientName, tagOps, rootServer));
             files.Add(this.EmitImplementation(clientName, tagOps));
         }
 
@@ -688,7 +699,8 @@ public sealed class OpenApi31CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     private static OperationInfo PrepareOperation(
         OperationRef opRef,
-        IOpenApiReferenceResolver referenceResolver)
+        IOpenApiReferenceResolver referenceResolver,
+        ServerInfo? rootServer)
     {
         using UnescapedUtf8JsonString pathName = opRef.PathProp.Utf8NameSpan;
         ReadOnlySpan<byte> pathNameUtf8 = pathName.Span;
@@ -715,6 +727,9 @@ public sealed class OpenApi31CodeGenerator
         ResponseInfo[] responses = PrepareResponses(
             opRef.Operation, pathNameUtf8, opRef.Method, referenceResolver);
 
+        ServerInfo? effectiveServer = ResolveEffectiveServer(
+            opRef.Operation, opRef.PathItem, rootServer);
+
         return new OperationInfo(
             pathTemplate,
             opRef.Method,
@@ -726,7 +741,8 @@ public sealed class OpenApi31CodeGenerator
             tags,
             parameters,
             requestBody,
-            responses);
+            responses,
+            effectiveServer);
     }
 
     private static ParameterInfo[] PrepareParameters(
@@ -1082,8 +1098,8 @@ public sealed class OpenApi31CodeGenerator
         return CodeEmitHelpers.ToPascalCase(methodPrefix + " " + pathPart);
     }
 
-    // ── Default server URL ──────────────────────────────────────────────
-    private static string? GetDefaultServerUrl(JsonElement specRoot)
+    // ── Server info extraction ───────────────────────────────────────────
+    private static ServerInfo? GetDefaultServerInfo(JsonElement specRoot)
     {
         OpenApiDocument doc = specRoot;
 
@@ -1091,16 +1107,75 @@ public sealed class OpenApi31CodeGenerator
         {
             foreach (var server in doc.Servers.EnumerateArray())
             {
-                if (server.Url.IsNotUndefined())
-                {
-                    return server.Url.GetString();
-                }
-
-                break;
+                return ExtractServerInfo(server);
             }
         }
 
         return null;
+    }
+
+    private static ServerInfo? ExtractServerInfo(OpenApiDocument.Server server)
+    {
+        if (server.Url.IsUndefined())
+        {
+            return null;
+        }
+
+        string urlTemplate = server.Url.GetString()!;
+        List<ServerVariableInfo> variables = [];
+
+        if (server.Variables.IsNotUndefined())
+        {
+            foreach (var kvp in server.Variables.EnumerateObject())
+            {
+                string varName = kvp.Name;
+                OpenApiDocument.ServerVariable variable = kvp.Value;
+                string defaultValue = variable.Default.IsNotUndefined()
+                    ? (string)variable.Default
+                    : string.Empty;
+
+                string[]? allowedValues = null;
+                if (variable.Enum.IsNotUndefined())
+                {
+                    List<string> values = [];
+                    foreach (var item in variable.Enum.EnumerateArray())
+                    {
+                        values.Add((string)item);
+                    }
+
+                    allowedValues = [.. values];
+                }
+
+                variables.Add(new ServerVariableInfo(varName, defaultValue, allowedValues));
+            }
+        }
+
+        return new ServerInfo(urlTemplate, [.. variables]);
+    }
+
+    private static ServerInfo? ResolveEffectiveServer(
+        OpenApiDocument.Operation operation,
+        OpenApiDocument.PathItem pathItem,
+        ServerInfo? rootServer)
+    {
+        // OAS precedence: operation > path > root
+        if (operation.Servers.IsNotUndefined())
+        {
+            foreach (var server in operation.Servers.EnumerateArray())
+            {
+                return ExtractServerInfo(server);
+            }
+        }
+
+        if (pathItem.Servers.IsNotUndefined())
+        {
+            foreach (var server in pathItem.Servers.EnumerateArray())
+            {
+                return ExtractServerInfo(server);
+            }
+        }
+
+        return rootServer;
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1386,6 +1461,12 @@ public sealed class OpenApi31CodeGenerator
         this.EmitWriteCookies(w, cookieParams);
         w.WriteLine();
         this.EmitValidate(w, op.Parameters);
+
+        if (op.EffectiveServer is { } effectiveServer)
+        {
+            w.WriteLine();
+            EmitCreateServerUri(w, effectiveServer);
+        }
 
         w.CloseBrace();
 
@@ -2713,7 +2794,7 @@ public sealed class OpenApi31CodeGenerator
     private GeneratedFile EmitInterface(
         string clientName,
         IReadOnlyList<OperationInfo> operations,
-        string? defaultServerUrl)
+        ServerInfo? serverInfo)
     {
         IndentedWriter w = new();
 
@@ -2727,14 +2808,9 @@ public sealed class OpenApi31CodeGenerator
         w.WriteLine($"public interface I{clientName}Client : IAsyncDisposable");
         w.OpenBrace();
 
-        if (defaultServerUrl is not null)
+        if (serverInfo is { } si)
         {
-            w.WriteLine("/// <summary>");
-            w.WriteLine("/// The default server URL from the OpenAPI specification.");
-            w.WriteLine("/// </summary>");
-            w.WriteLine(
-                $"static ReadOnlySpan<byte> DefaultServerUrlUtf8 => {CodeEmitHelpers.FormatStringLiteral(defaultServerUrl)}u8;");
-            w.WriteLine();
+            EmitCreateServerUri(w, si);
         }
 
         for (int i = 0; i < operations.Count; i++)
@@ -2750,6 +2826,76 @@ public sealed class OpenApi31CodeGenerator
         w.CloseBrace();
 
         return new GeneratedFile($"I{clientName}Client.cs", w.ToString());
+    }
+
+    private static void EmitCreateServerUri(IndentedWriter w, ServerInfo serverInfo)
+    {
+        if (serverInfo.Variables.Length == 0)
+        {
+            // No variables — simple parameterless factory.
+            string resolvedUrl = serverInfo.UrlTemplate;
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// Creates a <see cref=\"Uri\"/> for the default server.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <returns>A <see cref=\"Uri\"/> for the server.</returns>");
+            w.WriteLine(
+                $"static Uri CreateServerUri() => new({CodeEmitHelpers.FormatStringLiteral(resolvedUrl)});");
+        }
+        else
+        {
+            // Variables — emit parameters with defaults.
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// Creates a <see cref=\"Uri\"/> for the server, substituting");
+            w.WriteLine("/// any server variables with the provided or default values.");
+            w.WriteLine("/// </summary>");
+
+            foreach (ServerVariableInfo v in serverInfo.Variables)
+            {
+                string paramName = CodeEmitHelpers.SanitizeParameterName(v.Name);
+                w.Write($"/// <param name=\"{paramName}\">The {v.Name} variable.");
+                if (v.AllowedValues is not null)
+                {
+                    w.Write($" Allowed: {string.Join(", ", v.AllowedValues)}.");
+                }
+
+                w.WriteLine("</param>");
+            }
+
+            w.WriteLine("/// <returns>A <see cref=\"Uri\"/> for the server.</returns>");
+
+            // Build the parameter list.
+            w.Write("static Uri CreateServerUri(");
+            for (int i = 0; i < serverInfo.Variables.Length; i++)
+            {
+                if (i > 0)
+                {
+                    w.Write(", ");
+                }
+
+                ServerVariableInfo v = serverInfo.Variables[i];
+                string paramName = CodeEmitHelpers.SanitizeParameterName(v.Name);
+                w.Write($"string {paramName} = {CodeEmitHelpers.FormatStringLiteral(v.DefaultValue)}");
+            }
+
+            w.Write(") => new($\"");
+
+            // Build the interpolated string from the URL template, replacing
+            // {varName} with {paramName}. We manually escape only backslash
+            // and double-quote since the {paramName} parts must remain as
+            // interpolation expressions (not escaped by FormatStringLiteral).
+            string template = serverInfo.UrlTemplate;
+            foreach (ServerVariableInfo v in serverInfo.Variables)
+            {
+                string paramName = CodeEmitHelpers.SanitizeParameterName(v.Name);
+                template = template.Replace(
+                    $"{{{v.Name}}}", $"{{{paramName}}}", StringComparison.Ordinal);
+            }
+
+            w.Write(SymbolDisplay.FormatLiteral(template, false));
+            w.WriteLine("\");");
+        }
+
+        w.WriteLine();
     }
 
     private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op)

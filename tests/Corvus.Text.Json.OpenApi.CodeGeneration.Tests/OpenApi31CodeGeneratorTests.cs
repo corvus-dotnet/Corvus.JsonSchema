@@ -2122,7 +2122,8 @@ public class OpenApi31CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(root);
 
         GeneratedFile iface = GetFile(files, "IApiItemsClient.cs");
-        Assert.IsTrue(iface.Content.Contains("""DefaultServerUrlUtf8 => "/"u8""", StringComparison.Ordinal));
+        Assert.IsTrue(iface.Content.Contains("CreateServerUri", StringComparison.Ordinal));
+        Assert.IsTrue(iface.Content.Contains("""new("/")""", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -2151,6 +2152,7 @@ public class OpenApi31CodeGeneratorTests
 
         GeneratedFile iface = GetFile(files, "IApiItemsClient.cs");
         Assert.IsFalse(iface.Content.Contains("DefaultServerUrlUtf8", StringComparison.Ordinal));
+        Assert.IsFalse(iface.Content.Contains("CreateServerUri", StringComparison.Ordinal));
     }
 
     [TestMethod]

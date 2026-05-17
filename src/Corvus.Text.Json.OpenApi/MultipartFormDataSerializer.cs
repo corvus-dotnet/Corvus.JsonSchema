@@ -86,6 +86,38 @@ public static class MultipartFormDataSerializer
         IReadOnlyDictionary<string, PropertyEncoding>? encodings)
         where T : struct, IJsonElement<T>
     {
+        Serialize(value, output, boundary, encodings, null);
+    }
+
+    /// <summary>
+    /// Serializes a JSON object's properties directly to a <see cref="Stream"/>
+    /// in <c>multipart/form-data</c> format, applying per-property encoding
+    /// overrides and substituting binary parts for specified properties.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type.</typeparam>
+    /// <param name="value">The JSON object to serialize.</param>
+    /// <param name="output">The stream to write the multipart body to.</param>
+    /// <param name="boundary">The boundary string (must match the one in the Content-Type header).</param>
+    /// <param name="encodings">
+    /// Per-property encoding overrides keyed by property name, or <see langword="null"/>
+    /// to use default encoding for all properties.
+    /// </param>
+    /// <param name="binaryParts">
+    /// Binary part data keyed by property name, or <see langword="null"/> if there
+    /// are no binary parts. Properties that appear here are written as raw binary
+    /// content instead of their JSON representation.
+    /// </param>
+    /// <exception cref="InvalidOperationException">
+    /// Thrown if <paramref name="value"/> is not a JSON object.
+    /// </exception>
+    public static void Serialize<T>(
+        in T value,
+        Stream output,
+        string boundary,
+        IReadOnlyDictionary<string, PropertyEncoding>? encodings,
+        IReadOnlyDictionary<string, BinaryPartData>? binaryParts)
+        where T : struct, IJsonElement<T>
+    {
         if (value.ValueKind != JsonValueKind.Object)
         {
             ThrowHelper.ThrowFormBodyMustBeObject();
@@ -95,11 +127,19 @@ public static class MultipartFormDataSerializer
 
         foreach (JsonProperty<JsonElement> property in JsonElement.From(value).EnumerateObject())
         {
+            string name = property.Name;
+
+            // Check if this property is a binary part.
+            if (binaryParts is not null && binaryParts.TryGetValue(name, out BinaryPartData binaryPart))
+            {
+                WriteBinaryPart(writer, output, boundary, name, binaryPart);
+                continue;
+            }
+
             writer.Write("--");
             writer.Write(boundary);
             writer.Write("\r\n");
 
-            string name = property.Name;
             writer.Write("Content-Disposition: form-data; name=\"");
             writer.Write(name);
             writer.Write("\"\r\n");
@@ -166,9 +206,62 @@ public static class MultipartFormDataSerializer
             writer.Write("\r\n");
         }
 
+        // Write any binary parts that don't correspond to JSON properties
+        // (e.g. the JSON body used a placeholder or omitted the field).
+        if (binaryParts is not null)
+        {
+            HashSet<string> seen = [];
+            foreach (JsonProperty<JsonElement> property in JsonElement.From(value).EnumerateObject())
+            {
+                seen.Add(property.Name);
+            }
+
+            foreach (KeyValuePair<string, BinaryPartData> kvp in binaryParts)
+            {
+                if (!seen.Contains(kvp.Key))
+                {
+                    WriteBinaryPart(writer, output, boundary, kvp.Key, kvp.Value);
+                }
+            }
+        }
+
         // Final boundary with closing "--".
         writer.Write("--");
         writer.Write(boundary);
         writer.Write("--\r\n");
+    }
+
+    private static void WriteBinaryPart(
+        StreamWriter writer,
+        Stream output,
+        string boundary,
+        string name,
+        BinaryPartData binaryPart)
+    {
+        writer.Write("--");
+        writer.Write(boundary);
+        writer.Write("\r\n");
+
+        writer.Write("Content-Disposition: form-data; name=\"");
+        writer.Write(name);
+        writer.Write("\"");
+
+        if (binaryPart.FileName is not null)
+        {
+            writer.Write("; filename=\"");
+            writer.Write(binaryPart.FileName);
+            writer.Write("\"");
+        }
+
+        writer.Write("\r\n");
+        writer.Write("Content-Type: ");
+        writer.Write(binaryPart.ContentType);
+        writer.Write("\r\n\r\n");
+
+        // Flush text writer before writing raw bytes.
+        writer.Flush();
+        output.Write(binaryPart.Content.Span);
+
+        writer.Write("\r\n");
     }
 }

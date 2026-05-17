@@ -1451,7 +1451,7 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
-    public void Generate_InterfaceHasDefaultServerUrl()
+    public void Generate_InterfaceHasCreateServerUri()
     {
         OpenApi30CodeGenerator gen = CreateGenerator();
         IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
@@ -1460,7 +1460,11 @@ public class OpenApi30CodeGeneratorTests
 
         Assert.IsTrue(
             iface.Content.Contains(
-                "\"https://petstore.example.com/v1\"u8",
+                "CreateServerUri",
+                StringComparison.Ordinal));
+        Assert.IsTrue(
+            iface.Content.Contains(
+                "\"https://petstore.example.com/v1\"",
                 StringComparison.Ordinal));
     }
 
@@ -2100,6 +2104,7 @@ public class OpenApi30CodeGeneratorTests
 
         GeneratedFile iface = GetFile(files, "IApiItemsClient.cs");
         Assert.IsFalse(iface.Content.Contains("DefaultServerUrlUtf8", StringComparison.Ordinal));
+        Assert.IsFalse(iface.Content.Contains("CreateServerUri", StringComparison.Ordinal));
     }
 
     [TestMethod]
@@ -2128,6 +2133,7 @@ public class OpenApi30CodeGeneratorTests
 
         GeneratedFile iface = GetFile(files, "IApiItemsClient.cs");
         Assert.IsFalse(iface.Content.Contains("DefaultServerUrlUtf8", StringComparison.Ordinal));
+        Assert.IsFalse(iface.Content.Contains("CreateServerUri", StringComparison.Ordinal));
     }
 
     [TestMethod]
