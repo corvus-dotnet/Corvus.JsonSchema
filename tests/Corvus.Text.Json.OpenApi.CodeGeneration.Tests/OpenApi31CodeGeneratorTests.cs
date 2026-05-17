@@ -19,9 +19,11 @@ public class OpenApi31CodeGeneratorTests
         // Parameter schemas
         ["#/paths/~1pets/get/parameters/0/schema"] = "Petstore.Client.JsonInt32",
         ["#/paths/~1pets~1{petId}/get/parameters/0/schema"] = "Petstore.Client.JsonString",
+        ["#/paths/~1pets~1{petId}/put/parameters/0/schema"] = "Petstore.Client.JsonString",
 
         // Request body schemas
         ["#/paths/~1pets/post/requestBody/content/application~1json/schema"] = "Petstore.Client.NewPet",
+        ["#/paths/~1pets~1{petId}/put/requestBody/content/application~1x-www-form-urlencoded/schema"] = "Petstore.Client.NewPet",
 
         // Response body schemas
         ["#/paths/~1pets/get/responses/200/content/application~1json/schema"] = "Petstore.Client.Pets",
@@ -30,6 +32,8 @@ public class OpenApi31CodeGeneratorTests
         ["#/paths/~1pets/post/responses/default/content/application~1json/schema"] = "Petstore.Client.Error",
         ["#/paths/~1pets~1{petId}/get/responses/200/content/application~1json/schema"] = "Petstore.Client.Pet",
         ["#/paths/~1pets~1{petId}/get/responses/default/content/application~1json/schema"] = "Petstore.Client.Error",
+        ["#/paths/~1pets~1{petId}/put/responses/200/content/application~1json/schema"] = "Petstore.Client.Pet",
+        ["#/paths/~1pets~1{petId}/put/responses/default/content/application~1json/schema"] = "Petstore.Client.Error",
 
         // Response header schemas
         ["#/paths/~1pets/get/responses/200/headers/x-next/schema"] = "Petstore.Client.JsonString",
@@ -135,8 +139,8 @@ public class OpenApi31CodeGeneratorTests
         OpenApi31CodeGenerator gen = CreateGenerator();
         IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
 
-        // 3 operations × 2 (request + response) + 1 interface + 1 implementation = 8
-        Assert.AreEqual(8, files.Count);
+        // 4 operations × 2 (request + response) + 1 interface + 1 implementation = 10
+        Assert.AreEqual(10, files.Count);
     }
 
     [TestMethod]
@@ -1437,8 +1441,8 @@ public class OpenApi31CodeGeneratorTests
     {
         string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
 
-        // 2 param schemas + 1 request body + 6 response bodies + 1 response header = 10
-        Assert.AreEqual(10, pointers.Length);
+        // 3 param schemas + 2 request body + 8 response bodies + 1 response header = 14
+        Assert.AreEqual(14, pointers.Length);
     }
 
     [TestMethod]

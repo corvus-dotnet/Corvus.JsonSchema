@@ -1120,7 +1120,8 @@ public sealed class OpenApi31CodeGenerator
     {
         foreach (ContentInfo content in requestBody.Content)
         {
-            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType))
+            if (CodeEmitHelpers.IsJsonMediaType(content.MediaType)
+                || CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType))
             {
                 return this.ResolveSchemaTypeName(content.SchemaPointer);
             }
@@ -1138,6 +1139,23 @@ public sealed class OpenApi31CodeGenerator
         foreach (ContentInfo content in requestBody.Content)
         {
             if (CodeEmitHelpers.IsRawStreamMediaType(content.MediaType))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the request body's primary content type
+    /// is <c>application/x-www-form-urlencoded</c>.
+    /// </summary>
+    private static bool IsFormUrlEncodedRequestBody(RequestBodyInfo requestBody)
+    {
+        foreach (ContentInfo content in requestBody.Content)
+        {
+            if (CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType))
             {
                 return true;
             }
@@ -2718,10 +2736,11 @@ public sealed class OpenApi31CodeGenerator
         bool hasParams = op.Parameters.Length > 0;
         bool hasBody = op.RequestBody is not null;
         bool isRawStreamBody = hasBody && IsRawStreamRequestBody(op.RequestBody!.Value);
+        bool isFormUrlEncodedBody = hasBody && !isRawStreamBody && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
 
         w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
 
-        // Materialise body from Source → immutable typed element (JSON only).
+        // Materialise body from Source → immutable typed element (JSON and form-urlencoded).
         string? bodyTypeName = null;
         if (hasBody && !isRawStreamBody)
         {
@@ -2815,6 +2834,15 @@ public sealed class OpenApi31CodeGenerator
                 $"return SendWithStreamBodyAsyncCore<{requestName}, " +
                 $"{responseName}>(workspace, request, body, " +
                 $"\"{CodeEmitHelpers.EscapeStringLiteral(streamContentType)}\", responseValidationMode, cancellationToken);");
+        }
+        else if (isFormUrlEncodedBody)
+        {
+            // Serialize the typed body directly to the transport's output stream.
+            w.WriteLine(
+                $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                $"{responseName}>(workspace, request, " +
+                $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
+                $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
         }
         else if (hasBody)
         {

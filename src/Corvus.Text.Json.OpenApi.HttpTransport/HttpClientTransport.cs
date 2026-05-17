@@ -106,6 +106,20 @@ public sealed class HttpClientTransport : IApiTransport
     }
 
     /// <inheritdoc/>
+    public ValueTask<TResponse> SendAsync<TRequest, TResponse>(
+        in TRequest request,
+        Action<Stream> bodyWriter,
+        string contentType,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TResponse : struct, IApiResponse<TResponse>
+    {
+        HttpRequestMessage httpRequest = BuildHttpRequest(in request);
+        httpRequest.Content = new DelegatingContent(bodyWriter, contentType);
+        return SendCoreAsync<TResponse>(httpRequest, cancellationToken);
+    }
+
+    /// <inheritdoc/>
     public ValueTask DisposeAsync()
     {
         if (this.disposeClient)
@@ -269,6 +283,36 @@ public sealed class HttpClientTransport : IApiTransport
             using Utf8JsonWriter writer = new(stream);
             this.body.WriteTo(writer);
             writer.Flush();
+            return Task.CompletedTask;
+        }
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = 0;
+            return false;
+        }
+    }
+
+    /// <summary>
+    /// Custom <see cref="HttpContent"/> that writes the body via a delegate,
+    /// enabling zero-copy serialization for non-JSON body formats such as
+    /// <c>application/x-www-form-urlencoded</c>.
+    /// </summary>
+    private sealed class DelegatingContent : HttpContent
+    {
+        private readonly Action<Stream> bodyWriter;
+
+        public DelegatingContent(Action<Stream> bodyWriter, string contentType)
+        {
+            this.bodyWriter = bodyWriter;
+            this.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+        }
+
+        protected override Task SerializeToStreamAsync(
+            Stream stream,
+            System.Net.TransportContext? context)
+        {
+            this.bodyWriter(stream);
             return Task.CompletedTask;
         }
 

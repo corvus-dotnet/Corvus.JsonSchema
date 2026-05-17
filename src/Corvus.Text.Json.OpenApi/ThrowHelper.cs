@@ -178,4 +178,15 @@ public static class ThrowHelper
         throw new InvalidOperationException(
             SR.Format(SR.ResponseBodyValidationFailedWithDetail, statusCode, detail));
     }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that a
+    /// form-urlencoded body value was not a JSON object.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowFormBodyMustBeObject()
+    {
+        throw new InvalidOperationException(SR.FormBodyMustBeObject);
+    }
 }

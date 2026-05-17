@@ -96,4 +96,27 @@ public interface IApiTransport : IAsyncDisposable
         CancellationToken cancellationToken = default)
         where TRequest : struct, IApiRequest<TRequest>
         where TResponse : struct, IApiResponse<TResponse>;
+
+    /// <summary>
+    /// Sends a typed API request with a body written by a delegate and returns a typed response.
+    /// </summary>
+    /// <typeparam name="TRequest">The generated request type for this operation.</typeparam>
+    /// <typeparam name="TResponse">The generated response type for this operation.</typeparam>
+    /// <param name="request">The request, passed by <c>in</c> reference.</param>
+    /// <param name="bodyWriter">A delegate that writes the request body directly to the
+    /// transport's output stream. This enables zero-copy serialization for body formats
+    /// like <c>application/x-www-form-urlencoded</c>.</param>
+    /// <param name="contentType">The content type to set on the request.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>
+    /// A <typeparamref name="TResponse"/> containing the parsed, typed response.
+    /// The caller must dispose the response when finished.
+    /// </returns>
+    ValueTask<TResponse> SendAsync<TRequest, TResponse>(
+        in TRequest request,
+        Action<Stream> bodyWriter,
+        string contentType,
+        CancellationToken cancellationToken = default)
+        where TRequest : struct, IApiRequest<TRequest>
+        where TResponse : struct, IApiResponse<TResponse>;
 }

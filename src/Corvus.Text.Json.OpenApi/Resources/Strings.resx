@@ -98,5 +98,8 @@
   <data name="ResponseBodyValidationFailedWithDetail" xml:space="preserve">
     <value>The response body for status code {0} failed schema validation: {1}</value>
   </data>
+  <data name="FormBodyMustBeObject" xml:space="preserve">
+    <value>The form-urlencoded request body must be a JSON object.</value>
+  </data>
 
 </root>

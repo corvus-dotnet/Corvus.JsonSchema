@@ -38,4 +38,18 @@ public enum ContentCategory
     /// Response bodies are read as strings.
     /// </summary>
     TextPlain,
+
+    /// <summary>
+    /// Form URL-encoded content (<c>application/x-www-form-urlencoded</c>).
+    /// Request bodies are serialized as URL-encoded key=value pairs from
+    /// the schema object's properties (OAS §4.8.14.4).
+    /// </summary>
+    FormUrlEncoded,
+
+    /// <summary>
+    /// Multipart form data content (<c>multipart/form-data</c>).
+    /// Request bodies are serialized as MIME multipart parts, one per
+    /// schema property (OAS §4.8.14.5).
+    /// </summary>
+    Multipart,
 }

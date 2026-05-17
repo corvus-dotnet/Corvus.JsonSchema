@@ -1777,6 +1777,33 @@ public static class CodeEmitHelpers
         w.WriteLine("workspace.Dispose();");
         w.CloseBrace();
         w.CloseBrace();
+
+        w.WriteLine();
+
+        w.WriteLine("private async ValueTask<TResponse> SendWithBodyWriterAsyncCore<TRequest, TResponse>(");
+        w.PushIndent();
+        w.WriteLine("JsonWorkspace workspace,");
+        w.WriteLine("TRequest request,");
+        w.WriteLine("Action<Stream> bodyWriter,");
+        w.WriteLine("string contentType,");
+        w.WriteLine("ValidationMode responseValidationMode,");
+        w.WriteLine("CancellationToken cancellationToken)");
+        w.WriteLine("where TRequest : struct, IApiRequest<TRequest>");
+        w.WriteLine("where TResponse : struct, IApiResponse<TResponse>");
+        w.PopIndent();
+        w.OpenBrace();
+        w.WriteLine("try");
+        w.OpenBrace();
+        w.WriteLine(
+            "TResponse response = await this.transport.SendAsync<TRequest, TResponse>(in request, bodyWriter, contentType, cancellationToken).ConfigureAwait(false);");
+        w.WriteLine("response.Validate(responseValidationMode);");
+        w.WriteLine("return response;");
+        w.CloseBrace();
+        w.WriteLine("finally");
+        w.OpenBrace();
+        w.WriteLine("workspace.Dispose();");
+        w.CloseBrace();
+        w.CloseBrace();
     }
 
     /// <summary>
@@ -1934,6 +1961,16 @@ public static class CodeEmitHelpers
             return ContentCategory.Json;
         }
 
+        if (string.Equals(mediaType, "application/x-www-form-urlencoded", StringComparison.OrdinalIgnoreCase))
+        {
+            return ContentCategory.FormUrlEncoded;
+        }
+
+        if (string.Equals(mediaType, "multipart/form-data", StringComparison.OrdinalIgnoreCase))
+        {
+            return ContentCategory.Multipart;
+        }
+
         if (string.Equals(mediaType, "application/octet-stream", StringComparison.OrdinalIgnoreCase))
         {
             return ContentCategory.OctetStream;
@@ -1993,6 +2030,28 @@ public static class CodeEmitHelpers
     public static bool IsTextPlainMediaType(string mediaType)
     {
         return ClassifyMediaType(mediaType) == ContentCategory.TextPlain;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the given media type represents
+    /// <c>application/x-www-form-urlencoded</c> content.
+    /// </summary>
+    /// <param name="mediaType">The media type string.</param>
+    /// <returns><see langword="true"/> if the media type is form URL-encoded.</returns>
+    public static bool IsFormUrlEncodedMediaType(string mediaType)
+    {
+        return ClassifyMediaType(mediaType) == ContentCategory.FormUrlEncoded;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the given media type represents
+    /// <c>multipart/form-data</c> content.
+    /// </summary>
+    /// <param name="mediaType">The media type string.</param>
+    /// <returns><see langword="true"/> if the media type is multipart form data.</returns>
+    public static bool IsMultipartMediaType(string mediaType)
+    {
+        return ClassifyMediaType(mediaType) == ContentCategory.Multipart;
     }
 
     /// <summary>
