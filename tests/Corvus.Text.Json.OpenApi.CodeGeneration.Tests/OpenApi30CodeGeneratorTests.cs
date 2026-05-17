@@ -5415,4 +5415,269 @@ public class OpenApi30CodeGeneratorTests
             client.Content.Contains("ParseValue", StringComparison.Ordinal),
             "Client should not use ParseValue for scalar defaults");
     }
+
+    // ── Coverage spec helpers ─────────────────────────────────────────────
+    private static readonly Dictionary<string, string> CoverageSchemaTypeMap = new(StringComparer.Ordinal)
+    {
+        ["#/paths/~1items/get/parameters/0/schema"] = "CovTest.JsonBoolean",
+        ["#/paths/~1items/get/parameters/1/schema"] = "CovTest.JsonString",
+        ["#/paths/~1items/get/parameters/2/schema"] = "CovTest.JsonInt32",
+        ["#/paths/~1items/get/parameters/3/schema"] = "CovTest.JsonString",
+        ["#/paths/~1items/get/parameters/4/schema"] = "CovTest.JsonBoolean",
+        ["#/paths/~1items/get/responses/200/content/application~1json/schema"] = "CovTest.Items",
+        ["#/paths/~1items/get/responses/default/content/application~1json/schema"] = "CovTest.Error",
+        ["#/paths/~1items~1{itemId}/get/parameters/0/schema"] = "CovTest.JsonString",
+        ["#/paths/~1items~1{itemId}/get/responses/200/content/application~1json/schema"] = "CovTest.Item",
+        ["#/paths/~1items~1{itemId}/get/responses/200/headers/X-Rate-Limit/schema"] = "CovTest.JsonInt32",
+        ["#/paths/~1items~1{itemId}/get/responses/200/headers/X-Active/schema"] = "CovTest.JsonBoolean",
+        ["#/paths/~1items~1{itemId}/get/responses/200/headers/X-Tags/schema"] = "CovTest.Tags",
+        ["#/paths/~1items~1{itemId}~1form/post/parameters/0/schema"] = "CovTest.JsonString",
+        ["#/paths/~1items~1{itemId}~1form/post/requestBody/content/application~1x-www-form-urlencoded/schema"] = "CovTest.UpdateItemFormBody",
+        ["#/paths/~1items~1{itemId}~1form/post/responses/200/content/application~1json/schema"] = "CovTest.Item",
+        ["#/paths/~1items~1{itemId}~1upload/post/parameters/0/schema"] = "CovTest.JsonString",
+        ["#/paths/~1items~1{itemId}~1upload/post/responses/201/content/application~1json/schema"] = "CovTest.Item",
+    };
+
+    private static JsonElement coverageRoot;
+
+    private static JsonElement GetCoverageRoot()
+    {
+        if (coverageRoot.ValueKind != JsonValueKind.Undefined)
+        {
+            return coverageRoot;
+        }
+
+        string json = File.ReadAllText(
+            Path.Combine(AppContext.BaseDirectory, "TestData", "covspec-3.0.json"));
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
+        coverageRoot = doc.RootElement.Clone();
+        return coverageRoot;
+    }
+
+    private static IReadOnlyList<GeneratedFile> GenerateCoverageSpec()
+    {
+        JsonElement root = GetCoverageRoot();
+        OpenApi30CodeGenerator gen = new("CovTest", CoverageSchemaTypeMap);
+        return gen.Generate(root);
+    }
+
+    // ── Server URL templating tests ───────────────────────────────────────
+    [TestMethod]
+    public void CovSpec_Interface_HasCreateServerUri()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile iface = files.First(f => f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            iface.Content.Contains("static Uri CreateServerUri(", StringComparison.Ordinal),
+            "Interface should contain CreateServerUri method");
+    }
+
+    [TestMethod]
+    public void CovSpec_Interface_CreateServerUri_HasEnvironmentParam()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile iface = files.First(f => f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            iface.Content.Contains("string environment = \"api\"", StringComparison.Ordinal),
+            "CreateServerUri should have environment param with default 'api'");
+    }
+
+    [TestMethod]
+    public void CovSpec_Interface_CreateServerUri_HasAllowedValuesDoc()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile iface = files.First(f => f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            iface.Content.Contains("Allowed: api, staging, sandbox", StringComparison.Ordinal),
+            "CreateServerUri doc should list allowed values for environment");
+    }
+
+    // ── Form-urlencoded with Encoding Object tests ────────────────────────
+    [TestMethod]
+    public void CovSpec_FormEncoded_ClientEmitsEncodings()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => !f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("Dictionary<string, PropertyEncoding> encodings", StringComparison.Ordinal),
+            "Client should emit encodings dictionary for form-urlencoded body with encoding object");
+    }
+
+    [TestMethod]
+    public void CovSpec_FormEncoded_EncodingHasStyle()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => !f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("Style: \"form\"", StringComparison.Ordinal),
+            "Encoding for tags should have Style: form");
+    }
+
+    [TestMethod]
+    public void CovSpec_FormEncoded_EncodingHasAllowReserved()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => !f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("AllowReserved: true", StringComparison.Ordinal),
+            "Encoding for metadata should have AllowReserved: true");
+    }
+
+    [TestMethod]
+    public void CovSpec_FormEncoded_UsesFormUrlEncodedSerializer()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => !f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("FormUrlEncodedSerializer.Serialize", StringComparison.Ordinal),
+            "Client should use FormUrlEncodedSerializer for form-urlencoded body");
+    }
+
+    // ── Multipart with Encoding Object tests ──────────────────────────────
+    [TestMethod]
+    public void CovSpec_Multipart_UsesMultipartSerializer()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => !f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("MultipartFormDataSerializer.Serialize", StringComparison.Ordinal),
+            "Client should use MultipartFormDataSerializer for multipart body");
+    }
+
+    [TestMethod]
+    public void CovSpec_Multipart_HasFileContentTypeEncoding()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => !f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("ContentType: \"application/octet-stream\"", StringComparison.Ordinal),
+            "Encoding for file part should have ContentType: application/octet-stream");
+    }
+
+    // ── Wildcard media type tests ─────────────────────────────────────────
+    [TestMethod]
+    public void CovSpec_WildcardResponse_TreatedAsStream()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "DownloadFileResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("OkStream", StringComparison.Ordinal),
+            "Wildcard */* response should be treated as stream");
+    }
+
+    // ── Response header type branches ─────────────────────────────────────
+    [TestMethod]
+    public void CovSpec_ResponseHeader_BooleanHeader()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("bool.Parse(rawValue)", StringComparison.Ordinal),
+            "Boolean header should use bool.Parse for scalar parsing");
+    }
+
+    // ── Default parameter value branches ──────────────────────────────────
+    [TestMethod]
+    public void CovSpec_DefaultParam_BooleanTrue()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => !f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("ParsedJsonDocument<CovTest.JsonBoolean>.True", StringComparison.Ordinal),
+            "Boolean true default should use ParsedJsonDocument<T>.True");
+    }
+
+    [TestMethod]
+    public void CovSpec_DefaultParam_NullDefault()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => !f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("ParsedJsonDocument<CovTest.JsonString>.Null", StringComparison.Ordinal),
+            "Null default should use ParsedJsonDocument<T>.Null");
+    }
+
+    // ── Operation-level server override ───────────────────────────────────
+    [TestMethod]
+    public void CovSpec_OperationServer_Override()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile req = GetFile(files, "GetItemRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("detail.example.com", StringComparison.Ordinal),
+            "Request struct should contain the operation-level server URL for getItem");
+    }
+
+    // ── Path-level server ─────────────────────────────────────────────────
+    [TestMethod]
+    public void CovSpec_PathServer_Override()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("items.example.com", StringComparison.Ordinal),
+            "Request struct should contain the path-level server URL for listItems");
+    }
+
+    // ── Boolean false default parameter ───────────────────────────────────
+    [TestMethod]
+    public void CovSpec_DefaultParam_BooleanFalse()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => !f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("ParsedJsonDocument<CovTest.JsonBoolean>.False", StringComparison.Ordinal),
+            "Boolean false default should use ParsedJsonDocument<T>.False");
+    }
+
+    // ── Array response header ────────────────────────────────────────────
+    [TestMethod]
+    public void CovSpec_ResponseHeader_ArrayHeader_HasProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("XTagsHeader", StringComparison.Ordinal),
+            "Response should have XTagsHeader property for array header");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseHeader_ArrayHeader_UsesCreateBuilder()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("CreateBuilder<string>", StringComparison.Ordinal),
+            "Array header should use CreateBuilder to parse comma-separated elements");
+    }
 }

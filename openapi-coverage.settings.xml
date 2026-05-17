@@ -6,6 +6,8 @@
         <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.CodeGeneration\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.dll$</ModulePath>
         <ModulePath>.*Corvus\.Text\.Json\.OpenApi\.HttpTransport\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi31\.dll$</ModulePath>
+        <ModulePath>.*Corvus\.Text\.Json\.OpenApi30\.dll$</ModulePath>
       </Include>
     </ModulePaths>
   </CodeCoverage>
