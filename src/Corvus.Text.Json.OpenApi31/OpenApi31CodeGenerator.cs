@@ -71,6 +71,7 @@ public sealed class OpenApi31CodeGenerator
         string? OperationId,
         string? Summary,
         string? Description,
+        bool IsDeprecated,
         string[] Tags,
         ParameterInfo[] Parameters,
         RequestBodyInfo? RequestBody,
@@ -84,7 +85,9 @@ public sealed class OpenApi31CodeGenerator
         bool Explode,
         ParameterSerializationKind SerializationKind,
         string? SchemaPointer,
-        bool HasDeepNesting);
+        bool HasDeepNesting,
+        string? DefaultValueJson,
+        JsonValueKind DefaultValueKind);
 
     private readonly record struct RequestBodyInfo(
         string? Description,
@@ -701,6 +704,7 @@ public sealed class OpenApi31CodeGenerator
         string? description = opRef.Operation.Description.IsNotUndefined()
             ? opRef.Operation.Description.GetString()
             : null;
+        bool isDeprecated = opRef.Operation.Deprecated.ValueKind == JsonValueKind.True;
         string[] tags = ExtractTags(opRef.Operation);
         string methodName = GetMethodName(operationId, opRef.Method, pathTemplate);
 
@@ -718,6 +722,7 @@ public sealed class OpenApi31CodeGenerator
             operationId,
             summary,
             description,
+            isDeprecated,
             tags,
             parameters,
             requestBody,
@@ -761,12 +766,23 @@ public sealed class OpenApi31CodeGenerator
                     pathNameUtf8, method, sourceIndex, isPathLevel)
                 : null;
 
+            // Extract schema default value (if any) for optional parameters.
+            string? defaultValueJson = null;
+            JsonValueKind defaultValueKind = JsonValueKind.Undefined;
+            if (hasSchema && !required
+                && schemaElement.TryGetProperty("default"u8, out JsonElement defaultEl)
+                && defaultEl.ValueKind != JsonValueKind.Undefined)
+            {
+                defaultValueJson = defaultEl.GetRawText();
+                defaultValueKind = defaultEl.ValueKind;
+            }
+
             // Extract name at the emit boundary
             string name = param.Name.GetString()!;
 
             result[i] = new ParameterInfo(
                 name, location, required, style, explode,
-                serializationKind, schemaPointer, deepNesting);
+                serializationKind, schemaPointer, deepNesting, defaultValueJson, defaultValueKind);
         }
 
         return result;
@@ -2717,7 +2733,7 @@ public sealed class OpenApi31CodeGenerator
             w.WriteLine("/// The default server URL from the OpenAPI specification.");
             w.WriteLine("/// </summary>");
             w.WriteLine(
-                $"static ReadOnlySpan<byte> DefaultServerUrlUtf8 => \"{CodeEmitHelpers.EscapeStringLiteral(defaultServerUrl)}\"u8;");
+                $"static ReadOnlySpan<byte> DefaultServerUrlUtf8 => {CodeEmitHelpers.FormatStringLiteral(defaultServerUrl)}u8;");
             w.WriteLine();
         }
 
@@ -2741,6 +2757,11 @@ public sealed class OpenApi31CodeGenerator
         string responseName = $"{op.MethodName}Response";
 
         EmitMethodDoc(w, op);
+
+        if (op.IsDeprecated)
+        {
+            w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
+        }
 
         List<string> paramParts = this.BuildParameterList(op);
         w.WriteLine(
@@ -2804,6 +2825,11 @@ public sealed class OpenApi31CodeGenerator
 
         EmitMethodDoc(w, op);
 
+        if (op.IsDeprecated)
+        {
+            w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
+        }
+
         List<string> paramParts = this.BuildParameterList(op);
 
         w.WriteLine(
@@ -2861,8 +2887,11 @@ public sealed class OpenApi31CodeGenerator
                         CodeEmitHelpers.SanitizeParameterName(param.Name));
                     string typeName = this.ResolveSchemaTypeName(param.SchemaPointer);
 
+                    string undefinedFallback = CodeEmitHelpers.FormatDefaultValueExpression(
+                        typeName, param.DefaultValueJson, param.DefaultValueKind);
+
                     w.WriteLine(
-                        $"{fieldName} = {paramIdentifier}.IsUndefined ? default : " +
+                        $"{fieldName} = {paramIdentifier}.IsUndefined ? {undefinedFallback} : " +
                         $"({typeName}){typeName}.CreateBuilder(workspace, {paramIdentifier}).RootElement,");
                 }
 
@@ -2912,7 +2941,7 @@ public sealed class OpenApi31CodeGenerator
             w.WriteLine(
                 $"return SendWithStreamBodyAsyncCore<{requestName}, " +
                 $"{responseName}>(workspace, request, body, " +
-                $"\"{CodeEmitHelpers.EscapeStringLiteral(streamContentType)}\", responseValidationMode, cancellationToken);");
+                $"{CodeEmitHelpers.FormatStringLiteral(streamContentType)}, responseValidationMode, cancellationToken);");
         }
         else if (isFormUrlEncodedBody)
         {
@@ -2988,14 +3017,14 @@ public sealed class OpenApi31CodeGenerator
 
         foreach (KeyValuePair<string, EncodingInfo> kvp in encodings)
         {
-            string propName = CodeEmitHelpers.EscapeStringLiteral(kvp.Key);
+            string propNameLiteral = CodeEmitHelpers.FormatStringLiteral(kvp.Key);
             EncodingInfo enc = kvp.Value;
 
             List<string> args = [];
 
             if (enc.Style is not null)
             {
-                args.Add($"Style: \"{CodeEmitHelpers.EscapeStringLiteral(enc.Style)}\"");
+                args.Add($"Style: {CodeEmitHelpers.FormatStringLiteral(enc.Style)}");
             }
 
             if (enc.Explode is not null)
@@ -3010,11 +3039,11 @@ public sealed class OpenApi31CodeGenerator
 
             if (enc.ContentType is not null)
             {
-                args.Add($"ContentType: \"{CodeEmitHelpers.EscapeStringLiteral(enc.ContentType)}\"");
+                args.Add($"ContentType: {CodeEmitHelpers.FormatStringLiteral(enc.ContentType)}");
             }
 
             string ctor = $"new({string.Join(", ", args)})";
-            w.WriteLine($"[\"{propName}\"] = {ctor},");
+            w.WriteLine($"[{propNameLiteral}] = {ctor},");
         }
 
         w.PopIndent();
@@ -3033,7 +3062,10 @@ public sealed class OpenApi31CodeGenerator
         foreach (ParameterInfo param in op.Parameters)
         {
             string sanitizedParam = CodeEmitHelpers.SanitizeParameterName(param.Name);
-            w.WriteLine($"/// <param name=\"{sanitizedParam}\">The {param.Name} parameter.</param>");
+            string defaultNote = param.DefaultValueJson is not null
+                ? $" Default: {CodeEmitHelpers.EscapeXml(param.DefaultValueJson)}."
+                : string.Empty;
+            w.WriteLine($"/// <param name=\"{sanitizedParam}\">The {param.Name} parameter.{defaultNote}</param>");
         }
 
         if (op.RequestBody is { } rb)

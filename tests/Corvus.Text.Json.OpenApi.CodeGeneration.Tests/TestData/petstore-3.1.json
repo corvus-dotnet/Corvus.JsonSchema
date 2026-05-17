@@ -33,7 +33,8 @@
             "schema": {
               "type": "integer",
               "maximum": 100,
-              "format": "int32"
+              "format": "int32",
+              "default": 100
             }
           }
         ],
@@ -178,6 +179,37 @@
                 }
               }
             }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deletePet",
+        "summary": "Delete a specific pet",
+        "deprecated": true,
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Pet deleted"
           },
           "default": {
             "description": "unexpected error",

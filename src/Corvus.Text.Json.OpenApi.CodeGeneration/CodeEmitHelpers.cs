@@ -2,7 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
+using Microsoft.CodeAnalysis.CSharp;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
@@ -123,13 +125,52 @@ public static class CodeEmitHelpers
             .Replace(">", "&gt;", StringComparison.Ordinal);
 
     /// <summary>
-    /// Escapes text for inclusion in a C# string literal.
+    /// Formats a C# string literal (including surrounding quotes), using the Roslyn
+    /// <see cref="SymbolDisplay.FormatLiteral(string, bool)"/> method.
     /// </summary>
-    /// <param name="text">The text to escape.</param>
-    /// <returns>The escaped text.</returns>
-    public static string EscapeStringLiteral(string text) =>
-        text.Replace("\\", "\\\\", StringComparison.Ordinal)
-            .Replace("\"", "\\\"", StringComparison.Ordinal);
+    /// <param name="text">The text to include in the literal.</param>
+    /// <returns>A quoted and escaped C# string literal (e.g. <c>"hello\"world"</c>).</returns>
+    public static string FormatStringLiteral(string text) =>
+        SymbolDisplay.FormatLiteral(text, true);
+
+    /// <summary>
+    /// Formats a C# expression for a JSON Schema default value, using the
+    /// same factory methods as the core JSON Schema code generator
+    /// (<c>ParsedJsonDocument&lt;T&gt;.Null</c>, <c>.True</c>, <c>.False</c>,
+    /// <c>.NumberConstant</c>, <c>.StringConstant</c>).
+    /// </summary>
+    /// <param name="typeName">The resolved C# type name (e.g. <c>Schema.Limit</c>).</param>
+    /// <param name="rawJson">
+    /// The raw JSON text of the default value (e.g. <c>100</c>, <c>"foo"</c>),
+    /// or <see langword="null"/> if no default exists.
+    /// </param>
+    /// <param name="valueKind">
+    /// The <see cref="JsonValueKind"/> of the default value, or
+    /// <see cref="JsonValueKind.Undefined"/> if no default exists.
+    /// </param>
+    /// <returns>
+    /// A C# expression string. Returns <c>"default"</c> when no default is available.
+    /// </returns>
+    public static string FormatDefaultValueExpression(
+        string typeName, string? rawJson, JsonValueKind valueKind)
+    {
+        if (rawJson is null)
+        {
+            return "default";
+        }
+
+        string escaped = SymbolDisplay.FormatLiteral(rawJson, true);
+
+        return valueKind switch
+        {
+            JsonValueKind.Null => $"ParsedJsonDocument<{typeName}>.Null",
+            JsonValueKind.True => $"ParsedJsonDocument<{typeName}>.True",
+            JsonValueKind.False => $"ParsedJsonDocument<{typeName}>.False",
+            JsonValueKind.Number => $"ParsedJsonDocument<{typeName}>.NumberConstant([..{escaped}u8])",
+            JsonValueKind.String => $"ParsedJsonDocument<{typeName}>.StringConstant([..{escaped}u8])",
+            _ => "default", // Object/Array defaults are uncommon for parameters; fall back.
+        };
+    }
 
     /// <summary>
     /// Gets the C# expression for an <see cref="OperationMethod"/> value.

@@ -135,8 +135,8 @@ public class OpenApi30CodeGeneratorTests
         OpenApi30CodeGenerator gen = CreateGenerator();
         IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
 
-        // 3 operations × 2 (request + response) + 1 interface + 1 implementation = 8
-        Assert.AreEqual(8, files.Count);
+        // 4 operations × 2 (request + response) + 1 interface + 1 implementation = 10
+        Assert.AreEqual(10, files.Count);
     }
 
     [TestMethod]
@@ -1437,8 +1437,8 @@ public class OpenApi30CodeGeneratorTests
     {
         string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
 
-        // 2 param schemas + 1 request body + 6 response bodies + 1 response header = 10
-        Assert.AreEqual(10, pointers.Length);
+        // 3 param schemas + 1 request body + 7 response bodies + 1 response header = 12
+        Assert.AreEqual(12, pointers.Length);
     }
 
     [TestMethod]
@@ -5322,5 +5322,91 @@ public class OpenApi30CodeGeneratorTests
         Assert.IsTrue(
             client.Content.Contains("response.Validate(responseValidationMode)", StringComparison.Ordinal),
             "SendAsyncCore should call response.Validate with the mode");
+    }
+
+    [TestMethod]
+    public void Generate_DeprecatedOperation_EmitsObsoleteOnInterface()
+    {
+        OpenApi30CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
+
+        Assert.IsTrue(
+            iface.Content.Contains("[Obsolete(\"This operation is deprecated.\")]", StringComparison.Ordinal),
+            "Interface should contain [Obsolete] for deprecated operation");
+    }
+
+    [TestMethod]
+    public void Generate_DeprecatedOperation_EmitsObsoleteOnImplementation()
+    {
+        OpenApi30CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile client = GetFile(files, "ApiPetsClient.cs");
+
+        Assert.IsTrue(
+            client.Content.Contains("[Obsolete(\"This operation is deprecated.\")]", StringComparison.Ordinal),
+            "Implementation should contain [Obsolete] for deprecated operation");
+    }
+
+    [TestMethod]
+    public void Generate_NonDeprecatedOperation_DoesNotEmitObsolete()
+    {
+        OpenApi30CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
+
+        // Count [Obsolete] occurrences — should be exactly 1 (only for deletePet)
+        int count = 0;
+        int idx = 0;
+        while ((idx = iface.Content.IndexOf("[Obsolete(", idx, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            idx++;
+        }
+
+        Assert.AreEqual(1, count, "Only the deprecated operation should have [Obsolete]");
+    }
+
+    [TestMethod]
+    public void Generate_DefaultParameterValue_EmitsNumberConstant()
+    {
+        OpenApi30CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile client = GetFile(files, "ApiPetsClient.cs");
+
+        // The limit param has "default": 100, so the fallback should use NumberConstant
+        Assert.IsTrue(
+            client.Content.Contains("NumberConstant", StringComparison.Ordinal),
+            "Client should use NumberConstant for integer default value");
+    }
+
+    [TestMethod]
+    public void Generate_DefaultParameterValue_DocumentsDefault()
+    {
+        OpenApi30CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile iface = GetFile(files, "IApiPetsClient.cs");
+
+        Assert.IsTrue(
+            iface.Content.Contains("Default: 100.", StringComparison.Ordinal),
+            "Interface doc should mention the default value");
+    }
+
+    [TestMethod]
+    public void Generate_DefaultParameterValue_DoesNotUseParseValue()
+    {
+        OpenApi30CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile client = GetFile(files, "ApiPetsClient.cs");
+
+        Assert.IsFalse(
+            client.Content.Contains("ParseValue", StringComparison.Ordinal),
+            "Client should not use ParseValue for scalar defaults");
     }
 }
