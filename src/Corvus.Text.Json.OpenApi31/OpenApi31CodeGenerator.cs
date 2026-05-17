@@ -98,7 +98,14 @@ public sealed class OpenApi31CodeGenerator
 
     private readonly record struct ContentInfo(
         string MediaType,
-        string? SchemaPointer);
+        string? SchemaPointer,
+        IReadOnlyDictionary<string, EncodingInfo>? Encodings);
+
+    private readonly record struct EncodingInfo(
+        string? Style,
+        bool? Explode,
+        bool AllowReserved,
+        string? ContentType);
 
     private readonly record struct HeaderInfo(
         string HeaderName,
@@ -863,7 +870,9 @@ public sealed class OpenApi31CodeGenerator
                     pathNameUtf8, method, parentSegmentUtf8, mediaTypeName.Span);
             }
 
-            result.Add(new ContentInfo(mediaType, schemaPointer));
+            IReadOnlyDictionary<string, EncodingInfo>? encodings = ReadEncodings(mediaTypeProp.Value);
+
+            result.Add(new ContentInfo(mediaType, schemaPointer, encodings));
         }
 
         return [.. result];
@@ -897,10 +906,47 @@ public sealed class OpenApi31CodeGenerator
                     pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
             }
 
-            result.Add(new ContentInfo(mediaType, schemaPointer));
+            result.Add(new ContentInfo(mediaType, schemaPointer, null));
         }
 
         return [.. result];
+    }
+
+    private static IReadOnlyDictionary<string, EncodingInfo>? ReadEncodings(
+        OpenApiDocument.MediaType mediaType)
+    {
+        OpenApiDocument.MediaType.EncodingEntity encodingMap = mediaType.Encoding;
+        if (encodingMap.IsUndefined())
+        {
+            return null;
+        }
+
+        Dictionary<string, EncodingInfo> result = new(StringComparer.Ordinal);
+
+        foreach (var prop in encodingMap.EnumerateObject())
+        {
+            string propertyName = prop.Name;
+            OpenApiDocument.Encoding encoding = prop.Value;
+
+            string? style = encoding.Style.IsNotUndefined()
+                ? encoding.Style.GetString()
+                : null;
+
+            bool? explode = encoding.Explode.IsNotUndefined()
+                ? (bool)encoding.Explode
+                : null;
+
+            bool allowReserved = encoding.AllowReserved.IsNotUndefined()
+                && (bool)encoding.AllowReserved;
+
+            string? contentType = encoding.ContentType.IsNotUndefined()
+                ? encoding.ContentType.GetString()
+                : null;
+
+            result[propertyName] = new EncodingInfo(style, explode, allowReserved, contentType);
+        }
+
+        return result;
     }
 
     private static HeaderInfo[] PrepareResponseHeaders(
@@ -1180,6 +1226,25 @@ public sealed class OpenApi31CodeGenerator
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Returns the per-property encoding overrides for the form-urlencoded or
+    /// multipart content entry, or <see langword="null"/> if none are defined.
+    /// </summary>
+    private static IReadOnlyDictionary<string, EncodingInfo>? GetRequestBodyEncodings(
+        RequestBodyInfo requestBody,
+        Func<string, bool> mediaTypePredicate)
+    {
+        foreach (ContentInfo content in requestBody.Content)
+        {
+            if (mediaTypePredicate(content.MediaType))
+            {
+                return content.Encodings;
+            }
+        }
+
+        return null;
     }
 
     private string? ResolveResponseTypeName(ResponseInfo resp)
@@ -2856,22 +2921,51 @@ public sealed class OpenApi31CodeGenerator
         }
         else if (isFormUrlEncodedBody)
         {
-            // Serialize the typed body directly to the transport's output stream.
-            w.WriteLine(
-                $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                $"{responseName}>(workspace, request, " +
-                $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
-                $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+            IReadOnlyDictionary<string, EncodingInfo>? encodings =
+                GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsFormUrlEncodedMediaType);
+
+            if (encodings is { Count: > 0 })
+            {
+                EmitEncodingsDictionary(w, encodings);
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, " +
+                    $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), " +
+                    $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, " +
+                    $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
+                    $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+            }
         }
         else if (isMultipartBody)
         {
-            // Generate a boundary and serialize each property as a multipart part.
+            IReadOnlyDictionary<string, EncodingInfo>? encodings =
+                GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsMultipartMediaType);
+
             w.WriteLine("string boundary = MultipartFormDataSerializer.GenerateBoundary();");
-            w.WriteLine(
-                $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                $"{responseName}>(workspace, request, " +
-                $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), " +
-                $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+
+            if (encodings is { Count: > 0 })
+            {
+                EmitEncodingsDictionary(w, encodings);
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, " +
+                    $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), " +
+                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, " +
+                    $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), " +
+                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+            }
         }
         else if (hasBody)
         {
@@ -2887,6 +2981,49 @@ public sealed class OpenApi31CodeGenerator
         }
 
         w.CloseBrace();
+    }
+
+    private static void EmitEncodingsDictionary(
+        IndentedWriter w,
+        IReadOnlyDictionary<string, EncodingInfo> encodings)
+    {
+        w.WriteLine("Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)");
+        w.WriteLine("{");
+        w.PushIndent();
+
+        foreach (KeyValuePair<string, EncodingInfo> kvp in encodings)
+        {
+            string propName = CodeEmitHelpers.EscapeStringLiteral(kvp.Key);
+            EncodingInfo enc = kvp.Value;
+
+            List<string> args = [];
+
+            if (enc.Style is not null)
+            {
+                args.Add($"Style: \"{CodeEmitHelpers.EscapeStringLiteral(enc.Style)}\"");
+            }
+
+            if (enc.Explode is not null)
+            {
+                args.Add($"Explode: {(enc.Explode.Value ? "true" : "false")}");
+            }
+
+            if (enc.AllowReserved)
+            {
+                args.Add("AllowReserved: true");
+            }
+
+            if (enc.ContentType is not null)
+            {
+                args.Add($"ContentType: \"{CodeEmitHelpers.EscapeStringLiteral(enc.ContentType)}\"");
+            }
+
+            string ctor = $"new({string.Join(", ", args)})";
+            w.WriteLine($"[\"{propName}\"] = {ctor},");
+        }
+
+        w.PopIndent();
+        w.WriteLine("};");
     }
 
     private static void EmitMethodDoc(IndentedWriter w, OperationInfo op)

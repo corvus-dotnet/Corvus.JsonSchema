@@ -2158,6 +2158,109 @@ public class GeneratedClientEndToEndTests
             harness.CapturedRequest!.RequestUri!.OriginalString);
     }
 
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitEncodedContactFormAsync_PipeDelimitedTags()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsEncodedContactBody>.Parse(
+            """{"name":"Alice","email":"alice@example.com","tags":["red","green","blue"]}""");
+
+        await using SubmitEncodedContactFormResponse response = await client.SubmitEncodedContactFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // Tags should be pipe-delimited (non-exploded): tags=red|green|blue
+        Assert.IsTrue(
+            body.Contains("tags=red%7Cgreen%7Cblue") || body.Contains("tags=red|green|blue"),
+            $"Expected pipe-delimited tags, got: {body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitEncodedContactFormAsync_DeepObjectAddress()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsEncodedContactBody>.Parse(
+            """{"name":"Alice","email":"alice@example.com","address":{"street":"1 Main St","city":"London"}}""");
+
+        await using SubmitEncodedContactFormResponse response = await client.SubmitEncodedContactFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // Address should be deep-object style: address[street]=1%20Main%20St&address[city]=London
+        Assert.IsTrue(
+            body.Contains("address%5Bstreet%5D=1%20Main%20St") || body.Contains("address[street]=1%20Main%20St"),
+            $"Expected deep-object address with street, got: {body}");
+        Assert.IsTrue(
+            body.Contains("address%5Bcity%5D=London") || body.Contains("address[city]=London"),
+            $"Expected deep-object address with city, got: {body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitEncodedContactFormAsync_AllowReservedEmail()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsEncodedContactBody>.Parse(
+            """{"name":"Alice","email":"alice+test@example.com"}""");
+
+        await using SubmitEncodedContactFormResponse response = await client.SubmitEncodedContactFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // With allowReserved, the + in the email should NOT be percent-encoded
+        Assert.IsTrue(
+            body.Contains("email=alice+test@example.com"),
+            $"Expected unencoded reserved chars in email, got: {body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadEncodedDocumentAsync_MetadataContentTypeOverride()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsEncodedUploadBody>.Parse(
+            """{"title":"My Doc","metadata":{"author":"Alice","version":2}}""");
+
+        await using UploadEncodedDocumentResponse response = await client.UploadEncodedDocumentAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // metadata part should have application/json Content-Type override
+        Assert.IsTrue(
+            body.Contains("Content-Disposition: form-data; name=\"metadata\"\r\nContent-Type: application/json\r\n\r\n"),
+            $"Expected metadata with application/json Content-Type, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadEncodedDocumentAsync_TagsContentTypeOverride()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsEncodedUploadBody>.Parse(
+            """{"title":"Tagged","tags":["alpha","beta"]}""");
+
+        await using UploadEncodedDocumentResponse response = await client.UploadEncodedDocumentAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // tags part should have application/json Content-Type from encoding override
+        Assert.IsTrue(
+            body.Contains("Content-Disposition: form-data; name=\"tags\"\r\nContent-Type: application/json\r\n\r\n[\"alpha\",\"beta\"]"),
+            $"Expected tags with application/json Content-Type override, got:\n{body}");
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.

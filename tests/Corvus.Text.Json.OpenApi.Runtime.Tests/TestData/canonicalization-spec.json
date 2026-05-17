@@ -1343,6 +1343,124 @@
           }
         }
       }
+    },
+    "/forms/encoded-contact": {
+      "post": {
+        "operationId": "submitEncodedContactForm",
+        "summary": "Submit a contact form with encoding overrides",
+        "tags": ["forms"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "tags": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  },
+                  "address": {
+                    "type": "object",
+                    "properties": {
+                      "street": { "type": "string" },
+                      "city": { "type": "string" }
+                    }
+                  }
+                },
+                "required": ["name", "email"]
+              },
+              "encoding": {
+                "tags": {
+                  "style": "pipeDelimited",
+                  "explode": false
+                },
+                "address": {
+                  "style": "deepObject",
+                  "explode": true
+                },
+                "email": {
+                  "allowReserved": true
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "received": { "type": "boolean" }
+                  },
+                  "required": ["received"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/encoded-upload": {
+      "post": {
+        "operationId": "uploadEncodedDocument",
+        "summary": "Upload a document with encoding overrides",
+        "tags": ["forms"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "metadata": {
+                    "type": "object",
+                    "properties": {
+                      "author": { "type": "string" },
+                      "version": { "type": "integer" }
+                    }
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                },
+                "required": ["title"]
+              },
+              "encoding": {
+                "metadata": {
+                  "contentType": "application/json"
+                },
+                "tags": {
+                  "contentType": "application/json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploaded": { "type": "boolean" }
+                  },
+                  "required": ["uploaded"]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
