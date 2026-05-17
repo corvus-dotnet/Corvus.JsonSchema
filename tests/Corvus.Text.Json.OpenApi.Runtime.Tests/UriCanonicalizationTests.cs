@@ -298,25 +298,29 @@ public class UriCanonicalizationTests
             },
             headers);
 
-        Assert.AreEqual(1, headers.Count);
-        Assert.AreEqual("X-Request-Id", headers[0].Name);
-        Assert.AreEqual("hello world & more", headers[0].Value);
+        Assert.AreEqual(2, headers.Count);
+        Assert.AreEqual("Accept", headers[0].Name);
+        Assert.AreEqual("application/json", headers[0].Value);
+        Assert.AreEqual("X-Request-Id", headers[1].Name);
+        Assert.AreEqual("hello world & more", headers[1].Value);
     }
 
     [TestMethod]
-    public void HeaderParam_NotSet_NoCallback()
+    public void HeaderParam_NotSet_OnlyAcceptCallback()
     {
         GetItemRequest request = new(JsonString.ParseValue("\"id\""u8));
 
-        int[] counter = new int[1];
+        List<(string Name, string Value)> headers = [];
         request.WriteHeaders(
-            static (ReadOnlySpan<byte> name, ReadOnlySpan<byte> value, int[] state) =>
+            static (ReadOnlySpan<byte> name, ReadOnlySpan<byte> value, List<(string, string)> state) =>
             {
-                state[0]++;
+                state.Add((Encoding.UTF8.GetString(name), Encoding.UTF8.GetString(value)));
             },
-            counter);
+            headers);
 
-        Assert.AreEqual(0, counter[0]);
+        Assert.AreEqual(1, headers.Count);
+        Assert.AreEqual("Accept", headers[0].Name);
+        Assert.AreEqual("application/json", headers[0].Value);
     }
 
     [TestMethod]

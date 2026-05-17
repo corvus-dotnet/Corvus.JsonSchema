@@ -1184,6 +1184,84 @@
           }
         }
       }
+    },
+    "/text/echo": {
+      "post": {
+        "operationId": "echoText",
+        "summary": "Echo text back as text/plain",
+        "tags": ["text"],
+        "requestBody": {
+          "required": true,
+          "content": { "text/plain": { "schema": { "type": "string" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Echoed text",
+            "content": { "text/plain": { "schema": { "type": "string" } } }
+          }
+        }
+      }
+    },
+    "/text/to-json": {
+      "post": {
+        "operationId": "textToJson",
+        "summary": "Accept text/plain, return JSON",
+        "tags": ["text"],
+        "requestBody": {
+          "required": true,
+          "content": { "text/plain": { "schema": { "type": "string" } } }
+        },
+        "responses": {
+          "200": {
+            "description": "Parsed result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "parsed": { "type": "string" } },
+                  "required": ["parsed"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/text/mixed": {
+      "get": {
+        "operationId": "getTextOrJson",
+        "summary": "Returns text/plain or JSON depending on server state",
+        "tags": ["text"],
+        "responses": {
+          "200": {
+            "description": "Success - may be text or JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "value": { "type": "string" } },
+                  "required": ["value"]
+                }
+              },
+              "text/plain": {
+                "schema": { "type": "string" }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": { "error": { "type": "string" } },
+                  "required": ["error"]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

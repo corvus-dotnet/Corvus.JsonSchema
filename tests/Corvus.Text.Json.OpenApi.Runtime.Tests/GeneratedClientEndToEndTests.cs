@@ -1748,7 +1748,7 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(OperationMethod.Post, CreateItemRequest.Method);
         Assert.IsFalse(CreateItemRequest.HasPathParameters);
         Assert.IsFalse(CreateItemRequest.HasQueryParameters);
-        Assert.IsFalse(CreateItemRequest.HasHeaderParameters);
+        Assert.IsTrue(CreateItemRequest.HasHeaderParameters);
         Assert.IsFalse(CreateItemRequest.HasCookieParameters);
     }
 
@@ -1758,7 +1758,7 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(OperationMethod.Delete, DeleteItemRequest.Method);
         Assert.IsTrue(DeleteItemRequest.HasPathParameters);
         Assert.IsFalse(DeleteItemRequest.HasQueryParameters);
-        Assert.IsFalse(DeleteItemRequest.HasHeaderParameters);
+        Assert.IsTrue(DeleteItemRequest.HasHeaderParameters);
         Assert.IsFalse(DeleteItemRequest.HasCookieParameters);
     }
 
@@ -1768,7 +1768,7 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(OperationMethod.Get, GetSessionProfileRequest.Method);
         Assert.IsFalse(GetSessionProfileRequest.HasPathParameters);
         Assert.IsFalse(GetSessionProfileRequest.HasQueryParameters);
-        Assert.IsFalse(GetSessionProfileRequest.HasHeaderParameters);
+        Assert.IsTrue(GetSessionProfileRequest.HasHeaderParameters);
         Assert.IsTrue(GetSessionProfileRequest.HasCookieParameters);
     }
 
@@ -1778,7 +1778,7 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(OperationMethod.Put, UpdateItemRequest.Method);
         Assert.IsFalse(UpdateItemRequest.HasPathParameters);
         Assert.IsFalse(UpdateItemRequest.HasQueryParameters);
-        Assert.IsFalse(UpdateItemRequest.HasHeaderParameters);
+        Assert.IsTrue(UpdateItemRequest.HasHeaderParameters);
         Assert.IsFalse(UpdateItemRequest.HasCookieParameters);
     }
 
@@ -1788,7 +1788,7 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(OperationMethod.Get, GetItemTagRequest.Method);
         Assert.IsTrue(GetItemTagRequest.HasPathParameters);
         Assert.IsTrue(GetItemTagRequest.HasQueryParameters);
-        Assert.IsFalse(GetItemTagRequest.HasHeaderParameters);
+        Assert.IsTrue(GetItemTagRequest.HasHeaderParameters);
         Assert.IsFalse(GetItemTagRequest.HasCookieParameters);
     }
 
@@ -1798,7 +1798,7 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(OperationMethod.Get, GetItemDetailsRequest.Method);
         Assert.IsTrue(GetItemDetailsRequest.HasPathParameters);
         Assert.IsFalse(GetItemDetailsRequest.HasQueryParameters);
-        Assert.IsFalse(GetItemDetailsRequest.HasHeaderParameters);
+        Assert.IsTrue(GetItemDetailsRequest.HasHeaderParameters);
         Assert.IsFalse(GetItemDetailsRequest.HasCookieParameters);
     }
 
@@ -1808,7 +1808,7 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(OperationMethod.Get, SearchRequest.Method);
         Assert.IsFalse(SearchRequest.HasPathParameters);
         Assert.IsTrue(SearchRequest.HasQueryParameters);
-        Assert.IsFalse(SearchRequest.HasHeaderParameters);
+        Assert.IsTrue(SearchRequest.HasHeaderParameters);
         Assert.IsFalse(SearchRequest.HasCookieParameters);
     }
 
@@ -1828,7 +1828,7 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(OperationMethod.Get, GetPageRequest.Method);
         Assert.IsTrue(GetPageRequest.HasPathParameters);
         Assert.IsTrue(GetPageRequest.HasQueryParameters);
-        Assert.IsFalse(GetPageRequest.HasHeaderParameters);
+        Assert.IsTrue(GetPageRequest.HasHeaderParameters);
         Assert.IsFalse(GetPageRequest.HasCookieParameters);
     }
 
@@ -2590,12 +2590,19 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
-    public void CreateItemRequest_WriteHeaders_ThrowsWhenNoHeaderParams()
+    public void CreateItemRequest_WriteHeaders_EmitsOnlyAcceptHeader()
     {
         CreateItemRequest request = default;
-        Assert.IsFalse(CreateItemRequest.HasHeaderParameters);
-        Assert.ThrowsExactly<InvalidOperationException>(
-            () => request.WriteHeaders(static (ReadOnlySpan<byte> _, ReadOnlySpan<byte> _, int _) => { }, 0));
+        Assert.IsTrue(CreateItemRequest.HasHeaderParameters);
+        var headers = new List<(string Name, string Value)>();
+        request.WriteHeaders(
+            static (ReadOnlySpan<byte> name, ReadOnlySpan<byte> value, List<(string, string)> state) =>
+                state.Add((Encoding.UTF8.GetString(name), Encoding.UTF8.GetString(value))),
+            headers);
+
+        Assert.AreEqual(1, headers.Count);
+        Assert.AreEqual("Accept", headers[0].Name);
+        Assert.AreEqual("application/json", headers[0].Value);
     }
 
     [TestMethod]
@@ -2634,12 +2641,19 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
-    public void GetSessionProfileRequest_WriteHeaders_ThrowsWhenNoHeaderParams()
+    public void GetSessionProfileRequest_WriteHeaders_EmitsOnlyAcceptHeader()
     {
         GetSessionProfileRequest request = new(JsonElement.ParseValue("\"session-id\""u8));
-        Assert.IsFalse(GetSessionProfileRequest.HasHeaderParameters);
-        Assert.ThrowsExactly<InvalidOperationException>(
-            () => request.WriteHeaders(static (ReadOnlySpan<byte> _, ReadOnlySpan<byte> _, int _) => { }, 0));
+        Assert.IsTrue(GetSessionProfileRequest.HasHeaderParameters);
+        var headers = new List<(string Name, string Value)>();
+        request.WriteHeaders(
+            static (ReadOnlySpan<byte> name, ReadOnlySpan<byte> value, List<(string, string)> state) =>
+                state.Add((Encoding.UTF8.GetString(name), Encoding.UTF8.GetString(value))),
+            headers);
+
+        Assert.AreEqual(1, headers.Count);
+        Assert.AreEqual("Accept", headers[0].Name);
+        Assert.AreEqual("application/json", headers[0].Value);
     }
 
     // ── Throwing stub tests for complex-params operations ───────────────
@@ -2676,12 +2690,19 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
-    public void CookieArrayRequest_WriteHeaders_ThrowsWhenNoHeaderParams()
+    public void CookieArrayRequest_WriteHeaders_EmitsOnlyAcceptHeader()
     {
         CookieArrayRequest request = new(JsonElement.ParseValue("""["a"]"""u8));
-        Assert.IsFalse(CookieArrayRequest.HasHeaderParameters);
-        Assert.ThrowsExactly<InvalidOperationException>(
-            () => request.WriteHeaders(static (ReadOnlySpan<byte> _, ReadOnlySpan<byte> _, int _) => { }, 0));
+        Assert.IsTrue(CookieArrayRequest.HasHeaderParameters);
+        var headers = new List<(string Name, string Value)>();
+        request.WriteHeaders(
+            static (ReadOnlySpan<byte> name, ReadOnlySpan<byte> value, List<(string, string)> state) =>
+                state.Add((Encoding.UTF8.GetString(name), Encoding.UTF8.GetString(value))),
+            headers);
+
+        Assert.AreEqual(1, headers.Count);
+        Assert.AreEqual("Accept", headers[0].Name);
+        Assert.AreEqual("application/json", headers[0].Value);
     }
 
     // ── Stream and vendor JSON E2E tests ──────────────────────────────────
@@ -2720,7 +2741,7 @@ public class GeneratedClientEndToEndTests
                 CancellationToken.None);
 
         string result = response.MatchResult(
-            matchOk: stream => stream is not null ? "got-stream" : "null-stream",
+            matchOkStream: stream => stream is not null ? "got-stream" : "null-stream",
             matchDefault: statusCode => $"unmatched-{statusCode}");
 
         Assert.AreEqual("got-stream", result);
@@ -2741,7 +2762,7 @@ public class GeneratedClientEndToEndTests
         Assert.IsFalse(response.TryGetOkStream(out _));
 
         string result = response.MatchResult(
-            matchOk: _ => "ok",
+            matchOkStream: _ => "ok",
             matchDefault: statusCode => $"default-{statusCode}");
 
         Assert.AreEqual("default-404", result);
@@ -2856,7 +2877,7 @@ public class GeneratedClientEndToEndTests
                 CancellationToken.None);
 
         string result = response.MatchResult(
-            matchOk: stream => stream is not null ? "stream" : "null",
+            matchOkStream: stream => stream is not null ? "stream" : "null",
             matchNotFound: error => $"error-{(string)error.Error}",
             matchDefault: statusCode => $"default-{statusCode}");
 
@@ -2874,7 +2895,7 @@ public class GeneratedClientEndToEndTests
                 CancellationToken.None);
 
         string result = response.MatchResult(
-            matchOk: _ => "ok",
+            matchOkStream: _ => "ok",
             matchNotFound: error => $"not-found-{(string)error.Error}",
             matchDefault: statusCode => $"default-{statusCode}");
 
@@ -2892,7 +2913,7 @@ public class GeneratedClientEndToEndTests
                 CancellationToken.None);
 
         string result = response.MatchResult(
-            matchOk: _ => "ok",
+            matchOkStream: _ => "ok",
             matchNotFound: _ => "not-found",
             matchDefault: statusCode => $"default-{statusCode}");
 
@@ -2945,5 +2966,268 @@ public class GeneratedClientEndToEndTests
             matchDefault: statusCode => $"default-{statusCode}");
 
         Assert.AreEqual("data=d", result);
+    }
+
+    // ── Text/plain E2E tests ──────────────────────────────────────────────
+    [TestMethod]
+    public async Task EchoText_200_ReturnsText()
+    {
+        byte[] textBytes = Encoding.UTF8.GetBytes("Hello, world!");
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        using MemoryStream requestBody = new(Encoding.UTF8.GetBytes("Hello, world!"));
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                requestBody,
+                "text/plain",
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+        Assert.IsTrue(response.TryGetOkString(out string? text));
+        Assert.AreEqual("Hello, world!", text);
+    }
+
+    [TestMethod]
+    public async Task EchoText_OkTextAndUtf8BytesAreConsistent()
+    {
+        const string expected = "Héllo wörld — emoji 🎉";
+        byte[] textBytes = Encoding.UTF8.GetBytes(expected);
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                new MemoryStream(textBytes),
+                "text/plain",
+                CancellationToken.None);
+
+        Assert.AreEqual(expected, response.OkText);
+
+        ReadOnlySpan<byte> utf8 = response.OkUtf8Bytes;
+        Assert.AreEqual(textBytes.Length, utf8.Length);
+        Assert.IsTrue(utf8.SequenceEqual(textBytes));
+    }
+
+    [TestMethod]
+    public async Task EchoText_RequestBodyIsSentAsTextPlain()
+    {
+        byte[] textBytes = Encoding.UTF8.GetBytes("test input");
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        using MemoryStream requestBody = new(Encoding.UTF8.GetBytes("test input"));
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                requestBody,
+                "text/plain",
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.AreEqual("http://localhost/text/echo", harness.CapturedRequest.RequestUri!.OriginalString);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest.Method);
+        Assert.AreEqual("text/plain", harness.CapturedRequestContentType);
+        CollectionAssert.AreEqual(Encoding.UTF8.GetBytes("test input"), harness.CapturedRequestBody);
+    }
+
+    [TestMethod]
+    public async Task EchoText_AcceptHeaderIsTextPlain()
+    {
+        byte[] textBytes = Encoding.UTF8.GetBytes("x");
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                new MemoryStream(textBytes),
+                "text/plain",
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.IsTrue(
+            harness.CapturedRequest.Headers.Accept.Any(a => a.MediaType == "text/plain"),
+            "Accept header should include text/plain");
+    }
+
+    [TestMethod]
+    public async Task EchoText_404_TryGetOkStringReturnsFalse()
+    {
+        using var harness = new TestHarness(HttpStatusCode.NotFound, string.Empty);
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                new MemoryStream([]),
+                "text/plain",
+                CancellationToken.None);
+
+        Assert.AreEqual(404, response.StatusCode);
+        Assert.IsFalse(response.TryGetOkString(out _));
+        Assert.IsNull(response.OkText);
+    }
+
+    [TestMethod]
+    public async Task EchoText_200_MatchResult_CallsStringHandler()
+    {
+        byte[] textBytes = Encoding.UTF8.GetBytes("matched");
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using EchoTextResponse response = await harness.Transport
+            .SendAsync<EchoTextRequest, EchoTextResponse>(
+                default(EchoTextRequest),
+                new MemoryStream(textBytes),
+                "text/plain",
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchOkString: text => $"text={text}",
+            matchDefault: statusCode => $"default-{statusCode}");
+
+        Assert.AreEqual("text=matched", result);
+    }
+
+    [TestMethod]
+    public async Task TextToJson_200_ParsesJsonResponse()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"parsed":"hello"}""");
+
+        using MemoryStream requestBody = new(Encoding.UTF8.GetBytes("hello"));
+
+        await using TextToJsonResponse response = await harness.Transport
+            .SendAsync<TextToJsonRequest, TextToJsonResponse>(
+                default(TextToJsonRequest),
+                requestBody,
+                "text/plain",
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.TryGetOk(out var body));
+        Assert.AreEqual("hello", (string)body.Parsed);
+    }
+
+    [TestMethod]
+    public async Task TextToJson_RequestIsSentAsTextPlain()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"parsed":"x"}""");
+
+        using MemoryStream requestBody = new(Encoding.UTF8.GetBytes("input text"));
+
+        await using TextToJsonResponse response = await harness.Transport
+            .SendAsync<TextToJsonRequest, TextToJsonResponse>(
+                default(TextToJsonRequest),
+                requestBody,
+                "text/plain",
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest.Method);
+        Assert.AreEqual("text/plain", harness.CapturedRequestContentType);
+    }
+
+    [TestMethod]
+    public async Task GetTextOrJson_200_Json_ParsesBody()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"value":"json-data"}""");
+
+        await using GetTextOrJsonResponse response = await harness.Transport
+            .SendAsync<GetTextOrJsonRequest, GetTextOrJsonResponse>(
+                default(GetTextOrJsonRequest),
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.TryGetOk(out var body));
+        Assert.AreEqual("json-data", (string)body.Value);
+    }
+
+    [TestMethod]
+    public async Task GetTextOrJson_200_Text_ReturnsString()
+    {
+        byte[] textBytes = Encoding.UTF8.GetBytes("plain text response");
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using GetTextOrJsonResponse response = await harness.Transport
+            .SendAsync<GetTextOrJsonRequest, GetTextOrJsonResponse>(
+                default(GetTextOrJsonRequest),
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.TryGetOkString(out string? text));
+        Assert.AreEqual("plain text response", text);
+    }
+
+    [TestMethod]
+    public async Task GetTextOrJson_404_ParsesJsonError()
+    {
+        using var harness = new TestHarness(HttpStatusCode.NotFound, """{"error":"not here"}""");
+
+        await using GetTextOrJsonResponse response = await harness.Transport
+            .SendAsync<GetTextOrJsonRequest, GetTextOrJsonResponse>(
+                default(GetTextOrJsonRequest),
+                CancellationToken.None);
+
+        Assert.AreEqual(404, response.StatusCode);
+        Assert.IsFalse(response.IsSuccess);
+        Assert.IsTrue(response.TryGetNotFound(out var errorBody));
+        Assert.AreEqual("not here", (string)errorBody.Error);
+    }
+
+    [TestMethod]
+    public async Task GetTextOrJson_200_MatchResult_Json_CallsOkHandler()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"value":"matched-json"}""");
+
+        await using GetTextOrJsonResponse response = await harness.Transport
+            .SendAsync<GetTextOrJsonRequest, GetTextOrJsonResponse>(
+                default(GetTextOrJsonRequest),
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchOk: body => $"json={body.Value}",
+            matchOkString: text => $"text={text}",
+            matchNotFound: error => $"error={error.Error}",
+            matchDefault: statusCode => $"default-{statusCode}");
+
+        Assert.AreEqual("json=matched-json", result);
+    }
+
+    [TestMethod]
+    public async Task GetTextOrJson_200_MatchResult_Text_CallsStringHandler()
+    {
+        byte[] textBytes = Encoding.UTF8.GetBytes("plain matched");
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using GetTextOrJsonResponse response = await harness.Transport
+            .SendAsync<GetTextOrJsonRequest, GetTextOrJsonResponse>(
+                default(GetTextOrJsonRequest),
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchOk: body => $"json={body.Value}",
+            matchOkString: text => $"text={text}",
+            matchNotFound: error => $"error={error.Error}",
+            matchDefault: statusCode => $"default-{statusCode}");
+
+        Assert.AreEqual("text=plain matched", result);
+    }
+
+    [TestMethod]
+    public async Task GetTextOrJson_AcceptHeader_ListsBothTypes()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"value":"x"}""");
+
+        await using GetTextOrJsonResponse response = await harness.Transport
+            .SendAsync<GetTextOrJsonRequest, GetTextOrJsonResponse>(
+                default(GetTextOrJsonRequest),
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        var acceptTypes = harness.CapturedRequest.Headers.Accept
+            .Select(a => a.MediaType)
+            .ToList();
+        CollectionAssert.Contains(acceptTypes, "application/json");
+        CollectionAssert.Contains(acceptTypes, "text/plain");
     }
 }
