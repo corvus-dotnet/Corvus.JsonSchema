@@ -1,0 +1,41 @@
+// <copyright file="ContentCategory.cs" company="Endjin Limited">
+// Copyright (c) Endjin Limited. All rights reserved.
+// </copyright>
+
+namespace Corvus.Text.Json.OpenApi.CodeGeneration;
+
+/// <summary>
+/// Classifies a media type for code generation purposes.
+/// </summary>
+/// <remarks>
+/// <para>
+/// This determines how request bodies are sent and response bodies are parsed
+/// in the generated client code. The classification also handles wildcard
+/// media type ranges: <c>text/*</c> maps to <see cref="TextPlain"/>,
+/// while <c>*/*</c> and <c>application/*</c> map to <see cref="OctetStream"/>.
+/// </para>
+/// </remarks>
+public enum ContentCategory
+{
+    /// <summary>
+    /// JSON content (<c>application/json</c> or any <c>+json</c> structured syntax suffix).
+    /// Request bodies are serialized via the typed JSON element.
+    /// Response bodies are parsed into strongly-typed schema models.
+    /// </summary>
+    Json,
+
+    /// <summary>
+    /// Binary stream content (<c>application/octet-stream</c>, <c>*/*</c>,
+    /// <c>application/*</c>, <c>image/*</c>, etc.).
+    /// Request bodies are sent as raw <see cref="System.IO.Stream"/>.
+    /// Response bodies are exposed as raw <see cref="System.IO.Stream"/>.
+    /// </summary>
+    OctetStream,
+
+    /// <summary>
+    /// Plain text content (<c>text/plain</c>, <c>text/*</c>).
+    /// Request bodies are sent as UTF-8 encoded strings.
+    /// Response bodies are read as strings.
+    /// </summary>
+    TextPlain,
+}

@@ -1784,6 +1784,174 @@ public static class CodeEmitHelpers
     }
 
     /// <summary>
+    /// Emits the text/plain response body handling in CreateAsync.
+    /// Reads the stream into a rented buffer from ArrayPool.
+    /// </summary>
+    public static void EmitTextPlainResponseBody(
+        IndentedWriter w,
+        string accessorName)
+    {
+        string camelName = ToCamelCase(accessorName);
+        w.WriteLine(
+            $"response.{camelName}TextBuffer = ReadStreamToRentedBuffer(contentStream, out int {camelName}TextLen);");
+        w.WriteLine($"response.{camelName}TextLength = {camelName}TextLen;");
+    }
+
+    /// <summary>
+    /// Emits the private backing fields for a text/plain response.
+    /// </summary>
+    public static void EmitTextPlainFields(
+        IndentedWriter w,
+        string accessorName)
+    {
+        string camelName = ToCamelCase(accessorName);
+        w.WriteLine($"private byte[]? {camelName}TextBuffer;");
+        w.WriteLine($"private int {camelName}TextLength;");
+        w.WriteLine($"private string? {camelName}TextCached;");
+    }
+
+    /// <summary>
+    /// Emits the lazy <c>Text</c> property and zero-alloc <c>Utf8Bytes</c> property
+    /// for a text/plain response.
+    /// </summary>
+    public static void EmitTextPlainProperties(
+        IndentedWriter w,
+        string accessorName)
+    {
+        string camelName = ToCamelCase(accessorName);
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Gets the text/plain response body as a string. The string is");
+        w.WriteLine("/// realized lazily on first access.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public string? {accessorName}Text");
+        w.OpenBrace();
+        w.WriteLine("get");
+        w.OpenBrace();
+        w.WriteLine($"if (this.{camelName}TextBuffer is null) {{ return null; }}");
+        w.WriteLine();
+        w.WriteLine(
+            $"return this.{camelName}TextCached ??= System.Text.Encoding.UTF8.GetString(" +
+            $"this.{camelName}TextBuffer, 0, this.{camelName}TextLength);");
+        w.CloseBrace();
+        w.CloseBrace();
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Gets the raw UTF-8 bytes of the text/plain response body.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine(
+            $"public ReadOnlySpan<byte> {accessorName}Utf8Bytes => this.{camelName}TextBuffer is not null" +
+            $" ? new ReadOnlySpan<byte>(this.{camelName}TextBuffer, 0, this.{camelName}TextLength)" +
+            " : ReadOnlySpan<byte>.Empty;");
+    }
+
+    /// <summary>
+    /// Emits the ArrayPool return for a text/plain response buffer in DisposeAsync.
+    /// </summary>
+    public static void EmitTextPlainBufferReturn(
+        IndentedWriter w,
+        string accessorName)
+    {
+        string camelName = ToCamelCase(accessorName);
+        w.WriteLine($"if (this.{camelName}TextBuffer is not null)");
+        w.OpenBrace();
+        w.WriteLine($"System.Buffers.ArrayPool<byte>.Shared.Return(this.{camelName}TextBuffer);");
+        w.CloseBrace();
+    }
+
+    /// <summary>
+    /// Emits the private static <c>ReadStreamToRentedBuffer</c> helper method.
+    /// </summary>
+    public static void EmitReadStreamToRentedBufferHelper(IndentedWriter w)
+    {
+        w.WriteLine();
+        w.WriteLine(
+            "private static byte[] ReadStreamToRentedBuffer(Stream stream, out int bytesRead)");
+        w.OpenBrace();
+
+        // Seekable path: known length, single rent.
+        w.WriteLine("if (stream.CanSeek)");
+        w.OpenBrace();
+        w.WriteLine("int length = (int)stream.Length;");
+        w.WriteLine("byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(length);");
+        w.WriteLine("bytesRead = 0;");
+        w.WriteLine("while (bytesRead < length)");
+        w.OpenBrace();
+        w.WriteLine("int n = stream.Read(buffer, bytesRead, length - bytesRead);");
+        w.WriteLine("if (n == 0) { break; }");
+        w.WriteLine("bytesRead += n;");
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return buffer;");
+        w.CloseBrace();
+        w.WriteLine();
+
+        // Non-seekable fallback: grow by doubling.
+        w.WriteLine("byte[] buf = System.Buffers.ArrayPool<byte>.Shared.Rent(4096);");
+        w.WriteLine("bytesRead = 0;");
+        w.WriteLine("int read;");
+        w.WriteLine(
+            "while ((read = stream.Read(buf, bytesRead, buf.Length - bytesRead)) > 0)");
+        w.OpenBrace();
+        w.WriteLine("bytesRead += read;");
+        w.WriteLine("if (bytesRead == buf.Length)");
+        w.OpenBrace();
+        w.WriteLine(
+            "byte[] larger = System.Buffers.ArrayPool<byte>.Shared.Rent(buf.Length * 2);");
+        w.WriteLine("System.Array.Copy(buf, larger, bytesRead);");
+        w.WriteLine("System.Buffers.ArrayPool<byte>.Shared.Return(buf);");
+        w.WriteLine("buf = larger;");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.WriteLine();
+        w.WriteLine("return buf;");
+
+        w.CloseBrace();
+    }
+
+    /// <summary>
+    /// Classifies a media type string into a <see cref="ContentCategory"/>.
+    /// </summary>
+    /// <param name="mediaType">The media type string (e.g. <c>application/json</c>,
+    /// <c>text/plain</c>, <c>*/*</c>).</param>
+    /// <returns>The content category for code generation purposes.</returns>
+    public static ContentCategory ClassifyMediaType(string mediaType)
+    {
+        if (string.Equals(mediaType, "application/json", StringComparison.OrdinalIgnoreCase)
+            || mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase))
+        {
+            return ContentCategory.Json;
+        }
+
+        if (string.Equals(mediaType, "application/octet-stream", StringComparison.OrdinalIgnoreCase))
+        {
+            return ContentCategory.OctetStream;
+        }
+
+        if (string.Equals(mediaType, "text/plain", StringComparison.OrdinalIgnoreCase))
+        {
+            return ContentCategory.TextPlain;
+        }
+
+        // Wildcard ranges: text/* → text, everything else → binary stream
+        if (mediaType.StartsWith("text/", StringComparison.OrdinalIgnoreCase))
+        {
+            return ContentCategory.TextPlain;
+        }
+
+        if (string.Equals(mediaType, "*/*", StringComparison.Ordinal))
+        {
+            return ContentCategory.OctetStream;
+        }
+
+        // Remaining wildcards (application/*, image/*, audio/*, video/*, etc.)
+        // and any other unknown types → binary stream
+        return ContentCategory.OctetStream;
+    }
+
+    /// <summary>
     /// Returns <see langword="true"/> if the given media type should be treated as JSON.
     /// Matches <c>application/json</c> exactly, and any type with a <c>+json</c>
     /// structured syntax suffix (e.g. <c>application/vnd.api+json</c>).
@@ -1792,17 +1960,41 @@ public static class CodeEmitHelpers
     /// <returns><see langword="true"/> if the media type represents JSON content.</returns>
     public static bool IsJsonMediaType(string mediaType)
     {
-        return string.Equals(mediaType, "application/json", StringComparison.OrdinalIgnoreCase)
-            || mediaType.EndsWith("+json", StringComparison.OrdinalIgnoreCase);
+        return ClassifyMediaType(mediaType) == ContentCategory.Json;
     }
 
     /// <summary>
     /// Returns <see langword="true"/> if the given media type represents a binary octet stream.
+    /// This includes <c>application/octet-stream</c> and wildcard patterns like
+    /// <c>*/*</c> and <c>application/*</c> that are treated as binary.
     /// </summary>
     /// <param name="mediaType">The media type string.</param>
-    /// <returns><see langword="true"/> if the media type is <c>application/octet-stream</c>.</returns>
+    /// <returns><see langword="true"/> if the media type should be treated as a raw binary stream.</returns>
     public static bool IsOctetStreamMediaType(string mediaType)
     {
-        return string.Equals(mediaType, "application/octet-stream", StringComparison.OrdinalIgnoreCase);
+        return ClassifyMediaType(mediaType) == ContentCategory.OctetStream;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the given media type should be treated as plain text.
+    /// This includes <c>text/plain</c> and wildcard patterns like <c>text/*</c>.
+    /// </summary>
+    /// <param name="mediaType">The media type string.</param>
+    /// <returns><see langword="true"/> if the media type should be treated as a text string.</returns>
+    public static bool IsTextPlainMediaType(string mediaType)
+    {
+        return ClassifyMediaType(mediaType) == ContentCategory.TextPlain;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the media type is any non-JSON raw content type
+    /// (octet-stream, text/plain, image/*, etc.) that should be represented as a <see cref="Stream"/>.
+    /// </summary>
+    /// <param name="mediaType">The media type string.</param>
+    /// <returns><see langword="true"/> if the media type is a raw stream type.</returns>
+    public static bool IsRawStreamMediaType(string mediaType)
+    {
+        ContentCategory category = ClassifyMediaType(mediaType);
+        return category == ContentCategory.OctetStream || category == ContentCategory.TextPlain;
     }
 }
