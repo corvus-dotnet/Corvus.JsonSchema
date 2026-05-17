@@ -3297,4 +3297,102 @@ public class GeneratedClientEndToEndTests
 
         StringAssert.Contains(ex.Message, "limit");
     }
+
+    // ── Response Validate() E2E tests ────────────────────────────────────
+    [TestMethod]
+    public async Task ResponseValidate_ValidOkBody_DoesNotThrow()
+    {
+        await using GetItemResponse response = await CreateGetItemResponse(
+            200, """{"id":"1","name":"Widget"}""");
+
+        response.Validate();
+    }
+
+    [TestMethod]
+    public async Task ResponseValidate_Valid404Body_DoesNotThrow()
+    {
+        await using GetItemResponse response = await CreateGetItemResponse(
+            404, """{"code":404,"message":"Not found"}""");
+
+        response.Validate();
+    }
+
+    [TestMethod]
+    public async Task ResponseValidate_ValidDefaultBody_DoesNotThrow()
+    {
+        await using GetItemResponse response = await CreateGetItemResponse(
+            500, """{"error":"Internal server error"}""");
+
+        response.Validate();
+    }
+
+    [TestMethod]
+    public async Task ResponseValidate_NoneMode_SkipsValidation()
+    {
+        // Missing required "name" field, but None mode should not throw.
+        await using GetItemResponse response = await CreateGetItemResponse(
+            200, """{"id":"1"}""");
+
+        response.Validate(ValidationMode.None);
+    }
+
+    [TestMethod]
+    public async Task ResponseValidate_InvalidOkBody_BasicMode_ThrowsInvalidOperationException()
+    {
+        // Missing required "name" field.
+        await using GetItemResponse response = await CreateGetItemResponse(
+            200, """{"id":"1"}""");
+
+        InvalidOperationException ex = Assert.ThrowsExactly<InvalidOperationException>(() =>
+            response.Validate(ValidationMode.Basic));
+
+        StringAssert.Contains(ex.Message, "200");
+    }
+
+    [TestMethod]
+    public async Task ResponseValidate_Invalid404Body_BasicMode_ThrowsInvalidOperationException()
+    {
+        // Missing required "message" field.
+        await using GetItemResponse response = await CreateGetItemResponse(
+            404, """{"code":404}""");
+
+        InvalidOperationException ex = Assert.ThrowsExactly<InvalidOperationException>(() =>
+            response.Validate(ValidationMode.Basic));
+
+        StringAssert.Contains(ex.Message, "404");
+    }
+
+    [TestMethod]
+    public async Task ResponseValidate_InvalidDefaultBody_BasicMode_ThrowsWithStatusCode()
+    {
+        // Missing required "error" field.
+        await using GetItemResponse response = await CreateGetItemResponse(
+            503, """{"unexpected":"field"}""");
+
+        InvalidOperationException ex = Assert.ThrowsExactly<InvalidOperationException>(() =>
+            response.Validate(ValidationMode.Basic));
+
+        StringAssert.Contains(ex.Message, "503");
+    }
+
+    [TestMethod]
+    public async Task ResponseValidate_InvalidOkBody_DetailedMode_ThrowsWithJsonDiagnostics()
+    {
+        await using GetItemResponse response = await CreateGetItemResponse(
+            200, """{"id":"1"}""");
+
+        InvalidOperationException ex = Assert.ThrowsExactly<InvalidOperationException>(() =>
+            response.Validate(ValidationMode.Detailed));
+
+        StringAssert.Contains(ex.Message, "200");
+        StringAssert.Contains(ex.Message, "evaluationPath");
+        StringAssert.Contains(ex.Message, "instanceLocation");
+    }
+
+    private static async Task<GetItemResponse> CreateGetItemResponse(int statusCode, string json)
+    {
+        byte[] bytes = Encoding.UTF8.GetBytes(json);
+        MemoryStream stream = new(bytes);
+        return await GetItemResponse.CreateAsync(statusCode, stream, "application/json");
+    }
 }

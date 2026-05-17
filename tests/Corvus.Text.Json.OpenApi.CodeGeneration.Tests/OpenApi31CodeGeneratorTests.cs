@@ -6068,4 +6068,129 @@ public class OpenApi31CodeGeneratorTests
                 StringComparison.Ordinal),
             "Validate should early-return for None mode");
     }
+
+    // ── Response Validate() codegen tests ────────────────────────────────
+    [TestMethod]
+    public void Generate_ResponseWithJsonBodies_EmitsValidate()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile resp = GetFile(files, "CreatePetResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("public void Validate(ValidationMode mode = ValidationMode.Basic)", StringComparison.Ordinal),
+            "Response should contain the Validate method");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseValidate_ChecksNoneMode()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile resp = GetFile(files, "CreatePetResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("if (mode == ValidationMode.None)", StringComparison.Ordinal),
+            "Response Validate should check for None mode");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseValidate_BasicMode_CallsEvaluateSchema()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile resp = GetFile(files, "CreatePetResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("!this.CreatedBody.EvaluateSchema()", StringComparison.Ordinal),
+            "Basic mode should call EvaluateSchema on the body");
+        Assert.IsTrue(
+            resp.Content.Contains("ThrowHelper.ThrowResponseBodyValidationFailed(201)", StringComparison.Ordinal),
+            "Basic mode should throw with the status code");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseValidate_DetailedMode_CreatesCollector()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile resp = GetFile(files, "CreatePetResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed)",
+                StringComparison.Ordinal),
+            "Detailed mode should create a results collector");
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "SchemaValidationDetail.FormatResults(collector)",
+                StringComparison.Ordinal),
+            "Detailed mode should format results");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseValidate_DefaultResponse_UsesStatusCodeProperty()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile resp = GetFile(files, "CreatePetResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains(
+                "ThrowHelper.ThrowResponseBodyValidationFailed(this.StatusCode",
+                StringComparison.Ordinal),
+            "Default response should use this.StatusCode as the status code expression");
+    }
+
+    [TestMethod]
+    public void Generate_ResponseValidate_UsesIfElseIfChain()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile resp = GetFile(files, "CreatePetResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("if (this.StatusCode == 201)", StringComparison.Ordinal),
+            "Should branch on the named status code");
+        Assert.IsTrue(
+            resp.Content.Contains("else", StringComparison.Ordinal),
+            "Default response should be in the else branch");
+        Assert.IsFalse(
+            resp.Content.Contains("if (this.StatusCode == default)", StringComparison.Ordinal),
+            "Should not emit 'if (this.StatusCode == default)'");
+    }
+
+    [TestMethod]
+    public void Generate_ClientMethod_HasResponseValidationModeParam()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile client = GetFile(files, "ApiPetsClient.cs");
+
+        Assert.IsTrue(
+            client.Content.Contains(
+                "ValidationMode responseValidationMode = ValidationMode.None",
+                StringComparison.Ordinal),
+            "Client method should have responseValidationMode parameter defaulting to None");
+    }
+
+    [TestMethod]
+    public void Generate_SendAsyncCore_CallsResponseValidate()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile client = GetFile(files, "ApiPetsClient.cs");
+
+        Assert.IsTrue(
+            client.Content.Contains("response.Validate(responseValidationMode)", StringComparison.Ordinal),
+            "SendAsyncCore should call response.Validate with the mode");
+    }
 }
