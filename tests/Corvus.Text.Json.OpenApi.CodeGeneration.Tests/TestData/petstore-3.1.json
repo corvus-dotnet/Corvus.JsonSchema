@@ -191,6 +191,63 @@
           }
         }
       }
+    },
+    "/pets/{petId}/photo": {
+      "post": {
+        "operationId": "uploadPetPhoto",
+        "summary": "Upload a pet photo with metadata",
+        "tags": ["pets"],
+        "parameters": [
+          {
+            "name": "petId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caption": { "type": "string" },
+                  "tags": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                },
+                "required": ["caption"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Photo uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Pet"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {

@@ -1121,7 +1121,8 @@ public sealed class OpenApi31CodeGenerator
         foreach (ContentInfo content in requestBody.Content)
         {
             if (CodeEmitHelpers.IsJsonMediaType(content.MediaType)
-                || CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType))
+                || CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType)
+                || CodeEmitHelpers.IsMultipartMediaType(content.MediaType))
             {
                 return this.ResolveSchemaTypeName(content.SchemaPointer);
             }
@@ -1156,6 +1157,23 @@ public sealed class OpenApi31CodeGenerator
         foreach (ContentInfo content in requestBody.Content)
         {
             if (CodeEmitHelpers.IsFormUrlEncodedMediaType(content.MediaType))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the request body's primary content type
+    /// is <c>multipart/form-data</c>.
+    /// </summary>
+    private static bool IsMultipartRequestBody(RequestBodyInfo requestBody)
+    {
+        foreach (ContentInfo content in requestBody.Content)
+        {
+            if (CodeEmitHelpers.IsMultipartMediaType(content.MediaType))
             {
                 return true;
             }
@@ -2737,6 +2755,7 @@ public sealed class OpenApi31CodeGenerator
         bool hasBody = op.RequestBody is not null;
         bool isRawStreamBody = hasBody && IsRawStreamRequestBody(op.RequestBody!.Value);
         bool isFormUrlEncodedBody = hasBody && !isRawStreamBody && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
+        bool isMultipartBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && IsMultipartRequestBody(op.RequestBody!.Value);
 
         w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
 
@@ -2843,6 +2862,16 @@ public sealed class OpenApi31CodeGenerator
                 $"{responseName}>(workspace, request, " +
                 $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
                 $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+        }
+        else if (isMultipartBody)
+        {
+            // Generate a boundary and serialize each property as a multipart part.
+            w.WriteLine("string boundary = MultipartFormDataSerializer.GenerateBoundary();");
+            w.WriteLine(
+                $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                $"{responseName}>(workspace, request, " +
+                $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), " +
+                $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
         }
         else if (hasBody)
         {

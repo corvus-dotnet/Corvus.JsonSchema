@@ -2077,6 +2077,87 @@ public class GeneratedClientEndToEndTests
             harness.CapturedRequest!.RequestUri!.OriginalString);
     }
 
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadDocumentAsync_SendsMultipart()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsUploadBody>.Parse(
+            """{"title":"My Doc","category":"reports"}""");
+
+        await using UploadDocumentResponse response = await client.UploadDocumentAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.IsTrue(
+            harness.CapturedRequestContentType!.StartsWith("multipart/form-data; boundary="),
+            $"Expected multipart content type, got: {harness.CapturedRequestContentType}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadDocumentAsync_EncodesBodyCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsUploadBody>.Parse(
+            """{"title":"My Doc","category":"reports"}""");
+
+        await using UploadDocumentResponse response = await client.UploadDocumentAsync(
+            bodyDoc.RootElement);
+
+        // Extract the boundary from the Content-Type header.
+        string contentType = harness.CapturedRequestContentType!;
+        string boundary = contentType.Substring(contentType.IndexOf("boundary=") + "boundary=".Length);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // Verify the multipart structure contains the expected parts.
+        Assert.IsTrue(body.Contains($"--{boundary}\r\n"), "Missing opening boundary");
+        Assert.IsTrue(body.Contains($"--{boundary}--\r\n"), "Missing closing boundary");
+        Assert.IsTrue(body.Contains("Content-Disposition: form-data; name=\"title\"\r\n\r\nMy Doc"), "Missing title part");
+        Assert.IsTrue(body.Contains("Content-Disposition: form-data; name=\"category\"\r\n\r\nreports"), "Missing category part");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadDocumentAsync_HandlesArrayAsJson()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsUploadBody>.Parse(
+            """{"title":"Tagged","tags":["alpha","beta"]}""");
+
+        await using UploadDocumentResponse response = await client.UploadDocumentAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // Array values are JSON-stringified with an application/json content type.
+        Assert.IsTrue(
+            body.Contains("Content-Type: application/json\r\n\r\n[\"alpha\",\"beta\"]"),
+            $"Expected JSON-encoded tags array, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_UploadDocumentAsync_UrlPath()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"uploaded":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsUploadBody>.Parse(
+            """{"title":"Test"}""");
+
+        await using UploadDocumentResponse response = await client.UploadDocumentAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(
+            "http://localhost/forms/upload",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.
@@ -2183,7 +2264,7 @@ public class GeneratedClientEndToEndTests
             if (request.Content is not null)
             {
                 this.CapturedRequestBody = await request.Content.ReadAsByteArrayAsync(cancellationToken).ConfigureAwait(false);
-                this.CapturedRequestContentType = request.Content.Headers.ContentType?.MediaType;
+                this.CapturedRequestContentType = request.Content.Headers.ContentType?.ToString();
             }
 
             HttpContent content;

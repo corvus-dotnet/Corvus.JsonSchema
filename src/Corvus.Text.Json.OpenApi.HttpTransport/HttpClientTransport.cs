@@ -305,7 +305,7 @@ public sealed class HttpClientTransport : IApiTransport
         public DelegatingContent(Action<Stream> bodyWriter, string contentType)
         {
             this.bodyWriter = bodyWriter;
-            this.Headers.ContentType = new MediaTypeHeaderValue(contentType);
+            this.Headers.ContentType = MediaTypeHeaderValue.Parse(contentType);
         }
 
         protected override Task SerializeToStreamAsync(

@@ -1301,6 +1301,48 @@
           }
         }
       }
+    },
+    "/forms/upload": {
+      "post": {
+        "operationId": "uploadDocument",
+        "summary": "Upload a document with metadata",
+        "tags": ["forms"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": { "type": "string" },
+                  "category": { "type": "string" },
+                  "tags": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                },
+                "required": ["title"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploaded": { "type": "boolean" }
+                  },
+                  "required": ["uploaded"]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

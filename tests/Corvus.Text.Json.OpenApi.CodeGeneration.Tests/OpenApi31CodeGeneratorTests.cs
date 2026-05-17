@@ -20,10 +20,12 @@ public class OpenApi31CodeGeneratorTests
         ["#/paths/~1pets/get/parameters/0/schema"] = "Petstore.Client.JsonInt32",
         ["#/paths/~1pets~1{petId}/get/parameters/0/schema"] = "Petstore.Client.JsonString",
         ["#/paths/~1pets~1{petId}/put/parameters/0/schema"] = "Petstore.Client.JsonString",
+        ["#/paths/~1pets~1{petId}~1photo/post/parameters/0/schema"] = "Petstore.Client.JsonString",
 
         // Request body schemas
         ["#/paths/~1pets/post/requestBody/content/application~1json/schema"] = "Petstore.Client.NewPet",
         ["#/paths/~1pets~1{petId}/put/requestBody/content/application~1x-www-form-urlencoded/schema"] = "Petstore.Client.NewPet",
+        ["#/paths/~1pets~1{petId}~1photo/post/requestBody/content/multipart~1form-data/schema"] = "Petstore.Client.PostPetsPetIdPhotoBody",
 
         // Response body schemas
         ["#/paths/~1pets/get/responses/200/content/application~1json/schema"] = "Petstore.Client.Pets",
@@ -34,6 +36,8 @@ public class OpenApi31CodeGeneratorTests
         ["#/paths/~1pets~1{petId}/get/responses/default/content/application~1json/schema"] = "Petstore.Client.Error",
         ["#/paths/~1pets~1{petId}/put/responses/200/content/application~1json/schema"] = "Petstore.Client.Pet",
         ["#/paths/~1pets~1{petId}/put/responses/default/content/application~1json/schema"] = "Petstore.Client.Error",
+        ["#/paths/~1pets~1{petId}~1photo/post/responses/201/content/application~1json/schema"] = "Petstore.Client.Pet",
+        ["#/paths/~1pets~1{petId}~1photo/post/responses/default/content/application~1json/schema"] = "Petstore.Client.Error",
 
         // Response header schemas
         ["#/paths/~1pets/get/responses/200/headers/x-next/schema"] = "Petstore.Client.JsonString",
@@ -139,8 +143,8 @@ public class OpenApi31CodeGeneratorTests
         OpenApi31CodeGenerator gen = CreateGenerator();
         IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
 
-        // 4 operations × 2 (request + response) + 1 interface + 1 implementation = 10
-        Assert.AreEqual(10, files.Count);
+        // 5 operations × 2 (request + response) + 1 interface + 1 implementation = 12
+        Assert.AreEqual(12, files.Count);
     }
 
     [TestMethod]
@@ -1442,7 +1446,7 @@ public class OpenApi31CodeGeneratorTests
         string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
 
         // 3 param schemas + 2 request body + 8 response bodies + 1 response header = 14
-        Assert.AreEqual(14, pointers.Length);
+        Assert.AreEqual(18, pointers.Length);
     }
 
     [TestMethod]
