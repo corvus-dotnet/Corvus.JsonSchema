@@ -5969,4 +5969,103 @@ public class OpenApi31CodeGeneratorTests
             resp.Content.Contains("ArrayPool<byte>.Shared.Return(this.okTextBuffer)", StringComparison.Ordinal),
             "DisposeAsync should return the text buffer to the pool");
     }
+
+    // ── Validate emission tests ────────────────────────────────────────
+    [TestMethod]
+    public void Generate_RequestWithRequiredParam_EmitsValidateWithEvaluateSchema()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile req = GetFile(files, "ShowPetByIdRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("public void Validate(RequestValidationMode mode = RequestValidationMode.Basic)", StringComparison.Ordinal),
+            "Request should contain the Validate method");
+        Assert.IsTrue(
+            req.Content.Contains("this.PetId.EvaluateSchema()", StringComparison.Ordinal),
+            "Required param should call EvaluateSchema on the field directly");
+    }
+
+    [TestMethod]
+    public void Generate_RequestWithRequiredParam_BasicMode_ThrowsOnFailure()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile req = GetFile(files, "ShowPetByIdRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains(
+                "ThrowHelper.ThrowRequestParameterValidationFailed(\"petId\")",
+                StringComparison.Ordinal),
+            "Basic mode should throw with param name only");
+    }
+
+    [TestMethod]
+    public void Generate_RequestWithRequiredParam_DetailedMode_CreatesCollector()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile req = GetFile(files, "ShowPetByIdRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains(
+                "JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed)",
+                StringComparison.Ordinal),
+            "Detailed mode should create a results collector");
+        Assert.IsTrue(
+            req.Content.Contains(
+                "SchemaValidationDetail.FormatResults(collectorPetId)",
+                StringComparison.Ordinal),
+            "Detailed mode should format results for the parameter");
+    }
+
+    [TestMethod]
+    public void Generate_RequestWithOptionalParam_ValidatesOnlyWhenSet()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile req = GetFile(files, "ListPetsRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("if (this.Limit is { } LimitValue", StringComparison.Ordinal),
+            "Optional param should use pattern match to check presence");
+        Assert.IsTrue(
+            req.Content.Contains("LimitValue.EvaluateSchema()", StringComparison.Ordinal),
+            "Optional param should validate the unwrapped value");
+    }
+
+    [TestMethod]
+    public void Generate_RequestWithNoParams_EmitsEmptyValidate()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile req = GetFile(files, "CreatePetRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains("public void Validate(RequestValidationMode mode = RequestValidationMode.Basic)", StringComparison.Ordinal),
+            "Request with no params should still have Validate");
+        Assert.IsFalse(
+            req.Content.Contains("EvaluateSchema", StringComparison.Ordinal),
+            "Request with no params should not call EvaluateSchema");
+    }
+
+    [TestMethod]
+    public void Generate_Validate_ChecksNoneMode()
+    {
+        OpenApi31CodeGenerator gen = CreateGenerator();
+        IReadOnlyList<GeneratedFile> files = gen.Generate(petstoreRoot);
+
+        GeneratedFile req = GetFile(files, "ShowPetByIdRequest.cs");
+
+        Assert.IsTrue(
+            req.Content.Contains(
+                "if (mode == RequestValidationMode.None)",
+                StringComparison.Ordinal),
+            "Validate should early-return for None mode");
+    }
 }

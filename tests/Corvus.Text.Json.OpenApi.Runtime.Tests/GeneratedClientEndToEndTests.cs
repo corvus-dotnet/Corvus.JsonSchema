@@ -3230,4 +3230,71 @@ public class GeneratedClientEndToEndTests
         CollectionAssert.Contains(acceptTypes, "application/json");
         CollectionAssert.Contains(acceptTypes, "text/plain");
     }
+
+    // ── Validate() E2E tests ────────────────────────────────────────
+    [TestMethod]
+    public void Validate_ValidRequiredParam_DoesNotThrow()
+    {
+        GetItemRequest request = new(JsonString.ParseValue("\"abc\""u8));
+        request.Validate();
+    }
+
+    [TestMethod]
+    public void Validate_ValidOptionalParam_DoesNotThrow()
+    {
+        GetItemRequest request = new(JsonString.ParseValue("\"abc\""u8))
+        {
+            Limit = JsonInt32.ParseValue("10"u8),
+        };
+
+        request.Validate();
+    }
+
+    [TestMethod]
+    public void Validate_NoneMode_SkipsValidation()
+    {
+        // Even with a default-constructed required param (likely invalid), None should not throw.
+        GetItemRequest request = default;
+        request.Validate(RequestValidationMode.None);
+    }
+
+    [TestMethod]
+    public void Validate_InvalidRequiredParam_BasicMode_ThrowsArgumentException()
+    {
+        // Parse a JSON boolean as a JsonString — schema validation fails because it's not a string.
+        GetItemRequest request = new(JsonString.ParseValue("true"u8));
+
+        ArgumentException ex = Assert.ThrowsExactly<ArgumentException>(() =>
+            request.Validate(RequestValidationMode.Basic));
+
+        StringAssert.Contains(ex.Message, "itemId");
+    }
+
+    [TestMethod]
+    public void Validate_InvalidRequiredParam_DetailedMode_ThrowsWithJsonDiagnostics()
+    {
+        GetItemRequest request = new(JsonString.ParseValue("true"u8));
+
+        ArgumentException ex = Assert.ThrowsExactly<ArgumentException>(() =>
+            request.Validate(RequestValidationMode.Detailed));
+
+        StringAssert.Contains(ex.Message, "itemId");
+        StringAssert.Contains(ex.Message, "evaluationPath");
+        StringAssert.Contains(ex.Message, "instanceLocation");
+    }
+
+    [TestMethod]
+    public void Validate_InvalidOptionalParam_BasicMode_ThrowsArgumentException()
+    {
+        // Parse a JSON string as a JsonInt32 — schema validation fails because it's not an integer.
+        GetItemRequest request = new(JsonString.ParseValue("\"abc\""u8))
+        {
+            Limit = JsonInt32.ParseValue("\"not-a-number\""u8),
+        };
+
+        ArgumentException ex = Assert.ThrowsExactly<ArgumentException>(() =>
+            request.Validate(RequestValidationMode.Basic));
+
+        StringAssert.Contains(ex.Message, "limit");
+    }
 }
