@@ -48,7 +48,7 @@ public static class FormUrlEncodedSerializer
             ThrowHelper.ThrowFormBodyMustBeObject();
         }
 
-        using StreamWriter writer = new(output, Encoding.UTF8, bufferSize: 256, leaveOpen: true);
+        using StreamWriter writer = new(output, new System.Text.UTF8Encoding(false), bufferSize: 256, leaveOpen: true);
         bool first = true;
 
         foreach (JsonProperty<JsonElement> property in JsonElement.From(value).EnumerateObject())

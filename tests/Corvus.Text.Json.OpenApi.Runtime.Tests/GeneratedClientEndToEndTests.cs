@@ -2025,6 +2025,58 @@ public class GeneratedClientEndToEndTests
             harness.CapturedRequest.Headers.GetValues("Cookie").First());
     }
 
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitContactFormAsync_SendsFormUrlEncoded()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsContactBody>.Parse(
+            """{"name":"Alice","email":"alice@example.com","message":"Hello"}""");
+
+        await using SubmitContactFormResponse response = await client.SubmitContactFormAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual(
+            "application/x-www-form-urlencoded",
+            harness.CapturedRequestContentType);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitContactFormAsync_EncodesBodyCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsContactBody>.Parse(
+            """{"name":"Alice Smith","email":"alice@example.com"}""");
+
+        await using SubmitContactFormResponse response = await client.SubmitContactFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+        Assert.AreEqual("name=Alice%20Smith&email=alice%40example.com", body);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitContactFormAsync_UrlPath()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsContactBody>.Parse(
+            """{"name":"Bob","email":"b@x.com"}""");
+
+        await using SubmitContactFormResponse response = await client.SubmitContactFormAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(
+            "http://localhost/forms/contact",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.

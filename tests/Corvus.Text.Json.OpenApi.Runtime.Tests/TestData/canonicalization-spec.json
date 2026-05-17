@@ -1262,6 +1262,45 @@
           }
         }
       }
+    },
+    "/forms/contact": {
+      "post": {
+        "operationId": "submitContactForm",
+        "summary": "Submit a contact form via form-urlencoded",
+        "tags": ["forms"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string" },
+                  "email": { "type": "string", "format": "email" },
+                  "message": { "type": "string" }
+                },
+                "required": ["name", "email"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "received": { "type": "boolean" }
+                  },
+                  "required": ["received"]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
