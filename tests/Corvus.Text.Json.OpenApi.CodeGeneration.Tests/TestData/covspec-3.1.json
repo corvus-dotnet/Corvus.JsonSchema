@@ -1438,8 +1438,26 @@
                 }
               }
             }
+          },
+          "parameters": [
+            {
+              "name": "X-Check-Token",
+              "in": "header",
+              "schema": {
+                "type": "string"
+              }
+            }
+          ]
+        },
+        "parameters": [
+          {
+            "name": "verbose",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
           }
-        }
+        ]
       }
     },
     "links": {

@@ -1290,6 +1290,37 @@
           }
         }
       }
+    },
+    "/health": {
+      "get": {
+        "operationId": "healthCheck",
+        "parameters": [
+          {
+            "name": "verbose",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
