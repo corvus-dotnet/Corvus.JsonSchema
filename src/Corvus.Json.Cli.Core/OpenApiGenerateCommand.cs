@@ -105,13 +105,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             if (specVersion is "3.1" or not "3.0")
             {
                 // OpenAPI 3.1 (or unknown) — use the typed code generator directly
-                string[] schemaPointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
+                SchemaReference[] schemaRefs = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
 
                 AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
-                AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
+                AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
-                Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
-                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
+                Dictionary<string, string>? schemaTypeMap = schemaRefs.Length > 0
+                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
                         .ConfigureAwait(false)
                     : null;
 
@@ -129,13 +129,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             else
             {
                 // OpenAPI 3.0 — use the typed code generator directly
-                string[] schemaPointers = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
+                SchemaReference[] schemaRefs = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
 
                 AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
-                AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
+                AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
-                Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
-                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
+                Dictionary<string, string>? schemaTypeMap = schemaRefs.Length > 0
+                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
                         .ConfigureAwait(false)
                     : null;
 
@@ -194,11 +194,12 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         string specVersion,
         string rootNamespace,
         string outputPath,
-        string[] schemaPointers,
+        SchemaReference[] schemaRefs,
         Dictionary<string, string> parameterNames,
         CancellationToken cancellationToken)
     {
         string specFilePath = Path.GetFullPath(specFile);
+        string specDir = Path.GetDirectoryName(specFilePath)!;
 
         // Set up the document resolver — the FileSystemDocumentResolver reads the spec from disk
         CompoundDocumentResolver documentResolver = new(
@@ -225,20 +226,46 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
 
         JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
 
-        // Register each schema pointer as a type declaration
+        // Register each schema reference as a type declaration
         Dictionary<string, TypeDeclaration> pointerToType = new(StringComparer.Ordinal);
         List<TypeDeclaration> typesToGenerate = [];
 
-        foreach (string pointer in schemaPointers)
+        foreach (SchemaReference schemaRef in schemaRefs)
         {
-            JsonReference reference = new(specFilePath, pointer);
-            AnsiConsole.MarkupLine($"  [dim]Registering schema:[/] {pointer}");
+            // Build the JsonReference from the resolvable pointer.
+            // Fragment-only pointers (start with #) resolve against the entry spec file.
+            // External pointers (contain a doc path before #) resolve against that external file.
+            JsonReference reference;
+            int hashIndex = schemaRef.ResolvablePointer.IndexOf('#');
+
+            if (hashIndex == 0)
+            {
+                // Fragment-only — resolve against entry document
+                reference = new(specFilePath, schemaRef.ResolvablePointer);
+            }
+            else if (hashIndex > 0)
+            {
+                // External document + fragment
+                string docRelativePath = schemaRef.ResolvablePointer[..hashIndex];
+                string fragment = schemaRef.ResolvablePointer[hashIndex..];
+                string resolvedDocPath = Path.GetFullPath(Path.Combine(specDir, docRelativePath));
+                reference = new(resolvedDocPath, fragment);
+            }
+            else
+            {
+                // No fragment — entire external doc is the schema (unlikely but handled)
+                string resolvedDocPath = Path.GetFullPath(Path.Combine(specDir, schemaRef.ResolvablePointer));
+                reference = new(resolvedDocPath, "#");
+            }
+
+            AnsiConsole.MarkupLine($"  [dim]Registering schema:[/] {schemaRef.PositionalPointer}");
 
             TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
                 reference, defaultVocabulary, rebaseAsRoot: false)
                 .ConfigureAwait(false);
 
-            pointerToType[pointer] = rootType;
+            // Map by positional pointer — this is the key used by the client codegen
+            pointerToType[schemaRef.PositionalPointer] = rootType;
             typesToGenerate.Add(rootType);
         }
 

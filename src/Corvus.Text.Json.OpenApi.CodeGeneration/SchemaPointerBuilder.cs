@@ -170,6 +170,92 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
+    /// Builds a resolvable schema pointer from a <c>$ref</c> value by appending a sub-path
+    /// to the reference's fragment. When the component is reached via <c>$ref</c>, the type
+    /// builder cannot navigate the positional pointer (because the positional location
+    /// contains a Reference Object, not the actual component). Instead, we use the
+    /// <c>$ref</c> target as the base and append the schema sub-path to its fragment.
+    /// </summary>
+    /// <param name="refValue">
+    /// The resolved <c>$ref</c> value (e.g. <c>#/components/parameters/PetId</c> or
+    /// <c>./common/types.json#/components/parameters/OrderId</c>).
+    /// </param>
+    /// <param name="subPath">
+    /// The sub-path to append after the ref's fragment (e.g. <c>/schema</c> or
+    /// <c>/content/application~1json/schema</c>).
+    /// </param>
+    /// <returns>
+    /// A resolvable reference string with the sub-path appended to the fragment.
+    /// </returns>
+    public static string BuildRefBasedPointer(string refValue, string subPath)
+    {
+        // The refValue may be:
+        // - Fragment-only: "#/components/parameters/PetId"
+        //   → result: "#/components/parameters/PetId/schema"
+        // - External with fragment: "./common.json#/components/parameters/OrderId"
+        //   → result: "./common.json#/components/parameters/OrderId/schema"
+        // - External without fragment: "./common.json"
+        //   → result: "./common.json#/schema" (unlikely but handled)
+        int hashIndex = refValue.IndexOf('#');
+        if (hashIndex >= 0)
+        {
+            return string.Concat(refValue, subPath);
+        }
+
+        return string.Concat(refValue, "#", subPath);
+    }
+
+    /// <summary>
+    /// Builds a content schema sub-path: <c>/content/&lt;mediaType&gt;/schema</c> with
+    /// RFC 6901 escaping applied to the media type segment.
+    /// </summary>
+    /// <param name="mediaTypeNameUtf8">The UTF-8 media type name.</param>
+    /// <returns>The sub-path string (e.g. <c>/content/application~1json/schema</c>).</returns>
+    public static string BuildContentSubPath(ReadOnlySpan<byte> mediaTypeNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append("/content/"u8);
+            AppendEncodedSegment(ref sb, mediaTypeNameUtf8);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds a header schema sub-path: <c>/headers/&lt;headerName&gt;/schema</c> with
+    /// RFC 6901 escaping applied to the header name segment.
+    /// </summary>
+    /// <param name="headerNameUtf8">The UTF-8 header name.</param>
+    /// <returns>The sub-path string (e.g. <c>/headers/x-rate-limit/schema</c>).</returns>
+    public static string BuildHeaderSubPath(ReadOnlySpan<byte> headerNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append("/headers/"u8);
+            AppendEncodedSegment(ref sb, headerNameUtf8);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Appends a UTF-8 segment with RFC 6901 JSON Pointer escaping (~ → ~0, / → ~1).
     /// </summary>
     /// <param name="sb">The string builder.</param>

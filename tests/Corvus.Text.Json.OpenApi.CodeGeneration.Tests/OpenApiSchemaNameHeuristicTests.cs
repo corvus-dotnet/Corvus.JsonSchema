@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Text.Json.CodeGeneration;
@@ -36,8 +37,8 @@ public class OpenApiSchemaNameHeuristicTests
 
         JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
 
-        string[] pointers = OpenApi31CodeGenerator.CollectSchemaPointers(
-            LoadSpec(SpecPath), out _);
+        string[] pointers = [.. OpenApi31CodeGenerator.CollectSchemaPointers(
+            LoadSpec(SpecPath), out _).Select(r => r.PositionalPointer)];
 
         Dictionary<string, TypeDeclaration> pointerToType = new(StringComparer.Ordinal);
         List<TypeDeclaration> typesToGenerate = [];

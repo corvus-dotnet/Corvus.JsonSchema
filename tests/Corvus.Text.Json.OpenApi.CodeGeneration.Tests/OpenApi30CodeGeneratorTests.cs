@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Linq;
 using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi30;
@@ -61,7 +62,7 @@ public class OpenApi30CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_FindsParameterSchemas()
     {
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out var parameterNames);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out var parameterNames).Select(r => r.PositionalPointer)];
 
         CollectionAssert.Contains(pointers, "#/paths/~1pets/get/parameters/0/schema");
         CollectionAssert.Contains(pointers, "#/paths/~1pets~1{petId}/get/parameters/0/schema");
@@ -74,7 +75,7 @@ public class OpenApi30CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_FindsRequestBodySchemas()
     {
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _).Select(r => r.PositionalPointer)];
 
         CollectionAssert.Contains(
             pointers, "#/paths/~1pets/post/requestBody/content/application~1json/schema");
@@ -83,7 +84,7 @@ public class OpenApi30CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_FindsResponseSchemas()
     {
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _).Select(r => r.PositionalPointer)];
 
         CollectionAssert.Contains(
             pointers, "#/paths/~1pets/get/responses/200/content/application~1json/schema");
@@ -96,7 +97,7 @@ public class OpenApi30CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_FindsResponseHeaderSchemas()
     {
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _).Select(r => r.PositionalPointer)];
 
         CollectionAssert.Contains(
             pointers, "#/paths/~1pets/get/responses/200/headers/x-next/schema");
@@ -106,7 +107,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_WithFilter_OnlyIncludesMatchingPaths()
     {
         OperationFilter filter = new(["/pets"]);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _, filter);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _, filter).Select(r => r.PositionalPointer)];
 
         // /pets operations only — no /pets/{petId}
         Assert.IsTrue(pointers.Any(p => p.StartsWith("#/paths/~1pets/", StringComparison.Ordinal)));
@@ -123,7 +124,7 @@ public class OpenApi30CodeGeneratorTests
             }
             """);
 
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(emptySpec, out var parameterNames);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(emptySpec, out var parameterNames).Select(r => r.PositionalPointer)];
 
         Assert.AreEqual(0, pointers.Length);
         Assert.AreEqual(0, parameterNames.Count);
@@ -1421,7 +1422,7 @@ public class OpenApi30CodeGeneratorTests
         JsonElement root = ParseSpec(spec);
 
         // Collect pointers — should see the operation-level parameter, not the path-level one
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _).Select(r => r.PositionalPointer)];
 
         // The operation-level parameter should take precedence
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/parameters/0/schema");
@@ -1435,7 +1436,7 @@ public class OpenApi30CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_Petstore_ReturnsCorrectCount()
     {
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _).Select(r => r.PositionalPointer)];
 
         // 3 param schemas + 1 request body + 7 response bodies + 1 response header = 12
         Assert.AreEqual(12, pointers.Length);
@@ -1444,7 +1445,7 @@ public class OpenApi30CodeGeneratorTests
     [TestMethod]
     public void CollectSchemaPointers_Petstore_AllPointersAreUnique()
     {
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(petstoreRoot, out _).Select(r => r.PositionalPointer)];
         HashSet<string> unique = new(pointers, StringComparer.Ordinal);
 
         Assert.AreEqual(pointers.Length, unique.Count, "Duplicate schema pointers found");
@@ -1541,7 +1542,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_RefParameter_ResolvesAndCollects()
     {
         JsonElement spec = ParseSpec(RefSpec30);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _).Select(r => r.PositionalPointer)];
 
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/parameters/0/schema");
     }
@@ -1550,7 +1551,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_RefRequestBody_ResolvesAndCollects()
     {
         JsonElement spec = ParseSpec(RefSpec30);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _).Select(r => r.PositionalPointer)];
 
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/requestBody/content/application~1json/schema");
     }
@@ -1559,7 +1560,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_RefResponse_ResolvesAndCollects()
     {
         JsonElement spec = ParseSpec(RefSpec30);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _).Select(r => r.PositionalPointer)];
 
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/responses/200/content/application~1json/schema");
     }
@@ -1568,7 +1569,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_RefHeader_ResolvesAndCollects()
     {
         JsonElement spec = ParseSpec(RefSpec30);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _).Select(r => r.PositionalPointer)];
 
         CollectionAssert.Contains(pointers, "#/paths/~1items~1{id}/get/responses/200/headers/X-Request-Id/schema");
     }
@@ -2070,7 +2071,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_ResponseHeaders_CollectsAll()
     {
         JsonElement spec = ParseSpec(ResponseHeaderSpec30);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(spec, out _).Select(r => r.PositionalPointer)];
 
         CollectionAssert.Contains(pointers, "#/paths/~1data/get/responses/200/headers/X-Rate-Limit/schema");
         CollectionAssert.Contains(pointers, "#/paths/~1data/get/responses/200/headers/X-Request-Id/schema");
@@ -3237,7 +3238,7 @@ public class OpenApi30CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null).Select(r => r.PositionalPointer)];
 
         Assert.AreEqual(8, pointers.Length);
         Assert.IsTrue(pointers.Any(p => p.Contains("/get/", StringComparison.Ordinal)));
@@ -3261,7 +3262,7 @@ public class OpenApi30CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null).Select(r => r.PositionalPointer)];
         Assert.AreEqual(0, pointers.Length);
     }
 
@@ -3292,7 +3293,7 @@ public class OpenApi30CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null).Select(r => r.PositionalPointer)];
         Assert.AreEqual(2, pointers.Length);
         Assert.IsTrue(pointers.Any(p => p.Contains("headers/X-Total", StringComparison.Ordinal)));
     }
@@ -3329,7 +3330,7 @@ public class OpenApi30CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null).Select(r => r.PositionalPointer)];
         Assert.AreEqual(2, pointers.Length);
     }
 
@@ -3365,7 +3366,7 @@ public class OpenApi30CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null).Select(r => r.PositionalPointer)];
         Assert.AreEqual(2, pointers.Length);
     }
 
@@ -3396,7 +3397,7 @@ public class OpenApi30CodeGeneratorTests
             """;
 
         JsonElement root = ParseSpec(spec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null).Select(r => r.PositionalPointer)];
         Assert.AreEqual(2, pointers.Length);
     }
 
@@ -3513,7 +3514,7 @@ public class OpenApi30CodeGeneratorTests
         JsonElement root = ParseSpec(spec);
 
         // Verify that CollectSchemaPointers finds the $ref'd requestBody schema
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _, null).Select(r => r.PositionalPointer)];
         string? requestBodyPointer = pointers.FirstOrDefault(
             p => p.Contains("requestBody", StringComparison.Ordinal));
         Assert.IsNotNull(requestBodyPointer, "Expected requestBody schema pointer");
@@ -4981,7 +4982,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_ExcludesOctetStreamSchemas()
     {
         JsonElement root = ParseSpec(StreamSpec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _).Select(r => r.PositionalPointer)];
 
         Assert.IsFalse(
             pointers.Any(p => p.Contains("octet-stream", StringComparison.Ordinal)),
@@ -4995,7 +4996,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_IncludesVendorJsonSchemas()
     {
         JsonElement root = ParseSpec(StreamSpec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _).Select(r => r.PositionalPointer)];
 
         Assert.IsTrue(
             pointers.Any(p => p.Contains("vnd.api+json", StringComparison.Ordinal)),
@@ -5233,7 +5234,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_ExcludesTextPlainSchemas()
     {
         JsonElement root = ParseSpec(TextPlainSpec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _).Select(r => r.PositionalPointer)];
 
         Assert.IsFalse(
             pointers.Any(p => p.Contains("text~1plain", StringComparison.Ordinal)),
@@ -5248,7 +5249,7 @@ public class OpenApi30CodeGeneratorTests
     public void CollectSchemaPointers_ExcludesTextWildcardSchemas()
     {
         JsonElement root = ParseSpec(TextPlainSpec);
-        string[] pointers = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _);
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(root, out _).Select(r => r.PositionalPointer)];
 
         Assert.IsFalse(
             pointers.Any(p => p.Contains("text~1*", StringComparison.Ordinal)),
@@ -6486,5 +6487,264 @@ public class OpenApi30CodeGeneratorTests
         Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Options));
         Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Head));
         Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Trace));
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // External file $ref integration tests
+    // ══════════════════════════════════════════════════════════════════
+
+    // Main spec — all $refs point to an external "common.json" file
+    private const string ExternalRefSpec30 = """
+        {
+          "openapi": "3.0.0",
+          "info": { "title": "ExternalRefTest", "version": "1.0" },
+          "paths": {
+            "/items/{id}": {
+              "get": {
+                "operationId": "getItem",
+                "tags": ["items"],
+                "parameters": [
+                  { "$ref": "./common.json#/components/parameters/ItemId" }
+                ],
+                "responses": {
+                  "200": { "$ref": "./common.json#/components/responses/ItemResponse" }
+                }
+              },
+              "post": {
+                "operationId": "createItem",
+                "tags": ["items"],
+                "requestBody": { "$ref": "./common.json#/components/requestBodies/NewItem" },
+                "responses": {
+                  "201": {
+                    "description": "Created",
+                    "content": {
+                      "application/json": {
+                        "schema": { "type": "object", "properties": { "id": { "type": "string" } } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+        """;
+
+    // External document — contains the shared components
+    private const string ExternalCommonDoc30 = """
+        {
+          "components": {
+            "parameters": {
+              "ItemId": {
+                "name": "id",
+                "in": "path",
+                "required": true,
+                "schema": { "type": "string", "format": "uuid" }
+              }
+            },
+            "requestBodies": {
+              "NewItem": {
+                "required": true,
+                "content": {
+                  "application/json": {
+                    "schema": { "type": "object", "properties": { "name": { "type": "string" } } }
+                  }
+                }
+              }
+            },
+            "responses": {
+              "ItemResponse": {
+                "description": "An item",
+                "content": {
+                  "application/json": {
+                    "schema": { "type": "object", "properties": { "id": { "type": "string" }, "name": { "type": "string" } } }
+                  }
+                },
+                "headers": {
+                  "X-Request-Id": { "$ref": "#/components/headers/RequestId" }
+                }
+              }
+            },
+            "headers": {
+              "RequestId": {
+                "schema": { "type": "string" }
+              }
+            }
+          }
+        }
+        """;
+
+    private static ExternalReferenceResolver CreateExternalResolver30(
+        JsonElement specRoot)
+    {
+        string fakePath = Path.Combine(Path.GetTempPath(), "test-api", "openapi.json");
+        ExternalReferenceResolver resolver = new(specRoot, fakePath);
+
+        using ParsedJsonDocument<JsonElement> commonDoc =
+            ParsedJsonDocument<JsonElement>.Parse(ExternalCommonDoc30);
+        resolver.AddDocument("./common.json", commonDoc.RootElement.Clone());
+
+        return resolver;
+    }
+
+    [TestMethod]
+    public void ExternalRef_CollectSchemaPointers_ResolvesParameterFromExternalFile()
+    {
+        JsonElement spec = ParseSpec(ExternalRefSpec30);
+        using ExternalReferenceResolver resolver = CreateExternalResolver30(spec);
+
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(
+            spec, out _, referenceResolver: resolver).Select(r => r.PositionalPointer)];
+
+        CollectionAssert.Contains(
+            pointers,
+            "#/paths/~1items~1{id}/get/parameters/0/schema",
+            "Parameter schema from external file should be collected at the main spec's pointer location");
+    }
+
+    [TestMethod]
+    public void ExternalRef_CollectSchemaPointers_ResolvesResponseFromExternalFile()
+    {
+        JsonElement spec = ParseSpec(ExternalRefSpec30);
+        using ExternalReferenceResolver resolver = CreateExternalResolver30(spec);
+
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(
+            spec, out _, referenceResolver: resolver).Select(r => r.PositionalPointer)];
+
+        CollectionAssert.Contains(
+            pointers,
+            "#/paths/~1items~1{id}/get/responses/200/content/application~1json/schema",
+            "Response schema from external file should be collected");
+    }
+
+    [TestMethod]
+    public void ExternalRef_CollectSchemaPointers_ResolvesRequestBodyFromExternalFile()
+    {
+        JsonElement spec = ParseSpec(ExternalRefSpec30);
+        using ExternalReferenceResolver resolver = CreateExternalResolver30(spec);
+
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(
+            spec, out _, referenceResolver: resolver).Select(r => r.PositionalPointer)];
+
+        CollectionAssert.Contains(
+            pointers,
+            "#/paths/~1items~1{id}/post/requestBody/content/application~1json/schema",
+            "RequestBody schema from external file should be collected");
+    }
+
+    [TestMethod]
+    public void ExternalRef_CollectSchemaPointers_ResolvesHeaderViaChainedRef()
+    {
+        JsonElement spec = ParseSpec(ExternalRefSpec30);
+        using ExternalReferenceResolver resolver = CreateExternalResolver30(spec);
+
+        string[] pointers = [.. OpenApi30CodeGenerator.CollectSchemaPointers(
+            spec, out _, referenceResolver: resolver).Select(r => r.PositionalPointer)];
+
+        CollectionAssert.Contains(
+            pointers,
+            "#/paths/~1items~1{id}/get/responses/200/headers/X-Request-Id/schema",
+            "Header schema from chained $ref in external file should be collected");
+    }
+
+    [TestMethod]
+    public void ExternalRef_CollectSchemaPointers_ExtractsParameterNames()
+    {
+        JsonElement spec = ParseSpec(ExternalRefSpec30);
+        using ExternalReferenceResolver resolver = CreateExternalResolver30(spec);
+
+        OpenApi30CodeGenerator.CollectSchemaPointers(
+            spec, out Dictionary<string, string> parameterNames, referenceResolver: resolver);
+
+        Assert.IsTrue(
+            parameterNames.ContainsKey("/paths/~1items~1{id}/get/parameters/0/schema"),
+            "Parameter name should be extracted from externally-resolved parameter");
+        Assert.AreEqual(
+            "id",
+            parameterNames["/paths/~1items~1{id}/get/parameters/0/schema"],
+            "Parameter name from external file should be 'id'");
+    }
+
+    [TestMethod]
+    public void ExternalRef_Generate_ProducesClientCode()
+    {
+        JsonElement spec = ParseSpec(ExternalRefSpec30);
+        using ExternalReferenceResolver resolver = CreateExternalResolver30(spec);
+
+        Dictionary<string, string> schemaMap = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}/get/parameters/0/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{id}/get/responses/200/content/application~1json/schema"] = "Test.ItemEntity",
+            ["#/paths/~1items~1{id}/get/responses/200/headers/X-Request-Id/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{id}/post/requestBody/content/application~1json/schema"] = "Test.NewItemEntity",
+            ["#/paths/~1items~1{id}/post/responses/201/content/application~1json/schema"] = "Test.CreatedItemEntity",
+        };
+
+        OpenApi30CodeGenerator gen = new("Test", schemaMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec, referenceResolver: resolver);
+
+        Assert.IsTrue(files.Count > 0, "Should generate at least one file");
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("GetItemRequest")),
+            "Should generate GetItemRequest from externally-resolved parameter");
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("GetItemResponse")),
+            "Should generate GetItemResponse from externally-resolved response");
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("CreateItemRequest")),
+            "Should generate CreateItemRequest from externally-resolved request body");
+    }
+
+    [TestMethod]
+    public void ExternalRef_Generate_RequestContainsResolvedParameter()
+    {
+        JsonElement spec = ParseSpec(ExternalRefSpec30);
+        using ExternalReferenceResolver resolver = CreateExternalResolver30(spec);
+
+        Dictionary<string, string> schemaMap = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}/get/parameters/0/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{id}/get/responses/200/content/application~1json/schema"] = "Test.ItemEntity",
+            ["#/paths/~1items~1{id}/get/responses/200/headers/X-Request-Id/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{id}/post/requestBody/content/application~1json/schema"] = "Test.NewItemEntity",
+            ["#/paths/~1items~1{id}/post/responses/201/content/application~1json/schema"] = "Test.CreatedItemEntity",
+        };
+
+        OpenApi30CodeGenerator gen = new("Test", schemaMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec, referenceResolver: resolver);
+
+        GeneratedFile requestFile = files.First(f => f.FileName.Contains("GetItemRequest"));
+        string code = requestFile.Content;
+
+        Assert.IsTrue(
+            code.Contains("id"),
+            "Generated request should contain the 'id' parameter from the external file");
+    }
+
+    [TestMethod]
+    public void ExternalRef_Generate_ResponseContainsResolvedHeader()
+    {
+        JsonElement spec = ParseSpec(ExternalRefSpec30);
+        using ExternalReferenceResolver resolver = CreateExternalResolver30(spec);
+
+        Dictionary<string, string> schemaMap = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1items~1{id}/get/parameters/0/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{id}/get/responses/200/content/application~1json/schema"] = "Test.ItemEntity",
+            ["#/paths/~1items~1{id}/get/responses/200/headers/X-Request-Id/schema"] = "Test.JsonString",
+            ["#/paths/~1items~1{id}/post/requestBody/content/application~1json/schema"] = "Test.NewItemEntity",
+            ["#/paths/~1items~1{id}/post/responses/201/content/application~1json/schema"] = "Test.CreatedItemEntity",
+        };
+
+        OpenApi30CodeGenerator gen = new("Test", schemaMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec, referenceResolver: resolver);
+
+        GeneratedFile responseFile = files.First(f => f.FileName.Contains("GetItemResponse"));
+        string code = responseFile.Content;
+
+        Assert.IsTrue(
+            code.Contains("X-Request-Id"),
+            "Generated response should contain the header from the external file's chained $ref");
     }
 }

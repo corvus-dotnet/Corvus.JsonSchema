@@ -154,8 +154,8 @@ public sealed class OpenApi30CodeGenerator
     /// Optional reference resolver. If <see langword="null"/>,
     /// a <see cref="LocalReferenceResolver"/> is used.
     /// </param>
-    /// <returns>An array of JSON Pointer strings.</returns>
-    public static string[] CollectSchemaPointers(
+    /// <returns>An array of <see cref="SchemaReference"/> values.</returns>
+    public static SchemaReference[] CollectSchemaPointers(
         JsonElement specRoot,
         out Dictionary<string, string> parameterNames,
         OperationFilter? filter = null,
@@ -170,7 +170,7 @@ public sealed class OpenApi30CodeGenerator
             return [];
         }
 
-        List<string> pointers = [];
+        List<SchemaReference> pointers = [];
         Dictionary<string, string> paramNames = new(StringComparer.Ordinal);
 
         foreach (JsonProperty<JsonElement> pathProp in doc.PathsValue.EnumerateObject())
@@ -314,7 +314,7 @@ public sealed class OpenApi30CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     private static void CollectPathItemPointers(
         JsonProperty<JsonElement> pathProp,
-        List<string> pointers,
+        List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver)
     {
@@ -336,21 +336,26 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.Operation operation,
         OperationMethod method,
         OpenApiDocument.PathItem pathItem,
-        List<string> pointers,
+        List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
         IOpenApiReferenceResolver referenceResolver)
     {
         using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
 
         // Parameter schema pointers (with path/operation merge)
-        foreach ((OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel) in
+        foreach ((OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel, string? refValue) in
             MergeParameters(operation, pathItem, referenceResolver))
         {
             if (param.Schema.IsNotUndefined())
             {
-                string pointer = SchemaPointerBuilder.BuildParameterSchemaPointer(
+                string positionalPointer = SchemaPointerBuilder.BuildParameterSchemaPointer(
                     pathName.Span, method, sourceIndex, isPathLevel);
-                pointers.Add(pointer);
+
+                string resolvablePointer = refValue is not null
+                    ? SchemaPointerBuilder.BuildRefBasedPointer(refValue, "/schema")
+                    : positionalPointer;
+
+                pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
 
                 // Record the parameter name so the naming heuristic can use it.
                 // Key is the fragment (pointer without leading '#') for direct lookup.
@@ -359,7 +364,7 @@ public sealed class OpenApi30CodeGenerator
                     string? name = param.Name.GetString();
                     if (name is not null)
                     {
-                        parameterNames[pointer.AsSpan(1).ToString()] = name;
+                        parameterNames[positionalPointer.AsSpan(1).ToString()] = name;
                     }
                 }
             }
@@ -367,7 +372,7 @@ public sealed class OpenApi30CodeGenerator
 
         // Request body content schema pointers
         if (operation.RequestBody.IsNotUndefined()
-            && TryResolveRequestBody(operation.RequestBody, referenceResolver, out OpenApiDocument.RequestBody requestBody, out IDisposable rbScope)
+            && TryResolveRequestBody(operation.RequestBody, referenceResolver, out OpenApiDocument.RequestBody requestBody, out IDisposable rbScope, out string? rbRefValue)
             && requestBody.Content.IsNotUndefined())
         {
             using (rbScope)
@@ -383,8 +388,16 @@ public sealed class OpenApi30CodeGenerator
                     if (mediaTypeProp.Value.Schema.IsNotUndefined())
                     {
                         using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
-                        pointers.Add(SchemaPointerBuilder.BuildContentSchemaPointer(
-                            pathName.Span, method, "/requestBody"u8, mediaTypeName.Span));
+
+                        string positionalPointer = SchemaPointerBuilder.BuildContentSchemaPointer(
+                            pathName.Span, method, "/requestBody"u8, mediaTypeName.Span);
+
+                        string resolvablePointer = rbRefValue is not null
+                            ? SchemaPointerBuilder.BuildRefBasedPointer(
+                                rbRefValue, SchemaPointerBuilder.BuildContentSubPath(mediaTypeName.Span))
+                            : positionalPointer;
+
+                        pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                     }
                 }
             }
@@ -404,7 +417,8 @@ public sealed class OpenApi30CodeGenerator
                     OpenApiDocument.Responses.DefaultEntity.From(responseProp.Value),
                     referenceResolver,
                     out OpenApiDocument.Response response,
-                    out IDisposable responseScope))
+                    out IDisposable responseScope,
+                    out string? responseRefValue))
                 {
                     continue;
                 }
@@ -426,8 +440,16 @@ public sealed class OpenApi30CodeGenerator
                             if (mediaTypeProp.Value.Schema.IsNotUndefined())
                             {
                                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
-                                pointers.Add(SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                                    pathName.Span, method, statusCode.Span, mediaTypeName.Span));
+
+                                string positionalPointer = SchemaPointerBuilder.BuildResponseContentSchemaPointer(
+                                    pathName.Span, method, statusCode.Span, mediaTypeName.Span);
+
+                                string resolvablePointer = responseRefValue is not null
+                                    ? SchemaPointerBuilder.BuildRefBasedPointer(
+                                        responseRefValue, SchemaPointerBuilder.BuildContentSubPath(mediaTypeName.Span))
+                                    : positionalPointer;
+
+                                pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                             }
                         }
                     }
@@ -441,7 +463,7 @@ public sealed class OpenApi30CodeGenerator
                                 continue;
                             }
 
-                            if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header, out IDisposable headerScope))
+                            if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header, out IDisposable headerScope, out string? headerRefValue))
                             {
                                 continue;
                             }
@@ -451,8 +473,15 @@ public sealed class OpenApi30CodeGenerator
                                 if (header.Schema.IsNotUndefined())
                                 {
                                     using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
-                                    pointers.Add(SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                                        pathName.Span, method, statusCode.Span, headerName.Span));
+
+                                    string positionalPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
+                                        pathName.Span, method, statusCode.Span, headerName.Span);
+
+                                    string resolvablePointer = headerRefValue is not null
+                                        ? SchemaPointerBuilder.BuildRefBasedPointer(headerRefValue, "/schema")
+                                        : positionalPointer;
+
+                                    pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                                 }
                             }
                         }
@@ -513,7 +542,7 @@ public sealed class OpenApi30CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     // Parameter merging — typed dedup via JsonString equality
     // ═══════════════════════════════════════════════════════════════════
-    private static List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel)> MergeParameters(
+    private static List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel, string? RefValue)> MergeParameters(
         OpenApiDocument.Operation operation,
         OpenApiDocument.PathItem pathItem,
         IOpenApiReferenceResolver referenceResolver)
@@ -526,7 +555,7 @@ public sealed class OpenApi30CodeGenerator
             return [];
         }
 
-        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel)> result = [];
+        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel, string? RefValue)> result = [];
 
         if (hasPathParams)
         {
@@ -539,10 +568,10 @@ public sealed class OpenApi30CodeGenerator
                     continue;
                 }
 
-                if (TryResolvePathItemParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed, out IDisposable paramScope))
+                if (TryResolvePathItemParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed, out IDisposable paramScope, out string? refValue))
                 {
                     paramScope.Dispose();
-                    result.Add((typed, sourceIndex, true));
+                    result.Add((typed, sourceIndex, true, refValue));
                 }
 
                 sourceIndex++;
@@ -560,18 +589,18 @@ public sealed class OpenApi30CodeGenerator
                     continue;
                 }
 
-                if (TryResolveOperationParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed, out IDisposable paramScope))
+                if (TryResolveOperationParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed, out IDisposable paramScope, out string? refValue))
                 {
                     paramScope.Dispose();
                     int existingIndex = FindParameterIndex(result, typed);
 
                     if (existingIndex >= 0)
                     {
-                        result[existingIndex] = (typed, sourceIndex, false);
+                        result[existingIndex] = (typed, sourceIndex, false, refValue);
                     }
                     else
                     {
-                        result.Add((typed, sourceIndex, false));
+                        result.Add((typed, sourceIndex, false, refValue));
                     }
                 }
 
@@ -583,7 +612,7 @@ public sealed class OpenApi30CodeGenerator
     }
 
     private static int FindParameterIndex(
-        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel)> parameters,
+        List<(OpenApiDocument.Parameter Parameter, int SourceIndex, bool IsPathLevel, string? RefValue)> parameters,
         OpenApiDocument.Parameter newParam)
     {
         for (int i = 0; i < parameters.Count; i++)
@@ -603,7 +632,8 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.PathItem.ParametersEntityArray.ParametersEntity paramOrRef,
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.Parameter resolved,
-        out IDisposable baseScope)
+        out IDisposable baseScope,
+        out string? refValue)
     {
         OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(paramOrRef);
         if (asRef.Ref.IsNotUndefined())
@@ -613,16 +643,19 @@ public sealed class OpenApi30CodeGenerator
             {
                 resolved = r;
                 baseScope = referenceResolver.PushResolvedBase(refStr);
+                refValue = refStr;
                 return true;
             }
 
             resolved = default;
             baseScope = EmptyScope.Instance;
+            refValue = null;
             return false;
         }
 
         resolved = OpenApiDocument.Parameter.From(paramOrRef);
         baseScope = EmptyScope.Instance;
+        refValue = null;
         return true;
     }
 
@@ -630,7 +663,8 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.Operation.ParametersEntityArray.ParametersEntity paramOrRef,
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.Parameter resolved,
-        out IDisposable baseScope)
+        out IDisposable baseScope,
+        out string? refValue)
     {
         OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(paramOrRef);
         if (asRef.Ref.IsNotUndefined())
@@ -640,16 +674,19 @@ public sealed class OpenApi30CodeGenerator
             {
                 resolved = r;
                 baseScope = referenceResolver.PushResolvedBase(refStr);
+                refValue = refStr;
                 return true;
             }
 
             resolved = default;
             baseScope = EmptyScope.Instance;
+            refValue = null;
             return false;
         }
 
         resolved = OpenApiDocument.Parameter.From(paramOrRef);
         baseScope = EmptyScope.Instance;
+        refValue = null;
         return true;
     }
 
@@ -657,7 +694,8 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.Operation.RequestBodyEntity requestBodyOrRef,
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.RequestBody resolved,
-        out IDisposable baseScope)
+        out IDisposable baseScope,
+        out string? refValue)
     {
         OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(requestBodyOrRef);
         if (asRef.Ref.IsNotUndefined())
@@ -667,16 +705,19 @@ public sealed class OpenApi30CodeGenerator
             {
                 resolved = r;
                 baseScope = referenceResolver.PushResolvedBase(refStr);
+                refValue = refStr;
                 return true;
             }
 
             resolved = default;
             baseScope = EmptyScope.Instance;
+            refValue = null;
             return false;
         }
 
         resolved = OpenApiDocument.RequestBody.From(requestBodyOrRef);
         baseScope = EmptyScope.Instance;
+        refValue = null;
         return true;
     }
 
@@ -684,7 +725,8 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.Responses.DefaultEntity responseOrRef,
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.Response resolved,
-        out IDisposable baseScope)
+        out IDisposable baseScope,
+        out string? refValue)
     {
         // Avoid the Match discriminator — the 3.0 typed model's schema validation
         // can reject valid Response Objects that contain optional sub-objects with
@@ -698,16 +740,19 @@ public sealed class OpenApi30CodeGenerator
             {
                 resolved = r;
                 baseScope = referenceResolver.PushResolvedBase(refStr);
+                refValue = refStr;
                 return true;
             }
 
             resolved = default;
             baseScope = EmptyScope.Instance;
+            refValue = null;
             return false;
         }
 
         resolved = OpenApiDocument.Response.From(responseOrRef);
         baseScope = EmptyScope.Instance;
+        refValue = null;
         return true;
     }
 
@@ -715,7 +760,8 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.Response.HeadersEntity.AdditionalPropertiesEntity headerOrRef,
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.Header resolved,
-        out IDisposable baseScope)
+        out IDisposable baseScope,
+        out string? refValue)
     {
         // Same approach as TryResolveResponse — avoid Match discriminator to
         // handle headers that have optional properties missing (e.g. no "schema").
@@ -727,16 +773,19 @@ public sealed class OpenApi30CodeGenerator
             {
                 resolved = r;
                 baseScope = referenceResolver.PushResolvedBase(refStr);
+                refValue = refStr;
                 return true;
             }
 
             resolved = default;
             baseScope = EmptyScope.Instance;
+            refValue = null;
             return false;
         }
 
         resolved = OpenApiDocument.Header.From(headerOrRef);
         baseScope = EmptyScope.Instance;
+        refValue = null;
         return true;
     }
 
@@ -903,7 +952,7 @@ public sealed class OpenApi30CodeGenerator
 
         for (int i = 0; i < merged.Count; i++)
         {
-            (OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel) = merged[i];
+            (OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel, string? _) = merged[i];
 
             (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
             bool required = param.Required;
@@ -956,7 +1005,7 @@ public sealed class OpenApi30CodeGenerator
             return null;
         }
 
-        if (!TryResolveRequestBody(requestBodyOrRef, referenceResolver, out OpenApiDocument.RequestBody requestBody, out IDisposable rbScope))
+        if (!TryResolveRequestBody(requestBodyOrRef, referenceResolver, out OpenApiDocument.RequestBody requestBody, out IDisposable rbScope, out string? _))
         {
             ThrowHelper.ThrowUnableToResolveRequestBodyRef();
         }
@@ -999,7 +1048,8 @@ public sealed class OpenApi30CodeGenerator
                 OpenApiDocument.Responses.DefaultEntity.From(responseProp.Value),
                 referenceResolver,
                 out OpenApiDocument.Response response,
-                out IDisposable responseScope))
+                out IDisposable responseScope,
+                out string? _))
             {
                 ThrowHelper.ThrowUnableToResolveResponseRef();
             }
@@ -1148,7 +1198,7 @@ public sealed class OpenApi30CodeGenerator
                 continue;
             }
 
-            if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header, out IDisposable headerScope))
+            if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header, out IDisposable headerScope, out string? _))
             {
                 ThrowHelper.ThrowUnableToResolveHeaderRef();
             }
