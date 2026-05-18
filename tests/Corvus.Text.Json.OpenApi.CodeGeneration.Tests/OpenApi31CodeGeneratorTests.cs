@@ -6967,4 +6967,177 @@ public class OpenApi31CodeGeneratorTests
             resp.Content.Contains("CreateBuilder<string>", StringComparison.Ordinal),
             "Array header should use CreateBuilder to parse comma-separated elements");
     }
+
+    // ── Additional coverage tests: content type code paths ─────────────────
+    [TestMethod]
+    public void Generate_FormUrlEncoded_NoEncodings_EmitsSerializeWithoutEncodings()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "FormNoEnc", "version": "1.0" },
+              "paths": {
+                "/submit": {
+                  "post": {
+                    "operationId": "submitForm",
+                    "tags": ["forms"],
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "application/x-www-form-urlencoded": {
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "name": { "type": "string" },
+                              "age": { "type": "integer" }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> typeMap = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1submit/post/requestBody/content/application~1x-www-form-urlencoded/schema"] = "Test.FormBody",
+        };
+        OpenApi31CodeGenerator gen = new("Test", typeMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile client = GetFile(files, "ApiFormsClient.cs");
+
+        Assert.IsTrue(
+            client.Content.Contains("FormUrlEncodedSerializer.Serialize(bodyValue, stream)", StringComparison.Ordinal),
+            "Should call Serialize without encodings parameter");
+    }
+
+    [TestMethod]
+    public void Generate_Multipart_NoEncodings_EmitsSerializeWithoutEncodings()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "MultiNoEnc", "version": "1.0" },
+              "paths": {
+                "/upload": {
+                  "post": {
+                    "operationId": "uploadFile",
+                    "tags": ["uploads"],
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/form-data": {
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "file": { "type": "string", "contentEncoding": "base64" },
+                              "description": { "type": "string" }
+                            }
+                          }
+                        }
+                      }
+                    },
+                    "responses": { "201": { "description": "Created" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> typeMap = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1upload/post/requestBody/content/multipart~1form-data/schema"] = "Test.UploadBody",
+        };
+        OpenApi31CodeGenerator gen = new("Test", typeMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile client = GetFile(files, "ApiUploadsClient.cs");
+
+        Assert.IsTrue(
+            client.Content.Contains("MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary)", StringComparison.Ordinal),
+            "Should call Serialize without encodings parameter");
+    }
+
+    [TestMethod]
+    public void Generate_TextPlainResponse_EmitsTextAccessor()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "TextResp", "version": "1.0" },
+              "paths": {
+                "/echo": {
+                  "get": {
+                    "operationId": "echo",
+                    "tags": ["misc"],
+                    "responses": {
+                      "200": {
+                        "description": "Echo response",
+                        "content": {
+                          "text/plain": {
+                            "schema": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi31CodeGenerator gen = new("Test", new Dictionary<string, string>(StringComparer.Ordinal));
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "EchoResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("OkText", StringComparison.Ordinal),
+            "Response should have a text accessor for text/plain response");
+    }
+
+    [TestMethod]
+    public void Generate_OctetStreamResponse_EmitsStreamAccessor()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "StreamResp", "version": "1.0" },
+              "paths": {
+                "/download": {
+                  "get": {
+                    "operationId": "downloadFile",
+                    "tags": ["files"],
+                    "responses": {
+                      "200": {
+                        "description": "File download",
+                        "content": {
+                          "application/octet-stream": {}
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi31CodeGenerator gen = new("Test", new Dictionary<string, string>(StringComparer.Ordinal));
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "DownloadFileResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("OkStream", StringComparison.Ordinal),
+            "Response should have a stream accessor for octet-stream response");
+    }
 }
