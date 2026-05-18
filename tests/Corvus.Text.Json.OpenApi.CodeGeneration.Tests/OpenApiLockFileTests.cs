@@ -12,7 +12,7 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration.Tests;
 [TestClass]
 public class OpenApiLockFileTests
 {
-    private static readonly byte[] SampleSpec = Encoding.UTF8.GetBytes("""
+    private static readonly byte[] SampleSpecBytes = Encoding.UTF8.GetBytes("""
         {
           "openapi": "3.1.0",
           "info": { "title": "Test", "version": "1.0" },
@@ -49,8 +49,10 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void Create_Save_TryLoad_RoundTrips()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OpenApiLockFileModel original = OpenApiLockFile.Create(
-            SampleSpec,
+            doc.RootElement,
             "3.1",
             "TestNamespace",
             "MyClient",
@@ -74,8 +76,10 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void Create_Save_LockFileExistsOnDisk()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns", null, null, ["A.cs"]);
+            doc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
 
         OpenApiLockFile.Save(in lockFile, this.tempDir);
 
@@ -116,10 +120,12 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void IsUpToDate_SameParameters_ReturnsTrue()
     {
-        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", "Client", filter: null, generatedFiles: ["A.cs"]);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
 
-        bool result = OpenApiLockFile.IsUpToDate(in lockFile, SampleSpec, "3.1", "TestNs", "Client", filter: null);
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "TestNs", "Client", filter: null, generatedFiles: ["A.cs"]);
+
+        bool result = OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", "Client", filter: null);
 
         Assert.IsTrue(result);
     }
@@ -127,13 +133,15 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void IsUpToDate_AfterRoundTrip_ReturnsTrue()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+            doc.RootElement, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
 
         OpenApiLockFile.Save(in lockFile, this.tempDir);
         Assert.IsTrue(OpenApiLockFile.TryLoad(this.tempDir, out OpenApiLockFileModel loaded));
 
-        bool result = OpenApiLockFile.IsUpToDate(in loaded, SampleSpec, "3.1", "TestNs", null, filter: null);
+        bool result = OpenApiLockFile.IsUpToDate(in loaded, doc.RootElement, "3.1", "TestNs", null, filter: null);
 
         Assert.IsTrue(result);
     }
@@ -142,104 +150,163 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void IsUpToDate_DifferentSpecContent_ReturnsFalse()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+            doc.RootElement, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
 
-        byte[] modifiedSpec = Encoding.UTF8.GetBytes("""{ "openapi": "3.1.0", "info": { "title": "Modified", "version": "2.0" }, "paths": {} }""");
+        byte[] modifiedSpecBytes = Encoding.UTF8.GetBytes("""{ "openapi": "3.1.0", "info": { "title": "Modified", "version": "2.0" }, "paths": {} }""");
+        using ParsedJsonDocument<JsonElement> modifiedDoc = ParsedJsonDocument<JsonElement>.Parse(modifiedSpecBytes);
 
-        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, modifiedSpec, "3.1", "TestNs", null, filter: null));
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, modifiedDoc.RootElement, "3.1", "TestNs", null, filter: null));
     }
 
     [TestMethod]
     public void IsUpToDate_DifferentSpecVersion_ReturnsFalse()
     {
-        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
 
-        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, SampleSpec, "3.0", "TestNs", null, filter: null));
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.0", "TestNs", null, filter: null));
     }
 
     [TestMethod]
     public void IsUpToDate_DifferentRootNamespace_ReturnsFalse()
     {
-        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
 
-        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, SampleSpec, "3.1", "DifferentNs", null, filter: null));
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "DifferentNs", null, filter: null));
     }
 
     [TestMethod]
     public void IsUpToDate_DifferentClientName_ReturnsFalse()
     {
-        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", "ClientA", filter: null, generatedFiles: ["A.cs"]);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
 
-        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, SampleSpec, "3.1", "TestNs", "ClientB", filter: null));
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "TestNs", "ClientA", filter: null, generatedFiles: ["A.cs"]);
+
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", "ClientB", filter: null));
     }
 
     [TestMethod]
     public void IsUpToDate_ClientNameNullVsSet_ReturnsFalse()
     {
-        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
 
-        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, SampleSpec, "3.1", "TestNs", "SomeClient", filter: null));
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", "SomeClient", filter: null));
     }
 
     [TestMethod]
     public void IsUpToDate_IncludePathAdded_ReturnsFalse()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+            doc.RootElement, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
 
         OperationFilter filter = new(["/items"]);
 
-        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, SampleSpec, "3.1", "TestNs", null, filter));
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", null, filter));
     }
 
     [TestMethod]
     public void IsUpToDate_ExcludePathAdded_ReturnsFalse()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
+            doc.RootElement, "3.1", "TestNs", null, filter: null, generatedFiles: ["A.cs"]);
 
         OperationFilter filter = new(null, ["/admin*"]);
 
-        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, SampleSpec, "3.1", "TestNs", null, filter));
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", null, filter));
     }
 
     [TestMethod]
     public void IsUpToDate_IncludePathChanged_ReturnsFalse()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OperationFilter filterA = new(["/items"]);
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", null, filterA, generatedFiles: ["A.cs"]);
+            doc.RootElement, "3.1", "TestNs", null, filterA, generatedFiles: ["A.cs"]);
 
         OperationFilter filterB = new(["/pets"]);
 
-        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, SampleSpec, "3.1", "TestNs", null, filterB));
+        Assert.IsFalse(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", null, filterB));
     }
 
     [TestMethod]
     public void IsUpToDate_SameFilter_ReturnsTrue()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OperationFilter filter = new(["/items"], ["/admin*"]);
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "TestNs", null, filter, generatedFiles: ["A.cs"]);
+            doc.RootElement, "3.1", "TestNs", null, filter, generatedFiles: ["A.cs"]);
 
         OperationFilter sameFilter = new(["/items"], ["/admin*"]);
 
-        Assert.IsTrue(OpenApiLockFile.IsUpToDate(in lockFile, SampleSpec, "3.1", "TestNs", null, sameFilter));
+        Assert.IsTrue(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", null, sameFilter));
+    }
+
+    // ── Canonical hash: format-insensitive ────────────────────────────────
+    [TestMethod]
+    public void Create_SameContentDifferentWhitespace_ProducesSameHash()
+    {
+        byte[] compact = Encoding.UTF8.GetBytes("""{"openapi":"3.1.0","info":{"title":"Test","version":"1.0"},"paths":{"/items":{"get":{"operationId":"listItems","responses":{"200":{"description":"ok"}}}}}}""");
+        byte[] pretty = Encoding.UTF8.GetBytes("""
+            {
+              "openapi": "3.1.0",
+              "info": {
+                "title": "Test",
+                "version": "1.0"
+              },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "responses": {
+                      "200": {
+                        "description": "ok"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        using ParsedJsonDocument<JsonElement> compactDoc = ParsedJsonDocument<JsonElement>.Parse(compact);
+        using ParsedJsonDocument<JsonElement> prettyDoc = ParsedJsonDocument<JsonElement>.Parse(pretty);
+
+        OpenApiLockFileModel a = OpenApiLockFile.Create(
+            compactDoc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
+        OpenApiLockFileModel b = OpenApiLockFile.Create(
+            prettyDoc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
+
+        Assert.AreEqual(a.SpecFileHash.GetString(), b.SpecFileHash.GetString());
     }
 
     // ── Hash determinism ──────────────────────────────────────────────────
     [TestMethod]
     public void Create_SameContent_ProducesSameHash()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OpenApiLockFileModel a = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns", null, null, ["A.cs"]);
+            doc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
         OpenApiLockFileModel b = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns", null, null, ["A.cs"]);
+            doc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
 
         Assert.AreEqual(a.SpecFileHash.GetString(), b.SpecFileHash.GetString());
     }
@@ -247,12 +314,15 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void Create_DifferentContent_ProducesDifferentHash()
     {
-        byte[] otherSpec = Encoding.UTF8.GetBytes("{}");
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
+        byte[] otherSpecBytes = Encoding.UTF8.GetBytes("{}");
+        using ParsedJsonDocument<JsonElement> otherDoc = ParsedJsonDocument<JsonElement>.Parse(otherSpecBytes);
 
         OpenApiLockFileModel a = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns", null, null, ["A.cs"]);
+            doc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
         OpenApiLockFileModel b = OpenApiLockFile.Create(
-            otherSpec, "3.1", "Ns", null, null, ["A.cs"]);
+            otherDoc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
 
         Assert.AreNotEqual(a.SpecFileHash.GetString(), b.SpecFileHash.GetString());
     }
@@ -261,9 +331,11 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void Create_RecordsGeneratedFiles()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         string[] files = ["Req.cs", "Resp.cs", "Client.cs"];
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns", null, null, files);
+            doc.RootElement, "3.1", "Ns", null, null, files);
 
         List<string> actual = [];
         foreach (JsonElement item in lockFile.GeneratedFiles.EnumerateArray())
@@ -277,9 +349,11 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void Create_SetsTimestamp()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         DateTimeOffset before = DateTimeOffset.UtcNow;
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns", null, null, ["A.cs"]);
+            doc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
 
         string generatedAtStr = lockFile.GeneratedAt.GetString()!;
         Assert.IsTrue(DateTimeOffset.TryParse(generatedAtStr, out DateTimeOffset generatedAt));
@@ -290,30 +364,112 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void Create_SetsGeneratorVersion()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns", null, null, ["A.cs"]);
+            doc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
 
         Assert.IsFalse(string.IsNullOrEmpty(lockFile.GeneratorVersion.GetString()));
+    }
+
+    // ── Backup and restore ────────────────────────────────────────────────
+    [TestMethod]
+    public void BackupLockFile_NoExistingFile_ReturnsFalse()
+    {
+        Assert.IsFalse(OpenApiLockFile.BackupLockFile(this.tempDir));
+    }
+
+    [TestMethod]
+    public void BackupLockFile_ExistingFile_CreatesBackup()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
+        OpenApiLockFile.Save(in lockFile, this.tempDir);
+
+        Assert.IsTrue(OpenApiLockFile.BackupLockFile(this.tempDir));
+        Assert.IsTrue(File.Exists(Path.Combine(this.tempDir, "corvusjson-openapi.lock.bak")));
+    }
+
+    [TestMethod]
+    public void RestoreLockFile_NoBackup_ReturnsFalse()
+    {
+        Assert.IsFalse(OpenApiLockFile.RestoreLockFile(this.tempDir));
+    }
+
+    [TestMethod]
+    public void RestoreLockFile_AfterBackup_RestoresOriginal()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
+        // Create and save original lock file
+        OpenApiLockFileModel original = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "OriginalNs", null, null, ["A.cs"]);
+        OpenApiLockFile.Save(in original, this.tempDir);
+
+        // Back up
+        Assert.IsTrue(OpenApiLockFile.BackupLockFile(this.tempDir));
+
+        // Overwrite with different lock file
+        OpenApiLockFileModel overwritten = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "OverwrittenNs", null, null, ["B.cs"]);
+        OpenApiLockFile.Save(in overwritten, this.tempDir);
+
+        // Restore
+        Assert.IsTrue(OpenApiLockFile.RestoreLockFile(this.tempDir));
+
+        // Verify original is restored
+        Assert.IsTrue(OpenApiLockFile.TryLoad(this.tempDir, out OpenApiLockFileModel restored));
+        Assert.AreEqual("OriginalNs", restored.RootNamespace.GetString());
+
+        // Backup file is cleaned up
+        Assert.IsFalse(File.Exists(Path.Combine(this.tempDir, "corvusjson-openapi.lock.bak")));
+    }
+
+    [TestMethod]
+    public void DeleteBackup_NoBackup_DoesNotThrow()
+    {
+        OpenApiLockFile.DeleteBackup(this.tempDir);
+    }
+
+    [TestMethod]
+    public void DeleteBackup_WithBackup_RemovesFile()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
+            doc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
+        OpenApiLockFile.Save(in lockFile, this.tempDir);
+        OpenApiLockFile.BackupLockFile(this.tempDir);
+
+        string backupPath = Path.Combine(this.tempDir, "corvusjson-openapi.lock.bak");
+        Assert.IsTrue(File.Exists(backupPath));
+
+        OpenApiLockFile.DeleteBackup(this.tempDir);
+        Assert.IsFalse(File.Exists(backupPath));
     }
 
     // ── Full lifecycle simulation ─────────────────────────────────────────
     [TestMethod]
     public void Lifecycle_CreateSaveLoadCompare_MatchesThenDiverges()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         // Step 1: "Generate" and save lock file
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "MyApi", "Petstore", filter: null,
+            doc.RootElement, "3.1", "MyApi", "Petstore", filter: null,
             generatedFiles: ["ListItemsRequest.cs", "ListItemsResponse.cs", "IApiItemsClient.cs", "ApiItemsClient.cs"]);
         OpenApiLockFile.Save(in lockFile, this.tempDir);
 
         // Step 2: Simulate second run — load and compare with same inputs
         Assert.IsTrue(OpenApiLockFile.TryLoad(this.tempDir, out OpenApiLockFileModel loaded));
         Assert.IsTrue(
-            OpenApiLockFile.IsUpToDate(in loaded, SampleSpec, "3.1", "MyApi", "Petstore", filter: null),
+            OpenApiLockFile.IsUpToDate(in loaded, doc.RootElement, "3.1", "MyApi", "Petstore", filter: null),
             "Second run with identical inputs should be up to date");
 
         // Step 3: Spec content changes (user edits the OpenAPI file)
-        byte[] updatedSpec = Encoding.UTF8.GetBytes("""
+        byte[] updatedSpecBytes = Encoding.UTF8.GetBytes("""
             {
               "openapi": "3.1.0",
               "info": { "title": "Test", "version": "1.0" },
@@ -331,20 +487,22 @@ public class OpenApiLockFileTests
               }
             }
             """);
+        using ParsedJsonDocument<JsonElement> updatedDoc = ParsedJsonDocument<JsonElement>.Parse(updatedSpecBytes);
+
         Assert.IsFalse(
-            OpenApiLockFile.IsUpToDate(in loaded, updatedSpec, "3.1", "MyApi", "Petstore", filter: null),
+            OpenApiLockFile.IsUpToDate(in loaded, updatedDoc.RootElement, "3.1", "MyApi", "Petstore", filter: null),
             "Changed spec content should require regeneration");
 
         // Step 4: "Regenerate" with new spec, overwrite lock file
         OpenApiLockFileModel updatedLock = OpenApiLockFile.Create(
-            updatedSpec, "3.1", "MyApi", "Petstore", filter: null,
+            updatedDoc.RootElement, "3.1", "MyApi", "Petstore", filter: null,
             generatedFiles: ["ListItemsRequest.cs", "ListItemsResponse.cs", "CreateItemRequest.cs", "CreateItemResponse.cs", "IApiItemsClient.cs", "ApiItemsClient.cs"]);
         OpenApiLockFile.Save(in updatedLock, this.tempDir);
 
         // Step 5: Third run — now up to date again
         Assert.IsTrue(OpenApiLockFile.TryLoad(this.tempDir, out OpenApiLockFileModel reloaded));
         Assert.IsTrue(
-            OpenApiLockFile.IsUpToDate(in reloaded, updatedSpec, "3.1", "MyApi", "Petstore", filter: null),
+            OpenApiLockFile.IsUpToDate(in reloaded, updatedDoc.RootElement, "3.1", "MyApi", "Petstore", filter: null),
             "After regeneration, lock file should match updated spec");
 
         int fileCount = 0;
@@ -359,7 +517,7 @@ public class OpenApiLockFileTests
         // Step 6: User changes a CLI parameter (add filter)
         OperationFilter newFilter = new(["/items"]);
         Assert.IsFalse(
-            OpenApiLockFile.IsUpToDate(in reloaded, updatedSpec, "3.1", "MyApi", "Petstore", newFilter),
+            OpenApiLockFile.IsUpToDate(in reloaded, updatedDoc.RootElement, "3.1", "MyApi", "Petstore", newFilter),
             "Adding a filter should require regeneration");
     }
 
@@ -367,11 +525,13 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void Save_CreatesOutputDirectoryIfNeeded()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         string nestedDir = Path.Combine(this.tempDir, "nested", "output");
         Assert.IsFalse(Directory.Exists(nestedDir));
 
         OpenApiLockFileModel lockFile = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns", null, null, ["A.cs"]);
+            doc.RootElement, "3.1", "Ns", null, null, ["A.cs"]);
         OpenApiLockFile.Save(in lockFile, nestedDir);
 
         Assert.IsTrue(Directory.Exists(nestedDir));
@@ -382,12 +542,14 @@ public class OpenApiLockFileTests
     [TestMethod]
     public void Save_OverwritesExistingLockFile()
     {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
         OpenApiLockFileModel first = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns1", null, null, ["A.cs"]);
+            doc.RootElement, "3.1", "Ns1", null, null, ["A.cs"]);
         OpenApiLockFile.Save(in first, this.tempDir);
 
         OpenApiLockFileModel second = OpenApiLockFile.Create(
-            SampleSpec, "3.1", "Ns2", null, null, ["B.cs"]);
+            doc.RootElement, "3.1", "Ns2", null, null, ["B.cs"]);
         OpenApiLockFile.Save(in second, this.tempDir);
 
         Assert.IsTrue(OpenApiLockFile.TryLoad(this.tempDir, out OpenApiLockFileModel loaded));

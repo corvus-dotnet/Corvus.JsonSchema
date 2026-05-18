@@ -57,88 +57,106 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         if (!settings.Force)
         {
             if (OpenApiLockFile.TryLoad(outputPath, out OpenApiLockFileModel existingLock)
-                && OpenApiLockFile.IsUpToDate(in existingLock, specBytes, specVersion, rootNamespace, settings.ClientName, filter))
+                && OpenApiLockFile.IsUpToDate(in existingLock, in specRoot, specVersion, rootNamespace, settings.ClientName, filter))
             {
                 AnsiConsole.MarkupLine("[green]Up to date — skipping generation.[/] Use --force to regenerate.");
                 return 0;
             }
         }
 
-        IReadOnlyList<GeneratedFile> files;
-        string modelsPath = Path.Combine(outputPath, "Models");
+        // Back up existing lock file before generation so we can restore on failure
+        bool hasBackup = OpenApiLockFile.BackupLockFile(outputPath);
 
-        if (specVersion is "3.1" or not "3.0")
+        try
         {
-            // OpenAPI 3.1 (or unknown) — use the typed code generator directly
-            string[] schemaPointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
+            IReadOnlyList<GeneratedFile> files;
+            string modelsPath = Path.Combine(outputPath, "Models");
 
-            AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
-            AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
-
-            Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
-                ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
-                    .ConfigureAwait(false)
-                : null;
-
-            if (schemaTypeMap is not null)
+            if (specVersion is "3.1" or not "3.0")
             {
-                AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+                // OpenAPI 3.1 (or unknown) — use the typed code generator directly
+                string[] schemaPointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
+
+                AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
+                AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
+
+                Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
+                    ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
+                        .ConfigureAwait(false)
+                    : null;
+
+                if (schemaTypeMap is not null)
+                {
+                    AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+                }
+
+                OpenApi31CodeGenerator generator = new(
+                    rootNamespace,
+                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    settings.ClientName);
+                files = generator.Generate(specRoot, filter);
+            }
+            else
+            {
+                // OpenAPI 3.0 — use the typed code generator directly
+                string[] schemaPointers = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
+
+                AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
+                AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
+
+                Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
+                    ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
+                        .ConfigureAwait(false)
+                    : null;
+
+                if (schemaTypeMap is not null)
+                {
+                    AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+                }
+
+                OpenApi30CodeGenerator generator = new(
+                    rootNamespace,
+                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    settings.ClientName);
+                files = generator.Generate(specRoot, filter);
             }
 
-            OpenApi31CodeGenerator generator = new(
-                rootNamespace,
-                schemaTypeMap ?? new Dictionary<string, string>(),
-                settings.ClientName);
-            files = generator.Generate(specRoot, filter);
-        }
-        else
-        {
-            // OpenAPI 3.0 — use the typed code generator directly
-            string[] schemaPointers = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
+            AnsiConsole.MarkupLine($"[green]Files:[/] {files.Count}");
 
-            AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
-            AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
+            // Write client files
+            Directory.CreateDirectory(outputPath);
 
-            Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
-                ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
-                    .ConfigureAwait(false)
-                : null;
-
-            if (schemaTypeMap is not null)
+            List<string> generatedFileNames = [];
+            foreach (GeneratedFile file in files)
             {
-                AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+                string filePath = Path.Combine(outputPath, file.FileName);
+                await File.WriteAllTextAsync(filePath, file.Content, cancellationToken)
+                    .ConfigureAwait(false);
+                AnsiConsole.MarkupLine($"  [blue]Wrote:[/] {filePath}");
+                generatedFileNames.Add(file.FileName);
             }
 
-            OpenApi30CodeGenerator generator = new(
-                rootNamespace,
-                schemaTypeMap ?? new Dictionary<string, string>(),
-                settings.ClientName);
-            files = generator.Generate(specRoot, filter);
+            int totalFiles = files.Count;
+            AnsiConsole.MarkupLine($"[green]Generated {totalFiles} files in {outputPath}[/]");
+
+            // Write lock file and clean up backup
+            OpenApiLockFileModel lockFile = OpenApiLockFile.Create(in specRoot, specVersion, rootNamespace, settings.ClientName, filter, generatedFileNames);
+            OpenApiLockFile.Save(in lockFile, outputPath);
+            OpenApiLockFile.DeleteBackup(outputPath);
+
+            return 0;
         }
-
-        AnsiConsole.MarkupLine($"[green]Files:[/] {files.Count}");
-
-        // Write client files
-        Directory.CreateDirectory(outputPath);
-
-        List<string> generatedFileNames = [];
-        foreach (GeneratedFile file in files)
+        catch
         {
-            string filePath = Path.Combine(outputPath, file.FileName);
-            await File.WriteAllTextAsync(filePath, file.Content, cancellationToken)
-                .ConfigureAwait(false);
-            AnsiConsole.MarkupLine($"  [blue]Wrote:[/] {filePath}");
-            generatedFileNames.Add(file.FileName);
+            // Restore lock file to pre-generation state on failure
+            if (hasBackup)
+            {
+                OpenApiLockFile.RestoreLockFile(outputPath);
+                AnsiConsole.MarkupLine("[yellow]Lock file restored from backup after generation failure.[/]");
+            }
+
+            throw;
         }
-
-        int totalFiles = files.Count;
-        AnsiConsole.MarkupLine($"[green]Generated {totalFiles} files in {outputPath}[/]");
-
-        // Write lock file
-        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(specBytes, specVersion, rootNamespace, settings.ClientName, filter, generatedFileNames);
-        OpenApiLockFile.Save(in lockFile, outputPath);
-
-        return 0;
     }
 
     private static async Task<Dictionary<string, string>> GenerateSchemaTypesAsync(

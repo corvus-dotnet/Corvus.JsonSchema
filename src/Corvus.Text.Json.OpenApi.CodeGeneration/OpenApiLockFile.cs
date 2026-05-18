@@ -6,6 +6,7 @@ using System.Buffers;
 using System.Reflection;
 using System.Security.Cryptography;
 using Corvus.Text.Json;
+using Corvus.Text.Json.Canonicalization;
 
 namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 
@@ -17,11 +18,13 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 public static class OpenApiLockFile
 {
     private const string LockFileName = "corvusjson-openapi.lock";
+    private const string BackupSuffix = ".bak";
 
     /// <summary>
     /// Creates a new lock file model from the given generation parameters.
     /// </summary>
-    /// <param name="specBytes">The raw spec file content.</param>
+    /// <param name="specRoot">The parsed spec root element. The hash is computed from
+    /// the RFC 8785 canonical form, making it whitespace- and format-insensitive.</param>
     /// <param name="specVersion">The spec version ("3.0" or "3.1").</param>
     /// <param name="rootNamespace">The root namespace.</param>
     /// <param name="clientName">The client name prefix, or <see langword="null"/>.</param>
@@ -29,7 +32,7 @@ public static class OpenApiLockFile
     /// <param name="generatedFiles">The list of generated file names.</param>
     /// <returns>A new <see cref="OpenApiLockFileModel"/>.</returns>
     public static OpenApiLockFileModel Create(
-        byte[] specBytes,
+        in JsonElement specRoot,
         string specVersion,
         string rootNamespace,
         string? clientName,
@@ -78,7 +81,7 @@ public static class OpenApiLockFile
                         }
                     }),
                 rootNamespace: rootNamespace,
-                specFileHash: ComputeHash(specBytes),
+                specFileHash: ComputeCanonicalHash(in specRoot),
                 specVersion: specVersion,
                 clientName: clientName is not null ? (JsonString.Source)clientName : default);
 
@@ -120,7 +123,7 @@ public static class OpenApiLockFile
     /// Determines whether the lock file is up to date with the given parameters.
     /// </summary>
     /// <param name="lockFile">The existing lock file model.</param>
-    /// <param name="specBytes">The current spec file content.</param>
+    /// <param name="specRoot">The parsed spec root element.</param>
     /// <param name="specVersion">The spec version.</param>
     /// <param name="rootNamespace">The root namespace.</param>
     /// <param name="clientName">The client name prefix.</param>
@@ -128,7 +131,7 @@ public static class OpenApiLockFile
     /// <returns><see langword="true"/> if the lock file matches and generation can be skipped.</returns>
     public static bool IsUpToDate(
         in OpenApiLockFileModel lockFile,
-        byte[] specBytes,
+        in JsonElement specRoot,
         string specVersion,
         string rootNamespace,
         string? clientName,
@@ -139,7 +142,7 @@ public static class OpenApiLockFile
             return false;
         }
 
-        if (lockFile.SpecFileHash.GetString() != ComputeHash(specBytes))
+        if (lockFile.SpecFileHash.GetString() != ComputeCanonicalHash(in specRoot))
         {
             return false;
         }
@@ -197,6 +200,73 @@ public static class OpenApiLockFile
         File.WriteAllBytes(filePath, buffer.WrittenSpan.ToArray());
     }
 
+    /// <summary>
+    /// Creates a backup of the existing lock file, if one exists.
+    /// Call this before generation so the lock file can be restored on failure.
+    /// </summary>
+    /// <param name="outputPath">The output directory.</param>
+    /// <returns><see langword="true"/> if a backup was created; <see langword="false"/>
+    /// if no lock file existed.</returns>
+    public static bool BackupLockFile(string outputPath)
+    {
+        string filePath = Path.Combine(outputPath, LockFileName);
+        if (!File.Exists(filePath))
+        {
+            return false;
+        }
+
+        string backupPath = filePath + BackupSuffix;
+        File.Copy(filePath, backupPath, overwrite: true);
+        return true;
+    }
+
+    /// <summary>
+    /// Restores the lock file from a previously created backup.
+    /// Call this when generation fails to leave the lock file in its pre-generation state.
+    /// </summary>
+    /// <param name="outputPath">The output directory.</param>
+    /// <returns><see langword="true"/> if the backup was restored; <see langword="false"/>
+    /// if no backup existed.</returns>
+    public static bool RestoreLockFile(string outputPath)
+    {
+        string filePath = Path.Combine(outputPath, LockFileName);
+        string backupPath = filePath + BackupSuffix;
+
+        if (!File.Exists(backupPath))
+        {
+            return false;
+        }
+
+        File.Copy(backupPath, filePath, overwrite: true);
+        File.Delete(backupPath);
+        return true;
+    }
+
+    /// <summary>
+    /// Deletes the lock file backup, if one exists.
+    /// Call this after generation succeeds and the new lock file has been written.
+    /// </summary>
+    /// <param name="outputPath">The output directory.</param>
+    public static void DeleteBackup(string outputPath)
+    {
+        string backupPath = Path.Combine(outputPath, LockFileName + BackupSuffix);
+        if (File.Exists(backupPath))
+        {
+            File.Delete(backupPath);
+        }
+    }
+
+    /// <summary>
+    /// Computes a SHA-256 hash of the RFC 8785 canonical form of the given JSON element.
+    /// This makes the hash whitespace- and format-insensitive.
+    /// </summary>
+    private static string ComputeCanonicalHash(in JsonElement element)
+    {
+        byte[] canonicalBytes = JsonCanonicalizer.Canonicalize(in element);
+        byte[] hash = SHA256.HashData(canonicalBytes);
+        return Convert.ToHexStringLower(hash);
+    }
+
     private static bool StringArrayEquals(JsonElement jsonArray, string[] expected)
     {
         int i = 0;
@@ -211,12 +281,6 @@ public static class OpenApiLockFile
         }
 
         return i == expected.Length;
-    }
-
-    private static string ComputeHash(byte[] content)
-    {
-        byte[] hash = SHA256.HashData(content);
-        return Convert.ToHexStringLower(hash);
     }
 
     private static string GetGeneratorVersion()
