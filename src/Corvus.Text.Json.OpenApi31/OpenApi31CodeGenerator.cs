@@ -2588,16 +2588,16 @@ public sealed class OpenApi31CodeGenerator
                 w.Write(", ");
             }
 
-            string paramTypeName = this.GetParameterTypeName(param);
+            string paramSourceTypeName = this.GetParameterSourceTypeName(param);
             string paramName = CodeEmitHelpers.SanitizeParameterName(param.Name);
 
             if (param.IsRequired)
             {
-                w.Write($"{paramTypeName} {paramName}");
+                w.Write($"{paramSourceTypeName} {paramName}");
             }
             else
             {
-                w.Write($"{paramTypeName} {paramName} = default");
+                w.Write($"{paramSourceTypeName} {paramName} = default");
             }
 
             first = false;
@@ -2613,6 +2613,12 @@ public sealed class OpenApi31CodeGenerator
         w.OpenBrace();
 
         // Emit the body: build the request, set bound parameters from runtime expressions.
+        bool hasUnsatisfiedParams = unsatisfiedParams.Count > 0;
+        if (hasUnsatisfiedParams)
+        {
+            w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
+        }
+
         w.WriteLine($"{targetRequestType} request = new()");
         w.OpenBrace();
 
@@ -2649,14 +2655,19 @@ public sealed class OpenApi31CodeGenerator
         {
             string propertyName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
             string paramName = CodeEmitHelpers.SanitizeParameterName(param.Name);
+            string typeName = this.GetParameterTypeName(param);
 
             if (param.IsRequired)
             {
-                w.WriteLine($"{propertyName} = {paramName},");
+                w.WriteLine($"{propertyName} = ({typeName}){typeName}.CreateBuilder(workspace, {paramName}).RootElement,");
             }
             else
             {
-                w.WriteLine($"{propertyName} = {paramName},");
+                string undefinedFallback = CodeEmitHelpers.FormatDefaultValueExpression(
+                    typeName, param.DefaultValueJson, param.DefaultValueKind);
+                w.WriteLine(
+                    $"{propertyName} = {paramName}.IsUndefined ? {undefinedFallback} : " +
+                    $"({typeName}){typeName}.CreateBuilder(workspace, {paramName}).RootElement,");
             }
         }
 

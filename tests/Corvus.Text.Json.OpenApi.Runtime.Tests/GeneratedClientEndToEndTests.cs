@@ -3902,6 +3902,58 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual("/items/item-5", linkedRequest.RequestUri!.AbsolutePath);
     }
 
+    [TestMethod]
+    public async Task CreateItem_FollowSearchByNameLink_ExtractsNameFromRequestBody()
+    {
+        using var harness = new SequencedTestHarness(
+        [
+            (HttpStatusCode.Created, """{"id":"new-99","name":"Gizmo"}"""),
+            (HttpStatusCode.OK, """{}"""),
+        ]);
+
+        var client = new ApiItemsClient(harness.Transport);
+        using var bodyDoc = ParsedJsonDocument<PostItemsBody>.Parse("""{"name":"Gizmo","price":29.99}""");
+
+        CreateItemResponse createResp = await client.CreateItemAsync(body: bodyDoc.RootElement);
+
+        Assert.AreEqual(201, createResp.StatusCode);
+
+        // Follow the SearchByName link — extracts q from $request.body#/name.
+        await using SearchResponse searchResp = await createResp.Links.SearchByNameAsync();
+
+        Assert.AreEqual(200, searchResp.StatusCode);
+
+        // Verify the linked request used q = "Gizmo" from the original request body.
+        HttpRequestMessage linkedRequest = harness.CapturedRequests[1];
+        Assert.IsTrue(
+            linkedRequest.RequestUri!.Query.Contains("q=Gizmo"),
+            $"Expected query to contain 'q=Gizmo' but got '{linkedRequest.RequestUri.Query}'");
+    }
+
+    [TestMethod]
+    public async Task CreateItem_FollowSearchByNameLink_WithOptionalParams()
+    {
+        using var harness = new SequencedTestHarness(
+        [
+            (HttpStatusCode.Created, """{"id":"new-100","name":"Widget Pro"}"""),
+            (HttpStatusCode.OK, """{}"""),
+        ]);
+
+        var client = new ApiItemsClient(harness.Transport);
+        using var bodyDoc = ParsedJsonDocument<PostItemsBody>.Parse("""{"name":"Widget Pro","price":49.99}""");
+
+        CreateItemResponse createResp = await client.CreateItemAsync(body: bodyDoc.RootElement);
+
+        // Follow SearchByName with optional page parameter.
+        await using SearchResponse searchResp = await createResp.Links.SearchByNameAsync(page: 3);
+
+        HttpRequestMessage linkedRequest = harness.CapturedRequests[1];
+        string query = linkedRequest.RequestUri!.Query;
+
+        Assert.IsTrue(query.Contains("q=Widget"), $"Expected query to contain 'q=Widget' but got '{query}'");
+        Assert.IsTrue(query.Contains("page=3"), $"Expected query to contain 'page=3' but got '{query}'");
+    }
+
     /// <summary>
     /// A test harness that returns a sequence of pre-configured responses,
     /// capturing all requests in order. Used for link-following tests where

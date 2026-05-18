@@ -627,6 +627,13 @@
                   "itemId": "$response.body#/id"
                 },
                 "description": "Fetch the newly created item by its generated ID"
+              },
+              "SearchByName": {
+                "operationId": "search",
+                "parameters": {
+                  "q": "$request.body#/name"
+                },
+                "description": "Search for items using the name from the creation request body"
               }
             }
           },
