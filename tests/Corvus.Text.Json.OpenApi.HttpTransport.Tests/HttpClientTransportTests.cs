@@ -584,6 +584,7 @@ public class HttpClientTransportTests
             string? contentType = null,
             IResponseHeaders? responseHeaders = null,
             IAsyncDisposable? owner = null,
+            IApiTransport? transport = null,
             CancellationToken cancellationToken = default)
         {
             using MemoryStream ms = new();
@@ -621,6 +622,7 @@ public class HttpClientTransportTests
             string? contentType = null,
             IResponseHeaders? responseHeaders = null,
             IAsyncDisposable? owner = null,
+            IApiTransport? transport = null,
             CancellationToken cancellationToken = default)
         {
             throw new InvalidOperationException("Simulated CreateAsync failure");
@@ -1142,6 +1144,7 @@ public class HttpClientTransportTests
             string? contentType = null,
             IResponseHeaders? responseHeaders = null,
             IAsyncDisposable? owner = null,
+            IApiTransport? transport = null,
             CancellationToken cancellationToken = default)
         {
             // Drain the stream to avoid leaks.

@@ -3,7 +3,6 @@
 // </copyright>
 
 using System.Buffers;
-using System.Diagnostics;
 using System.Net.Http.Headers;
 using System.Text;
 using Corvus.Text.Json.Internal;
@@ -142,7 +141,7 @@ public sealed class HttpClientTransport : IApiTransport
             OperationMethod.Head => HttpMethod.Head,
             OperationMethod.Options => HttpMethod.Options,
             OperationMethod.Trace => HttpMethod.Trace,
-            _ => throw new UnreachableException(),
+            _ => new HttpMethod(method.ToString()),
         };
 
     private static HttpRequestMessage BuildHttpRequest<TRequest>(in TRequest request)

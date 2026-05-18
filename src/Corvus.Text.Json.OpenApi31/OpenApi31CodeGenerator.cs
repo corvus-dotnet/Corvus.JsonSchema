@@ -2276,10 +2276,17 @@ public sealed class OpenApi31CodeGenerator
 
         // Determine if any link uses $request.* expressions, requiring the source request.
         bool hasRequestExprLinks = hasLinks && HasRequestBasedExpressions(op);
+        bool hasRequestBodyExprLinks = hasRequestExprLinks && HasRequestBodyExpressions(op);
         if (hasRequestExprLinks)
         {
             w.WriteLine($"internal {op.MethodName}Request sourceRequest;");
             w.WriteLine("internal JsonWorkspace sourceWorkspace;");
+
+            if (hasRequestBodyExprLinks && op.RequestBody is not null)
+            {
+                string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
+                w.WriteLine($"internal {bodyTypeName} sourceBody;");
+            }
         }
 
         // Emit private backing fields for text/plain responses.
@@ -2674,19 +2681,9 @@ public sealed class OpenApi31CodeGenerator
                 // Navigate the response body via typed property accessors.
                 if (expr.JsonPointer?.StartsWith('/') == true)
                 {
-                    string pointerPath = expr.JsonPointer!.Substring(1);
-
-                    // Use the typed body accessor for the response status code.
                     string bodyAccessorName = CodeEmitHelpers.StatusCodeToName(link.SourceStatusCode);
                     string access = $"this.response.{bodyAccessorName}Body";
-
-                    // Map each JSON Pointer segment to its generated property name.
-                    string[] segments = pointerPath.Split('/');
-                    foreach (string segment in segments)
-                    {
-                        access += $".{CodeEmitHelpers.SanitizeIdentifier(segment)}";
-                    }
-
+                    access = AppendJsonPointerNavigation(access, expr.JsonPointer);
                     return $"{targetTypeName}.From({access})";
                 }
 
@@ -2702,13 +2699,58 @@ public sealed class OpenApi31CodeGenerator
                 string reqPropertyName = CodeEmitHelpers.SanitizeIdentifier(expr.Name!);
                 return $"{targetTypeName}.From(this.response.sourceRequest.{reqPropertyName})";
 
+            case RuntimeExpressionKind.RequestBody:
+                // Navigate the stored source body via typed property accessors.
+                if (expr.JsonPointer?.StartsWith('/') == true)
+                {
+                    string bodyAccess = "this.response.sourceBody";
+                    bodyAccess = AppendJsonPointerNavigation(bodyAccess, expr.JsonPointer);
+                    return $"{targetTypeName}.From({bodyAccess})";
+                }
+
+                return $"{targetTypeName}.From(this.response.sourceBody)";
+
             case RuntimeExpressionKind.Literal:
                 return $"{targetTypeName}.ParseValue(\"\"\"{expr.LiteralValue}\"\"\")";
 
             default:
-                // $url, $method, $request.body require additional infrastructure.
-                return $"default({targetTypeName}) /* TODO: {expr.Kind} expression */";
+                // $url, $method require additional infrastructure.
+                return $"default({targetTypeName}) /* unsupported: {expr.Kind} expression */";
         }
+    }
+
+    /// <summary>
+    /// Appends property/indexer access expressions for each segment of a JSON Pointer.
+    /// Numeric segments produce array indexer syntax (e.g., [0]), non-numeric segments
+    /// produce PascalCase property access (e.g., .PropertyName).
+    /// If the pointer references a path that doesn't exist on the generated type, the
+    /// emitted code will fail to compile — this is intentional, as it surfaces spec
+    /// authoring errors at build time.
+    /// </summary>
+    private static string AppendJsonPointerNavigation(string baseExpression, string jsonPointer)
+    {
+        string pointerPath = jsonPointer.Substring(1); // Remove leading '/'
+        string[] segments = pointerPath.Split('/');
+
+        string access = baseExpression;
+        foreach (string rawSegment in segments)
+        {
+            // JSON Pointer escaping: ~1 → /, ~0 → ~
+            string segment = rawSegment.Replace("~1", "/").Replace("~0", "~");
+
+            if (int.TryParse(segment, out int index))
+            {
+                // Numeric segment → array indexer
+                access += $"[{index}]";
+            }
+            else
+            {
+                // Named segment → typed property accessor
+                access += $".{CodeEmitHelpers.SanitizeIdentifier(segment)}";
+            }
+        }
+
+        return access;
     }
 
     private static bool HasRequestBasedExpressions(OperationInfo op)
@@ -2722,7 +2764,28 @@ public sealed class OpenApi31CodeGenerator
                     RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
                     if (expr.Kind is RuntimeExpressionKind.RequestPath
                         or RuntimeExpressionKind.RequestQuery
-                        or RuntimeExpressionKind.RequestHeader)
+                        or RuntimeExpressionKind.RequestHeader
+                        or RuntimeExpressionKind.RequestBody)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static bool HasRequestBodyExpressions(OperationInfo op)
+    {
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            foreach (LinkInfo link in resp.Links)
+            {
+                foreach (LinkParameterBinding binding in link.ParameterBindings)
+                {
+                    RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
+                    if (expr.Kind is RuntimeExpressionKind.RequestBody)
                     {
                         return true;
                     }
@@ -3607,6 +3670,9 @@ public sealed class OpenApi31CodeGenerator
         bool isFormUrlEncodedBody = hasBody && !isRawStreamBody && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
         bool isMultipartBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && IsMultipartRequestBody(op.RequestBody!.Value);
 
+        bool hasRequestBodyExprLinks = hasRequestExprLinks && HasRequestBodyExpressions(op)
+            && hasBody && !isRawStreamBody;
+
         w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
 
         // Materialise body from Source → immutable typed element (JSON and form-urlencoded).
@@ -3734,7 +3800,7 @@ public sealed class OpenApi31CodeGenerator
                         $"SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
                         $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), " +
-                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, workspace);");
+                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
                 }
                 else
                 {
@@ -3754,7 +3820,7 @@ public sealed class OpenApi31CodeGenerator
                         $"SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
                         $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
-                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, workspace);");
+                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
                 }
                 else
                 {
@@ -3783,7 +3849,7 @@ public sealed class OpenApi31CodeGenerator
                         $"SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
                         $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, workspace);");
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
                 }
                 else
                 {
@@ -3803,7 +3869,7 @@ public sealed class OpenApi31CodeGenerator
                         $"SendWithBodyWriterAsyncCore<{requestName}, " +
                         $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
                         $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, workspace);");
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
                 }
                 else
                 {
@@ -3822,7 +3888,7 @@ public sealed class OpenApi31CodeGenerator
                 w.WriteLine(
                     $"return CaptureRequestAsync(" +
                     $"SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
-                    $"{responseName}>(JsonWorkspace.CreateUnrented(), request, bodyValue, responseValidationMode, cancellationToken), request, workspace);");
+                    $"{responseName}>(JsonWorkspace.CreateUnrented(), request, bodyValue, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
             }
             else
             {
@@ -3851,15 +3917,32 @@ public sealed class OpenApi31CodeGenerator
         if (hasRequestExprLinks)
         {
             w.WriteLine();
-            w.WriteLine(
-                $"static async ValueTask<{responseName}> CaptureRequestAsync(" +
-                $"ValueTask<{responseName}> sendTask, {requestName} request, JsonWorkspace workspace)");
-            w.OpenBrace();
-            w.WriteLine($"{responseName} response = await sendTask;");
-            w.WriteLine("response.sourceRequest = request;");
-            w.WriteLine("response.sourceWorkspace = workspace;");
-            w.WriteLine("return response;");
-            w.CloseBrace();
+
+            if (hasRequestBodyExprLinks)
+            {
+                w.WriteLine(
+                    $"static async ValueTask<{responseName}> CaptureRequestAsync(" +
+                    $"ValueTask<{responseName}> sendTask, {requestName} request, {bodyTypeName} bodyValue, JsonWorkspace workspace)");
+                w.OpenBrace();
+                w.WriteLine($"{responseName} response = await sendTask;");
+                w.WriteLine("response.sourceRequest = request;");
+                w.WriteLine("response.sourceBody = bodyValue;");
+                w.WriteLine("response.sourceWorkspace = workspace;");
+                w.WriteLine("return response;");
+                w.CloseBrace();
+            }
+            else
+            {
+                w.WriteLine(
+                    $"static async ValueTask<{responseName}> CaptureRequestAsync(" +
+                    $"ValueTask<{responseName}> sendTask, {requestName} request, JsonWorkspace workspace)");
+                w.OpenBrace();
+                w.WriteLine($"{responseName} response = await sendTask;");
+                w.WriteLine("response.sourceRequest = request;");
+                w.WriteLine("response.sourceWorkspace = workspace;");
+                w.WriteLine("return response;");
+                w.CloseBrace();
+            }
         }
 
         w.CloseBrace();

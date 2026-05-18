@@ -116,6 +116,14 @@
                   },
                   "tag": {
                     "type": "string"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "properties": {
+                      "source": {
+                        "type": "string"
+                      }
+                    }
                   }
                 },
                 "required": [
@@ -157,6 +165,13 @@
                   "itemId": "$response.body#/id"
                 },
                 "description": "Retrieve the created item by its id."
+              },
+              "SearchByName": {
+                "operationId": "searchItems",
+                "parameters": {
+                  "q": "$request.body#/metadata/source"
+                },
+                "description": "Search for items by the created name"
               }
             }
           }
@@ -234,7 +249,7 @@
                 }
               },
               "X-Request-Id": {
-                "description": "Request correlation ID (no schema \u00e2\u20ac\u201d raw string)"
+                "description": "Request correlation ID (no schema â€” raw string)"
               }
             },
             "links": {
@@ -244,6 +259,12 @@
                   "itemId": "$request.path.itemId"
                 },
                 "description": "Re-fetch the same item."
+              },
+              "NonExistentLink": {
+                "operationId": "doesNotExist",
+                "parameters": {
+                  "id": "$response.body#/id"
+                }
               }
             }
           }
@@ -481,6 +502,443 @@
           }
         }
       }
+    },
+    "/search": {
+      "get": {
+        "operationId": "searchItems",
+        "tags": [
+          "Items",
+          "Search"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "tags",
+            "in": "query",
+            "style": "pipeDelimited",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "coords",
+            "in": "query",
+            "style": "spaceDelimited",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "number"
+              }
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "style": "deepObject",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "min": {
+                  "type": "integer"
+                },
+                "max": {
+                  "type": "integer"
+                }
+              }
+            }
+          },
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "prefs",
+            "in": "cookie",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Correlation-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Item"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "searchItemsAdvanced",
+        "tags": [
+          "Search"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "query": {
+                    "type": "string"
+                  },
+                  "limit": {
+                    "type": "integer"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "session",
+            "in": "cookie",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Item"
+                      }
+                    },
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "links": {
+              "GetFirstResult": {
+                "$ref": "#/components/links/GetItemById"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/upload": {
+      "post": {
+        "operationId": "uploadFile",
+        "tags": [
+          "Items"
+        ],
+        "summary": "Upload a file",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "links": {
+              "GetUploadedItem": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$response.body#/id"
+                }
+              },
+              "ReUpload": {
+                "operationId": "uploadFile",
+                "parameters": {
+                  "name": "$request.header.X-File-Name"
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "X-File-Name",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ]
+      }
+    },
+    "/feedback": {
+      "post": {
+        "operationId": "submitFeedback",
+        "tags": [
+          "Items"
+        ],
+        "summary": "Submit feedback",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "rating": {
+                    "type": "integer"
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "rating"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Feedback submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "links": {
+              "UpdateFeedback": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$request.body#/rating"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attachments": {
+      "post": {
+        "operationId": "uploadAttachment",
+        "tags": [
+          "Items"
+        ],
+        "summary": "Upload attachment",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "description": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attachment uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "links": {
+              "UpdateDescription": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$request.body#/description"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/feedback-encoded": {
+      "post": {
+        "operationId": "submitFeedbackEncoded",
+        "tags": [
+          "Items"
+        ],
+        "summary": "Submit feedback with encoding",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "comment": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "tags"
+                ]
+              },
+              "encoding": {
+                "tags": {
+                  "style": "pipeDelimited",
+                  "explode": false
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Feedback submitted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "links": {
+              "RefreshFeedback": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$request.body#/comment"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/attachments-encoded": {
+      "post": {
+        "operationId": "uploadAttachmentEncoded",
+        "tags": [
+          "Items"
+        ],
+        "summary": "Upload attachment with encoding",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              },
+              "encoding": {
+                "metadata": {
+                  "contentType": "application/json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attachment uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Item"
+                }
+              }
+            },
+            "links": {
+              "ReUploadEncoded": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$request.body#/metadata"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -519,6 +977,15 @@
             "type": "string"
           }
         }
+      }
+    },
+    "links": {
+      "GetItemById": {
+        "operationId": "getItem",
+        "parameters": {
+          "itemId": "$response.body#/id"
+        },
+        "description": "Fetch the item by its ID"
       }
     }
   }
