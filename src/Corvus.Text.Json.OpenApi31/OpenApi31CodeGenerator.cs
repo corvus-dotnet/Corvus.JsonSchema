@@ -2272,6 +2272,13 @@ public sealed class OpenApi31CodeGenerator
             w.WriteLine("private IApiTransport? transport;");
         }
 
+        // Determine if any link uses $request.* expressions, requiring the source request.
+        bool hasRequestExprLinks = hasLinks && HasRequestBasedExpressions(op);
+        if (hasRequestExprLinks)
+        {
+            w.WriteLine($"internal {op.MethodName}Request sourceRequest;");
+        }
+
         // Emit private backing fields for text/plain responses.
         foreach (ResponseInfo resp in op.Responses)
         {
@@ -2656,7 +2663,6 @@ public sealed class OpenApi31CodeGenerator
         {
             case RuntimeExpressionKind.ResponseBody:
                 // Navigate the response body via JSON Pointer.
-                // For now, emit a property access pattern for simple single-level pointers.
                 if (expr.JsonPointer?.StartsWith('/') == true)
                 {
                     string propertyName = expr.JsonPointer!.Substring(1);
@@ -2677,14 +2683,42 @@ public sealed class OpenApi31CodeGenerator
             case RuntimeExpressionKind.ResponseHeader:
                 return $"{targetTypeName}.ParseValue(\"{expr.Name}\")";
 
+            case RuntimeExpressionKind.RequestPath:
+            case RuntimeExpressionKind.RequestQuery:
+            case RuntimeExpressionKind.RequestHeader:
+                // Access the stored source request property.
+                string reqPropertyName = CodeEmitHelpers.SanitizeIdentifier(expr.Name!);
+                return $"{targetTypeName}.From(this.response.sourceRequest.{reqPropertyName})";
+
             case RuntimeExpressionKind.Literal:
                 return $"{targetTypeName}.ParseValue(\"\"\"{expr.LiteralValue}\"\"\")";
 
             default:
-                // Request-based expressions ($request.path.*, $request.query.*, $url, $method)
-                // require captured request context. Emit a TODO comment placeholder for now.
+                // $url, $method, $request.body require additional infrastructure.
                 return $"default({targetTypeName}) /* TODO: {expr.Kind} expression */";
         }
+    }
+
+    private static bool HasRequestBasedExpressions(OperationInfo op)
+    {
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            foreach (LinkInfo link in resp.Links)
+            {
+                foreach (LinkParameterBinding binding in link.ParameterBindings)
+                {
+                    RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
+                    if (expr.Kind is RuntimeExpressionKind.RequestPath
+                        or RuntimeExpressionKind.RequestQuery
+                        or RuntimeExpressionKind.RequestHeader)
+                    {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
     }
 
     private void EmitCreateAsync(
@@ -3547,9 +3581,21 @@ public sealed class OpenApi31CodeGenerator
 
         List<string> paramParts = this.BuildParameterList(op);
 
-        w.WriteLine(
-            $"public ValueTask<{responseName}> {op.MethodName}Async(" +
-            $"{string.Join(", ", paramParts)})");
+        bool hasRequestExprLinks = HasRequestBasedExpressions(op);
+
+        if (hasRequestExprLinks)
+        {
+            w.WriteLine(
+                $"public async ValueTask<{responseName}> {op.MethodName}Async(" +
+                $"{string.Join(", ", paramParts)})");
+        }
+        else
+        {
+            w.WriteLine(
+                $"public ValueTask<{responseName}> {op.MethodName}Async(" +
+                $"{string.Join(", ", paramParts)})");
+        }
+
         w.OpenBrace();
 
         bool hasParams = op.Parameters.Length > 0;
@@ -3653,10 +3699,23 @@ public sealed class OpenApi31CodeGenerator
             // Find the actual content type string from the spec for the raw stream body.
             string streamContentType = op.RequestBody!.Value.Content
                 .First(c => CodeEmitHelpers.IsRawStreamMediaType(c.MediaType)).MediaType;
-            w.WriteLine(
-                $"return SendWithStreamBodyAsyncCore<{requestName}, " +
-                $"{responseName}>(workspace, request, body, " +
-                $"{CodeEmitHelpers.FormatStringLiteral(streamContentType)}, responseValidationMode, cancellationToken);");
+
+            if (hasRequestExprLinks)
+            {
+                w.WriteLine(
+                    $"{responseName} response = await SendWithStreamBodyAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, body, " +
+                    $"{CodeEmitHelpers.FormatStringLiteral(streamContentType)}, responseValidationMode, cancellationToken);");
+                w.WriteLine("response.sourceRequest = request;");
+                w.WriteLine("return response;");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"return SendWithStreamBodyAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, body, " +
+                    $"{CodeEmitHelpers.FormatStringLiteral(streamContentType)}, responseValidationMode, cancellationToken);");
+            }
         }
         else if (isFormUrlEncodedBody)
         {
@@ -3666,19 +3725,45 @@ public sealed class OpenApi31CodeGenerator
             if (encodings is { Count: > 0 })
             {
                 EmitEncodingsDictionary(w, encodings);
-                w.WriteLine(
-                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, " +
-                    $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), " +
-                    $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+                if (hasRequestExprLinks)
+                {
+                    w.WriteLine(
+                        $"{responseName} response = await SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), " +
+                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+                    w.WriteLine("response.sourceRequest = request;");
+                    w.WriteLine("return response;");
+                }
+                else
+                {
+                    w.WriteLine(
+                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), " +
+                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+                }
             }
             else
             {
-                w.WriteLine(
-                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, " +
-                    $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
-                    $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+                if (hasRequestExprLinks)
+                {
+                    w.WriteLine(
+                        $"{responseName} response = await SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
+                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+                    w.WriteLine("response.sourceRequest = request;");
+                    w.WriteLine("return response;");
+                }
+                else
+                {
+                    w.WriteLine(
+                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), " +
+                        $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
+                }
             }
         }
         else if (isMultipartBody)
@@ -3691,32 +3776,80 @@ public sealed class OpenApi31CodeGenerator
             if (encodings is { Count: > 0 })
             {
                 EmitEncodingsDictionary(w, encodings);
-                w.WriteLine(
-                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, " +
-                    $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), " +
-                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                if (hasRequestExprLinks)
+                {
+                    w.WriteLine(
+                        $"{responseName} response = await SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                    w.WriteLine("response.sourceRequest = request;");
+                    w.WriteLine("return response;");
+                }
+                else
+                {
+                    w.WriteLine(
+                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                }
             }
             else
             {
-                w.WriteLine(
-                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                    $"{responseName}>(workspace, request, " +
-                    $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), " +
-                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                if (hasRequestExprLinks)
+                {
+                    w.WriteLine(
+                        $"{responseName} response = await SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                    w.WriteLine("response.sourceRequest = request;");
+                    w.WriteLine("return response;");
+                }
+                else
+                {
+                    w.WriteLine(
+                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                        $"{responseName}>(workspace, request, " +
+                        $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), " +
+                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                }
             }
         }
         else if (hasBody)
         {
-            w.WriteLine(
-                $"return SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
-                $"{responseName}>(workspace, request, bodyValue, responseValidationMode, cancellationToken);");
+            if (hasRequestExprLinks)
+            {
+                w.WriteLine(
+                    $"{responseName} response = await SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
+                    $"{responseName}>(workspace, request, bodyValue, responseValidationMode, cancellationToken);");
+                w.WriteLine("response.sourceRequest = request;");
+                w.WriteLine("return response;");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"return SendWithBodyAsyncCore<{requestName}, {bodyTypeName}, " +
+                    $"{responseName}>(workspace, request, bodyValue, responseValidationMode, cancellationToken);");
+            }
         }
         else
         {
-            w.WriteLine(
-                $"return SendAsyncCore<{requestName}, " +
-                $"{responseName}>(workspace, request, responseValidationMode, cancellationToken);");
+            if (hasRequestExprLinks)
+            {
+                w.WriteLine(
+                    $"{responseName} response = await SendAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, responseValidationMode, cancellationToken);");
+                w.WriteLine("response.sourceRequest = request;");
+                w.WriteLine("return response;");
+            }
+            else
+            {
+                w.WriteLine(
+                    $"return SendAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, responseValidationMode, cancellationToken);");
+            }
         }
 
         w.CloseBrace();

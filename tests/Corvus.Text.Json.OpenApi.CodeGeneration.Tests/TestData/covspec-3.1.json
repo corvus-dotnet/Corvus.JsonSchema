@@ -236,6 +236,15 @@
                   }
                 }
               }
+            },
+            "links": {
+              "RefreshItem": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$request.path.itemId"
+                },
+                "description": "Re-fetch the same item."
+              }
             }
           }
         }

@@ -236,6 +236,15 @@
               "X-Request-Id": {
                 "description": "Request correlation ID (no schema \u00e2\u20ac\u201d raw string)"
               }
+            },
+            "links": {
+              "RefreshItem": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$request.path.itemId"
+                },
+                "description": "Re-fetch the same item."
+              }
             }
           }
         }

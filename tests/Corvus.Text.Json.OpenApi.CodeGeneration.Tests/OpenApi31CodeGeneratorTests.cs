@@ -8057,13 +8057,70 @@ public class OpenApi31CodeGeneratorTests
     }
 
     [TestMethod]
-    public void CovSpec_ResponseLinks_GetItemResponse_NoLinksProperty()
+    public void CovSpec_ResponseLinks_GetItemResponse_HasRefreshItemLink()
     {
         IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
         GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
 
+        Assert.IsTrue(
+            resp.Content.Contains("RefreshItemAsync(", StringComparison.Ordinal),
+            "GetItemResponse should have RefreshItemAsync link method");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_GetItemResponse_HasSourceRequestField()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("internal GetItemRequest sourceRequest;", StringComparison.Ordinal),
+            "GetItemResponse should have sourceRequest field for $request.path expressions");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_RefreshItem_UsesSourceRequest()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("this.response.sourceRequest.ItemId", StringComparison.Ordinal),
+            "RefreshItem link should access sourceRequest.ItemId for $request.path.itemId");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_ListItemsResponse_NoLinksProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "ListItemsResponse.cs");
+
         Assert.IsFalse(
             resp.Content.Contains("LinksAccessor", StringComparison.Ordinal),
-            "GetItemResponse should NOT have a Links accessor (no links defined)");
+            "ListItemsResponse should NOT have a Links accessor (no links defined)");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_ClientMethod_IsAsyncWhenRequestExpr()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => f.FileName.EndsWith("Client.cs", StringComparison.Ordinal)
+            && !f.FileName.StartsWith("IApi", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("public async ValueTask<GetItemResponse> GetItemAsync(", StringComparison.Ordinal),
+            "GetItemAsync should be async when response has $request.* link expressions");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_ClientMethod_SetsSourceRequest()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile client = files.First(f => f.FileName.EndsWith("Client.cs", StringComparison.Ordinal)
+            && !f.FileName.StartsWith("IApi", StringComparison.Ordinal));
+
+        Assert.IsTrue(
+            client.Content.Contains("response.sourceRequest = request;", StringComparison.Ordinal),
+            "Client method should set response.sourceRequest after await");
     }
 }
