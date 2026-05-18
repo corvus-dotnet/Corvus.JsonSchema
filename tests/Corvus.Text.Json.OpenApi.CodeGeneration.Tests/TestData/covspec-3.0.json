@@ -593,6 +593,37 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/Item"
+                  },
+                  "properties": {
+                    "nextPage": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            },
+            "links": {
+              "NextPage": {
+                "operationId": "searchItems",
+                "parameters": {
+                  "q": "$request.query.q",
+                  "page": "$response.body#/nextPage"
+                },
+                "description": "Tests request.query expression"
+              }
+            },
+            "headers": {
+              "X-Facets": {
+                "explode": true,
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "category": {
+                      "type": "string"
+                    },
+                    "status": {
+                      "type": "string"
+                    }
                   }
                 }
               }
@@ -933,6 +964,326 @@
                 "operationId": "getItem",
                 "parameters": {
                   "itemId": "$request.body#/metadata"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/advanced-styles/{ids}": {
+      "parameters": [
+        {
+          "name": "ids",
+          "in": "path",
+          "required": true,
+          "style": "label",
+          "explode": true,
+          "schema": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getAdvancedStyles",
+        "parameters": [
+          {
+            "name": "matrixTags",
+            "in": "query",
+            "style": "form",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "weight",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          },
+          {
+            "name": "score",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Advanced styles result",
+            "headers": {
+              "X-Request-Id": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Counts": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int64"
+                  }
+                }
+              },
+              "X-Scores": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "format": "double"
+                  }
+                }
+              },
+              "X-Weights": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "number",
+                    "format": "float"
+                  }
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          }
+                        }
+                      }
+                    },
+                    "total": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            },
+            "links": {
+              "GetFirstItemById": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$response.body#/items/0/id"
+                },
+                "description": "Get the first item by its ID (tests numeric pointer segment)"
+              },
+              "GetItemByHeader": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$response.header.X-Request-Id"
+                },
+                "description": "Tests response header expression"
+              },
+              "SearchWithLiteral": {
+                "operationId": "searchItems",
+                "parameters": {
+                  "q": "default-search-term"
+                },
+                "description": "Tests literal value expression"
+              },
+              "SearchWithUrl": {
+                "operationId": "searchItems",
+                "parameters": {
+                  "q": "$url"
+                },
+                "description": "Tests url expression (unsupported - emits default)"
+              },
+              "SearchWithMethod": {
+                "operationId": "searchItems",
+                "parameters": {
+                  "q": "$method"
+                },
+                "description": "Tests method expression (unsupported - emits default)"
+              },
+              "UnrecognizedExpr": {
+                "operationId": "searchItems",
+                "parameters": {
+                  "q": "$unknown.expression"
+                },
+                "description": "Tests unrecognized dollar expression fallback"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matrix-test/{codes}": {
+      "get": {
+        "operationId": "getByMatrixCodes",
+        "parameters": [
+          {
+            "name": "codes",
+            "in": "path",
+            "required": true,
+            "style": "matrix",
+            "explode": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Matrix test result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/matrix-no-explode/{tags}": {
+      "get": {
+        "operationId": "getByMatrixTags",
+        "parameters": [
+          {
+            "name": "tags",
+            "in": "path",
+            "required": true,
+            "style": "matrix",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/label-no-explode/{.items}": {
+      "get": {
+        "operationId": "getByLabelItems",
+        "parameters": [
+          {
+            "name": "items",
+            "in": "path",
+            "required": true,
+            "style": "label",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "count": {
+                      "type": "integer"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/styled-object/{obj}": {
+      "get": {
+        "operationId": "getByStyledObject",
+        "parameters": [
+          {
+            "name": "obj",
+            "in": "path",
+            "required": true,
+            "style": "matrix",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "color": {
+                  "type": "string"
+                },
+                "size": {
+                  "type": "integer"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "found": {
+                      "type": "boolean"
+                    }
+                  }
                 }
               }
             }
