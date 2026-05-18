@@ -1386,30 +1386,6 @@ public sealed class OpenApi30CodeGenerator
     }
 
     /// <summary>
-    /// Classifies how a response body should be represented in generated code.
-    /// </summary>
-    private static ResponseBodyKind GetResponseBodyKind(ResponseInfo resp)
-    {
-        foreach (ContentInfo content in resp.Content)
-        {
-            ContentCategory category = CodeEmitHelpers.ClassifyMediaType(content.MediaType);
-            if (category == ContentCategory.Json)
-            {
-                return ResponseBodyKind.Json;
-            }
-
-            if (category == ContentCategory.TextPlain)
-            {
-                return ResponseBodyKind.Text;
-            }
-
-            return ResponseBodyKind.Stream;
-        }
-
-        return ResponseBodyKind.Json;
-    }
-
-    /// <summary>
     /// Returns the distinct content categories present in a response's content entries.
     /// </summary>
     private static ContentCategory[] GetDistinctContentCategories(ResponseInfo resp)
@@ -1418,15 +1394,6 @@ public sealed class OpenApi30CodeGenerator
             .Select(c => CodeEmitHelpers.ClassifyMediaType(c.MediaType))
             .Distinct()
             .ToArray();
-    }
-
-    /// <summary>
-    /// Returns <see langword="true"/> if the response has multiple content types
-    /// from different categories (e.g., JSON and text/plain).
-    /// </summary>
-    private static bool HasMultipleContentCategories(ResponseInfo resp)
-    {
-        return GetDistinctContentCategories(resp).Length > 1;
     }
 
     // ── Request struct emission ─────────────────────────────────────────
@@ -3288,20 +3255,5 @@ public sealed class OpenApi30CodeGenerator
         }
 
         w.CloseBrace();
-    }
-
-    /// <summary>
-    /// How a response body is represented in generated code.
-    /// </summary>
-    private enum ResponseBodyKind
-    {
-        /// <summary>JSON body — parsed into a typed element.</summary>
-        Json,
-
-        /// <summary>Raw binary stream (octet-stream, image/*, etc.).</summary>
-        Stream,
-
-        /// <summary>Text/plain — exposed as both Stream and string.</summary>
-        Text,
     }
 }

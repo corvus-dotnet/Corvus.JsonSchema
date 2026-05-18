@@ -2602,6 +2602,129 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_MultiContentResponse_EmitsContentTypeBranching()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "Multi", "version": "1.0" },
+              "paths": {
+                "/data": {
+                  "get": {
+                    "operationId": "getData",
+                    "tags": ["data"],
+                    "responses": {
+                      "200": {
+                        "description": "Data in multiple formats",
+                        "content": {
+                          "application/json": {
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "value": { "type": "string" }
+                              }
+                            }
+                          },
+                          "text/plain": {
+                            "schema": { "type": "string" }
+                          }
+                        }
+                      },
+                      "default": {
+                        "description": "Error in multiple formats",
+                        "content": {
+                          "application/json": {
+                            "schema": {
+                              "type": "object",
+                              "properties": {
+                                "error": { "type": "string" }
+                              }
+                            }
+                          },
+                          "text/plain": {
+                            "schema": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> typeMap = new(StringComparer.Ordinal)
+        {
+            ["#/paths/~1data/get/responses/200/content/application~1json/schema"] = "Test.DataResult",
+            ["#/paths/~1data/get/responses/default/content/application~1json/schema"] = "Test.ErrorResult",
+        };
+        OpenApi30CodeGenerator gen = new("Test", typeMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
+
+        // Multi-content response should have Content-Type branching
+        Assert.IsTrue(
+            resp.Content.Contains("contentType", StringComparison.Ordinal),
+            "Multi-content response should branch on Content-Type");
+
+        // Should have both JSON and text accessors
+        Assert.IsTrue(
+            resp.Content.Contains("OkText", StringComparison.Ordinal),
+            "Should have text accessor for 200");
+        Assert.IsTrue(
+            resp.Content.Contains("OkBody", StringComparison.Ordinal) ||
+            resp.Content.Contains("TryGetOk", StringComparison.Ordinal),
+            "Should have JSON accessor for 200");
+
+        // Client should generate Match method with multi-category support
+        GeneratedFile client = GetFile(files, "ApiDataClient.cs");
+        Assert.IsTrue(
+            client.Content.Contains("getData", StringComparison.OrdinalIgnoreCase),
+            "Client should have the getData operation method");
+    }
+
+    [TestMethod]
+    public void Generate_OctetStreamRequestBody_EmitsStreamSend()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "StreamReq", "version": "1.0" },
+              "paths": {
+                "/upload-raw": {
+                  "post": {
+                    "operationId": "uploadRaw",
+                    "tags": ["uploads"],
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "application/octet-stream": {
+                          "schema": { "type": "string", "format": "binary" }
+                        }
+                      }
+                    },
+                    "responses": { "201": { "description": "Created" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OpenApi30CodeGenerator gen = new("Test", new Dictionary<string, string>(StringComparer.Ordinal));
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile client = GetFile(files, "ApiUploadsClient.cs");
+
+        // octet-stream request body should use stream sending
+        Assert.IsTrue(
+            client.Content.Contains("Stream", StringComparison.Ordinal),
+            "Client should use Stream for octet-stream request body");
+    }
+
+    [TestMethod]
     public void Generate_StaticPath_EmitsLiteralWrite()
     {
         const string spec = """
