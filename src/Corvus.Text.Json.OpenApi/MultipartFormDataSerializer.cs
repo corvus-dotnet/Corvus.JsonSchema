@@ -197,10 +197,6 @@ public static class MultipartFormDataSerializer
                     writer.Write("\r\n\r\n");
                     writer.Write(propValue.ToString());
                     break;
-
-                default:
-                    writer.Write("\r\n");
-                    break;
             }
 
             writer.Write("\r\n");

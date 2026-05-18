@@ -34,12 +34,4 @@ namespace Corvus.Text.Json.OpenApi.CodeGeneration;
 /// The resolvable reference for the type builder. May be a fragment-only pointer (same
 /// document) or a relative/absolute URI with fragment (external document).
 /// </param>
-public readonly record struct SchemaReference(string PositionalPointer, string ResolvablePointer)
-{
-    /// <summary>
-    /// Creates a schema reference for an inline schema (both pointers are the same).
-    /// </summary>
-    /// <param name="pointer">The positional JSON Pointer.</param>
-    /// <returns>A <see cref="SchemaReference"/> where both pointers are identical.</returns>
-    public static SchemaReference Inline(string pointer) => new(pointer, pointer);
-}
+public readonly record struct SchemaReference(string PositionalPointer, string ResolvablePointer);

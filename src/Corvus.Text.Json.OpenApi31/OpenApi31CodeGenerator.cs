@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
@@ -1316,7 +1317,7 @@ public sealed class OpenApi31CodeGenerator
             OperationMethod.Head => "head",
             OperationMethod.Patch => "patch",
             OperationMethod.Trace => "trace",
-            _ => method.ToString().ToLowerInvariant(),
+            _ => throw new UnreachableException(),
         };
 
         string pathPart = pathTemplate

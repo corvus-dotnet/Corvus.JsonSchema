@@ -2,6 +2,7 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Diagnostics;
 using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Microsoft.CodeAnalysis.CSharp;
@@ -1574,9 +1575,10 @@ public static class CodeEmitHelpers
         }
         else
         {
-            // Boolean and other non-numeric/non-string: use CreateBuilder with Source implicit conversion.
-            string sourceExpr = GetScalarSourceExpression(kind);
-            w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.CreateBuilder(this.workspace, {sourceExpr}).RootElement;");
+            // Boolean: use CreateBuilder with Source implicit conversion.
+            // Only Boolean reaches this branch — String and all numeric kinds are handled above.
+            Debug.Assert(kind is ParameterSerializationKind.Boolean, "Only Boolean should reach this branch.");
+            w.WriteLine($"this.{fieldName}HeaderValue = {typeName}.CreateBuilder(this.workspace, bool.Parse(rawValue)).RootElement;");
         }
     }
 
@@ -1597,15 +1599,6 @@ public static class CodeEmitHelpers
             or ParameterSerializationKind.Double
             or ParameterSerializationKind.Decimal
             or ParameterSerializationKind.UnboundedNumber;
-    }
-
-    private static string GetScalarSourceExpression(ParameterSerializationKind kind)
-    {
-        return kind switch
-        {
-            ParameterSerializationKind.Boolean => "bool.Parse(rawValue)",
-            _ => "rawValue",
-        };
     }
 
     private static void EmitResponseHeaderArrayParse(
@@ -2129,7 +2122,9 @@ public static class CodeEmitHelpers
                 ContentCategory.Json => 0,
                 ContentCategory.TextPlain => 1,
                 ContentCategory.OctetStream => 2,
-                _ => 3,
+                ContentCategory.FormUrlEncoded => 3,
+                ContentCategory.Multipart => 3,
+                _ => throw new UnreachableException(),
             })
             .ToArray();
     }
