@@ -31,6 +31,32 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SpecFile);
 
+        // Resolve the spec URL — explicit --spec-url takes priority, then lock file descriptionLocation
+        string? specUrl = settings.SpecUrl;
+        if (specUrl is null)
+        {
+            string outputPathForLockCheck = settings.OutputPath ?? Path.Combine(Directory.GetCurrentDirectory(), "Generated");
+            if (OpenApiLockFile.TryLoad(outputPathForLockCheck, out OpenApiLockFileModel lockCheck)
+                && lockCheck.DescriptionLocation.IsNotUndefined())
+            {
+                specUrl = lockCheck.DescriptionLocation.GetString();
+            }
+        }
+
+        // If we have a spec URL (either explicit or from lock file), fetch and overwrite the local file
+        if (specUrl is not null)
+        {
+            AnsiConsole.MarkupLine($"[green]Fetching spec from:[/] {specUrl}");
+            using HttpClient httpClient = new();
+            byte[] remoteBytes = await httpClient.GetByteArrayAsync(specUrl, cancellationToken)
+                .ConfigureAwait(false);
+            string dir = Path.GetDirectoryName(Path.GetFullPath(settings.SpecFile))!;
+            Directory.CreateDirectory(dir);
+            await File.WriteAllBytesAsync(settings.SpecFile, remoteBytes, cancellationToken)
+                .ConfigureAwait(false);
+            AnsiConsole.MarkupLine($"[green]Saved to:[/] {settings.SpecFile}");
+        }
+
         if (!File.Exists(settings.SpecFile))
         {
             AnsiConsole.MarkupLine($"[red]Error:[/] Spec file not found: {settings.SpecFile}");
@@ -144,7 +170,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             AnsiConsole.MarkupLine($"[green]Generated {totalFiles} files in {outputPath}[/]");
 
             // Write lock file and clean up backup
-            OpenApiLockFileModel lockFile = OpenApiLockFile.Create(in specRoot, specVersion, rootNamespace, settings.ClientName, filter, generatedFileNames);
+            OpenApiLockFileModel lockFile = OpenApiLockFile.Create(in specRoot, specVersion, rootNamespace, settings.ClientName, filter, generatedFileNames, specUrl);
             OpenApiLockFile.Save(in lockFile, outputPath);
             OpenApiLockFile.DeleteBackup(outputPath);
 

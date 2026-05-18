@@ -30,6 +30,7 @@ public static class OpenApiLockFile
     /// <param name="clientName">The client name prefix, or <see langword="null"/>.</param>
     /// <param name="filter">The operation filter, or <see langword="null"/>.</param>
     /// <param name="generatedFiles">The list of generated file names.</param>
+    /// <param name="descriptionLocation">The original URL of the API description, or <see langword="null"/>.</param>
     /// <returns>A new <see cref="OpenApiLockFileModel"/>.</returns>
     public static OpenApiLockFileModel Create(
         in JsonElement specRoot,
@@ -37,7 +38,8 @@ public static class OpenApiLockFile
         string rootNamespace,
         string? clientName,
         OperationFilter? filter,
-        IReadOnlyList<string> generatedFiles)
+        IReadOnlyList<string> generatedFiles,
+        string? descriptionLocation = null)
     {
         string[] includePaths = filter?.IncludePaths is { Count: > 0 } inc ? [.. inc] : [];
         string[] excludePaths = filter?.ExcludePaths is { Count: > 0 } exc ? [.. exc] : [];
@@ -83,7 +85,8 @@ public static class OpenApiLockFile
                 rootNamespace: rootNamespace,
                 specFileHash: ComputeCanonicalHash(in specRoot),
                 specVersion: specVersion,
-                clientName: clientName is not null ? (JsonString.Source)clientName : default);
+                clientName: clientName is not null ? (JsonString.Source)clientName : default,
+                descriptionLocation: descriptionLocation is not null ? (JsonUri.Source)descriptionLocation : default);
 
         return builder.RootElement.Clone();
     }
