@@ -642,8 +642,8 @@ public sealed class OpenApi30CodeGenerator
             if (referenceResolver.TryResolve<OpenApiDocument.Parameter>(refStr, out OpenApiDocument.Parameter r))
             {
                 resolved = r;
+                refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
-                refValue = refStr;
                 return true;
             }
 
@@ -673,8 +673,8 @@ public sealed class OpenApi30CodeGenerator
             if (referenceResolver.TryResolve<OpenApiDocument.Parameter>(refStr, out OpenApiDocument.Parameter r))
             {
                 resolved = r;
+                refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
-                refValue = refStr;
                 return true;
             }
 
@@ -704,8 +704,8 @@ public sealed class OpenApi30CodeGenerator
             if (referenceResolver.TryResolve<OpenApiDocument.RequestBody>(refStr, out OpenApiDocument.RequestBody r))
             {
                 resolved = r;
+                refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
-                refValue = refStr;
                 return true;
             }
 
@@ -739,8 +739,8 @@ public sealed class OpenApi30CodeGenerator
             if (referenceResolver.TryResolve<OpenApiDocument.Response>(refStr, out OpenApiDocument.Response r))
             {
                 resolved = r;
+                refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
-                refValue = refStr;
                 return true;
             }
 
@@ -772,8 +772,8 @@ public sealed class OpenApi30CodeGenerator
             if (referenceResolver.TryResolve<OpenApiDocument.Header>(refStr, out OpenApiDocument.Header r))
             {
                 resolved = r;
+                refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
-                refValue = refStr;
                 return true;
             }
 

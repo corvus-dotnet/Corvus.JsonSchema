@@ -100,4 +100,11 @@ public sealed class LocalReferenceResolver : IOpenApiReferenceResolver
 
     /// <inheritdoc/>
     public IDisposable PushResolvedBase(string refValue) => EmptyScope.Instance;
+
+    /// <inheritdoc/>
+    /// <remarks>
+    /// The local resolver only handles fragment-only references, so all values are returned
+    /// unchanged (they already resolve against the single document).
+    /// </remarks>
+    public string ResolveToAbsolute(string refValue) => refValue;
 }

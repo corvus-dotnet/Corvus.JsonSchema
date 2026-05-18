@@ -303,6 +303,31 @@ public sealed class ExternalReferenceResolver : IOpenApiReferenceResolver, IDisp
         return EmptyScope.Instance;
     }
 
+    /// <inheritdoc/>
+    public string ResolveToAbsolute(string refValue)
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        // Fragment-only — resolves against entry doc, return as-is
+        if (string.IsNullOrEmpty(refValue) || refValue[0] == '#')
+        {
+            return refValue;
+        }
+
+        // Separate doc part from fragment
+        int hashIndex = refValue.IndexOf('#');
+        string docPart = hashIndex >= 0 ? refValue[..hashIndex] : refValue;
+        string fragment = hashIndex >= 0 ? refValue[hashIndex..] : string.Empty;
+
+        // Resolve doc part against current base URI (RFC 3986 §5)
+        Uri resolved = new(this.CurrentBaseUri, docPart);
+
+        // For file:// URIs, return the local path; for other schemes, return the absolute URI
+        string absoluteDoc = resolved.IsFile ? resolved.LocalPath : resolved.AbsoluteUri;
+
+        return string.Concat(absoluteDoc, fragment);
+    }
+
     /// <summary>
     /// Releases all lazily loaded external documents.
     /// </summary>

@@ -199,15 +199,15 @@ public class ExternalRefSchemaResolutionTests
             else if (hashIndex > 0)
             {
                 // External document + fragment
-                string docRelativePath = schemaRef.ResolvablePointer[..hashIndex];
+                string docPart = schemaRef.ResolvablePointer[..hashIndex];
                 string fragment = schemaRef.ResolvablePointer[hashIndex..];
-                string resolvedDocPath = Path.GetFullPath(Path.Combine(specDir, docRelativePath));
+                string resolvedDocPath = ResolveDocumentPath(docPart, specDir);
                 reference = new(resolvedDocPath, fragment);
             }
             else
             {
                 // No fragment — entire external doc is the schema
-                string resolvedDocPath = Path.GetFullPath(Path.Combine(specDir, schemaRef.ResolvablePointer));
+                string resolvedDocPath = ResolveDocumentPath(schemaRef.ResolvablePointer, specDir);
                 reference = new(resolvedDocPath, "#");
             }
 
@@ -368,5 +368,20 @@ public class ExternalRefSchemaResolutionTests
         string json = File.ReadAllText(path);
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
         return doc.RootElement.Clone();
+    }
+
+    private static string ResolveDocumentPath(string docPart, string specDir)
+    {
+        // Absolute URIs (http://, https://, urn:, etc.) pass through unchanged —
+        // Path.Combine would corrupt them.
+        if (Uri.TryCreate(docPart, UriKind.Absolute, out Uri? uri)
+            && !uri.IsFile)
+        {
+            return docPart;
+        }
+
+        // Relative path or file:// URI — resolve against the spec directory
+        string localPath = uri?.LocalPath ?? docPart;
+        return Path.GetFullPath(Path.Combine(specDir, localPath));
     }
 }

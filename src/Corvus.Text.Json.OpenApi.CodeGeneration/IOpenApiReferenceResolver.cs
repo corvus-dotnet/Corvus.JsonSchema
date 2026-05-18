@@ -88,4 +88,32 @@ public interface IOpenApiReferenceResolver
     /// <param name="refValue">The <c>$ref</c> URI-reference that was resolved.</param>
     /// <returns>An <see cref="IDisposable"/> that restores the previous base URI context when disposed.</returns>
     IDisposable PushResolvedBase(string refValue);
+
+    /// <summary>
+    /// Resolves a raw <c>$ref</c> URI-reference against the current base URI per RFC 3986 §5,
+    /// returning an absolute reference string suitable for the JSON Schema type builder.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This method performs the same URI resolution as <see cref="PushResolvedBase"/> but
+    /// returns the resolved absolute reference as a string rather than pushing the base context.
+    /// The result preserves any fragment from the original <paramref name="refValue"/>.
+    /// </para>
+    /// <para>
+    /// For fragment-only references (starting with <c>#</c>), the value is returned unchanged
+    /// since it resolves against the entry document by convention.
+    /// </para>
+    /// <para>
+    /// For references with a document part, the document portion is resolved against the
+    /// current base URI to produce an absolute path (for file URIs) or absolute URI
+    /// (for non-file schemes). The fragment portion is preserved as-is.
+    /// </para>
+    /// </remarks>
+    /// <param name="refValue">The raw <c>$ref</c> value from the JSON document.</param>
+    /// <returns>
+    /// The resolved absolute reference. For file-based URIs this is a local file path
+    /// with fragment (e.g. <c>D:\project\common\types.json#/components/schemas/Pet</c>).
+    /// For non-file URIs, the full absolute URI with fragment is returned.
+    /// </returns>
+    string ResolveToAbsolute(string refValue);
 }

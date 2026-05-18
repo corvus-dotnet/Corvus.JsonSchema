@@ -246,15 +246,15 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             else if (hashIndex > 0)
             {
                 // External document + fragment
-                string docRelativePath = schemaRef.ResolvablePointer[..hashIndex];
+                string docPart = schemaRef.ResolvablePointer[..hashIndex];
                 string fragment = schemaRef.ResolvablePointer[hashIndex..];
-                string resolvedDocPath = Path.GetFullPath(Path.Combine(specDir, docRelativePath));
+                string resolvedDocPath = ResolveDocumentPath(docPart, specDir);
                 reference = new(resolvedDocPath, fragment);
             }
             else
             {
                 // No fragment — entire external doc is the schema (unlikely but handled)
-                string resolvedDocPath = Path.GetFullPath(Path.Combine(specDir, schemaRef.ResolvablePointer));
+                string resolvedDocPath = ResolveDocumentPath(schemaRef.ResolvablePointer, specDir);
                 reference = new(resolvedDocPath, "#");
             }
 
@@ -309,6 +309,27 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         }
 
         return schemaTypeMap;
+    }
+
+    /// <summary>
+    /// Resolves a document path that may be an absolute URI or a relative file path.
+    /// </summary>
+    /// <param name="docPart">The document portion of a reference (before the # fragment).</param>
+    /// <param name="specDir">The directory containing the entry spec file, for resolving relative paths.</param>
+    /// <returns>The resolved document path suitable for <see cref="JsonReference"/>.</returns>
+    private static string ResolveDocumentPath(string docPart, string specDir)
+    {
+        // If it's an absolute URI (e.g. http://example.com/schemas/types.json or
+        // urn:example:schema), use it directly — Path.Combine would corrupt it.
+        if (Uri.TryCreate(docPart, UriKind.Absolute, out Uri? uri)
+            && !uri.IsFile)
+        {
+            return docPart;
+        }
+
+        // Relative path or file:// URI — resolve against the spec directory
+        string localPath = uri?.LocalPath ?? docPart;
+        return Path.GetFullPath(Path.Combine(specDir, localPath));
     }
 }
 
