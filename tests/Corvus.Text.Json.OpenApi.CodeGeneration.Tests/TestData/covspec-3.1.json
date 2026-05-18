@@ -157,6 +157,23 @@
                     "type": "string"
                   }
                 }
+              },
+              "X-Page-Sizes": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              },
+              "X-Flags": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  }
+                }
               }
             }
           }

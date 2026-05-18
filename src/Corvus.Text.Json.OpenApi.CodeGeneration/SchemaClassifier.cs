@@ -219,6 +219,48 @@ public static class SchemaClassifier
     }
 
     /// <summary>
+    /// Classifies the element type for an array schema by inspecting its
+    /// <c>items</c> sub-schema.
+    /// </summary>
+    /// <param name="schema">The array schema element.</param>
+    /// <returns>
+    /// The serialization kind for the array element type.
+    /// Returns <see cref="ParameterSerializationKind.String"/> if no
+    /// <c>items</c> sub-schema is present.
+    /// </returns>
+    public static ParameterSerializationKind ClassifyArrayElement(JsonElement schema)
+    {
+        if (schema.TryGetProperty("items"u8, out JsonElement items)
+            && items.ValueKind == JsonValueKind.Object)
+        {
+            return Classify(items);
+        }
+
+        return ParameterSerializationKind.String;
+    }
+
+    /// <summary>
+    /// Classifies the value type for an object schema by inspecting its
+    /// <c>additionalProperties</c> sub-schema.
+    /// </summary>
+    /// <param name="schema">The object schema element.</param>
+    /// <returns>
+    /// The serialization kind for the object value type.
+    /// Returns <see cref="ParameterSerializationKind.String"/> if no
+    /// <c>additionalProperties</c> sub-schema is present.
+    /// </returns>
+    public static ParameterSerializationKind ClassifyObjectValue(JsonElement schema)
+    {
+        if (schema.TryGetProperty("additionalProperties"u8, out JsonElement addlProps)
+            && addlProps.ValueKind == JsonValueKind.Object)
+        {
+            return Classify(addlProps);
+        }
+
+        return ParameterSerializationKind.String;
+    }
+
+    /// <summary>
     /// Checks whether a schema classified as <see cref="ParameterSerializationKind.Object"/>
     /// or <see cref="ParameterSerializationKind.Array"/> contains nested composite types
     /// (objects or arrays within its property values or array items).

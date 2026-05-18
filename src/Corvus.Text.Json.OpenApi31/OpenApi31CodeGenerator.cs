@@ -126,6 +126,7 @@ public sealed class OpenApi31CodeGenerator
         string? SchemaPointer,
         bool Explode,
         ParameterSerializationKind SerializationKind,
+        ParameterSerializationKind ElementSerializationKind,
         bool HasDeepNesting);
 
     /// <summary>
@@ -1254,13 +1255,20 @@ public sealed class OpenApi31CodeGenerator
                     ? SchemaClassifier.Classify(schemaEl)
                     : ParameterSerializationKind.String;
 
+                ParameterSerializationKind elementKind = serializationKind switch
+                {
+                    ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaEl),
+                    ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaEl),
+                    _ => ParameterSerializationKind.String,
+                };
+
                 bool deepNesting = hasSchema
                     && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
                     && SchemaClassifier.HasDeepNesting(schemaEl);
 
                 // Extract header name at the emit boundary
                 string name = headerProp.Name;
-                result.Add(new HeaderInfo(name, schemaPointer, explode, serializationKind, deepNesting));
+                result.Add(new HeaderInfo(name, schemaPointer, explode, serializationKind, elementKind, deepNesting));
             }
         }
 
@@ -2538,6 +2546,7 @@ public sealed class OpenApi31CodeGenerator
                         typeName,
                         header.Explode,
                         header.SerializationKind,
+                        header.ElementSerializationKind,
                         header.HasDeepNesting);
                 }
                 else

@@ -6587,6 +6587,8 @@ public class OpenApi31CodeGeneratorTests
         ["#/paths/~1items~1{itemId}/get/responses/200/headers/X-Rate-Limit/schema"] = "CovTest.JsonInt32",
         ["#/paths/~1items~1{itemId}/get/responses/200/headers/X-Active/schema"] = "CovTest.JsonBoolean",
         ["#/paths/~1items~1{itemId}/get/responses/200/headers/X-Tags/schema"] = "CovTest.Tags",
+        ["#/paths/~1items~1{itemId}/get/responses/200/headers/X-Page-Sizes/schema"] = "CovTest.PageSizes",
+        ["#/paths/~1items~1{itemId}/get/responses/200/headers/X-Flags/schema"] = "CovTest.Flags",
         ["#/paths/~1items~1{itemId}~1form/post/parameters/0/schema"] = "CovTest.JsonString",
         ["#/paths/~1items~1{itemId}~1form/post/requestBody/content/application~1x-www-form-urlencoded/schema"] = "CovTest.UpdateItemFormBody",
         ["#/paths/~1items~1{itemId}~1form/post/responses/200/content/application~1json/schema"] = "CovTest.Item",
@@ -6977,6 +6979,29 @@ public class OpenApi31CodeGeneratorTests
         Assert.IsTrue(
             resp.Content.Contains("string? XRequestIdHeader", StringComparison.Ordinal),
             "Header with no schema should be a raw string? property");
+    }
+
+    // ── Typed array response headers ─────────────────────────────────────
+    [TestMethod]
+    public void CovSpec_ResponseHeader_IntArrayEmitsIntParse()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("int.Parse(", StringComparison.Ordinal),
+            "Integer array header should emit int.Parse for each element");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseHeader_BoolArrayEmitsBoolParse()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("bool.Parse(", StringComparison.Ordinal),
+            "Boolean array header should emit bool.Parse for each element");
     }
 
     // ── application/* wildcard ────────────────────────────────────────────

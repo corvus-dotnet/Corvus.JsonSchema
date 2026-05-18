@@ -1499,6 +1499,7 @@ public static class CodeEmitHelpers
         string typeName,
         bool explode,
         ParameterSerializationKind kind,
+        ParameterSerializationKind elementKind,
         bool hasDeepNesting = false)
     {
         // Backing fields: cached parsed value and a flag to avoid re-parsing.
@@ -1535,13 +1536,11 @@ public static class CodeEmitHelpers
         // Object: split on comma, interpret as key,value pairs (or key=value with explode).
         if (kind is ParameterSerializationKind.Array)
         {
-            // TODO: Pass the actual element schema kind when available.
-            EmitResponseHeaderArrayParse(w, fieldName, typeName, explode, ParameterSerializationKind.String, hasDeepNesting);
+            EmitResponseHeaderArrayParse(w, fieldName, typeName, explode, elementKind, hasDeepNesting);
         }
         else if (kind is ParameterSerializationKind.Object)
         {
-            // TODO: Pass the actual value schema kind when available.
-            EmitResponseHeaderObjectParse(w, fieldName, typeName, explode, ParameterSerializationKind.String, hasDeepNesting);
+            EmitResponseHeaderObjectParse(w, fieldName, typeName, explode, elementKind, hasDeepNesting);
         }
         else
         {
