@@ -109,7 +109,8 @@ public sealed class OpenApi31CodeGenerator
     private readonly record struct ResponseInfo(
         string StatusCode,
         ContentInfo[] Content,
-        HeaderInfo[] Headers);
+        HeaderInfo[] Headers,
+        LinkInfo[] Links);
 
     private readonly record struct ContentInfo(
         string MediaType,
@@ -129,6 +130,17 @@ public sealed class OpenApi31CodeGenerator
         ParameterSerializationKind SerializationKind,
         ParameterSerializationKind ElementSerializationKind,
         bool HasDeepNesting);
+
+    private readonly record struct LinkInfo(
+        string LinkName,
+        string? TargetOperationId,
+        LinkParameterBinding[] ParameterBindings,
+        string? RequestBodyExpression,
+        string? Description);
+
+    private readonly record struct LinkParameterBinding(
+        string ParameterName,
+        string Expression);
 
     /// <summary>
     /// Walks the OpenAPI 3.1 specification and collects all schema
@@ -282,7 +294,7 @@ public sealed class OpenApi31CodeGenerator
         foreach (OperationInfo op in operations)
         {
             files.Add(this.EmitRequestStruct(op));
-            files.Add(this.EmitResponseStruct(op));
+            files.Add(this.EmitResponseStruct(op, operations));
         }
 
         foreach ((string tag, List<OperationInfo> tagOps) in groups)
@@ -1088,7 +1100,9 @@ public sealed class OpenApi31CodeGenerator
                 HeaderInfo[] headers = PrepareResponseHeaders(
                     response.Headers, pathNameUtf8, method, statusCodeUtf8.Span, referenceResolver);
 
-                result.Add(new ResponseInfo(statusCode, content, headers));
+                LinkInfo[] links = PrepareLinks(response.Links, referenceResolver);
+
+                result.Add(new ResponseInfo(statusCode, content, headers, links));
             }
         }
 
@@ -1274,6 +1288,102 @@ public sealed class OpenApi31CodeGenerator
         }
 
         return [.. result];
+    }
+
+    private static LinkInfo[] PrepareLinks(
+        OpenApiDocument.Response.LinksEntity linksMap,
+        IOpenApiReferenceResolver referenceResolver)
+    {
+        if (linksMap.IsUndefined())
+        {
+            return [];
+        }
+
+        List<LinkInfo> result = [];
+
+        foreach (var linkProp in linksMap.EnumerateObject())
+        {
+            if (linkProp.Value.IsUndefined())
+            {
+                continue;
+            }
+
+            if (!TryResolveLink(linkProp.Value, referenceResolver, out OpenApiDocument.Link link, out IDisposable linkScope))
+            {
+                // Skip unresolvable link references rather than failing the whole generation.
+                continue;
+            }
+
+            using (linkScope)
+            {
+                string linkName = linkProp.Name;
+
+                // We only support operationId-based links for now.
+                string? targetOperationId = link.OperationId.IsNotUndefined()
+                    ? link.OperationId.GetString()
+                    : null;
+
+                if (targetOperationId is null)
+                {
+                    // operationRef links are deferred — skip.
+                    continue;
+                }
+
+                // Extract parameter bindings (paramName → runtime expression string)
+                List<LinkParameterBinding> bindings = [];
+                if (link.Parameters.IsNotUndefined())
+                {
+                    foreach (var paramProp in link.Parameters.EnumerateObject())
+                    {
+                        string paramName = paramProp.Name;
+                        string expression = paramProp.Value.GetString() ?? string.Empty;
+                        bindings.Add(new LinkParameterBinding(paramName, expression));
+                    }
+                }
+
+                // Extract requestBody expression if present
+                string? requestBodyExpr = null;
+                if (link.RequestBody.IsNotUndefined() && link.RequestBody.ValueKind == JsonValueKind.String)
+                {
+                    requestBodyExpr = link.RequestBody.GetString();
+                }
+
+                string? description = link.Description.IsNotUndefined()
+                    ? link.Description.GetString()
+                    : null;
+
+                result.Add(new LinkInfo(linkName, targetOperationId, [.. bindings], requestBodyExpr, description));
+            }
+        }
+
+        return [.. result];
+    }
+
+    private static bool TryResolveLink(
+        OpenApiDocument.LinkOrReference linkOrRef,
+        IOpenApiReferenceResolver referenceResolver,
+        out OpenApiDocument.Link resolved,
+        out IDisposable baseScope)
+    {
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(linkOrRef);
+        if (asRef.Ref.IsNotUndefined())
+        {
+            string refStr = asRef.Ref.GetString()!;
+            if (referenceResolver.TryResolve(refStr, out JsonElement element))
+            {
+                resolved = OpenApiDocument.Link.From(element);
+                baseScope = referenceResolver.PushResolvedBase(refStr);
+                return true;
+            }
+
+            resolved = default;
+            baseScope = EmptyScope.Instance;
+            return false;
+        }
+
+        resolved = OpenApiDocument.Link.From(linkOrRef);
+        baseScope = EmptyScope.Instance;
+        return true;
     }
 
     // ── String helpers ──────────────────────────────────────────────────
@@ -2128,7 +2238,7 @@ public sealed class OpenApi31CodeGenerator
     }
 
     // ── Response struct emission ────────────────────────────────────────
-    private GeneratedFile EmitResponseStruct(OperationInfo op)
+    private GeneratedFile EmitResponseStruct(OperationInfo op, List<OperationInfo> allOperations)
     {
         string structName = $"{op.MethodName}Response";
         IndentedWriter w = new();
@@ -2153,6 +2263,13 @@ public sealed class OpenApi31CodeGenerator
         if (hasJsonBody)
         {
             w.WriteLine("private IDisposable? parsedDocument;");
+        }
+
+        // Determine if this operation has any resolvable links.
+        bool hasLinks = op.Responses.Any(r => r.Links.Length > 0);
+        if (hasLinks)
+        {
+            w.WriteLine("private IApiTransport? transport;");
         }
 
         // Emit private backing fields for text/plain responses.
@@ -2320,9 +2437,254 @@ public sealed class OpenApi31CodeGenerator
             CodeEmitHelpers.EmitReadStreamToRentedBufferHelper(w);
         }
 
+        // Emit link accessor struct and property when the operation has links.
+        if (hasLinks)
+        {
+            this.EmitLinksAccessor(w, structName, op, allOperations);
+        }
+
         w.CloseBrace();
 
         return new GeneratedFile($"{structName}.cs", w.ToString());
+    }
+
+    private void EmitLinksAccessor(
+        IndentedWriter w,
+        string responseStructName,
+        OperationInfo op,
+        List<OperationInfo> allOperations)
+    {
+        // Collect all links across all responses for this operation.
+        List<LinkInfo> allLinks = [];
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            allLinks.AddRange(resp.Links);
+        }
+
+        if (allLinks.Count == 0)
+        {
+            return;
+        }
+
+        string accessorName = $"{responseStructName}LinksAccessor";
+
+        // Emit the Links property on the response struct.
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Gets the links accessor for navigating to related operations.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public {accessorName} Links => new(this);");
+
+        // Emit the nested LinksAccessor readonly struct.
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Provides navigable link methods for the <see cref=\"{responseStructName}\"/>.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public readonly struct {accessorName}");
+        w.OpenBrace();
+
+        w.WriteLine($"private readonly {responseStructName} response;");
+        w.WriteLine();
+
+        w.WriteLine($"internal {accessorName}({responseStructName} response)");
+        w.OpenBrace();
+        w.WriteLine("this.response = response;");
+        w.CloseBrace();
+
+        // Emit one method per link.
+        foreach (LinkInfo link in allLinks)
+        {
+            this.EmitLinkMethod(w, link, op, allOperations);
+        }
+
+        w.CloseBrace();
+    }
+
+    private void EmitLinkMethod(
+        IndentedWriter w,
+        LinkInfo link,
+        OperationInfo sourceOp,
+        List<OperationInfo> allOperations)
+    {
+        // Resolve the target operation by operationId.
+        OperationInfo? targetOp = null;
+        foreach (OperationInfo candidate in allOperations)
+        {
+            if (string.Equals(candidate.OperationId, link.TargetOperationId, StringComparison.Ordinal))
+            {
+                targetOp = candidate;
+                break;
+            }
+        }
+
+        if (targetOp is null)
+        {
+            // Target operation not found (may have been excluded by filters).
+            w.WriteLine();
+            w.WriteLine($"// Link '{link.LinkName}' targets operationId '{link.TargetOperationId}' which is not available.");
+            return;
+        }
+
+        OperationInfo target = targetOp.Value;
+        string targetResponseType = $"{target.MethodName}Response";
+        string targetRequestType = $"{target.MethodName}Request";
+
+        // Determine which target parameters are NOT satisfied by link bindings.
+        HashSet<string> boundParams = new(StringComparer.OrdinalIgnoreCase);
+        foreach (LinkParameterBinding binding in link.ParameterBindings)
+        {
+            boundParams.Add(binding.ParameterName);
+        }
+
+        // Build the method signature with unsatisfied required parameters.
+        List<ParameterInfo> unsatisfiedParams = [];
+        foreach (ParameterInfo param in target.Parameters)
+        {
+            if (!boundParams.Contains(param.Name))
+            {
+                unsatisfiedParams.Add(param);
+            }
+        }
+
+        w.WriteLine();
+        if (link.Description is not null)
+        {
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// {link.Description}");
+            w.WriteLine("/// </summary>");
+        }
+
+        // Build parameter list for the method.
+        string methodName = $"{CodeEmitHelpers.SanitizeIdentifier(link.LinkName)}Async";
+        w.Write($"public ValueTask<{targetResponseType}> {methodName}(");
+
+        bool first = true;
+        foreach (ParameterInfo param in unsatisfiedParams)
+        {
+            if (!first)
+            {
+                w.Write(", ");
+            }
+
+            string paramTypeName = this.GetParameterTypeName(param);
+            string paramName = CodeEmitHelpers.SanitizeParameterName(param.Name);
+
+            if (param.IsRequired)
+            {
+                w.Write($"{paramTypeName} {paramName}");
+            }
+            else
+            {
+                w.Write($"{paramTypeName}? {paramName} = null");
+            }
+
+            first = false;
+        }
+
+        if (!first)
+        {
+            w.Write(", ");
+        }
+
+        w.Write("CancellationToken cancellationToken = default)");
+        w.WriteLine();
+        w.OpenBrace();
+
+        // Emit the body: build the request, set bound parameters from runtime expressions.
+        w.WriteLine($"{targetRequestType} request = new()");
+        w.OpenBrace();
+
+        // Set parameters from link bindings.
+        foreach (LinkParameterBinding binding in link.ParameterBindings)
+        {
+            // Find the target parameter.
+            ParameterInfo? targetParam = null;
+            foreach (ParameterInfo p in target.Parameters)
+            {
+                if (string.Equals(p.Name, binding.ParameterName, StringComparison.OrdinalIgnoreCase))
+                {
+                    targetParam = p;
+                    break;
+                }
+            }
+
+            if (targetParam is null)
+            {
+                continue;
+            }
+
+            string paramTypeName = this.GetParameterTypeName(targetParam.Value);
+            string propertyName = CodeEmitHelpers.SanitizeIdentifier(binding.ParameterName);
+
+            RuntimeExpression expr = RuntimeExpression.Parse(binding.Expression);
+            string valueExpression = EmitRuntimeExpressionValue(expr, paramTypeName, sourceOp);
+
+            w.WriteLine($"{propertyName} = {valueExpression},");
+        }
+
+        // Set unsatisfied parameters from method arguments.
+        foreach (ParameterInfo param in unsatisfiedParams)
+        {
+            string propertyName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
+            string paramName = CodeEmitHelpers.SanitizeParameterName(param.Name);
+
+            if (param.IsRequired)
+            {
+                w.WriteLine($"{propertyName} = {paramName},");
+            }
+            else
+            {
+                w.WriteLine($"{propertyName} = {paramName},");
+            }
+        }
+
+        w.CloseBraceWithSemicolon();
+        w.WriteLine();
+
+        // Invoke the transport.
+        w.WriteLine($"return this.response.transport!.SendAsync<{targetRequestType}, {targetResponseType}>(in request, cancellationToken);");
+
+        w.CloseBrace();
+    }
+
+    private static string EmitRuntimeExpressionValue(
+        RuntimeExpression expr,
+        string targetTypeName,
+        OperationInfo sourceOp)
+    {
+        switch (expr.Kind)
+        {
+            case RuntimeExpressionKind.ResponseBody:
+                // Navigate the response body via JSON Pointer.
+                // For now, emit a property access pattern for simple single-level pointers.
+                if (expr.JsonPointer?.StartsWith('/') == true)
+                {
+                    string propertyName = expr.JsonPointer!.Substring(1);
+
+                    // If the pointer has further segments, use chained GetProperty calls.
+                    string[] segments = propertyName.Split('/');
+                    string access = "this.response";
+                    foreach (string segment in segments)
+                    {
+                        access += $".GetProperty(\"{segment}\"u8)";
+                    }
+
+                    return $"{targetTypeName}.From({access})";
+                }
+
+                return $"default({targetTypeName})";
+
+            case RuntimeExpressionKind.ResponseHeader:
+                return $"{targetTypeName}.ParseValue(\"{expr.Name}\")";
+
+            case RuntimeExpressionKind.Literal:
+                return $"{targetTypeName}.ParseValue(\"\"\"{expr.LiteralValue}\"\"\")";
+
+            default:
+                // Request-based expressions ($request.path.*, $request.query.*, $url, $method)
+                // require captured request context. Emit a TODO comment placeholder for now.
+                return $"default({targetTypeName}) /* TODO: {expr.Kind} expression */";
+        }
     }
 
     private void EmitCreateAsync(

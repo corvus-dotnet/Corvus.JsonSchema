@@ -12,8 +12,6 @@
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
     <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsPackable>true</IsPackable>
-    <InternalsVisibleTo>Corvus.Text.Json.OpenApi31</InternalsVisibleTo>
-    <InternalsVisibleTo>Corvus.Text.Json.OpenApi30</InternalsVisibleTo>
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Description>Code generation for .NET API clients and servers from OpenAPI and AsyncAPI specifications. Produces strongly-typed C# using Corvus.Text.Json zero-allocation types.</Description>
     <PackageReadmeFile>README.md</PackageReadmeFile>
@@ -21,6 +19,9 @@
   <PropertyGroup>
     <CommonPath>..\..\Common\src\</CommonPath>
   </PropertyGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.OpenApi.CodeGeneration.Tests" />
+  </ItemGroup>
   <ItemGroup>
     <AdditionalFiles Include="Schemas\corvusjson-openapi-lock.json" />
   </ItemGroup>

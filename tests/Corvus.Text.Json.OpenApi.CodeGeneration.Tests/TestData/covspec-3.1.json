@@ -100,6 +100,67 @@
             }
           }
         }
+      },
+      "post": {
+        "operationId": "createItem",
+        "summary": "Create a new item",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "tag": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Item created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "tag": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            },
+            "links": {
+              "GetCreatedItem": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$response.body#/id"
+                },
+                "description": "Retrieve the created item by its id."
+              }
+            }
+          }
+        }
       }
     },
     "/items/{itemId}": {

@@ -115,6 +115,18 @@ public sealed class IndentedWriter
         return this;
     }
 
+    /// <summary>
+    /// Closes a brace block with a trailing semicolon: pops indent and writes <c>};</c>.
+    /// Use for object initializer closings.
+    /// </summary>
+    /// <returns>This writer, for fluent chaining.</returns>
+    public IndentedWriter CloseBraceWithSemicolon()
+    {
+        this.PopIndent();
+        this.WriteLine("};");
+        return this;
+    }
+
     /// <inheritdoc/>
     public override string ToString() => this.sb.ToString();
 
