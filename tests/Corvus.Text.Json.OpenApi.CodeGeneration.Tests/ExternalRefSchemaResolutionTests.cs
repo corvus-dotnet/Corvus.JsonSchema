@@ -181,13 +181,13 @@ public class ExternalRefSchemaResolutionTests
 
         JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
 
-        string specDir = Path.GetDirectoryName(specFilePath)!;
         Dictionary<string, TypeDeclaration> pointerToType = new(StringComparer.Ordinal);
         List<TypeDeclaration> typesToGenerate = [];
 
         foreach (SchemaReference schemaRef in collectedRefs)
         {
             // Build the JsonReference from the resolvable pointer (same logic as OpenApiGenerateCommand).
+            // The ResolvablePointer's doc part is already absolute (ResolveToAbsolute ran at scan time).
             JsonReference reference;
             int hashIndex = schemaRef.ResolvablePointer.IndexOf('#');
 
@@ -198,17 +198,15 @@ public class ExternalRefSchemaResolutionTests
             }
             else if (hashIndex > 0)
             {
-                // External document + fragment
+                // External document + fragment (doc part already absolute)
                 string docPart = schemaRef.ResolvablePointer[..hashIndex];
                 string fragment = schemaRef.ResolvablePointer[hashIndex..];
-                string resolvedDocPath = ResolveDocumentPath(docPart, specDir);
-                reference = new(resolvedDocPath, fragment);
+                reference = new(Path.GetFullPath(docPart), fragment);
             }
             else
             {
                 // No fragment — entire external doc is the schema
-                string resolvedDocPath = ResolveDocumentPath(schemaRef.ResolvablePointer, specDir);
-                reference = new(resolvedDocPath, "#");
+                reference = new(Path.GetFullPath(schemaRef.ResolvablePointer), "#");
             }
 
             TypeDeclaration rootType = await typeBuilder.AddTypeDeclarationsAsync(
@@ -368,20 +366,5 @@ public class ExternalRefSchemaResolutionTests
         string json = File.ReadAllText(path);
         using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(json);
         return doc.RootElement.Clone();
-    }
-
-    private static string ResolveDocumentPath(string docPart, string specDir)
-    {
-        // Absolute URIs (http://, https://, urn:, etc.) pass through unchanged —
-        // Path.Combine would corrupt them.
-        if (Uri.TryCreate(docPart, UriKind.Absolute, out Uri? uri)
-            && !uri.IsFile)
-        {
-            return docPart;
-        }
-
-        // Relative path or file:// URI — resolve against the spec directory
-        string localPath = uri?.LocalPath ?? docPart;
-        return Path.GetFullPath(Path.Combine(specDir, localPath));
     }
 }

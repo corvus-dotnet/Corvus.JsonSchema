@@ -199,7 +199,6 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         CancellationToken cancellationToken)
     {
         string specFilePath = Path.GetFullPath(specFile);
-        string specDir = Path.GetDirectoryName(specFilePath)!;
 
         // Set up the document resolver — the FileSystemDocumentResolver reads the spec from disk
         CompoundDocumentResolver documentResolver = new(
@@ -248,13 +247,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 // External document + fragment
                 string docPart = schemaRef.ResolvablePointer[..hashIndex];
                 string fragment = schemaRef.ResolvablePointer[hashIndex..];
-                string resolvedDocPath = ResolveDocumentPath(docPart, specDir);
+                string resolvedDocPath = ResolveDocumentPath(docPart);
                 reference = new(resolvedDocPath, fragment);
             }
             else
             {
                 // No fragment — entire external doc is the schema (unlikely but handled)
-                string resolvedDocPath = ResolveDocumentPath(schemaRef.ResolvablePointer, specDir);
+                string resolvedDocPath = ResolveDocumentPath(schemaRef.ResolvablePointer);
                 reference = new(resolvedDocPath, "#");
             }
 
@@ -312,24 +311,31 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
     }
 
     /// <summary>
-    /// Resolves a document path that may be an absolute URI or a relative file path.
+    /// Extracts the document path from a resolvable pointer's document portion.
     /// </summary>
-    /// <param name="docPart">The document portion of a reference (before the # fragment).</param>
-    /// <param name="specDir">The directory containing the entry spec file, for resolving relative paths.</param>
-    /// <returns>The resolved document path suitable for <see cref="JsonReference"/>.</returns>
-    private static string ResolveDocumentPath(string docPart, string specDir)
+    /// <remarks>
+    /// <para>
+    /// The document portion is already absolute because <c>ResolveToAbsolute</c> resolved it
+    /// against the correct base URI at scan time (per RFC 3986 §5). This method simply handles
+    /// the file URI vs non-file URI distinction for <see cref="JsonReference"/> construction.
+    /// </para>
+    /// </remarks>
+    /// <param name="docPart">The document portion of a reference (before the # fragment).
+    /// Must be absolute (either an absolute file path or an absolute non-file URI).</param>
+    /// <returns>The document path suitable for <see cref="JsonReference"/>.</returns>
+    private static string ResolveDocumentPath(string docPart)
     {
-        // If it's an absolute URI (e.g. http://example.com/schemas/types.json or
-        // urn:example:schema), use it directly — Path.Combine would corrupt it.
+        // Non-file absolute URIs (http://, https://, urn:, etc.) pass through directly.
+        // File paths (already absolute from ResolveToAbsolute) also pass through —
+        // Path.GetFullPath normalizes path separators.
         if (Uri.TryCreate(docPart, UriKind.Absolute, out Uri? uri)
             && !uri.IsFile)
         {
             return docPart;
         }
 
-        // Relative path or file:// URI — resolve against the spec directory
-        string localPath = uri?.LocalPath ?? docPart;
-        return Path.GetFullPath(Path.Combine(specDir, localPath));
+        // Absolute file path — normalize separators
+        return Path.GetFullPath(docPart);
     }
 }
 
