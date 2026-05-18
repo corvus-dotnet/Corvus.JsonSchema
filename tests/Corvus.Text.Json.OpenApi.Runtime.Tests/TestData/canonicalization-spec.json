@@ -5,40 +5,55 @@
     "version": "1.0.0"
   },
   "servers": [
-    { "url": "https://api.example.com/v1" }
+    {
+      "url": "https://api.example.com/v1"
+    }
   ],
   "paths": {
     "/items/{itemId}": {
       "get": {
         "operationId": "getItem",
         "summary": "Get item by string ID with mixed param types",
-        "tags": ["items"],
+        "tags": [
+          "items"
+        ],
         "parameters": [
           {
             "name": "itemId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "filter",
             "in": "query",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "limit",
             "in": "query",
-            "schema": { "type": "integer", "format": "int32" }
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           },
           {
             "name": "verbose",
             "in": "query",
-            "schema": { "type": "boolean" }
+            "schema": {
+              "type": "boolean"
+            }
           },
           {
             "name": "X-Request-Id",
             "in": "header",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -49,10 +64,17 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" }
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["id", "name"]
+                  "required": [
+                    "id",
+                    "name"
+                  ]
                 }
               }
             }
@@ -64,10 +86,18 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "code": { "type": "integer", "format": "int32" },
-                    "message": { "type": "string" }
+                    "code": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["code", "message"]
+                  "required": [
+                    "code",
+                    "message"
+                  ]
                 }
               }
             }
@@ -79,9 +109,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "error": { "type": "string" }
+                    "error": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["error"]
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -91,13 +125,17 @@
       "delete": {
         "operationId": "deleteItem",
         "summary": "Delete an item (204 no content)",
-        "tags": ["items"],
+        "tags": [
+          "items"
+        ],
         "parameters": [
           {
             "name": "itemId",
             "in": "path",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -111,274 +149,40 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "code": { "type": "integer", "format": "int32" },
-                    "message": { "type": "string" }
+                    "code": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["code", "message"]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/items/{itemId}/tags/{tagName}": {
-      "get": {
-        "operationId": "getItemTag",
-        "summary": "Two path params: int64 + string, with trailing literal path",
-        "tags": ["items"],
-        "parameters": [
-          {
-            "name": "itemId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer", "format": "int64" }
-          },
-          {
-            "name": "tagName",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "score",
-            "in": "query",
-            "schema": { "type": "number", "format": "double" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "headers": {
-              "X-Total-Count": {
-                "description": "Total number of items available",
-                "schema": { "type": "integer", "format": "int32" }
-              },
-              "X-Request-Id": {
-                "description": "Request correlation ID",
-                "schema": { "type": "string" }
-              },
-              "X-Tags": {
-                "description": "Array of tag names",
-                "schema": {
-                  "type": "array",
-                  "items": { "type": "string" }
-                }
-              },
-              "X-Metadata": {
-                "description": "Object with string properties",
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "region": { "type": "string" },
-                    "version": { "type": "string" }
-                  }
-                }
-              }
-            },
-            "content": {
-              "application/json": {
-                "schema": { "type": "object" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/items/{itemId}/details": {
-      "get": {
-        "operationId": "getItemDetails",
-        "summary": "Path with trailing literal after param",
-        "tags": ["items"],
-        "parameters": [
-          {
-            "name": "itemId",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "string" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/search": {
-      "get": {
-        "operationId": "search",
-        "summary": "Required + optional query params",
-        "tags": ["search"],
-        "parameters": [
-          {
-            "name": "q",
-            "in": "query",
-            "required": true,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "page",
-            "in": "query",
-            "schema": { "type": "integer", "format": "int32" }
-          },
-          {
-            "name": "rating",
-            "in": "query",
-            "schema": { "type": "number", "format": "float" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/flags/{active}": {
-      "get": {
-        "operationId": "getByFlag",
-        "summary": "Boolean path param",
-        "tags": ["flags"],
-        "parameters": [
-          {
-            "name": "active",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "boolean" }
-          },
-          {
-            "name": "X-Trace-Id",
-            "in": "header",
-            "required": true,
-            "schema": { "type": "string" }
-          },
-          {
-            "name": "X-Request-Count",
-            "in": "header",
-            "required": true,
-            "schema": { "type": "integer", "format": "int32" }
-          },
-          {
-            "name": "X-Debug",
-            "in": "header",
-            "schema": { "type": "boolean" }
-          },
-          {
-            "name": "X-Score",
-            "in": "header",
-            "schema": { "type": "number", "format": "double" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/pages/{pageNum}": {
-      "get": {
-        "operationId": "getPage",
-        "summary": "Int32 path param with unbounded number query",
-        "tags": ["pages"],
-        "parameters": [
-          {
-            "name": "pageNum",
-            "in": "path",
-            "required": true,
-            "schema": { "type": "integer", "format": "int32" }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "schema": { "type": "integer" }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": { "type": "object" }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/items": {
-      "post": {
-        "operationId": "createItem",
-        "summary": "Create an item with request body",
-        "tags": ["items"],
-        "requestBody": {
-          "description": "The item to create",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": { "type": "string" },
-                  "price": { "type": "number", "format": "double" }
-                },
-                "required": ["name"]
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Created",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" }
-                  },
-                  "required": ["id", "name"]
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "errors": { "type": "array", "items": { "type": "string" } }
-                  },
-                  "required": ["errors"]
+                  "required": [
+                    "code",
+                    "message"
+                  ]
                 }
               }
             }
           }
         }
       },
-      "put": {
-        "operationId": "updateItem",
-        "summary": "Update an item",
-        "tags": ["items"],
+      "patch": {
+        "operationId": "patchItem",
+        "summary": "Partially update an item",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -386,10 +190,10 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "id": { "type": "string" },
-                  "name": { "type": "string" }
-                },
-                "required": ["id", "name"]
+                  "name": {
+                    "type": "string"
+                  }
+                }
               }
             }
           }
@@ -402,13 +206,478 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "id": { "type": "string" },
-                    "name": { "type": "string" }
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
                   },
-                  "required": ["id", "name"]
+                  "required": [
+                    "id",
+                    "name"
+                  ]
                 }
               }
             }
+          }
+        }
+      },
+      "head": {
+        "operationId": "headItem",
+        "summary": "Check item existence",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item exists"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "trace": {
+        "operationId": "traceItem",
+        "summary": "Diagnostic loop-back",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request message as received",
+            "content": {
+              "text/plain": {}
+            }
+          }
+        }
+      }
+    },
+    "/items/{itemId}/tags/{tagName}": {
+      "get": {
+        "operationId": "getItemTag",
+        "summary": "Two path params: int64 + string, with trailing literal path",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "tagName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "score",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total number of items available",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-Request-Id": {
+                "description": "Request correlation ID",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Tags": {
+                "description": "Array of tag names",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "X-Metadata": {
+                "description": "Object with string properties",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "region": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{itemId}/details": {
+      "get": {
+        "operationId": "getItemDetails",
+        "summary": "Path with trailing literal after param",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "operationId": "search",
+        "summary": "Required + optional query params",
+        "tags": [
+          "search"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "rating",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/flags/{active}": {
+      "get": {
+        "operationId": "getByFlag",
+        "summary": "Boolean path param",
+        "tags": [
+          "flags"
+        ],
+        "parameters": [
+          {
+            "name": "active",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Request-Count",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "X-Debug",
+            "in": "header",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "X-Score",
+            "in": "header",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pages/{pageNum}": {
+      "get": {
+        "operationId": "getPage",
+        "summary": "Int32 path param with unbounded number query",
+        "tags": [
+          "pages"
+        ],
+        "parameters": [
+          {
+            "name": "pageNum",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items": {
+      "post": {
+        "operationId": "createItem",
+        "summary": "Create an item with request body",
+        "tags": [
+          "items"
+        ],
+        "requestBody": {
+          "description": "The item to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "double"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "errors"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateItem",
+        "summary": "Update an item",
+        "tags": [
+          "items"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "optionsItems",
+        "summary": "Discover available operations",
+        "tags": [
+          "items"
+        ],
+        "responses": {
+          "204": {
+            "description": "No content \u2014 check Allow header"
           }
         }
       }
@@ -417,28 +686,39 @@
       "get": {
         "operationId": "getSessionProfile",
         "summary": "Cookie params: session, theme (optional), debug flag (optional)",
-        "tags": ["session"],
+        "tags": [
+          "session"
+        ],
         "parameters": [
           {
             "name": "session_id",
             "in": "cookie",
             "required": true,
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "theme",
             "in": "cookie",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           },
           {
             "name": "debug",
             "in": "cookie",
-            "schema": { "type": "boolean" }
+            "schema": {
+              "type": "boolean"
+            }
           },
           {
             "name": "max_age",
             "in": "cookie",
-            "schema": { "type": "integer", "format": "int32" }
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
           }
         ],
         "responses": {
@@ -446,7 +726,9 @@
             "description": "OK",
             "content": {
               "application/json": {
-                "schema": { "type": "object" }
+                "schema": {
+                  "type": "object"
+                }
               }
             }
           }
@@ -459,23 +741,32 @@
           "name": "orderId",
           "in": "path",
           "required": true,
-          "schema": { "type": "string", "format": "uuid" }
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
         },
         {
           "name": "X-Trace-Id",
           "in": "header",
-          "schema": { "type": "string" }
+          "schema": {
+            "type": "string"
+          }
         }
       ],
       "get": {
         "operationId": "getOrder",
-        "summary": "Get order — inherits path-level orderId and X-Trace-Id",
-        "tags": ["orders"],
+        "summary": "Get order \u00e2\u20ac\u201d inherits path-level orderId and X-Trace-Id",
+        "tags": [
+          "orders"
+        ],
         "parameters": [
           {
             "name": "fields",
             "in": "query",
-            "schema": { "type": "string" }
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -486,11 +777,22 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "orderId": { "type": "string", "format": "uuid" },
-                    "status": { "type": "string" },
-                    "total": { "type": "number" }
+                    "orderId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "total": {
+                      "type": "number"
+                    }
                   },
-                  "required": ["orderId", "status", "total"]
+                  "required": [
+                    "orderId",
+                    "status",
+                    "total"
+                  ]
                 }
               }
             }
@@ -499,14 +801,19 @@
       },
       "put": {
         "operationId": "updateOrder",
-        "summary": "Update order — inherits path-level params, overrides X-Trace-Id",
-        "tags": ["orders"],
+        "summary": "Update order \u00e2\u20ac\u201d inherits path-level params, overrides X-Trace-Id",
+        "tags": [
+          "orders"
+        ],
         "parameters": [
           {
             "name": "X-Trace-Id",
             "in": "header",
             "required": true,
-            "schema": { "type": "string", "format": "uuid" }
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
           }
         ],
         "requestBody": {
@@ -516,10 +823,16 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "status": { "type": "string" },
-                  "total": { "type": "number" }
+                  "status": {
+                    "type": "string"
+                  },
+                  "total": {
+                    "type": "number"
+                  }
                 },
-                "required": ["status"]
+                "required": [
+                  "status"
+                ]
               }
             }
           }
@@ -532,11 +845,22 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "orderId": { "type": "string", "format": "uuid" },
-                    "status": { "type": "string" },
-                    "total": { "type": "number" }
+                    "orderId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "total": {
+                      "type": "number"
+                    }
                   },
-                  "required": ["orderId", "status", "total"]
+                  "required": [
+                    "orderId",
+                    "status",
+                    "total"
+                  ]
                 }
               }
             }
@@ -548,19 +872,32 @@
       "get": {
         "operationId": "pathArraySimple",
         "summary": "Path array param, simple style (default, explode=false)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "ids",
             "in": "path",
             "required": true,
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -569,20 +906,33 @@
       "get": {
         "operationId": "pathArrayLabel",
         "summary": "Path array param, label style",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "ids",
             "in": "path",
             "required": true,
             "style": "label",
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -591,20 +941,33 @@
       "get": {
         "operationId": "pathArrayMatrix",
         "summary": "Path array param, matrix style",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "ids",
             "in": "path",
             "required": true,
             "style": "matrix",
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -613,7 +976,9 @@
       "get": {
         "operationId": "pathObjectSimple",
         "summary": "Path object param, simple style (default, explode=false)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "dims",
@@ -622,8 +987,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -631,7 +1002,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -640,7 +1017,9 @@
       "get": {
         "operationId": "pathObjectSimpleExplode",
         "summary": "Path object param, simple+explode",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "dims",
@@ -650,8 +1029,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -659,7 +1044,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -668,7 +1059,9 @@
       "get": {
         "operationId": "pathObjectLabel",
         "summary": "Path object param, label style (explode=false)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "dims",
@@ -678,8 +1071,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -687,7 +1086,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -696,7 +1101,9 @@
       "get": {
         "operationId": "pathObjectLabelExplode",
         "summary": "Path object param, label+explode",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "dims",
@@ -707,8 +1114,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -716,7 +1129,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -725,7 +1144,9 @@
       "get": {
         "operationId": "pathObjectMatrix",
         "summary": "Path object param, matrix style (explode=false)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "dims",
@@ -735,8 +1156,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -744,7 +1171,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -753,7 +1186,9 @@
       "get": {
         "operationId": "pathObjectMatrixExplode",
         "summary": "Path object param, matrix+explode",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "dims",
@@ -764,8 +1199,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -773,7 +1214,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -782,19 +1229,32 @@
       "get": {
         "operationId": "queryArrayExplode",
         "summary": "Query array param, form+explode (default)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "colors",
             "in": "query",
             "required": true,
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -803,20 +1263,33 @@
       "get": {
         "operationId": "queryArrayNonexplode",
         "summary": "Query array param, form+explode=false",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "colors",
             "in": "query",
             "required": true,
             "explode": false,
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -825,7 +1298,9 @@
       "get": {
         "operationId": "queryArraySpace",
         "summary": "Query array param, spaceDelimited",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "colors",
@@ -833,13 +1308,24 @@
             "required": true,
             "style": "spaceDelimited",
             "explode": false,
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -848,7 +1334,9 @@
       "get": {
         "operationId": "queryArrayPipe",
         "summary": "Query array param, pipeDelimited",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "colors",
@@ -856,13 +1344,24 @@
             "required": true,
             "style": "pipeDelimited",
             "explode": false,
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -871,7 +1370,9 @@
       "get": {
         "operationId": "queryObjectExplode",
         "summary": "Query object param, form+explode (default)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "dims",
@@ -880,8 +1381,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -889,7 +1396,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -898,7 +1411,9 @@
       "get": {
         "operationId": "queryObjectNonexplode",
         "summary": "Query object param, form+explode=false",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "dims",
@@ -908,8 +1423,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -917,7 +1438,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -926,7 +1453,9 @@
       "get": {
         "operationId": "queryObjectDeep",
         "summary": "Query object param, deepObject style",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "dims",
@@ -937,8 +1466,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -946,7 +1481,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -955,19 +1496,32 @@
       "get": {
         "operationId": "headerArray",
         "summary": "Header array param, simple (default)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "X-Tags",
             "in": "header",
             "required": true,
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -976,7 +1530,9 @@
       "get": {
         "operationId": "headerObject",
         "summary": "Header object param, simple+explode=false (default)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "X-Dims",
@@ -985,8 +1541,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -994,7 +1556,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -1003,7 +1571,9 @@
       "get": {
         "operationId": "headerObjectExplode",
         "summary": "Header object param, simple+explode",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "X-Dims",
@@ -1013,8 +1583,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -1022,7 +1598,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -1031,19 +1613,32 @@
       "get": {
         "operationId": "cookieArray",
         "summary": "Cookie array param, form+explode (default)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "colors",
             "in": "cookie",
             "required": true,
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -1052,20 +1647,33 @@
       "get": {
         "operationId": "cookieArrayNonexplode",
         "summary": "Cookie array param, form+explode=false",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "colors",
             "in": "cookie",
             "required": true,
             "explode": false,
-            "schema": { "type": "array", "items": { "type": "string" } }
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
           }
         ],
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -1074,7 +1682,9 @@
       "get": {
         "operationId": "cookieObject",
         "summary": "Cookie object param, form+explode (default)",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "prefs",
@@ -1083,8 +1693,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -1092,7 +1708,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -1101,7 +1723,9 @@
       "get": {
         "operationId": "cookieObjectNonexplode",
         "summary": "Cookie object param, form+explode=false",
-        "tags": ["complex-params"],
+        "tags": [
+          "complex-params"
+        ],
         "parameters": [
           {
             "name": "prefs",
@@ -1111,8 +1735,14 @@
             "schema": {
               "type": "object",
               "properties": {
-                "width": { "type": "integer", "format": "int32" },
-                "height": { "type": "integer", "format": "int32" }
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
               }
             }
           }
@@ -1120,7 +1750,13 @@
         "responses": {
           "200": {
             "description": "OK",
-            "content": { "application/json": { "schema": { "type": "object" } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
           }
         }
       }
@@ -1129,11 +1765,20 @@
       "get": {
         "operationId": "downloadFile",
         "summary": "Download a binary file",
-        "tags": ["files"],
+        "tags": [
+          "files"
+        ],
         "responses": {
           "200": {
             "description": "The binary file content",
-            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           }
         }
       }
@@ -1142,15 +1787,35 @@
       "post": {
         "operationId": "uploadFile",
         "summary": "Upload a binary file",
-        "tags": ["files"],
+        "tags": [
+          "files"
+        ],
         "requestBody": {
           "required": true,
-          "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
         },
         "responses": {
           "201": {
             "description": "Upload accepted",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "id": { "type": "string" } } } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1159,15 +1824,35 @@
       "get": {
         "operationId": "downloadMixed",
         "summary": "Download file with mixed content types (binary or JSON error)",
-        "tags": ["files"],
+        "tags": [
+          "files"
+        ],
         "responses": {
           "200": {
             "description": "The binary file content",
-            "content": { "application/octet-stream": { "schema": { "type": "string", "format": "binary" } } }
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
           },
           "404": {
             "description": "Not found error",
-            "content": { "application/json": { "schema": { "type": "object", "properties": { "error": { "type": "string" } } } } }
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1176,11 +1861,24 @@
       "get": {
         "operationId": "getVendorJson",
         "summary": "Get data with vendor JSON content type",
-        "tags": ["files"],
+        "tags": [
+          "files"
+        ],
         "responses": {
           "200": {
             "description": "Vendor JSON response",
-            "content": { "application/vnd.api+json": { "schema": { "type": "object", "properties": { "data": { "type": "string" } } } } }
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1189,15 +1887,29 @@
       "post": {
         "operationId": "echoText",
         "summary": "Echo text back as text/plain",
-        "tags": ["text"],
+        "tags": [
+          "text"
+        ],
         "requestBody": {
           "required": true,
-          "content": { "text/plain": { "schema": { "type": "string" } } }
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
             "description": "Echoed text",
-            "content": { "text/plain": { "schema": { "type": "string" } } }
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
           }
         }
       }
@@ -1206,10 +1918,18 @@
       "post": {
         "operationId": "textToJson",
         "summary": "Accept text/plain, return JSON",
-        "tags": ["text"],
+        "tags": [
+          "text"
+        ],
         "requestBody": {
           "required": true,
-          "content": { "text/plain": { "schema": { "type": "string" } } }
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
         },
         "responses": {
           "200": {
@@ -1218,8 +1938,14 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "parsed": { "type": "string" } },
-                  "required": ["parsed"]
+                  "properties": {
+                    "parsed": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "parsed"
+                  ]
                 }
               }
             }
@@ -1231,7 +1957,9 @@
       "get": {
         "operationId": "getTextOrJson",
         "summary": "Returns text/plain or JSON depending on server state",
-        "tags": ["text"],
+        "tags": [
+          "text"
+        ],
         "responses": {
           "200": {
             "description": "Success - may be text or JSON",
@@ -1239,12 +1967,20 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "value": { "type": "string" } },
-                  "required": ["value"]
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ]
                 }
               },
               "text/plain": {
-                "schema": { "type": "string" }
+                "schema": {
+                  "type": "string"
+                }
               }
             }
           },
@@ -1254,8 +1990,14 @@
               "application/json": {
                 "schema": {
                   "type": "object",
-                  "properties": { "error": { "type": "string" } },
-                  "required": ["error"]
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
                 }
               }
             }
@@ -1267,7 +2009,9 @@
       "post": {
         "operationId": "submitContactForm",
         "summary": "Submit a contact form via form-urlencoded",
-        "tags": ["forms"],
+        "tags": [
+          "forms"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1275,11 +2019,21 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "email": { "type": "string", "format": "email" },
-                  "message": { "type": "string" }
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
                 },
-                "required": ["name", "email"]
+                "required": [
+                  "name",
+                  "email"
+                ]
               }
             }
           }
@@ -1292,9 +2046,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "received": { "type": "boolean" }
+                    "received": {
+                      "type": "boolean"
+                    }
                   },
-                  "required": ["received"]
+                  "required": [
+                    "received"
+                  ]
                 }
               }
             }
@@ -1306,7 +2064,9 @@
       "post": {
         "operationId": "uploadDocument",
         "summary": "Upload a document with metadata",
-        "tags": ["forms"],
+        "tags": [
+          "forms"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1314,14 +2074,22 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": { "type": "string" },
-                  "category": { "type": "string" },
+                  "title": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
                   "tags": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 },
-                "required": ["title"]
+                "required": [
+                  "title"
+                ]
               }
             }
           }
@@ -1334,9 +2102,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "uploaded": { "type": "boolean" }
+                    "uploaded": {
+                      "type": "boolean"
+                    }
                   },
-                  "required": ["uploaded"]
+                  "required": [
+                    "uploaded"
+                  ]
                 }
               }
             }
@@ -1348,7 +2120,9 @@
       "post": {
         "operationId": "submitEncodedContactForm",
         "summary": "Submit a contact form with encoding overrides",
-        "tags": ["forms"],
+        "tags": [
+          "forms"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1356,21 +2130,35 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "name": { "type": "string" },
-                  "email": { "type": "string", "format": "email" },
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
                   "tags": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": {
+                      "type": "string"
+                    }
                   },
                   "address": {
                     "type": "object",
                     "properties": {
-                      "street": { "type": "string" },
-                      "city": { "type": "string" }
+                      "street": {
+                        "type": "string"
+                      },
+                      "city": {
+                        "type": "string"
+                      }
                     }
                   }
                 },
-                "required": ["name", "email"]
+                "required": [
+                  "name",
+                  "email"
+                ]
               },
               "encoding": {
                 "tags": {
@@ -1396,9 +2184,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "received": { "type": "boolean" }
+                    "received": {
+                      "type": "boolean"
+                    }
                   },
-                  "required": ["received"]
+                  "required": [
+                    "received"
+                  ]
                 }
               }
             }
@@ -1410,7 +2202,9 @@
       "post": {
         "operationId": "uploadEncodedDocument",
         "summary": "Upload a document with encoding overrides",
-        "tags": ["forms"],
+        "tags": [
+          "forms"
+        ],
         "requestBody": {
           "required": true,
           "content": {
@@ -1418,20 +2212,30 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "title": { "type": "string" },
+                  "title": {
+                    "type": "string"
+                  },
                   "metadata": {
                     "type": "object",
                     "properties": {
-                      "author": { "type": "string" },
-                      "version": { "type": "integer" }
+                      "author": {
+                        "type": "string"
+                      },
+                      "version": {
+                        "type": "integer"
+                      }
                     }
                   },
                   "tags": {
                     "type": "array",
-                    "items": { "type": "string" }
+                    "items": {
+                      "type": "string"
+                    }
                   }
                 },
-                "required": ["title"]
+                "required": [
+                  "title"
+                ]
               },
               "encoding": {
                 "metadata": {
@@ -1452,9 +2256,13 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "uploaded": { "type": "boolean" }
+                    "uploaded": {
+                      "type": "boolean"
+                    }
                   },
-                  "required": ["uploaded"]
+                  "required": [
+                    "uploaded"
+                  ]
                 }
               }
             }

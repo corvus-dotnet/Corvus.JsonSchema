@@ -3641,6 +3641,79 @@ public class GeneratedClientEndToEndTests
         StringAssert.Contains(ex.Message, "instanceLocation");
     }
 
+    // ── PATCH / HEAD / OPTIONS / TRACE E2E tests ─────────────────────────
+    // These tests exercise HttpClientTransport.MapMethod for the four HTTP
+    // methods not covered by the existing spec operations.
+    [TestMethod]
+    public async Task PatchItem_200_SendsPatchAndParsesJsonResponse()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"id":"i-1","name":"patched"}""");
+
+        using var bodyDoc = ParsedJsonDocument<PatchItemsByItemIdBody>.Parse("""{"name":"patched"}""");
+        PatchItemsByItemIdBody body = bodyDoc.RootElement;
+
+        await using PatchItemResponse response = await harness.Transport
+            .SendAsync<PatchItemRequest, PatchItemsByItemIdBody, PatchItemResponse>(
+                new PatchItemRequest(JsonElement.ParseValue("\"i-1\""u8)),
+                in body,
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.AreEqual(new HttpMethod("PATCH"), harness.CapturedRequest.Method);
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.TryGetOk(out var result));
+        Assert.AreEqual("patched", (string)result.Name);
+    }
+
+    [TestMethod]
+    public async Task HeadItem_200_SendsHead()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, string.Empty);
+
+        await using HeadItemResponse response = await harness.Transport
+            .SendAsync<HeadItemRequest, HeadItemResponse>(
+                new HeadItemRequest(JsonElement.ParseValue("\"h-1\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.AreEqual(HttpMethod.Head, harness.CapturedRequest.Method);
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+    }
+
+    [TestMethod]
+    public async Task OptionsItems_204_SendsOptions()
+    {
+        using var harness = new TestHarness(HttpStatusCode.NoContent, string.Empty);
+
+        await using OptionsItemsResponse response = await harness.Transport
+            .SendAsync<OptionsItemsRequest, OptionsItemsResponse>(
+                default(OptionsItemsRequest),
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.AreEqual(HttpMethod.Options, harness.CapturedRequest.Method);
+        Assert.AreEqual(204, response.StatusCode);
+    }
+
+    [TestMethod]
+    public async Task TraceItem_200_SendsTraceAndReturnsText()
+    {
+        byte[] textBytes = Encoding.UTF8.GetBytes("TRACE /items/t-1 HTTP/1.1");
+        using var harness = new TestHarness(HttpStatusCode.OK, textBytes, "text/plain");
+
+        await using TraceItemResponse response = await harness.Transport
+            .SendAsync<TraceItemRequest, TraceItemResponse>(
+                new TraceItemRequest(JsonElement.ParseValue("\"t-1\""u8)),
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        Assert.AreEqual(HttpMethod.Trace, harness.CapturedRequest.Method);
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.TryGetOkString(out string? text));
+        Assert.AreEqual("TRACE /items/t-1 HTTP/1.1", text);
+    }
+
     private static async Task<GetItemResponse> CreateGetItemResponse(int statusCode, string json)
     {
         byte[] bytes = Encoding.UTF8.GetBytes(json);
