@@ -330,4 +330,106 @@ public class CodeEmitHelpersTests
     {
         Assert.AreEqual($"@{keyword}", CodeEmitHelpers.EscapeCSharpKeyword(keyword));
     }
+
+    [TestMethod]
+    [DataRow(JsonValueKind.Object)]
+    [DataRow(JsonValueKind.Array)]
+    public void FormatDefaultValueExpression_ObjectOrArray_ReturnsDefault(JsonValueKind kind)
+    {
+        string result = CodeEmitHelpers.FormatDefaultValueExpression(
+            "MyType", """{"key":"value"}""", kind);
+        Assert.AreEqual("default", result);
+    }
+
+    [TestMethod]
+    public void FormatDefaultValueExpression_NullJson_ReturnsDefault()
+    {
+        string result = CodeEmitHelpers.FormatDefaultValueExpression(
+            "MyType", null, JsonValueKind.String);
+        Assert.AreEqual("default", result);
+    }
+
+    [TestMethod]
+    public void FormatDefaultValueExpression_StringKind_ReturnsStringConstant()
+    {
+        string result = CodeEmitHelpers.FormatDefaultValueExpression(
+            "MyType", "hello", JsonValueKind.String);
+        Assert.IsTrue(
+            result.Contains("StringConstant", StringComparison.Ordinal),
+            "String kind should produce StringConstant expression");
+    }
+
+    [TestMethod]
+    public void FormatDefaultValueExpression_NumberKind_ReturnsNumberConstant()
+    {
+        string result = CodeEmitHelpers.FormatDefaultValueExpression(
+            "MyType", "42", JsonValueKind.Number);
+        Assert.IsTrue(
+            result.Contains("NumberConstant", StringComparison.Ordinal),
+            "Number kind should produce NumberConstant expression");
+    }
+
+    [TestMethod]
+    public void FormatDefaultValueExpression_TrueKind_ReturnsTrue()
+    {
+        string result = CodeEmitHelpers.FormatDefaultValueExpression(
+            "MyType", "true", JsonValueKind.True);
+        Assert.IsTrue(
+            result.Contains(".True", StringComparison.Ordinal),
+            "True kind should produce .True expression");
+    }
+
+    [TestMethod]
+    public void FormatDefaultValueExpression_FalseKind_ReturnsFalse()
+    {
+        string result = CodeEmitHelpers.FormatDefaultValueExpression(
+            "MyType", "false", JsonValueKind.False);
+        Assert.IsTrue(
+            result.Contains(".False", StringComparison.Ordinal),
+            "False kind should produce .False expression");
+    }
+
+    [TestMethod]
+    public void FormatDefaultValueExpression_NullKind_ReturnsNull()
+    {
+        string result = CodeEmitHelpers.FormatDefaultValueExpression(
+            "MyType", "null", JsonValueKind.Null);
+        Assert.IsTrue(
+            result.Contains(".Null", StringComparison.Ordinal),
+            "Null kind should produce .Null expression");
+    }
+
+    [TestMethod]
+    public void ContentTypeCondition_Json_ReturnsJsonCondition()
+    {
+        string result = CodeEmitHelpers.ContentTypeCondition(ContentCategory.Json);
+        Assert.IsTrue(
+            result.Contains("application/json", StringComparison.Ordinal),
+            "Json category should check for application/json");
+    }
+
+    [TestMethod]
+    public void ContentTypeCondition_TextPlain_ReturnsTextCondition()
+    {
+        string result = CodeEmitHelpers.ContentTypeCondition(ContentCategory.TextPlain);
+        Assert.IsTrue(
+            result.Contains("text/", StringComparison.Ordinal),
+            "TextPlain category should check for text/");
+    }
+
+    [TestMethod]
+    public void ContentTypeCondition_OctetStream_ReturnsBinaryCondition()
+    {
+        string result = CodeEmitHelpers.ContentTypeCondition(ContentCategory.OctetStream);
+        Assert.IsTrue(
+            result.Contains("text/", StringComparison.Ordinal),
+            "OctetStream category should reference text/ (negated)");
+    }
+
+    [TestMethod]
+    public void ContentTypeCondition_UnknownCategory_ReturnsTrue()
+    {
+        string result = CodeEmitHelpers.ContentTypeCondition((ContentCategory)99);
+        Assert.AreEqual("true", result);
+    }
 }

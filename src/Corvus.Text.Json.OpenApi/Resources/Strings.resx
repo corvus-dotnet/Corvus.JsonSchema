@@ -81,7 +81,7 @@
     <value>The request body failed schema validation.</value>
   </data>
   <data name="RequestBodyValidationFailedWithDetail" xml:space="preserve">
-    <value>The request body failed schema validation: {1}</value>
+    <value>The request body failed schema validation: {0}</value>
   </data>
   <data name="UnableToResolveRequestBodyRef" xml:space="preserve">
     <value>Unable to resolve request body $ref.</value>

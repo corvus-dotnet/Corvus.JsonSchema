@@ -2175,6 +2175,216 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void Generate_RefParameter_ResolvesCorrectly()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "RefParam", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "parameters": [
+                    { "$ref": "#/components/parameters/PageSize" }
+                  ],
+                  "get": {
+                    "operationId": "listItems",
+                    "tags": ["items"],
+                    "parameters": [
+                      { "$ref": "#/components/parameters/PageToken" }
+                    ],
+                    "responses": { "200": { "description": "Ok" } }
+                  }
+                }
+              },
+              "components": {
+                "parameters": {
+                  "PageSize": {
+                    "name": "pageSize",
+                    "in": "query",
+                    "schema": { "type": "integer", "format": "int32" }
+                  },
+                  "PageToken": {
+                    "name": "pageToken",
+                    "in": "query",
+                    "schema": { "type": "string" }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> typeMap = new(StringComparer.Ordinal)
+        {
+            ["#/components/parameters/PageSize/schema"] = "Test.JsonInt32",
+            ["#/components/parameters/PageToken/schema"] = "Test.JsonString",
+        };
+        OpenApi30CodeGenerator gen = new("Test", typeMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile req = GetFile(files, "ListItemsRequest.cs");
+
+        // Both $ref parameters should be resolved and included
+        Assert.IsTrue(
+            req.Content.Contains("HasQueryParameters => true", StringComparison.Ordinal),
+            "Request should have query parameters from $ref resolution");
+        Assert.IsTrue(
+            req.Content.Contains("pageSize", StringComparison.Ordinal),
+            "Path-level $ref parameter 'pageSize' should be resolved");
+        Assert.IsTrue(
+            req.Content.Contains("pageToken", StringComparison.Ordinal),
+            "Operation-level $ref parameter 'pageToken' should be resolved");
+    }
+
+    [TestMethod]
+    public void Generate_RefResponse_ResolvesCorrectly()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "RefResp", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "tags": ["items"],
+                    "responses": {
+                      "200": { "$ref": "#/components/responses/ItemList" }
+                    }
+                  }
+                }
+              },
+              "components": {
+                "responses": {
+                  "ItemList": {
+                    "description": "A list of items",
+                    "content": {
+                      "application/json": {
+                        "schema": { "type": "array", "items": { "type": "string" } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> typeMap = new(StringComparer.Ordinal)
+        {
+            ["#/components/responses/ItemList/content/application~1json/schema"] = "Test.Items",
+        };
+        OpenApi30CodeGenerator gen = new("Test", typeMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "ListItemsResponse.cs");
+
+        // The $ref response should be resolved and generate a typed accessor
+        Assert.IsTrue(
+            resp.Content.Contains("TryGetOk", StringComparison.Ordinal),
+            "Response should have a TryGetOk method for the $ref response");
+    }
+
+    [TestMethod]
+    public void Generate_RefRequestBody_ResolvesCorrectly()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "RefBody", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "post": {
+                    "operationId": "createItem",
+                    "tags": ["items"],
+                    "requestBody": { "$ref": "#/components/requestBodies/NewItem" },
+                    "responses": { "201": { "description": "Created" } }
+                  }
+                }
+              },
+              "components": {
+                "requestBodies": {
+                  "NewItem": {
+                    "description": "The item to create",
+                    "required": true,
+                    "content": {
+                      "application/json": {
+                        "schema": { "type": "object", "properties": { "name": { "type": "string" } } }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> typeMap = new(StringComparer.Ordinal)
+        {
+            ["#/components/requestBodies/NewItem/content/application~1json/schema"] = "Test.NewItem",
+        };
+        OpenApi30CodeGenerator gen = new("Test", typeMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile client = GetFile(files, "ApiItemsClient.cs");
+
+        // The $ref request body should be resolved and the client method should accept a body
+        Assert.IsTrue(
+            client.Content.Contains("SendWithBodyAsyncCore", StringComparison.Ordinal),
+            "Client should call SendWithBodyAsyncCore for the $ref request body");
+    }
+
+    [TestMethod]
+    public void Generate_RefHeader_ResolvesCorrectly()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "RefHeader", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "tags": ["items"],
+                    "responses": {
+                      "200": {
+                        "description": "Ok",
+                        "headers": {
+                          "X-Rate-Limit": { "$ref": "#/components/headers/RateLimit" }
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              "components": {
+                "headers": {
+                  "RateLimit": {
+                    "description": "Rate limit remaining",
+                    "schema": { "type": "integer", "format": "int32" }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        Dictionary<string, string> typeMap = new(StringComparer.Ordinal)
+        {
+            ["#/components/headers/RateLimit/schema"] = "Test.JsonInt32",
+        };
+        OpenApi30CodeGenerator gen = new("Test", typeMap);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(root);
+
+        GeneratedFile resp = GetFile(files, "ListItemsResponse.cs");
+
+        // The $ref header should be resolved and exposed as a typed property
+        Assert.IsTrue(
+            resp.Content.Contains("X-Rate-Limit", StringComparison.Ordinal),
+            "Response should include the $ref header X-Rate-Limit");
+    }
+
+    [TestMethod]
     public void Generate_StaticPath_EmitsLiteralWrite()
     {
         const string spec = """
