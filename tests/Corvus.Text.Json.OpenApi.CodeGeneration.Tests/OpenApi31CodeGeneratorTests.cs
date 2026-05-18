@@ -6599,6 +6599,7 @@ public class OpenApi31CodeGeneratorTests
         ["#/paths/~1quirky~1{sid}~1styled/get/parameters/0/schema"] = "CovTest.JsonString",
         ["#/paths/~1quirky~1{sid}~1styled/get/parameters/1/schema"] = "CovTest.JsonString",
         ["#/paths/~1quirky~1{sid}~1styled/get/responses/200/content/application~1json/schema"] = "CovTest.Item",
+        ["#/paths/~1empty-servers/get/responses/200/content/application~1json/schema"] = "CovTest.GetEmptyServersOk",
     };
 
     private static JsonElement coverageRoot;
@@ -7074,6 +7075,19 @@ public class OpenApi31CodeGeneratorTests
         Assert.IsTrue(
             iface.Content.Contains("GetStyledQuirkyAsync", StringComparison.Ordinal),
             "Interface should have GetStyledQuirkyAsync for path param with non-standard style");
+    }
+
+    [TestMethod]
+    public void CovSpec_EmptyServers_GeneratesWithoutError()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+
+        // The empty-servers path should still generate a client method
+        GeneratedFile iface = files.First(f => f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+        Assert.IsTrue(
+            iface.Content.Contains("GetEmptyServersAsync", StringComparison.Ordinal),
+            "Interface should have GetEmptyServersAsync even with empty servers arrays");
     }
 
     // ── Additional coverage tests: content type code paths ─────────────────
