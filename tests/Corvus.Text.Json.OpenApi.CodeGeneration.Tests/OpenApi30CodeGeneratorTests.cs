@@ -7012,8 +7012,8 @@ public class OpenApi30CodeGeneratorTests
         GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
 
         Assert.IsTrue(
-            resp.Content.Contains("GetProperty(\"id\"u8)", StringComparison.Ordinal),
-            "Link method should extract 'id' from response body via GetProperty");
+            resp.Content.Contains("this.response.CreatedBody.Id", StringComparison.Ordinal),
+            "Link method should extract 'id' from response body via the typed property accessor");
     }
 
     [TestMethod]
@@ -7094,15 +7094,15 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
-    public void CovSpec_ResponseLinks_ClientMethod_IsAsyncWhenRequestExpr()
+    public void CovSpec_ResponseLinks_ClientMethod_UsesLocalAsyncCaptureWhenRequestExpr()
     {
         IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
         GeneratedFile client = files.First(f => f.FileName.EndsWith("Client.cs", StringComparison.Ordinal)
             && !f.FileName.StartsWith("IApi", StringComparison.Ordinal));
 
         Assert.IsTrue(
-            client.Content.Contains("public async ValueTask<GetItemResponse> GetItemAsync(", StringComparison.Ordinal),
-            "GetItemAsync should be async when response has $request.* link expressions");
+            client.Content.Contains("return CaptureRequestAsync(", StringComparison.Ordinal),
+            "GetItemAsync should use CaptureRequestAsync local function when response has $request.* link expressions");
     }
 
     [TestMethod]
@@ -7114,6 +7114,6 @@ public class OpenApi30CodeGeneratorTests
 
         Assert.IsTrue(
             client.Content.Contains("response.sourceRequest = request;", StringComparison.Ordinal),
-            "Client method should set response.sourceRequest after await");
+            "CaptureRequestAsync local function should set response.sourceRequest");
     }
 }

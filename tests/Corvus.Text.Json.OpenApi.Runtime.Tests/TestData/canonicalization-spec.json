@@ -77,6 +77,15 @@
                   ]
                 }
               }
+            },
+            "links": {
+              "RefreshItem": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$request.path.itemId"
+                },
+                "description": "Re-fetch this item using the original path parameter"
+              }
             }
           },
           "404": {
@@ -609,6 +618,15 @@
                     "name"
                   ]
                 }
+              }
+            },
+            "links": {
+              "GetCreatedItem": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$response.body#/id"
+                },
+                "description": "Fetch the newly created item by its generated ID"
               }
             }
           },

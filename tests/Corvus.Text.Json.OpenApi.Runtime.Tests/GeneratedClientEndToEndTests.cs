@@ -3787,4 +3787,187 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(false, (bool)flags.Value[1]);
         Assert.AreEqual(true, (bool)flags.Value[2]);
     }
+
+    // ── Link following E2E tests ─────────────────────────────────────────
+    [TestMethod]
+    public async Task CreateItem_FollowGetCreatedItemLink_ExtractsIdFromResponseBody()
+    {
+        using var harness = new SequencedTestHarness(
+        [
+            (HttpStatusCode.Created, """{"id":"new-42","name":"NewWidget","price":19.99}"""),
+            (HttpStatusCode.OK, """{"id":"new-42","name":"NewWidget","price":19.99}"""),
+        ]);
+
+        var client = new ApiItemsClient(harness.Transport);
+        using var bodyDoc = ParsedJsonDocument<PostItemsBody>.Parse("""{"name":"NewWidget","price":19.99}""");
+
+        CreateItemResponse createResp = await client.CreateItemAsync(body: bodyDoc.RootElement);
+
+        Assert.AreEqual(201, createResp.StatusCode);
+
+        // Follow the GetCreatedItem link — extracts itemId from $response.body#/id.
+        GetItemResponse getResp = await createResp.Links.GetCreatedItemAsync();
+
+        Assert.AreEqual(200, getResp.StatusCode);
+
+        // Verify the linked request used itemId = "new-42" from the response body.
+        HttpRequestMessage linkedRequest = harness.CapturedRequests[1];
+        Assert.AreEqual("/items/new-42", linkedRequest.RequestUri!.AbsolutePath);
+    }
+
+    [TestMethod]
+    public async Task GetItem_FollowRefreshItemLink_UsesSourceRequestPath()
+    {
+        using var harness = new SequencedTestHarness(
+        [
+            (HttpStatusCode.OK, """{"id":"item-7","name":"Widget","price":9.99}"""),
+            (HttpStatusCode.OK, """{"id":"item-7","name":"Widget","price":10.99}"""),
+        ]);
+
+        var client = new ApiItemsClient(harness.Transport);
+        GetItemResponse getResp = await client.GetItemAsync(itemId: "item-7");
+
+        Assert.AreEqual(200, getResp.StatusCode);
+
+        // Follow the RefreshItem link — uses $request.path.itemId from the original request.
+        GetItemResponse refreshResp = await getResp.Links.RefreshItemAsync();
+
+        Assert.AreEqual(200, refreshResp.StatusCode);
+
+        HttpRequestMessage linkedRequest = harness.CapturedRequests[1];
+        Assert.AreEqual("/items/item-7", linkedRequest.RequestUri!.AbsolutePath);
+    }
+
+    [TestMethod]
+    public async Task CreateItem_FollowLink_TransportIsPassedThrough()
+    {
+        using var harness = new SequencedTestHarness(
+        [
+            (HttpStatusCode.Created, """{"id":"t-1","name":"Test","price":1.00}"""),
+            (HttpStatusCode.OK, """{"id":"t-1","name":"Test","price":1.00}"""),
+        ]);
+
+        var client = new ApiItemsClient(harness.Transport);
+        using var bodyDoc = ParsedJsonDocument<PostItemsBody>.Parse("""{"name":"Test","price":1.00}""");
+
+        CreateItemResponse createResp = await client.CreateItemAsync(body: bodyDoc.RootElement);
+
+        // The link call succeeds — transport was stored in the response and used for linked request.
+        GetItemResponse linkedResp = await createResp.Links.GetCreatedItemAsync();
+
+        Assert.AreEqual(2, harness.CapturedRequests.Count);
+    }
+
+    [TestMethod]
+    public async Task GetItem_FollowRefreshLink_UnsatisfiedOptionalParamsAreUndefined()
+    {
+        using var harness = new SequencedTestHarness(
+        [
+            (HttpStatusCode.OK, """{"id":"item-3","name":"Gadget","price":5.00}"""),
+            (HttpStatusCode.OK, """{"id":"item-3","name":"Gadget","price":5.00}"""),
+        ]);
+
+        var client = new ApiItemsClient(harness.Transport);
+        GetItemResponse getResp = await client.GetItemAsync(itemId: "item-3");
+
+        // Follow RefreshItem with no optional params — they should not appear in the query string.
+        GetItemResponse refreshResp = await getResp.Links.RefreshItemAsync();
+
+        HttpRequestMessage linkedRequest = harness.CapturedRequests[1];
+        string query = linkedRequest.RequestUri!.Query;
+
+        Assert.AreEqual(string.Empty, query);
+    }
+
+    [TestMethod]
+    public async Task GetItem_FollowRefreshLink_WithOptionalParams()
+    {
+        using var harness = new SequencedTestHarness(
+        [
+            (HttpStatusCode.OK, """{"id":"item-5","name":"Widget","price":9.99}"""),
+            (HttpStatusCode.OK, """{"id":"item-5","name":"Widget","price":9.99}"""),
+        ]);
+
+        var client = new ApiItemsClient(harness.Transport);
+        GetItemResponse getResp = await client.GetItemAsync(itemId: "item-5");
+
+        // Follow RefreshItem with an optional filter param.
+        GetItemResponse refreshResp = await getResp.Links.RefreshItemAsync(
+            filter: JsonString.ParseValue("\"active\""u8));
+
+        HttpRequestMessage linkedRequest = harness.CapturedRequests[1];
+        string query = linkedRequest.RequestUri!.Query;
+
+        Assert.IsTrue(query.Contains("filter=active"), $"Expected query to contain 'filter=active' but got '{query}'");
+        Assert.AreEqual("/items/item-5", linkedRequest.RequestUri!.AbsolutePath);
+    }
+
+    /// <summary>
+    /// A test harness that returns a sequence of pre-configured responses,
+    /// capturing all requests in order. Used for link-following tests where
+    /// the initial request and the linked request need different responses.
+    /// </summary>
+    private sealed class SequencedTestHarness : IDisposable
+    {
+        private readonly SequencedMockHandler handler;
+        private readonly HttpClient client;
+
+        public SequencedTestHarness(
+            IReadOnlyList<(HttpStatusCode StatusCode, string ResponseBody)> responses)
+        {
+            this.handler = new SequencedMockHandler(responses);
+            this.client = new HttpClient(this.handler)
+            {
+                BaseAddress = new Uri("http://localhost"),
+            };
+            this.Transport = new HttpClientTransport(this.client);
+        }
+
+        public HttpClientTransport Transport { get; }
+
+        public IReadOnlyList<HttpRequestMessage> CapturedRequests => this.handler.CapturedRequests;
+
+        public void Dispose()
+        {
+            this.Transport.DisposeAsync().AsTask().GetAwaiter().GetResult();
+            this.client.Dispose();
+            this.handler.Dispose();
+        }
+    }
+
+    private sealed class SequencedMockHandler : DelegatingHandler
+    {
+        private readonly IReadOnlyList<(HttpStatusCode StatusCode, string ResponseBody)> responses;
+        private readonly List<HttpRequestMessage> capturedRequests = [];
+        private int callIndex;
+
+        public SequencedMockHandler(
+            IReadOnlyList<(HttpStatusCode StatusCode, string ResponseBody)> responses)
+        {
+            this.responses = responses;
+            this.InnerHandler = new HttpClientHandler();
+        }
+
+        public IReadOnlyList<HttpRequestMessage> CapturedRequests => this.capturedRequests;
+
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            this.capturedRequests.Add(request);
+
+            int index = this.callIndex < this.responses.Count
+                ? this.callIndex
+                : this.responses.Count - 1;
+            this.callIndex++;
+
+            var (statusCode, body) = this.responses[index];
+
+            HttpContent content = string.IsNullOrEmpty(body)
+                ? new ByteArrayContent([])
+                : new StringContent(body, Encoding.UTF8, "application/json");
+
+            return Task.FromResult(new HttpResponseMessage(statusCode) { Content = content });
+        }
+    }
 }
