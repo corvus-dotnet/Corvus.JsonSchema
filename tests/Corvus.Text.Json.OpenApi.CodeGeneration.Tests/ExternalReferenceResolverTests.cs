@@ -331,6 +331,33 @@ public class ExternalReferenceResolverTests
         Assert.AreEqual(JsonValueKind.Object, result.ValueKind);
     }
 
+    [TestMethod]
+    public void TryResolve_Generic_String_SchemaValidationFails_ReturnsFalse()
+    {
+        // Resolve an object value as JsonUri — schema validation will fail
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(EntryDoc);
+        using ExternalReferenceResolver resolver = new(doc.RootElement, EntryDocPath);
+
+        bool found = resolver.TryResolve<JsonUri>(
+            "#/components/schemas/Pet", out JsonUri result);
+
+        Assert.IsFalse(found);
+        Assert.AreEqual(default(JsonUri), result);
+    }
+
+    [TestMethod]
+    public void TryResolve_Generic_Utf8_SchemaValidationFails_ReturnsFalse()
+    {
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(EntryDoc);
+        using ExternalReferenceResolver resolver = new(doc.RootElement, EntryDocPath);
+
+        bool found = resolver.TryResolve<JsonUri>(
+            "#/components/schemas/Pet"u8, out JsonUri result);
+
+        Assert.IsFalse(found);
+        Assert.AreEqual(default(JsonUri), result);
+    }
+
     // ══════════════════════════════════════════════════════════════════
     // File-system lazy loading
     // ══════════════════════════════════════════════════════════════════

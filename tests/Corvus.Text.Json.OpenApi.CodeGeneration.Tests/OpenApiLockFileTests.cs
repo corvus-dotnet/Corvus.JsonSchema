@@ -259,6 +259,33 @@ public class OpenApiLockFileTests
         Assert.IsTrue(OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", null, sameFilter));
     }
 
+    [TestMethod]
+    public void IsUpToDate_DifferentGeneratorVersion_ReturnsFalse()
+    {
+        // Build a lock file JSON string with a fake generator version
+        const string lockJson = """
+            {
+              "specFileHash": "0000000000000000000000000000000000000000000000000000000000000000",
+              "specVersion": "3.1",
+              "rootNamespace": "TestNs",
+              "includePaths": [],
+              "excludePaths": [],
+              "generatedFiles": [],
+              "generatedAt": "2025-01-01T00:00:00Z",
+              "generatorVersion": "0.0.0-fake"
+            }
+            """;
+
+        using ParsedJsonDocument<OpenApiLockFileModel> lockDoc = ParsedJsonDocument<OpenApiLockFileModel>.Parse(lockJson);
+        OpenApiLockFileModel lockFile = lockDoc.RootElement.Clone();
+
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(SampleSpecBytes);
+
+        Assert.IsFalse(
+            OpenApiLockFile.IsUpToDate(in lockFile, doc.RootElement, "3.1", "TestNs", null, filter: null),
+            "A lock file from a different generator version should not be considered up to date");
+    }
+
     // ── Canonical hash: format-insensitive ────────────────────────────────
     [TestMethod]
     public void Create_SameContentDifferentWhitespace_ProducesSameHash()
