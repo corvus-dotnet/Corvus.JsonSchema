@@ -526,23 +526,22 @@ public sealed class OpenApi30CodeGenerator
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.Parameter resolved)
     {
-        OpenApiDocument.Parameter? result = paramOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.Parameter?>(
-            in referenceResolver,
-            static (in OpenApiDocument.Parameter parameter, in IOpenApiReferenceResolver _) =>
-                parameter,
-            static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver solver) =>
-                ResolveRef<OpenApiDocument.Parameter>(reference, solver),
-            static (in OpenApiDocument.PathItem.ParametersEntityArray.ParametersEntity _, in IOpenApiReferenceResolver _) =>
-                null);
-
-        if (result is { } r2)
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(paramOrRef);
+        if (asRef.Ref.IsNotUndefined())
         {
-            resolved = r2;
-            return true;
+            OpenApiDocument.Parameter? r = ResolveRef<OpenApiDocument.Parameter>(asRef, referenceResolver);
+            if (r is { } resolved2)
+            {
+                resolved = resolved2;
+                return true;
+            }
+
+            resolved = default;
+            return false;
         }
 
-        resolved = default;
-        return false;
+        resolved = OpenApiDocument.Parameter.From(paramOrRef);
+        return true;
     }
 
     private static bool TryResolveOperationParameter(
@@ -550,23 +549,22 @@ public sealed class OpenApi30CodeGenerator
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.Parameter resolved)
     {
-        OpenApiDocument.Parameter? result = paramOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.Parameter?>(
-            in referenceResolver,
-            static (in OpenApiDocument.Parameter parameter, in IOpenApiReferenceResolver _) =>
-                parameter,
-            static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver solver) =>
-                ResolveRef<OpenApiDocument.Parameter>(reference, solver),
-            static (in OpenApiDocument.Operation.ParametersEntityArray.ParametersEntity _, in IOpenApiReferenceResolver _) =>
-                null);
-
-        if (result is { } r2)
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(paramOrRef);
+        if (asRef.Ref.IsNotUndefined())
         {
-            resolved = r2;
-            return true;
+            OpenApiDocument.Parameter? r = ResolveRef<OpenApiDocument.Parameter>(asRef, referenceResolver);
+            if (r is { } resolved2)
+            {
+                resolved = resolved2;
+                return true;
+            }
+
+            resolved = default;
+            return false;
         }
 
-        resolved = default;
-        return false;
+        resolved = OpenApiDocument.Parameter.From(paramOrRef);
+        return true;
     }
 
     private static bool TryResolveRequestBody(
@@ -574,23 +572,22 @@ public sealed class OpenApi30CodeGenerator
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.RequestBody resolved)
     {
-        OpenApiDocument.RequestBody? result = requestBodyOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.RequestBody?>(
-            in referenceResolver,
-            static (in OpenApiDocument.RequestBody requestBody, in IOpenApiReferenceResolver _) =>
-                requestBody,
-            static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver solver) =>
-                ResolveRef<OpenApiDocument.RequestBody>(reference, solver),
-            static (in OpenApiDocument.Operation.RequestBodyEntity _, in IOpenApiReferenceResolver _) =>
-                null);
-
-        if (result is { } r2)
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(requestBodyOrRef);
+        if (asRef.Ref.IsNotUndefined())
         {
-            resolved = r2;
-            return true;
+            OpenApiDocument.RequestBody? r = ResolveRef<OpenApiDocument.RequestBody>(asRef, referenceResolver);
+            if (r is { } resolved2)
+            {
+                resolved = resolved2;
+                return true;
+            }
+
+            resolved = default;
+            return false;
         }
 
-        resolved = default;
-        return false;
+        resolved = OpenApiDocument.RequestBody.From(requestBodyOrRef);
+        return true;
     }
 
     private static bool TryResolveResponse(
@@ -598,23 +595,26 @@ public sealed class OpenApi30CodeGenerator
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.Response resolved)
     {
-        OpenApiDocument.Response? result = responseOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.Response?>(
-            in referenceResolver,
-            static (in OpenApiDocument.Response response, in IOpenApiReferenceResolver _) =>
-                response,
-            static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver solver) =>
-                ResolveRef<OpenApiDocument.Response>(reference, solver),
-            static (in OpenApiDocument.Responses.DefaultEntity _, in IOpenApiReferenceResolver _) =>
-                null);
-
-        if (result is { } r2)
+        // Avoid the Match discriminator — the 3.0 typed model's schema validation
+        // can reject valid Response Objects that contain optional sub-objects with
+        // missing optional properties (e.g. a header with only "description" and
+        // no "schema"). Instead, check for $ref directly and fall back to From().
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(responseOrRef);
+        if (asRef.Ref.IsNotUndefined())
         {
-            resolved = r2;
-            return true;
+            OpenApiDocument.Response? r = ResolveRef<OpenApiDocument.Response>(asRef, referenceResolver);
+            if (r is { } resolved2)
+            {
+                resolved = resolved2;
+                return true;
+            }
+
+            resolved = default;
+            return false;
         }
 
-        resolved = default;
-        return false;
+        resolved = OpenApiDocument.Response.From(responseOrRef);
+        return true;
     }
 
     private static bool TryResolveHeader(
@@ -622,23 +622,24 @@ public sealed class OpenApi30CodeGenerator
         IOpenApiReferenceResolver referenceResolver,
         out OpenApiDocument.Header resolved)
     {
-        OpenApiDocument.Header? result = headerOrRef.Match<IOpenApiReferenceResolver, OpenApiDocument.Header?>(
-            in referenceResolver,
-            static (in OpenApiDocument.Header header, in IOpenApiReferenceResolver _) =>
-                header,
-            static (in OpenApiDocument.Reference reference, in IOpenApiReferenceResolver solver) =>
-                ResolveRef<OpenApiDocument.Header>(reference, solver),
-            static (in OpenApiDocument.Response.HeadersEntity.AdditionalPropertiesEntity _, in IOpenApiReferenceResolver _) =>
-                null);
-
-        if (result is { } r2)
+        // Same approach as TryResolveResponse — avoid Match discriminator to
+        // handle headers that have optional properties missing (e.g. no "schema").
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(headerOrRef);
+        if (asRef.Ref.IsNotUndefined())
         {
-            resolved = r2;
-            return true;
+            OpenApiDocument.Header? r = ResolveRef<OpenApiDocument.Header>(asRef, referenceResolver);
+            if (r is { } resolved2)
+            {
+                resolved = resolved2;
+                return true;
+            }
+
+            resolved = default;
+            return false;
         }
 
-        resolved = default;
-        return false;
+        resolved = OpenApiDocument.Header.From(headerOrRef);
+        return true;
     }
 
     // ── Parameter trait parsing ──────────────────────────────────────────

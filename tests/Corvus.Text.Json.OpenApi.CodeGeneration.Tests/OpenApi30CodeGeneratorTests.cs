@@ -2164,8 +2164,14 @@ public class OpenApi30CodeGeneratorTests
 
         GeneratedFile req = GetFile(files, "SearchRequest.cs");
 
-        // Parameters without a schema are skipped — the request struct has no query params
-        Assert.IsTrue(req.Content.Contains("HasQueryParameters => false", StringComparison.Ordinal));
+        // A parameter without a schema is still a valid query parameter — it defaults
+        // to JsonElement as its type and is included in the request struct.
+        Assert.IsTrue(
+            req.Content.Contains("HasQueryParameters => true", StringComparison.Ordinal),
+            "Schema-less query parameter should still be a query parameter");
+        Assert.IsTrue(
+            req.Content.Contains("JsonElement", StringComparison.Ordinal),
+            "Schema-less parameter should default to JsonElement type");
     }
 
     [TestMethod]
@@ -5679,5 +5685,28 @@ public class OpenApi30CodeGeneratorTests
         Assert.IsTrue(
             resp.Content.Contains("CreateBuilder<string>", StringComparison.Ordinal),
             "Array header should use CreateBuilder to parse comma-separated elements");
+    }
+
+    // ── Raw string header (no schema) ─────────────────────────────────────
+    [TestMethod]
+    public void CovSpec_ResponseHeader_NoSchema_RawString()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("XRequestIdHeader", StringComparison.Ordinal),
+            "Response should have XRequestIdHeader property for header with no schema");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseHeader_NoSchema_IsStringProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("string? XRequestIdHeader", StringComparison.Ordinal),
+            "Header with no schema should be a raw string? property");
     }
 }

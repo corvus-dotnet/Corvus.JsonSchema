@@ -144,6 +144,9 @@
                     "type": "string"
                   }
                 }
+              },
+              "X-Request-Id": {
+                "description": "Request correlation ID (no schema — raw string)"
               }
             }
           }
