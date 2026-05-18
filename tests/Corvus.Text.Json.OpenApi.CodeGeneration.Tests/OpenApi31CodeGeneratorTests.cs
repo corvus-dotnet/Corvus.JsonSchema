@@ -7250,4 +7250,232 @@ public class OpenApi31CodeGeneratorTests
             client.Content.Contains("Stream", StringComparison.Ordinal),
             "Client should use Stream for octet-stream request body");
     }
+
+    // ── ListOperations tests ──────────────────────────────────────────────
+    [TestMethod]
+    public void ListOperations_ReturnsPetstoreOperations()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot);
+
+        Assert.IsTrue(ops.Length > 0, "Should return at least one operation");
+    }
+
+    [TestMethod]
+    public void ListOperations_IncludesPathAndMethod()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot);
+
+        OperationSummary listPets = ops.First(o => o.OperationId == "listPets");
+        Assert.AreEqual("/pets", listPets.Path);
+        Assert.AreEqual(OperationMethod.Get, listPets.Method);
+    }
+
+    [TestMethod]
+    public void ListOperations_IncludesOperationId()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot);
+
+        Assert.IsTrue(ops.Any(o => o.OperationId == "createPets"));
+        Assert.IsTrue(ops.Any(o => o.OperationId == "showPetById"));
+    }
+
+    [TestMethod]
+    public void ListOperations_IncludesParameterCount()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot);
+
+        OperationSummary listPets = ops.First(o => o.OperationId == "listPets");
+        Assert.AreEqual(1, listPets.ParameterCount, "listPets has 1 parameter (limit)");
+
+        OperationSummary showPet = ops.First(o => o.OperationId == "showPetById");
+        Assert.AreEqual(1, showPet.ParameterCount, "showPetById has 1 parameter (petId)");
+    }
+
+    [TestMethod]
+    public void ListOperations_IncludesHasRequestBody()
+    {
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot);
+
+        OperationSummary createPets = ops.First(o => o.OperationId == "createPets");
+        Assert.IsTrue(createPets.HasRequestBody, "createPets has a request body");
+
+        OperationSummary listPets = ops.First(o => o.OperationId == "listPets");
+        Assert.IsFalse(listPets.HasRequestBody, "listPets has no request body");
+    }
+
+    [TestMethod]
+    public void ListOperations_WithFilter_OnlyIncludesMatchingPaths()
+    {
+        OperationFilter filter = new(["/pets"]);
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot, filter);
+
+        Assert.IsTrue(ops.All(o => o.Path == "/pets"), "All operations should be on /pets");
+        Assert.IsTrue(ops.Length >= 2, "Should include GET and POST on /pets");
+        Assert.IsFalse(ops.Any(o => o.Path.Contains("{petId}", StringComparison.Ordinal)), "Should not include /pets/{petId}");
+    }
+
+    [TestMethod]
+    public void ListOperations_WithExcludeFilter_ExcludesMatchingPaths()
+    {
+        OperationFilter filter = new(null, ["/pets/{petId}*"]);
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot, filter);
+
+        Assert.IsFalse(ops.Any(o => o.Path.Contains("{petId}", StringComparison.Ordinal)), "Should exclude /pets/{petId} paths");
+        Assert.IsTrue(ops.Any(o => o.Path == "/pets"), "Should include /pets");
+    }
+
+    [TestMethod]
+    public void ListOperations_NoOperations_ReturnsEmpty()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "Empty", "version": "1.0" },
+              "paths": {}
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(root);
+
+        Assert.AreEqual(0, ops.Length);
+    }
+
+    [TestMethod]
+    public void ListOperations_DeprecatedOperation()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/old": {
+                  "get": {
+                    "operationId": "oldEndpoint",
+                    "deprecated": true,
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(root);
+
+        Assert.AreEqual(1, ops.Length);
+        Assert.IsTrue(ops[0].IsDeprecated);
+    }
+
+    [TestMethod]
+    public void ListOperations_OperationWithTags()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "tags": ["items", "read"],
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(root);
+
+        Assert.AreEqual(1, ops.Length);
+        CollectionAssert.AreEqual(new[] { "items", "read" }, ops[0].Tags);
+    }
+
+    [TestMethod]
+    public void ListOperations_OperationWithSummary()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "summary": "List all items",
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(root);
+
+        Assert.AreEqual(1, ops.Length);
+        Assert.AreEqual("List all items", ops[0].Summary);
+    }
+
+    [TestMethod]
+    public void ListOperations_NoOperationId_ReturnsNull()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(root);
+
+        Assert.AreEqual(1, ops.Length);
+        Assert.IsNull(ops[0].OperationId);
+    }
+
+    [TestMethod]
+    public void ListOperations_AllHttpMethods()
+    {
+        const string spec = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items": {
+                  "get":     { "operationId": "getItems",     "responses": { "200": { "description": "ok" } } },
+                  "post":    { "operationId": "createItem",   "responses": { "200": { "description": "ok" } } },
+                  "put":     { "operationId": "replaceItem",  "responses": { "200": { "description": "ok" } } },
+                  "delete":  { "operationId": "deleteItem",   "responses": { "200": { "description": "ok" } } },
+                  "patch":   { "operationId": "patchItem",    "responses": { "200": { "description": "ok" } } },
+                  "options": { "operationId": "optionsItem",  "responses": { "200": { "description": "ok" } } },
+                  "head":    { "operationId": "headItem",     "responses": { "200": { "description": "ok" } } },
+                  "trace":   { "operationId": "traceItem",    "responses": { "200": { "description": "ok" } } }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(root);
+
+        Assert.AreEqual(8, ops.Length);
+        Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Get));
+        Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Post));
+        Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Put));
+        Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Delete));
+        Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Patch));
+        Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Options));
+        Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Head));
+        Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Trace));
+    }
 }

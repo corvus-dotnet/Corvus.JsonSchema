@@ -192,6 +192,81 @@ public sealed class OpenApi30CodeGenerator
     }
 
     /// <summary>
+    /// Lists all operations in the OpenAPI 3.0 specification, optionally filtered.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter.</param>
+    /// <returns>An array of <see cref="OperationSummary"/> records.</returns>
+    public static OperationSummary[] ListOperations(
+        JsonElement specRoot,
+        OperationFilter? filter = null)
+    {
+        List<OperationSummary> result = [];
+
+        foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter))
+        {
+            using UnescapedUtf16JsonString pathName = opRef.PathProp.Utf16NameSpan;
+            string path = pathName.Span.ToString();
+
+            string? operationId = opRef.Operation.OperationId.IsNotUndefined()
+                ? opRef.Operation.OperationId.GetString()
+                : null;
+
+            string? summary = opRef.Operation.Summary.IsNotUndefined()
+                ? opRef.Operation.Summary.GetString()
+                : null;
+
+            bool isDeprecated = opRef.Operation.Deprecated.ValueKind == JsonValueKind.True;
+
+            List<string> tags = [];
+            if (opRef.Operation.Tags.IsNotUndefined())
+            {
+                foreach (var tag in opRef.Operation.Tags.EnumerateArray())
+                {
+                    if (tag.ValueKind == JsonValueKind.String)
+                    {
+                        tags.Add(tag.GetString()!);
+                    }
+                }
+            }
+
+            int paramCount = 0;
+            if (opRef.Operation.Parameters.IsNotUndefined())
+            {
+                foreach (var param in opRef.Operation.Parameters.EnumerateArray())
+                {
+                    _ = param;
+                    paramCount++;
+                }
+            }
+
+            // Also count path-level parameters
+            if (opRef.PathItem.Parameters.IsNotUndefined())
+            {
+                foreach (var param in opRef.PathItem.Parameters.EnumerateArray())
+                {
+                    _ = param;
+                    paramCount++;
+                }
+            }
+
+            bool hasBody = opRef.Operation.RequestBody.IsNotUndefined();
+
+            result.Add(new OperationSummary(
+                path,
+                opRef.Method,
+                operationId,
+                [.. tags],
+                isDeprecated,
+                paramCount,
+                hasBody,
+                summary));
+        }
+
+        return [.. result];
+    }
+
+    /// <summary>
     /// Walks the OpenAPI 3.0 specification and emits C# source files.
     /// </summary>
     /// <param name="specRoot">The root element of the parsed spec document.</param>

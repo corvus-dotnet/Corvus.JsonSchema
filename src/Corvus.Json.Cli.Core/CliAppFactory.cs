@@ -33,7 +33,10 @@ public static class CliAppFactory
                 c.AddCommand<JMESPathCommand>("jmespath");
                 c.AddCommand<JsonPathCommand>("jsonpath");
 #if NET10_0_OR_GREATER
-                c.AddCommand<OpenApiCommand>("openapi");
+                c.AddCommand<OpenApiGenerateCommand>("openapi-client")
+                    .WithDescription("Generate API client code from an OpenAPI specification.");
+                c.AddCommand<OpenApiShowCommand>("openapi-show")
+                    .WithDescription("Display the operation tree of an OpenAPI specification.");
 #endif
             });
         return app;

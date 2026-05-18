@@ -1,0 +1,59 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "title": "OpenApiLockFile",
+    "description": "Records the parameters used for a code generation run so subsequent runs can skip generation when nothing has changed.",
+    "type": "object",
+    "required": [
+        "specFileHash",
+        "specVersion",
+        "rootNamespace",
+        "includePaths",
+        "excludePaths",
+        "generatedFiles",
+        "generatedAt",
+        "generatorVersion"
+    ],
+    "properties": {
+        "specFileHash": {
+            "type": "string",
+            "description": "The SHA-256 hash of the spec file content."
+        },
+        "specVersion": {
+            "type": "string",
+            "description": "The OpenAPI spec version used for generation (e.g. '3.0' or '3.1')."
+        },
+        "rootNamespace": {
+            "type": "string",
+            "description": "The root namespace for generated types."
+        },
+        "clientName": {
+            "type": "string",
+            "description": "The client name prefix, if specified."
+        },
+        "includePaths": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The include path patterns used for filtering."
+        },
+        "excludePaths": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The exclude path patterns used for filtering."
+        },
+        "generatedFiles": {
+            "type": "array",
+            "items": { "type": "string" },
+            "description": "The list of generated file names, relative to the output directory."
+        },
+        "generatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "The UTC timestamp of generation."
+        },
+        "generatorVersion": {
+            "type": "string",
+            "description": "The generator assembly version."
+        }
+    },
+    "additionalProperties": false
+}

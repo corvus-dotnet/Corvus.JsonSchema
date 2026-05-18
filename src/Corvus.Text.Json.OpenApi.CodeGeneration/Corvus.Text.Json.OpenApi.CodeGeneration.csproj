@@ -8,8 +8,9 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <!-- Only upgrade NuGetAudit warnings to errors for official builds. -->
     <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1901;NU1902;NU1903;NU1904</WarningsNotAsErrors>
-    <NoWarn>$(NoWarn);NU1504;CS8500;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
+    <NoWarn>$(NoWarn);NU1504;CS8500;CS8969;CS1591;IDE0065;IDE0290;IDE0079;IDE0130;CS1572;CS1573;CS1574;CS1584;CS1658</NoWarn>
     <EndjinDisableCreateEditorConfig>true</EndjinDisableCreateEditorConfig>
+    <EmitCompilerGeneratedFiles>true</EmitCompilerGeneratedFiles>
     <IsPackable>true</IsPackable>
     <InternalsVisibleTo>Corvus.Text.Json.OpenApi31</InternalsVisibleTo>
     <InternalsVisibleTo>Corvus.Text.Json.OpenApi30</InternalsVisibleTo>
@@ -21,6 +22,9 @@
     <CommonPath>..\..\Common\src\</CommonPath>
   </PropertyGroup>
   <ItemGroup>
+    <AdditionalFiles Include="Schemas\corvusjson-openapi-lock.json" />
+  </ItemGroup>
+  <ItemGroup>
     <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.cs" Link="Common\Utf8ValueStringBuilder.cs" />
     <Compile Include="$(CommonPath)System\Text\Utf8ValueStringBuilder.AppendHelpers.cs" Link="Common\Utf8ValueStringBuilder.AppendHelpers.cs" />
   </ItemGroup>
@@ -28,6 +32,7 @@
     <ProjectReference Include="..\Corvus.Text.Json.CodeGeneration\Corvus.Text.Json.CodeGeneration.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json.OpenApi\Corvus.Text.Json.OpenApi.csproj" />
     <ProjectReference Include="..\Corvus.Text.Json\Corvus.Text.Json.csproj" />
+    <ProjectReference Include="..\Corvus.Text.Json.SourceGenerator\Corvus.Text.Json.SourceGenerator.csproj" PrivateAssets="all" ReferenceOutputAssembly="false" OutputItemType="Analyzer" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Endjin.RecommendedPractices.GitHub" PrivateAssets="All" />

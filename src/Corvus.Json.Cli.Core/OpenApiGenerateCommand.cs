@@ -1,18 +1,16 @@
-// <copyright file="OpenApiCommand.cs" company="Endjin Limited">
+// <copyright file="OpenApiGenerateCommand.cs" company="Endjin Limited">
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
 #if NET10_0_OR_GREATER
 
-using System.ComponentModel;
-using System.Diagnostics.CodeAnalysis;
 using Corvus.Json;
 using Corvus.Json.CodeGeneration;
 using Corvus.Json.CodeGeneration.DocumentResolvers;
 using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
-using Corvus.Text.Json.OpenApi31;
 using Corvus.Text.Json.OpenApi30;
+using Corvus.Text.Json.OpenApi31;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -21,42 +19,15 @@ namespace Corvus.Text.Json.CodeGenerator;
 /// <summary>
 /// Spectre.Console.Cli command for generating API client code from an OpenAPI specification.
 /// </summary>
-internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
+/// <remarks>
+/// This is the default command for the <c>openapi</c> branch.
+/// It can be invoked as <c>corvusjson openapi &lt;specFile&gt;</c> or
+/// <c>corvusjson openapi generate &lt;specFile&gt;</c>.
+/// </remarks>
+internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSettings>
 {
-    /// <summary>
-    /// Settings for the OpenAPI code generation command.
-    /// </summary>
-    public sealed class Settings : CommandSettings
-    {
-        [Description("The path to the OpenAPI specification file (JSON or YAML).")]
-        [CommandArgument(0, "<specFile>")]
-        [NotNull]
-        public string? SpecFile { get; init; }
-
-        [CommandOption("--rootNamespace")]
-        [Description("The root namespace for generated types.")]
-        public string? RootNamespace { get; init; }
-
-        [CommandOption("--outputPath")]
-        [Description("The path to which to write the generated code.")]
-        public string? OutputPath { get; init; }
-
-        [CommandOption("--clientName")]
-        [Description("The prefix for generated client type names. Defaults to the API title.")]
-        public string? ClientName { get; init; }
-
-        [CommandOption("--filter")]
-        [Description("Glob patterns to filter which paths to include (e.g. /pets/*). Comma-separated or specify multiple times.")]
-        public string[]? Filter { get; init; }
-
-        [CommandOption("--specVersion")]
-        [Description("The OpenAPI spec version to use (3.0 or 3.1). If not specified, auto-detected from the spec.")]
-        [DefaultValue(null)]
-        public string? SpecVersion { get; init; }
-    }
-
     /// <inheritdoc/>
-    protected override async Task<int> ExecuteAsync(CommandContext context, Settings settings, CancellationToken cancellationToken)
+    protected override async Task<int> ExecuteAsync(CommandContext context, OpenApiGenerateSettings settings, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNullOrEmpty(settings.SpecFile);
 
@@ -77,19 +48,20 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         JsonElement specRoot = doc.RootElement;
 
         // Detect or use specified version
-        string specVersion = settings.SpecVersion ?? DetectSpecVersion(specRoot);
+        string specVersion = OpenApiCommandHelpers.DetectSpecVersion(specRoot, settings.SpecVersion);
 
-        // Build filter
-        OperationFilter? filter = null;
-        if (settings.Filter is { Length: > 0 })
+        // Build filter from --include-path / --exclude-path / --filter
+        OperationFilter? filter = OpenApiCommandHelpers.BuildFilter(settings);
+
+        // Check lock file (skip if up to date, unless --force)
+        if (!settings.Force)
         {
-            List<string> patterns = [];
-            foreach (string f in settings.Filter)
+            if (OpenApiLockFile.TryLoad(outputPath, out OpenApiLockFileModel existingLock)
+                && OpenApiLockFile.IsUpToDate(in existingLock, specBytes, specVersion, rootNamespace, settings.ClientName, filter))
             {
-                patterns.AddRange(f.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+                AnsiConsole.MarkupLine("[green]Up to date — skipping generation.[/] Use --force to regenerate.");
+                return 0;
             }
-
-            filter = new OperationFilter(patterns);
         }
 
         IReadOnlyList<GeneratedFile> files;
@@ -100,7 +72,7 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
             // OpenAPI 3.1 (or unknown) — use the typed code generator directly
             string[] schemaPointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
 
-            AnsiConsole.MarkupLine($"[green]API:[/] {GetTitle(specRoot) ?? "(untitled)"} v{GetVersion(specRoot) ?? "?"}");
+            AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
             AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
 
             Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
@@ -124,7 +96,7 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
             // OpenAPI 3.0 — use the typed code generator directly
             string[] schemaPointers = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
 
-            AnsiConsole.MarkupLine($"[green]API:[/] {GetTitle(specRoot) ?? "(untitled)"} v{GetVersion(specRoot) ?? "?"}");
+            AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
             AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
 
             Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
@@ -149,16 +121,22 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         // Write client files
         Directory.CreateDirectory(outputPath);
 
+        List<string> generatedFileNames = [];
         foreach (GeneratedFile file in files)
         {
             string filePath = Path.Combine(outputPath, file.FileName);
             await File.WriteAllTextAsync(filePath, file.Content, cancellationToken)
                 .ConfigureAwait(false);
             AnsiConsole.MarkupLine($"  [blue]Wrote:[/] {filePath}");
+            generatedFileNames.Add(file.FileName);
         }
 
         int totalFiles = files.Count;
         AnsiConsole.MarkupLine($"[green]Generated {totalFiles} files in {outputPath}[/]");
+
+        // Write lock file
+        OpenApiLockFileModel lockFile = OpenApiLockFile.Create(specBytes, specVersion, rootNamespace, settings.ClientName, filter, generatedFileNames);
+        OpenApiLockFile.Save(in lockFile, outputPath);
 
         return 0;
     }
@@ -256,45 +234,6 @@ internal class OpenApiCommand : AsyncCommand<OpenApiCommand.Settings>
         }
 
         return schemaTypeMap;
-    }
-
-    private static string DetectSpecVersion(JsonElement specRoot)
-    {
-        if (specRoot.TryGetProperty("openapi"u8, out JsonElement version)
-            && version.ValueKind == JsonValueKind.String)
-        {
-            string? v = version.GetString();
-            if (v?.StartsWith("3.0", StringComparison.Ordinal) == true)
-            {
-                return "3.0";
-            }
-        }
-
-        return "3.1";
-    }
-
-    private static string? GetTitle(JsonElement specRoot)
-    {
-        if (specRoot.TryGetProperty("info"u8, out JsonElement info)
-            && info.TryGetProperty("title"u8, out JsonElement title)
-            && title.ValueKind == JsonValueKind.String)
-        {
-            return title.GetString();
-        }
-
-        return null;
-    }
-
-    private static string? GetVersion(JsonElement specRoot)
-    {
-        if (specRoot.TryGetProperty("info"u8, out JsonElement info)
-            && info.TryGetProperty("version"u8, out JsonElement ver)
-            && ver.ValueKind == JsonValueKind.String)
-        {
-            return ver.GetString();
-        }
-
-        return null;
     }
 }
 
