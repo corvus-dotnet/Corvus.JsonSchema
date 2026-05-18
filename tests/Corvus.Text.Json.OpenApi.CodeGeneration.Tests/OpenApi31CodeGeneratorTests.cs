@@ -6582,6 +6582,8 @@ public class OpenApi31CodeGeneratorTests
         ["#/paths/~1items/get/parameters/4/schema"] = "CovTest.JsonBoolean",
         ["#/paths/~1items/get/responses/200/content/application~1json/schema"] = "CovTest.Items",
         ["#/paths/~1items/get/responses/default/content/application~1json/schema"] = "CovTest.Error",
+        ["#/paths/~1items/post/requestBody/content/application~1json/schema"] = "CovTest.NewItem",
+        ["#/paths/~1items/post/responses/201/content/application~1json/schema"] = "CovTest.CreatedItem",
         ["#/paths/~1items~1{itemId}/get/parameters/0/schema"] = "CovTest.JsonString",
         ["#/paths/~1items~1{itemId}/get/responses/200/content/application~1json/schema"] = "CovTest.Item",
         ["#/paths/~1items~1{itemId}/get/responses/200/headers/X-Rate-Limit/schema"] = "CovTest.JsonInt32",
@@ -7974,5 +7976,94 @@ public class OpenApi31CodeGeneratorTests
         Assert.IsTrue(
             code.Contains("X-Request-Id"),
             "Generated response should contain the header from the external file's chained $ref");
+    }
+
+    // ── Response Links tests ──────────────────────────────────────────────
+    [TestMethod]
+    public void CovSpec_ResponseLinks_CreateItemResponse_HasLinksProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("public CreateItemResponseLinksAccessor Links =>", StringComparison.Ordinal),
+            "CreateItemResponse should have a Links property");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_LinksAccessor_HasGetCreatedItemMethod()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("GetCreatedItemAsync(", StringComparison.Ordinal),
+            "Links accessor should have GetCreatedItemAsync method");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_LinksAccessor_ReturnsGetItemResponse()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("ValueTask<GetItemResponse>", StringComparison.Ordinal),
+            "GetCreatedItemAsync should return ValueTask<GetItemResponse>");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_LinksAccessor_ExtractsBodyProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("GetProperty(\"id\"u8)", StringComparison.Ordinal),
+            "Link method should extract 'id' from response body via GetProperty");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_CreateAsync_HasTransportParam()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("IApiTransport? transport = null,", StringComparison.Ordinal),
+            "CreateAsync should accept optional transport parameter");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_CreateAsync_StoresTransport()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("response.transport = transport;", StringComparison.Ordinal),
+            "CreateAsync should store the transport on the response");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_HasTransportField()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "CreateItemResponse.cs");
+
+        Assert.IsTrue(
+            resp.Content.Contains("private IApiTransport? transport;", StringComparison.Ordinal),
+            "Response struct should have private transport field");
+    }
+
+    [TestMethod]
+    public void CovSpec_ResponseLinks_GetItemResponse_NoLinksProperty()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+        GeneratedFile resp = GetFile(files, "GetItemResponse.cs");
+
+        Assert.IsFalse(
+            resp.Content.Contains("LinksAccessor", StringComparison.Ordinal),
+            "GetItemResponse should NOT have a Links accessor (no links defined)");
     }
 }
