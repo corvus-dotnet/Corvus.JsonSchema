@@ -2261,6 +2261,22 @@ public class GeneratedClientEndToEndTests
             $"Expected tags with application/json Content-Type override, got:\n{body}");
     }
 
+    [TestMethod]
+    public async Task DisposeAsync_WithDisposeClient_DisposesHttpClient()
+    {
+        var handler = new MockHandler(HttpStatusCode.OK, """{}""");
+        var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+        var transport = new HttpClientTransport(client, disposeClient: true);
+
+        await transport.DisposeAsync();
+
+        // After the transport disposes the HttpClient, it should be unusable.
+        Assert.ThrowsExactly<ObjectDisposedException>(() =>
+            client.GetAsync("http://localhost/test").GetAwaiter().GetResult());
+
+        handler.Dispose();
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.

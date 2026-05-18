@@ -6597,6 +6597,50 @@ public class OpenApi30CodeGeneratorTests
         Assert.AreEqual(1, deleteItem.ParameterCount, "deleteItem should count path-level params");
     }
 
+    [TestMethod]
+    public void ListOperations_MissingPaths_ReturnsEmpty()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.0",
+              "info": { "title": "No paths key", "version": "1.0" }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OperationSummary[] ops = OpenApi30CodeGenerator.ListOperations(root);
+
+        Assert.AreEqual(0, ops.Length);
+    }
+
+    [TestMethod]
+    public void ListOperations_BrokenPathItemRef_SkipsPath()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.0",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/ok": {
+                  "get": {
+                    "operationId": "okOp",
+                    "responses": { "200": { "description": "ok" } }
+                  }
+                },
+                "/broken": {
+                  "$ref": "#/components/pathItems/doesNotExist"
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OperationSummary[] ops = OpenApi30CodeGenerator.ListOperations(root);
+
+        Assert.AreEqual(1, ops.Length);
+        Assert.AreEqual("okOp", ops[0].OperationId);
+    }
+
     // ══════════════════════════════════════════════════════════════════
     // External file $ref integration tests
     // ══════════════════════════════════════════════════════════════════
