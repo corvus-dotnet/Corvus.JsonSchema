@@ -114,7 +114,7 @@ For the source generator, add as an analyzer reference:
 
 ## Documentation
 
-Full documentation is available at the [Corvus.Text.Json documentation website](docs/website/.output/index.html).
+Full documentation is available at the [Corvus.Text.Json documentation website](https://corvus-oss.org/Corvus.JsonSchema/).
 
 To build and preview the docs locally:
 
