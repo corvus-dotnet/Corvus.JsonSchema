@@ -269,7 +269,7 @@ public sealed class OpenApi31CodeGenerator
         List<OperationInfo> operations = [];
         ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
 
-        foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter))
+        foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
         {
             operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
         }
@@ -304,44 +304,61 @@ public sealed class OpenApi31CodeGenerator
     {
         OpenApiDocument.PathItem pathItem = pathProp.Value;
 
-        if (pathItem.Get.IsNotUndefined())
+        // Determine if this path item is a $ref and compute its absolute reference
+        string? pathItemRefValue = null;
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(pathItem);
+        if (asRef.Ref.IsNotUndefined())
         {
-            CollectOperationPointers(pathProp, pathItem.Get, OperationMethod.Get, pathItem, pointers, parameterNames, referenceResolver);
+            string refStr = asRef.Ref.GetString()!;
+            pathItemRefValue = referenceResolver.ResolveToAbsolute(refStr);
         }
 
-        if (pathItem.Put.IsNotUndefined())
+        if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
         {
-            CollectOperationPointers(pathProp, pathItem.Put, OperationMethod.Put, pathItem, pointers, parameterNames, referenceResolver);
+            return;
         }
 
-        if (pathItem.Post.IsNotUndefined())
+        using (pathItemScope)
         {
-            CollectOperationPointers(pathProp, pathItem.Post, OperationMethod.Post, pathItem, pointers, parameterNames, referenceResolver);
-        }
+            if (resolved.Get.IsNotUndefined())
+            {
+                CollectOperationPointers(pathProp, resolved.Get, OperationMethod.Get, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+            }
 
-        if (pathItem.Delete.IsNotUndefined())
-        {
-            CollectOperationPointers(pathProp, pathItem.Delete, OperationMethod.Delete, pathItem, pointers, parameterNames, referenceResolver);
-        }
+            if (resolved.Put.IsNotUndefined())
+            {
+                CollectOperationPointers(pathProp, resolved.Put, OperationMethod.Put, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+            }
 
-        if (pathItem.Options.IsNotUndefined())
-        {
-            CollectOperationPointers(pathProp, pathItem.Options, OperationMethod.Options, pathItem, pointers, parameterNames, referenceResolver);
-        }
+            if (resolved.Post.IsNotUndefined())
+            {
+                CollectOperationPointers(pathProp, resolved.Post, OperationMethod.Post, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+            }
 
-        if (pathItem.Head.IsNotUndefined())
-        {
-            CollectOperationPointers(pathProp, pathItem.Head, OperationMethod.Head, pathItem, pointers, parameterNames, referenceResolver);
-        }
+            if (resolved.Delete.IsNotUndefined())
+            {
+                CollectOperationPointers(pathProp, resolved.Delete, OperationMethod.Delete, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+            }
 
-        if (pathItem.Patch.IsNotUndefined())
-        {
-            CollectOperationPointers(pathProp, pathItem.Patch, OperationMethod.Patch, pathItem, pointers, parameterNames, referenceResolver);
-        }
+            if (resolved.Options.IsNotUndefined())
+            {
+                CollectOperationPointers(pathProp, resolved.Options, OperationMethod.Options, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+            }
 
-        if (pathItem.Trace.IsNotUndefined())
-        {
-            CollectOperationPointers(pathProp, pathItem.Trace, OperationMethod.Trace, pathItem, pointers, parameterNames, referenceResolver);
+            if (resolved.Head.IsNotUndefined())
+            {
+                CollectOperationPointers(pathProp, resolved.Head, OperationMethod.Head, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+            }
+
+            if (resolved.Patch.IsNotUndefined())
+            {
+                CollectOperationPointers(pathProp, resolved.Patch, OperationMethod.Patch, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+            }
+
+            if (resolved.Trace.IsNotUndefined())
+            {
+                CollectOperationPointers(pathProp, resolved.Trace, OperationMethod.Trace, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+            }
         }
     }
 
@@ -352,7 +369,8 @@ public sealed class OpenApi31CodeGenerator
         OpenApiDocument.PathItem pathItem,
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
-        IOpenApiReferenceResolver referenceResolver)
+        IOpenApiReferenceResolver referenceResolver,
+        string? pathItemRefValue = null)
     {
         using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
 
@@ -367,7 +385,9 @@ public sealed class OpenApi31CodeGenerator
 
                 string resolvablePointer = refValue is not null
                     ? SchemaPointerBuilder.BuildRefBasedPointer(refValue, "/schema")
-                    : positionalPointer;
+                    : pathItemRefValue is not null
+                        ? SchemaPointerBuilder.BuildRefBasedPointer(pathItemRefValue, SchemaPointerBuilder.BuildParameterSubPath(method, sourceIndex, isPathLevel))
+                        : positionalPointer;
 
                 pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
 
@@ -409,7 +429,10 @@ public sealed class OpenApi31CodeGenerator
                         string resolvablePointer = rbRefValue is not null
                             ? SchemaPointerBuilder.BuildRefBasedPointer(
                                 rbRefValue, SchemaPointerBuilder.BuildContentSubPath(mediaTypeName.Span))
-                            : positionalPointer;
+                            : pathItemRefValue is not null
+                                ? SchemaPointerBuilder.BuildRefBasedPointer(
+                                    pathItemRefValue, SchemaPointerBuilder.BuildRequestBodyContentSubPath(method, mediaTypeName.Span))
+                                : positionalPointer;
 
                         pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                     }
@@ -456,7 +479,10 @@ public sealed class OpenApi31CodeGenerator
                                 string resolvablePointer = responseRefValue is not null
                                     ? SchemaPointerBuilder.BuildRefBasedPointer(
                                         responseRefValue, SchemaPointerBuilder.BuildContentSubPath(mediaTypeName.Span))
-                                    : positionalPointer;
+                                    : pathItemRefValue is not null
+                                        ? SchemaPointerBuilder.BuildRefBasedPointer(
+                                            pathItemRefValue, SchemaPointerBuilder.BuildResponseContentSubPath(method, statusCode.Span, mediaTypeName.Span))
+                                        : positionalPointer;
 
                                 pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                             }
@@ -488,7 +514,10 @@ public sealed class OpenApi31CodeGenerator
 
                                     string resolvablePointer = headerRefValue is not null
                                         ? SchemaPointerBuilder.BuildRefBasedPointer(headerRefValue, "/schema")
-                                        : positionalPointer;
+                                        : pathItemRefValue is not null
+                                            ? SchemaPointerBuilder.BuildRefBasedPointer(
+                                                pathItemRefValue, SchemaPointerBuilder.BuildResponseHeaderSubPath(method, statusCode.Span, headerName.Span))
+                                            : positionalPointer;
 
                                     pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                                 }
@@ -505,7 +534,8 @@ public sealed class OpenApi31CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     private static IEnumerable<OperationRef> WalkOperationRefs(
         JsonElement specRoot,
-        OperationFilter? filter)
+        OperationFilter? filter,
+        IOpenApiReferenceResolver? referenceResolver = null)
     {
         OpenApiDocument doc = specRoot;
 
@@ -513,6 +543,8 @@ public sealed class OpenApi31CodeGenerator
         {
             yield break;
         }
+
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
 
         foreach (JsonProperty<OpenApiDocument.PathItem> pathProp in doc.PathsValue.EnumerateObject())
         {
@@ -525,7 +557,7 @@ public sealed class OpenApi31CodeGenerator
                 }
             }
 
-            foreach (OperationRef entry in WalkPathItemRefs(pathProp))
+            foreach (OperationRef entry in WalkPathItemRefs(pathProp, referenceResolver))
             {
                 yield return entry;
             }
@@ -533,48 +565,57 @@ public sealed class OpenApi31CodeGenerator
     }
 
     private static IEnumerable<OperationRef> WalkPathItemRefs(
-        JsonProperty<OpenApiDocument.PathItem> pathProp)
+        JsonProperty<OpenApiDocument.PathItem> pathProp,
+        IOpenApiReferenceResolver referenceResolver)
     {
         OpenApiDocument.PathItem pathItem = pathProp.Value;
 
-        if (pathItem.Get.IsNotUndefined())
+        if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
         {
-            yield return new OperationRef(pathProp, pathItem.Get, OperationMethod.Get, pathItem);
+            yield break;
         }
 
-        if (pathItem.Put.IsNotUndefined())
+        using (pathItemScope)
         {
-            yield return new OperationRef(pathProp, pathItem.Put, OperationMethod.Put, pathItem);
-        }
+            if (resolved.Get.IsNotUndefined())
+            {
+                yield return new OperationRef(pathProp, resolved.Get, OperationMethod.Get, resolved);
+            }
 
-        if (pathItem.Post.IsNotUndefined())
-        {
-            yield return new OperationRef(pathProp, pathItem.Post, OperationMethod.Post, pathItem);
-        }
+            if (resolved.Put.IsNotUndefined())
+            {
+                yield return new OperationRef(pathProp, resolved.Put, OperationMethod.Put, resolved);
+            }
 
-        if (pathItem.Delete.IsNotUndefined())
-        {
-            yield return new OperationRef(pathProp, pathItem.Delete, OperationMethod.Delete, pathItem);
-        }
+            if (resolved.Post.IsNotUndefined())
+            {
+                yield return new OperationRef(pathProp, resolved.Post, OperationMethod.Post, resolved);
+            }
 
-        if (pathItem.Options.IsNotUndefined())
-        {
-            yield return new OperationRef(pathProp, pathItem.Options, OperationMethod.Options, pathItem);
-        }
+            if (resolved.Delete.IsNotUndefined())
+            {
+                yield return new OperationRef(pathProp, resolved.Delete, OperationMethod.Delete, resolved);
+            }
 
-        if (pathItem.Head.IsNotUndefined())
-        {
-            yield return new OperationRef(pathProp, pathItem.Head, OperationMethod.Head, pathItem);
-        }
+            if (resolved.Options.IsNotUndefined())
+            {
+                yield return new OperationRef(pathProp, resolved.Options, OperationMethod.Options, resolved);
+            }
 
-        if (pathItem.Patch.IsNotUndefined())
-        {
-            yield return new OperationRef(pathProp, pathItem.Patch, OperationMethod.Patch, pathItem);
-        }
+            if (resolved.Head.IsNotUndefined())
+            {
+                yield return new OperationRef(pathProp, resolved.Head, OperationMethod.Head, resolved);
+            }
 
-        if (pathItem.Trace.IsNotUndefined())
-        {
-            yield return new OperationRef(pathProp, pathItem.Trace, OperationMethod.Trace, pathItem);
+            if (resolved.Patch.IsNotUndefined())
+            {
+                yield return new OperationRef(pathProp, resolved.Patch, OperationMethod.Patch, resolved);
+            }
+
+            if (resolved.Trace.IsNotUndefined())
+            {
+                yield return new OperationRef(pathProp, resolved.Trace, OperationMethod.Trace, resolved);
+            }
         }
     }
 
@@ -678,9 +719,9 @@ public sealed class OpenApi31CodeGenerator
         if (asRef.Ref.IsNotUndefined())
         {
             string refStr = asRef.Ref.GetString()!;
-            if (referenceResolver.TryResolve<OpenApiDocument.Parameter>(refStr, out OpenApiDocument.Parameter r))
+            if (referenceResolver.TryResolve(refStr, out JsonElement element))
             {
-                resolved = r;
+                resolved = OpenApiDocument.Parameter.From(element);
                 refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
@@ -709,9 +750,9 @@ public sealed class OpenApi31CodeGenerator
         if (asRef.Ref.IsNotUndefined())
         {
             string refStr = asRef.Ref.GetString()!;
-            if (referenceResolver.TryResolve<OpenApiDocument.RequestBody>(refStr, out OpenApiDocument.RequestBody r))
+            if (referenceResolver.TryResolve(refStr, out JsonElement element))
             {
-                resolved = r;
+                resolved = OpenApiDocument.RequestBody.From(element);
                 refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
@@ -740,9 +781,9 @@ public sealed class OpenApi31CodeGenerator
         if (asRef.Ref.IsNotUndefined())
         {
             string refStr = asRef.Ref.GetString()!;
-            if (referenceResolver.TryResolve<OpenApiDocument.Response>(refStr, out OpenApiDocument.Response r))
+            if (referenceResolver.TryResolve(refStr, out JsonElement element))
             {
-                resolved = r;
+                resolved = OpenApiDocument.Response.From(element);
                 refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
@@ -771,9 +812,9 @@ public sealed class OpenApi31CodeGenerator
         if (asRef.Ref.IsNotUndefined())
         {
             string refStr = asRef.Ref.GetString()!;
-            if (referenceResolver.TryResolve<OpenApiDocument.Header>(refStr, out OpenApiDocument.Header r))
+            if (referenceResolver.TryResolve(refStr, out JsonElement element))
             {
-                resolved = r;
+                resolved = OpenApiDocument.Header.From(element);
                 refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
@@ -788,6 +829,35 @@ public sealed class OpenApi31CodeGenerator
         resolved = OpenApiDocument.Header.From(headerOrRef);
         baseScope = EmptyScope.Instance;
         refValue = null;
+        return true;
+    }
+
+    private static bool TryResolvePathItem(
+        OpenApiDocument.PathItem pathItem,
+        IOpenApiReferenceResolver referenceResolver,
+        out OpenApiDocument.PathItem resolved,
+        out IDisposable baseScope)
+    {
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(pathItem);
+        if (asRef.Ref.IsNotUndefined())
+        {
+            string refStr = asRef.Ref.GetString()!;
+
+            // Use the non-generic TryResolve to avoid expensive EvaluateSchema() on complex PathItem objects.
+            if (referenceResolver.TryResolve(refStr, out JsonElement element))
+            {
+                resolved = OpenApiDocument.PathItem.From(element);
+                baseScope = referenceResolver.PushResolvedBase(refStr);
+                return true;
+            }
+
+            resolved = default;
+            baseScope = EmptyScope.Instance;
+            return false;
+        }
+
+        resolved = pathItem;
+        baseScope = EmptyScope.Instance;
         return true;
     }
 

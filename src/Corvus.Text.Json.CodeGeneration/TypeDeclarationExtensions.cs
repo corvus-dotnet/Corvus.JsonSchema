@@ -662,6 +662,9 @@ public static class TypeDeclarationExtensions
     public static TypeDeclaration SetDotnetTypeName(this TypeDeclaration typeDeclaration, string typeName)
     {
         typeDeclaration.SetMetadata(DotnetTypeNameKey, typeName);
+
+        // Invalidate the cached fully-qualified name since it depends on DotnetTypeName.
+        typeDeclaration.RemoveMetadata(FullyQualifiedDotnetTypeNameKey);
         return typeDeclaration;
     }
 

@@ -256,6 +256,141 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
+    /// Builds a parameter schema sub-path relative to a path item:
+    /// <c>/&lt;method&gt;/parameters/&lt;index&gt;/schema</c> or
+    /// <c>/parameters/&lt;index&gt;/schema</c> (path-level).
+    /// </summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="index">The parameter index.</param>
+    /// <param name="isPathLevel">Whether the parameter is path-level.</param>
+    /// <returns>The sub-path string.</returns>
+    public static string BuildParameterSubPath(
+        OperationMethod method,
+        int index,
+        bool isPathLevel)
+    {
+        Span<byte> initialBuffer = stackalloc byte[64];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            if (!isPathLevel)
+            {
+                sb.Append((byte)'/');
+                AppendMethodUtf8(ref sb, method);
+            }
+
+            sb.Append("/parameters/"u8);
+            sb.Append(index);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds a request body content schema sub-path relative to a path item:
+    /// <c>/&lt;method&gt;/requestBody/content/&lt;mediaType&gt;/schema</c>.
+    /// </summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="mediaTypeNameUtf8">The UTF-8 media type name.</param>
+    /// <returns>The sub-path string.</returns>
+    public static string BuildRequestBodyContentSubPath(
+        OperationMethod method,
+        ReadOnlySpan<byte> mediaTypeNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/requestBody/content/"u8);
+            AppendEncodedSegment(ref sb, mediaTypeNameUtf8);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds a response content schema sub-path relative to a path item:
+    /// <c>/&lt;method&gt;/responses/&lt;statusCode&gt;/content/&lt;mediaType&gt;/schema</c>.
+    /// </summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="statusCodeUtf8">The UTF-8 status code.</param>
+    /// <param name="mediaTypeNameUtf8">The UTF-8 media type name.</param>
+    /// <returns>The sub-path string.</returns>
+    public static string BuildResponseContentSubPath(
+        OperationMethod method,
+        ReadOnlySpan<byte> statusCodeUtf8,
+        ReadOnlySpan<byte> mediaTypeNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/responses/"u8);
+            AppendEncodedSegment(ref sb, statusCodeUtf8);
+            sb.Append("/content/"u8);
+            AppendEncodedSegment(ref sb, mediaTypeNameUtf8);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
+    /// Builds a response header schema sub-path relative to a path item:
+    /// <c>/&lt;method&gt;/responses/&lt;statusCode&gt;/headers/&lt;headerName&gt;/schema</c>.
+    /// </summary>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="statusCodeUtf8">The UTF-8 status code.</param>
+    /// <param name="headerNameUtf8">The UTF-8 header name.</param>
+    /// <returns>The sub-path string.</returns>
+    public static string BuildResponseHeaderSubPath(
+        OperationMethod method,
+        ReadOnlySpan<byte> statusCodeUtf8,
+        ReadOnlySpan<byte> headerNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[128];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/responses/"u8);
+            AppendEncodedSegment(ref sb, statusCodeUtf8);
+            sb.Append("/headers/"u8);
+            AppendEncodedSegment(ref sb, headerNameUtf8);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Appends a UTF-8 segment with RFC 6901 JSON Pointer escaping (~ → ~0, / → ~1).
     /// </summary>
     /// <param name="sb">The string builder.</param>

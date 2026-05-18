@@ -285,7 +285,7 @@ public sealed class OpenApi30CodeGenerator
         List<OperationInfo> operations = [];
         ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
 
-        foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter))
+        foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
         {
             operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
         }
@@ -320,13 +320,30 @@ public sealed class OpenApi30CodeGenerator
     {
         OpenApiDocument.PathItem pathItem = OpenApiDocument.PathItem.From(pathProp.Value);
 
-        foreach ((ReadOnlyMemory<byte> methodName, OperationMethod method) in HttpMethods)
+        // Determine if this path item is a $ref and compute its absolute reference
+        string? pathItemRefValue = null;
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(pathItem);
+        if (asRef.Ref.IsNotUndefined())
         {
-            if (pathItem.TryGetProperty(methodName.Span, out JsonElement operationElement)
-                && operationElement.ValueKind == JsonValueKind.Object)
+            string refStr = asRef.Ref.GetString()!;
+            pathItemRefValue = referenceResolver.ResolveToAbsolute(refStr);
+        }
+
+        if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
+        {
+            return;
+        }
+
+        using (pathItemScope)
+        {
+            foreach ((ReadOnlyMemory<byte> methodName, OperationMethod method) in HttpMethods)
             {
-                OpenApiDocument.Operation operation = operationElement;
-                CollectOperationPointers(pathProp, operation, method, pathItem, pointers, parameterNames, referenceResolver);
+                if (resolved.TryGetProperty(methodName.Span, out JsonElement operationElement)
+                    && operationElement.ValueKind == JsonValueKind.Object)
+                {
+                    OpenApiDocument.Operation operation = operationElement;
+                    CollectOperationPointers(pathProp, operation, method, resolved, pointers, parameterNames, referenceResolver, pathItemRefValue);
+                }
             }
         }
     }
@@ -338,7 +355,8 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.PathItem pathItem,
         List<SchemaReference> pointers,
         Dictionary<string, string> parameterNames,
-        IOpenApiReferenceResolver referenceResolver)
+        IOpenApiReferenceResolver referenceResolver,
+        string? pathItemRefValue = null)
     {
         using UnescapedUtf8JsonString pathName = pathProp.Utf8NameSpan;
 
@@ -353,7 +371,9 @@ public sealed class OpenApi30CodeGenerator
 
                 string resolvablePointer = refValue is not null
                     ? SchemaPointerBuilder.BuildRefBasedPointer(refValue, "/schema")
-                    : positionalPointer;
+                    : pathItemRefValue is not null
+                        ? SchemaPointerBuilder.BuildRefBasedPointer(pathItemRefValue, SchemaPointerBuilder.BuildParameterSubPath(method, sourceIndex, isPathLevel))
+                        : positionalPointer;
 
                 pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
 
@@ -395,7 +415,10 @@ public sealed class OpenApi30CodeGenerator
                         string resolvablePointer = rbRefValue is not null
                             ? SchemaPointerBuilder.BuildRefBasedPointer(
                                 rbRefValue, SchemaPointerBuilder.BuildContentSubPath(mediaTypeName.Span))
-                            : positionalPointer;
+                            : pathItemRefValue is not null
+                                ? SchemaPointerBuilder.BuildRefBasedPointer(
+                                    pathItemRefValue, SchemaPointerBuilder.BuildRequestBodyContentSubPath(method, mediaTypeName.Span))
+                                : positionalPointer;
 
                         pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                     }
@@ -447,7 +470,10 @@ public sealed class OpenApi30CodeGenerator
                                 string resolvablePointer = responseRefValue is not null
                                     ? SchemaPointerBuilder.BuildRefBasedPointer(
                                         responseRefValue, SchemaPointerBuilder.BuildContentSubPath(mediaTypeName.Span))
-                                    : positionalPointer;
+                                    : pathItemRefValue is not null
+                                        ? SchemaPointerBuilder.BuildRefBasedPointer(
+                                            pathItemRefValue, SchemaPointerBuilder.BuildResponseContentSubPath(method, statusCode.Span, mediaTypeName.Span))
+                                        : positionalPointer;
 
                                 pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                             }
@@ -479,7 +505,10 @@ public sealed class OpenApi30CodeGenerator
 
                                     string resolvablePointer = headerRefValue is not null
                                         ? SchemaPointerBuilder.BuildRefBasedPointer(headerRefValue, "/schema")
-                                        : positionalPointer;
+                                        : pathItemRefValue is not null
+                                            ? SchemaPointerBuilder.BuildRefBasedPointer(
+                                                pathItemRefValue, SchemaPointerBuilder.BuildResponseHeaderSubPath(method, statusCode.Span, headerName.Span))
+                                            : positionalPointer;
 
                                     pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                                 }
@@ -496,7 +525,8 @@ public sealed class OpenApi30CodeGenerator
     // ═══════════════════════════════════════════════════════════════════
     private static IEnumerable<OperationRef> WalkOperationRefs(
         JsonElement specRoot,
-        OperationFilter? filter)
+        OperationFilter? filter,
+        IOpenApiReferenceResolver? referenceResolver = null)
     {
         OpenApiDocument doc = specRoot;
 
@@ -504,6 +534,8 @@ public sealed class OpenApi30CodeGenerator
         {
             yield break;
         }
+
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
 
         foreach (JsonProperty<JsonElement> pathProp in doc.PathsValue.EnumerateObject())
         {
@@ -516,7 +548,7 @@ public sealed class OpenApi30CodeGenerator
                 }
             }
 
-            foreach (OperationRef entry in WalkPathItemRefs(pathProp))
+            foreach (OperationRef entry in WalkPathItemRefs(pathProp, referenceResolver))
             {
                 yield return entry;
             }
@@ -524,17 +556,26 @@ public sealed class OpenApi30CodeGenerator
     }
 
     private static IEnumerable<OperationRef> WalkPathItemRefs(
-        JsonProperty<JsonElement> pathProp)
+        JsonProperty<JsonElement> pathProp,
+        IOpenApiReferenceResolver referenceResolver)
     {
         OpenApiDocument.PathItem pathItem = OpenApiDocument.PathItem.From(pathProp.Value);
 
-        foreach ((ReadOnlyMemory<byte> methodName, OperationMethod method) in HttpMethods)
+        if (!TryResolvePathItem(pathItem, referenceResolver, out OpenApiDocument.PathItem resolved, out IDisposable pathItemScope))
         {
-            if (pathItem.TryGetProperty(methodName.Span, out JsonElement operationElement)
-                && operationElement.ValueKind == JsonValueKind.Object)
+            yield break;
+        }
+
+        using (pathItemScope)
+        {
+            foreach ((ReadOnlyMemory<byte> methodName, OperationMethod method) in HttpMethods)
             {
-                OpenApiDocument.Operation operation = operationElement;
-                yield return new OperationRef(pathProp, operation, method, pathItem);
+                if (resolved.TryGetProperty(methodName.Span, out JsonElement operationElement)
+                    && operationElement.ValueKind == JsonValueKind.Object)
+                {
+                    OpenApiDocument.Operation operation = operationElement;
+                    yield return new OperationRef(pathProp, operation, method, resolved);
+                }
             }
         }
     }
@@ -628,6 +669,33 @@ public sealed class OpenApi30CodeGenerator
     }
 
     // ── $ref resolution ─────────────────────────────────────────────────
+    private static bool TryResolvePathItem(
+        OpenApiDocument.PathItem pathItem,
+        IOpenApiReferenceResolver referenceResolver,
+        out OpenApiDocument.PathItem resolved,
+        out IDisposable baseScope)
+    {
+        OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(pathItem);
+        if (asRef.Ref.IsNotUndefined())
+        {
+            string refStr = asRef.Ref.GetString()!;
+            if (referenceResolver.TryResolve(refStr, out JsonElement element))
+            {
+                resolved = OpenApiDocument.PathItem.From(element);
+                baseScope = referenceResolver.PushResolvedBase(refStr);
+                return true;
+            }
+
+            resolved = default;
+            baseScope = EmptyScope.Instance;
+            return false;
+        }
+
+        resolved = pathItem;
+        baseScope = EmptyScope.Instance;
+        return true;
+    }
+
     private static bool TryResolvePathItemParameter(
         OpenApiDocument.PathItem.ParametersEntityArray.ParametersEntity paramOrRef,
         IOpenApiReferenceResolver referenceResolver,
@@ -639,9 +707,9 @@ public sealed class OpenApi30CodeGenerator
         if (asRef.Ref.IsNotUndefined())
         {
             string refStr = asRef.Ref.GetString()!;
-            if (referenceResolver.TryResolve<OpenApiDocument.Parameter>(refStr, out OpenApiDocument.Parameter r))
+            if (referenceResolver.TryResolve(refStr, out JsonElement pathItemParamElement))
             {
-                resolved = r;
+                resolved = OpenApiDocument.Parameter.From(pathItemParamElement);
                 refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
@@ -670,9 +738,9 @@ public sealed class OpenApi30CodeGenerator
         if (asRef.Ref.IsNotUndefined())
         {
             string refStr = asRef.Ref.GetString()!;
-            if (referenceResolver.TryResolve<OpenApiDocument.Parameter>(refStr, out OpenApiDocument.Parameter r))
+            if (referenceResolver.TryResolve(refStr, out JsonElement opParamElement))
             {
-                resolved = r;
+                resolved = OpenApiDocument.Parameter.From(opParamElement);
                 refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
@@ -701,9 +769,9 @@ public sealed class OpenApi30CodeGenerator
         if (asRef.Ref.IsNotUndefined())
         {
             string refStr = asRef.Ref.GetString()!;
-            if (referenceResolver.TryResolve<OpenApiDocument.RequestBody>(refStr, out OpenApiDocument.RequestBody r))
+            if (referenceResolver.TryResolve(refStr, out JsonElement rbElement))
             {
-                resolved = r;
+                resolved = OpenApiDocument.RequestBody.From(rbElement);
                 refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
@@ -736,9 +804,9 @@ public sealed class OpenApi30CodeGenerator
         if (asRef.Ref.IsNotUndefined())
         {
             string refStr = asRef.Ref.GetString()!;
-            if (referenceResolver.TryResolve<OpenApiDocument.Response>(refStr, out OpenApiDocument.Response r))
+            if (referenceResolver.TryResolve(refStr, out JsonElement respElement))
             {
-                resolved = r;
+                resolved = OpenApiDocument.Response.From(respElement);
                 refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
@@ -769,9 +837,9 @@ public sealed class OpenApi30CodeGenerator
         if (asRef.Ref.IsNotUndefined())
         {
             string refStr = asRef.Ref.GetString()!;
-            if (referenceResolver.TryResolve<OpenApiDocument.Header>(refStr, out OpenApiDocument.Header r))
+            if (referenceResolver.TryResolve(refStr, out JsonElement hdrElement))
             {
-                resolved = r;
+                resolved = OpenApiDocument.Header.From(hdrElement);
                 refValue = referenceResolver.ResolveToAbsolute(refStr);
                 baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
