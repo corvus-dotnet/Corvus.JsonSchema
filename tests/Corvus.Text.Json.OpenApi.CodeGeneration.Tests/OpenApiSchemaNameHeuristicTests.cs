@@ -38,7 +38,7 @@ public class OpenApiSchemaNameHeuristicTests
         JsonSchemaTypeBuilder typeBuilder = new(documentResolver, vocabularyRegistry);
 
         string[] pointers = [.. OpenApi31CodeGenerator.CollectSchemaPointers(
-            LoadSpec(SpecPath), out _).Select(r => r.PositionalPointer)];
+            LoadSpec(SpecPath), out var parameterNames).Select(r => r.PositionalPointer)];
 
         Dictionary<string, TypeDeclaration> pointerToType = new(StringComparer.Ordinal);
         List<TypeDeclaration> typesToGenerate = [];
@@ -57,7 +57,7 @@ public class OpenApiSchemaNameHeuristicTests
 
         CSharpLanguageProvider.Options options = new("TestApi");
         CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
-        languageProvider.RegisterNameHeuristics(OpenApiSchemaNameHeuristic.Instance);
+        languageProvider.RegisterNameHeuristics(new OpenApiSchemaNameHeuristic(parameterNames));
 
         generatedFiles = typeBuilder.GenerateCodeUsing(
             languageProvider, typesToGenerate, CancellationToken.None);
@@ -228,13 +228,15 @@ public class OpenApiSchemaNameHeuristicTests
     [TestMethod]
     public void OperationParameter_NamedParam()
     {
-        AssertTypeName("#/paths/~1items/get/parameters/0/schema", "GetItemsParam0");
+        // With parameterNames passed, uses "Limit" (the param name) instead of "Param0"
+        AssertTypeName("#/paths/~1items/get/parameters/0/schema", "GetItemsLimit");
     }
 
     [TestMethod]
     public void PathLevelParameter_NamedParam()
     {
-        AssertTypeName("#/paths/~1items/parameters/0/schema", "ItemsParam0");
+        // Path-level parameter "x-tenant" → "XTenant" via PascalCase
+        AssertTypeName("#/paths/~1items/parameters/0/schema", "ItemsXTenant");
     }
 
     [TestMethod]
@@ -419,5 +421,14 @@ public class OpenApiSchemaNameHeuristicTests
 
         Assert.AreEqual(expectedName, actualName,
             $"Type name mismatch for pointer: {pointer}");
+    }
+
+    [TestMethod]
+    public void TryGetName_WithParameterNames_UsesParamNameInsteadOfIndex()
+    {
+        // The integration test (ClassInit) now passes parameterNames to the heuristic.
+        // Verify the parameter schema type name uses the param name ("Limit") not index.
+        // Fragment: /paths/~1items/get/parameters/0/schema → name "limit"
+        AssertTypeName("#/paths/~1items/get/parameters/0/schema", "GetItemsLimit");
     }
 }
