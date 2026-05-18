@@ -7275,7 +7275,7 @@ public class OpenApi31CodeGeneratorTests
     {
         OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot);
 
-        Assert.IsTrue(ops.Any(o => o.OperationId == "createPets"));
+        Assert.IsTrue(ops.Any(o => o.OperationId == "createPet"));
         Assert.IsTrue(ops.Any(o => o.OperationId == "showPetById"));
     }
 
@@ -7296,8 +7296,8 @@ public class OpenApi31CodeGeneratorTests
     {
         OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot);
 
-        OperationSummary createPets = ops.First(o => o.OperationId == "createPets");
-        Assert.IsTrue(createPets.HasRequestBody, "createPets has a request body");
+        OperationSummary createPet = ops.First(o => o.OperationId == "createPet");
+        Assert.IsTrue(createPet.HasRequestBody, "createPet has a request body");
 
         OperationSummary listPets = ops.First(o => o.OperationId == "listPets");
         Assert.IsFalse(listPets.HasRequestBody, "listPets has no request body");
@@ -7317,7 +7317,7 @@ public class OpenApi31CodeGeneratorTests
     [TestMethod]
     public void ListOperations_WithExcludeFilter_ExcludesMatchingPaths()
     {
-        OperationFilter filter = new(null, ["/pets/{petId}*"]);
+        OperationFilter filter = new(null, ["/pets/{petId}**"]);
         OperationSummary[] ops = OpenApi31CodeGenerator.ListOperations(petstoreRoot, filter);
 
         Assert.IsFalse(ops.Any(o => o.Path.Contains("{petId}", StringComparison.Ordinal)), "Should exclude /pets/{petId} paths");

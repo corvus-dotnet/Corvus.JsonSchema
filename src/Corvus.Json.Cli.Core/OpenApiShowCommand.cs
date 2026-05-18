@@ -69,10 +69,39 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
             return Task.FromResult(0);
         }
 
-        // Group by path for tree display
+        bool groupByTag = string.Equals(settings.GroupBy, "tag", StringComparison.OrdinalIgnoreCase);
+
+        if (groupByTag)
+        {
+            RenderByTag(operations);
+        }
+        else
+        {
+            RenderByPath(operations);
+        }
+
+        // Summary
+        AnsiConsole.WriteLine();
+        int deprecatedCount = operations.Count(o => o.IsDeprecated);
+        int pathCount = operations.Select(o => o.Path).Distinct(StringComparer.Ordinal).Count();
+        AnsiConsole.MarkupLine($"[green]{operations.Length} operations[/] across [green]{pathCount} paths[/]");
+        if (deprecatedCount > 0)
+        {
+            AnsiConsole.MarkupLine($"[yellow]{deprecatedCount} deprecated[/]");
+        }
+
+        if (filter is not null)
+        {
+            AnsiConsole.MarkupLine("[dim](filtered)[/]");
+        }
+
+        return Task.FromResult(0);
+    }
+
+    private static void RenderByPath(OperationSummary[] operations)
+    {
         var tree = new Tree($"[bold]Operations[/] ({operations.Length})");
 
-        // Group operations by path (preserving order)
         var pathGroups = new Dictionary<string, List<OperationSummary>>(StringComparer.Ordinal);
         foreach (OperationSummary op in operations)
         {
@@ -88,58 +117,89 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
         foreach ((string path, List<OperationSummary> ops) in pathGroups)
         {
             TreeNode pathNode = tree.AddNode($"[bold]{Markup.Escape(path)}[/]");
-
             foreach (OperationSummary op in ops)
             {
-                string methodStr = op.Method.ToString().ToUpperInvariant();
-                string color = MethodColors.GetValueOrDefault(op.Method, "white");
-                string deprecated = op.IsDeprecated ? " [strikethrough dim](deprecated)[/]" : string.Empty;
-                string opIdStr = op.OperationId is not null ? $" [dim]{Markup.Escape(op.OperationId)}[/]" : string.Empty;
-                string summaryStr = op.Summary is not null ? $" — {Markup.Escape(op.Summary)}" : string.Empty;
-
-                string details = string.Empty;
-                List<string> detailParts = [];
-                if (op.ParameterCount > 0)
-                {
-                    detailParts.Add($"{op.ParameterCount} params");
-                }
-
-                if (op.HasRequestBody)
-                {
-                    detailParts.Add("body");
-                }
-
-                if (op.Tags.Length > 0)
-                {
-                    detailParts.Add($"tags: {string.Join(", ", op.Tags)}");
-                }
-
-                if (detailParts.Count > 0)
-                {
-                    details = $" [dim]({string.Join(", ", detailParts)})[/]";
-                }
-
-                pathNode.AddNode($"[{color}]{methodStr}[/]{opIdStr}{deprecated}{summaryStr}{details}");
+                pathNode.AddNode(FormatOperation(op));
             }
         }
 
         AnsiConsole.Write(tree);
+    }
 
-        // Summary
-        AnsiConsole.WriteLine();
-        int deprecatedCount = operations.Count(o => o.IsDeprecated);
-        AnsiConsole.MarkupLine($"[green]{operations.Length} operations[/] across [green]{pathGroups.Count} paths[/]");
-        if (deprecatedCount > 0)
+    private static void RenderByTag(OperationSummary[] operations)
+    {
+        var tree = new Tree($"[bold]Operations by Tag[/] ({operations.Length})");
+
+        var tagGroups = new Dictionary<string, List<OperationSummary>>(StringComparer.Ordinal);
+        foreach (OperationSummary op in operations)
         {
-            AnsiConsole.MarkupLine($"[yellow]{deprecatedCount} deprecated[/]");
+            if (op.Tags.Length == 0)
+            {
+                if (!tagGroups.TryGetValue("(untagged)", out List<OperationSummary>? untagged))
+                {
+                    untagged = [];
+                    tagGroups["(untagged)"] = untagged;
+                }
+
+                untagged.Add(op);
+            }
+            else
+            {
+                foreach (string tag in op.Tags)
+                {
+                    if (!tagGroups.TryGetValue(tag, out List<OperationSummary>? group))
+                    {
+                        group = [];
+                        tagGroups[tag] = group;
+                    }
+
+                    group.Add(op);
+                }
+            }
         }
 
-        if (filter is not null)
+        foreach ((string tag, List<OperationSummary> ops) in tagGroups.OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
         {
-            AnsiConsole.MarkupLine("[dim](filtered)[/]");
+            TreeNode tagNode = tree.AddNode($"[bold]{Markup.Escape(tag)}[/] [dim]({ops.Count})[/]");
+            foreach (OperationSummary op in ops)
+            {
+                tagNode.AddNode(FormatOperation(op, includePath: true));
+            }
         }
 
-        return Task.FromResult(0);
+        AnsiConsole.Write(tree);
+    }
+
+    private static string FormatOperation(OperationSummary op, bool includePath = false)
+    {
+        string methodStr = op.Method.ToString().ToUpperInvariant();
+        string color = MethodColors.GetValueOrDefault(op.Method, "white");
+        string deprecated = op.IsDeprecated ? " [strikethrough dim](deprecated)[/]" : string.Empty;
+        string opIdStr = op.OperationId is not null ? $" [dim]{Markup.Escape(op.OperationId)}[/]" : string.Empty;
+        string summaryStr = op.Summary is not null ? $" — {Markup.Escape(op.Summary)}" : string.Empty;
+        string pathStr = includePath ? $" [bold]{Markup.Escape(op.Path)}[/]" : string.Empty;
+
+        List<string> detailParts = [];
+        if (op.ParameterCount > 0)
+        {
+            detailParts.Add($"{op.ParameterCount} params");
+        }
+
+        if (op.HasRequestBody)
+        {
+            detailParts.Add("body");
+        }
+
+        if (!includePath && op.Tags.Length > 0)
+        {
+            detailParts.Add($"tags: {string.Join(", ", op.Tags)}");
+        }
+
+        string details = detailParts.Count > 0
+            ? $" [dim]({string.Join(", ", detailParts)})[/]"
+            : string.Empty;
+
+        return $"[{color}]{methodStr}[/]{pathStr}{opIdStr}{deprecated}{summaryStr}{details}";
     }
 }
 

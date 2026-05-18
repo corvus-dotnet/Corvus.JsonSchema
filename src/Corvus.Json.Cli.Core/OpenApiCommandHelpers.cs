@@ -23,45 +23,30 @@ internal static class OpenApiCommandHelpers
     /// <returns>An <see cref="OperationFilter"/>, or <see langword="null"/> if no filters are specified.</returns>
     internal static OperationFilter? BuildFilter(OpenApiSettings settings)
     {
-        return BuildFilter(settings.IncludePath, settings.ExcludePath, settings.Filter);
-    }
-
-    /// <summary>
-    /// Builds an <see cref="OperationFilter"/> from the generate settings.
-    /// </summary>
-    /// <param name="settings">The generate command settings.</param>
-    /// <returns>An <see cref="OperationFilter"/>, or <see langword="null"/> if no filters are specified.</returns>
-    internal static OperationFilter? BuildFilter(OpenApiGenerateSettings settings)
-    {
-        return BuildFilter(settings.IncludePath, settings.ExcludePath, settings.Filter);
-    }
-
-    private static OperationFilter? BuildFilter(string[]? includePath, string[]? excludePath, string[]? filter)
-    {
         List<string> includePatterns = [];
         List<string> excludePatterns = [];
 
         // --filter is the deprecated alias for --include-path
-        if (filter is { Length: > 0 })
+        if (settings.Filter is { Length: > 0 })
         {
             AnsiConsole.MarkupLine("[yellow]Warning:[/] --filter is deprecated. Use --include-path instead.");
-            foreach (string f in filter)
+            foreach (string f in settings.Filter)
             {
                 includePatterns.AddRange(f.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
             }
         }
 
-        if (includePath is { Length: > 0 })
+        if (settings.IncludePath is { Length: > 0 })
         {
-            foreach (string f in includePath)
+            foreach (string f in settings.IncludePath)
             {
                 includePatterns.AddRange(f.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
             }
         }
 
-        if (excludePath is { Length: > 0 })
+        if (settings.ExcludePath is { Length: > 0 })
         {
-            foreach (string f in excludePath)
+            foreach (string f in settings.ExcludePath)
             {
                 excludePatterns.AddRange(f.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
             }

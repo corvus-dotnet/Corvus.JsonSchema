@@ -36,6 +36,11 @@ internal class OpenApiSettings : CommandSettings
     [Description("The OpenAPI spec version to use (3.0 or 3.1). If not specified, auto-detected from the spec.")]
     [DefaultValue(null)]
     public string? SpecVersion { get; init; }
+
+    [CommandOption("--group-by")]
+    [Description("How to group operations in the output: 'path' (default) or 'tag'.")]
+    [DefaultValue("path")]
+    public string GroupBy { get; init; } = "path";
 }
 
 #endif
