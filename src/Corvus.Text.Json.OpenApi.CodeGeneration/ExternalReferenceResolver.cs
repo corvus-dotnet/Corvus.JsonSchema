@@ -60,6 +60,8 @@ public sealed class ExternalReferenceResolver : IOpenApiReferenceResolver, IDisp
     // Lazily loaded documents (owned by the resolver — disposed on Dispose).
     private readonly Dictionary<string, ParsedJsonDocument<JsonElement>> loadedDocuments = new(StringComparer.Ordinal);
 
+    private readonly Stack<(string Key, JsonElement Root)> baseStack = new();
+
     private bool disposed;
 
     /// <summary>
@@ -83,6 +85,14 @@ public sealed class ExternalReferenceResolver : IOpenApiReferenceResolver, IDisp
         this.entryDocumentRoot = entryDocumentRoot;
         this.baseUri = new Uri(entryDocumentPath);
     }
+
+    private Uri CurrentBaseUri => this.baseStack.Count > 0
+        ? new Uri(this.baseStack.Peek().Key)
+        : this.baseUri;
+
+    private JsonElement CurrentBaseDocument => this.baseStack.Count > 0
+        ? this.baseStack.Peek().Root
+        : this.entryDocumentRoot;
 
     /// <summary>
     /// Pre-registers an external document with its canonical URI.
@@ -189,11 +199,11 @@ public sealed class ExternalReferenceResolver : IOpenApiReferenceResolver, IDisp
             return false;
         }
 
-        // Fragment-only reference — resolve within entry document
+        // Fragment-only reference — resolve within CURRENT base document (RFC 3986 §5)
         if (refValue[0] == (byte)'#')
         {
             ReadOnlySpan<byte> pointer = refValue.Slice(1);
-            return this.entryDocumentRoot.TryResolvePointer(pointer, out result);
+            return this.CurrentBaseDocument.TryResolvePointer(pointer, out result);
         }
 
         // External reference — convert to string for URI parsing
@@ -212,11 +222,11 @@ public sealed class ExternalReferenceResolver : IOpenApiReferenceResolver, IDisp
             return false;
         }
 
-        // Fragment-only reference — resolve within entry document
+        // Fragment-only reference — resolve within CURRENT base document (RFC 3986 §5)
         if (refValue[0] == '#')
         {
             ReadOnlySpan<char> pointer = refValue.AsSpan(1);
-            return this.entryDocumentRoot.TryResolvePointer(pointer, out result);
+            return this.CurrentBaseDocument.TryResolvePointer(pointer, out result);
         }
 
         return this.TryResolveExternal(refValue, out result);
@@ -260,6 +270,39 @@ public sealed class ExternalReferenceResolver : IOpenApiReferenceResolver, IDisp
         return false;
     }
 
+    /// <inheritdoc/>
+    public IDisposable PushResolvedBase(string refValue)
+    {
+        ObjectDisposedException.ThrowIf(this.disposed, this);
+
+        if (string.IsNullOrEmpty(refValue) || refValue[0] == '#')
+        {
+            return EmptyScope.Instance;
+        }
+
+        // Extract the document URI (before the fragment)
+        int hashIndex = refValue.IndexOf('#');
+        string docPart = hashIndex >= 0 ? refValue.Substring(0, hashIndex) : refValue;
+
+        Uri resolved = new(this.CurrentBaseUri, docPart);
+        string key = resolved.AbsoluteUri;
+
+        // Look up the document
+        if (this.registeredDocuments.TryGetValue(key, out JsonElement _))
+        {
+            this.baseStack.Push((key, this.registeredDocuments[key]));
+            return new BaseScope(this);
+        }
+
+        if (this.loadedDocuments.TryGetValue(key, out ParsedJsonDocument<JsonElement>? loaded))
+        {
+            this.baseStack.Push((key, loaded.RootElement));
+            return new BaseScope(this);
+        }
+
+        return EmptyScope.Instance;
+    }
+
     /// <summary>
     /// Releases all lazily loaded external documents.
     /// </summary>
@@ -290,8 +333,8 @@ public sealed class ExternalReferenceResolver : IOpenApiReferenceResolver, IDisp
         // Split into URI and fragment parts
         SplitReference(refValue, out string uriPart, out string? fragment);
 
-        // Resolve the URI against the entry document's base URI
-        Uri resolvedUri = new(this.baseUri, uriPart);
+        // Resolve the URI against the current base URI (RFC 3986 §5)
+        Uri resolvedUri = new(this.CurrentBaseUri, uriPart);
         string key = resolvedUri.AbsoluteUri;
 
         // 1. Check pre-registered documents (caller-managed lifetime)
@@ -374,6 +417,17 @@ public sealed class ExternalReferenceResolver : IOpenApiReferenceResolver, IDisp
         {
             uriPart = refValue[..hashIndex];
             fragment = refValue[(hashIndex + 1)..];
+        }
+    }
+
+    private sealed class BaseScope(ExternalReferenceResolver resolver) : IDisposable
+    {
+        public void Dispose()
+        {
+            if (resolver.baseStack.Count > 0)
+            {
+                resolver.baseStack.Pop();
+            }
         }
     }
 }

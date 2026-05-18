@@ -68,4 +68,24 @@ public interface IOpenApiReferenceResolver
     /// against its schema; otherwise, <see langword="false"/>.</returns>
     bool TryResolve<TTarget>(ReadOnlySpan<byte> refValue, out TTarget result)
         where TTarget : struct, IJsonElement<TTarget>;
+
+    /// <summary>
+    /// Pushes the base URI context for the document identified by the given <c>$ref</c> value.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// Per RFC 3986 §5, when resolution crosses a document boundary, the target document's
+    /// URI becomes the base for resolving subsequent relative and fragment-only references.
+    /// Call this method with the <c>$ref</c> string that triggered an external resolution,
+    /// and dispose the returned scope when you are finished walking the resolved element's
+    /// sub-structure.
+    /// </para>
+    /// <para>
+    /// If <paramref name="refValue"/> is fragment-only (starts with <c>#</c>) or does not
+    /// identify a known document, the returned scope is a no-op.
+    /// </para>
+    /// </remarks>
+    /// <param name="refValue">The <c>$ref</c> URI-reference that was resolved.</param>
+    /// <returns>An <see cref="IDisposable"/> that restores the previous base URI context when disposed.</returns>
+    IDisposable PushResolvedBase(string refValue);
 }

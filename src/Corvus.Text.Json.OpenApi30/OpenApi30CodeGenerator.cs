@@ -367,22 +367,25 @@ public sealed class OpenApi30CodeGenerator
 
         // Request body content schema pointers
         if (operation.RequestBody.IsNotUndefined()
-            && TryResolveRequestBody(operation.RequestBody, referenceResolver, out OpenApiDocument.RequestBody requestBody)
+            && TryResolveRequestBody(operation.RequestBody, referenceResolver, out OpenApiDocument.RequestBody requestBody, out IDisposable rbScope)
             && requestBody.Content.IsNotUndefined())
         {
-            foreach (var mediaTypeProp in requestBody.Content.EnumerateObject())
+            using (rbScope)
             {
-                // Skip raw stream content types — no JSON Schema type needed.
-                if (CodeEmitHelpers.IsRawStreamMediaType(mediaTypeProp.Name))
+                foreach (var mediaTypeProp in requestBody.Content.EnumerateObject())
                 {
-                    continue;
-                }
+                    // Skip raw stream content types — no JSON Schema type needed.
+                    if (CodeEmitHelpers.IsRawStreamMediaType(mediaTypeProp.Name))
+                    {
+                        continue;
+                    }
 
-                if (mediaTypeProp.Value.Schema.IsNotUndefined())
-                {
-                    using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
-                    pointers.Add(SchemaPointerBuilder.BuildContentSchemaPointer(
-                        pathName.Span, method, "/requestBody"u8, mediaTypeName.Span));
+                    if (mediaTypeProp.Value.Schema.IsNotUndefined())
+                    {
+                        using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+                        pointers.Add(SchemaPointerBuilder.BuildContentSchemaPointer(
+                            pathName.Span, method, "/requestBody"u8, mediaTypeName.Span));
+                    }
                 }
             }
         }
@@ -400,51 +403,58 @@ public sealed class OpenApi30CodeGenerator
                 if (!TryResolveResponse(
                     OpenApiDocument.Responses.DefaultEntity.From(responseProp.Value),
                     referenceResolver,
-                    out OpenApiDocument.Response response))
+                    out OpenApiDocument.Response response,
+                    out IDisposable responseScope))
                 {
                     continue;
                 }
 
-                using UnescapedUtf8JsonString statusCode = responseProp.Utf8NameSpan;
-
-                if (response.Content.IsNotUndefined())
+                using (responseScope)
                 {
-                    foreach (var mediaTypeProp in response.Content.EnumerateObject())
-                    {
-                        // Skip raw stream content types — no JSON Schema type needed.
-                        if (CodeEmitHelpers.IsRawStreamMediaType(mediaTypeProp.Name))
-                        {
-                            continue;
-                        }
+                    using UnescapedUtf8JsonString statusCode = responseProp.Utf8NameSpan;
 
-                        if (mediaTypeProp.Value.Schema.IsNotUndefined())
+                    if (response.Content.IsNotUndefined())
+                    {
+                        foreach (var mediaTypeProp in response.Content.EnumerateObject())
                         {
-                            using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
-                            pointers.Add(SchemaPointerBuilder.BuildResponseContentSchemaPointer(
-                                pathName.Span, method, statusCode.Span, mediaTypeName.Span));
+                            // Skip raw stream content types — no JSON Schema type needed.
+                            if (CodeEmitHelpers.IsRawStreamMediaType(mediaTypeProp.Name))
+                            {
+                                continue;
+                            }
+
+                            if (mediaTypeProp.Value.Schema.IsNotUndefined())
+                            {
+                                using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+                                pointers.Add(SchemaPointerBuilder.BuildResponseContentSchemaPointer(
+                                    pathName.Span, method, statusCode.Span, mediaTypeName.Span));
+                            }
                         }
                     }
-                }
 
-                if (response.Headers.IsNotUndefined())
-                {
-                    foreach (var headerProp in response.Headers.EnumerateObject())
+                    if (response.Headers.IsNotUndefined())
                     {
-                        if (headerProp.Value.IsUndefined())
+                        foreach (var headerProp in response.Headers.EnumerateObject())
                         {
-                            continue;
-                        }
+                            if (headerProp.Value.IsUndefined())
+                            {
+                                continue;
+                            }
 
-                        if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header))
-                        {
-                            continue;
-                        }
+                            if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header, out IDisposable headerScope))
+                            {
+                                continue;
+                            }
 
-                        if (header.Schema.IsNotUndefined())
-                        {
-                            using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
-                            pointers.Add(SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                                pathName.Span, method, statusCode.Span, headerName.Span));
+                            using (headerScope)
+                            {
+                                if (header.Schema.IsNotUndefined())
+                                {
+                                    using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
+                                    pointers.Add(SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
+                                        pathName.Span, method, statusCode.Span, headerName.Span));
+                                }
+                            }
                         }
                     }
                 }
@@ -529,8 +539,9 @@ public sealed class OpenApi30CodeGenerator
                     continue;
                 }
 
-                if (TryResolvePathItemParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
+                if (TryResolvePathItemParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed, out IDisposable paramScope))
                 {
+                    paramScope.Dispose();
                     result.Add((typed, sourceIndex, true));
                 }
 
@@ -549,8 +560,9 @@ public sealed class OpenApi30CodeGenerator
                     continue;
                 }
 
-                if (TryResolveOperationParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed))
+                if (TryResolveOperationParameter(paramOrRef, referenceResolver, out OpenApiDocument.Parameter typed, out IDisposable paramScope))
                 {
+                    paramScope.Dispose();
                     int existingIndex = FindParameterIndex(result, typed);
 
                     if (existingIndex >= 0)
@@ -587,88 +599,92 @@ public sealed class OpenApi30CodeGenerator
     }
 
     // ── $ref resolution ─────────────────────────────────────────────────
-    private static T? ResolveRef<T>(
-        OpenApiDocument.Reference reference,
-        IOpenApiReferenceResolver solver)
-        where T : struct, IJsonElement<T>
-    {
-        using UnescapedUtf8JsonString refUtf8 = reference.Ref.GetUtf8String();
-        return solver.TryResolve<T>(refUtf8.Span, out T r) ? r : null;
-    }
-
     private static bool TryResolvePathItemParameter(
         OpenApiDocument.PathItem.ParametersEntityArray.ParametersEntity paramOrRef,
         IOpenApiReferenceResolver referenceResolver,
-        out OpenApiDocument.Parameter resolved)
+        out OpenApiDocument.Parameter resolved,
+        out IDisposable baseScope)
     {
         OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(paramOrRef);
         if (asRef.Ref.IsNotUndefined())
         {
-            OpenApiDocument.Parameter? r = ResolveRef<OpenApiDocument.Parameter>(asRef, referenceResolver);
-            if (r is { } resolved2)
+            string refStr = asRef.Ref.GetString()!;
+            if (referenceResolver.TryResolve<OpenApiDocument.Parameter>(refStr, out OpenApiDocument.Parameter r))
             {
-                resolved = resolved2;
+                resolved = r;
+                baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
             }
 
             resolved = default;
+            baseScope = EmptyScope.Instance;
             return false;
         }
 
         resolved = OpenApiDocument.Parameter.From(paramOrRef);
+        baseScope = EmptyScope.Instance;
         return true;
     }
 
     private static bool TryResolveOperationParameter(
         OpenApiDocument.Operation.ParametersEntityArray.ParametersEntity paramOrRef,
         IOpenApiReferenceResolver referenceResolver,
-        out OpenApiDocument.Parameter resolved)
+        out OpenApiDocument.Parameter resolved,
+        out IDisposable baseScope)
     {
         OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(paramOrRef);
         if (asRef.Ref.IsNotUndefined())
         {
-            OpenApiDocument.Parameter? r = ResolveRef<OpenApiDocument.Parameter>(asRef, referenceResolver);
-            if (r is { } resolved2)
+            string refStr = asRef.Ref.GetString()!;
+            if (referenceResolver.TryResolve<OpenApiDocument.Parameter>(refStr, out OpenApiDocument.Parameter r))
             {
-                resolved = resolved2;
+                resolved = r;
+                baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
             }
 
             resolved = default;
+            baseScope = EmptyScope.Instance;
             return false;
         }
 
         resolved = OpenApiDocument.Parameter.From(paramOrRef);
+        baseScope = EmptyScope.Instance;
         return true;
     }
 
     private static bool TryResolveRequestBody(
         OpenApiDocument.Operation.RequestBodyEntity requestBodyOrRef,
         IOpenApiReferenceResolver referenceResolver,
-        out OpenApiDocument.RequestBody resolved)
+        out OpenApiDocument.RequestBody resolved,
+        out IDisposable baseScope)
     {
         OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(requestBodyOrRef);
         if (asRef.Ref.IsNotUndefined())
         {
-            OpenApiDocument.RequestBody? r = ResolveRef<OpenApiDocument.RequestBody>(asRef, referenceResolver);
-            if (r is { } resolved2)
+            string refStr = asRef.Ref.GetString()!;
+            if (referenceResolver.TryResolve<OpenApiDocument.RequestBody>(refStr, out OpenApiDocument.RequestBody r))
             {
-                resolved = resolved2;
+                resolved = r;
+                baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
             }
 
             resolved = default;
+            baseScope = EmptyScope.Instance;
             return false;
         }
 
         resolved = OpenApiDocument.RequestBody.From(requestBodyOrRef);
+        baseScope = EmptyScope.Instance;
         return true;
     }
 
     private static bool TryResolveResponse(
         OpenApiDocument.Responses.DefaultEntity responseOrRef,
         IOpenApiReferenceResolver referenceResolver,
-        out OpenApiDocument.Response resolved)
+        out OpenApiDocument.Response resolved,
+        out IDisposable baseScope)
     {
         // Avoid the Match discriminator — the 3.0 typed model's schema validation
         // can reject valid Response Objects that contain optional sub-objects with
@@ -677,43 +693,50 @@ public sealed class OpenApi30CodeGenerator
         OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(responseOrRef);
         if (asRef.Ref.IsNotUndefined())
         {
-            OpenApiDocument.Response? r = ResolveRef<OpenApiDocument.Response>(asRef, referenceResolver);
-            if (r is { } resolved2)
+            string refStr = asRef.Ref.GetString()!;
+            if (referenceResolver.TryResolve<OpenApiDocument.Response>(refStr, out OpenApiDocument.Response r))
             {
-                resolved = resolved2;
+                resolved = r;
+                baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
             }
 
             resolved = default;
+            baseScope = EmptyScope.Instance;
             return false;
         }
 
         resolved = OpenApiDocument.Response.From(responseOrRef);
+        baseScope = EmptyScope.Instance;
         return true;
     }
 
     private static bool TryResolveHeader(
         OpenApiDocument.Response.HeadersEntity.AdditionalPropertiesEntity headerOrRef,
         IOpenApiReferenceResolver referenceResolver,
-        out OpenApiDocument.Header resolved)
+        out OpenApiDocument.Header resolved,
+        out IDisposable baseScope)
     {
         // Same approach as TryResolveResponse — avoid Match discriminator to
         // handle headers that have optional properties missing (e.g. no "schema").
         OpenApiDocument.Reference asRef = OpenApiDocument.Reference.From(headerOrRef);
         if (asRef.Ref.IsNotUndefined())
         {
-            OpenApiDocument.Header? r = ResolveRef<OpenApiDocument.Header>(asRef, referenceResolver);
-            if (r is { } resolved2)
+            string refStr = asRef.Ref.GetString()!;
+            if (referenceResolver.TryResolve<OpenApiDocument.Header>(refStr, out OpenApiDocument.Header r))
             {
-                resolved = resolved2;
+                resolved = r;
+                baseScope = referenceResolver.PushResolvedBase(refStr);
                 return true;
             }
 
             resolved = default;
+            baseScope = EmptyScope.Instance;
             return false;
         }
 
         resolved = OpenApiDocument.Header.From(headerOrRef);
+        baseScope = EmptyScope.Instance;
         return true;
     }
 
@@ -933,20 +956,23 @@ public sealed class OpenApi30CodeGenerator
             return null;
         }
 
-        if (!TryResolveRequestBody(requestBodyOrRef, referenceResolver, out OpenApiDocument.RequestBody requestBody))
+        if (!TryResolveRequestBody(requestBodyOrRef, referenceResolver, out OpenApiDocument.RequestBody requestBody, out IDisposable rbScope))
         {
             ThrowHelper.ThrowUnableToResolveRequestBodyRef();
         }
 
-        bool required = requestBody.Required;
-        string? description = requestBody.Description.IsNotUndefined()
-            ? requestBody.Description.GetString()
-            : null;
+        using (rbScope)
+        {
+            bool required = requestBody.Required;
+            string? description = requestBody.Description.IsNotUndefined()
+                ? requestBody.Description.GetString()
+                : null;
 
-        ContentInfo[] content = PrepareContentEntries(
-            requestBody.Content, pathNameUtf8, method, "/requestBody"u8);
+            ContentInfo[] content = PrepareContentEntries(
+                requestBody.Content, pathNameUtf8, method, "/requestBody"u8);
 
-        return new RequestBodyInfo(description, required, content);
+            return new RequestBodyInfo(description, required, content);
+        }
     }
 
     private static ResponseInfo[] PrepareResponses(
@@ -972,23 +998,27 @@ public sealed class OpenApi30CodeGenerator
             if (!TryResolveResponse(
                 OpenApiDocument.Responses.DefaultEntity.From(responseProp.Value),
                 referenceResolver,
-                out OpenApiDocument.Response response))
+                out OpenApiDocument.Response response,
+                out IDisposable responseScope))
             {
                 ThrowHelper.ThrowUnableToResolveResponseRef();
             }
 
-            // Extract status code at the emit boundary
-            string statusCode = responseProp.Name;
+            using (responseScope)
+            {
+                // Extract status code at the emit boundary
+                string statusCode = responseProp.Name;
 
-            using UnescapedUtf8JsonString statusCodeUtf8 = responseProp.Utf8NameSpan;
+                using UnescapedUtf8JsonString statusCodeUtf8 = responseProp.Utf8NameSpan;
 
-            ContentInfo[] content = PrepareResponseContentEntries(
-                response.Content, pathNameUtf8, method, statusCodeUtf8.Span);
+                ContentInfo[] content = PrepareResponseContentEntries(
+                    response.Content, pathNameUtf8, method, statusCodeUtf8.Span);
 
-            HeaderInfo[] headers = PrepareResponseHeaders(
-                response.Headers, pathNameUtf8, method, statusCodeUtf8.Span, referenceResolver);
+                HeaderInfo[] headers = PrepareResponseHeaders(
+                    response.Headers, pathNameUtf8, method, statusCodeUtf8.Span, referenceResolver);
 
-            result.Add(new ResponseInfo(statusCode, content, headers));
+                result.Add(new ResponseInfo(statusCode, content, headers));
+            }
         }
 
         return [.. result];
@@ -1118,42 +1148,45 @@ public sealed class OpenApi30CodeGenerator
                 continue;
             }
 
-            if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header))
+            if (!TryResolveHeader(headerProp.Value, referenceResolver, out OpenApiDocument.Header header, out IDisposable headerScope))
             {
                 ThrowHelper.ThrowUnableToResolveHeaderRef();
             }
 
-            bool hasSchema = header.Schema.IsNotUndefined();
-
-            string? schemaPointer = null;
-            if (hasSchema)
+            using (headerScope)
             {
-                using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
-                schemaPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
-                    pathNameUtf8, method, statusCodeUtf8, headerName.Span);
+                bool hasSchema = header.Schema.IsNotUndefined();
+
+                string? schemaPointer = null;
+                if (hasSchema)
+                {
+                    using UnescapedUtf8JsonString headerName = headerProp.Utf8NameSpan;
+                    schemaPointer = SchemaPointerBuilder.BuildResponseHeaderSchemaPointer(
+                        pathNameUtf8, method, statusCodeUtf8, headerName.Span);
+                }
+
+                // Extract explode and serialization kind for response header deserialization.
+                // Headers always use style: simple. Explode defaults to false.
+                bool explode = false;
+
+                if (hasSchema)
+                {
+                    explode = header.Explode.ValueKind == JsonValueKind.True;
+                }
+
+                JsonElement schemaEl = hasSchema ? JsonElement.From(header.Schema) : default;
+                ParameterSerializationKind serializationKind = hasSchema
+                    ? SchemaClassifier.Classify(schemaEl)
+                    : ParameterSerializationKind.String;
+
+                bool deepNesting = hasSchema
+                    && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
+                    && SchemaClassifier.HasDeepNesting(schemaEl);
+
+                // Extract header name at the emit boundary
+                string name = headerProp.Name;
+                result.Add(new HeaderInfo(name, schemaPointer, explode, serializationKind, deepNesting));
             }
-
-            // Extract explode and serialization kind for response header deserialization.
-            // Headers always use style: simple. Explode defaults to false.
-            bool explode = false;
-
-            if (hasSchema)
-            {
-                explode = header.Explode.ValueKind == JsonValueKind.True;
-            }
-
-            JsonElement schemaEl = hasSchema ? JsonElement.From(header.Schema) : default;
-            ParameterSerializationKind serializationKind = hasSchema
-                ? SchemaClassifier.Classify(schemaEl)
-                : ParameterSerializationKind.String;
-
-            bool deepNesting = hasSchema
-                && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
-                && SchemaClassifier.HasDeepNesting(schemaEl);
-
-            // Extract header name at the emit boundary
-            string name = headerProp.Name;
-            result.Add(new HeaderInfo(name, schemaPointer, explode, serializationKind, deepNesting));
         }
 
         return [.. result];

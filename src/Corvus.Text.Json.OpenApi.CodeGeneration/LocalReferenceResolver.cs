@@ -97,4 +97,7 @@ public sealed class LocalReferenceResolver : IOpenApiReferenceResolver
         result = default;
         return false;
     }
+
+    /// <inheritdoc/>
+    public IDisposable PushResolvedBase(string refValue) => EmptyScope.Instance;
 }
