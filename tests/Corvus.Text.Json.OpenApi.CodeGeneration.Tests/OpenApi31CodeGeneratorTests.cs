@@ -6593,6 +6593,12 @@ public class OpenApi31CodeGeneratorTests
         ["#/paths/~1items~1{itemId}~1upload/post/parameters/0/schema"] = "CovTest.JsonString",
         ["#/paths/~1items~1{itemId}~1upload/post/responses/201/content/application~1json/schema"] = "CovTest.Item",
         ["#/paths/~1export/get/responses/default/content/application~1json/schema"] = "CovTest.Error",
+        ["#/paths/~1quirky~1{qid}/get/parameters/0/schema"] = "CovTest.JsonString",
+        ["#/paths/~1quirky~1{qid}/get/parameters/1/schema"] = "CovTest.JsonString",
+        ["#/paths/~1quirky~1{qid}/get/responses/200/content/application~1json/schema"] = "CovTest.Item",
+        ["#/paths/~1quirky~1{sid}~1styled/get/parameters/0/schema"] = "CovTest.JsonString",
+        ["#/paths/~1quirky~1{sid}~1styled/get/parameters/1/schema"] = "CovTest.JsonString",
+        ["#/paths/~1quirky~1{sid}~1styled/get/responses/200/content/application~1json/schema"] = "CovTest.Item",
     };
 
     private static JsonElement coverageRoot;
@@ -7042,6 +7048,32 @@ public class OpenApi31CodeGeneratorTests
         Assert.IsTrue(
             resp.Content.Contains("CreateBuilder<string>", StringComparison.Ordinal),
             "Array header should use CreateBuilder to parse comma-separated elements");
+    }
+
+    // ── Non-conformant parameter edge cases ───────────────────────────────
+    [TestMethod]
+    public void CovSpec_QuirkyPath_GeneratesWithoutError()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+
+        // Verify client method generated for operation with non-conformant parameters
+        GeneratedFile iface = files.First(f => f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+        Assert.IsTrue(
+            iface.Content.Contains("GetQuirkyAsync", StringComparison.Ordinal),
+            "Interface should have GetQuirkyAsync for path param without required:true and unknown 'in' param");
+    }
+
+    [TestMethod]
+    public void CovSpec_StyledQuirkyPath_GeneratesWithoutError()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateCoverageSpec();
+
+        GeneratedFile iface = files.First(f => f.FileName.StartsWith("IApi", StringComparison.Ordinal)
+            && f.FileName.EndsWith("Client.cs", StringComparison.Ordinal));
+        Assert.IsTrue(
+            iface.Content.Contains("GetStyledQuirkyAsync", StringComparison.Ordinal),
+            "Interface should have GetStyledQuirkyAsync for path param with non-standard style");
     }
 
     // ── Additional coverage tests: content type code paths ─────────────────

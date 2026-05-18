@@ -277,6 +277,63 @@
           }
         }
       }
+    },
+    "/quirky/{qid}": {
+      "get": {
+        "operationId": "getQuirky",
+        "parameters": [
+          {
+            "name": "qid",
+            "in": "path",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "weirdLoc",
+            "in": "custom",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Item" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/quirky/{sid}/styled": {
+      "get": {
+        "operationId": "getStyledQuirky",
+        "parameters": [
+          {
+            "name": "sid",
+            "in": "path",
+            "required": true,
+            "style": "form",
+            "schema": { "type": "string" }
+          },
+          {
+            "name": "badQueryStyle",
+            "in": "query",
+            "style": "simple",
+            "schema": { "type": "string" }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ok",
+            "content": {
+              "application/json": {
+                "schema": { "$ref": "#/components/schemas/Item" }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
