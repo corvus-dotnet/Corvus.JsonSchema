@@ -347,6 +347,25 @@
                     }
                   }
                 }
+              },
+              "X-Page-Sizes": {
+                "description": "Array of page sizes",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              },
+              "X-Flags": {
+                "description": "Array of boolean flags",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  }
+                }
               }
             },
             "content": {

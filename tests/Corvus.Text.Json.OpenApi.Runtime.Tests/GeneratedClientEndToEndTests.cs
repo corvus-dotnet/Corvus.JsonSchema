@@ -3720,4 +3720,71 @@ public class GeneratedClientEndToEndTests
         MemoryStream stream = new(bytes);
         return await GetItemResponse.CreateAsync(statusCode, stream, "application/json");
     }
+
+    [TestMethod]
+    public async Task GetItemTag_200_TypedIntArrayHeaderParsed()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            ["X-Total-Count"] = "3",
+            ["X-Request-Id"] = "req-123",
+            ["X-Tags"] = "a,b",
+            ["X-Metadata"] = "region,us-east-1,version,2",
+            ["X-Page-Sizes"] = "10,25,50,100",
+            ["X-Flags"] = "true,false,true",
+        };
+
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""", headers);
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(
+                    JsonInt64.ParseValue("42"u8),
+                    JsonString.ParseValue("\"myTag\""u8)),
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+
+        // Verify the int32 array header was parsed with int.Parse
+        var pageSizes = response.XPageSizesHeader;
+        Assert.IsNotNull(pageSizes);
+        Assert.AreEqual(4, pageSizes.Value.GetArrayLength());
+        Assert.AreEqual(10, (int)pageSizes.Value[0]);
+        Assert.AreEqual(25, (int)pageSizes.Value[1]);
+        Assert.AreEqual(50, (int)pageSizes.Value[2]);
+        Assert.AreEqual(100, (int)pageSizes.Value[3]);
+    }
+
+    [TestMethod]
+    public async Task GetItemTag_200_TypedBoolArrayHeaderParsed()
+    {
+        var headers = new Dictionary<string, string>
+        {
+            ["X-Total-Count"] = "1",
+            ["X-Request-Id"] = "req-456",
+            ["X-Tags"] = "x",
+            ["X-Metadata"] = "region,eu-west-1,version,1",
+            ["X-Page-Sizes"] = "20",
+            ["X-Flags"] = "true,false,true",
+        };
+
+        using var harness = new TestHarness(HttpStatusCode.OK, """{}""", headers);
+
+        await using GetItemTagResponse response = await harness.Transport
+            .SendAsync<GetItemTagRequest, GetItemTagResponse>(
+                new GetItemTagRequest(
+                    JsonInt64.ParseValue("7"u8),
+                    JsonString.ParseValue("\"tag2\""u8)),
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+
+        // Verify the boolean array header was parsed with bool.Parse
+        var flags = response.XFlagsHeader;
+        Assert.IsNotNull(flags);
+        Assert.AreEqual(3, flags.Value.GetArrayLength());
+        Assert.AreEqual(true, (bool)flags.Value[0]);
+        Assert.AreEqual(false, (bool)flags.Value[1]);
+        Assert.AreEqual(true, (bool)flags.Value[2]);
+    }
 }
