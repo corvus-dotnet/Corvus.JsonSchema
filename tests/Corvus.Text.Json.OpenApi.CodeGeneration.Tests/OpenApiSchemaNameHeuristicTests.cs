@@ -24,6 +24,7 @@ public class OpenApiSchemaNameHeuristicTests
 
     private static IReadOnlyCollection<GeneratedCodeFile>? generatedFiles;
     private static Dictionary<string, string>? pointerToTypeName;
+    private static Dictionary<string, TypeDeclaration>? pointerToTypeMap;
 
     [ClassInitialize]
     public static async Task ClassInit(TestContext context)
@@ -71,6 +72,8 @@ public class OpenApiSchemaNameHeuristicTests
                 pointerToTypeName[pointer] = reduced.DotnetTypeName()?.ToString() ?? string.Empty;
             }
         }
+
+        pointerToTypeMap = pointerToType;
     }
 
     [TestMethod]
@@ -430,5 +433,30 @@ public class OpenApiSchemaNameHeuristicTests
         // Verify the parameter schema type name uses the param name ("Limit") not index.
         // Fragment: /paths/~1items/get/parameters/0/schema → name "limit"
         AssertTypeName("#/paths/~1items/get/parameters/0/schema", "GetItemsLimit");
+    }
+
+    [TestMethod]
+    public void TryGetName_WithoutParameterNames_FallsBackToIndex()
+    {
+        // When no parameterNames dict is provided, the heuristic falls back to "ParamN".
+        OpenApiSchemaNameHeuristic noParamNamesHeuristic = OpenApiSchemaNameHeuristic.Instance;
+
+        CSharpLanguageProvider.Options options = new("TestApi");
+        CSharpLanguageProvider languageProvider = CSharpLanguageProvider.DefaultWithOptions(options);
+
+        Span<char> nameBuffer = stackalloc char[256];
+        JsonReferenceBuilder refBuilder = JsonReferenceBuilder.From("#/paths/~1items/get/parameters/0/schema");
+
+        TypeDeclaration td = pointerToTypeMap!["#/paths/~1items/get/parameters/0/schema"];
+
+        bool result = noParamNamesHeuristic.TryGetName(
+            languageProvider,
+            td,
+            refBuilder,
+            nameBuffer,
+            out int written);
+
+        Assert.IsTrue(result);
+        Assert.AreEqual("GetItemsParam0", nameBuffer[..written].ToString());
     }
 }
