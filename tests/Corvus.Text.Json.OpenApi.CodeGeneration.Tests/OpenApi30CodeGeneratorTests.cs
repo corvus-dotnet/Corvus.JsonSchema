@@ -131,6 +131,74 @@ public class OpenApi30CodeGeneratorTests
     }
 
     [TestMethod]
+    public void CollectSchemaPointers_BrokenRefs_SkipsGracefully()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "Broken", "version": "1.0" },
+              "paths": {
+                "/a": {
+                  "get": {
+                    "operationId": "getA",
+                    "parameters": [
+                      { "$ref": "#/components/parameters/DoesNotExist" }
+                    ],
+                    "requestBody": { "$ref": "#/components/requestBodies/DoesNotExist" },
+                    "responses": {
+                      "200": { "$ref": "#/components/responses/DoesNotExist" }
+                    }
+                  }
+                },
+                "/b": { "$ref": "#/components/pathItems/DoesNotExist" }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        SchemaReference[] refs = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _);
+
+        Assert.AreEqual(0, refs.Length);
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_BrokenHeaderRef_SkipsGracefully()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.3",
+              "info": { "title": "BrokenHeader", "version": "1.0" },
+              "paths": {
+                "/x": {
+                  "get": {
+                    "operationId": "getX",
+                    "responses": {
+                      "200": {
+                        "description": "ok",
+                        "headers": {
+                          "X-Broken": { "$ref": "#/components/headers/DoesNotExist" }
+                        },
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        SchemaReference[] refs = OpenApi30CodeGenerator.CollectSchemaPointers(root, out _);
+
+        Assert.AreEqual(1, refs.Length);
+        Assert.IsTrue(refs[0].PositionalPointer.Contains("content", StringComparison.Ordinal));
+    }
+
+    [TestMethod]
     public void Generate_ProducesCorrectFileCount()
     {
         OpenApi30CodeGenerator gen = CreateGenerator();
@@ -6487,6 +6555,46 @@ public class OpenApi30CodeGeneratorTests
         Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Options));
         Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Head));
         Assert.IsTrue(ops.Any(o => o.Method == OperationMethod.Trace));
+    }
+
+    [TestMethod]
+    public void ListOperations_CountsPathLevelParameters()
+    {
+        const string spec = """
+            {
+              "openapi": "3.0.0",
+              "info": { "title": "T", "version": "1" },
+              "paths": {
+                "/items/{itemId}": {
+                  "parameters": [
+                    { "name": "itemId", "in": "path", "required": true, "schema": { "type": "string" } }
+                  ],
+                  "get": {
+                    "operationId": "getItem",
+                    "parameters": [
+                      { "name": "expand", "in": "query", "schema": { "type": "boolean" } }
+                    ],
+                    "responses": { "200": { "description": "ok" } }
+                  },
+                  "delete": {
+                    "operationId": "deleteItem",
+                    "responses": { "204": { "description": "deleted" } }
+                  }
+                }
+              }
+            }
+            """;
+
+        JsonElement root = ParseSpec(spec);
+        OperationSummary[] ops = OpenApi30CodeGenerator.ListOperations(root);
+
+        // GET: 1 path-level param (itemId) + 1 operation-level param (expand) = 2
+        OperationSummary getItem = ops.First(o => o.OperationId == "getItem");
+        Assert.AreEqual(2, getItem.ParameterCount, "getItem should count path + operation params");
+
+        // DELETE: 1 path-level param (itemId) + 0 operation-level params = 1
+        OperationSummary deleteItem = ops.First(o => o.OperationId == "deleteItem");
+        Assert.AreEqual(1, deleteItem.ParameterCount, "deleteItem should count path-level params");
     }
 
     // ══════════════════════════════════════════════════════════════════

@@ -505,10 +505,13 @@ public sealed class OpenApi30CodeGenerator
 
                                     string resolvablePointer = headerRefValue is not null
                                         ? SchemaPointerBuilder.BuildRefBasedPointer(headerRefValue, "/schema")
-                                        : pathItemRefValue is not null
+                                        : responseRefValue is not null
                                             ? SchemaPointerBuilder.BuildRefBasedPointer(
-                                                pathItemRefValue, SchemaPointerBuilder.BuildResponseHeaderSubPath(method, statusCode.Span, headerName.Span))
-                                            : positionalPointer;
+                                                responseRefValue, SchemaPointerBuilder.BuildHeaderSubPath(headerName.Span))
+                                            : pathItemRefValue is not null
+                                                ? SchemaPointerBuilder.BuildRefBasedPointer(
+                                                    pathItemRefValue, SchemaPointerBuilder.BuildResponseHeaderSubPath(method, statusCode.Span, headerName.Span))
+                                                : positionalPointer;
 
                                     pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                                 }

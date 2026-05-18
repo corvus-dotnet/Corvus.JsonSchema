@@ -97,6 +97,8 @@ public class PathItemRefResolutionTests
     /// <summary>
     /// <c>paths/items.json</c>: A path item with GET and DELETE.
     /// GET has a parameter and response referencing external files.
+    /// DELETE has an inline response with headers (to exercise BuildResponseHeaderSubPath —
+    /// path-item is $ref'd but response is inline).
     /// </summary>
     private const string ItemsPathItem = """
         {
@@ -117,7 +119,15 @@ public class PathItemRefResolutionTests
           "delete": {
             "operationId": "deleteItem",
             "responses": {
-              "204": { "description": "Deleted" }
+              "204": {
+                "description": "Deleted",
+                "headers": {
+                  "X-Deleted-At": {
+                    "description": "Timestamp of deletion",
+                    "schema": { "type": "string", "format": "date-time" }
+                  }
+                }
+              }
             }
           }
         }
@@ -126,10 +136,21 @@ public class PathItemRefResolutionTests
     /// <summary>
     /// <c>responses/user-list.json</c>: A response object with schema $ref to <c>../schemas/user.json</c>.
     /// This creates a 3-hop chain: entry → paths/users.json → responses/user-list.json → schemas/user.json.
+    /// Also includes response headers with schemas to exercise header collection.
     /// </summary>
     private const string UserListResponse = """
         {
           "description": "A list of users",
+          "headers": {
+            "X-Total-Count": {
+              "description": "Total number of users",
+              "schema": { "type": "integer", "minimum": 0 }
+            },
+            "X-Request-Id": {
+              "description": "Request correlation ID",
+              "schema": { "type": "string", "format": "uuid" }
+            }
+          },
           "content": {
             "application/json": {
               "schema": {
@@ -557,6 +578,63 @@ public class PathItemRefResolutionTests
             $"File contents: {string.Join("\n---\n", clientFiles.Select(f => $"{f.FileName}: {f.Content[..Math.Min(200, f.Content.Length)]}"))}");
         Assert.IsTrue(hasItemsPath,
             "Client code should use '/items/{itemId}' path template.");
+    }
+
+    // ══════════════════════════════════════════════════════════════════
+    // Response headers from external responses
+    // ══════════════════════════════════════════════════════════════════
+    [TestMethod]
+    public void ResponseHeader_Schema_IsCollected()
+    {
+        // responses/user-list.json has headers: X-Total-Count (integer) and X-Request-Id (uuid string)
+        // These should be collected when the response is reached via path-item $ref → response $ref
+        Assert.IsNotNull(collectedRefs);
+
+        bool hasHeaderSchema = collectedRefs.Any(r =>
+            r.PositionalPointer.Contains("headers", StringComparison.OrdinalIgnoreCase));
+
+        Assert.IsTrue(hasHeaderSchema,
+            $"Should collect response header schemas from external responses. " +
+            $"Positional pointers: {string.Join(", ", collectedRefs.Select(r => r.PositionalPointer))}");
+    }
+
+    [TestMethod]
+    public void ResponseHeader_ResolvablePointer_PointsToExternalFile()
+    {
+        // Header schemas from external response (user-list.json) resolve into that file.
+        // Header schemas inline within an external path-item resolve via path-item ref.
+        Assert.IsNotNull(collectedRefs);
+
+        var headerRefs = collectedRefs.Where(r =>
+            r.PositionalPointer.Contains("headers", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        Assert.IsTrue(headerRefs.Count >= 3,
+            $"Should collect at least 3 header schemas (X-Total-Count, X-Request-Id, X-Deleted-At). " +
+            $"Got {headerRefs.Count}. All refs: {string.Join(", ", collectedRefs.Select(r => r.PositionalPointer))}");
+
+        // Headers from the external response should reference user-list.json
+        var externalResponseHeaders = headerRefs.Where(r =>
+            r.PositionalPointer.Contains("/users/", StringComparison.Ordinal) &&
+            r.PositionalPointer.Contains("200", StringComparison.Ordinal)).ToList();
+
+        foreach (var headerRef in externalResponseHeaders)
+        {
+            Assert.IsTrue(
+                headerRef.ResolvablePointer.Contains("user-list.json", StringComparison.OrdinalIgnoreCase),
+                $"Header schema from external response should resolve into user-list.json. Got: {headerRef.ResolvablePointer}");
+        }
+
+        // The inline header (X-Deleted-At) in items.json should resolve via path-item ref
+        var inlineHeaders = headerRefs.Where(r =>
+            r.PositionalPointer.Contains("X-Deleted-At", StringComparison.OrdinalIgnoreCase)).ToList();
+
+        Assert.AreEqual(1, inlineHeaders.Count,
+            "Should have exactly 1 X-Deleted-At header ref");
+
+        Assert.IsTrue(
+            inlineHeaders[0].ResolvablePointer.Contains("items.json", StringComparison.OrdinalIgnoreCase),
+            $"Inline header in external path-item should resolve via path-item ref into items.json. " +
+            $"Got: {inlineHeaders[0].ResolvablePointer}");
     }
 
     // ══════════════════════════════════════════════════════════════════
