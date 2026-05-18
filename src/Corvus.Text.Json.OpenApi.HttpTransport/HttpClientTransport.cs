@@ -249,6 +249,7 @@ public sealed class HttpClientTransport : IApiTransport
                 contentType,
                 new HttpResponseHeadersAdapter(httpResponse.Headers),
                 new HttpResponseOwner(httpResponse),
+                this,
                 cancellationToken).ConfigureAwait(false);
         }
         catch

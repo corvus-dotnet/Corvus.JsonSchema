@@ -2386,7 +2386,7 @@ public sealed class OpenApi30CodeGenerator
         this.EmitResponseHeaderProperties(w, op.Responses);
 
         w.WriteLine();
-        this.EmitCreateAsync(w, structName, op.Responses);
+        this.EmitCreateAsync(w, structName, op.Responses, hasLinks);
 
         // Collect the specific (non-default) status codes for TryGetDefault.
         List<string> specificStatusCodes = [];
@@ -2730,7 +2730,8 @@ public sealed class OpenApi30CodeGenerator
     private void EmitCreateAsync(
         IndentedWriter w,
         string structName,
-        ResponseInfo[] responses)
+        ResponseInfo[] responses,
+        bool hasLinks)
     {
         // Determine if any response needs async processing (JSON parsing is async; streams and text are not).
         bool hasAnyJsonBody = responses.Any(
@@ -2755,6 +2756,7 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine("string? contentType = null,");
         w.WriteLine("IResponseHeaders? responseHeaders = null,");
         w.WriteLine("IAsyncDisposable? owner = null,");
+        w.WriteLine("IApiTransport? transport = null,");
         w.WriteLine("CancellationToken cancellationToken = default)");
         w.PopIndent();
         w.OpenBrace();
@@ -2762,6 +2764,12 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine($"{structName} response = default;");
         w.WriteLine("response.StatusCode = statusCode;");
         w.WriteLine("response.owner = owner;");
+
+        if (hasLinks)
+        {
+            w.WriteLine("response.transport = transport;");
+        }
+
         w.WriteLine();
 
         this.EmitReadResponseHeaders(w, responses);

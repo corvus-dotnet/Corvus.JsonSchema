@@ -59,6 +59,11 @@ public interface IApiResponse<TSelf> : IAsyncDisposable
     /// An optional disposable that owns transport resources (e.g. the HTTP response message).
     /// Will be disposed when the response is disposed.
     /// </param>
+    /// <param name="transport">
+    /// Optional reference to the transport that produced this response. Used by generated
+    /// link accessor methods to invoke linked operations without requiring the caller to
+    /// pass the transport explicitly.
+    /// </param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A task producing the typed response.</returns>
     /// <remarks>
@@ -74,6 +79,7 @@ public interface IApiResponse<TSelf> : IAsyncDisposable
         string? contentType = null,
         IResponseHeaders? responseHeaders = null,
         IAsyncDisposable? owner = null,
+        IApiTransport? transport = null,
         CancellationToken cancellationToken = default);
 
     /// <summary>
