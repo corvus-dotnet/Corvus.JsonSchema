@@ -39,6 +39,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
 
         string rootNamespace = settings.RootNamespace ?? "GeneratedApi";
         string outputPath = settings.OutputPath ?? Path.Combine(Directory.GetCurrentDirectory(), "Generated");
+        string specFilePath = Path.GetFullPath(settings.SpecFile);
 
         // Read and parse the spec
         byte[] specBytes = await File.ReadAllBytesAsync(settings.SpecFile, cancellationToken)
@@ -67,6 +68,9 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         // Back up existing lock file before generation so we can restore on failure
         bool hasBackup = OpenApiLockFile.BackupLockFile(outputPath);
 
+        // Create the external reference resolver — supports local, relative, and absolute $ref
+        using ExternalReferenceResolver referenceResolver = new(specRoot, specFilePath);
+
         try
         {
             IReadOnlyList<GeneratedFile> files;
@@ -75,13 +79,13 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             if (specVersion is "3.1" or not "3.0")
             {
                 // OpenAPI 3.1 (or unknown) — use the typed code generator directly
-                string[] schemaPointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
+                string[] schemaPointers = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
 
                 AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
 
                 Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
-                    ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
+                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
                         .ConfigureAwait(false)
                     : null;
 
@@ -94,18 +98,18 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                     rootNamespace,
                     schemaTypeMap ?? new Dictionary<string, string>(),
                     settings.ClientName);
-                files = generator.Generate(specRoot, filter);
+                files = generator.Generate(specRoot, filter, referenceResolver);
             }
             else
             {
                 // OpenAPI 3.0 — use the typed code generator directly
-                string[] schemaPointers = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter);
+                string[] schemaPointers = OpenApi30CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
 
                 AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaPointers.Length}");
 
                 Dictionary<string, string>? schemaTypeMap = schemaPointers.Length > 0
-                    ? await GenerateSchemaTypesAsync(settings.SpecFile, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
+                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaPointers, parameterNames, cancellationToken)
                         .ConfigureAwait(false)
                     : null;
 
@@ -118,7 +122,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                     rootNamespace,
                     schemaTypeMap ?? new Dictionary<string, string>(),
                     settings.ClientName);
-                files = generator.Generate(specRoot, filter);
+                files = generator.Generate(specRoot, filter, referenceResolver);
             }
 
             AnsiConsole.MarkupLine($"[green]Files:[/] {files.Count}");
