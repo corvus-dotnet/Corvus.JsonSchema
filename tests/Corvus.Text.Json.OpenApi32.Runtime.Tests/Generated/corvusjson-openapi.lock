@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-05-19T18:52:10.8836580\u002B00:00",
+  "generatedAt": "2026-05-19T20:32:35.3047193\u002B00:00",
   "generatedFiles": [
     "GetItemRequest.cs",
     "GetItemResponse.cs",
@@ -128,6 +128,10 @@
     "StreamEventsResponse.cs",
     "ChatCompletionsRequest.cs",
     "ChatCompletionsResponse.cs",
+    "UploadDocMixedRequest.cs",
+    "UploadDocMixedResponse.cs",
+    "ProcessBatchRequest.cs",
+    "ProcessBatchResponse.cs",
     "IApiItemsClient.cs",
     "ApiItemsClient.cs",
     "IApiSearchClient.cs",
@@ -157,11 +161,13 @@
     "IApiTrackingClient.cs",
     "ApiTrackingClient.cs",
     "IApiStreamingClient.cs",
-    "ApiStreamingClient.cs"
+    "ApiStreamingClient.cs",
+    "IApiDocsClient.cs",
+    "ApiDocsClient.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bc34b1d19282be0b892cd5e950c364e43d39bb156",
+  "generatorVersion": "1.0.0\u002Bce832036ca7dbfd7ac8793295dd26aa23c279bb5",
   "includePaths": [],
   "rootNamespace": "CanonTests32.Client",
-  "specFileHash": "d715ba29b654061ec25256a075eab6a5e599d7af845b2bc1758f120a8a247bb5",
+  "specFileHash": "5915d2d9d651c0254d1e918137b760602577006a9e701506567c4064f609e782",
   "specVersion": "3.2"
 }

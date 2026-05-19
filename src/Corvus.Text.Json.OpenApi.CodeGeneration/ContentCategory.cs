@@ -52,4 +52,12 @@ public enum ContentCategory
     /// schema property (OAS §4.8.14.5).
     /// </summary>
     Multipart,
+
+    /// <summary>
+    /// Multipart mixed content (<c>multipart/mixed</c>).
+    /// Request bodies are serialized as positional MIME parts using
+    /// <c>prefixEncoding</c> (per-position) or <c>itemEncoding</c> (uniform).
+    /// OAS 3.2 §4.8.14.
+    /// </summary>
+    MultipartMixed,
 }

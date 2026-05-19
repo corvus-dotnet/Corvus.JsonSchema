@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
@@ -108,12 +109,19 @@ public sealed class OpenApi32CodeGenerator
         string? Description,
         bool IsRequired,
         ContentInfo[] Content,
-        BinaryPropertyInfo[] BinaryProperties);
+        BinaryPropertyInfo[] BinaryProperties,
+        MixedPartInfo[]? PrefixParts = null,
+        MixedPartInfo? ItemPart = null);
 
     private readonly record struct BinaryPropertyInfo(
         string PropertyName,
         string ParameterName,
         string? ContentType);
+
+    private readonly record struct MixedPartInfo(
+        string SchemaPointer,
+        string ContentType,
+        bool IsBinary);
 
     private readonly record struct ResponseInfo(
         string StatusCode,
@@ -525,6 +533,47 @@ public sealed class OpenApi32CodeGenerator
 
                         pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                     }
+
+                    // Collect prefixItems and items schema pointers for multipart/mixed.
+                    if (CodeEmitHelpers.IsMultipartMixedMediaType(mediaTypeProp.Name))
+                    {
+                        OpenApiDocument.MediaType mediaType = OpenApiDocument.MediaType.From(mediaTypeProp.Value);
+
+                        if (mediaType.PrefixEncoding.IsNotUndefined())
+                        {
+                            using UnescapedUtf8JsonString mtName = mediaTypeProp.Utf8NameSpan;
+                            int prefixIndex = 0;
+                            foreach (OpenApiDocument.Encoding encoding in mediaType.PrefixEncoding.EnumerateArray())
+                            {
+                                string contentType = encoding.ContentType.IsNotUndefined()
+                                    ? encoding.ContentType.GetString()!
+                                    : "application/json";
+
+                                if (!CodeEmitHelpers.IsRawStreamMediaType(contentType))
+                                {
+                                    string pointer = BuildPrefixItemSchemaPointer(
+                                        pathName.Span, method, mtName.Span, prefixIndex, null);
+                                    pointers.Add(new SchemaReference(pointer, pointer));
+                                }
+
+                                prefixIndex++;
+                            }
+                        }
+                        else if (mediaType.ItemEncoding.IsNotUndefined())
+                        {
+                            string contentType = mediaType.ItemEncoding.ContentType.IsNotUndefined()
+                                ? mediaType.ItemEncoding.ContentType.GetString()!
+                                : "application/json";
+
+                            if (!CodeEmitHelpers.IsRawStreamMediaType(contentType))
+                            {
+                                using UnescapedUtf8JsonString mtName = mediaTypeProp.Utf8NameSpan;
+                                string pointer = BuildItemsSchemaPointer(
+                                    pathName.Span, method, mtName.Span, null);
+                                pointers.Add(new SchemaReference(pointer, pointer));
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -722,6 +771,47 @@ public sealed class OpenApi32CodeGenerator
                             : positionalPointer;
 
                         pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
+                    }
+
+                    // Collect prefixItems and items schema pointers for multipart/mixed.
+                    if (CodeEmitHelpers.IsMultipartMixedMediaType(mediaTypeProp.Name))
+                    {
+                        OpenApiDocument.MediaType mediaType = OpenApiDocument.MediaType.From(mediaTypeProp.Value);
+
+                        if (mediaType.PrefixEncoding.IsNotUndefined())
+                        {
+                            using UnescapedUtf8JsonString mtName = mediaTypeProp.Utf8NameSpan;
+                            int prefixIndex = 0;
+                            foreach (OpenApiDocument.Encoding encoding in mediaType.PrefixEncoding.EnumerateArray())
+                            {
+                                string contentType = encoding.ContentType.IsNotUndefined()
+                                    ? encoding.ContentType.GetString()!
+                                    : "application/json";
+
+                                if (!CodeEmitHelpers.IsRawStreamMediaType(contentType))
+                                {
+                                    string pointer = BuildPrefixItemSchemaPointer(
+                                        pathName.Span, OperationMethod.Get, mtName.Span, prefixIndex, customMethodName);
+                                    pointers.Add(new SchemaReference(pointer, pointer));
+                                }
+
+                                prefixIndex++;
+                            }
+                        }
+                        else if (mediaType.ItemEncoding.IsNotUndefined())
+                        {
+                            string contentType = mediaType.ItemEncoding.ContentType.IsNotUndefined()
+                                ? mediaType.ItemEncoding.ContentType.GetString()!
+                                : "application/json";
+
+                            if (!CodeEmitHelpers.IsRawStreamMediaType(contentType))
+                            {
+                                using UnescapedUtf8JsonString mtName = mediaTypeProp.Utf8NameSpan;
+                                string pointer = BuildItemsSchemaPointer(
+                                    pathName.Span, OperationMethod.Get, mtName.Span, customMethodName);
+                                pointers.Add(new SchemaReference(pointer, pointer));
+                            }
+                        }
                     }
                 }
             }
@@ -1534,7 +1624,14 @@ public sealed class OpenApi32CodeGenerator
 
             BinaryPropertyInfo[] binaryProperties = DetectBinaryProperties(requestBody.ContentValue);
 
-            return new RequestBodyInfo(description, required, content, binaryProperties);
+            // Detect multipart/mixed prefixEncoding or itemEncoding.
+            MixedPartInfo[]? prefixParts = null;
+            MixedPartInfo? itemPart = null;
+            DetectMultipartMixedParts(
+                requestBody.ContentValue, pathNameUtf8, method, customMethodName,
+                out prefixParts, out itemPart);
+
+            return new RequestBodyInfo(description, required, content, binaryProperties, prefixParts, itemPart);
         }
     }
 
@@ -2305,6 +2402,165 @@ public sealed class OpenApi32CodeGenerator
         }
 
         return false;
+    }
+
+    /// <summary>
+    /// Returns <see langword="true"/> if the request body's primary content type
+    /// is <c>multipart/mixed</c> with either <c>prefixEncoding</c> or <c>itemEncoding</c>.
+    /// </summary>
+    private static bool IsMultipartMixedRequestBody(RequestBodyInfo requestBody)
+    {
+        return requestBody.PrefixParts is not null || requestBody.ItemPart is not null;
+    }
+
+    /// <summary>
+    /// Detects <c>multipart/mixed</c> content with <c>prefixEncoding</c> or <c>itemEncoding</c>.
+    /// </summary>
+    private static void DetectMultipartMixedParts(
+        OpenApiDocument.Content contentMap,
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        string? customMethodName,
+        out MixedPartInfo[]? prefixParts,
+        out MixedPartInfo? itemPart)
+    {
+        prefixParts = null;
+        itemPart = null;
+
+        if (contentMap.IsUndefined())
+        {
+            return;
+        }
+
+        foreach (var mediaTypeProp in contentMap.EnumerateObject())
+        {
+            if (!CodeEmitHelpers.IsMultipartMixedMediaType(mediaTypeProp.Name))
+            {
+                continue;
+            }
+
+            OpenApiDocument.MediaType mediaType = OpenApiDocument.MediaType.From(mediaTypeProp.Value);
+
+            using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+
+            // Check prefixEncoding (array of encodings — positional parts).
+            if (mediaType.PrefixEncoding.IsNotUndefined())
+            {
+                prefixParts = ReadPrefixParts(mediaType, pathNameUtf8, mediaTypeName.Span, method, customMethodName);
+                return;
+            }
+
+            // Check itemEncoding (single encoding — homogeneous parts).
+            if (mediaType.ItemEncoding.IsNotUndefined())
+            {
+                itemPart = ReadItemPart(mediaType, pathNameUtf8, mediaTypeName.Span, method, customMethodName);
+                return;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Reads prefixEncoding positions and pairs them with prefixItems schema pointers.
+    /// </summary>
+    private static MixedPartInfo[] ReadPrefixParts(
+        OpenApiDocument.MediaType mediaType,
+        ReadOnlySpan<byte> pathNameUtf8,
+        ReadOnlySpan<byte> mediaTypeNameUtf8,
+        OperationMethod method,
+        string? customMethodName)
+    {
+        List<MixedPartInfo> parts = [];
+
+        // Read prefixEncoding content types.
+        int index = 0;
+        foreach (OpenApiDocument.Encoding encoding in mediaType.PrefixEncoding.EnumerateArray())
+        {
+            string contentType = encoding.ContentType.IsNotUndefined()
+                ? encoding.ContentType.GetString()!
+                : "application/json";
+
+            bool isBinary = CodeEmitHelpers.IsOctetStreamMediaType(contentType)
+                || contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase)
+                || contentType.StartsWith("audio/", StringComparison.OrdinalIgnoreCase)
+                || contentType.StartsWith("video/", StringComparison.OrdinalIgnoreCase);
+
+            // Build schema pointer for this prefixItem position.
+            string schemaPointer = BuildPrefixItemSchemaPointer(
+                pathNameUtf8, method, mediaTypeNameUtf8, index, customMethodName);
+
+            parts.Add(new MixedPartInfo(schemaPointer, contentType, isBinary));
+            index++;
+        }
+
+        return [.. parts];
+    }
+
+    /// <summary>
+    /// Reads itemEncoding and pairs with the items schema pointer.
+    /// </summary>
+    private static MixedPartInfo ReadItemPart(
+        OpenApiDocument.MediaType mediaType,
+        ReadOnlySpan<byte> pathNameUtf8,
+        ReadOnlySpan<byte> mediaTypeNameUtf8,
+        OperationMethod method,
+        string? customMethodName)
+    {
+        string contentType = mediaType.ItemEncoding.ContentType.IsNotUndefined()
+            ? mediaType.ItemEncoding.ContentType.GetString()!
+            : "application/json";
+
+        bool isBinary = CodeEmitHelpers.IsOctetStreamMediaType(contentType)
+            || contentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
+
+        string schemaPointer = BuildItemsSchemaPointer(
+            pathNameUtf8, method, mediaTypeNameUtf8, customMethodName);
+
+        return new MixedPartInfo(schemaPointer, contentType, isBinary);
+    }
+
+    private static string BuildPrefixItemSchemaPointer(
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        ReadOnlySpan<byte> mediaTypeNameUtf8,
+        int index,
+        string? customMethodName)
+    {
+        string pathSegment = EscapeJsonPointerSegment(Encoding.UTF8.GetString(pathNameUtf8));
+        string mediaTypeSegment = EscapeJsonPointerSegment(Encoding.UTF8.GetString(mediaTypeNameUtf8));
+        string methodStr = method.ToString().ToLowerInvariant();
+
+        if (customMethodName is not null)
+        {
+            return $"#/paths/{pathSegment}/additionalOperations/{customMethodName}/requestBody/content/{mediaTypeSegment}/schema/prefixItems/{index}";
+        }
+
+        return $"#/paths/{pathSegment}/{methodStr}/requestBody/content/{mediaTypeSegment}/schema/prefixItems/{index}";
+    }
+
+    private static string BuildItemsSchemaPointer(
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        ReadOnlySpan<byte> mediaTypeNameUtf8,
+        string? customMethodName)
+    {
+        string pathSegment = EscapeJsonPointerSegment(Encoding.UTF8.GetString(pathNameUtf8));
+        string mediaTypeSegment = EscapeJsonPointerSegment(Encoding.UTF8.GetString(mediaTypeNameUtf8));
+        string methodStr = method.ToString().ToLowerInvariant();
+
+        if (customMethodName is not null)
+        {
+            return $"#/paths/{pathSegment}/additionalOperations/{customMethodName}/requestBody/content/{mediaTypeSegment}/schema/items";
+        }
+
+        return $"#/paths/{pathSegment}/{methodStr}/requestBody/content/{mediaTypeSegment}/schema/items";
+    }
+
+    /// <summary>
+    /// Escapes a JSON Pointer segment per RFC 6901: <c>~</c> → <c>~0</c>, <c>/</c> → <c>~1</c>.
+    /// </summary>
+    private static string EscapeJsonPointerSegment(string segment)
+    {
+        return segment.Replace("~", "~0").Replace("/", "~1");
     }
 
     /// <summary>
@@ -4636,18 +4892,20 @@ public sealed class OpenApi32CodeGenerator
 
         bool hasParams = op.Parameters.Length > 0;
         bool hasBody = op.RequestBody is not null;
-        bool isRawStreamBody = hasBody && IsRawStreamRequestBody(op.RequestBody!.Value);
-        bool isFormUrlEncodedBody = hasBody && !isRawStreamBody && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
-        bool isMultipartBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && IsMultipartRequestBody(op.RequestBody!.Value);
+        bool isMultipartMixedBody = hasBody && IsMultipartMixedRequestBody(op.RequestBody!.Value);
+        bool isRawStreamBody = hasBody && !isMultipartMixedBody && IsRawStreamRequestBody(op.RequestBody!.Value);
+        bool isFormUrlEncodedBody = hasBody && !isRawStreamBody && !isMultipartMixedBody && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
+        bool isMultipartBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && !isMultipartMixedBody && IsMultipartRequestBody(op.RequestBody!.Value);
 
         bool hasRequestBodyExprLinks = hasRequestExprLinks && HasRequestBodyExpressions(op)
-            && hasBody && !isRawStreamBody;
+            && hasBody && !isRawStreamBody && !isMultipartMixedBody;
 
         w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
 
         // Materialise body from Source → immutable typed element (JSON and form-urlencoded).
+        // For multipart/mixed, parts are materialised individually below, not as a single body.
         string? bodyTypeName = null;
-        if (hasBody && !isRawStreamBody)
+        if (hasBody && !isRawStreamBody && !isMultipartMixedBody)
         {
             bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
             w.WriteLine(
@@ -4713,8 +4971,8 @@ public sealed class OpenApi32CodeGenerator
         // Validate parameters.
         w.WriteLine("request.Validate(validationMode);");
 
-        // Validate JSON body if present (skip text/plain and stream bodies).
-        if (hasBody && !isRawStreamBody)
+        // Validate JSON body if present (skip text/plain, stream, and multipart/mixed bodies).
+        if (hasBody && !isRawStreamBody && !isMultipartMixedBody)
         {
             w.WriteLine();
             w.WriteLine("if (validationMode == ValidationMode.Detailed)");
@@ -4801,6 +5059,10 @@ public sealed class OpenApi32CodeGenerator
                         $"\"application/x-www-form-urlencoded\", responseValidationMode, cancellationToken);");
                 }
             }
+        }
+        else if (isMultipartMixedBody)
+        {
+            EmitMultipartMixedBody(w, op, requestName, responseName);
         }
         else if (isMultipartBody)
         {
@@ -5034,7 +5296,42 @@ public sealed class OpenApi32CodeGenerator
         // Request body (always required when present).
         if (op.RequestBody is not null)
         {
-            if (IsRawStreamRequestBody(op.RequestBody.Value))
+            if (IsMultipartMixedRequestBody(op.RequestBody.Value))
+            {
+                // multipart/mixed with prefixEncoding: one parameter per position.
+                if (op.RequestBody.Value.PrefixParts is { } prefixParts)
+                {
+                    for (int i = 0; i < prefixParts.Length; i++)
+                    {
+                        MixedPartInfo part = prefixParts[i];
+                        string paramName = $"part{i}";
+
+                        if (part.IsBinary)
+                        {
+                            paramParts.Add($"BinaryPartData {paramName}");
+                        }
+                        else
+                        {
+                            string typeName = this.ResolveSchemaTypeName(part.SchemaPointer);
+                            paramParts.Add($"{typeName}.Source {paramName}");
+                        }
+                    }
+                }
+                else if (op.RequestBody.Value.ItemPart is { } itemPart)
+                {
+                    // multipart/mixed with itemEncoding: collection of items.
+                    if (itemPart.IsBinary)
+                    {
+                        paramParts.Add("IEnumerable<BinaryPartData> items");
+                    }
+                    else
+                    {
+                        string typeName = this.ResolveSchemaTypeName(itemPart.SchemaPointer);
+                        paramParts.Add($"IEnumerable<{typeName}.Source> items");
+                    }
+                }
+            }
+            else if (IsRawStreamRequestBody(op.RequestBody.Value))
             {
                 paramParts.Add("Stream body");
             }
@@ -5045,8 +5342,10 @@ public sealed class OpenApi32CodeGenerator
             }
         }
 
-        // Binary part parameters (for multipart file uploads).
-        if (op.RequestBody is { } rbForBinary && rbForBinary.BinaryProperties.Length > 0)
+        // Binary part parameters (for multipart/form-data file uploads).
+        if (op.RequestBody is { } rbForBinary
+            && rbForBinary.BinaryProperties.Length > 0
+            && !IsMultipartMixedRequestBody(rbForBinary))
         {
             foreach (BinaryPropertyInfo binaryProp in rbForBinary.BinaryProperties)
             {
@@ -5069,5 +5368,112 @@ public sealed class OpenApi32CodeGenerator
         paramParts.Add("ValidationMode responseValidationMode = ValidationMode.None");
 
         return paramParts;
+    }
+
+    private void EmitMultipartMixedBody(
+        IndentedWriter w,
+        OperationInfo op,
+        string requestName,
+        string responseName)
+    {
+        RequestBodyInfo rb = op.RequestBody!.Value;
+
+        w.WriteLine("string boundary = MultipartMixedSerializer.GenerateBoundary();");
+
+        if (rb.PrefixParts is { } prefixParts)
+        {
+            // Materialise JSON prefix parts from Source → typed values.
+            // Each builder is properly disposed; the workspace still owns the
+            // underlying memory until it is disposed in SendWithBodyWriterAsyncCore.
+            for (int i = 0; i < prefixParts.Length; i++)
+            {
+                MixedPartInfo part = prefixParts[i];
+                if (!part.IsBinary)
+                {
+                    string typeName = this.ResolveSchemaTypeName(part.SchemaPointer);
+                    w.WriteLine(
+                        $"using var part{i}Builder = {typeName}.CreateBuilder(workspace, part{i});");
+                    w.WriteLine(
+                        $"{typeName} part{i}Value = part{i}Builder.RootElement;");
+                }
+            }
+
+            // Build the body writer lambda.
+            w.WriteLine(
+                $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                $"{responseName}>(workspace, request, stream =>");
+            w.OpenBrace();
+
+            for (int i = 0; i < prefixParts.Length; i++)
+            {
+                MixedPartInfo part = prefixParts[i];
+                string contentType = part.ContentType ?? "application/json";
+
+                if (part.IsBinary)
+                {
+                    w.WriteLine(
+                        $"MultipartMixedSerializer.WriteBinaryPart(stream, boundary, part{i});");
+                }
+                else
+                {
+                    w.WriteLine(
+                        $"MultipartMixedSerializer.WriteJsonPart(stream, boundary, part{i}Value);");
+                }
+            }
+
+            w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, boundary);");
+            w.CloseBraceNoNewline();
+            w.WriteLine(
+                ", \"multipart/mixed; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+        }
+        else if (rb.ItemPart is { } itemPart)
+        {
+            string contentType = itemPart.ContentType ?? "application/json";
+
+            if (itemPart.IsBinary)
+            {
+                // Homogeneous binary batch.
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, stream =>");
+                w.OpenBrace();
+                w.WriteLine("foreach (BinaryPartData item in items)");
+                w.OpenBrace();
+                w.WriteLine(
+                    "MultipartMixedSerializer.WriteBinaryPart(stream, boundary, item);");
+                w.CloseBrace();
+                w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, boundary);");
+                w.CloseBraceNoNewline();
+                w.WriteLine(
+                    $", \"multipart/mixed; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+            }
+            else
+            {
+                // Homogeneous JSON batch.
+                string typeName = this.ResolveSchemaTypeName(itemPart.SchemaPointer);
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, stream =>");
+                w.OpenBrace();
+                w.WriteLine($"foreach ({typeName}.Source item in items)");
+                w.OpenBrace();
+                w.WriteLine(
+                    $"using var itemBuilder = {typeName}.CreateBuilder(workspace, item);");
+                w.WriteLine(
+                    $"{typeName} itemValue = itemBuilder.RootElement;");
+                w.WriteLine(
+                    "MultipartMixedSerializer.WriteJsonPart(stream, boundary, itemValue);");
+                w.CloseBrace();
+                w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, boundary);");
+                w.CloseBraceNoNewline();
+                w.WriteLine(
+                    $", \"multipart/mixed; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+            }
+        }
+    }
+
+    private static string EscapeStringLiteral(string value)
+    {
+        return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 }

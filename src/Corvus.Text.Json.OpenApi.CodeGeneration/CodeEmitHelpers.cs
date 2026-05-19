@@ -2127,6 +2127,11 @@ public static class CodeEmitHelpers
             return ContentCategory.Multipart;
         }
 
+        if (string.Equals(mediaType, "multipart/mixed", StringComparison.OrdinalIgnoreCase))
+        {
+            return ContentCategory.MultipartMixed;
+        }
+
         if (string.Equals(mediaType, "application/octet-stream", StringComparison.OrdinalIgnoreCase))
         {
             return ContentCategory.OctetStream;
@@ -2211,6 +2216,17 @@ public static class CodeEmitHelpers
     }
 
     /// <summary>
+    /// Returns <see langword="true"/> if the given media type represents
+    /// <c>multipart/mixed</c> content.
+    /// </summary>
+    /// <param name="mediaType">The media type string.</param>
+    /// <returns><see langword="true"/> if the media type is multipart mixed.</returns>
+    public static bool IsMultipartMixedMediaType(string mediaType)
+    {
+        return ClassifyMediaType(mediaType) == ContentCategory.MultipartMixed;
+    }
+
+    /// <summary>
     /// Returns <see langword="true"/> if the media type is any non-JSON raw content type
     /// (octet-stream, text/plain, image/*, etc.) that should be represented as a <see cref="Stream"/>.
     /// </summary>
@@ -2247,6 +2263,7 @@ public static class CodeEmitHelpers
                 ContentCategory.OctetStream => 2,
                 ContentCategory.FormUrlEncoded => 3,
                 ContentCategory.Multipart => 3,
+                ContentCategory.MultipartMixed => 3,
                 _ => throw new UnreachableException(),
             })
             .ToArray();

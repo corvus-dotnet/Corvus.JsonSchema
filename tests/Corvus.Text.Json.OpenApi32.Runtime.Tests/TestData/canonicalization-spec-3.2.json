@@ -3155,6 +3155,103 @@
           }
         }
       }
+    },
+    "/docs/upload-mixed": {
+      "post": {
+        "operationId": "uploadDocMixed",
+        "summary": "Upload a document with metadata via multipart/mixed (prefixEncoding)",
+        "tags": ["docs"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "prefixItems": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "title": { "type": "string" },
+                      "category": { "type": "string" }
+                    },
+                    "required": ["title"]
+                  },
+                  {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                ]
+              },
+              "prefixEncoding": [
+                { "contentType": "application/json" },
+                { "contentType": "application/octet-stream" }
+              ]
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Document uploaded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "documentId": { "type": "string" },
+                    "url": { "type": "string", "format": "uri" }
+                  },
+                  "required": ["documentId", "url"]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/docs/batch-process": {
+      "post": {
+        "operationId": "processBatch",
+        "summary": "Process a batch of items via multipart/mixed (itemEncoding)",
+        "tags": ["docs"],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/mixed": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "action": { "type": "string" },
+                    "payload": { "type": "object" }
+                  },
+                  "required": ["action"]
+                }
+              },
+              "itemEncoding": {
+                "contentType": "application/json"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Batch processed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "processed": { "type": "integer" },
+                    "failed": { "type": "integer" }
+                  },
+                  "required": ["processed", "failed"]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
