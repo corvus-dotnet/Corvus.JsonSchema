@@ -2569,6 +2569,113 @@ public class GeneratedClientEndToEndTests
         Assert.IsFalse(PurgeItemRequest.HasCookieParameters);
     }
 
+    [TestMethod]
+    public void SearchWithQuerystringRequest_StaticMembers()
+    {
+        Assert.AreEqual(OperationMethod.Get, SearchWithQuerystringRequest.Method);
+        Assert.IsTrue(SearchWithQuerystringRequest.PathTemplateUtf8.SequenceEqual("/search-with-querystring"u8));
+        Assert.IsFalse(SearchWithQuerystringRequest.HasPathParameters);
+        Assert.IsTrue(SearchWithQuerystringRequest.HasQueryParameters);
+        Assert.IsTrue(SearchWithQuerystringRequest.HasHeaderParameters);
+        Assert.IsFalse(SearchWithQuerystringRequest.HasCookieParameters);
+    }
+
+    [TestMethod]
+    public async Task SearchWithQuerystring_WritesFormEncodedQueryString()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"results":[],"count":0}""");
+
+        using var qsDoc = ParsedJsonDocument<GetSearchWithQuerystringQs>.Parse("""{"q":"hello world","page":2}"""u8.ToArray());
+        var request = new SearchWithQuerystringRequest(qsDoc.RootElement);
+
+        await using SearchWithQuerystringResponse response = await harness.Transport
+            .SendAsync<SearchWithQuerystringRequest, SearchWithQuerystringResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string uri = harness.CapturedRequest.RequestUri!.OriginalString;
+
+        // The query string should contain form-urlencoded parameters
+        StringAssert.Contains(uri, "q=hello%20world");
+        StringAssert.Contains(uri, "page=2");
+    }
+
+    [TestMethod]
+    public async Task SearchWithQuerystring_ArraysAreExploded()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"results":[],"count":0}""");
+
+        using var qsDoc = ParsedJsonDocument<GetSearchWithQuerystringQs>.Parse("""{"q":"test","tags":["alpha","beta"]}"""u8.ToArray());
+        var request = new SearchWithQuerystringRequest(qsDoc.RootElement);
+
+        await using SearchWithQuerystringResponse response = await harness.Transport
+            .SendAsync<SearchWithQuerystringRequest, SearchWithQuerystringResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string uri = harness.CapturedRequest.RequestUri!.OriginalString;
+
+        // Arrays should be exploded: tags=alpha&tags=beta
+        StringAssert.Contains(uri, "tags=alpha");
+        StringAssert.Contains(uri, "tags=beta");
+    }
+
+    [TestMethod]
+    public async Task SearchWithQuerystring_SpecialCharsArePercentEncoded()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"results":[],"count":0}""");
+
+        using var qsDoc = ParsedJsonDocument<GetSearchWithQuerystringQs>.Parse("""{"q":"a&b=c"}"""u8.ToArray());
+        var request = new SearchWithQuerystringRequest(qsDoc.RootElement);
+
+        await using SearchWithQuerystringResponse response = await harness.Transport
+            .SendAsync<SearchWithQuerystringRequest, SearchWithQuerystringResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string uri = harness.CapturedRequest.RequestUri!.OriginalString;
+
+        // Special chars in values should be percent-encoded
+        StringAssert.Contains(uri, "q=a%26b%3Dc");
+    }
+
+    [TestMethod]
+    public async Task SearchWithQuerystring_ResponseParsesCorrectly()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"results":[{"id":"item-1","title":"First"}],"count":1}""");
+
+        using var qsDoc = ParsedJsonDocument<GetSearchWithQuerystringQs>.Parse("""{"q":"first"}"""u8.ToArray());
+        var request = new SearchWithQuerystringRequest(qsDoc.RootElement);
+
+        await using SearchWithQuerystringResponse response = await harness.Transport
+            .SendAsync<SearchWithQuerystringRequest, SearchWithQuerystringResponse>(
+                in request, CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+        Assert.IsTrue(response.TryGetOk(out var body));
+        Assert.AreEqual(1, (int)body.Count);
+    }
+
+    [TestMethod]
+    public async Task SearchWithQuerystring_PathHasNoTemplateSegments()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"results":[],"count":0}""");
+
+        using var qsDoc = ParsedJsonDocument<GetSearchWithQuerystringQs>.Parse("""{"q":"test"}"""u8.ToArray());
+        var request = new SearchWithQuerystringRequest(qsDoc.RootElement);
+
+        await using SearchWithQuerystringResponse response = await harness.Transport
+            .SendAsync<SearchWithQuerystringRequest, SearchWithQuerystringResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string uri = harness.CapturedRequest.RequestUri!.OriginalString;
+
+        // Path should be /search-with-querystring?... (no template params)
+        Assert.IsTrue(uri.StartsWith("http://localhost/search-with-querystring?"));
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.

@@ -41,4 +41,11 @@ public interface IApiSearchClient : IAsyncDisposable
     /// <param name="body">The request body..</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<QuerySearchResponse> QuerySearchAsync(CanonTests32.Client.Schema1.Source body, CanonTests32.Client.JsonInt32.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+
+    /// <summary>
+    /// Search using in:querystring parameter with content-based serialization
+    /// </summary>
+    /// <param name="qs">The qs parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<SearchWithQuerystringResponse> SearchWithQuerystringAsync(CanonTests32.Client.GetSearchWithQuerystringQs.Source qs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

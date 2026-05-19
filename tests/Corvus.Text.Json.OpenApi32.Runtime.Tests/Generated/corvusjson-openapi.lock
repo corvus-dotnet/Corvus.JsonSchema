@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-05-19T08:39:50.3440216\u002B00:00",
+  "generatedAt": "2026-05-19T09:07:20.1045900\u002B00:00",
   "generatedFiles": [
     "GetItemRequest.cs",
     "GetItemResponse.cs",
@@ -108,6 +108,8 @@
     "UploadEncodedDocumentResponse.cs",
     "QuerySearchRequest.cs",
     "QuerySearchResponse.cs",
+    "SearchWithQuerystringRequest.cs",
+    "SearchWithQuerystringResponse.cs",
     "IApiItemsClient.cs",
     "ApiItemsClient.cs",
     "IApiSearchClient.cs",
@@ -129,9 +131,9 @@
     "IApiFormsClient.cs",
     "ApiFormsClient.cs"
   ],
-  "generatorVersion": "1.0.0\u002B1f5cf058bb9e6f56d4b169b744c438388e03f6e8",
+  "generatorVersion": "1.0.0\u002B66d2e374e2657bba428a8938089c95bc93893d1a",
   "includePaths": [],
   "rootNamespace": "CanonTests32.Client",
-  "specFileHash": "cbdebbc374054fff6696263fa9b15147d56b317ad08e56ccafcc8ae9f7a85a45",
+  "specFileHash": "d05294973925f19dac6e8a43bca11191389acf223ed0348abf0ca48757feeade",
   "specVersion": "3.2"
 }

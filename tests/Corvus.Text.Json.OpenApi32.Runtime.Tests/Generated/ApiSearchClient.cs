@@ -87,6 +87,22 @@ public sealed class ApiSearchClient : IApiSearchClient
         return SendWithBodyAsyncCore<QuerySearchRequest, CanonTests32.Client.Schema1, QuerySearchResponse>(workspace, request, bodyValue, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Search using in:querystring parameter with content-based serialization
+    /// </summary>
+    /// <param name="qs">The qs parameter.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<SearchWithQuerystringResponse> SearchWithQuerystringAsync(CanonTests32.Client.GetSearchWithQuerystringQs.Source qs, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CanonTests32.Client.GetSearchWithQuerystringQs QsValue = CanonTests32.Client.GetSearchWithQuerystringQs.CreateBuilder(workspace, qs).RootElement;
+        SearchWithQuerystringRequest request = new(QsValue);
+
+        request.Validate(validationMode);
+
+        return SendAsyncCore<SearchWithQuerystringRequest, SearchWithQuerystringResponse>(workspace, request, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

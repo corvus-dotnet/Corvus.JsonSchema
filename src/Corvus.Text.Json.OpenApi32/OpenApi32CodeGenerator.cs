@@ -436,6 +436,36 @@ public sealed class OpenApi32CodeGenerator
                     }
                 }
             }
+            else if (param.Content.IsNotUndefined())
+            {
+                // Querystring parameters use 'content' instead of 'schema'.
+                foreach (var mediaTypeProp in param.Content.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+
+                    string positionalPointer = SchemaPointerBuilder.BuildParameterContentSchemaPointer(
+                        pathName.Span, method, sourceIndex, isPathLevel, mediaTypeName.Span);
+
+                    string resolvablePointer = refValue is not null
+                        ? SchemaPointerBuilder.BuildRefBasedPointer(
+                            refValue,
+                            SchemaPointerBuilder.BuildContentSubPath(mediaTypeName.Span))
+                        : positionalPointer;
+
+                    pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
+
+                    if (param.Name.IsNotUndefined())
+                    {
+                        string? name = param.Name.GetString();
+                        if (name is not null)
+                        {
+                            parameterNames[positionalPointer.AsSpan(1).ToString()] = name;
+                        }
+                    }
+
+                    break; // Only take the first content entry
+                }
+            }
         }
 
         // Request body content schema pointers
@@ -601,6 +631,36 @@ public sealed class OpenApi32CodeGenerator
                     {
                         parameterNames[positionalPointer.AsSpan(1).ToString()] = name;
                     }
+                }
+            }
+            else if (param.Content.IsNotUndefined())
+            {
+                // Querystring parameters use 'content' instead of 'schema'.
+                foreach (var mediaTypeProp in param.Content.EnumerateObject())
+                {
+                    using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+
+                    string positionalPointer = BuildAdditionalOpParameterContentSchemaPointer(
+                        pathName.Span, customMethodName, sourceIndex, mediaTypeName.Span);
+
+                    string resolvablePointer = refValue is not null
+                        ? SchemaPointerBuilder.BuildRefBasedPointer(
+                            refValue,
+                            SchemaPointerBuilder.BuildContentSubPath(mediaTypeName.Span))
+                        : positionalPointer;
+
+                    pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
+
+                    if (param.Name.IsNotUndefined())
+                    {
+                        string? name = param.Name.GetString();
+                        if (name is not null)
+                        {
+                            parameterNames[positionalPointer.AsSpan(1).ToString()] = name;
+                        }
+                    }
+
+                    break; // Only take the first content entry
                 }
             }
         }
@@ -1155,7 +1215,7 @@ public sealed class OpenApi32CodeGenerator
         (ParameterLocation location, ParameterStyle style) = typed.In.Match<OpenApiDocument.Parameter, (ParameterLocation, ParameterStyle)>(
             in typed,
             static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p))),
-            static (OpenApiDocument.Parameter _) => (ParameterLocation.Query, ParameterStyle.Form),
+            static (OpenApiDocument.Parameter _) => (ParameterLocation.Querystring, ParameterStyle.Form),
             static (OpenApiDocument.Parameter _) => (ParameterLocation.Header, ParameterStyle.Simple),
             static (OpenApiDocument.Parameter p) => (ParameterLocation.Path, ParsePathStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.From(p))),
             static (OpenApiDocument.Parameter _) => (ParameterLocation.Cookie, ParameterStyle.Form),
@@ -1267,6 +1327,21 @@ public sealed class OpenApi32CodeGenerator
 
             (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
             bool required = param.Required;
+
+            // Querystring parameters use 'content' instead of 'schema'.
+            if (location == ParameterLocation.Querystring)
+            {
+                string? schemaPointer = BuildQuerystringContentSchemaPointer(
+                    param, pathNameUtf8, method, sourceIndex, isPathLevel, customMethodName);
+
+                string name = param.Name.IsNotUndefined() ? param.Name.GetString()! : "__querystring";
+
+                result[i] = new ParameterInfo(
+                    name, location, required, style, explode,
+                    ParameterSerializationKind.Object, schemaPointer, false, null, JsonValueKind.Undefined);
+                continue;
+            }
+
             bool hasSchema = param.SchemaValue.IsNotUndefined();
             JsonElement schemaElement = hasSchema ? JsonElement.From(param.SchemaValue) : default;
             ParameterSerializationKind serializationKind = hasSchema
@@ -1277,7 +1352,7 @@ public sealed class OpenApi32CodeGenerator
                 && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
                 && SchemaClassifier.HasDeepNesting(schemaElement);
 
-            string? schemaPointer = hasSchema
+            string? schemaPointerRegular = hasSchema
                 ? (customMethodName is not null
                     ? BuildAdditionalOpParameterSchemaPointer(pathNameUtf8, customMethodName, sourceIndex)
                     : SchemaPointerBuilder.BuildParameterSchemaPointer(
@@ -1296,14 +1371,57 @@ public sealed class OpenApi32CodeGenerator
             }
 
             // Extract name at the emit boundary
-            string name = param.Name.GetString()!;
+            string regularName = param.Name.GetString()!;
 
             result[i] = new ParameterInfo(
-                name, location, required, style, explode,
-                serializationKind, schemaPointer, deepNesting, defaultValueJson, defaultValueKind);
+                regularName, location, required, style, explode,
+                serializationKind, schemaPointerRegular, deepNesting, defaultValueJson, defaultValueKind);
         }
 
         return result;
+    }
+
+    private static string? BuildQuerystringContentSchemaPointer(
+        OpenApiDocument.Parameter param,
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        int sourceIndex,
+        bool isPathLevel,
+        string? customMethodName)
+    {
+        // Get the first media type from the parameter's content map.
+        if (param.Content.IsUndefined())
+        {
+            return null;
+        }
+
+        foreach (var mediaTypeProp in param.Content.EnumerateObject())
+        {
+            using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+
+            if (customMethodName is not null)
+            {
+                // Build pointer for additionalOperations parameters
+                return BuildAdditionalOpParameterContentSchemaPointer(
+                    pathNameUtf8, customMethodName, sourceIndex, mediaTypeName.Span);
+            }
+
+            return SchemaPointerBuilder.BuildParameterContentSchemaPointer(
+                pathNameUtf8, method, sourceIndex, isPathLevel, mediaTypeName.Span);
+        }
+
+        return null;
+    }
+
+    private static string BuildAdditionalOpParameterContentSchemaPointer(
+        ReadOnlySpan<byte> pathNameUtf8,
+        string customMethodName,
+        int index,
+        ReadOnlySpan<byte> mediaTypeNameUtf8)
+    {
+        string pathSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(pathNameUtf8));
+        string mediaTypeSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(mediaTypeNameUtf8));
+        return $"#/paths/{pathSegment}/additionalOperations/{customMethodName}/parameters/{index}/content/{mediaTypeSegment}/schema";
     }
 
     private static RequestBodyInfo? PrepareRequestBody(
@@ -2014,10 +2132,13 @@ public sealed class OpenApi32CodeGenerator
             .Where(p => p.Location == ParameterLocation.Path).ToArray();
         ParameterInfo[] queryParams = op.Parameters
             .Where(p => p.Location == ParameterLocation.Query).ToArray();
+        ParameterInfo[] querystringParams = op.Parameters
+            .Where(p => p.Location == ParameterLocation.Querystring).ToArray();
         ParameterInfo[] headerParams = op.Parameters
             .Where(p => p.Location == ParameterLocation.Header).ToArray();
         ParameterInfo[] cookieParams = op.Parameters
             .Where(p => p.Location == ParameterLocation.Cookie).ToArray();
+        bool hasQueryOrQuerystring = queryParams.Length > 0 || querystringParams.Length > 0;
 
         // Collect distinct response media types for the Accept header.
         string[] acceptMediaTypes = CodeEmitHelpers.GetAcceptMediaTypes(
@@ -2047,7 +2168,7 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine($"public static bool HasPathParameters => {(pathParams.Length > 0 ? "true" : "false")};");
         w.WriteLine();
         w.WriteLine("/// <inheritdoc/>");
-        w.WriteLine($"public static bool HasQueryParameters => {(queryParams.Length > 0 ? "true" : "false")};");
+        w.WriteLine($"public static bool HasQueryParameters => {(hasQueryOrQuerystring ? "true" : "false")};");
         w.WriteLine();
         bool hasAcceptHeader = acceptMediaTypes.Length > 0;
 
@@ -2060,7 +2181,7 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine();
         this.EmitWriteResolvedPath(w, op.PathTemplate, pathParams);
         w.WriteLine();
-        this.EmitWriteQueryString(w, queryParams);
+        this.EmitWriteQueryString(w, queryParams, querystringParams);
         w.WriteLine();
         this.EmitWriteHeaders(w, headerParams, acceptMediaTypes);
         w.WriteLine();
@@ -2210,13 +2331,13 @@ public sealed class OpenApi32CodeGenerator
         }
     }
 
-    private void EmitWriteQueryString(IndentedWriter w, ParameterInfo[] queryParams)
+    private void EmitWriteQueryString(IndentedWriter w, ParameterInfo[] queryParams, ParameterInfo[] querystringParams)
     {
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine("public int WriteQueryString(IBufferWriter<byte> writer)");
         w.OpenBrace();
 
-        if (queryParams.Length == 0)
+        if (queryParams.Length == 0 && querystringParams.Length == 0)
         {
             w.WriteLine("ThrowHelper.ThrowNoQueryParameters();");
             w.WriteLine("return default;");
@@ -2224,6 +2345,31 @@ public sealed class OpenApi32CodeGenerator
             return;
         }
 
+        // Querystring parameter: serialize the entire content object as form-urlencoded query.
+        if (querystringParams.Length > 0)
+        {
+            ParameterInfo qsParam = querystringParams[0];
+            string fieldName = CodeEmitHelpers.SanitizeIdentifier(qsParam.Name);
+
+            if (!qsParam.IsRequired)
+            {
+                w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
+                w.OpenBrace();
+                w.WriteLine($"return FormUrlEncodedQueryStringWriter.Write(this.{fieldName}, writer);");
+                w.CloseBrace();
+                w.WriteLine();
+                w.WriteLine("return 0;");
+            }
+            else
+            {
+                w.WriteLine($"return FormUrlEncodedQueryStringWriter.Write(this.{fieldName}, writer);");
+            }
+
+            w.CloseBrace();
+            return;
+        }
+
+        // Regular query parameters
         w.WriteLine("int totalWritten = 0;");
         w.WriteLine("bool first = true;");
         w.WriteLine();

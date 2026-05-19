@@ -28,4 +28,10 @@ public enum ParameterLocation
     /// A cookie parameter.
     /// </summary>
     Cookie,
+
+    /// <summary>
+    /// A querystring parameter (OAS 3.2+). Represents the entire query string
+    /// serialized via a content media type rather than individual named parameters.
+    /// </summary>
+    Querystring,
 }

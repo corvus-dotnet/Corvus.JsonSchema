@@ -60,6 +60,50 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
+    /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/parameters/&lt;idx&gt;/content/&lt;mediaType&gt;/schema</c>.
+    /// </summary>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="index">The zero-based parameter index.</param>
+    /// <param name="isPathLevel">Whether the parameter is at path-item level rather than operation level.</param>
+    /// <param name="mediaTypeNameUtf8">The UTF-8 media type name from the content map.</param>
+    /// <returns>The JSON Pointer string.</returns>
+    public static string BuildParameterContentSchemaPointer(
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        int index,
+        bool isPathLevel,
+        ReadOnlySpan<byte> mediaTypeNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append("#/paths/"u8);
+            AppendEncodedSegment(ref sb, pathNameUtf8);
+
+            if (!isPathLevel)
+            {
+                sb.Append((byte)'/');
+                AppendMethodUtf8(ref sb, method);
+            }
+
+            sb.Append("/parameters/"u8);
+            sb.Append(index);
+            sb.Append("/content/"u8);
+            AppendEncodedSegment(ref sb, mediaTypeNameUtf8);
+            sb.Append("/schema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/&lt;parentSegment&gt;/content/&lt;mediaType&gt;/schema</c>.
     /// </summary>
     /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
