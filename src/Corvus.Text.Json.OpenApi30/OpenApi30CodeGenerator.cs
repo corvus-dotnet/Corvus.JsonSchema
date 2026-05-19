@@ -4005,17 +4005,17 @@ public sealed class OpenApi30CodeGenerator
     {
         List<string> paramParts = [];
 
-        foreach (ParameterInfo param in op.Parameters)
+        // Required parameters first.
+        foreach (ParameterInfo param in op.Parameters.Where(p => p.IsRequired))
         {
             string typeName = this.GetParameterSourceTypeName(param);
             string paramIdentifier = CodeEmitHelpers.EscapeCSharpKeyword(
                 CodeEmitHelpers.SanitizeParameterName(param.Name));
 
-            paramParts.Add(param.IsRequired
-                ? $"{typeName} {paramIdentifier}"
-                : $"{typeName} {paramIdentifier} = default");
+            paramParts.Add($"{typeName} {paramIdentifier}");
         }
 
+        // Request body (always required when present).
         if (op.RequestBody is not null)
         {
             if (IsRawStreamRequestBody(op.RequestBody.Value))
@@ -4027,6 +4027,16 @@ public sealed class OpenApi30CodeGenerator
                 string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
                 paramParts.Add($"{bodyTypeName}.Source body");
             }
+        }
+
+        // Optional parameters after all required ones.
+        foreach (ParameterInfo param in op.Parameters.Where(p => !p.IsRequired))
+        {
+            string typeName = this.GetParameterSourceTypeName(param);
+            string paramIdentifier = CodeEmitHelpers.EscapeCSharpKeyword(
+                CodeEmitHelpers.SanitizeParameterName(param.Name));
+
+            paramParts.Add($"{typeName} {paramIdentifier} = default");
         }
 
         paramParts.Add("CancellationToken cancellationToken = default");

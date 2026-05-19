@@ -1,0 +1,2318 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "Runtime Tests",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "https://api.example.com/v1"
+    }
+  ],
+  "paths": {
+    "/items/{itemId}": {
+      "get": {
+        "operationId": "getItem",
+        "summary": "Get item by string ID with mixed param types",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "verbose",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "X-Request-Id",
+            "in": "header",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            },
+            "links": {
+              "RefreshItem": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$request.path.itemId"
+                },
+                "description": "Re-fetch this item using the original path parameter"
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Unexpected error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "deleteItem",
+        "summary": "Delete an item (204 no content)",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted"
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "code": {
+                      "type": "integer",
+                      "format": "int32"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "code",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "patchItem",
+        "summary": "Partially update an item",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "head": {
+        "operationId": "headItem",
+        "summary": "Check item existence",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Item exists"
+          },
+          "404": {
+            "description": "Not found"
+          }
+        }
+      },
+      "trace": {
+        "operationId": "traceItem",
+        "summary": "Diagnostic loop-back",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "The request message as received",
+            "content": {
+              "text/plain": {}
+            }
+          }
+        }
+      }
+    },
+    "/items/{itemId}/tags/{tagName}": {
+      "get": {
+        "operationId": "getItemTag",
+        "summary": "Two path params: int64 + string, with trailing literal path",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int64"
+            }
+          },
+          {
+            "name": "tagName",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "score",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Total-Count": {
+                "description": "Total number of items available",
+                "schema": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              },
+              "X-Request-Id": {
+                "description": "Request correlation ID",
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "X-Tags": {
+                "description": "Array of tag names",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "X-Metadata": {
+                "description": "Object with string properties",
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "region": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    }
+                  }
+                }
+              },
+              "X-Page-Sizes": {
+                "description": "Array of page sizes",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer",
+                    "format": "int32"
+                  }
+                }
+              },
+              "X-Flags": {
+                "description": "Array of boolean flags",
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items/{itemId}/details": {
+      "get": {
+        "operationId": "getItemDetails",
+        "summary": "Path with trailing literal after param",
+        "tags": [
+          "items"
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search": {
+      "get": {
+        "operationId": "search",
+        "summary": "Required + optional query params",
+        "tags": [
+          "search"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "rating",
+            "in": "query",
+            "schema": {
+              "type": "number",
+              "format": "float"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/flags/{active}": {
+      "get": {
+        "operationId": "getByFlag",
+        "summary": "Boolean path param",
+        "tags": [
+          "flags"
+        ],
+        "parameters": [
+          {
+            "name": "active",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "X-Request-Count",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "X-Debug",
+            "in": "header",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "X-Score",
+            "in": "header",
+            "schema": {
+              "type": "number",
+              "format": "double"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/pages/{pageNum}": {
+      "get": {
+        "operationId": "getPage",
+        "summary": "Int32 path param with unbounded number query",
+        "tags": [
+          "pages"
+        ],
+        "parameters": [
+          {
+            "name": "pageNum",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items": {
+      "post": {
+        "operationId": "createItem",
+        "summary": "Create an item with request body",
+        "tags": [
+          "items"
+        ],
+        "requestBody": {
+          "description": "The item to create",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "price": {
+                    "type": "number",
+                    "format": "double"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            },
+            "links": {
+              "GetCreatedItem": {
+                "operationId": "getItem",
+                "parameters": {
+                  "itemId": "$response.body#/id"
+                },
+                "description": "Fetch the newly created item by its generated ID"
+              },
+              "SearchByName": {
+                "operationId": "search",
+                "parameters": {
+                  "q": "$request.body#/name"
+                },
+                "description": "Search for items using the name from the creation request body"
+              }
+            }
+          },
+          "422": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "errors": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "required": [
+                    "errors"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateItem",
+        "summary": "Update an item",
+        "tags": [
+          "items"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "name": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "id",
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Updated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "name"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "options": {
+        "operationId": "optionsItems",
+        "summary": "Discover available operations",
+        "tags": [
+          "items"
+        ],
+        "responses": {
+          "204": {
+            "description": "No content \u2014 check Allow header"
+          }
+        }
+      }
+    },
+    "/session/profile": {
+      "get": {
+        "operationId": "getSessionProfile",
+        "summary": "Cookie params: session, theme (optional), debug flag (optional)",
+        "tags": [
+          "session"
+        ],
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "cookie",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "theme",
+            "in": "cookie",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "debug",
+            "in": "cookie",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "max_age",
+            "in": "cookie",
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{orderId}": {
+      "parameters": [
+        {
+          "name": "orderId",
+          "in": "path",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "X-Trace-Id",
+          "in": "header",
+          "schema": {
+            "type": "string"
+          }
+        }
+      ],
+      "get": {
+        "operationId": "getOrder",
+        "summary": "Get order \u00e2\u20ac\u201d inherits path-level orderId and X-Trace-Id",
+        "tags": [
+          "orders"
+        ],
+        "parameters": [
+          {
+            "name": "fields",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orderId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "orderId",
+                    "status",
+                    "total"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateOrder",
+        "summary": "Update order \u00e2\u20ac\u201d inherits path-level params, overrides X-Trace-Id",
+        "tags": [
+          "orders"
+        ],
+        "parameters": [
+          {
+            "name": "X-Trace-Id",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "type": "string"
+                  },
+                  "total": {
+                    "type": "number"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "orderId": {
+                      "type": "string",
+                      "format": "uuid"
+                    },
+                    "status": {
+                      "type": "string"
+                    },
+                    "total": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "orderId",
+                    "status",
+                    "total"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/path-array-simple/{ids}": {
+      "get": {
+        "operationId": "pathArraySimple",
+        "summary": "Path array param, simple style (default, explode=false)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/path-array-label/{ids}": {
+      "get": {
+        "operationId": "pathArrayLabel",
+        "summary": "Path array param, label style",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "path",
+            "required": true,
+            "style": "label",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/path-array-matrix/{ids}": {
+      "get": {
+        "operationId": "pathArrayMatrix",
+        "summary": "Path array param, matrix style",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "ids",
+            "in": "path",
+            "required": true,
+            "style": "matrix",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/path-object-simple/{dims}": {
+      "get": {
+        "operationId": "pathObjectSimple",
+        "summary": "Path object param, simple style (default, explode=false)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/path-object-simple-explode/{dims}": {
+      "get": {
+        "operationId": "pathObjectSimpleExplode",
+        "summary": "Path object param, simple+explode",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/path-object-label/{dims}": {
+      "get": {
+        "operationId": "pathObjectLabel",
+        "summary": "Path object param, label style (explode=false)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "style": "label",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/path-object-label-explode/{dims}": {
+      "get": {
+        "operationId": "pathObjectLabelExplode",
+        "summary": "Path object param, label+explode",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "style": "label",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/path-object-matrix/{dims}": {
+      "get": {
+        "operationId": "pathObjectMatrix",
+        "summary": "Path object param, matrix style (explode=false)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "style": "matrix",
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/path-object-matrix-explode/{dims}": {
+      "get": {
+        "operationId": "pathObjectMatrixExplode",
+        "summary": "Path object param, matrix+explode",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "path",
+            "required": true,
+            "style": "matrix",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/query-array-explode": {
+      "get": {
+        "operationId": "queryArrayExplode",
+        "summary": "Query array param, form+explode (default)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/query-array-nonexplode": {
+      "get": {
+        "operationId": "queryArrayNonexplode",
+        "summary": "Query array param, form+explode=false",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "query",
+            "required": true,
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/query-array-space": {
+      "get": {
+        "operationId": "queryArraySpace",
+        "summary": "Query array param, spaceDelimited",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "query",
+            "required": true,
+            "style": "spaceDelimited",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/query-array-pipe": {
+      "get": {
+        "operationId": "queryArrayPipe",
+        "summary": "Query array param, pipeDelimited",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "query",
+            "required": true,
+            "style": "pipeDelimited",
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/query-object-explode": {
+      "get": {
+        "operationId": "queryObjectExplode",
+        "summary": "Query object param, form+explode (default)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/query-object-nonexplode": {
+      "get": {
+        "operationId": "queryObjectNonexplode",
+        "summary": "Query object param, form+explode=false",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "query",
+            "required": true,
+            "explode": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/query-object-deep": {
+      "get": {
+        "operationId": "queryObjectDeep",
+        "summary": "Query object param, deepObject style",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "dims",
+            "in": "query",
+            "required": true,
+            "style": "deepObject",
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/header-array": {
+      "get": {
+        "operationId": "headerArray",
+        "summary": "Header array param, simple (default)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "X-Tags",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/header-object": {
+      "get": {
+        "operationId": "headerObject",
+        "summary": "Header object param, simple+explode=false (default)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "X-Dims",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/header-object-explode": {
+      "get": {
+        "operationId": "headerObjectExplode",
+        "summary": "Header object param, simple+explode",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "X-Dims",
+            "in": "header",
+            "required": true,
+            "explode": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/cookie-array": {
+      "get": {
+        "operationId": "cookieArray",
+        "summary": "Cookie array param, form+explode (default)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "cookie",
+            "required": true,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/cookie-array-nonexplode": {
+      "get": {
+        "operationId": "cookieArrayNonexplode",
+        "summary": "Cookie array param, form+explode=false",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "colors",
+            "in": "cookie",
+            "required": true,
+            "explode": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/cookie-object": {
+      "get": {
+        "operationId": "cookieObject",
+        "summary": "Cookie object param, form+explode (default)",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "prefs",
+            "in": "cookie",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/cookie-object-nonexplode": {
+      "get": {
+        "operationId": "cookieObjectNonexplode",
+        "summary": "Cookie object param, form+explode=false",
+        "tags": [
+          "complex-params"
+        ],
+        "parameters": [
+          {
+            "name": "prefs",
+            "in": "cookie",
+            "required": true,
+            "explode": false,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "width": {
+                  "type": "integer",
+                  "format": "int32"
+                },
+                "height": {
+                  "type": "integer",
+                  "format": "int32"
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/download": {
+      "get": {
+        "operationId": "downloadFile",
+        "summary": "Download a binary file",
+        "tags": [
+          "files"
+        ],
+        "responses": {
+          "200": {
+            "description": "The binary file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/upload": {
+      "post": {
+        "operationId": "uploadFile",
+        "summary": "Upload a binary file",
+        "tags": [
+          "files"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Upload accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/download-mixed": {
+      "get": {
+        "operationId": "downloadMixed",
+        "summary": "Download file with mixed content types (binary or JSON error)",
+        "tags": [
+          "files"
+        ],
+        "responses": {
+          "200": {
+            "description": "The binary file content",
+            "content": {
+              "application/octet-stream": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/files/vendor-json": {
+      "get": {
+        "operationId": "getVendorJson",
+        "summary": "Get data with vendor JSON content type",
+        "tags": [
+          "files"
+        ],
+        "responses": {
+          "200": {
+            "description": "Vendor JSON response",
+            "content": {
+              "application/vnd.api+json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/text/echo": {
+      "post": {
+        "operationId": "echoText",
+        "summary": "Echo text back as text/plain",
+        "tags": [
+          "text"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Echoed text",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/text/to-json": {
+      "post": {
+        "operationId": "textToJson",
+        "summary": "Accept text/plain, return JSON",
+        "tags": [
+          "text"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "text/plain": {
+              "schema": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Parsed result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "parsed": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "parsed"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/text/mixed": {
+      "get": {
+        "operationId": "getTextOrJson",
+        "summary": "Returns text/plain or JSON depending on server state",
+        "tags": [
+          "text"
+        ],
+        "responses": {
+          "200": {
+            "description": "Success - may be text or JSON",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "value": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "value"
+                  ]
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/contact": {
+      "post": {
+        "operationId": "submitContactForm",
+        "summary": "Submit a contact form via form-urlencoded",
+        "tags": [
+          "forms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "message": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "email"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "received": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "received"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/upload": {
+      "post": {
+        "operationId": "uploadDocument",
+        "summary": "Upload a document with metadata",
+        "tags": [
+          "forms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "title"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploaded": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "uploaded"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/encoded-contact": {
+      "post": {
+        "operationId": "submitEncodedContactForm",
+        "summary": "Submit a contact form with encoding overrides",
+        "tags": [
+          "forms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "address": {
+                    "type": "object",
+                    "properties": {
+                      "street": {
+                        "type": "string"
+                      },
+                      "city": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "name",
+                  "email"
+                ]
+              },
+              "encoding": {
+                "tags": {
+                  "style": "pipeDelimited",
+                  "explode": false
+                },
+                "address": {
+                  "style": "deepObject",
+                  "explode": true
+                },
+                "email": {
+                  "allowReserved": true
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "received": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "received"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/encoded-upload": {
+      "post": {
+        "operationId": "uploadEncodedDocument",
+        "summary": "Upload a document with encoding overrides",
+        "tags": [
+          "forms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "metadata": {
+                    "type": "object",
+                    "properties": {
+                      "author": {
+                        "type": "string"
+                      },
+                      "version": {
+                        "type": "integer"
+                      }
+                    }
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                },
+                "required": [
+                  "title"
+                ]
+              },
+              "encoding": {
+                "metadata": {
+                  "contentType": "application/json"
+                },
+                "tags": {
+                  "contentType": "application/json"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploaded": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "uploaded"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

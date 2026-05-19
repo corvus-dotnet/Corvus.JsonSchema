@@ -18,6 +18,9 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
   <ItemGroup>
+    <InternalsVisibleTo Include="Corvus.Text.Json.OpenApi31.Runtime.Tests" />
+  </ItemGroup>
+  <ItemGroup>
     <Using Include="SR = Resources.Strings" />
   </ItemGroup>
   <ItemGroup>

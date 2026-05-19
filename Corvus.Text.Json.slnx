@@ -42,7 +42,6 @@
     <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi30/Corvus.Json.CodeGeneration.OpenApi30.csproj" />
     <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi31/Corvus.Json.CodeGeneration.OpenApi31.csproj" />
   </Folder>
-  <Folder Name="/src-v4/" />
   <Folder Name="/src/">
     <Project Path="src/Corvus.Text.Json.OpenApi32/Corvus.Text.Json.OpenApi32.csproj" />
   </Folder>
@@ -50,7 +49,9 @@
     <Project Path="tests-v4/Corvus.Json.Specs.Tests/Corvus.Json.Specs.Tests.csproj" />
   </Folder>
   <Folder Name="/tests/">
-    <Project Path="tests/Corvus.Text.Json.OpenApi.Runtime.Tests/Corvus.Text.Json.OpenApi.Runtime.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.OpenApi30.Runtime.Tests/Corvus.Text.Json.OpenApi30.Runtime.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.OpenApi31.Runtime.Tests/Corvus.Text.Json.OpenApi31.Runtime.Tests.csproj" />
+    <Project Path="tests/Corvus.Text.Json.OpenApi32.Runtime.Tests/Corvus.Text.Json.OpenApi32.Runtime.Tests.csproj" />
   </Folder>
   <Folder Name="/v4/">
     <Project Path="src-v4/Corvus.Json.Validator/Corvus.Json.Validator.csproj" />
