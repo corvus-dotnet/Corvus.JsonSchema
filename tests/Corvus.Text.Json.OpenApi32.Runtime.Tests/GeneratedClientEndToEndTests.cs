@@ -2891,6 +2891,26 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual("tracker_id=a/b=c; ref_url=a%2Fb%3Dc", cookie);
     }
 
+    // ── 3.2-specific: $self document identity ────────────────────────────
+    [TestMethod]
+    public void DocumentIdentityUri_ExposedOnGeneratedInterface()
+    {
+        // The $self field from the spec is emitted as a static property on all interfaces.
+        Assert.AreEqual(
+            "https://api.example.com/specs/runtime-tests.json",
+            IApiItemsClient.DocumentIdentityUri);
+    }
+
+    [TestMethod]
+    public void DocumentIdentityUri_ConsistentAcrossAllInterfaces()
+    {
+        // All tag-based interfaces share the same document identity.
+        Assert.AreEqual(IApiItemsClient.DocumentIdentityUri, IApiSearchClient.DocumentIdentityUri);
+        Assert.AreEqual(IApiItemsClient.DocumentIdentityUri, IApiOrdersClient.DocumentIdentityUri);
+        Assert.AreEqual(IApiItemsClient.DocumentIdentityUri, IApiFilesClient.DocumentIdentityUri);
+        Assert.AreEqual(IApiItemsClient.DocumentIdentityUri, IApiTextClient.DocumentIdentityUri);
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.

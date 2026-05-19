@@ -32,12 +32,12 @@ public struct GetItemResponse : IApiResponse<GetItemResponse>
     public bool IsSuccess => this.StatusCode >= 200 && this.StatusCode < 300;
 
     /// <summary>
-    /// Gets the 200 response body.
+    /// The requested item
     /// </summary>
     public CanonTests32.Client.GetItemsByItemIdOk OkBody { get; private set; }
 
     /// <summary>
-    /// Gets the 404 response body.
+    /// Item not found
     /// </summary>
     public CanonTests32.Client.GetItemsByItemIdNotFound NotFoundBody { get; private set; }
 

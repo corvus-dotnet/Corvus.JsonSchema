@@ -249,6 +249,9 @@ public sealed class ApiItemsClient : IApiItemsClient
     /// <summary>
     /// Create an item with request body
     /// </summary>
+    /// <remarks>
+    /// Creates a new item in the catalog. The item name must be unique within the catalog.
+    /// </remarks>
     /// <param name="body">The item to create.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     public ValueTask<CreateItemResponse> CreateItemAsync(CanonTests32.Client.PostItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)

@@ -20,6 +20,11 @@ namespace CanonTests32.Client;
 public interface IApiFilesClient : IAsyncDisposable
 {
     /// <summary>
+    /// Gets the document identity URI (<c>$self</c>).
+    /// </summary>
+    static string DocumentIdentityUri => "https://api.example.com/specs/runtime-tests.json";
+
+    /// <summary>
     /// Creates a <see cref="Uri"/> for the default server.
     /// </summary>
     /// <returns>A <see cref="Uri"/> for the server.</returns>

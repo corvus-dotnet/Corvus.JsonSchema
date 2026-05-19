@@ -17,7 +17,7 @@ namespace CanonTests32.Client;
 /// <summary>
 /// Request type for the CreateItem operation.
 /// </summary>
-/// <remarks>Create an item with request body</remarks>
+/// <remarks>Creates a new item in the catalog. The item name must be unique within the catalog.</remarks>
 public readonly struct CreateItemRequest : IApiRequest<CreateItemRequest>
 {
 

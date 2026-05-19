@@ -1,5 +1,6 @@
 {
   "openapi": "3.2.0",
+  "$self": "https://api.example.com/specs/runtime-tests.json",
   "info": {
     "title": "Runtime Tests",
     "version": "1.0.0"
@@ -58,7 +59,8 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
+            "summary": "The requested item",
+            "description": "Returns the full item representation including all properties.",
             "content": {
               "application/json": {
                 "schema": {
@@ -89,7 +91,7 @@
             }
           },
           "404": {
-            "description": "Not found",
+            "summary": "Item not found",
             "content": {
               "application/json": {
                 "schema": {
@@ -653,6 +655,7 @@
       "post": {
         "operationId": "createItem",
         "summary": "Create an item with request body",
+        "description": "Creates a new item in the catalog. The item name must be unique within the catalog.",
         "tags": [
           "items"
         ],

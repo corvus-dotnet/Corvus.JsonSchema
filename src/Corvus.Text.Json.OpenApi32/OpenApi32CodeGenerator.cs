@@ -111,6 +111,8 @@ public sealed class OpenApi32CodeGenerator
 
     private readonly record struct ResponseInfo(
         string StatusCode,
+        string? Summary,
+        string? Description,
         ContentInfo[] Content,
         HeaderInfo[] Headers,
         LinkInfo[] Links);
@@ -286,6 +288,7 @@ public sealed class OpenApi32CodeGenerator
         referenceResolver ??= new LocalReferenceResolver(specRoot);
         List<OperationInfo> operations = [];
         ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+        string? documentSelf = GetDocumentSelf(specRoot);
 
         foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
         {
@@ -304,7 +307,7 @@ public sealed class OpenApi32CodeGenerator
         foreach ((string tag, List<OperationInfo> tagOps) in groups)
         {
             string clientName = this.GetClientName(tag);
-            files.Add(this.EmitInterface(clientName, tagOps, rootServer));
+            files.Add(this.EmitInterface(clientName, tagOps, rootServer, documentSelf));
             files.Add(this.EmitImplementation(clientName, tagOps));
         }
 
@@ -1521,6 +1524,13 @@ public sealed class OpenApi32CodeGenerator
 
                 using UnescapedUtf8JsonString statusCodeUtf8 = responseProp.Utf8NameSpan;
 
+                string? responseSummary = response.Summary.IsNotUndefined()
+                    ? response.Summary.GetString()
+                    : null;
+                string? responseDescription = response.Description.IsNotUndefined()
+                    ? response.Description.GetString()
+                    : null;
+
                 ContentInfo[] content = PrepareResponseContentEntries(
                     response.ContentValue, pathNameUtf8, method, statusCodeUtf8.Span, customMethodName);
 
@@ -1529,7 +1539,7 @@ public sealed class OpenApi32CodeGenerator
 
                 LinkInfo[] links = PrepareLinks(response.Links, referenceResolver, statusCode);
 
-                result.Add(new ResponseInfo(statusCode, content, headers, links));
+                result.Add(new ResponseInfo(statusCode, responseSummary, responseDescription, content, headers, links));
             }
         }
 
@@ -1895,6 +1905,12 @@ public sealed class OpenApi32CodeGenerator
         return null;
     }
 
+    private static string? GetDocumentSelf(JsonElement specRoot)
+    {
+        OpenApiDocument doc = specRoot;
+        return doc.Self.IsNotUndefined() ? doc.Self.GetString() : null;
+    }
+
     private static ServerInfo? ExtractServerInfo(OpenApiDocument.Server server)
     {
         if (server.Url.IsUndefined())
@@ -2152,9 +2168,10 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine($"/// Request type for the {op.MethodName} operation.");
         w.WriteLine("/// </summary>");
 
-        if (op.Summary is not null)
+        string? remarks = op.Description ?? op.Summary;
+        if (remarks is not null)
         {
-            w.WriteLine($"/// <remarks>{CodeEmitHelpers.EscapeXml(op.Summary)}</remarks>");
+            w.WriteLine($"/// <remarks>{CodeEmitHelpers.EscapeXml(remarks)}</remarks>");
         }
 
         w.WriteLine($"public readonly struct {structName} : IApiRequest<{structName}>");
@@ -2799,6 +2816,7 @@ public sealed class OpenApi32CodeGenerator
         {
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
             ContentCategory[] categories = GetDistinctContentCategories(resp);
+            string bodyDocSummary = resp.Summary ?? $"Gets the {resp.StatusCode} response body.";
 
             foreach (ContentCategory cat in categories)
             {
@@ -2806,7 +2824,7 @@ public sealed class OpenApi32CodeGenerator
                 {
                     w.WriteLine();
                     w.WriteLine("/// <summary>");
-                    w.WriteLine($"/// Gets the {resp.StatusCode} response stream.");
+                    w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(resp.Summary ?? $"Gets the {resp.StatusCode} response stream.")}");
                     w.WriteLine("/// </summary>");
                     w.WriteLine($"public Stream? {accessorName}Stream {{ get; private set; }}");
                 }
@@ -2821,7 +2839,7 @@ public sealed class OpenApi32CodeGenerator
                     {
                         w.WriteLine();
                         w.WriteLine("/// <summary>");
-                        w.WriteLine($"/// Gets the {resp.StatusCode} response body.");
+                        w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(bodyDocSummary)}");
                         w.WriteLine("/// </summary>");
                         w.WriteLine($"public {typeName} {accessorName}Body {{ get; private set; }}");
                     }
@@ -3962,7 +3980,8 @@ public sealed class OpenApi32CodeGenerator
     private GeneratedFile EmitInterface(
         string clientName,
         IReadOnlyList<OperationInfo> operations,
-        ServerInfo? serverInfo)
+        ServerInfo? serverInfo,
+        string? documentSelf = null)
     {
         IndentedWriter w = new();
 
@@ -3975,6 +3994,16 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine("/// </summary>");
         w.WriteLine($"public interface I{clientName}Client : IAsyncDisposable");
         w.OpenBrace();
+
+        if (documentSelf is not null)
+        {
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// Gets the document identity URI (<c>$self</c>).");
+            w.WriteLine("/// </summary>");
+            w.WriteLine(
+                $"static string DocumentIdentityUri => {CodeEmitHelpers.FormatStringLiteral(documentSelf)};");
+            w.WriteLine();
+        }
 
         if (serverInfo is { } si)
         {
@@ -4488,6 +4517,13 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("/// <summary>");
             w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(op.Summary)}");
             w.WriteLine("/// </summary>");
+        }
+
+        if (op.Description is not null)
+        {
+            w.WriteLine("/// <remarks>");
+            w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(op.Description)}");
+            w.WriteLine("/// </remarks>");
         }
 
         foreach (ParameterInfo param in op.Parameters)

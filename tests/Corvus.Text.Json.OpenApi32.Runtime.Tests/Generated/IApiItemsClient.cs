@@ -20,6 +20,11 @@ namespace CanonTests32.Client;
 public interface IApiItemsClient : IAsyncDisposable
 {
     /// <summary>
+    /// Gets the document identity URI (<c>$self</c>).
+    /// </summary>
+    static string DocumentIdentityUri => "https://api.example.com/specs/runtime-tests.json";
+
+    /// <summary>
     /// Creates a <see cref="Uri"/> for the default server.
     /// </summary>
     /// <returns>A <see cref="Uri"/> for the server.</returns>
@@ -106,6 +111,9 @@ public interface IApiItemsClient : IAsyncDisposable
     /// <summary>
     /// Create an item with request body
     /// </summary>
+    /// <remarks>
+    /// Creates a new item in the catalog. The item name must be unique within the catalog.
+    /// </remarks>
     /// <param name="body">The item to create.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     ValueTask<CreateItemResponse> CreateItemAsync(CanonTests32.Client.PostItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
