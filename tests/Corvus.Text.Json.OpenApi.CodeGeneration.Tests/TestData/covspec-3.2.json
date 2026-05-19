@@ -99,7 +99,15 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "apiKeyAuth": []
+          }
+        ]
       },
       "post": {
         "operationId": "createItem",
@@ -740,7 +748,13 @@
       }
     },
     "/health": {
-      "$ref": "#/components/pathItems/HealthCheck"
+      "head": {
+        "responses": {
+          "200": {
+            "description": "Service is healthy"
+          }
+        }
+      }
     },
     "/upload": {
       "post": {
@@ -1495,6 +1509,21 @@
                 }
               }
             }
+          },
+          "requestBody": {
+            "required": true,
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "overwrite": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
           }
         },
         "PURGE": {
@@ -1513,6 +1542,180 @@
             "204": {
               "description": "Resource purged"
             }
+          }
+        },
+        "MOVE": {
+          "operationId": "moveResource",
+          "parameters": [
+            {
+              "name": "resourceId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            },
+            {
+              "name": "options",
+              "in": "querystring",
+              "required": false,
+              "content": {
+                "application/x-www-form-urlencoded": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "target": {
+                        "type": "string"
+                      },
+                      "merge": {
+                        "type": "boolean"
+                      }
+                    },
+                    "required": [
+                      "target"
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "responses": {
+            "200": {
+              "description": "Move progress stream",
+              "content": {
+                "application/x-ndjson": {
+                  "itemSchema": {
+                    "type": "object",
+                    "properties": {
+                      "progress": {
+                        "type": "integer"
+                      },
+                      "status": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "progress",
+                      "status"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/events/stream": {
+      "get": {
+        "operationId": "streamEvents",
+        "summary": "Stream events via NDJSON",
+        "responses": {
+          "200": {
+            "description": "Event stream",
+            "content": {
+              "application/x-ndjson": {
+                "itemSchema": {
+                  "type": "object",
+                  "properties": {
+                    "eventId": {
+                      "type": "string"
+                    },
+                    "eventType": {
+                      "type": "string"
+                    },
+                    "data": {}
+                  },
+                  "required": [
+                    "eventId",
+                    "eventType"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/search-qs": {
+      "get": {
+        "operationId": "searchWithQuerystring",
+        "summary": "Search using querystring content parameter",
+        "parameters": [
+          {
+            "name": "qs",
+            "in": "querystring",
+            "required": false,
+            "content": {
+              "application/x-www-form-urlencoded": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "q": {
+                      "type": "string"
+                    },
+                    "page": {
+                      "type": "integer",
+                      "format": "int32"
+                    }
+                  },
+                  "required": [
+                    "q"
+                  ]
+                }
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Search results",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Item"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/{documentId}": {
+      "get": {
+        "operationId": "getDocument",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/DocumentResponse"
+          }
+        }
+      },
+      "put": {
+        "operationId": "updateDocument",
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/DocumentId"
+          }
+        ],
+        "requestBody": {
+          "$ref": "#/components/requestBodies/DocumentBody"
+        },
+        "responses": {
+          "200": {
+            "$ref": "#/components/responses/DocumentResponse"
           }
         }
       }
@@ -1605,6 +1808,129 @@
           "itemId": "$response.body#/id"
         },
         "description": "Fetch the item by its ID"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "name": "X-API-Key",
+        "in": "header"
+      },
+      "legacyAuth": {
+        "type": "apiKey",
+        "name": "api_key",
+        "in": "query",
+        "deprecated": true,
+        "description": "Legacy API key. Use bearerAuth instead."
+      },
+      "openIdAuth": {
+        "type": "openIdConnect",
+        "openIdConnectUrl": "https://auth.example.com/.well-known/openid-configuration"
+      },
+      "oauth2Auth": {
+        "type": "oauth2",
+        "oauth2MetadataUrl": "https://auth.example.com/.well-known/oauth-authorization-server",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://auth.example.com/authorize",
+            "tokenUrl": "https://auth.example.com/token",
+            "scopes": {
+              "read": "Read access",
+              "write": "Write access"
+            }
+          },
+          "deviceAuthorization": {
+            "deviceAuthorizationUrl": "https://auth.example.com/device",
+            "tokenUrl": "https://auth.example.com/token",
+            "scopes": {
+              "read": "Read access"
+            }
+          }
+        }
+      }
+    },
+    "parameters": {
+      "DocumentId": {
+        "name": "documentId",
+        "in": "path",
+        "required": true,
+        "schema": {
+          "type": "string",
+          "format": "uuid"
+        }
+      }
+    },
+    "requestBodies": {
+      "DocumentBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "title": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "title"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "responses": {
+      "DocumentResponse": {
+        "description": "Document retrieved",
+        "headers": {
+          "X-Document-Version": {
+            "$ref": "#/components/headers/DocumentVersionHeader"
+          }
+        },
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "title": {
+                  "type": "string"
+                },
+                "content": {
+                  "type": "string"
+                },
+                "version": {
+                  "type": "integer"
+                }
+              },
+              "required": [
+                "id",
+                "title",
+                "version"
+              ]
+            }
+          }
+        }
+      }
+    },
+    "headers": {
+      "DocumentVersionHeader": {
+        "schema": {
+          "type": "integer",
+          "format": "int32"
+        }
       }
     }
   }

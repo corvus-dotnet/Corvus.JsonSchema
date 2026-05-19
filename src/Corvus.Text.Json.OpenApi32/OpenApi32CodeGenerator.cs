@@ -763,6 +763,16 @@ public sealed class OpenApi32CodeGenerator
 
                                 pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                             }
+
+                            if (mediaTypeProp.Value.ItemSchema.IsNotUndefined())
+                            {
+                                using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+
+                                string positionalPointer = BuildAdditionalOpResponseContentItemSchemaPointer(
+                                    pathName.Span, customMethodName, statusCode.Span, mediaTypeName.Span);
+
+                                pointers.Add(new SchemaReference(positionalPointer, positionalPointer));
+                            }
                         }
                     }
 
