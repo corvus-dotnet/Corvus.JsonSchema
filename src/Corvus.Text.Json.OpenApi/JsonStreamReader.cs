@@ -2,9 +2,9 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
+using System.Buffers;
+using System.IO.Pipelines;
 using System.Runtime.CompilerServices;
-using System.Text;
-using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 
 namespace Corvus.Text.Json.OpenApi;
@@ -13,8 +13,22 @@ namespace Corvus.Text.Json.OpenApi;
 /// Reads a stream of newline-delimited JSON (NDJSON) or Server-Sent Events (SSE)
 /// and yields strongly-typed items parsed from each JSON payload.
 /// </summary>
+/// <remarks>
+/// <para>All processing is performed directly on UTF-8 bytes using <see cref="PipeReader"/>.
+/// No transcoding to UTF-16 occurs.</para>
+/// </remarks>
 public static class JsonStreamReader
 {
+    private static ReadOnlySpan<byte> DataColonSpace => "data: "u8;
+
+    private static ReadOnlySpan<byte> DataColon => "data:"u8;
+
+    private static ReadOnlySpan<byte> EventColon => "event:"u8;
+
+    private static ReadOnlySpan<byte> IdColon => "id:"u8;
+
+    private static ReadOnlySpan<byte> RetryColon => "retry:"u8;
+
     /// <summary>
     /// Asynchronously reads items from a stream containing newline-delimited JSON or SSE data.
     /// </summary>
@@ -38,60 +52,46 @@ public static class JsonStreamReader
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
-        using StreamReader reader = new(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
+        PipeReader pipeReader = PipeReader.Create(stream, new StreamPipeReaderOptions(leaveOpen: true));
 
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            string? line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
-            if (line is null)
+            while (!cancellationToken.IsCancellationRequested)
             {
-                yield break;
-            }
+                ReadResult result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                ReadOnlySequence<byte> buffer = result.Buffer;
 
-            ReadOnlySpan<char> span = line.AsSpan();
-
-            // Skip empty lines.
-            if (span.IsEmpty)
-            {
-                continue;
-            }
-
-            // SSE comment lines start with ':'.
-            if (span[0] == ':')
-            {
-                continue;
-            }
-
-            // SSE data lines: strip "data:" or "data: " prefix.
-            if (span.StartsWith("data:".AsSpan()))
-            {
-                span = span[5..];
-                if (span.Length > 0 && span[0] == ' ')
+                while (TryReadLine(ref buffer, out ReadOnlySequence<byte> line))
                 {
-                    span = span[1..];
+                    if (TryGetDataPayload(line, out ReadOnlySpan<byte> payload))
+                    {
+                        yield return JsonElementHelpers.ParseValue<T>(payload);
+                    }
                 }
 
-                // Empty data field (e.g. heartbeat) — skip.
-                if (span.IsEmpty)
+                pipeReader.AdvanceTo(buffer.Start, buffer.End);
+
+                if (result.IsCompleted)
                 {
-                    continue;
+                    // Process any trailing data without a final newline.
+                    if (buffer.Length > 0 && TryGetDataPayload(buffer, out ReadOnlySpan<byte> trailing))
+                    {
+                        yield return JsonElementHelpers.ParseValue<T>(trailing);
+                    }
+
+                    break;
                 }
             }
-            else if (!IsJsonStart(span))
-            {
-                // Skip SSE metadata lines (event:, id:, retry:, etc.)
-                continue;
-            }
-
-            // Parse the JSON payload into the target type.
-            byte[] utf8Bytes = Encoding.UTF8.GetBytes(span.ToString());
-            yield return JsonElementHelpers.ParseValue<T>(utf8Bytes);
+        }
+        finally
+        {
+            await pipeReader.CompleteAsync().ConfigureAwait(false);
         }
     }
 
     /// <summary>
     /// Asynchronously reads Server-Sent Events from a stream, yielding each event
-    /// with its associated metadata (event type, id, retry).
+    /// with its associated metadata (event type, id, retry) as raw UTF-8 bytes.
     /// </summary>
     /// <typeparam name="T">The element type to parse each JSON data payload into.</typeparam>
     /// <param name="stream">The source SSE stream.</param>
@@ -100,121 +100,281 @@ public static class JsonStreamReader
     /// <remarks>
     /// <para>Per the SSE specification, events are delimited by blank lines. Metadata fields
     /// (<c>event:</c>, <c>id:</c>, <c>retry:</c>) are accumulated until a <c>data:</c> field
-    /// is encountered, at which point an event is yielded. Metadata resets for the next event
-    /// after a blank line.</para>
+    /// is encountered. Events are dispatched on blank lines or end-of-stream.</para>
     /// <para>Multi-line data fields (multiple consecutive <c>data:</c> lines before a blank line)
-    /// are concatenated with newlines per the SSE spec.</para>
+    /// are concatenated with U+000A per the SSE spec.</para>
     /// </remarks>
     public static async IAsyncEnumerable<SseEvent<T>> ReadSseItemsAsync<T>(
         Stream stream,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
-        using StreamReader reader = new(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
+        PipeReader pipeReader = PipeReader.Create(stream, new StreamPipeReaderOptions(leaveOpen: true));
 
-        string? eventType = null;
-        string? id = null;
-        int? retry = null;
-        StringBuilder? dataBuffer = null;
-
-        while (!cancellationToken.IsCancellationRequested)
+        try
         {
-            string? line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
-            if (line is null)
+            ReadOnlyMemory<byte> eventType = default;
+            ReadOnlyMemory<byte> id = default;
+            int? retry = null;
+            byte[]? dataBuffer = null;
+            int dataLength = 0;
+
+            while (!cancellationToken.IsCancellationRequested)
             {
-                // End of stream — flush any pending event.
-                if (dataBuffer is { Length: > 0 })
+                ReadResult result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
+                ReadOnlySequence<byte> buffer = result.Buffer;
+
+                while (TryReadLine(ref buffer, out ReadOnlySequence<byte> line))
                 {
-                    yield return ParseSseEvent<T>(dataBuffer.ToString(), eventType, id, retry);
+                    if (TryProcessSseLine(line, ref eventType, ref id, ref retry, ref dataBuffer, ref dataLength, out SseEvent<T>? evt) && evt.HasValue)
+                    {
+                        yield return evt.Value;
+                    }
                 }
 
-                yield break;
-            }
+                pipeReader.AdvanceTo(buffer.Start, buffer.End);
 
-            ReadOnlySpan<char> span = line.AsSpan();
-
-            // Blank line = event boundary per SSE spec.
-            if (span.IsEmpty)
-            {
-                if (dataBuffer is { Length: > 0 })
+                if (result.IsCompleted)
                 {
-                    yield return ParseSseEvent<T>(dataBuffer.ToString(), eventType, id, retry);
-                    dataBuffer.Clear();
-                }
+                    // Flush any pending event at end of stream.
+                    if (dataLength > 0 && dataBuffer is not null)
+                    {
+                        T parsed = JsonElementHelpers.ParseValue<T>(dataBuffer.AsSpan(0, dataLength));
+                        yield return new SseEvent<T>(parsed, eventType, id, retry);
+                    }
 
-                // Reset metadata for next event.
-                eventType = null;
-                id = null;
-                retry = null;
-                continue;
-            }
+                    if (dataBuffer is not null)
+                    {
+                        ArrayPool<byte>.Shared.Return(dataBuffer);
+                    }
 
-            // Comment lines start with ':'.
-            if (span[0] == ':')
-            {
-                continue;
-            }
-
-            // Parse field name and value.
-            int colonIndex = span.IndexOf(':');
-            if (colonIndex < 0)
-            {
-                // Field with no value (treated as empty string per spec) — skip.
-                continue;
-            }
-
-            ReadOnlySpan<char> fieldName = span[..colonIndex];
-            ReadOnlySpan<char> fieldValue = span[(colonIndex + 1)..];
-            if (fieldValue.Length > 0 && fieldValue[0] == ' ')
-            {
-                fieldValue = fieldValue[1..];
-            }
-
-            if (fieldName.SequenceEqual("data".AsSpan()))
-            {
-                dataBuffer ??= new StringBuilder();
-                if (dataBuffer.Length > 0)
-                {
-                    dataBuffer.Append('\n');
-                }
-
-                dataBuffer.Append(fieldValue.ToString());
-            }
-            else if (fieldName.SequenceEqual("event".AsSpan()))
-            {
-                eventType = fieldValue.ToString();
-            }
-            else if (fieldName.SequenceEqual("id".AsSpan()))
-            {
-                id = fieldValue.ToString();
-            }
-            else if (fieldName.SequenceEqual("retry".AsSpan()))
-            {
-                if (int.TryParse(fieldValue, out int retryMs))
-                {
-                    retry = retryMs;
+                    break;
                 }
             }
         }
-
-        // Cancellation requested — flush any pending event.
-        if (dataBuffer is { Length: > 0 })
+        finally
         {
-            yield return ParseSseEvent<T>(dataBuffer.ToString(), eventType, id, retry);
+            await pipeReader.CompleteAsync().ConfigureAwait(false);
         }
     }
 
-    private static SseEvent<T> ParseSseEvent<T>(string data, string? eventType, string? id, int? retry)
+    private static bool TryReadLine(ref ReadOnlySequence<byte> buffer, out ReadOnlySequence<byte> line)
+    {
+        SequencePosition? newlinePos = buffer.PositionOf((byte)'\n');
+        if (newlinePos is null)
+        {
+            line = default;
+            return false;
+        }
+
+        line = buffer.Slice(0, newlinePos.Value);
+        buffer = buffer.Slice(buffer.GetPosition(1, newlinePos.Value));
+
+        // Trim trailing \r if present (CRLF).
+        if (line.Length > 0)
+        {
+            ReadOnlySpan<byte> lastSegment = line.IsSingleSegment
+                ? line.FirstSpan
+                : line.ToArray();
+            if (lastSegment.Length > 0 && lastSegment[^1] == (byte)'\r')
+            {
+                line = line.Slice(0, line.Length - 1);
+            }
+        }
+
+        return true;
+    }
+
+    private static bool TryGetDataPayload(ReadOnlySequence<byte> line, out ReadOnlySpan<byte> payload)
+    {
+        ReadOnlySpan<byte> span = line.IsSingleSegment ? line.FirstSpan : line.ToArray();
+        return TryGetDataPayload(span, out payload);
+    }
+
+    private static bool TryGetDataPayload(ReadOnlySpan<byte> span, out ReadOnlySpan<byte> payload)
+    {
+        // Skip empty lines.
+        if (span.IsEmpty)
+        {
+            payload = default;
+            return false;
+        }
+
+        // SSE comment lines start with ':'.
+        if (span[0] == (byte)':')
+        {
+            payload = default;
+            return false;
+        }
+
+        // SSE data lines: strip "data: " or "data:" prefix.
+        if (span.StartsWith(DataColonSpace))
+        {
+            payload = span[6..];
+            return !payload.IsEmpty;
+        }
+
+        if (span.StartsWith(DataColon))
+        {
+            payload = span[5..];
+            return !payload.IsEmpty;
+        }
+
+        // Skip SSE metadata lines (event:, id:, retry:).
+        if (span.StartsWith(EventColon) || span.StartsWith(IdColon) || span.StartsWith(RetryColon))
+        {
+            payload = default;
+            return false;
+        }
+
+        // For NDJSON, the entire line is the payload if it starts with a JSON character.
+        if (IsJsonStart(span[0]))
+        {
+            payload = span;
+            return true;
+        }
+
+        payload = default;
+        return false;
+    }
+
+    private static bool TryProcessSseLine<T>(
+        ReadOnlySequence<byte> line,
+        ref ReadOnlyMemory<byte> eventType,
+        ref ReadOnlyMemory<byte> id,
+        ref int? retry,
+        ref byte[]? dataBuffer,
+        ref int dataLength,
+        out SseEvent<T>? result)
         where T : struct, IJsonElement<T>
     {
-        byte[] utf8Bytes = Encoding.UTF8.GetBytes(data);
-        T parsed = JsonElementHelpers.ParseValue<T>(utf8Bytes);
-        return new SseEvent<T>(parsed, eventType, id, retry);
+        ReadOnlySpan<byte> span = line.IsSingleSegment ? line.FirstSpan : line.ToArray();
+
+        // Blank line = event boundary.
+        if (span.IsEmpty)
+        {
+            if (dataLength > 0 && dataBuffer is not null)
+            {
+                T parsed = JsonElementHelpers.ParseValue<T>(dataBuffer.AsSpan(0, dataLength));
+                result = new SseEvent<T>(parsed, eventType, id, retry);
+
+                // Reset state for next event.
+                eventType = default;
+                id = default;
+                retry = null;
+                dataLength = 0;
+                return true;
+            }
+
+            // Reset even if no data was accumulated.
+            eventType = default;
+            id = default;
+            retry = null;
+            result = null;
+            return false;
+        }
+
+        // Comment lines.
+        if (span[0] == (byte)':')
+        {
+            result = null;
+            return false;
+        }
+
+        // data: field — accumulate payload bytes.
+        if (span.StartsWith(DataColonSpace))
+        {
+            AppendDataBytes(span[6..], ref dataBuffer, ref dataLength);
+            result = null;
+            return false;
+        }
+
+        if (span.StartsWith(DataColon))
+        {
+            AppendDataBytes(span[5..], ref dataBuffer, ref dataLength);
+            result = null;
+            return false;
+        }
+
+        // event: field.
+        if (span.StartsWith(EventColon))
+        {
+            ReadOnlySpan<byte> value = StripLeadingSpace(span[6..]);
+            eventType = value.ToArray();
+            result = null;
+            return false;
+        }
+
+        // id: field.
+        if (span.StartsWith(IdColon))
+        {
+            ReadOnlySpan<byte> value = StripLeadingSpace(span[3..]);
+            id = value.ToArray();
+            result = null;
+            return false;
+        }
+
+        // retry: field.
+        if (span.StartsWith(RetryColon))
+        {
+            ReadOnlySpan<byte> value = StripLeadingSpace(span[6..]);
+            if (TryParseInt(value, out int retryMs))
+            {
+                retry = retryMs;
+            }
+
+            result = null;
+            return false;
+        }
+
+        // Unknown field — skip per SSE spec.
+        result = null;
+        return false;
     }
 
-    private static bool IsJsonStart(ReadOnlySpan<char> span)
+    private static void AppendDataBytes(ReadOnlySpan<byte> data, ref byte[]? buffer, ref int length)
     {
-        return span[0] is '{' or '[' or '"' or '-' or 't' or 'f' or 'n'
-            || char.IsDigit(span[0]);
+        // Per SSE spec, multiple data: lines are concatenated with \n.
+        int needed = length > 0 ? length + 1 + data.Length : data.Length;
+
+        if (buffer is null || buffer.Length < needed)
+        {
+            int newSize = Math.Max(needed, 256);
+            byte[] newBuffer = ArrayPool<byte>.Shared.Rent(newSize);
+            if (buffer is not null)
+            {
+                buffer.AsSpan(0, length).CopyTo(newBuffer);
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+
+            buffer = newBuffer;
+        }
+
+        if (length > 0)
+        {
+            buffer[length] = (byte)'\n';
+            length++;
+        }
+
+        data.CopyTo(buffer.AsSpan(length));
+        length += data.Length;
+    }
+
+    private static ReadOnlySpan<byte> StripLeadingSpace(ReadOnlySpan<byte> value)
+    {
+        return value.Length > 0 && value[0] == (byte)' ' ? value[1..] : value;
+    }
+
+    private static bool TryParseInt(ReadOnlySpan<byte> utf8, out int value)
+    {
+        return System.Buffers.Text.Utf8Parser.TryParse(utf8, out value, out _);
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private static bool IsJsonStart(byte b)
+    {
+        return b is (byte)'{' or (byte)'[' or (byte)'"' or (byte)'-'
+            or (byte)'t' or (byte)'f' or (byte)'n'
+            or >= (byte)'0' and <= (byte)'9';
     }
 }

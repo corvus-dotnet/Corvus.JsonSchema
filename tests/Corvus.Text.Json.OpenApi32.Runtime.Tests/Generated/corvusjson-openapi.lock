@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-05-19T13:15:06.1746198\u002B00:00",
+  "generatedAt": "2026-05-19T13:28:12.5464587\u002B00:00",
   "generatedFiles": [
     "GetItemRequest.cs",
     "GetItemResponse.cs",
@@ -149,7 +149,7 @@
     "IApiStreamingClient.cs",
     "ApiStreamingClient.cs"
   ],
-  "generatorVersion": "1.0.0\u002B5348fd4a4f90e12bf1b7afb422643148d81b5a44",
+  "generatorVersion": "1.0.0\u002B41bad0da3632db5feb7f6cc90f594d7409f5d911",
   "includePaths": [],
   "rootNamespace": "CanonTests32.Client",
   "specFileHash": "73d2f3a2b5ab1628a9fb0400685afeb24fe641a7643f2cbf9949200702e68794",

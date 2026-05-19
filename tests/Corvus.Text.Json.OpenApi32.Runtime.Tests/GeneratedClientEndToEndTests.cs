@@ -4997,14 +4997,14 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(2, events.Count);
 
         // First event has all metadata
-        Assert.AreEqual("update", events[0].EventType);
-        Assert.AreEqual("evt-001", events[0].Id);
+        Assert.IsTrue(events[0].EventType.Span.SequenceEqual("update"u8));
+        Assert.IsTrue(events[0].Id.Span.SequenceEqual("evt-001"u8));
         Assert.AreEqual(5000, events[0].Retry);
         Assert.AreEqual("evt-1", (string)events[0].Data.EventId);
 
         // Second event has event+id but no retry
-        Assert.AreEqual("create", events[1].EventType);
-        Assert.AreEqual("evt-002", events[1].Id);
+        Assert.IsTrue(events[1].EventType.Span.SequenceEqual("create"u8));
+        Assert.IsTrue(events[1].Id.Span.SequenceEqual("evt-002"u8));
         Assert.IsNull(events[1].Retry);
         Assert.AreEqual("evt-2", (string)events[1].Data.EventId);
     }
@@ -5030,9 +5030,9 @@ public class GeneratedClientEndToEndTests
         }
 
         Assert.AreEqual(2, events.Count);
-        Assert.AreEqual("message", events[0].EventType);
+        Assert.IsTrue(events[0].EventType.Span.SequenceEqual("message"u8));
         Assert.AreEqual("cmpl-1", (string)events[0].Data.Id);
-        Assert.AreEqual("done", events[1].EventType);
+        Assert.IsTrue(events[1].EventType.Span.SequenceEqual("done"u8));
         Assert.AreEqual("cmpl-2", (string)events[1].Data.Id);
     }
 
@@ -5058,8 +5058,8 @@ public class GeneratedClientEndToEndTests
         }
 
         Assert.AreEqual(1, events.Count);
-        Assert.IsNull(events[0].EventType);
-        Assert.IsNull(events[0].Id);
+        Assert.IsTrue(events[0].EventType.IsEmpty);
+        Assert.IsTrue(events[0].Id.IsEmpty);
         Assert.IsNull(events[0].Retry);
         Assert.AreEqual("bare", (string)events[0].Data.EventId);
     }

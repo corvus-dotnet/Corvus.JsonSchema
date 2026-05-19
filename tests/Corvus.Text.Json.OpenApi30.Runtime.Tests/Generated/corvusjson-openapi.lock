@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-05-19T13:15:02.7790561\u002B00:00",
+  "generatedAt": "2026-05-19T13:28:12.3451508\u002B00:00",
   "generatedFiles": [
     "GetItemRequest.cs",
     "GetItemResponse.cs",
@@ -123,7 +123,7 @@
     "IApiFormsClient.cs",
     "ApiFormsClient.cs"
   ],
-  "generatorVersion": "1.0.0\u002B5348fd4a4f90e12bf1b7afb422643148d81b5a44",
+  "generatorVersion": "1.0.0\u002B41bad0da3632db5feb7f6cc90f594d7409f5d911",
   "includePaths": [],
   "rootNamespace": "CanonTests30.Client",
   "specFileHash": "2e39cbfe097e73fe6f546fa7c1f65364210d0283efb477c8b9341678c178da0a",

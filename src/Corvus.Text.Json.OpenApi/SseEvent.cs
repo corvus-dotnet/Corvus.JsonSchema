@@ -8,7 +8,7 @@ namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
 /// Represents a Server-Sent Event (SSE) containing a parsed data payload
-/// and optional SSE metadata fields.
+/// and optional SSE metadata fields as raw UTF-8 bytes.
 /// </summary>
 /// <typeparam name="T">The element type of the parsed data payload.</typeparam>
 public readonly struct SseEvent<T>
@@ -18,10 +18,10 @@ public readonly struct SseEvent<T>
     /// Initializes a new instance of the <see cref="SseEvent{T}"/> struct.
     /// </summary>
     /// <param name="data">The parsed data payload.</param>
-    /// <param name="eventType">The optional SSE event type.</param>
-    /// <param name="id">The optional SSE event ID.</param>
+    /// <param name="eventType">The optional SSE event type as UTF-8 bytes.</param>
+    /// <param name="id">The optional SSE event ID as UTF-8 bytes.</param>
     /// <param name="retry">The optional reconnection time in milliseconds.</param>
-    public SseEvent(T data, string? eventType = null, string? id = null, int? retry = null)
+    public SseEvent(T data, ReadOnlyMemory<byte> eventType = default, ReadOnlyMemory<byte> id = default, int? retry = null)
     {
         this.Data = data;
         this.EventType = eventType;
@@ -35,16 +35,16 @@ public readonly struct SseEvent<T>
     public T Data { get; }
 
     /// <summary>
-    /// Gets the SSE event type (from the <c>event:</c> field), or <see langword="null"/>
-    /// if no event type was specified (defaults to "message" per SSE spec).
+    /// Gets the SSE event type (from the <c>event:</c> field) as UTF-8 bytes.
+    /// Empty if no event type was specified (defaults to "message" per SSE spec).
     /// </summary>
-    public string? EventType { get; }
+    public ReadOnlyMemory<byte> EventType { get; }
 
     /// <summary>
-    /// Gets the SSE event ID (from the <c>id:</c> field), or <see langword="null"/>
-    /// if no ID was specified.
+    /// Gets the SSE event ID (from the <c>id:</c> field) as UTF-8 bytes.
+    /// Empty if no ID was specified.
     /// </summary>
-    public string? Id { get; }
+    public ReadOnlyMemory<byte> Id { get; }
 
     /// <summary>
     /// Gets the reconnection time in milliseconds (from the <c>retry:</c> field),
