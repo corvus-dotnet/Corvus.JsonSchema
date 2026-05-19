@@ -31,6 +31,95 @@ public interface IApiOrdersClient : IAsyncDisposable
     static Uri CreateServerUri() => new("https://api.example.com/v1");
 
     /// <summary>
+    /// Security scheme metadata from the specification.
+    /// </summary>
+    public static class SecuritySchemes
+    {
+
+        /// <summary>
+        /// Gets the name of the <c>bearerAuth</c> security scheme.
+        /// </summary>
+        public static string BearerAuthName => "bearerAuth";
+
+        /// <summary>
+        /// Gets the type of the <c>bearerAuth</c> security scheme.
+        /// </summary>
+        public static string BearerAuthType => "http";
+
+        /// <summary>
+        /// Gets the HTTP scheme for <c>bearerAuth</c>.
+        /// </summary>
+        public static string BearerAuthScheme => "bearer";
+
+
+        /// <summary>
+        /// Gets the name of the <c>apiKeyAuth</c> security scheme.
+        /// </summary>
+        public static string ApiKeyAuthName => "apiKeyAuth";
+
+        /// <summary>
+        /// Gets the type of the <c>apiKeyAuth</c> security scheme.
+        /// </summary>
+        public static string ApiKeyAuthType => "apiKey";
+
+        /// <summary>
+        /// Gets the API key parameter name for <c>apiKeyAuth</c>.
+        /// </summary>
+        public static string ApiKeyAuthKeyName => "X-API-Key";
+
+        /// <summary>
+        /// Gets the API key location for <c>apiKeyAuth</c>.
+        /// </summary>
+        public static string ApiKeyAuthKeyLocation => "header";
+
+
+        /// <summary>
+        /// Gets the name of the <c>legacyApiKey</c> security scheme.
+        /// </summary>
+        [Obsolete("This security scheme is deprecated.")]
+        public static string LegacyApiKeyName => "legacyApiKey";
+
+        /// <summary>
+        /// Gets the type of the <c>legacyApiKey</c> security scheme.
+        /// </summary>
+        [Obsolete("This security scheme is deprecated.")]
+        public static string LegacyApiKeyType => "apiKey";
+
+        /// <summary>
+        /// Gets the API key parameter name for <c>legacyApiKey</c>.
+        /// </summary>
+        [Obsolete("This security scheme is deprecated.")]
+        public static string LegacyApiKeyKeyName => "api_key";
+
+        /// <summary>
+        /// Gets the API key location for <c>legacyApiKey</c>.
+        /// </summary>
+        [Obsolete("This security scheme is deprecated.")]
+        public static string LegacyApiKeyKeyLocation => "query";
+
+
+        /// <summary>
+        /// Gets the name of the <c>oauth2</c> security scheme.
+        /// </summary>
+        public static string Oauth2Name => "oauth2";
+
+        /// <summary>
+        /// Gets the type of the <c>oauth2</c> security scheme.
+        /// </summary>
+        public static string Oauth2Type => "oauth2";
+
+        /// <summary>
+        /// Gets the OAuth2 metadata URL for <c>oauth2</c>.
+        /// </summary>
+        public static string Oauth2Oauth2MetadataUrl => "https://auth.example.com/.well-known/oauth-authorization-server";
+
+        /// <summary>
+        /// Gets the device authorization URL for <c>oauth2</c>.
+        /// </summary>
+        public static string Oauth2DeviceAuthorizationUrl => "https://auth.example.com/device";
+    }
+
+    /// <summary>
     /// Get order â€” inherits path-level orderId and X-Trace-Id
     /// </summary>
     /// <param name="orderId">The orderId parameter.</param>

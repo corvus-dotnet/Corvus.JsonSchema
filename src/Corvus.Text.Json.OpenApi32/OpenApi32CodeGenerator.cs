@@ -148,6 +148,19 @@ public sealed class OpenApi32CodeGenerator
         string ParameterName,
         string Expression);
 
+    private readonly record struct SecuritySchemeInfo(
+        string SchemeName,
+        string SchemeType,
+        bool IsDeprecated,
+        string? Description,
+        string? ApiKeyName,
+        string? ApiKeyIn,
+        string? HttpScheme,
+        string? BearerFormat,
+        string? OpenIdConnectUrl,
+        string? Oauth2MetadataUrl,
+        string? DeviceAuthorizationUrl);
+
     /// <summary>
     /// Walks the OpenAPI 3.2 specification and collects all schema
     /// JSON Pointer strings reachable from the selected operations.
@@ -289,6 +302,7 @@ public sealed class OpenApi32CodeGenerator
         List<OperationInfo> operations = [];
         ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
         string? documentSelf = GetDocumentSelf(specRoot);
+        SecuritySchemeInfo[] securitySchemes = PrepareSecuritySchemes(specRoot);
 
         foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
         {
@@ -307,7 +321,7 @@ public sealed class OpenApi32CodeGenerator
         foreach ((string tag, List<OperationInfo> tagOps) in groups)
         {
             string clientName = this.GetClientName(tag);
-            files.Add(this.EmitInterface(clientName, tagOps, rootServer, documentSelf));
+            files.Add(this.EmitInterface(clientName, tagOps, rootServer, documentSelf, securitySchemes));
             files.Add(this.EmitImplementation(clientName, tagOps));
         }
 
@@ -1909,6 +1923,79 @@ public sealed class OpenApi32CodeGenerator
     {
         OpenApiDocument doc = specRoot;
         return doc.Self.IsNotUndefined() ? doc.Self.GetString() : null;
+    }
+
+    private static SecuritySchemeInfo[] PrepareSecuritySchemes(JsonElement specRoot)
+    {
+        OpenApiDocument doc = specRoot;
+        if (doc.ComponentsValue.IsUndefined() || doc.ComponentsValue.SecuritySchemes.IsUndefined())
+        {
+            return [];
+        }
+
+        List<SecuritySchemeInfo> result = [];
+
+        foreach (var schemeProp in doc.ComponentsValue.SecuritySchemes.EnumerateObject())
+        {
+            OpenApiDocument.SecuritySchemeOrReference schemeOrRef = schemeProp.Value;
+            OpenApiDocument.SecurityScheme scheme = OpenApiDocument.SecurityScheme.From(schemeOrRef);
+
+            string schemeName = schemeProp.Name;
+            string schemeType = scheme.Type.IsNotUndefined() ? scheme.Type.GetString()! : "unknown";
+            bool isDeprecated = scheme.Deprecated.IsNotUndefined() && (bool)scheme.Deprecated;
+            string? description = scheme.Description.IsNotUndefined() ? scheme.Description.GetString() : null;
+
+            string? apiKeyName = null;
+            string? apiKeyIn = null;
+            string? httpScheme = null;
+            string? bearerFormat = null;
+            string? openIdConnectUrl = null;
+            string? oauth2MetadataUrl = null;
+            string? deviceAuthorizationUrl = null;
+
+            if (string.Equals(schemeType, "apiKey", StringComparison.Ordinal))
+            {
+                apiKeyName = scheme.Name.IsNotUndefined() ? scheme.Name.GetString() : null;
+                apiKeyIn = scheme.In.IsNotUndefined() ? scheme.In.GetString() : null;
+            }
+            else if (string.Equals(schemeType, "http", StringComparison.Ordinal))
+            {
+                httpScheme = scheme.Scheme.IsNotUndefined() ? scheme.Scheme.GetString() : null;
+                bearerFormat = scheme.BearerFormat.IsNotUndefined() ? scheme.BearerFormat.GetString() : null;
+            }
+            else if (string.Equals(schemeType, "openIdConnect", StringComparison.Ordinal))
+            {
+                openIdConnectUrl = scheme.OpenIdConnectUrl.IsNotUndefined() ? scheme.OpenIdConnectUrl.GetString() : null;
+            }
+            else if (string.Equals(schemeType, "oauth2", StringComparison.Ordinal))
+            {
+                oauth2MetadataUrl = scheme.Oauth2MetadataUrl.IsNotUndefined() ? scheme.Oauth2MetadataUrl.GetString() : null;
+
+                if (scheme.Flows.IsNotUndefined() && scheme.Flows.DeviceAuthorization.IsNotUndefined())
+                {
+                    var deviceFlow = scheme.Flows.DeviceAuthorization;
+                    if (deviceFlow.DeviceAuthorizationUrl.IsNotUndefined())
+                    {
+                        deviceAuthorizationUrl = deviceFlow.DeviceAuthorizationUrl.GetString();
+                    }
+                }
+            }
+
+            result.Add(new SecuritySchemeInfo(
+                schemeName,
+                schemeType,
+                isDeprecated,
+                description,
+                apiKeyName,
+                apiKeyIn,
+                httpScheme,
+                bearerFormat,
+                openIdConnectUrl,
+                oauth2MetadataUrl,
+                deviceAuthorizationUrl));
+        }
+
+        return [.. result];
     }
 
     private static ServerInfo? ExtractServerInfo(OpenApiDocument.Server server)
@@ -3981,7 +4068,8 @@ public sealed class OpenApi32CodeGenerator
         string clientName,
         IReadOnlyList<OperationInfo> operations,
         ServerInfo? serverInfo,
-        string? documentSelf = null)
+        string? documentSelf = null,
+        SecuritySchemeInfo[]? securitySchemes = null)
     {
         IndentedWriter w = new();
 
@@ -4008,6 +4096,11 @@ public sealed class OpenApi32CodeGenerator
         if (serverInfo is { } si)
         {
             EmitCreateServerUri(w, si);
+        }
+
+        if (securitySchemes is { Length: > 0 })
+        {
+            EmitSecuritySchemeMetadata(w, securitySchemes);
         }
 
         for (int i = 0; i < operations.Count; i++)
@@ -4093,6 +4186,92 @@ public sealed class OpenApi32CodeGenerator
         }
 
         w.WriteLine();
+    }
+
+    private static void EmitSecuritySchemeMetadata(IndentedWriter w, SecuritySchemeInfo[] schemes)
+    {
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Security scheme metadata from the specification.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("public static class SecuritySchemes");
+        w.OpenBrace();
+
+        for (int i = 0; i < schemes.Length; i++)
+        {
+            if (i > 0)
+            {
+                w.WriteLine();
+            }
+
+            SecuritySchemeInfo scheme = schemes[i];
+            string propName = CodeEmitHelpers.SanitizeIdentifier(scheme.SchemeName);
+
+            EmitSecurityProperty(w, scheme, propName, "Name", scheme.SchemeName,
+                $"Gets the name of the <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c> security scheme.");
+
+            EmitSecurityProperty(w, scheme, propName, "Type", scheme.SchemeType,
+                $"Gets the type of the <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c> security scheme.");
+
+            if (scheme.HttpScheme is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "Scheme", scheme.HttpScheme,
+                    $"Gets the HTTP scheme for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.ApiKeyName is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "KeyName", scheme.ApiKeyName,
+                    $"Gets the API key parameter name for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.ApiKeyIn is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "KeyLocation", scheme.ApiKeyIn,
+                    $"Gets the API key location for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.OpenIdConnectUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "OpenIdConnectUrl", scheme.OpenIdConnectUrl,
+                    $"Gets the OpenID Connect discovery URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.Oauth2MetadataUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "Oauth2MetadataUrl", scheme.Oauth2MetadataUrl,
+                    $"Gets the OAuth2 metadata URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+
+            if (scheme.DeviceAuthorizationUrl is not null)
+            {
+                EmitSecurityProperty(w, scheme, propName, "DeviceAuthorizationUrl", scheme.DeviceAuthorizationUrl,
+                    $"Gets the device authorization URL for <c>{CodeEmitHelpers.EscapeXml(scheme.SchemeName)}</c>.");
+            }
+        }
+
+        w.CloseBrace();
+        w.WriteLine();
+    }
+
+    private static void EmitSecurityProperty(
+        IndentedWriter w,
+        SecuritySchemeInfo scheme,
+        string propName,
+        string suffix,
+        string value,
+        string docSummary)
+    {
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// {docSummary}");
+        w.WriteLine("/// </summary>");
+        if (scheme.IsDeprecated)
+        {
+            w.WriteLine("[Obsolete(\"This security scheme is deprecated.\")]");
+        }
+
+        w.WriteLine(
+            $"public static string {propName}{suffix} => {CodeEmitHelpers.FormatStringLiteral(value)};");
     }
 
     private void EmitInterfaceMethodSignature(IndentedWriter w, OperationInfo op)

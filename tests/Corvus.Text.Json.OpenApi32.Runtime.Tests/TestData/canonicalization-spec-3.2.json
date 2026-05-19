@@ -2711,5 +2711,47 @@
         }
       }
     }
+  },
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      },
+      "apiKeyAuth": {
+        "type": "apiKey",
+        "name": "X-API-Key",
+        "in": "header"
+      },
+      "legacyApiKey": {
+        "type": "apiKey",
+        "name": "api_key",
+        "in": "query",
+        "deprecated": true,
+        "description": "Use bearerAuth instead."
+      },
+      "oauth2": {
+        "type": "oauth2",
+        "oauth2MetadataUrl": "https://auth.example.com/.well-known/oauth-authorization-server",
+        "flows": {
+          "authorizationCode": {
+            "authorizationUrl": "https://auth.example.com/authorize",
+            "tokenUrl": "https://auth.example.com/token",
+            "scopes": {
+              "read": "Read access",
+              "write": "Write access"
+            }
+          },
+          "deviceAuthorization": {
+            "deviceAuthorizationUrl": "https://auth.example.com/device",
+            "tokenUrl": "https://auth.example.com/token",
+            "scopes": {
+              "read": "Read access"
+            }
+          }
+        }
+      }
+    }
   }
 }

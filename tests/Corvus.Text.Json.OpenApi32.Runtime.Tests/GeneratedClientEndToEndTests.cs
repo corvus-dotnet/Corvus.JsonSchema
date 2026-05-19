@@ -2911,6 +2911,54 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(IApiItemsClient.DocumentIdentityUri, IApiTextClient.DocumentIdentityUri);
     }
 
+    // ── 3.2-specific: Security scheme metadata ──────────────────────────
+    [TestMethod]
+    public void SecuritySchemes_BearerAuth_HasCorrectMetadata()
+    {
+        Assert.AreEqual("bearerAuth", IApiItemsClient.SecuritySchemes.BearerAuthName);
+        Assert.AreEqual("http", IApiItemsClient.SecuritySchemes.BearerAuthType);
+        Assert.AreEqual("bearer", IApiItemsClient.SecuritySchemes.BearerAuthScheme);
+    }
+
+    [TestMethod]
+    public void SecuritySchemes_ApiKeyAuth_HasCorrectMetadata()
+    {
+        Assert.AreEqual("apiKeyAuth", IApiItemsClient.SecuritySchemes.ApiKeyAuthName);
+        Assert.AreEqual("apiKey", IApiItemsClient.SecuritySchemes.ApiKeyAuthType);
+        Assert.AreEqual("X-API-Key", IApiItemsClient.SecuritySchemes.ApiKeyAuthKeyName);
+        Assert.AreEqual("header", IApiItemsClient.SecuritySchemes.ApiKeyAuthKeyLocation);
+    }
+
+    [TestMethod]
+    public void SecuritySchemes_LegacyApiKey_IsDeprecated()
+    {
+        // The LegacyApiKey properties have [Obsolete] — verify they are still accessible.
+#pragma warning disable CS0618 // Obsolete
+        Assert.AreEqual("legacyApiKey", IApiItemsClient.SecuritySchemes.LegacyApiKeyName);
+        Assert.AreEqual("apiKey", IApiItemsClient.SecuritySchemes.LegacyApiKeyType);
+        Assert.AreEqual("api_key", IApiItemsClient.SecuritySchemes.LegacyApiKeyKeyName);
+        Assert.AreEqual("query", IApiItemsClient.SecuritySchemes.LegacyApiKeyKeyLocation);
+#pragma warning restore CS0618
+    }
+
+    [TestMethod]
+    public void SecuritySchemes_Oauth2_HasMetadataUrl()
+    {
+        Assert.AreEqual("oauth2", IApiItemsClient.SecuritySchemes.Oauth2Name);
+        Assert.AreEqual("oauth2", IApiItemsClient.SecuritySchemes.Oauth2Type);
+        Assert.AreEqual(
+            "https://auth.example.com/.well-known/oauth-authorization-server",
+            IApiItemsClient.SecuritySchemes.Oauth2Oauth2MetadataUrl);
+    }
+
+    [TestMethod]
+    public void SecuritySchemes_Oauth2_HasDeviceAuthorizationUrl()
+    {
+        Assert.AreEqual(
+            "https://auth.example.com/device",
+            IApiItemsClient.SecuritySchemes.Oauth2DeviceAuthorizationUrl);
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.
