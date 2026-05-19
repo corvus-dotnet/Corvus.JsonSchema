@@ -83,6 +83,11 @@ internal static class OpenApiCommandHelpers
             {
                 return "3.0";
             }
+
+            if (v?.StartsWith("3.2", StringComparison.Ordinal) == true)
+            {
+                return "3.2";
+            }
         }
 
         return "3.1";

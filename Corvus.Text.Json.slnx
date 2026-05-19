@@ -43,7 +43,9 @@
     <Project Path="src-v4/Corvus.Json.CodeGeneration.OpenApi31/Corvus.Json.CodeGeneration.OpenApi31.csproj" />
   </Folder>
   <Folder Name="/src-v4/" />
-  <Folder Name="/src/" />
+  <Folder Name="/src/">
+    <Project Path="src/Corvus.Text.Json.OpenApi32/Corvus.Text.Json.OpenApi32.csproj" />
+  </Folder>
   <Folder Name="/tests-v4/">
     <Project Path="tests-v4/Corvus.Json.Specs.Tests/Corvus.Json.Specs.Tests.csproj" />
   </Folder>

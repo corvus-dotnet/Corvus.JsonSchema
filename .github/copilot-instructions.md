@@ -221,6 +221,7 @@ finally
 - **`SR` alias** — `using SR = Resources.Strings;` (or the project-specific variant) is a global using. Use `SR.ExceptionMessageName` for all user-facing strings; define new strings in the `.resx` file.
 - **Disabled warnings** — `JSON001`, `CS8500`, `IDE0065`, `IDE0290` are suppressed project-wide; don't add `#pragma warning disable` for these.
 - **EditorConfig** — 4-space indentation, `csharp_new_line_before_open_brace = all`. Generated files must be marked `generated_code = true` in `.editorconfig` entries.
+- **No trailing newline in `.cs` files** — StyleCop SA1518 is enforced as an error (`TreatWarningsAsErrors=true`). Source files must end immediately after the final `;` or `}` with **no** trailing newline character. When creating new `.cs` files, ensure the content does not end with `\n`.
 - **JSON Schema test suite** — `JSON-Schema-Test-Suite/` is a git submodule. Run `.\update-json-schema-test-suite.ps1` to update the submodule and regenerate V5 test classes. See `docs/RunningTests.md` for manual regeneration details.
 - **`BigNumber`** — the custom arbitrary-precision decimal struct lives in `Corvus.Numerics`. Prefer it over `decimal` when the JSON value may have precision beyond 28 significant digits.
 - **Test-first bug fixes** — never implement a fix for a suspected bug without first writing a test that reproduces the problem. The test must fail before the fix and pass after. If you cannot reproduce the bug with a test, do not change production code.

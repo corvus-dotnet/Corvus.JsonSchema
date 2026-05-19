@@ -9,6 +9,7 @@ using Corvus.Text.Json.OpenApi;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
+using Corvus.Text.Json.OpenApi32;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -59,9 +60,12 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
         AnsiConsole.WriteLine();
 
         // List operations
-        OperationSummary[] operations = specVersion == "3.0"
-            ? OpenApi30CodeGenerator.ListOperations(specRoot, filter)
-            : OpenApi31CodeGenerator.ListOperations(specRoot, filter);
+        OperationSummary[] operations = specVersion switch
+        {
+            "3.0" => OpenApi30CodeGenerator.ListOperations(specRoot, filter),
+            "3.2" => OpenApi32CodeGenerator.ListOperations(specRoot, filter),
+            _ => OpenApi31CodeGenerator.ListOperations(specRoot, filter),
+        };
 
         if (operations.Length == 0)
         {

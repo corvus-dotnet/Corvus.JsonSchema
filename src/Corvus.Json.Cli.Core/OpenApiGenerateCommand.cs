@@ -11,6 +11,7 @@ using Corvus.Text.Json.CodeGeneration;
 using Corvus.Text.Json.OpenApi.CodeGeneration;
 using Corvus.Text.Json.OpenApi30;
 using Corvus.Text.Json.OpenApi31;
+using Corvus.Text.Json.OpenApi32;
 using Spectre.Console;
 using Spectre.Console.Cli;
 
@@ -102,7 +103,31 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             IReadOnlyList<GeneratedFile> files;
             string modelsPath = Path.Combine(outputPath, "Models");
 
-            if (specVersion is "3.1" or not "3.0")
+            if (specVersion is "3.2")
+            {
+                // OpenAPI 3.2 — use the 3.2 typed code generator
+                SchemaReference[] schemaRefs = OpenApi32CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
+
+                AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
+                AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
+
+                Dictionary<string, string>? schemaTypeMap = schemaRefs.Length > 0
+                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                        .ConfigureAwait(false)
+                    : null;
+
+                if (schemaTypeMap is not null)
+                {
+                    AnsiConsole.MarkupLine($"[green]Resolved schema types:[/] {schemaTypeMap.Count}");
+                }
+
+                OpenApi32CodeGenerator generator = new(
+                    rootNamespace,
+                    schemaTypeMap ?? new Dictionary<string, string>(),
+                    settings.ClientName);
+                files = generator.Generate(specRoot, filter, referenceResolver);
+            }
+            else if (specVersion is "3.1" or not "3.0")
             {
                 // OpenAPI 3.1 (or unknown) — use the typed code generator directly
                 SchemaReference[] schemaRefs = OpenApi31CodeGenerator.CollectSchemaPointers(specRoot, out var parameterNames, filter, referenceResolver);
