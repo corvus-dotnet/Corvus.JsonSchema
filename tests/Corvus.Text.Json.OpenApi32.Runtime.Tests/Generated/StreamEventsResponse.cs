@@ -41,6 +41,7 @@ public struct StreamEventsResponse : IApiResponse<StreamEventsResponse>
     /// <returns>An async enumerable of <see cref="CanonTests32.Client.ItemSchema"/> items.</returns>
     /// <remarks>
     /// <para>The response stream is read line-by-line. Supports NDJSON and SSE formats.</para>
+    /// <para>For SSE streams, use <see cref="EnumerateOkSseItems"/> to access event metadata.</para>
     /// <para>The response must not be disposed until enumeration is complete.</para>
     /// </remarks>
     public IAsyncEnumerable<CanonTests32.Client.ItemSchema> EnumerateOkItems(CancellationToken cancellationToken = default)
@@ -51,6 +52,27 @@ public struct StreamEventsResponse : IApiResponse<StreamEventsResponse>
         }
 
         return JsonStreamReader.ReadItemsAsync<CanonTests32.Client.ItemSchema>(this.itemStream, cancellationToken);
+    }
+
+    /// <summary>
+    /// Enumerates the streaming SSE events from the 200 response,
+    /// including event metadata (event type, id, retry).
+    /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>An async enumerable of SSE events wrapping <see cref="CanonTests32.Client.ItemSchema"/> items.</returns>
+    /// <remarks>
+    /// <para>Use this method when consuming Server-Sent Events and you need access to
+    /// the event type, id, or retry metadata fields.</para>
+    /// <para>The response must not be disposed until enumeration is complete.</para>
+    /// </remarks>
+    public IAsyncEnumerable<SseEvent<CanonTests32.Client.ItemSchema>> EnumerateOkSseItems(CancellationToken cancellationToken = default)
+    {
+        if (this.itemStream is null)
+        {
+            throw new InvalidOperationException("No streaming content is available.");
+        }
+
+        return JsonStreamReader.ReadSseItemsAsync<CanonTests32.Client.ItemSchema>(this.itemStream, cancellationToken);
     }
 
     /// <inheritdoc/>

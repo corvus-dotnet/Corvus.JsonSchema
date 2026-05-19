@@ -3761,6 +3761,7 @@ public sealed class OpenApi32CodeGenerator
 
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
 
+            // Raw items method (NDJSON/SSE — strips metadata, yields data only).
             w.WriteLine();
             w.WriteLine("/// <summary>");
             w.WriteLine($"/// Enumerates the streaming items from the {resp.StatusCode} response.");
@@ -3769,6 +3770,7 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine($"/// <returns>An async enumerable of <see cref=\"{itemTypeName}\"/> items.</returns>");
             w.WriteLine("/// <remarks>");
             w.WriteLine("/// <para>The response stream is read line-by-line. Supports NDJSON and SSE formats.</para>");
+            w.WriteLine($"/// <para>For SSE streams, use <see cref=\"Enumerate{accessorName}SseItems\"/> to access event metadata.</para>");
             w.WriteLine("/// <para>The response must not be disposed until enumeration is complete.</para>");
             w.WriteLine("/// </remarks>");
             w.WriteLine($"public IAsyncEnumerable<{itemTypeName}> Enumerate{accessorName}Items(CancellationToken cancellationToken = default)");
@@ -3779,6 +3781,29 @@ public sealed class OpenApi32CodeGenerator
             w.CloseBrace();
             w.WriteLine();
             w.WriteLine($"return JsonStreamReader.ReadItemsAsync<{itemTypeName}>(this.itemStream, cancellationToken);");
+            w.CloseBrace();
+
+            // SSE items method (preserves event metadata).
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Enumerates the streaming SSE events from the {resp.StatusCode} response,");
+            w.WriteLine("/// including event metadata (event type, id, retry).");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+            w.WriteLine($"/// <returns>An async enumerable of SSE events wrapping <see cref=\"{itemTypeName}\"/> items.</returns>");
+            w.WriteLine("/// <remarks>");
+            w.WriteLine("/// <para>Use this method when consuming Server-Sent Events and you need access to");
+            w.WriteLine("/// the event type, id, or retry metadata fields.</para>");
+            w.WriteLine("/// <para>The response must not be disposed until enumeration is complete.</para>");
+            w.WriteLine("/// </remarks>");
+            w.WriteLine($"public IAsyncEnumerable<SseEvent<{itemTypeName}>> Enumerate{accessorName}SseItems(CancellationToken cancellationToken = default)");
+            w.OpenBrace();
+            w.WriteLine("if (this.itemStream is null)");
+            w.OpenBrace();
+            w.WriteLine("throw new InvalidOperationException(\"No streaming content is available.\");");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"return JsonStreamReader.ReadSseItemsAsync<{itemTypeName}>(this.itemStream, cancellationToken);");
             w.CloseBrace();
         }
     }

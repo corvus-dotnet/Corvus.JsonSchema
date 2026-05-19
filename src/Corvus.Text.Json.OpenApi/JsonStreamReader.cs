@@ -89,6 +89,129 @@ public static class JsonStreamReader
         }
     }
 
+    /// <summary>
+    /// Asynchronously reads Server-Sent Events from a stream, yielding each event
+    /// with its associated metadata (event type, id, retry).
+    /// </summary>
+    /// <typeparam name="T">The element type to parse each JSON data payload into.</typeparam>
+    /// <param name="stream">The source SSE stream.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>An async enumerable of SSE events containing parsed data and metadata.</returns>
+    /// <remarks>
+    /// <para>Per the SSE specification, events are delimited by blank lines. Metadata fields
+    /// (<c>event:</c>, <c>id:</c>, <c>retry:</c>) are accumulated until a <c>data:</c> field
+    /// is encountered, at which point an event is yielded. Metadata resets for the next event
+    /// after a blank line.</para>
+    /// <para>Multi-line data fields (multiple consecutive <c>data:</c> lines before a blank line)
+    /// are concatenated with newlines per the SSE spec.</para>
+    /// </remarks>
+    public static async IAsyncEnumerable<SseEvent<T>> ReadSseItemsAsync<T>(
+        Stream stream,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+        where T : struct, IJsonElement<T>
+    {
+        using StreamReader reader = new(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true, leaveOpen: true);
+
+        string? eventType = null;
+        string? id = null;
+        int? retry = null;
+        StringBuilder? dataBuffer = null;
+
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            string? line = await reader.ReadLineAsync(cancellationToken).ConfigureAwait(false);
+            if (line is null)
+            {
+                // End of stream — flush any pending event.
+                if (dataBuffer is { Length: > 0 })
+                {
+                    yield return ParseSseEvent<T>(dataBuffer.ToString(), eventType, id, retry);
+                }
+
+                yield break;
+            }
+
+            ReadOnlySpan<char> span = line.AsSpan();
+
+            // Blank line = event boundary per SSE spec.
+            if (span.IsEmpty)
+            {
+                if (dataBuffer is { Length: > 0 })
+                {
+                    yield return ParseSseEvent<T>(dataBuffer.ToString(), eventType, id, retry);
+                    dataBuffer.Clear();
+                }
+
+                // Reset metadata for next event.
+                eventType = null;
+                id = null;
+                retry = null;
+                continue;
+            }
+
+            // Comment lines start with ':'.
+            if (span[0] == ':')
+            {
+                continue;
+            }
+
+            // Parse field name and value.
+            int colonIndex = span.IndexOf(':');
+            if (colonIndex < 0)
+            {
+                // Field with no value (treated as empty string per spec) — skip.
+                continue;
+            }
+
+            ReadOnlySpan<char> fieldName = span[..colonIndex];
+            ReadOnlySpan<char> fieldValue = span[(colonIndex + 1)..];
+            if (fieldValue.Length > 0 && fieldValue[0] == ' ')
+            {
+                fieldValue = fieldValue[1..];
+            }
+
+            if (fieldName.SequenceEqual("data".AsSpan()))
+            {
+                dataBuffer ??= new StringBuilder();
+                if (dataBuffer.Length > 0)
+                {
+                    dataBuffer.Append('\n');
+                }
+
+                dataBuffer.Append(fieldValue.ToString());
+            }
+            else if (fieldName.SequenceEqual("event".AsSpan()))
+            {
+                eventType = fieldValue.ToString();
+            }
+            else if (fieldName.SequenceEqual("id".AsSpan()))
+            {
+                id = fieldValue.ToString();
+            }
+            else if (fieldName.SequenceEqual("retry".AsSpan()))
+            {
+                if (int.TryParse(fieldValue, out int retryMs))
+                {
+                    retry = retryMs;
+                }
+            }
+        }
+
+        // Cancellation requested — flush any pending event.
+        if (dataBuffer is { Length: > 0 })
+        {
+            yield return ParseSseEvent<T>(dataBuffer.ToString(), eventType, id, retry);
+        }
+    }
+
+    private static SseEvent<T> ParseSseEvent<T>(string data, string? eventType, string? id, int? retry)
+        where T : struct, IJsonElement<T>
+    {
+        byte[] utf8Bytes = Encoding.UTF8.GetBytes(data);
+        T parsed = JsonElementHelpers.ParseValue<T>(utf8Bytes);
+        return new SseEvent<T>(parsed, eventType, id, retry);
+    }
+
     private static bool IsJsonStart(ReadOnlySpan<char> span)
     {
         return span[0] is '{' or '[' or '"' or '-' or 't' or 'f' or 'n'

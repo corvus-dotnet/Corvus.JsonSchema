@@ -4971,6 +4971,113 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual("default:200", result);
     }
 
+    // ── SSE metadata (EnumerateOkSseItems) tests ─────────────────────────
+    [TestMethod]
+    public async Task StreamEvents_200_SseItemsPreservesMetadata()
+    {
+        const string SseBody = "event: update\nid: evt-001\nretry: 5000\ndata: {\"eventId\":\"evt-1\",\"eventType\":\"update\",\"timestamp\":\"2024-01-01T00:00:00Z\",\"payload\":{\"key\":\"v1\"}}\n\nevent: create\nid: evt-002\ndata: {\"eventId\":\"evt-2\",\"eventType\":\"create\",\"timestamp\":\"2024-01-02T00:00:00Z\",\"payload\":{\"key\":\"v2\"}}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+
+        List<SseEvent<ItemSchema>> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            events.Add(evt);
+        }
+
+        Assert.AreEqual(2, events.Count);
+
+        // First event has all metadata
+        Assert.AreEqual("update", events[0].EventType);
+        Assert.AreEqual("evt-001", events[0].Id);
+        Assert.AreEqual(5000, events[0].Retry);
+        Assert.AreEqual("evt-1", (string)events[0].Data.EventId);
+
+        // Second event has event+id but no retry
+        Assert.AreEqual("create", events[1].EventType);
+        Assert.AreEqual("evt-002", events[1].Id);
+        Assert.IsNull(events[1].Retry);
+        Assert.AreEqual("evt-2", (string)events[1].Data.EventId);
+    }
+
+    [TestMethod]
+    public async Task ChatCompletions_200_SseItemsPreservesEventType()
+    {
+        const string SseBody = "event: message\ndata: {\"id\":\"cmpl-1\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"Hello\"}}]}\n\nevent: done\ndata: {\"id\":\"cmpl-2\",\"choices\":[{\"index\":0,\"delta\":{\"content\":\"\"}}]}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        ChatCompletionsRequest request = default;
+        await using ChatCompletionsResponse response = await harness.Transport
+            .SendAsync<ChatCompletionsRequest, ChatCompletionsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<SseEvent<ItemSchema1>> events = [];
+        await foreach (SseEvent<ItemSchema1> evt in response.EnumerateOkSseItems())
+        {
+            events.Add(evt);
+        }
+
+        Assert.AreEqual(2, events.Count);
+        Assert.AreEqual("message", events[0].EventType);
+        Assert.AreEqual("cmpl-1", (string)events[0].Data.Id);
+        Assert.AreEqual("done", events[1].EventType);
+        Assert.AreEqual("cmpl-2", (string)events[1].Data.Id);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseItemsNoMetadataYieldsNulls()
+    {
+        // SSE data without any metadata fields — EventType, Id, Retry should be null
+        const string SseBody = "data: {\"eventId\":\"bare\"}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<SseEvent<ItemSchema>> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            events.Add(evt);
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.IsNull(events[0].EventType);
+        Assert.IsNull(events[0].Id);
+        Assert.IsNull(events[0].Retry);
+        Assert.AreEqual("bare", (string)events[0].Data.EventId);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_401_EnumerateSseThrowsWhenNoStream()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Unauthorized, """{"message":"unauthorized"}""");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        Assert.ThrowsExactly<InvalidOperationException>(() => response.EnumerateOkSseItems());
+    }
+
     private sealed class SequencedMockHandler : DelegatingHandler
     {
         private readonly IReadOnlyList<(HttpStatusCode StatusCode, string ResponseBody)> responses;

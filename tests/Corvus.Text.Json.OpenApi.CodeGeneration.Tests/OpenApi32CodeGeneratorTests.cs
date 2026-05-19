@@ -387,8 +387,14 @@ public class OpenApi32CodeGeneratorTests
             responseFile.Content.Contains("EnumerateOkItems"),
             "Expected EnumerateOkItems method in streaming response");
         Assert.IsTrue(
+            responseFile.Content.Contains("EnumerateOkSseItems"),
+            "Expected EnumerateOkSseItems method in streaming response");
+        Assert.IsTrue(
             responseFile.Content.Contains("IAsyncEnumerable"),
             "Expected IAsyncEnumerable return type in streaming response");
+        Assert.IsTrue(
+            responseFile.Content.Contains("SseEvent<"),
+            "Expected SseEvent<T> return type for SSE method");
     }
 
     [TestMethod]
@@ -508,6 +514,253 @@ public class OpenApi32CodeGeneratorTests
         Assert.IsTrue(
             responseFile.Content.Contains("EnumerateOkItems"),
             "Expected EnumerateOkItems method in MOVE streaming response");
+    }
+
+    [TestMethod]
+    public void Generate_DocumentSelfEmitsIdentityUri()
+    {
+        // $self at root should produce DocumentIdentityUri in the interface
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile interfaceFile = files.First(f => f.FileName == "IApiDefaultClient.cs");
+
+        Assert.IsTrue(
+            interfaceFile.Content.Contains("DocumentIdentityUri"),
+            "Expected DocumentIdentityUri property in interface");
+        Assert.IsTrue(
+            interfaceFile.Content.Contains("covspec-3.2.json"),
+            "Expected the $self URI value in the interface");
+    }
+
+    [TestMethod]
+    public void Generate_OptionsOperationProducesMethod()
+    {
+        // OPTIONS on /items (no operationId) should produce OptionsItems method
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile clientFile = files.First(f => f.FileName == "ApiDefaultClient.cs");
+
+        Assert.IsTrue(
+            clientFile.Content.Contains("OptionsItemsAsync"),
+            "Expected OptionsItemsAsync method for OPTIONS /items");
+    }
+
+    [TestMethod]
+    public void Generate_PatchOperationProducesMethod()
+    {
+        // PATCH on /items/{itemId} (no operationId) should produce PatchItemsItemId method
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile clientFile = files.First(f => f.FileName == "ApiDefaultClient.cs");
+
+        Assert.IsTrue(
+            clientFile.Content.Contains("PatchItemsItemIdAsync"),
+            "Expected PatchItemsItemIdAsync method for PATCH /items/{itemId}");
+    }
+
+    [TestMethod]
+    public void Generate_TraceOperationProducesMethod()
+    {
+        // TRACE on /health (no operationId) should produce TraceHealth method
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile clientFile = files.First(f => f.FileName == "ApiDefaultClient.cs");
+
+        Assert.IsTrue(
+            clientFile.Content.Contains("TraceHealthAsync"),
+            "Expected TraceHealthAsync method for TRACE /health");
+    }
+
+    [TestMethod]
+    public void Generate_StreamBodyProducesSendWithStreamBody()
+    {
+        // POST /upload-raw with application/octet-stream body should use SendWithStreamBodyAsyncCore
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile clientFile = files.First(f => f.FileName == "ApiDefaultClient.cs");
+
+        Assert.IsTrue(
+            clientFile.Content.Contains("UploadRawFileAsync"),
+            "Expected UploadRawFileAsync method");
+        Assert.IsTrue(
+            clientFile.Content.Contains("Stream body"),
+            "Expected Stream body parameter for octet-stream upload");
+        Assert.IsTrue(
+            clientFile.Content.Contains("SendWithStreamBodyAsyncCore"),
+            "Expected SendWithStreamBodyAsyncCore call for stream upload");
+    }
+
+    [TestMethod]
+    public void Generate_OperationDescriptionEmitsRemarks()
+    {
+        // /items GET has a description — should emit <remarks> in generated docs
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile interfaceFile = files.First(f => f.FileName == "IApiDefaultClient.cs");
+
+        Assert.IsTrue(
+            interfaceFile.Content.Contains("<remarks>"),
+            "Expected <remarks> XML doc for operation with description");
+        Assert.IsTrue(
+            interfaceFile.Content.Contains("Returns all items matching optional filters"),
+            "Expected description text in remarks");
+    }
+
+    [TestMethod]
+    public void Generate_PathItemRefResolvesOperations()
+    {
+        // /versions/{versionId} uses $ref to components/pathItems/VersionedResource
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile clientFile = files.First(f => f.FileName == "ApiDefaultClient.cs");
+
+        Assert.IsTrue(
+            clientFile.Content.Contains("GetResourceVersionAsync"),
+            "Expected GetResourceVersionAsync method from pathItem $ref");
+    }
+
+    [TestMethod]
+    public void Generate_CookieParameterIncludedInRequest()
+    {
+        // /search-qs GET has a cookie parameter session_id
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile requestFile = files.First(f => f.FileName == "SearchWithQuerystringRequest.cs");
+
+        Assert.IsTrue(
+            requestFile.Content.Contains("sessionId") || requestFile.Content.Contains("session_id"),
+            "Expected session_id cookie parameter in search request struct");
+    }
+
+    [TestMethod]
+    public void Generate_OperationRefLinkSkipsGracefully()
+    {
+        // /items/{itemId} GET 200 has a link with operationRef — should be skipped (deferred)
+        // The generation should still succeed without errors
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        // Just verify generation succeeds and the response file exists
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "GetItemResponse.cs"),
+            "Expected GetItemResponse.cs to be generated despite operationRef link");
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_FindsPathItemRefSchemas()
+    {
+        // The pathItem $ref should have its schemas collected
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(covspecRoot, out _)];
+
+        Assert.IsTrue(
+            refs.Any(r => r.PositionalPointer.Contains("versions")),
+            "Expected schema pointer from pathItem $ref path");
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_FindsPatchRequestBody()
+    {
+        // PATCH on /items/{itemId} has a requestBody
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(covspecRoot, out _)];
+
+        Assert.IsTrue(
+            refs.Any(r => r.PositionalPointer.Contains("items~1{itemId}") && r.PositionalPointer.Contains("patch") && r.PositionalPointer.Contains("requestBody")),
+            "Expected PATCH requestBody schema pointer");
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_FindsStreamBodyResponse()
+    {
+        // POST /upload-raw has a response schema
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(covspecRoot, out _)];
+
+        Assert.IsTrue(
+            refs.Any(r => r.PositionalPointer.Contains("upload-raw") && r.PositionalPointer.Contains("responses")),
+            "Expected upload-raw response schema pointer");
+    }
+
+    [TestMethod]
+    public void Generate_FallbackNamingForGetPutPostDelete()
+    {
+        // /monitoring/status has GET, PUT, POST, DELETE without operationId
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile clientFile = files.First(f => f.FileName == "ApiDefaultClient.cs");
+
+        Assert.IsTrue(
+            clientFile.Content.Contains("GetMonitoringStatusAsync"),
+            "Expected GetMonitoringStatusAsync from fallback naming");
+        Assert.IsTrue(
+            clientFile.Content.Contains("PutMonitoringStatusAsync"),
+            "Expected PutMonitoringStatusAsync from fallback naming");
+        Assert.IsTrue(
+            clientFile.Content.Contains("PostMonitoringStatusAsync"),
+            "Expected PostMonitoringStatusAsync from fallback naming");
+        Assert.IsTrue(
+            clientFile.Content.Contains("DeleteMonitoringStatusAsync"),
+            "Expected DeleteMonitoringStatusAsync from fallback naming");
+    }
+
+    [TestMethod]
+    public void Generate_FallbackNamingForQueryMethod()
+    {
+        // /monitoring/status has QUERY without operationId
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        GeneratedFile clientFile = files.First(f => f.FileName == "ApiDefaultClient.cs");
+
+        Assert.IsTrue(
+            clientFile.Content.Contains("QueryMonitoringStatusAsync"),
+            "Expected QueryMonitoringStatusAsync from fallback naming");
+    }
+
+    [TestMethod]
+    public void Generate_LinkWithRequestBodyExpression()
+    {
+        // /items/{itemId} GET 200 has a RefreshItem link with operationId and requestBody
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+
+        OpenApi32CodeGenerator generator = new("CovTest.Client", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.Generate(covspecRoot);
+
+        // The response file should have a links accessor
+        GeneratedFile responseFile = files.First(f => f.FileName == "GetItemResponse.cs");
+
+        Assert.IsTrue(
+            responseFile.Content.Contains("RefreshItem"),
+            "Expected RefreshItem link accessor in GetItemResponse");
     }
 
     private static Dictionary<string, string> BuildFullCovspecSchemaTypeMap()
