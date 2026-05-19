@@ -4693,19 +4693,22 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(200, response.StatusCode);
         Assert.IsTrue(response.IsSuccess);
 
-        List<ItemSchema> items = [];
-        await foreach (ItemSchema item in response.EnumerateOkItems())
+        List<(string EventId, string EventType)> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema> doc in response.EnumerateOkItems())
         {
-            items.Add(item);
+            using (doc)
+            {
+                items.Add(((string)doc.RootElement.EventId, (string)doc.RootElement.EventType));
+            }
         }
 
         Assert.AreEqual(3, items.Count);
-        Assert.AreEqual("evt-1", (string)items[0].EventId);
-        Assert.AreEqual("update", (string)items[0].EventType);
-        Assert.AreEqual("evt-2", (string)items[1].EventId);
-        Assert.AreEqual("create", (string)items[1].EventType);
-        Assert.AreEqual("evt-3", (string)items[2].EventId);
-        Assert.AreEqual("delete", (string)items[2].EventType);
+        Assert.AreEqual("evt-1", items[0].EventId);
+        Assert.AreEqual("update", items[0].EventType);
+        Assert.AreEqual("evt-2", items[1].EventId);
+        Assert.AreEqual("create", items[1].EventType);
+        Assert.AreEqual("evt-3", items[2].EventId);
+        Assert.AreEqual("delete", items[2].EventType);
     }
 
     [TestMethod]
@@ -4723,10 +4726,13 @@ public class GeneratedClientEndToEndTests
 
         Assert.AreEqual(200, response.StatusCode);
 
-        List<ItemSchema> items = [];
-        await foreach (ItemSchema item in response.EnumerateOkItems())
+        List<string> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema> doc in response.EnumerateOkItems())
         {
-            items.Add(item);
+            using (doc)
+            {
+                items.Add((string)doc.RootElement.EventId);
+            }
         }
 
         Assert.AreEqual(0, items.Count);
@@ -4751,15 +4757,18 @@ public class GeneratedClientEndToEndTests
                 in request,
                 CancellationToken.None);
 
-        List<ItemSchema> items = [];
-        await foreach (ItemSchema item in response.EnumerateOkItems())
+        List<string> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema> doc in response.EnumerateOkItems())
         {
-            items.Add(item);
+            using (doc)
+            {
+                items.Add((string)doc.RootElement.EventId);
+            }
         }
 
         Assert.AreEqual(2, items.Count);
-        Assert.AreEqual("a", (string)items[0].EventId);
-        Assert.AreEqual("b", (string)items[1].EventId);
+        Assert.AreEqual("a", items[0]);
+        Assert.AreEqual("b", items[1]);
     }
 
     [TestMethod]
@@ -4819,17 +4828,20 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(200, response.StatusCode);
         Assert.IsTrue(response.IsSuccess);
 
-        List<ItemSchema1> items = [];
-        await foreach (ItemSchema1 item in response.EnumerateOkItems())
+        List<(string Id, string Obj)> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema1> doc in response.EnumerateOkItems())
         {
-            items.Add(item);
+            using (doc)
+            {
+                items.Add(((string)doc.RootElement.Id, (string)doc.RootElement.ObjectValue));
+            }
         }
 
         Assert.AreEqual(3, items.Count);
-        Assert.AreEqual("cmpl-1", (string)items[0].Id);
-        Assert.AreEqual("chat.completion.chunk", (string)items[0].ObjectValue);
-        Assert.AreEqual("cmpl-2", (string)items[1].Id);
-        Assert.AreEqual("cmpl-3", (string)items[2].Id);
+        Assert.AreEqual("cmpl-1", items[0].Id);
+        Assert.AreEqual("chat.completion.chunk", items[0].Obj);
+        Assert.AreEqual("cmpl-2", items[1].Id);
+        Assert.AreEqual("cmpl-3", items[2].Id);
     }
 
     [TestMethod]
@@ -4857,15 +4869,18 @@ public class GeneratedClientEndToEndTests
                 in request,
                 CancellationToken.None);
 
-        List<ItemSchema1> items = [];
-        await foreach (ItemSchema1 item in response.EnumerateOkItems())
+        List<string> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema1> doc in response.EnumerateOkItems())
         {
-            items.Add(item);
+            using (doc)
+            {
+                items.Add((string)doc.RootElement.Id);
+            }
         }
 
         Assert.AreEqual(2, items.Count);
-        Assert.AreEqual("c1", (string)items[0].Id);
-        Assert.AreEqual("c2", (string)items[1].Id);
+        Assert.AreEqual("c1", items[0]);
+        Assert.AreEqual("c2", items[1]);
     }
 
     [TestMethod]
@@ -4885,14 +4900,17 @@ public class GeneratedClientEndToEndTests
                 in request,
                 CancellationToken.None);
 
-        List<ItemSchema1> items = [];
-        await foreach (ItemSchema1 item in response.EnumerateOkItems())
+        List<string> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema1> doc in response.EnumerateOkItems())
         {
-            items.Add(item);
+            using (doc)
+            {
+                items.Add((string)doc.RootElement.Id);
+            }
         }
 
         Assert.AreEqual(1, items.Count);
-        Assert.AreEqual("d1", (string)items[0].Id);
+        Assert.AreEqual("d1", items[0]);
     }
 
     [TestMethod]
@@ -4934,15 +4952,18 @@ public class GeneratedClientEndToEndTests
                 CancellationToken.None);
 
         using CancellationTokenSource cts = new();
-        List<ItemSchema1> items = [];
+        List<string> items = [];
 
-        await foreach (ItemSchema1 item in response.EnumerateOkItems(cts.Token))
+        await foreach (ParsedJsonDocument<ItemSchema1> doc in response.EnumerateOkItems(cts.Token))
         {
-            items.Add(item);
-            if (items.Count >= 2)
+            using (doc)
             {
-                cts.Cancel();
-                break;
+                items.Add((string)doc.RootElement.Id);
+                if (items.Count >= 2)
+                {
+                    cts.Cancel();
+                    break;
+                }
             }
         }
 
@@ -4988,25 +5009,32 @@ public class GeneratedClientEndToEndTests
 
         Assert.AreEqual(200, response.StatusCode);
 
-        List<SseEvent<ItemSchema>> events = [];
+        List<(string EventId, string? EvtType, string? Id, int? Retry)> events = [];
         await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
         {
-            events.Add(evt);
+            using (evt)
+            {
+                events.Add((
+                    (string)evt.Data.EventId,
+                    evt.GetEventTypeAsString(),
+                    evt.GetIdAsString(),
+                    evt.Retry));
+            }
         }
 
         Assert.AreEqual(2, events.Count);
 
         // First event has all metadata
-        Assert.IsTrue(events[0].EventType.Span.SequenceEqual("update"u8));
-        Assert.IsTrue(events[0].Id.Span.SequenceEqual("evt-001"u8));
+        Assert.AreEqual("update", events[0].EvtType);
+        Assert.AreEqual("evt-001", events[0].Id);
         Assert.AreEqual(5000, events[0].Retry);
-        Assert.AreEqual("evt-1", (string)events[0].Data.EventId);
+        Assert.AreEqual("evt-1", events[0].EventId);
 
         // Second event has event+id but no retry
-        Assert.IsTrue(events[1].EventType.Span.SequenceEqual("create"u8));
-        Assert.IsTrue(events[1].Id.Span.SequenceEqual("evt-002"u8));
+        Assert.AreEqual("create", events[1].EvtType);
+        Assert.AreEqual("evt-002", events[1].Id);
         Assert.IsNull(events[1].Retry);
-        Assert.AreEqual("evt-2", (string)events[1].Data.EventId);
+        Assert.AreEqual("evt-2", events[1].EventId);
     }
 
     [TestMethod]
@@ -5023,23 +5051,28 @@ public class GeneratedClientEndToEndTests
                 in request,
                 CancellationToken.None);
 
-        List<SseEvent<ItemSchema1>> events = [];
+        List<(string Id, string? EvtType)> events = [];
         await foreach (SseEvent<ItemSchema1> evt in response.EnumerateOkSseItems())
         {
-            events.Add(evt);
+            using (evt)
+            {
+                events.Add((
+                    (string)evt.Data.Id,
+                    evt.GetEventTypeAsString()));
+            }
         }
 
         Assert.AreEqual(2, events.Count);
-        Assert.IsTrue(events[0].EventType.Span.SequenceEqual("message"u8));
-        Assert.AreEqual("cmpl-1", (string)events[0].Data.Id);
-        Assert.IsTrue(events[1].EventType.Span.SequenceEqual("done"u8));
-        Assert.AreEqual("cmpl-2", (string)events[1].Data.Id);
+        Assert.AreEqual("message", events[0].EvtType);
+        Assert.AreEqual("cmpl-1", events[0].Id);
+        Assert.AreEqual("done", events[1].EvtType);
+        Assert.AreEqual("cmpl-2", events[1].Id);
     }
 
     [TestMethod]
     public async Task StreamEvents_200_SseItemsNoMetadataYieldsNulls()
     {
-        // SSE data without any metadata fields — EventType, Id, Retry should be null
+        // SSE data without any metadata fields — EventType, Id, Retry should be empty/null
         const string SseBody = "data: {\"eventId\":\"bare\"}\n\n";
         byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
 
@@ -5051,17 +5084,24 @@ public class GeneratedClientEndToEndTests
                 in request,
                 CancellationToken.None);
 
-        List<SseEvent<ItemSchema>> events = [];
+        List<(string EventId, string? EvtType, string? Id, int? Retry)> events = [];
         await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
         {
-            events.Add(evt);
+            using (evt)
+            {
+                events.Add((
+                    (string)evt.Data.EventId,
+                    evt.GetEventTypeAsString(),
+                    evt.GetIdAsString(),
+                    evt.Retry));
+            }
         }
 
         Assert.AreEqual(1, events.Count);
-        Assert.IsTrue(events[0].EventType.IsEmpty);
-        Assert.IsTrue(events[0].Id.IsEmpty);
+        Assert.IsNull(events[0].EvtType);
+        Assert.IsNull(events[0].Id);
         Assert.IsNull(events[0].Retry);
-        Assert.AreEqual("bare", (string)events[0].Data.EventId);
+        Assert.AreEqual("bare", events[0].EventId);
     }
 
     [TestMethod]

@@ -3761,19 +3761,20 @@ public sealed class OpenApi32CodeGenerator
 
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
 
-            // Raw items method (NDJSON/SSE — strips metadata, yields data only).
+            // Raw items method (NDJSON/SSE — strips metadata, yields documents).
             w.WriteLine();
             w.WriteLine("/// <summary>");
             w.WriteLine($"/// Enumerates the streaming items from the {resp.StatusCode} response.");
             w.WriteLine("/// </summary>");
             w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
-            w.WriteLine($"/// <returns>An async enumerable of <see cref=\"{itemTypeName}\"/> items.</returns>");
+            w.WriteLine($"/// <returns>An async enumerable of parsed documents containing <see cref=\"{itemTypeName}\"/> items. Each document must be disposed by the caller.</returns>");
             w.WriteLine("/// <remarks>");
             w.WriteLine("/// <para>The response stream is read line-by-line. Supports NDJSON and SSE formats.</para>");
             w.WriteLine($"/// <para>For SSE streams, use <see cref=\"Enumerate{accessorName}SseItems\"/> to access event metadata.</para>");
-            w.WriteLine("/// <para>The response must not be disposed until enumeration is complete.</para>");
+            w.WriteLine("/// <para>The response must not be disposed until enumeration is complete.");
+            w.WriteLine("/// Each yielded document must be disposed when no longer needed.</para>");
             w.WriteLine("/// </remarks>");
-            w.WriteLine($"public IAsyncEnumerable<{itemTypeName}> Enumerate{accessorName}Items(CancellationToken cancellationToken = default)");
+            w.WriteLine($"public IAsyncEnumerable<ParsedJsonDocument<{itemTypeName}>> Enumerate{accessorName}Items(CancellationToken cancellationToken = default)");
             w.OpenBrace();
             w.WriteLine("if (this.itemStream is null)");
             w.OpenBrace();
@@ -3790,11 +3791,12 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("/// including event metadata (event type, id, retry).");
             w.WriteLine("/// </summary>");
             w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
-            w.WriteLine($"/// <returns>An async enumerable of SSE events wrapping <see cref=\"{itemTypeName}\"/> items.</returns>");
+            w.WriteLine($"/// <returns>An async enumerable of SSE events wrapping <see cref=\"{itemTypeName}\"/> items. Each event must be disposed by the caller.</returns>");
             w.WriteLine("/// <remarks>");
             w.WriteLine("/// <para>Use this method when consuming Server-Sent Events and you need access to");
             w.WriteLine("/// the event type, id, or retry metadata fields.</para>");
-            w.WriteLine("/// <para>The response must not be disposed until enumeration is complete.</para>");
+            w.WriteLine("/// <para>The response must not be disposed until enumeration is complete.");
+            w.WriteLine("/// Each yielded event must be disposed when no longer needed.</para>");
             w.WriteLine("/// </remarks>");
             w.WriteLine($"public IAsyncEnumerable<SseEvent<{itemTypeName}>> Enumerate{accessorName}SseItems(CancellationToken cancellationToken = default)");
             w.OpenBrace();

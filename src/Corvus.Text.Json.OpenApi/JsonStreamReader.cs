@@ -16,6 +16,8 @@ namespace Corvus.Text.Json.OpenApi;
 /// <remarks>
 /// <para>All processing is performed directly on UTF-8 bytes using <see cref="PipeReader"/>.
 /// No transcoding to UTF-16 occurs.</para>
+/// <para>Each yielded document or event is backed by pooled memory. The caller must
+/// dispose each item when done to return memory to the pool.</para>
 /// </remarks>
 public static class JsonStreamReader
 {
@@ -30,12 +32,13 @@ public static class JsonStreamReader
     private static ReadOnlySpan<byte> RetryColon => "retry:"u8;
 
     /// <summary>
-    /// Asynchronously reads items from a stream containing newline-delimited JSON or SSE data.
+    /// Asynchronously reads items from a stream containing newline-delimited JSON or SSE data,
+    /// yielding each as a disposable <see cref="ParsedJsonDocument{T}"/>.
     /// </summary>
     /// <typeparam name="T">The element type to parse each JSON payload into.</typeparam>
     /// <param name="stream">The source stream (NDJSON or SSE).</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>An async enumerable of parsed items.</returns>
+    /// <returns>An async enumerable of parsed documents. Each must be disposed by the caller.</returns>
     /// <remarks>
     /// <para>Supported formats:</para>
     /// <list type="bullet">
@@ -44,10 +47,10 @@ public static class JsonStreamReader
     ///   comment lines (starting with <c>:</c>) and metadata lines (<c>event:</c>, <c>id:</c>,
     ///   <c>retry:</c>) are skipped.</description></item>
     /// </list>
-    /// <para>Empty lines are skipped. Each yielded item is a standalone value with no
-    /// shared disposal requirements.</para>
+    /// <para>Empty lines are skipped. Each yielded document is backed by pooled memory
+    /// and must be disposed when no longer needed.</para>
     /// </remarks>
-    public static async IAsyncEnumerable<T> ReadItemsAsync<T>(
+    public static async IAsyncEnumerable<ParsedJsonDocument<T>> ReadItemsAsync<T>(
         Stream stream,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
@@ -65,7 +68,7 @@ public static class JsonStreamReader
                 {
                     if (TryGetDataPayload(line, out ReadOnlySpan<byte> payload))
                     {
-                        yield return JsonElementHelpers.ParseValue<T>(payload);
+                        yield return ParseFromPayload<T>(payload);
                     }
                 }
 
@@ -76,7 +79,7 @@ public static class JsonStreamReader
                     // Process any trailing data without a final newline.
                     if (buffer.Length > 0 && TryGetDataPayload(buffer, out ReadOnlySpan<byte> trailing))
                     {
-                        yield return JsonElementHelpers.ParseValue<T>(trailing);
+                        yield return ParseFromPayload<T>(trailing);
                     }
 
                     break;
@@ -96,13 +99,15 @@ public static class JsonStreamReader
     /// <typeparam name="T">The element type to parse each JSON data payload into.</typeparam>
     /// <param name="stream">The source SSE stream.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>An async enumerable of SSE events containing parsed data and metadata.</returns>
+    /// <returns>An async enumerable of SSE events. Each must be disposed by the caller.</returns>
     /// <remarks>
     /// <para>Per the SSE specification, events are delimited by blank lines. Metadata fields
     /// (<c>event:</c>, <c>id:</c>, <c>retry:</c>) are accumulated until a <c>data:</c> field
     /// is encountered. Events are dispatched on blank lines or end-of-stream.</para>
     /// <para>Multi-line data fields (multiple consecutive <c>data:</c> lines before a blank line)
     /// are concatenated with U+000A per the SSE spec.</para>
+    /// <para>Each yielded <see cref="SseEvent{T}"/> is backed by pooled memory
+    /// and must be disposed when no longer needed.</para>
     /// </remarks>
     public static async IAsyncEnumerable<SseEvent<T>> ReadSseItemsAsync<T>(
         Stream stream,
@@ -118,6 +123,8 @@ public static class JsonStreamReader
             int? retry = null;
             byte[]? dataBuffer = null;
             int dataLength = 0;
+            byte[]? metadataBuffer = null;
+            int metadataLength = 0;
 
             while (!cancellationToken.IsCancellationRequested)
             {
@@ -126,7 +133,7 @@ public static class JsonStreamReader
 
                 while (TryReadLine(ref buffer, out ReadOnlySequence<byte> line))
                 {
-                    if (TryProcessSseLine(line, ref eventType, ref id, ref retry, ref dataBuffer, ref dataLength, out SseEvent<T>? evt) && evt.HasValue)
+                    if (TryProcessSseLine(line, ref eventType, ref id, ref retry, ref dataBuffer, ref dataLength, ref metadataBuffer, ref metadataLength, out SseEvent<T>? evt) && evt.HasValue)
                     {
                         yield return evt.Value;
                     }
@@ -139,13 +146,22 @@ public static class JsonStreamReader
                     // Flush any pending event at end of stream.
                     if (dataLength > 0 && dataBuffer is not null)
                     {
-                        T parsed = JsonElementHelpers.ParseValue<T>(dataBuffer.AsSpan(0, dataLength));
-                        yield return new SseEvent<T>(parsed, eventType, id, retry);
+                        ParsedJsonDocument<T> doc = ParsedJsonDocument<T>.Parse(dataBuffer.AsMemory(0, dataLength), dataBuffer);
+                        yield return new SseEvent<T>(doc, eventType, id, retry, metadataBuffer);
+                        dataBuffer = null;
+                        metadataBuffer = null;
                     }
-
-                    if (dataBuffer is not null)
+                    else
                     {
-                        ArrayPool<byte>.Shared.Return(dataBuffer);
+                        if (dataBuffer is not null)
+                        {
+                            ArrayPool<byte>.Shared.Return(dataBuffer);
+                        }
+
+                        if (metadataBuffer is not null)
+                        {
+                            ArrayPool<byte>.Shared.Return(metadataBuffer);
+                        }
                     }
 
                     break;
@@ -156,6 +172,14 @@ public static class JsonStreamReader
         {
             await pipeReader.CompleteAsync().ConfigureAwait(false);
         }
+    }
+
+    private static ParsedJsonDocument<T> ParseFromPayload<T>(ReadOnlySpan<byte> payload)
+        where T : struct, IJsonElement<T>
+    {
+        byte[] rented = ArrayPool<byte>.Shared.Rent(payload.Length);
+        payload.CopyTo(rented);
+        return ParsedJsonDocument<T>.Parse(rented.AsMemory(0, payload.Length), rented);
     }
 
     private static bool TryReadLine(ref ReadOnlySequence<byte> buffer, out ReadOnlySequence<byte> line)
@@ -245,6 +269,8 @@ public static class JsonStreamReader
         ref int? retry,
         ref byte[]? dataBuffer,
         ref int dataLength,
+        ref byte[]? metadataBuffer,
+        ref int metadataLength,
         out SseEvent<T>? result)
         where T : struct, IJsonElement<T>
     {
@@ -255,14 +281,18 @@ public static class JsonStreamReader
         {
             if (dataLength > 0 && dataBuffer is not null)
             {
-                T parsed = JsonElementHelpers.ParseValue<T>(dataBuffer.AsSpan(0, dataLength));
-                result = new SseEvent<T>(parsed, eventType, id, retry);
+                // Transfer ownership of the data buffer to the parsed document.
+                ParsedJsonDocument<T> doc = ParsedJsonDocument<T>.Parse(dataBuffer.AsMemory(0, dataLength), dataBuffer);
+                result = new SseEvent<T>(doc, eventType, id, retry, metadataBuffer);
 
-                // Reset state for next event.
+                // Reset state for next event — buffers are now owned by the SseEvent.
+                dataBuffer = null;
+                metadataBuffer = null;
                 eventType = default;
                 id = default;
                 retry = null;
                 dataLength = 0;
+                metadataLength = 0;
                 return true;
             }
 
@@ -300,7 +330,7 @@ public static class JsonStreamReader
         if (span.StartsWith(EventColon))
         {
             ReadOnlySpan<byte> value = StripLeadingSpace(span[6..]);
-            eventType = value.ToArray();
+            eventType = AppendMetadata(value, ref metadataBuffer, ref metadataLength);
             result = null;
             return false;
         }
@@ -309,7 +339,7 @@ public static class JsonStreamReader
         if (span.StartsWith(IdColon))
         {
             ReadOnlySpan<byte> value = StripLeadingSpace(span[3..]);
-            id = value.ToArray();
+            id = AppendMetadata(value, ref metadataBuffer, ref metadataLength);
             result = null;
             return false;
         }
@@ -358,6 +388,33 @@ public static class JsonStreamReader
 
         data.CopyTo(buffer.AsSpan(length));
         length += data.Length;
+    }
+
+    private static ReadOnlyMemory<byte> AppendMetadata(ReadOnlySpan<byte> value, ref byte[]? buffer, ref int length)
+    {
+        if (value.IsEmpty)
+        {
+            return default;
+        }
+
+        int needed = length + value.Length;
+        if (buffer is null || buffer.Length < needed)
+        {
+            int newSize = Math.Max(needed, 128);
+            byte[] newBuffer = ArrayPool<byte>.Shared.Rent(newSize);
+            if (buffer is not null)
+            {
+                buffer.AsSpan(0, length).CopyTo(newBuffer);
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+
+            buffer = newBuffer;
+        }
+
+        int start = length;
+        value.CopyTo(buffer.AsSpan(length));
+        length += value.Length;
+        return buffer.AsMemory(start, value.Length);
     }
 
     private static ReadOnlySpan<byte> StripLeadingSpace(ReadOnlySpan<byte> value)

@@ -38,13 +38,14 @@ public struct ChatCompletionsResponse : IApiResponse<ChatCompletionsResponse>
     /// Enumerates the streaming items from the 200 response.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>An async enumerable of <see cref="CanonTests32.Client.ItemSchema1"/> items.</returns>
+    /// <returns>An async enumerable of parsed documents containing <see cref="CanonTests32.Client.ItemSchema1"/> items. Each document must be disposed by the caller.</returns>
     /// <remarks>
     /// <para>The response stream is read line-by-line. Supports NDJSON and SSE formats.</para>
     /// <para>For SSE streams, use <see cref="EnumerateOkSseItems"/> to access event metadata.</para>
-    /// <para>The response must not be disposed until enumeration is complete.</para>
+    /// <para>The response must not be disposed until enumeration is complete.
+    /// Each yielded document must be disposed when no longer needed.</para>
     /// </remarks>
-    public IAsyncEnumerable<CanonTests32.Client.ItemSchema1> EnumerateOkItems(CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<ParsedJsonDocument<CanonTests32.Client.ItemSchema1>> EnumerateOkItems(CancellationToken cancellationToken = default)
     {
         if (this.itemStream is null)
         {
@@ -59,11 +60,12 @@ public struct ChatCompletionsResponse : IApiResponse<ChatCompletionsResponse>
     /// including event metadata (event type, id, retry).
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>An async enumerable of SSE events wrapping <see cref="CanonTests32.Client.ItemSchema1"/> items.</returns>
+    /// <returns>An async enumerable of SSE events wrapping <see cref="CanonTests32.Client.ItemSchema1"/> items. Each event must be disposed by the caller.</returns>
     /// <remarks>
     /// <para>Use this method when consuming Server-Sent Events and you need access to
     /// the event type, id, or retry metadata fields.</para>
-    /// <para>The response must not be disposed until enumeration is complete.</para>
+    /// <para>The response must not be disposed until enumeration is complete.
+    /// Each yielded event must be disposed when no longer needed.</para>
     /// </remarks>
     public IAsyncEnumerable<SseEvent<CanonTests32.Client.ItemSchema1>> EnumerateOkSseItems(CancellationToken cancellationToken = default)
     {
