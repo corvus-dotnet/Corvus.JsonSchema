@@ -2676,6 +2676,221 @@ public class GeneratedClientEndToEndTests
         Assert.IsTrue(uri.StartsWith("http://localhost/search-with-querystring?"));
     }
 
+    [TestMethod]
+    public async Task GetDocument_AllowReservedPath_DoesNotPercentEncodeReservedChars()
+    {
+        using TestHarness harness = new(
+            HttpStatusCode.OK,
+            """{"path":"docs/2024/report","content":"hello"}""");
+
+        GetDocumentRequest request = new(
+            JsonElement.ParseValue("""  "docs/2024/report"  """u8));
+
+        await harness.Transport.SendAsync<GetDocumentRequest, GetDocumentResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string path = harness.CapturedRequest.RequestUri!.AbsolutePath;
+
+        // With allowReserved=true, the slash is NOT percent-encoded
+        Assert.AreEqual("/documents/docs/2024/report", path);
+    }
+
+    [TestMethod]
+    public async Task GetDocument_AllowReservedPath_PreservesColonAndQuestionMark()
+    {
+        using TestHarness harness = new(
+            HttpStatusCode.OK,
+            """{"path":"file:name?v=1","content":"data"}""");
+
+        GetDocumentRequest request = new(
+            JsonElement.ParseValue("""  "file:name?v=1"  """u8));
+
+        await harness.Transport.SendAsync<GetDocumentRequest, GetDocumentResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string uri = harness.CapturedRequest.RequestUri!.OriginalString;
+
+        // Reserved chars (:, ?) are preserved in the path
+        Assert.IsTrue(uri.Contains("file:name?v=1"));
+    }
+
+    [TestMethod]
+    public async Task GetDocument_AllowReservedPath_NumericPathNotAffected()
+    {
+        using TestHarness harness = new(
+            HttpStatusCode.OK,
+            """{"path":"42","content":"data"}""");
+
+        // Use a simple numeric-like string value — no reserved chars to preserve
+        GetDocumentRequest request = new(
+            JsonElement.ParseValue("""  "doc-42"  """u8));
+
+        await harness.Transport.SendAsync<GetDocumentRequest, GetDocumentResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string path = harness.CapturedRequest.RequestUri!.AbsolutePath;
+        Assert.AreEqual("/documents/doc-42", path);
+    }
+
+    [TestMethod]
+    public async Task GetPreferences_CookieStyle_SerializesWithoutPercentEncoding()
+    {
+        using TestHarness harness = new(
+            HttpStatusCode.OK,
+            """{"theme":"dark","language":"en"}""");
+
+        GetPreferencesRequest request = new(
+            JsonElement.ParseValue("""  "abc=123&special"  """u8));
+
+        await harness.Transport.SendAsync<GetPreferencesRequest, GetPreferencesResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string? cookie = harness.CapturedRequest.Headers.TryGetValues("Cookie", out var values)
+            ? string.Join("; ", values)
+            : null;
+
+        Assert.IsNotNull(cookie);
+        Assert.AreEqual("session_token=abc=123&special", cookie);
+    }
+
+    [TestMethod]
+    public async Task GetPreferences_CookieStyle_MultipleParams()
+    {
+        using TestHarness harness = new(
+            HttpStatusCode.OK,
+            """{"theme":"dark","language":"en"}""");
+
+        GetPreferencesRequest request = new(
+            JsonElement.ParseValue("""  "token-value"  """u8))
+        {
+            Theme = JsonElement.ParseValue("""  "dark-mode"  """u8),
+        };
+
+        await harness.Transport.SendAsync<GetPreferencesRequest, GetPreferencesResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string? cookie = harness.CapturedRequest.Headers.TryGetValues("Cookie", out var values)
+            ? string.Join("; ", values)
+            : null;
+
+        Assert.IsNotNull(cookie);
+        Assert.AreEqual("session_token=token-value; theme=dark-mode", cookie);
+    }
+
+    [TestMethod]
+    public async Task GetPreferences_CookieStyle_OptionalParamOmitted()
+    {
+        using TestHarness harness = new(
+            HttpStatusCode.OK,
+            """{"theme":"default","language":"en"}""");
+
+        GetPreferencesRequest request = new(
+            JsonElement.ParseValue("""  "my-session"  """u8));
+
+        await harness.Transport.SendAsync<GetPreferencesRequest, GetPreferencesResponse>(
+                in request, CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string? cookie = harness.CapturedRequest.Headers.TryGetValues("Cookie", out var values)
+            ? string.Join("; ", values)
+            : null;
+
+        Assert.IsNotNull(cookie);
+        Assert.AreEqual("session_token=my-session", cookie);
+    }
+
+    [TestMethod]
+    public async Task TrackEvent_FormCookieAllowReservedTrue_NoPercentEncoding()
+    {
+        using TestHarness harness = new(
+            HttpStatusCode.Accepted,
+            string.Empty);
+
+        TrackEventRequest request = new(
+            JsonElement.ParseValue("""  "tid=abc&ref=123"  """u8));
+
+        using var bodyDoc = ParsedJsonDocument<PostTrackingBody>.Parse("""{"event":"click"}""");
+        PostTrackingBody body = bodyDoc.RootElement;
+
+        await harness.Transport.SendAsync<TrackEventRequest, PostTrackingBody, TrackEventResponse>(
+                in request,
+                in body,
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string? cookie = harness.CapturedRequest.Headers.TryGetValues("Cookie", out var values)
+            ? string.Join("; ", values)
+            : null;
+
+        Assert.IsNotNull(cookie);
+        Assert.AreEqual("tracker_id=tid=abc&ref=123", cookie);
+    }
+
+    [TestMethod]
+    public async Task TrackEvent_FormCookieAllowReservedFalse_PercentEncodesReservedChars()
+    {
+        using TestHarness harness = new(
+            HttpStatusCode.Accepted,
+            string.Empty);
+
+        TrackEventRequest request = new(
+            JsonElement.ParseValue("""  "simple-id"  """u8))
+        {
+            RefUrl = JsonElement.ParseValue("""  "https://example.com/page?q=1"  """u8),
+        };
+
+        using var bodyDoc = ParsedJsonDocument<PostTrackingBody>.Parse("""{"event":"view"}""");
+        PostTrackingBody body = bodyDoc.RootElement;
+
+        await harness.Transport.SendAsync<TrackEventRequest, PostTrackingBody, TrackEventResponse>(
+                in request,
+                in body,
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string? cookie = harness.CapturedRequest.Headers.TryGetValues("Cookie", out var values)
+            ? string.Join("; ", values)
+            : null;
+
+        Assert.IsNotNull(cookie);
+        Assert.IsTrue(cookie!.Contains("ref_url=https%3A%2F%2Fexample.com%2Fpage%3Fq%3D1"));
+    }
+
+    [TestMethod]
+    public async Task TrackEvent_FormCookieMixed_CorrectEncodingPerParam()
+    {
+        using TestHarness harness = new(
+            HttpStatusCode.Accepted,
+            string.Empty);
+
+        TrackEventRequest request = new(
+            JsonElement.ParseValue("""  "a/b=c"  """u8))
+        {
+            RefUrl = JsonElement.ParseValue("""  "a/b=c"  """u8),
+        };
+
+        using var bodyDoc = ParsedJsonDocument<PostTrackingBody>.Parse("""{"event":"test"}""");
+        PostTrackingBody body = bodyDoc.RootElement;
+
+        await harness.Transport.SendAsync<TrackEventRequest, PostTrackingBody, TrackEventResponse>(
+                in request,
+                in body,
+                CancellationToken.None);
+
+        Assert.IsNotNull(harness.CapturedRequest);
+        string? cookie = harness.CapturedRequest.Headers.TryGetValues("Cookie", out var values)
+            ? string.Join("; ", values)
+            : null;
+
+        Assert.IsNotNull(cookie);
+        Assert.AreEqual("tracker_id=a/b=c; ref_url=a%2Fb%3Dc", cookie);
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.

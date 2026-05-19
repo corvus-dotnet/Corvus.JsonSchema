@@ -97,6 +97,7 @@ public sealed class OpenApi32CodeGenerator
         bool IsRequired,
         ParameterStyle Style,
         bool Explode,
+        bool AllowReserved,
         ParameterSerializationKind SerializationKind,
         string? SchemaPointer,
         bool HasDeepNesting,
@@ -1209,25 +1210,26 @@ public sealed class OpenApi32CodeGenerator
     }
 
     // ── Parameter trait parsing ──────────────────────────────────────────
-    private static (ParameterLocation Location, ParameterStyle Style, bool Explode) ParseParameterTraits(
+    private static (ParameterLocation Location, ParameterStyle Style, bool Explode, bool AllowReserved) ParseParameterTraits(
         OpenApiDocument.Parameter typed)
     {
-        (ParameterLocation location, ParameterStyle style) = typed.In.Match<OpenApiDocument.Parameter, (ParameterLocation, ParameterStyle)>(
+        (ParameterLocation location, ParameterStyle style, bool allowReserved) = typed.In.Match<OpenApiDocument.Parameter, (ParameterLocation, ParameterStyle, bool)>(
             in typed,
-            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p))),
-            static (OpenApiDocument.Parameter _) => (ParameterLocation.Querystring, ParameterStyle.Form),
-            static (OpenApiDocument.Parameter _) => (ParameterLocation.Header, ParameterStyle.Simple),
-            static (OpenApiDocument.Parameter p) => (ParameterLocation.Path, ParsePathStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.From(p))),
-            static (OpenApiDocument.Parameter _) => (ParameterLocation.Cookie, ParameterStyle.Form),
-            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p))));
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p)), ParseQueryAllowReserved(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p))),
+            static (OpenApiDocument.Parameter _) => (ParameterLocation.Querystring, ParameterStyle.Form, false),
+            static (OpenApiDocument.Parameter _) => (ParameterLocation.Header, ParameterStyle.Simple, false),
+            static (OpenApiDocument.Parameter p) => ParsePathTraits(OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.From(p)),
+            static (OpenApiDocument.Parameter p) => ParseCookieTraits(OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity.From(p)),
+            static (OpenApiDocument.Parameter p) => (ParameterLocation.Query, ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p)), ParseQueryAllowReserved(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity.From(p))));
 
         bool explode = typed.Explode.IsNotUndefined() ? (bool)typed.Explode : style == ParameterStyle.Form;
-        return (location, style, explode);
+        return (location, style, explode, allowReserved);
     }
 
-    private static ParameterStyle ParsePathStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity pathStyles)
+    private static (ParameterLocation, ParameterStyle, bool AllowReserved) ParsePathTraits(
+        OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity pathStyles)
     {
-        return pathStyles.Match(
+        ParameterStyle style = pathStyles.Match(
             static (in OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity.RequiredRequired rr) =>
                 rr.Style.Match(
                     static () => ParameterStyle.Matrix,
@@ -1236,6 +1238,31 @@ public sealed class OpenApi32CodeGenerator
                     static () => ParameterStyle.Simple),
             static (in OpenApiDocument.Parameter.SchemaEntity.StylesForPathEntity _) =>
                 ParameterStyle.Simple);
+
+        bool allowReserved = pathStyles.AllowReserved.IsNotUndefined() && (bool)pathStyles.AllowReserved;
+        return (ParameterLocation.Path, style, allowReserved);
+    }
+
+    private static (ParameterLocation, ParameterStyle, bool AllowReserved) ParseCookieTraits(
+        OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity cookieStyles)
+    {
+        return cookieStyles.Match(
+            static (in OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity.ThenEntity then) =>
+            {
+                ParameterStyle style = then.Style.Match(
+                    static () => ParameterStyle.Form,
+                    static () => ParameterStyle.Cookie,
+                    static () => ParameterStyle.Form);
+
+                // allowReserved is only valid when style=form
+                bool allowReserved = style == ParameterStyle.Form &&
+                    then.AllowReserved.IsNotUndefined() &&
+                    (bool)then.AllowReserved;
+
+                return (ParameterLocation.Cookie, style, allowReserved);
+            },
+            static (in OpenApiDocument.Parameter.SchemaEntity.StylesForCookieEntity _) =>
+                (ParameterLocation.Cookie, ParameterStyle.Form, false));
     }
 
     private static ParameterStyle ParseQueryStyle(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity queryStyles)
@@ -1250,6 +1277,11 @@ public sealed class OpenApi32CodeGenerator
                     static () => ParameterStyle.Form),
             static (in OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity _) =>
                 ParameterStyle.Form);
+    }
+
+    private static bool ParseQueryAllowReserved(OpenApiDocument.Parameter.SchemaEntity.StylesForQueryEntity queryStyles)
+    {
+        return queryStyles.AllowReserved.IsNotUndefined() && (bool)queryStyles.AllowReserved;
     }
 
     // ═══════════════════════════════════════════════════════════════════
@@ -1325,7 +1357,7 @@ public sealed class OpenApi32CodeGenerator
         {
             (OpenApiDocument.Parameter param, int sourceIndex, bool isPathLevel, string? _) = merged[i];
 
-            (ParameterLocation location, ParameterStyle style, bool explode) = ParseParameterTraits(param);
+            (ParameterLocation location, ParameterStyle style, bool explode, bool allowReserved) = ParseParameterTraits(param);
             bool required = param.Required;
 
             // Querystring parameters use 'content' instead of 'schema'.
@@ -1337,7 +1369,7 @@ public sealed class OpenApi32CodeGenerator
                 string name = param.Name.IsNotUndefined() ? param.Name.GetString()! : "__querystring";
 
                 result[i] = new ParameterInfo(
-                    name, location, required, style, explode,
+                    name, location, required, style, explode, allowReserved,
                     ParameterSerializationKind.Object, schemaPointer, false, null, JsonValueKind.Undefined);
                 continue;
             }
@@ -1374,7 +1406,7 @@ public sealed class OpenApi32CodeGenerator
             string regularName = param.Name.GetString()!;
 
             result[i] = new ParameterInfo(
-                regularName, location, required, style, explode,
+                regularName, location, required, style, explode, allowReserved,
                 serializationKind, schemaPointerRegular, deepNesting, defaultValueJson, defaultValueKind);
         }
 
@@ -2325,8 +2357,9 @@ public sealed class OpenApi32CodeGenerator
                 ?? ParameterSerializationKind.String;
             ParameterStyle style = matchingParam?.Style ?? ParameterStyle.Simple;
             bool explode = matchingParam?.Explode ?? false;
+            bool allowReserved = matchingParam?.AllowReserved ?? false;
 
-            CodeEmitHelpers.EmitPathParamWrite(w, paramName, $"this.{fieldName}", fieldName, kind, style, explode);
+            CodeEmitHelpers.EmitPathParamWrite(w, paramName, $"this.{fieldName}", fieldName, kind, style, explode, allowReserved);
             remaining = remaining[(openBrace + 1 + closeBrace + 1)..];
         }
     }
@@ -2467,17 +2500,21 @@ public sealed class OpenApi32CodeGenerator
             string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
             ParameterSerializationKind kind = param.SerializationKind;
 
+            // For cookie style, allowReserved is implied (no percent-encoding).
+            // For form style, respect the allowReserved flag from the spec.
+            bool effectiveAllowReserved = param.Style == ParameterStyle.Cookie || param.AllowReserved;
+
             if (!param.IsRequired)
             {
                 w.WriteLine($"if (this.{fieldName}.IsNotUndefined())");
                 w.OpenBrace();
-                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, effectiveAllowReserved);
                 w.CloseBrace();
                 w.WriteLine();
             }
             else
             {
-                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode);
+                CodeEmitHelpers.EmitCookieParamWrite(w, param.Name, $"this.{fieldName}", fieldName, kind, param.Style, param.Explode, effectiveAllowReserved);
                 w.WriteLine();
             }
         }

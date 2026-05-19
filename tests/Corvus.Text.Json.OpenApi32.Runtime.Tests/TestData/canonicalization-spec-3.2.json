@@ -2558,6 +2558,155 @@
           }
         }
       }
+    },
+    "/documents/{docPath}": {
+      "get": {
+        "operationId": "getDocument",
+        "summary": "Get document by path (allowReserved path param)",
+        "tags": [
+          "documents"
+        ],
+        "parameters": [
+          {
+            "name": "docPath",
+            "in": "path",
+            "required": true,
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Document content",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "content": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "content"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/preferences": {
+      "get": {
+        "operationId": "getPreferences",
+        "summary": "Get preferences with cookie style cookie param",
+        "tags": [
+          "preferences"
+        ],
+        "parameters": [
+          {
+            "name": "session_token",
+            "in": "cookie",
+            "required": true,
+            "style": "cookie",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "theme",
+            "in": "cookie",
+            "style": "cookie",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User preferences",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "theme": {
+                      "type": "string"
+                    },
+                    "language": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "theme",
+                    "language"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/tracking": {
+      "post": {
+        "operationId": "trackEvent",
+        "summary": "Track event with form-style cookie and allowReserved",
+        "tags": [
+          "tracking"
+        ],
+        "parameters": [
+          {
+            "name": "tracker_id",
+            "in": "cookie",
+            "required": true,
+            "style": "form",
+            "allowReserved": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ref_url",
+            "in": "cookie",
+            "style": "form",
+            "allowReserved": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "event": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "event"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Event accepted"
+          }
+        }
+      }
     }
   }
 }

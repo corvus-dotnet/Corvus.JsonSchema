@@ -52,4 +52,10 @@ public enum ParameterStyle : byte
     /// Only applies to objects with <c>explode: true</c>.
     /// </summary>
     DeepObject = 6,
+
+    /// <summary>
+    /// Cookie-specific serialization matching the behavior of the <c>Cookie</c> header
+    /// field as defined in RFC 6265. New in OpenAPI 3.2.
+    /// </summary>
+    Cookie = 7,
 }

@@ -103,8 +103,12 @@ public readonly struct GetSessionProfileRequest : IApiRequest<GetSessionProfileR
         writer.Write("session_id="u8);
         totalWritten += 11;
         using UnescapedUtf8JsonString utf8SessionId = ((JsonElement)this.SessionId).GetUtf8String();
-        writer.Write(utf8SessionId.Span);
-        totalWritten += utf8SessionId.Span.Length;
+        Span<byte> escSessionId = stackalloc byte[utf8SessionId.Span.Length * 3];
+        if (Utf8Uri.TryEscapeDataString(utf8SessionId.Span, escSessionId, out int ewSessionId))
+        {
+            writer.Write(escSessionId[..ewSessionId]);
+            totalWritten += ewSessionId;
+        }
 
         first = false;
 
@@ -119,8 +123,12 @@ public readonly struct GetSessionProfileRequest : IApiRequest<GetSessionProfileR
             writer.Write("theme="u8);
             totalWritten += 6;
             using UnescapedUtf8JsonString utf8Theme = ((JsonElement)this.Theme).GetUtf8String();
-            writer.Write(utf8Theme.Span);
-            totalWritten += utf8Theme.Span.Length;
+            Span<byte> escTheme = stackalloc byte[utf8Theme.Span.Length * 3];
+            if (Utf8Uri.TryEscapeDataString(utf8Theme.Span, escTheme, out int ewTheme))
+            {
+                writer.Write(escTheme[..ewTheme]);
+                totalWritten += ewTheme;
+            }
 
             first = false;
         }

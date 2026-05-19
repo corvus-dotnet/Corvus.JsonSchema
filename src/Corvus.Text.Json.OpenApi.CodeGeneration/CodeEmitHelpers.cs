@@ -515,6 +515,30 @@ public static class CodeEmitHelpers
         ParameterStyle style,
         bool explode)
     {
+        EmitPathParamWrite(w, paramName, valueExpr, uid, kind, style, explode, allowReserved: false);
+    }
+
+    /// <summary>
+    /// Emits path parameter serialization with style, explode, and allowReserved support.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name (used for matrix style).</param>
+    /// <param name="valueExpr">The C# expression for the value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="kind">The serialization kind.</param>
+    /// <param name="style">The parameter style.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="allowReserved">When <see langword="true"/>, reserved characters are not percent-encoded.</param>
+    public static void EmitPathParamWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterSerializationKind kind,
+        ParameterStyle style,
+        bool explode,
+        bool allowReserved)
+    {
         if (kind == ParameterSerializationKind.Array)
         {
             EmitPathArrayWrite(w, paramName, valueExpr, uid, style, explode);
@@ -529,7 +553,7 @@ public static class CodeEmitHelpers
 
         // For scalar types, emit the style prefix, then the value.
         EmitPathStylePrefix(w, paramName, style);
-        EmitPathScalarValue(w, valueExpr, uid, kind);
+        EmitPathScalarValue(w, valueExpr, uid, kind, allowReserved);
     }
 
     /// <summary>
@@ -632,6 +656,30 @@ public static class CodeEmitHelpers
         ParameterStyle style,
         bool explode)
     {
+        EmitCookieParamWrite(w, paramName, valueExpr, uid, kind, style, explode, allowReserved: style == ParameterStyle.Cookie);
+    }
+
+    /// <summary>
+    /// Emits cookie parameter serialization with style, explode, and allowReserved support.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="paramName">The parameter name as it appears in the cookie.</param>
+    /// <param name="valueExpr">The C# expression for the value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="kind">The serialization kind.</param>
+    /// <param name="style">The parameter style.</param>
+    /// <param name="explode">Whether to use exploded serialization.</param>
+    /// <param name="allowReserved">When <see langword="true"/>, reserved characters in strings are not percent-encoded.</param>
+    public static void EmitCookieParamWrite(
+        IndentedWriter w,
+        string paramName,
+        string valueExpr,
+        string uid,
+        ParameterSerializationKind kind,
+        ParameterStyle style,
+        bool explode,
+        bool allowReserved)
+    {
         if (kind == ParameterSerializationKind.Array)
         {
             EmitCookieArrayWrite(w, paramName, valueExpr, uid, explode);
@@ -644,7 +692,7 @@ public static class CodeEmitHelpers
             return;
         }
 
-        // For scalar types, cookies always use form style: name=value with "; " separator.
+        // For scalar types, cookies use name=value with "; " separator.
         w.WriteLine("if (!first)");
         w.OpenBrace();
         w.WriteLine("writer.Write(\"; \"u8);");
@@ -655,7 +703,7 @@ public static class CodeEmitHelpers
         w.WriteLine($"writer.Write(\"{paramName}=\"u8);");
         w.WriteLine($"totalWritten += {paramName.Length + 1};");
 
-        EmitCookieScalarWrite(w, valueExpr, uid, kind);
+        EmitCookieScalarWrite(w, valueExpr, uid, kind, allowReserved);
 
         w.WriteLine();
         w.WriteLine("first = false;");
@@ -787,6 +835,24 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind)
     {
+        EmitCookieScalarWrite(w, valueExpr, uid, kind, allowReserved: true);
+    }
+
+    /// <summary>
+    /// Emits cookie parameter scalar serialization with optional percent-encoding.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="valueExpr">The C# expression for the value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="kind">The serialization kind.</param>
+    /// <param name="allowReserved">When <see langword="true"/>, string values are not percent-encoded.</param>
+    public static void EmitCookieScalarWrite(
+        IndentedWriter w,
+        string valueExpr,
+        string uid,
+        ParameterSerializationKind kind,
+        bool allowReserved)
+    {
         switch (kind)
         {
             case ParameterSerializationKind.Boolean:
@@ -820,8 +886,16 @@ public static class CodeEmitHelpers
 
             case ParameterSerializationKind.String:
                 EmitStringWrite(w, valueExpr, uid);
-                w.WriteLine($"writer.Write(utf8{uid}.Span);");
-                w.WriteLine($"totalWritten += utf8{uid}.Span.Length;");
+                if (allowReserved)
+                {
+                    w.WriteLine($"writer.Write(utf8{uid}.Span);");
+                    w.WriteLine($"totalWritten += utf8{uid}.Span.Length;");
+                }
+                else
+                {
+                    EmitUriEscapeAndWriteCounted(w, $"utf8{uid}.Span", uid);
+                }
+
                 break;
 
             case ParameterSerializationKind.Object:
@@ -872,11 +946,38 @@ public static class CodeEmitHelpers
         string uid,
         ParameterSerializationKind kind)
     {
+        EmitPathScalarValue(w, valueExpr, uid, kind, allowReserved: false);
+    }
+
+    /// <summary>
+    /// Emits a single scalar value for path parameters with optional allowReserved behavior.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="valueExpr">The C# expression for the value.</param>
+    /// <param name="uid">A unique identifier for variable naming.</param>
+    /// <param name="kind">The serialization kind.</param>
+    /// <param name="allowReserved">When <see langword="true"/>, reserved characters in strings are not percent-encoded.</param>
+    public static void EmitPathScalarValue(
+        IndentedWriter w,
+        string valueExpr,
+        string uid,
+        ParameterSerializationKind kind,
+        bool allowReserved)
+    {
         switch (kind)
         {
             case ParameterSerializationKind.String:
                 EmitStringWrite(w, valueExpr, uid);
-                EmitUriEscapeAndWrite(w, $"utf8{uid}.Span", uid);
+                if (allowReserved)
+                {
+                    // When allowReserved is true, write the UTF-8 value directly without percent-encoding.
+                    w.WriteLine($"writer.Write(utf8{uid}.Span);");
+                }
+                else
+                {
+                    EmitUriEscapeAndWrite(w, $"utf8{uid}.Span", uid);
+                }
+
                 break;
 
             case ParameterSerializationKind.Boolean:
