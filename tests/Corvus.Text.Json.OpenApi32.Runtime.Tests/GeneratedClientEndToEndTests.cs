@@ -3438,6 +3438,282 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(HttpMethod.Get, harness.CapturedRequest.Method);
     }
 
+    [TestMethod]
+    public async Task Client_ApiDocsClient_UploadDocMixedAsync_SendsMultipartMixedContentType()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"accepted":true}""");
+        var client = new ApiDocsClient(harness.Transport);
+
+        using var metadataDoc = ParsedJsonDocument<PostDocsUploadMixedBody.RequiredTitle>.Parse(
+            """{"title":"Annual Report"}""");
+        BinaryPartData filePart = new(s => s.Write([0x25, 0x50, 0x44, 0x46]), "application/pdf", "report.pdf");
+
+        await using UploadDocMixedResponse response = await client.UploadDocMixedAsync(
+            metadataDoc.RootElement, filePart);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(
+            harness.CapturedRequestContentType!.StartsWith("multipart/mixed; boundary=----CorvusBoundary"),
+            $"Expected multipart/mixed content type, got: {harness.CapturedRequestContentType}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiDocsClient_UploadDocMixedAsync_HasCorrectMimeStructure()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"accepted":true}""");
+        var client = new ApiDocsClient(harness.Transport);
+
+        using var metadataDoc = ParsedJsonDocument<PostDocsUploadMixedBody.RequiredTitle>.Parse(
+            """{"title":"Spec Doc"}""");
+        byte[] fileBytes = [0x89, 0x50, 0x4E, 0x47]; // PNG magic bytes
+        BinaryPartData filePart = new(s => s.Write(fileBytes), "image/png", "diagram.png");
+
+        await using UploadDocMixedResponse response = await client.UploadDocMixedAsync(
+            metadataDoc.RootElement, filePart);
+
+        string body = Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // Extract boundary from Content-Type header
+        string contentType = harness.CapturedRequestContentType!;
+        string boundary = contentType.Substring(contentType.IndexOf("boundary=") + "boundary=".Length);
+
+        // Verify MIME structure
+        Assert.IsTrue(body.Contains($"--{boundary}\r\n"), $"Missing opening boundary in:\n{body}");
+        Assert.IsTrue(body.Contains($"--{boundary}--\r\n"), $"Missing closing boundary in:\n{body}");
+
+        // First part should be JSON with metadata
+        Assert.IsTrue(body.Contains("Content-Type: application/json\r\n"), $"Missing JSON content type in:\n{body}");
+        Assert.IsTrue(body.Contains("""{"title":"Spec Doc"}"""), $"Missing JSON body in:\n{body}");
+
+        // Second part should be binary with filename
+        Assert.IsTrue(body.Contains("Content-Type: image/png"), $"Missing image/png content type in:\n{body}");
+        Assert.IsTrue(body.Contains("Content-Disposition: attachment; filename=\"diagram.png\""), $"Missing filename in:\n{body}");
+
+        // Verify correct part order: JSON before binary
+        int jsonIndex = body.IndexOf("application/json");
+        int pngIndex = body.IndexOf("image/png");
+        Assert.IsTrue(jsonIndex < pngIndex, "JSON part should precede binary part");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiDocsClient_UploadDocMixedAsync_BinaryContentWritten()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"accepted":true}""");
+        var client = new ApiDocsClient(harness.Transport);
+
+        using var metadataDoc = ParsedJsonDocument<PostDocsUploadMixedBody.RequiredTitle>.Parse(
+            """{"title":"Data"}""");
+        byte[] payload = [0xDE, 0xAD, 0xBE, 0xEF];
+        BinaryPartData filePart = new(s => s.Write(payload), "application/octet-stream", "data.bin");
+
+        await using UploadDocMixedResponse response = await client.UploadDocMixedAsync(
+            metadataDoc.RootElement, filePart);
+
+        // Verify the binary bytes appear in the captured body
+        byte[] captured = harness.CapturedRequestBody!;
+        int idx = FindSubArray(captured, payload);
+        Assert.IsTrue(idx >= 0, "Binary payload not found in captured request body");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiDocsClient_UploadDocMixedAsync_UsesPostMethod()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"accepted":true}""");
+        var client = new ApiDocsClient(harness.Transport);
+
+        using var metadataDoc = ParsedJsonDocument<PostDocsUploadMixedBody.RequiredTitle>.Parse(
+            """{"title":"T"}""");
+        BinaryPartData filePart = new(s => s.Write([0xFF]), "application/octet-stream", null);
+
+        await using UploadDocMixedResponse response = await client.UploadDocMixedAsync(
+            metadataDoc.RootElement, filePart);
+
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual(
+            "http://localhost/docs/upload-mixed",
+            harness.CapturedRequest.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiDocsClient_ProcessBatchAsync_SendsMultipartMixedContentType()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"processed":3}""");
+        var client = new ApiDocsClient(harness.Transport);
+
+        using var item1 = ParsedJsonDocument<PostDocsBatchProcessBody.RequiredAction>.Parse(
+            """{"action":"delete","id":1}""");
+        using var item2 = ParsedJsonDocument<PostDocsBatchProcessBody.RequiredAction>.Parse(
+            """{"action":"archive","id":2}""");
+        using var item3 = ParsedJsonDocument<PostDocsBatchProcessBody.RequiredAction>.Parse(
+            """{"action":"restore","id":3}""");
+
+        await using ProcessBatchResponse response = await client.ProcessBatchAsync(
+            YieldSources(item1.RootElement, item2.RootElement, item3.RootElement));
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(
+            harness.CapturedRequestContentType!.StartsWith("multipart/mixed; boundary=----CorvusBoundary"),
+            $"Expected multipart/mixed content type, got: {harness.CapturedRequestContentType}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiDocsClient_ProcessBatchAsync_WritesAllItemsAsJsonParts()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"processed":3}""");
+        var client = new ApiDocsClient(harness.Transport);
+
+        using var item1 = ParsedJsonDocument<PostDocsBatchProcessBody.RequiredAction>.Parse(
+            """{"action":"delete","id":1}""");
+        using var item2 = ParsedJsonDocument<PostDocsBatchProcessBody.RequiredAction>.Parse(
+            """{"action":"archive","id":2}""");
+        using var item3 = ParsedJsonDocument<PostDocsBatchProcessBody.RequiredAction>.Parse(
+            """{"action":"restore","id":3}""");
+
+        await using ProcessBatchResponse response = await client.ProcessBatchAsync(
+            YieldSources(item1.RootElement, item2.RootElement, item3.RootElement));
+
+        string body = Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // All items should be JSON parts
+        int jsonPartCount = CountOccurrences(body, "Content-Type: application/json");
+        Assert.AreEqual(3, jsonPartCount, $"Expected 3 JSON parts, got {jsonPartCount}.\n{body}");
+
+        // Verify each item's content is present
+        Assert.IsTrue(body.Contains("""{"action":"delete","id":1}"""), $"Missing item 1 in:\n{body}");
+        Assert.IsTrue(body.Contains("""{"action":"archive","id":2}"""), $"Missing item 2 in:\n{body}");
+        Assert.IsTrue(body.Contains("""{"action":"restore","id":3}"""), $"Missing item 3 in:\n{body}");
+
+        // Should have closing boundary
+        string contentType = harness.CapturedRequestContentType!;
+        string boundary = contentType.Substring(contentType.IndexOf("boundary=") + "boundary=".Length);
+        Assert.IsTrue(body.Contains($"--{boundary}--\r\n"), $"Missing closing boundary in:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiDocsClient_ProcessBatchAsync_SingleItem()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"processed":1}""");
+        var client = new ApiDocsClient(harness.Transport);
+
+        using var item = ParsedJsonDocument<PostDocsBatchProcessBody.RequiredAction>.Parse(
+            """{"action":"update","id":42}""");
+
+        await using ProcessBatchResponse response = await client.ProcessBatchAsync(
+            YieldSources(item.RootElement));
+
+        string body = Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        int jsonPartCount = CountOccurrences(body, "Content-Type: application/json");
+        Assert.AreEqual(1, jsonPartCount, $"Expected 1 JSON part, got {jsonPartCount}.\n{body}");
+        Assert.IsTrue(body.Contains("""{"action":"update","id":42}"""), $"Missing item in:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiDocsClient_ProcessBatchAsync_EmptyBatch()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"processed":0}""");
+        var client = new ApiDocsClient(harness.Transport);
+
+        await using ProcessBatchResponse response = await client.ProcessBatchAsync(
+            YieldSources());
+
+        string body = Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // No JSON parts, just a closing boundary
+        int jsonPartCount = CountOccurrences(body, "Content-Type: application/json");
+        Assert.AreEqual(0, jsonPartCount, $"Expected 0 JSON parts for empty batch, got {jsonPartCount}.\n{body}");
+
+        // Should still have a closing boundary
+        string contentType = harness.CapturedRequestContentType!;
+        string boundary = contentType.Substring(contentType.IndexOf("boundary=") + "boundary=".Length);
+        Assert.IsTrue(body.Contains($"--{boundary}--"), $"Missing closing boundary in:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiDocsClient_ProcessBatchAsync_UsesPostMethod()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"processed":0}""");
+        var client = new ApiDocsClient(harness.Transport);
+
+        await using ProcessBatchResponse response = await client.ProcessBatchAsync(
+            YieldSources());
+
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual(
+            "http://localhost/docs/batch-process",
+            harness.CapturedRequest.RequestUri!.OriginalString);
+    }
+
+    private static IEnumerable<PostDocsBatchProcessBody.RequiredAction.Source> YieldSources(
+        params PostDocsBatchProcessBody.RequiredAction[] items)
+    {
+        return new SourceEnumerable(items);
+    }
+
+    private sealed class SourceEnumerable(PostDocsBatchProcessBody.RequiredAction[] items)
+        : IEnumerable<PostDocsBatchProcessBody.RequiredAction.Source>
+    {
+        public IEnumerator<PostDocsBatchProcessBody.RequiredAction.Source> GetEnumerator()
+            => new SourceEnumerator(items);
+
+        System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator()
+            => GetEnumerator();
+    }
+
+    private sealed class SourceEnumerator(PostDocsBatchProcessBody.RequiredAction[] items)
+        : IEnumerator<PostDocsBatchProcessBody.RequiredAction.Source>
+    {
+        private int index = -1;
+
+        public PostDocsBatchProcessBody.RequiredAction.Source Current => items[this.index];
+
+        object System.Collections.IEnumerator.Current => throw new NotSupportedException();
+
+        public bool MoveNext() => ++this.index < items.Length;
+
+        public void Reset() => this.index = -1;
+
+        public void Dispose()
+        {
+        }
+    }
+
+    private static int CountOccurrences(string text, string pattern)
+    {
+        int count = 0;
+        int index = 0;
+        while ((index = text.IndexOf(pattern, index, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            index += pattern.Length;
+        }
+
+        return count;
+    }
+
+    private static int FindSubArray(byte[] source, byte[] pattern)
+    {
+        for (int i = 0; i <= source.Length - pattern.Length; i++)
+        {
+            bool found = true;
+            for (int j = 0; j < pattern.Length; j++)
+            {
+                if (source[i + j] != pattern[j])
+                {
+                    found = false;
+                    break;
+                }
+            }
+
+            if (found)
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.
