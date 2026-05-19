@@ -4676,9 +4676,9 @@ public class GeneratedClientEndToEndTests
     public async Task StreamEvents_200_NdjsonEnumeratesItems()
     {
         const string NdjsonBody = """
-            {"type":"event","id":1}
-            {"type":"event","id":2}
-            {"type":"event","id":3}
+            {"eventId":"evt-1","eventType":"update","timestamp":"2024-01-01T00:00:00Z","payload":{"key":"value1"}}
+            {"eventId":"evt-2","eventType":"create","timestamp":"2024-01-02T00:00:00Z","payload":{"key":"value2"}}
+            {"eventId":"evt-3","eventType":"delete","timestamp":"2024-01-03T00:00:00Z","payload":{"key":"value3"}}
             """;
         byte[] bytes = Encoding.UTF8.GetBytes(NdjsonBody);
 
@@ -4693,16 +4693,19 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(200, response.StatusCode);
         Assert.IsTrue(response.IsSuccess);
 
-        List<JsonElement> items = [];
-        await foreach (JsonElement item in response.EnumerateOkItems())
+        List<ItemSchema> items = [];
+        await foreach (ItemSchema item in response.EnumerateOkItems())
         {
             items.Add(item);
         }
 
         Assert.AreEqual(3, items.Count);
-        Assert.AreEqual(1, items[0].GetProperty("id"u8).GetInt32());
-        Assert.AreEqual(2, items[1].GetProperty("id"u8).GetInt32());
-        Assert.AreEqual(3, items[2].GetProperty("id"u8).GetInt32());
+        Assert.AreEqual("evt-1", (string)items[0].EventId);
+        Assert.AreEqual("update", (string)items[0].EventType);
+        Assert.AreEqual("evt-2", (string)items[1].EventId);
+        Assert.AreEqual("create", (string)items[1].EventType);
+        Assert.AreEqual("evt-3", (string)items[2].EventId);
+        Assert.AreEqual("delete", (string)items[2].EventType);
     }
 
     [TestMethod]
@@ -4720,8 +4723,8 @@ public class GeneratedClientEndToEndTests
 
         Assert.AreEqual(200, response.StatusCode);
 
-        List<JsonElement> items = [];
-        await foreach (JsonElement item in response.EnumerateOkItems())
+        List<ItemSchema> items = [];
+        await foreach (ItemSchema item in response.EnumerateOkItems())
         {
             items.Add(item);
         }
@@ -4733,9 +4736,9 @@ public class GeneratedClientEndToEndTests
     public async Task StreamEvents_200_SkipsEmptyLines()
     {
         const string NdjsonBody = """
-            {"id":1}
+            {"eventId":"a"}
 
-            {"id":2}
+            {"eventId":"b"}
 
             """;
         byte[] bytes = Encoding.UTF8.GetBytes(NdjsonBody);
@@ -4748,13 +4751,15 @@ public class GeneratedClientEndToEndTests
                 in request,
                 CancellationToken.None);
 
-        List<JsonElement> items = [];
-        await foreach (JsonElement item in response.EnumerateOkItems())
+        List<ItemSchema> items = [];
+        await foreach (ItemSchema item in response.EnumerateOkItems())
         {
             items.Add(item);
         }
 
         Assert.AreEqual(2, items.Count);
+        Assert.AreEqual("a", (string)items[0].EventId);
+        Assert.AreEqual("b", (string)items[1].EventId);
     }
 
     [TestMethod]
@@ -4794,11 +4799,11 @@ public class GeneratedClientEndToEndTests
         const string SseBody = """
             :comment line
             event: message
-            data: {"delta":"Hello"}
+            data: {"id":"cmpl-1","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"Hello"}}]}
 
-            data: {"delta":" World"}
+            data: {"id":"cmpl-2","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":" World"}}]}
 
-            data: {"delta":"!"}
+            data: {"id":"cmpl-3","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"!"}}]}
 
             """;
         byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
@@ -4814,16 +4819,17 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(200, response.StatusCode);
         Assert.IsTrue(response.IsSuccess);
 
-        List<JsonElement> items = [];
-        await foreach (JsonElement item in response.EnumerateOkItems())
+        List<ItemSchema1> items = [];
+        await foreach (ItemSchema1 item in response.EnumerateOkItems())
         {
             items.Add(item);
         }
 
         Assert.AreEqual(3, items.Count);
-        Assert.AreEqual("Hello", items[0].GetProperty("delta"u8).GetString());
-        Assert.AreEqual(" World", items[1].GetProperty("delta"u8).GetString());
-        Assert.AreEqual("!", items[2].GetProperty("delta"u8).GetString());
+        Assert.AreEqual("cmpl-1", (string)items[0].Id);
+        Assert.AreEqual("chat.completion.chunk", (string)items[0].ObjectValue);
+        Assert.AreEqual("cmpl-2", (string)items[1].Id);
+        Assert.AreEqual("cmpl-3", (string)items[2].Id);
     }
 
     [TestMethod]
@@ -4834,11 +4840,11 @@ public class GeneratedClientEndToEndTests
             retry: 3000
             id: 123
             event: message
-            data: {"value":42}
+            data: {"id":"c1","choices":[{"index":0,"delta":{"content":"A"}}]}
 
             :another comment
             event: done
-            data: {"value":99}
+            data: {"id":"c2","choices":[{"index":0,"delta":{"content":"B"}}]}
 
             """;
         byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
@@ -4851,22 +4857,24 @@ public class GeneratedClientEndToEndTests
                 in request,
                 CancellationToken.None);
 
-        List<JsonElement> items = [];
-        await foreach (JsonElement item in response.EnumerateOkItems())
+        List<ItemSchema1> items = [];
+        await foreach (ItemSchema1 item in response.EnumerateOkItems())
         {
             items.Add(item);
         }
 
         Assert.AreEqual(2, items.Count);
-        Assert.AreEqual(42, items[0].GetProperty("value"u8).GetInt32());
-        Assert.AreEqual(99, items[1].GetProperty("value"u8).GetInt32());
+        Assert.AreEqual("c1", (string)items[0].Id);
+        Assert.AreEqual("c2", (string)items[1].Id);
     }
 
     [TestMethod]
     public async Task ChatCompletions_200_SseDataWithoutSpace()
     {
         // SSE data lines can omit the space after "data:"
-        const string SseBody = "data:{\"x\":1}\n";
+        const string SseBody = """
+            data:{"id":"d1","choices":[{"index":0,"delta":{"content":"X"}}]}
+            """;
         byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
 
         using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
@@ -4877,14 +4885,14 @@ public class GeneratedClientEndToEndTests
                 in request,
                 CancellationToken.None);
 
-        List<JsonElement> items = [];
-        await foreach (JsonElement item in response.EnumerateOkItems())
+        List<ItemSchema1> items = [];
+        await foreach (ItemSchema1 item in response.EnumerateOkItems())
         {
             items.Add(item);
         }
 
         Assert.AreEqual(1, items.Count);
-        Assert.AreEqual(1, items[0].GetProperty("x"u8).GetInt32());
+        Assert.AreEqual("d1", (string)items[0].Id);
     }
 
     [TestMethod]
@@ -4909,11 +4917,11 @@ public class GeneratedClientEndToEndTests
     {
         // A stream that yields many items — we cancel after first
         const string SseBody = """
-            data: {"n":1}
-            data: {"n":2}
-            data: {"n":3}
-            data: {"n":4}
-            data: {"n":5}
+            data: {"id":"n1","choices":[{"index":0,"delta":{"content":"a"}}]}
+            data: {"id":"n2","choices":[{"index":0,"delta":{"content":"b"}}]}
+            data: {"id":"n3","choices":[{"index":0,"delta":{"content":"c"}}]}
+            data: {"id":"n4","choices":[{"index":0,"delta":{"content":"d"}}]}
+            data: {"id":"n5","choices":[{"index":0,"delta":{"content":"e"}}]}
             """;
         byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
 
@@ -4926,9 +4934,9 @@ public class GeneratedClientEndToEndTests
                 CancellationToken.None);
 
         using CancellationTokenSource cts = new();
-        List<JsonElement> items = [];
+        List<ItemSchema1> items = [];
 
-        await foreach (JsonElement item in response.EnumerateOkItems(cts.Token))
+        await foreach (ItemSchema1 item in response.EnumerateOkItems(cts.Token))
         {
             items.Add(item);
             if (items.Count >= 2)
@@ -4946,7 +4954,7 @@ public class GeneratedClientEndToEndTests
     {
         // A 200 streaming response doesn't have a MatchResult handler for OK
         // (streaming responses use EnumerateOkItems instead), so it falls to default
-        byte[] bytes = "{\"id\":1}\n"u8.ToArray();
+        byte[] bytes = "{\"eventId\":\"x\"}\n"u8.ToArray();
 
         using var harness = new TestHarness(HttpStatusCode.OK, bytes, "application/x-ndjson");
 

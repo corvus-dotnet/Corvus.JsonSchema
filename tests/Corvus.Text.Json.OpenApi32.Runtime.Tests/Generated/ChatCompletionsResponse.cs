@@ -38,19 +38,19 @@ public struct ChatCompletionsResponse : IApiResponse<ChatCompletionsResponse>
     /// Enumerates the streaming items from the 200 response.
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
-    /// <returns>An async enumerable of <see cref="JsonElement"/> items.</returns>
+    /// <returns>An async enumerable of <see cref="CanonTests32.Client.ItemSchema1"/> items.</returns>
     /// <remarks>
     /// <para>The response stream is read line-by-line. Supports NDJSON and SSE formats.</para>
     /// <para>The response must not be disposed until enumeration is complete.</para>
     /// </remarks>
-    public IAsyncEnumerable<JsonElement> EnumerateOkItems(CancellationToken cancellationToken = default)
+    public IAsyncEnumerable<CanonTests32.Client.ItemSchema1> EnumerateOkItems(CancellationToken cancellationToken = default)
     {
         if (this.itemStream is null)
         {
             throw new InvalidOperationException("No streaming content is available.");
         }
 
-        return JsonStreamReader.ReadItemsAsync<JsonElement>(this.itemStream, cancellationToken);
+        return JsonStreamReader.ReadItemsAsync<CanonTests32.Client.ItemSchema1>(this.itemStream, cancellationToken);
     }
 
     /// <inheritdoc/>

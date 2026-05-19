@@ -546,14 +546,9 @@ public sealed class OpenApi32CodeGenerator
                     {
                         foreach (var mediaTypeProp in response.ContentValue.EnumerateObject())
                         {
-                            if (mediaTypeProp.Value.Schema.IsNotUndefined())
+                            if (mediaTypeProp.Value.Schema.IsNotUndefined()
+                                && !CodeEmitHelpers.IsRawStreamMediaType(mediaTypeProp.Name))
                             {
-                                // Skip raw stream content types — no JSON Schema type needed.
-                                if (CodeEmitHelpers.IsRawStreamMediaType(mediaTypeProp.Name))
-                                {
-                                    continue;
-                                }
-
                                 using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
 
                                 string positionalPointer = SchemaPointerBuilder.BuildResponseContentSchemaPointer(
