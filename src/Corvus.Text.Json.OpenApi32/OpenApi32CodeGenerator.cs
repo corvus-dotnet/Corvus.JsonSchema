@@ -3730,6 +3730,16 @@ public sealed class OpenApi32CodeGenerator
                 {
                     string fieldName = CodeEmitHelpers.ToCamelCase(propertyName);
 
+                    // Resolve the element/value type for deeply nested headers.
+                    string? elementTypeName = null;
+                    if (header.HasDeepNesting && header.SchemaPointer is not null)
+                    {
+                        string elementPointer = header.SerializationKind is ParameterSerializationKind.Array
+                            ? header.SchemaPointer + "/items"
+                            : header.SchemaPointer + "/additionalProperties";
+                        elementTypeName = this.ResolveSchemaTypeName(elementPointer);
+                    }
+
                     CodeEmitHelpers.EmitResponseHeaderLazyProperty(
                         w,
                         propertyName,
@@ -3739,7 +3749,8 @@ public sealed class OpenApi32CodeGenerator
                         header.Explode,
                         header.SerializationKind,
                         header.ElementSerializationKind,
-                        header.HasDeepNesting);
+                        header.HasDeepNesting,
+                        elementTypeName);
                 }
                 else
                 {

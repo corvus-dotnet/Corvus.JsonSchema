@@ -159,6 +159,104 @@ public sealed class ApiFormsClient : IApiFormsClient
         return SendWithBodyWriterAsyncCore<UploadEncodedDocumentRequest, UploadEncodedDocumentResponse>(workspace, request, stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
     }
 
+    /// <summary>
+    /// Submit form with default encoding (explode=true for arrays and objects)
+    /// </summary>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<SubmitDefaultFormResponse> SubmitDefaultFormAsync(CanonTests32.Client.PostFormsDefaultFormBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CanonTests32.Client.PostFormsDefaultFormBody bodyValue = CanonTests32.Client.PostFormsDefaultFormBody.CreateBuilder(workspace, body).RootElement;
+        SubmitDefaultFormRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        return SendWithBodyWriterAsyncCore<SubmitDefaultFormRequest, SubmitDefaultFormResponse>(workspace, request, stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream), "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Submit form with non-exploded object and spaceDelimited array
+    /// </summary>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<SubmitNonexplodedFormResponse> SubmitNonexplodedFormAsync(CanonTests32.Client.PostFormsNonexplodedFormBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CanonTests32.Client.PostFormsNonexplodedFormBody bodyValue = CanonTests32.Client.PostFormsNonexplodedFormBody.CreateBuilder(workspace, body).RootElement;
+        SubmitNonexplodedFormRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)
+        {
+            ["keywords"] = new(Style: "spaceDelimited", Explode: false),
+            ["data"] = new(Style: "form", Explode: false),
+        };
+        return SendWithBodyWriterAsyncCore<SubmitNonexplodedFormRequest, SubmitNonexplodedFormResponse>(workspace, request, stream => FormUrlEncodedSerializer.Serialize(bodyValue, stream, encodings), "application/x-www-form-urlencoded", responseValidationMode, cancellationToken);
+    }
+
+    /// <summary>
+    /// Submit multipart form with various value types
+    /// </summary>
+    /// <param name="body">The request body..</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public ValueTask<SubmitMultipartTypesResponse> SubmitMultipartTypesAsync(CanonTests32.Client.PostFormsMultipartTypesBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    {
+        JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+        CanonTests32.Client.PostFormsMultipartTypesBody bodyValue = CanonTests32.Client.PostFormsMultipartTypesBody.CreateBuilder(workspace, body).RootElement;
+        SubmitMultipartTypesRequest request = new();
+
+        request.Validate(validationMode);
+
+        if (validationMode == ValidationMode.Detailed)
+        {
+            using JsonSchemaResultsCollector bodyCollector = JsonSchemaResultsCollector.Create(JsonSchemaResultsLevel.Detailed);
+            if (!bodyValue.EvaluateSchema(bodyCollector))
+            {
+                ThrowHelper.ThrowRequestBodyValidationFailed(SchemaValidationDetail.FormatResults(bodyCollector));
+            }
+        }
+        else if (validationMode != ValidationMode.None && !bodyValue.EvaluateSchema())
+        {
+            ThrowHelper.ThrowRequestBodyValidationFailed();
+        }
+
+        string boundary = MultipartFormDataSerializer.GenerateBoundary();
+        Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)
+        {
+            ["title"] = new(ContentType: "text/plain"),
+            ["file"] = new(ContentType: "application/octet-stream"),
+        };
+        return SendWithBodyWriterAsyncCore<SubmitMultipartTypesRequest, SubmitMultipartTypesResponse>(workspace, request, stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
+    }
+
     /// <inheritdoc/>
     public ValueTask DisposeAsync() => default;
 

@@ -1604,7 +1604,8 @@ public static class CodeEmitHelpers
         bool explode,
         ParameterSerializationKind kind,
         ParameterSerializationKind elementKind,
-        bool hasDeepNesting = false)
+        bool hasDeepNesting = false,
+        string? elementTypeName = null)
     {
         // Backing fields: cached parsed value and a flag to avoid re-parsing.
         w.WriteLine($"private {typeName}? {fieldName}HeaderValue;");
@@ -1640,11 +1641,11 @@ public static class CodeEmitHelpers
         // Object: split on comma, interpret as key,value pairs (or key=value with explode).
         if (kind is ParameterSerializationKind.Array)
         {
-            EmitResponseHeaderArrayParse(w, fieldName, typeName, explode, elementKind, hasDeepNesting);
+            EmitResponseHeaderArrayParse(w, fieldName, typeName, explode, elementKind, hasDeepNesting, elementTypeName);
         }
         else if (kind is ParameterSerializationKind.Object)
         {
-            EmitResponseHeaderObjectParse(w, fieldName, typeName, explode, elementKind, hasDeepNesting);
+            EmitResponseHeaderObjectParse(w, fieldName, typeName, explode, elementKind, hasDeepNesting, elementTypeName);
         }
         else
         {
@@ -1710,17 +1711,12 @@ public static class CodeEmitHelpers
         string typeName,
         bool explode,
         ParameterSerializationKind elementKind,
-        bool hasDeepNesting)
+        bool hasDeepNesting,
+        string? elementTypeName = null)
     {
         // style: simple arrays are comma-separated (explode has no effect on separator for simple).
         // Use CreateBuilder<TContext> with rawValue as context — static lambda, zero captures.
         _ = explode;
-        string elementSourceExpr = GetElementSourceExpression(elementKind, "element");
-
-        if (hasDeepNesting)
-        {
-            w.WriteLine("#warning Deep nesting detected in array header schema. Nested object/array values are treated as JSON-encoded strings.");
-        }
 
         // When hasDeepNesting is true, elements may contain JSON-encoded values with
         // commas inside braces/brackets/strings. Use StyleValueSplitter.NextSeparator
@@ -1737,7 +1733,18 @@ public static class CodeEmitHelpers
         w.OpenBrace();
         w.WriteLine($"int commaIdx = {separatorExpr};");
         w.WriteLine("System.ReadOnlySpan<char> element = commaIdx >= 0 ? remaining.Slice(0, commaIdx).Trim() : remaining.Trim();");
-        w.WriteLine($"arrayBuilder.AddItem({elementSourceExpr});");
+
+        if (hasDeepNesting && elementTypeName is not null)
+        {
+            // Elements are JSON-encoded objects/arrays — parse directly into the workspace.
+            w.WriteLine("arrayBuilder._builder.AddItemFromJson(element);");
+        }
+        else
+        {
+            string elementSourceExpr = GetElementSourceExpression(elementKind, "element");
+            w.WriteLine($"arrayBuilder.AddItem({elementSourceExpr});");
+        }
+
         w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
         w.CloseBrace();
         w.CloseBraceNoNewline();
@@ -1750,18 +1757,13 @@ public static class CodeEmitHelpers
         string typeName,
         bool explode,
         ParameterSerializationKind valueKind,
-        bool hasDeepNesting)
+        bool hasDeepNesting,
+        string? valueTypeName = null)
     {
         // style: simple objects:
         // explode=false: comma-separated alternating key,value: "R,100,G,200,B,150"
         // explode=true: comma-separated key=value: "R=100,G=200,B=150"
         // Use CreateBuilder<TContext> with rawValue as context — static lambda, zero captures.
-        string valueSourceExpr = GetElementSourceExpression(valueKind, "value");
-
-        if (hasDeepNesting)
-        {
-            w.WriteLine("#warning Deep nesting detected in object header schema. Nested object/array values are treated as JSON-encoded strings.");
-        }
 
         // When hasDeepNesting is true, values may contain JSON-encoded content with
         // commas inside braces/brackets/strings. Use StyleValueSplitter.NextSeparator
@@ -1786,7 +1788,7 @@ public static class CodeEmitHelpers
             w.OpenBrace();
             w.WriteLine("System.ReadOnlySpan<char> key = pair.Slice(0, eqIdx).Trim();");
             w.WriteLine("System.ReadOnlySpan<char> value = pair.Slice(eqIdx + 1).Trim();");
-            w.WriteLine($"objectBuilder.AddProperty(key, {valueSourceExpr});");
+            EmitObjectAddProperty(w, hasDeepNesting, valueKind, valueTypeName);
             w.CloseBrace();
             w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
             w.CloseBrace();
@@ -1808,13 +1810,31 @@ public static class CodeEmitHelpers
             // Value separator uses depth-aware splitting when deep nesting is present.
             w.WriteLine($"commaIdx = {separatorExpr};");
             w.WriteLine("System.ReadOnlySpan<char> value = commaIdx >= 0 ? remaining.Slice(0, commaIdx).Trim() : remaining.Trim();");
-            w.WriteLine($"objectBuilder.AddProperty(key, {valueSourceExpr});");
+            EmitObjectAddProperty(w, hasDeepNesting, valueKind, valueTypeName);
             w.WriteLine("remaining = commaIdx >= 0 ? remaining.Slice(commaIdx + 1) : default;");
             w.CloseBrace();
         }
 
         w.CloseBraceNoNewline();
         w.WriteLine(").RootElement;");
+    }
+
+    private static void EmitObjectAddProperty(
+        IndentedWriter w,
+        bool hasDeepNesting,
+        ParameterSerializationKind valueKind,
+        string? valueTypeName)
+    {
+        if (hasDeepNesting && valueTypeName is not null)
+        {
+            // Values are JSON-encoded objects/arrays — parse directly into the workspace.
+            w.WriteLine("objectBuilder._builder.AddPropertyValueFromJson(key, value);");
+        }
+        else
+        {
+            string valueSourceExpr = GetElementSourceExpression(valueKind, "value");
+            w.WriteLine($"objectBuilder.AddProperty(key, {valueSourceExpr});");
+        }
     }
 
     private static string GetElementSourceExpression(ParameterSerializationKind kind, string varName)

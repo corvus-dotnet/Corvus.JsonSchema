@@ -61,6 +61,36 @@ public sealed partial class JsonDocumentBuilder<T>
     }
 
     /// <summary>
+    /// Parses UTF-8 encoded JSON from a byte span directly into a mutable document builder.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This overload accepts a <see cref="ReadOnlySpan{T}"/> of bytes, making it suitable for
+    /// use with stack-allocated or sliced buffers. The data is copied into a pooled buffer
+    /// internally, so the caller's span does not need to remain valid after this method returns.
+    /// </para>
+    /// </remarks>
+    /// <param name="workspace">The workspace that will own this builder.</param>
+    /// <param name="utf8Json">UTF-8 encoded JSON text to parse.</param>
+    /// <param name="options">Options to control the reader behavior during parsing.</param>
+    /// <returns>A <see cref="JsonDocumentBuilder{T}"/> representation of the JSON value.</returns>
+    /// <exception cref="JsonException">
+    /// <paramref name="utf8Json"/> does not represent a valid single JSON value.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="options"/> contains unsupported options.
+    /// </exception>
+    public static JsonDocumentBuilder<T> Parse(
+        JsonWorkspace workspace,
+        ReadOnlySpan<byte> utf8Json,
+        JsonDocumentOptions options = default)
+    {
+        byte[] buffer = ArrayPool<byte>.Shared.Rent(Math.Max(256, utf8Json.Length));
+        utf8Json.CopyTo(buffer);
+        return ParseCore(workspace, buffer, utf8Json.Length, options.GetReaderOptions());
+    }
+
+    /// <summary>
     /// Parses text representing a single JSON value directly into a mutable document builder.
     /// </summary>
     /// <remarks>
@@ -93,6 +123,51 @@ public sealed partial class JsonDocumentBuilder<T>
         try
         {
             actualByteCount = JsonReaderHelper.GetUtf8FromText(jsonChars, utf8Bytes);
+            Debug.Assert(expectedByteCount == actualByteCount);
+        }
+        catch
+        {
+            utf8Bytes.AsSpan(0, expectedByteCount).Clear();
+            ArrayPool<byte>.Shared.Return(utf8Bytes);
+            throw;
+        }
+
+        // Ownership of utf8Bytes transfers to ParseCore (becomes _valueBacking).
+        return ParseCore(workspace, utf8Bytes, actualByteCount, options.GetReaderOptions());
+    }
+
+    /// <summary>
+    /// Parses a character span representing a single JSON value directly into a mutable document builder.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The text is transcoded from UTF-16 to UTF-8 before parsing. For best performance,
+    /// prefer the <see cref="Parse(JsonWorkspace, ReadOnlyMemory{byte}, JsonDocumentOptions)"/>
+    /// overload if you already have UTF-8 data.
+    /// </para>
+    /// </remarks>
+    /// <param name="workspace">The workspace that will own this builder.</param>
+    /// <param name="json">JSON text to parse.</param>
+    /// <param name="options">Options to control the reader behavior during parsing.</param>
+    /// <returns>A <see cref="JsonDocumentBuilder{T}"/> representation of the JSON value.</returns>
+    /// <exception cref="JsonException">
+    /// <paramref name="json"/> does not represent a valid single JSON value.
+    /// </exception>
+    /// <exception cref="ArgumentException">
+    /// <paramref name="options"/> contains unsupported options.
+    /// </exception>
+    public static JsonDocumentBuilder<T> Parse(
+        JsonWorkspace workspace,
+        [StringSyntax(StringSyntaxAttribute.Json)] ReadOnlySpan<char> json,
+        JsonDocumentOptions options = default)
+    {
+        int expectedByteCount = JsonReaderHelper.GetUtf8ByteCount(json);
+        byte[] utf8Bytes = ArrayPool<byte>.Shared.Rent(Math.Max(256, expectedByteCount));
+
+        int actualByteCount;
+        try
+        {
+            actualByteCount = JsonReaderHelper.GetUtf8FromText(json, utf8Bytes);
             Debug.Assert(expectedByteCount == actualByteCount);
         }
         catch

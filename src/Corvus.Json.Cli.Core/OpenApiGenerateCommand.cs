@@ -330,9 +330,48 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             {
                 schemaTypeMap[pointerStr] = reduced.FullyQualifiedDotnetTypeName();
             }
+
+            // Also add child types (items, additionalProperties, etc.) so that
+            // deeply nested header/parameter element types can be resolved.
+            AddChildTypesToMap(reduced, schemaTypeMap);
         }
 
         return schemaTypeMap;
+    }
+
+    /// <summary>
+    /// Recursively walks child type declarations and adds their pointer mappings to the schema type map.
+    /// This ensures sub-schema types (e.g., array items, additionalProperties) are resolvable by pointer.
+    /// </summary>
+    private static void AddChildTypesToMap(TypeDeclaration parentType, Dictionary<string, string> schemaTypeMap)
+    {
+        HashSet<TypeDeclaration> visited = [];
+        AddChildTypesToMapCore(parentType, schemaTypeMap, visited);
+    }
+
+    private static void AddChildTypesToMapCore(TypeDeclaration parentType, Dictionary<string, string> schemaTypeMap, HashSet<TypeDeclaration> visited)
+    {
+        foreach (TypeDeclaration child in parentType.Children())
+        {
+            TypeDeclaration reducedChild = child.ReducedTypeDeclaration().ReducedType;
+
+            if (!visited.Add(reducedChild))
+            {
+                continue;
+            }
+
+            if (reducedChild.HasDotnetTypeName()
+                && reducedChild.LocatedSchema.RootDocumentPointer is { Length: > 0 } rootPointer)
+            {
+                string key = "#" + rootPointer;
+
+                // Don't overwrite existing entries (root pointers take precedence)
+                schemaTypeMap.TryAdd(key, reducedChild.FullyQualifiedDotnetTypeName());
+            }
+
+            // Recurse into grandchildren
+            AddChildTypesToMapCore(reducedChild, schemaTypeMap, visited);
+        }
     }
 
     /// <summary>

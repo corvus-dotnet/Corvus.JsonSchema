@@ -2398,6 +2398,268 @@
         }
       }
     },
+    "/forms/default-form": {
+      "post": {
+        "operationId": "submitDefaultForm",
+        "summary": "Submit form with default encoding (explode=true for arrays and objects)",
+        "tags": [
+          "forms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "info": {
+                    "type": "object",
+                    "properties": {
+                      "key": {
+                        "type": "string"
+                      },
+                      "value": {
+                        "type": "string"
+                      }
+                    }
+                  },
+                  "count": {
+                    "type": "integer"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "extra": {
+                    "type": ["string", "null"]
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "received": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "received"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/nonexploded-form": {
+      "post": {
+        "operationId": "submitNonexplodedForm",
+        "summary": "Submit form with non-exploded object and spaceDelimited array",
+        "tags": [
+          "forms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/x-www-form-urlencoded": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "keywords": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "x": {
+                        "type": "string"
+                      },
+                      "y": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "required": [
+                  "keywords",
+                  "data"
+                ]
+              },
+              "encoding": {
+                "keywords": {
+                  "style": "spaceDelimited",
+                  "explode": false
+                },
+                "data": {
+                  "style": "form",
+                  "explode": false
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Form accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "received": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "received"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/forms/multipart-types": {
+      "post": {
+        "operationId": "submitMultipartTypes",
+        "summary": "Submit multipart form with various value types",
+        "tags": [
+          "forms"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string"
+                  },
+                  "count": {
+                    "type": "integer"
+                  },
+                  "active": {
+                    "type": "boolean"
+                  },
+                  "note": {
+                    "type": ["string", "null"]
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "title",
+                  "count",
+                  "active"
+                ]
+              },
+              "encoding": {
+                "title": {
+                  "contentType": "text/plain"
+                },
+                "file": {
+                  "contentType": "application/octet-stream"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Upload accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "uploaded": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "uploaded"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/complex/header-nested-array": {
+      "get": {
+        "operationId": "headerNestedArray",
+        "summary": "Response with deeply nested array header (triggers StyleValueSplitter)",
+        "tags": [
+          "complex"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "headers": {
+              "X-Nested-Items": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/query-search": {
       "query": {
         "operationId": "querySearch",

@@ -1,6 +1,6 @@
 {
   "excludePaths": [],
-  "generatedAt": "2026-05-19T15:15:04.4996494\u002B00:00",
+  "generatedAt": "2026-05-19T16:48:28.7614633\u002B00:00",
   "generatedFiles": [
     "GetItemRequest.cs",
     "GetItemResponse.cs",
@@ -106,6 +106,14 @@
     "SubmitEncodedContactFormResponse.cs",
     "UploadEncodedDocumentRequest.cs",
     "UploadEncodedDocumentResponse.cs",
+    "SubmitDefaultFormRequest.cs",
+    "SubmitDefaultFormResponse.cs",
+    "SubmitNonexplodedFormRequest.cs",
+    "SubmitNonexplodedFormResponse.cs",
+    "SubmitMultipartTypesRequest.cs",
+    "SubmitMultipartTypesResponse.cs",
+    "HeaderNestedArrayRequest.cs",
+    "HeaderNestedArrayResponse.cs",
     "QuerySearchRequest.cs",
     "QuerySearchResponse.cs",
     "SearchWithQuerystringRequest.cs",
@@ -140,6 +148,8 @@
     "ApiTextClient.cs",
     "IApiFormsClient.cs",
     "ApiFormsClient.cs",
+    "IApiComplexClient.cs",
+    "ApiComplexClient.cs",
     "IApiDocumentsClient.cs",
     "ApiDocumentsClient.cs",
     "IApiPreferencesClient.cs",
@@ -149,9 +159,9 @@
     "IApiStreamingClient.cs",
     "ApiStreamingClient.cs"
   ],
-  "generatorVersion": "1.0.0\u002Bf9da60f159dffb9209599b822b513aef222b5437",
+  "generatorVersion": "1.0.0\u002B0ad71fbb40e068143b6297c0e5d98bdbfa5972c5",
   "includePaths": [],
   "rootNamespace": "CanonTests32.Client",
-  "specFileHash": "73d2f3a2b5ab1628a9fb0400685afeb24fe641a7643f2cbf9949200702e68794",
+  "specFileHash": "d715ba29b654061ec25256a075eab6a5e599d7af845b2bc1758f120a8a247bb5",
   "specVersion": "3.2"
 }

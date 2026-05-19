@@ -2960,6 +2960,469 @@ public class GeneratedClientEndToEndTests
             IApiItemsClient.SecuritySchemes.Oauth2DeviceAuthorizationUrl);
     }
 
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitDefaultFormAsync_SendsFormUrlEncoded()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsDefaultFormBody>.Parse(
+            """{"name":"Alice","tags":["a","b"],"info":{"key":"k1","value":"v1"},"count":42,"active":true,"extra":null}""");
+
+        await using SubmitDefaultFormResponse response = await client.SubmitDefaultFormAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual(
+            "application/x-www-form-urlencoded",
+            harness.CapturedRequestContentType);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitDefaultFormAsync_EncodesExplodedArray()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsDefaultFormBody>.Parse(
+            """{"name":"Test","tags":["x","y","z"]}""");
+
+        await using SubmitDefaultFormResponse response = await client.SubmitDefaultFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // Default encoding for arrays is explode=true: tags=x&tags=y&tags=z
+        Assert.IsTrue(body.Contains("tags=x"), $"Expected exploded tags, got:\n{body}");
+        Assert.IsTrue(body.Contains("tags=y"), $"Expected exploded tags, got:\n{body}");
+        Assert.IsTrue(body.Contains("tags=z"), $"Expected exploded tags, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitDefaultFormAsync_EncodesExplodedObject()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsDefaultFormBody>.Parse(
+            """{"name":"Test","info":{"key":"myKey","value":"myVal"}}""");
+
+        await using SubmitDefaultFormResponse response = await client.SubmitDefaultFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // Default encoding for objects is explode=true: key=myKey&value=myVal
+        Assert.IsTrue(body.Contains("key=myKey"), $"Expected exploded object, got:\n{body}");
+        Assert.IsTrue(body.Contains("value=myVal"), $"Expected exploded object, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitDefaultFormAsync_EncodesIntegerAndBoolean()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsDefaultFormBody>.Parse(
+            """{"name":"Test","count":7,"active":false}""");
+
+        await using SubmitDefaultFormResponse response = await client.SubmitDefaultFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        Assert.IsTrue(body.Contains("count=7"), $"Expected integer encoding, got:\n{body}");
+        Assert.IsTrue(
+            body.Contains("active=false") || body.Contains("active=False"),
+            $"Expected boolean encoding, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitDefaultFormAsync_EncodesNullable()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsDefaultFormBody>.Parse(
+            """{"name":"Test","extra":"hello"}""");
+
+        await using SubmitDefaultFormResponse response = await client.SubmitDefaultFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        Assert.IsTrue(body.Contains("extra=hello"), $"Expected nullable string encoding, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitDefaultFormAsync_NullValueEncodedAsEmpty()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsDefaultFormBody>.Parse(
+            """{"name":"Test","extra":null}""");
+
+        await using SubmitDefaultFormResponse response = await client.SubmitDefaultFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // Null values are serialized as empty string value in form encoding
+        Assert.AreEqual("name=Test&extra=", body);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitDefaultFormAsync_UrlPath()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsDefaultFormBody>.Parse(
+            """{"name":"Test"}""");
+
+        await using SubmitDefaultFormResponse response = await client.SubmitDefaultFormAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(
+            "http://localhost/forms/default-form",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitNonexplodedFormAsync_SendsFormUrlEncoded()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsNonexplodedFormBody>.Parse(
+            """{"keywords":["foo","bar"],"data":{"x":"1","y":"2"}}""");
+
+        await using SubmitNonexplodedFormResponse response = await client.SubmitNonexplodedFormAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.AreEqual(
+            "application/x-www-form-urlencoded",
+            harness.CapturedRequestContentType);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitNonexplodedFormAsync_SpaceDelimitedArray()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsNonexplodedFormBody>.Parse(
+            """{"keywords":["alpha","beta","gamma"],"data":{"x":"1","y":"2"}}""");
+
+        await using SubmitNonexplodedFormResponse response = await client.SubmitNonexplodedFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // spaceDelimited, explode=false → keywords=alpha%20beta%20gamma (or alpha+beta+gamma)
+        Assert.IsTrue(
+            body.Contains("keywords=alpha%20beta%20gamma") || body.Contains("keywords=alpha+beta+gamma"),
+            $"Expected space-delimited non-exploded array, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitNonexplodedFormAsync_NonExplodedObject()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsNonexplodedFormBody>.Parse(
+            """{"keywords":["a"],"data":{"x":"hello","y":"world"}}""");
+
+        await using SubmitNonexplodedFormResponse response = await client.SubmitNonexplodedFormAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // form style, explode=false for object → data=x,hello,y,world
+        Assert.IsTrue(
+            body.Contains("data=x%2Chello%2Cy%2Cworld") || body.Contains("data=x,hello,y,world"),
+            $"Expected non-exploded object encoding, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitNonexplodedFormAsync_UrlPath()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsNonexplodedFormBody>.Parse(
+            """{"keywords":["a"],"data":{"x":"1","y":"2"}}""");
+
+        await using SubmitNonexplodedFormResponse response = await client.SubmitNonexplodedFormAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(
+            "http://localhost/forms/nonexploded-form",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitMultipartTypesAsync_SendsMultipart()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
+            """{"count":42,"active":true,"title":"Hello"}""");
+
+        await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.AreEqual(HttpMethod.Post, harness.CapturedRequest!.Method);
+        Assert.IsTrue(
+            harness.CapturedRequestContentType!.StartsWith("multipart/form-data; boundary="),
+            $"Expected multipart content type, got: {harness.CapturedRequestContentType}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitMultipartTypesAsync_EncodesInteger()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
+            """{"count":99,"active":true,"title":"Test"}""");
+
+        await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        Assert.IsTrue(
+            body.Contains("Content-Disposition: form-data; name=\"count\"\r\n\r\n99"),
+            $"Expected integer part, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitMultipartTypesAsync_EncodesBoolean()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
+            """{"count":1,"active":false,"title":"Test"}""");
+
+        await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        Assert.IsTrue(
+            body.Contains("Content-Disposition: form-data; name=\"active\""),
+            $"Expected active part, got:\n{body}");
+
+        // The value follows after blank line — check it's present somewhere after the header
+        int activeIdx = body.IndexOf("name=\"active\"");
+        Assert.IsTrue(activeIdx >= 0);
+        string afterActive = body.Substring(activeIdx);
+        Assert.IsTrue(
+            afterActive.Contains("false") || afterActive.Contains("False"),
+            $"Expected boolean false value after active header, got:\n{afterActive}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitMultipartTypesAsync_EncodesStringWithContentType()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
+            """{"count":1,"active":true,"title":"My Title"}""");
+
+        await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // title has contentType override of text/plain
+        Assert.IsTrue(
+            body.Contains("Content-Disposition: form-data; name=\"title\""),
+            $"Expected title part, got:\n{body}");
+        Assert.IsTrue(
+            body.Contains("Content-Type: text/plain"),
+            $"Expected text/plain content type for title, got:\n{body}");
+        Assert.IsTrue(
+            body.Contains("My Title"),
+            $"Expected title value, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitMultipartTypesAsync_EncodesNullable()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
+            """{"count":1,"active":true,"title":"T","label":"optional-value"}""");
+
+        await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        Assert.IsTrue(
+            body.Contains("Content-Disposition: form-data; name=\"label\"\r\n\r\noptional-value"),
+            $"Expected nullable string part, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitMultipartTypesAsync_NullValueIncludedAsEmpty()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
+            """{"count":1,"active":true,"title":"T","label":null}""");
+
+        await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // Null values are included as empty parts in multipart encoding
+        Assert.IsTrue(
+            body.Contains("Content-Disposition: form-data; name=\"label\""),
+            $"Expected null label to be included as empty part, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitMultipartTypesAsync_EncodesBinary()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        // Binary field is base64-encoded in JSON
+        string base64Data = Convert.ToBase64String(new byte[] { 0x01, 0x02, 0x03, 0x04 });
+        using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
+            $$"""{"count":1,"active":true,"title":"T","file":"{{base64Data}}"}""");
+
+        await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
+            bodyDoc.RootElement);
+
+        string body = System.Text.Encoding.UTF8.GetString(harness.CapturedRequestBody!);
+
+        // file has contentType override of application/octet-stream
+        Assert.IsTrue(
+            body.Contains("Content-Disposition: form-data; name=\"file\""),
+            $"Expected file part, got:\n{body}");
+        Assert.IsTrue(
+            body.Contains("Content-Type: application/octet-stream"),
+            $"Expected octet-stream content type for file, got:\n{body}");
+    }
+
+    [TestMethod]
+    public async Task Client_ApiFormsClient_SubmitMultipartTypesAsync_UrlPath()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"received":true}""");
+        var client = new ApiFormsClient(harness.Transport);
+
+        using var bodyDoc = ParsedJsonDocument<PostFormsMultipartTypesBody>.Parse(
+            """{"count":1,"active":true,"title":"T"}""");
+
+        await using SubmitMultipartTypesResponse response = await client.SubmitMultipartTypesAsync(
+            bodyDoc.RootElement);
+
+        Assert.AreEqual(
+            "http://localhost/forms/multipart-types",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexClient_HeaderNestedArrayAsync_ParsesNestedObjectArray()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"ok":true}""",
+            new Dictionary<string, string>
+            {
+                ["X-Nested-Items"] = """{"id":"item-1","tags":["a","b"]}, {"id":"item-2","tags":["c"]}"""
+            });
+        var client = new ApiComplexClient(harness.Transport);
+
+        await using HeaderNestedArrayResponse response = await client.HeaderNestedArrayAsync();
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+
+        // Verify the deeply nested header was parsed correctly
+        Assert.IsNotNull(response.XNestedItemsHeader);
+        var items = response.XNestedItemsHeader.Value;
+        Assert.AreEqual(2, items.GetArrayLength());
+
+        // First element
+        var item0 = items[0];
+        Assert.AreEqual("item-1", (string)item0.Id);
+        Assert.AreEqual(2, item0.Tags.GetArrayLength());
+        Assert.AreEqual("a", (string)item0.Tags[0]);
+        Assert.AreEqual("b", (string)item0.Tags[1]);
+
+        // Second element
+        var item1 = items[1];
+        Assert.AreEqual("item-2", (string)item1.Id);
+        Assert.AreEqual(1, item1.Tags.GetArrayLength());
+        Assert.AreEqual("c", (string)item1.Tags[0]);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexClient_HeaderNestedArrayAsync_MissingHeaderReturnsNull()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"ok":true}""");
+        var client = new ApiComplexClient(harness.Transport);
+
+        await using HeaderNestedArrayResponse response = await client.HeaderNestedArrayAsync();
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsNull(response.XNestedItemsHeader);
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexClient_HeaderNestedArrayAsync_SingleElement()
+    {
+        using var harness = new TestHarness(
+            HttpStatusCode.OK,
+            """{"ok":true}""",
+            new Dictionary<string, string>
+            {
+                ["X-Nested-Items"] = """{"id":"solo","tags":[]}"""
+            });
+        var client = new ApiComplexClient(harness.Transport);
+
+        await using HeaderNestedArrayResponse response = await client.HeaderNestedArrayAsync();
+
+        Assert.IsNotNull(response.XNestedItemsHeader);
+        var items = response.XNestedItemsHeader.Value;
+        Assert.AreEqual(1, items.GetArrayLength());
+        Assert.AreEqual("solo", (string)items[0].Id);
+        Assert.AreEqual(0, items[0].Tags.GetArrayLength());
+    }
+
+    [TestMethod]
+    public async Task Client_ApiComplexClient_HeaderNestedArrayAsync_UrlPath()
+    {
+        using var harness = new TestHarness(HttpStatusCode.OK, """{"ok":true}""");
+        var client = new ApiComplexClient(harness.Transport);
+
+        await using HeaderNestedArrayResponse response = await client.HeaderNestedArrayAsync();
+
+        Assert.AreEqual(
+            "http://localhost/complex/header-nested-array",
+            harness.CapturedRequest!.RequestUri!.OriginalString);
+        Assert.AreEqual(HttpMethod.Get, harness.CapturedRequest.Method);
+    }
+
     /// <summary>
     /// Encapsulates a mock HTTP handler, HttpClient, and HttpClientTransport for testing.
     /// The handler captures the outgoing request and returns a canned response.
