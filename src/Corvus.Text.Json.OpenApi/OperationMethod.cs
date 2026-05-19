@@ -33,9 +33,15 @@ public enum OperationMethod
     /// <summary>HTTP TRACE.</summary>
     Trace,
 
+    /// <summary>HTTP QUERY (RFC 9110).</summary>
+    Query,
+
     /// <summary>AsyncAPI publish action.</summary>
     Publish,
 
     /// <summary>AsyncAPI subscribe action.</summary>
     Subscribe,
+
+    /// <summary>A custom HTTP method (from OpenAPI 3.2 additionalOperations).</summary>
+    Custom,
 }

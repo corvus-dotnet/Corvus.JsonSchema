@@ -189,6 +189,8 @@ public static class CodeEmitHelpers
             OperationMethod.Head => "OperationMethod.Head",
             OperationMethod.Options => "OperationMethod.Options",
             OperationMethod.Trace => "OperationMethod.Trace",
+            OperationMethod.Query => "OperationMethod.Query",
+            OperationMethod.Custom => "OperationMethod.Custom",
             _ => $"(OperationMethod){(int)method}",
         };
 

@@ -47,6 +47,17 @@ public interface IApiRequest<TSelf>
     static abstract OperationMethod Method { get; }
 
     /// <summary>
+    /// Gets the custom HTTP method name when <see cref="Method"/> is <see cref="OperationMethod.Custom"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is used for arbitrary HTTP methods defined via OpenAPI 3.2's <c>additionalOperations</c>.
+    /// When <see cref="Method"/> is not <see cref="OperationMethod.Custom"/>, this returns an empty span.
+    /// </para>
+    /// </remarks>
+    static virtual ReadOnlySpan<byte> CustomMethodNameUtf8 => default;
+
+    /// <summary>
     /// Gets a value indicating whether this operation has any path parameters
     /// that require template substitution.
     /// </summary>

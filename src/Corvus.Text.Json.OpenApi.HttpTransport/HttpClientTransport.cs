@@ -130,8 +130,16 @@ public sealed class HttpClientTransport : IApiTransport
         return default;
     }
 
-    private static HttpMethod MapMethod(OperationMethod method) =>
-        method switch
+    private static HttpMethod MapMethod<TRequest>(OperationMethod method)
+        where TRequest : struct, IApiRequest<TRequest>
+    {
+        if (method == OperationMethod.Custom)
+        {
+            ReadOnlySpan<byte> customName = TRequest.CustomMethodNameUtf8;
+            return new HttpMethod(System.Text.Encoding.UTF8.GetString(customName));
+        }
+
+        return method switch
         {
             OperationMethod.Get => HttpMethod.Get,
             OperationMethod.Post => HttpMethod.Post,
@@ -141,8 +149,10 @@ public sealed class HttpClientTransport : IApiTransport
             OperationMethod.Head => HttpMethod.Head,
             OperationMethod.Options => HttpMethod.Options,
             OperationMethod.Trace => HttpMethod.Trace,
+            OperationMethod.Query => new HttpMethod("QUERY"),
             _ => new HttpMethod(method.ToString()),
         };
+    }
 
     private static HttpRequestMessage BuildHttpRequest<TRequest>(in TRequest request)
         where TRequest : struct, IApiRequest<TRequest>
@@ -151,7 +161,7 @@ public sealed class HttpClientTransport : IApiTransport
 
         // Use the string-accepting constructor. HttpClient.SendAsync resolves
         // this relative path against HttpClient.BaseAddress automatically.
-        HttpRequestMessage httpRequest = new(MapMethod(TRequest.Method), relativePath);
+        HttpRequestMessage httpRequest = new(MapMethod<TRequest>(TRequest.Method), relativePath);
 
         if (TRequest.HasHeaderParameters)
         {

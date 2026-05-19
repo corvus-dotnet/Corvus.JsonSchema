@@ -445,6 +445,7 @@ public static class SchemaPointerBuilder
             OperationMethod.Head => "head"u8,
             OperationMethod.Patch => "patch"u8,
             OperationMethod.Trace => "trace"u8,
+            OperationMethod.Query => "query"u8,
             OperationMethod.Publish => "publish"u8,
             OperationMethod.Subscribe => "subscribe"u8,
             _ => throw new ArgumentOutOfRangeException(nameof(method)),
