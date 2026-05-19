@@ -42,15 +42,15 @@ public sealed class ApiDocsClient : IApiDocsClient
 
         request.Validate(validationMode);
 
-        string boundary = MultipartMixedSerializer.GenerateBoundary();
+        Guid guid = Guid.NewGuid();
         using var part0Builder = CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.CreateBuilder(workspace, part0);
         CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle part0Value = part0Builder.RootElement;
         return SendWithBodyWriterAsyncCore<UploadDocMixedRequest, UploadDocMixedResponse>(workspace, request, stream =>
         {
-            MultipartMixedSerializer.WriteJsonPart(stream, boundary, part0Value);
-            MultipartMixedSerializer.WriteBinaryPart(stream, boundary, part1);
-            MultipartMixedSerializer.WriteClosingBoundary(stream, boundary);
-        }, "multipart/mixed; boundary=" + boundary, responseValidationMode, cancellationToken);
+            MultipartMixedSerializer.WriteJsonPart(stream, guid, part0Value);
+            MultipartMixedSerializer.WriteBinaryPart(stream, guid, part1);
+            MultipartMixedSerializer.WriteClosingBoundary(stream, guid);
+        }, MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);
     }
 
     /// <summary>
@@ -65,17 +65,17 @@ public sealed class ApiDocsClient : IApiDocsClient
 
         request.Validate(validationMode);
 
-        string boundary = MultipartMixedSerializer.GenerateBoundary();
+        Guid guid = Guid.NewGuid();
         return SendWithBodyWriterAsyncCore<ProcessBatchRequest, ProcessBatchResponse>(workspace, request, stream =>
         {
             foreach (CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source item in items)
             {
                 using var itemBuilder = CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.CreateBuilder(workspace, item);
                 CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction itemValue = itemBuilder.RootElement;
-                MultipartMixedSerializer.WriteJsonPart(stream, boundary, itemValue);
+                MultipartMixedSerializer.WriteJsonPart(stream, guid, itemValue);
             }
-            MultipartMixedSerializer.WriteClosingBoundary(stream, boundary);
-        }, "multipart/mixed; boundary=" + boundary, responseValidationMode, cancellationToken);
+            MultipartMixedSerializer.WriteClosingBoundary(stream, guid);
+        }, MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>

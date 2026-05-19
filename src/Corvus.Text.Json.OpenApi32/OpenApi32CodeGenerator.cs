@@ -5378,7 +5378,7 @@ public sealed class OpenApi32CodeGenerator
     {
         RequestBodyInfo rb = op.RequestBody!.Value;
 
-        w.WriteLine("string boundary = MultipartMixedSerializer.GenerateBoundary();");
+        w.WriteLine("Guid guid = Guid.NewGuid();");
 
         if (rb.PrefixParts is { } prefixParts)
         {
@@ -5412,19 +5412,19 @@ public sealed class OpenApi32CodeGenerator
                 if (part.IsBinary)
                 {
                     w.WriteLine(
-                        $"MultipartMixedSerializer.WriteBinaryPart(stream, boundary, part{i});");
+                        $"MultipartMixedSerializer.WriteBinaryPart(stream, guid, part{i});");
                 }
                 else
                 {
                     w.WriteLine(
-                        $"MultipartMixedSerializer.WriteJsonPart(stream, boundary, part{i}Value);");
+                        $"MultipartMixedSerializer.WriteJsonPart(stream, guid, part{i}Value);");
                 }
             }
 
-            w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, boundary);");
+            w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, guid);");
             w.CloseBraceNoNewline();
             w.WriteLine(
-                ", \"multipart/mixed; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                ", MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);");
         }
         else if (rb.ItemPart is { } itemPart)
         {
@@ -5440,12 +5440,12 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine("foreach (BinaryPartData item in items)");
                 w.OpenBrace();
                 w.WriteLine(
-                    "MultipartMixedSerializer.WriteBinaryPart(stream, boundary, item);");
+                    "MultipartMixedSerializer.WriteBinaryPart(stream, guid, item);");
                 w.CloseBrace();
-                w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, boundary);");
+                w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, guid);");
                 w.CloseBraceNoNewline();
                 w.WriteLine(
-                    $", \"multipart/mixed; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                    ", MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);");
             }
             else
             {
@@ -5462,12 +5462,12 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine(
                     $"{typeName} itemValue = itemBuilder.RootElement;");
                 w.WriteLine(
-                    "MultipartMixedSerializer.WriteJsonPart(stream, boundary, itemValue);");
+                    "MultipartMixedSerializer.WriteJsonPart(stream, guid, itemValue);");
                 w.CloseBrace();
-                w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, boundary);");
+                w.WriteLine("MultipartMixedSerializer.WriteClosingBoundary(stream, guid);");
                 w.CloseBraceNoNewline();
                 w.WriteLine(
-                    $", \"multipart/mixed; boundary=\" + boundary, responseValidationMode, cancellationToken);");
+                    ", MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);");
             }
         }
     }
