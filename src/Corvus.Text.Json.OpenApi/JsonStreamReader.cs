@@ -37,6 +37,8 @@ public static class JsonStreamReader
     /// </summary>
     /// <typeparam name="T">The element type to parse each JSON payload into.</typeparam>
     /// <param name="stream">The source stream (NDJSON or SSE).</param>
+    /// <param name="pipeReaderOptions">Optional <see cref="StreamPipeReaderOptions"/> for controlling
+    /// the internal <see cref="PipeReader"/> buffer size and behavior.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>An async enumerable of parsed documents. Each must be disposed by the caller.</returns>
     /// <remarks>
@@ -52,10 +54,12 @@ public static class JsonStreamReader
     /// </remarks>
     public static async IAsyncEnumerable<ParsedJsonDocument<T>> ReadItemsAsync<T>(
         Stream stream,
+        StreamPipeReaderOptions? pipeReaderOptions = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
-        PipeReader pipeReader = PipeReader.Create(stream, new StreamPipeReaderOptions(leaveOpen: true));
+        PipeReader pipeReader = PipeReader.Create(stream, pipeReaderOptions ?? new StreamPipeReaderOptions(leaveOpen: true));
+        byte[]? lineBuffer = null;
 
         try
         {
@@ -64,7 +68,7 @@ public static class JsonStreamReader
                 ReadResult result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
                 ReadOnlySequence<byte> buffer = result.Buffer;
 
-                while (TryReadLine(ref buffer, out ReadOnlySequence<byte> line))
+                while (TryReadLine(ref buffer, ref lineBuffer, out ReadOnlySpan<byte> line))
                 {
                     if (TryGetDataPayload(line, out ReadOnlySpan<byte> payload))
                     {
@@ -77,9 +81,13 @@ public static class JsonStreamReader
                 if (result.IsCompleted)
                 {
                     // Process any trailing data without a final newline.
-                    if (buffer.Length > 0 && TryGetDataPayload(buffer, out ReadOnlySpan<byte> trailing))
+                    if (buffer.Length > 0)
                     {
-                        yield return ParseFromPayload<T>(trailing);
+                        ReadOnlySpan<byte> trailing = Linearize(buffer, ref lineBuffer);
+                        if (TryGetDataPayload(trailing, out ReadOnlySpan<byte> trailingPayload))
+                        {
+                            yield return ParseFromPayload<T>(trailingPayload);
+                        }
                     }
 
                     break;
@@ -88,6 +96,11 @@ public static class JsonStreamReader
         }
         finally
         {
+            if (lineBuffer is not null)
+            {
+                ArrayPool<byte>.Shared.Return(lineBuffer);
+            }
+
             await pipeReader.CompleteAsync().ConfigureAwait(false);
         }
     }
@@ -98,6 +111,8 @@ public static class JsonStreamReader
     /// </summary>
     /// <typeparam name="T">The element type to parse each JSON data payload into.</typeparam>
     /// <param name="stream">The source SSE stream.</param>
+    /// <param name="pipeReaderOptions">Optional <see cref="StreamPipeReaderOptions"/> for controlling
+    /// the internal <see cref="PipeReader"/> buffer size and behavior.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>An async enumerable of SSE events. Each must be disposed by the caller.</returns>
     /// <remarks>
@@ -111,10 +126,12 @@ public static class JsonStreamReader
     /// </remarks>
     public static async IAsyncEnumerable<SseEvent<T>> ReadSseItemsAsync<T>(
         Stream stream,
+        StreamPipeReaderOptions? pipeReaderOptions = null,
         [EnumeratorCancellation] CancellationToken cancellationToken = default)
         where T : struct, IJsonElement<T>
     {
-        PipeReader pipeReader = PipeReader.Create(stream, new StreamPipeReaderOptions(leaveOpen: true));
+        PipeReader pipeReader = PipeReader.Create(stream, pipeReaderOptions ?? new StreamPipeReaderOptions(leaveOpen: true));
+        byte[]? lineBuffer = null;
 
         try
         {
@@ -131,7 +148,7 @@ public static class JsonStreamReader
                 ReadResult result = await pipeReader.ReadAsync(cancellationToken).ConfigureAwait(false);
                 ReadOnlySequence<byte> buffer = result.Buffer;
 
-                while (TryReadLine(ref buffer, out ReadOnlySequence<byte> line))
+                while (TryReadLine(ref buffer, ref lineBuffer, out ReadOnlySpan<byte> line))
                 {
                     if (TryProcessSseLine(line, ref eventType, ref id, ref retry, ref dataBuffer, ref dataLength, ref metadataBuffer, ref metadataLength, out SseEvent<T>? evt) && evt.HasValue)
                     {
@@ -143,6 +160,13 @@ public static class JsonStreamReader
 
                 if (result.IsCompleted)
                 {
+                    // Process any trailing line without a final newline.
+                    if (buffer.Length > 0)
+                    {
+                        ReadOnlySpan<byte> trailing = Linearize(buffer, ref lineBuffer);
+                        TryProcessSseLine<T>(trailing, ref eventType, ref id, ref retry, ref dataBuffer, ref dataLength, ref metadataBuffer, ref metadataLength, out _);
+                    }
+
                     // Flush any pending event at end of stream.
                     if (dataLength > 0 && dataBuffer is not null)
                     {
@@ -170,6 +194,11 @@ public static class JsonStreamReader
         }
         finally
         {
+            if (lineBuffer is not null)
+            {
+                ArrayPool<byte>.Shared.Return(lineBuffer);
+            }
+
             await pipeReader.CompleteAsync().ConfigureAwait(false);
         }
     }
@@ -182,7 +211,37 @@ public static class JsonStreamReader
         return ParsedJsonDocument<T>.Parse(rented.AsMemory(0, payload.Length), rented);
     }
 
-    private static bool TryReadLine(ref ReadOnlySequence<byte> buffer, out ReadOnlySequence<byte> line)
+    /// <summary>
+    /// Linearizes a <see cref="ReadOnlySequence{T}"/> into a contiguous span,
+    /// reusing a caller-owned buffer to avoid per-line allocation.
+    /// </summary>
+    private static ReadOnlySpan<byte> Linearize(ReadOnlySequence<byte> sequence, ref byte[]? lineBuffer)
+    {
+        if (sequence.IsSingleSegment)
+        {
+            return sequence.FirstSpan;
+        }
+
+        int length = (int)sequence.Length;
+        if (lineBuffer is null || lineBuffer.Length < length)
+        {
+            if (lineBuffer is not null)
+            {
+                ArrayPool<byte>.Shared.Return(lineBuffer);
+            }
+
+            lineBuffer = ArrayPool<byte>.Shared.Rent(length);
+        }
+
+        sequence.CopyTo(lineBuffer);
+        return lineBuffer.AsSpan(0, length);
+    }
+
+    /// <summary>
+    /// Extracts the next complete line (up to <c>\n</c>) from the buffer, trims <c>\r</c>,
+    /// and linearizes it into a contiguous span using the caller-owned buffer.
+    /// </summary>
+    private static bool TryReadLine(ref ReadOnlySequence<byte> buffer, ref byte[]? lineBuffer, out ReadOnlySpan<byte> line)
     {
         SequencePosition? newlinePos = buffer.PositionOf((byte)'\n');
         if (newlinePos is null)
@@ -191,28 +250,18 @@ public static class JsonStreamReader
             return false;
         }
 
-        line = buffer.Slice(0, newlinePos.Value);
+        ReadOnlySequence<byte> lineSequence = buffer.Slice(0, newlinePos.Value);
         buffer = buffer.Slice(buffer.GetPosition(1, newlinePos.Value));
 
-        // Trim trailing \r if present (CRLF).
-        if (line.Length > 0)
+        // Linearize and trim trailing \r if present (CRLF).
+        ReadOnlySpan<byte> span = Linearize(lineSequence, ref lineBuffer);
+        if (span.Length > 0 && span[^1] == (byte)'\r')
         {
-            ReadOnlySpan<byte> lastSegment = line.IsSingleSegment
-                ? line.FirstSpan
-                : line.ToArray();
-            if (lastSegment.Length > 0 && lastSegment[^1] == (byte)'\r')
-            {
-                line = line.Slice(0, line.Length - 1);
-            }
+            span = span[..^1];
         }
 
+        line = span;
         return true;
-    }
-
-    private static bool TryGetDataPayload(ReadOnlySequence<byte> line, out ReadOnlySpan<byte> payload)
-    {
-        ReadOnlySpan<byte> span = line.IsSingleSegment ? line.FirstSpan : line.ToArray();
-        return TryGetDataPayload(span, out payload);
     }
 
     private static bool TryGetDataPayload(ReadOnlySpan<byte> span, out ReadOnlySpan<byte> payload)
@@ -263,7 +312,7 @@ public static class JsonStreamReader
     }
 
     private static bool TryProcessSseLine<T>(
-        ReadOnlySequence<byte> line,
+        ReadOnlySpan<byte> span,
         ref ReadOnlyMemory<byte> eventType,
         ref ReadOnlyMemory<byte> id,
         ref int? retry,
@@ -274,8 +323,6 @@ public static class JsonStreamReader
         out SseEvent<T>? result)
         where T : struct, IJsonElement<T>
     {
-        ReadOnlySpan<byte> span = line.IsSingleSegment ? line.FirstSpan : line.ToArray();
-
         // Blank line = event boundary.
         if (span.IsEmpty)
         {

@@ -3781,7 +3781,7 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("throw new InvalidOperationException(\"No streaming content is available.\");");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"return JsonStreamReader.ReadItemsAsync<{itemTypeName}>(this.itemStream, cancellationToken);");
+            w.WriteLine($"return JsonStreamReader.ReadItemsAsync<{itemTypeName}>(this.itemStream, cancellationToken: cancellationToken);");
             w.CloseBrace();
 
             // SSE items method (preserves event metadata).
@@ -3805,7 +3805,7 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("throw new InvalidOperationException(\"No streaming content is available.\");");
             w.CloseBrace();
             w.WriteLine();
-            w.WriteLine($"return JsonStreamReader.ReadSseItemsAsync<{itemTypeName}>(this.itemStream, cancellationToken);");
+            w.WriteLine($"return JsonStreamReader.ReadSseItemsAsync<{itemTypeName}>(this.itemStream, cancellationToken: cancellationToken);");
             w.CloseBrace();
         }
     }

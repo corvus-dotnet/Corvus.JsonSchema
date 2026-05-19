@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Buffers;
+using System.IO.Pipelines;
 using System.Net;
 using System.Text;
 using CanonTests32.Client;
@@ -5118,6 +5119,480 @@ public class GeneratedClientEndToEndTests
         Assert.ThrowsExactly<InvalidOperationException>(() => response.EnumerateOkSseItems());
     }
 
+    // ── JsonStreamReader coverage tests ────────────────────────────────────
+    [TestMethod]
+    public async Task StreamEvents_200_SseFlushesEventAtEndOfStreamWithoutBlankLine()
+    {
+        // No trailing blank line — event should still be flushed at end-of-stream
+        const string SseBody = "event: flush\nid: f1\ndata: {\"eventId\":\"pending\"}";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<(string EventId, string? EvtType, string? Id)> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                events.Add(((string)evt.Data.EventId, evt.GetEventTypeAsString(), evt.GetIdAsString()));
+            }
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.AreEqual("pending", events[0].EventId);
+        Assert.AreEqual("flush", events[0].EvtType);
+        Assert.AreEqual("f1", events[0].Id);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseCrlfLineEndings()
+    {
+        // CRLF line endings should be handled correctly
+        byte[] bytes = Encoding.UTF8.GetBytes("data: {\"eventId\":\"crlf\"}\r\n\r\n");
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<string> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                events.Add((string)evt.Data.EventId);
+            }
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.AreEqual("crlf", events[0]);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseSkipsCommentsAndUnknownFields()
+    {
+        // Comments and unknown fields should be ignored in SSE mode
+        const string SseBody = ":comment line\nfoo: unknown field\ndata: {\"eventId\":\"ok\"}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<string> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                events.Add((string)evt.Data.EventId);
+            }
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.AreEqual("ok", events[0]);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseDataWithoutSpace()
+    {
+        // data: without space after colon
+        const string SseBody = "data:{\"eventId\":\"nospace\"}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<string> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                events.Add((string)evt.Data.EventId);
+            }
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.AreEqual("nospace", events[0]);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseMultiLineDataConcatenatesWithNewline()
+    {
+        // Multiple data: lines before a blank line should be concatenated with \n
+        // We use a JSON object split across two data: lines
+        const string SseBody = "data: {\"eventId\":\n" +
+                               "data: \"multi\"}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<string> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                events.Add((string)evt.Data.EventId);
+            }
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.AreEqual("multi", events[0]);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseBlankLinesWithoutDataAreIgnored()
+    {
+        // Consecutive blank lines without any data should not yield events
+        const string SseBody = "\n\nevent: x\n\ndata: {\"eventId\":\"after\"}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<(string EventId, string? EvtType)> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                events.Add(((string)evt.Data.EventId, evt.GetEventTypeAsString()));
+            }
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.AreEqual("after", events[0].EventId);
+        Assert.IsNull(events[0].EvtType);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_NdjsonCrlfLineEndings()
+    {
+        // NDJSON with CRLF line endings
+        byte[] bytes = Encoding.UTF8.GetBytes("{\"eventId\":\"cr1\"}\r\n{\"eventId\":\"cr2\"}\r\n");
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "application/x-ndjson");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<string> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema> doc in response.EnumerateOkItems())
+        {
+            using (doc)
+            {
+                items.Add((string)doc.RootElement.EventId);
+            }
+        }
+
+        Assert.AreEqual(2, items.Count);
+        Assert.AreEqual("cr1", items[0]);
+        Assert.AreEqual("cr2", items[1]);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseEmptyMetadataFields()
+    {
+        // event: and id: with empty values (just "event:" with nothing after)
+        const string SseBody = "event:\nid:\ndata: {\"eventId\":\"empty-meta\"}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<(string EventId, string? EvtType, string? Id)> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                events.Add(((string)evt.Data.EventId, evt.GetEventTypeAsString(), evt.GetIdAsString()));
+            }
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.AreEqual("empty-meta", events[0].EventId);
+        Assert.IsNull(events[0].EvtType);
+        Assert.IsNull(events[0].Id);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseEventTypeAndIdSpanAccess()
+    {
+        // Test the ReadOnlySpan<byte> properties directly
+        const string SseBody = "event: ping\nid: 42\ndata: {\"eventId\":\"span-test\"}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                Assert.IsTrue(evt.EventType.SequenceEqual("ping"u8));
+                Assert.IsTrue(evt.Id.SequenceEqual("42"u8));
+                Assert.AreEqual("span-test", (string)evt.Data.EventId);
+            }
+        }
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_NdjsonIgnoresNonJsonLine()
+    {
+        // A line that doesn't start with a JSON character is silently skipped in NDJSON mode.
+        // Use 'X' which is not a valid JSON start character ({, [, ", -, t, f, n, 0-9).
+        byte[] bytes = Encoding.UTF8.GetBytes("X-invalid\n{\"eventId\":\"ok\"}\n");
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "application/x-ndjson");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<string> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema> doc in response.EnumerateOkItems())
+        {
+            using (doc)
+            {
+                items.Add((string)doc.RootElement.EventId);
+            }
+        }
+
+        Assert.AreEqual(1, items.Count);
+        Assert.AreEqual("ok", items[0]);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseEndOfStreamCleansUpMetadataOnly()
+    {
+        // Stream ends with event/id metadata but no data: line — buffers are cleaned up without yielding.
+        const string SseBody = "event: heartbeat\nid: 99";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<SseEvent<ItemSchema>> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            events.Add(evt);
+        }
+
+        // No event yielded because there was no data: field.
+        Assert.AreEqual(0, events.Count);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseEndOfStreamCleansUpEmptyDataBuffer()
+    {
+        // "data:" with no value allocates a buffer but leaves dataLength=0 (empty payload).
+        // End of stream should return the buffer without yielding an event.
+        const string SseBody = "data:";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<SseEvent<ItemSchema>> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            events.Add(evt);
+        }
+
+        // No event yielded — empty data doesn't constitute a valid JSON payload.
+        Assert.AreEqual(0, events.Count);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseDataBufferGrowth()
+    {
+        // Two data: lines where the second forces buffer reallocation.
+        // ArrayPool typically returns buffers in powers of 2. First data line must fill the initial
+        // allocation, and the second must push past it. Use 300 chars each to ensure growth.
+        string padding1 = new('a', 300);
+        string padding2 = new('b', 300);
+
+        // Two data: lines — per SSE spec they are joined with \n between tokens (valid JSON whitespace).
+        string sseBody = $"data: {{\"eventId\":\"{padding1}\",\ndata: \"extra\":\"{padding2}\"}}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(sseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<string> events = [];
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                events.Add((string)evt.Data.EventId);
+            }
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.AreEqual(padding1, events[0]);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseMetadataBufferGrowth()
+    {
+        // event: and id: values exceeding 128 bytes combined to trigger metadata buffer growth.
+        string longEventType = new('e', 100);
+        string longId = new('i', 100);
+        string sseBody = $"event: {longEventType}\nid: {longId}\ndata: {{\"eventId\":\"meta-grow\"}}\n\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(sseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        await foreach (SseEvent<ItemSchema> evt in response.EnumerateOkSseItems())
+        {
+            using (evt)
+            {
+                Assert.AreEqual("meta-grow", (string)evt.Data.EventId);
+                Assert.AreEqual(longEventType, evt.GetEventTypeAsString());
+                Assert.AreEqual(longId, evt.GetIdAsString());
+            }
+        }
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_NdjsonMultiSegmentStream()
+    {
+        // Deliver data in tiny chunks with a tiny memory pool to force multi-segment sequences.
+        byte[] bytes = Encoding.UTF8.GetBytes("{\"eventId\":\"multi-seg\"}\n");
+
+        using var chunked = new ChunkedStream(bytes, chunkSize: 3);
+        using var pool = new TinySegmentPool(8);
+        var options = new StreamPipeReaderOptions(pool, bufferSize: 8, minimumReadSize: 1, leaveOpen: true);
+
+        List<string> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema> doc in JsonStreamReader.ReadItemsAsync<ItemSchema>(chunked, options))
+        {
+            using (doc)
+            {
+                items.Add((string)doc.RootElement.EventId);
+            }
+        }
+
+        Assert.AreEqual(1, items.Count);
+        Assert.AreEqual("multi-seg", items[0]);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SseMultiSegmentStream()
+    {
+        // Deliver SSE data in tiny chunks with a tiny memory pool to force multi-segment linearization.
+        byte[] bytes = Encoding.UTF8.GetBytes("event: chat\nid: 7\ndata: {\"eventId\":\"seg-sse\"}\n\n");
+
+        using var chunked = new ChunkedStream(bytes, chunkSize: 4);
+        using var pool = new TinySegmentPool(8);
+        var options = new StreamPipeReaderOptions(pool, bufferSize: 8, minimumReadSize: 1, leaveOpen: true);
+
+        List<(string Id, string? Evt)> events = [];
+        await foreach (SseEvent<ItemSchema> evt in JsonStreamReader.ReadSseItemsAsync<ItemSchema>(chunked, options))
+        {
+            using (evt)
+            {
+                events.Add(((string)evt.Data.EventId, evt.GetEventTypeAsString()));
+            }
+        }
+
+        Assert.AreEqual(1, events.Count);
+        Assert.AreEqual("seg-sse", events[0].Id);
+        Assert.AreEqual("chat", events[0].Evt);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_NdjsonMultiSegmentBufferGrowth()
+    {
+        // Two NDJSON lines with increasing sizes force Linearize() to return+rent a larger buffer.
+        // First line: 15 bytes → Rent(15) gives 16-byte buffer.
+        // Second line: 300+ bytes → exceeds the 16-byte buffer, forcing return + re-rent.
+        const string Short1 = "{\"eventId\":\"a\"}";
+        string long2 = "{\"eventId\":\"" + new string('b', 300) + "\"}";
+        byte[] bytes = Encoding.UTF8.GetBytes(Short1 + "\n" + long2 + "\n");
+
+        // Tiny pool segments ensure both lines span multiple PipeReader segments.
+        using var chunked = new ChunkedStream(bytes, chunkSize: 3);
+        using var pool = new TinySegmentPool(8);
+        var options = new StreamPipeReaderOptions(pool, bufferSize: 4, minimumReadSize: 1, leaveOpen: true);
+
+        List<string> items = [];
+        await foreach (ParsedJsonDocument<ItemSchema> doc in JsonStreamReader.ReadItemsAsync<ItemSchema>(chunked, options))
+        {
+            using (doc)
+            {
+                items.Add((string)doc.RootElement.EventId);
+            }
+        }
+
+        Assert.AreEqual(2, items.Count);
+        Assert.AreEqual("a", items[0]);
+        Assert.AreEqual(new string('b', 300), items[1]);
+    }
+
     private sealed class SequencedMockHandler : DelegatingHandler
     {
         private readonly IReadOnlyList<(HttpStatusCode StatusCode, string ResponseBody)> responses;
@@ -5151,6 +5626,100 @@ public class GeneratedClientEndToEndTests
                 : new StringContent(body, Encoding.UTF8, "application/json");
 
             return Task.FromResult(new HttpResponseMessage(statusCode) { Content = content });
+        }
+    }
+
+    /// <summary>
+    /// A stream that delivers data in fixed-size chunks to force PipeReader
+    /// to create multi-segment ReadOnlySequence buffers.
+    /// </summary>
+    private sealed class ChunkedStream(byte[] data, int chunkSize) : Stream
+    {
+        private int position;
+
+        public override bool CanRead => true;
+
+        public override bool CanSeek => false;
+
+        public override bool CanWrite => false;
+
+        public override long Length => data.Length;
+
+        public override long Position
+        {
+            get => this.position;
+            set => throw new NotSupportedException();
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int remaining = data.Length - this.position;
+            if (remaining <= 0)
+            {
+                return 0;
+            }
+
+            int toRead = Math.Min(Math.Min(count, chunkSize), remaining);
+            data.AsSpan(this.position, toRead).CopyTo(buffer.AsSpan(offset));
+            this.position += toRead;
+            return toRead;
+        }
+
+        public override Task<int> ReadAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(this.Read(buffer, offset, count));
+        }
+
+        public override ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken = default)
+        {
+            int remaining = data.Length - this.position;
+            if (remaining <= 0)
+            {
+                return ValueTask.FromResult(0);
+            }
+
+            int toRead = Math.Min(Math.Min(buffer.Length, chunkSize), remaining);
+            data.AsSpan(this.position, toRead).CopyTo(buffer.Span);
+            this.position += toRead;
+            return ValueTask.FromResult(toRead);
+        }
+
+        public override void Flush()
+        {
+        }
+
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+
+        public override void SetLength(long value) => throw new NotSupportedException();
+
+        public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+    }
+
+    /// <summary>
+    /// A custom MemoryPool that allocates tiny segments, forcing PipeReader
+    /// to produce multi-segment ReadOnlySequence buffers.
+    /// </summary>
+    private sealed class TinySegmentPool(int segmentSize) : MemoryPool<byte>
+    {
+        public override int MaxBufferSize => segmentSize;
+
+        public override IMemoryOwner<byte> Rent(int minBufferSize = -1)
+        {
+            int size = minBufferSize <= 0 ? segmentSize : Math.Max(minBufferSize, segmentSize);
+            return new ArrayOwner(new byte[size]);
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+        }
+
+        private sealed class ArrayOwner(byte[] array) : IMemoryOwner<byte>
+        {
+            public Memory<byte> Memory => array;
+
+            public void Dispose()
+            {
+            }
         }
     }
 }

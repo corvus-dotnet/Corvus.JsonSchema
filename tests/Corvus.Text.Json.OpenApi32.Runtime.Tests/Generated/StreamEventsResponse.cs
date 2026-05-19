@@ -52,7 +52,7 @@ public struct StreamEventsResponse : IApiResponse<StreamEventsResponse>
             throw new InvalidOperationException("No streaming content is available.");
         }
 
-        return JsonStreamReader.ReadItemsAsync<CanonTests32.Client.ItemSchema>(this.itemStream, cancellationToken);
+        return JsonStreamReader.ReadItemsAsync<CanonTests32.Client.ItemSchema>(this.itemStream, cancellationToken: cancellationToken);
     }
 
     /// <summary>
@@ -74,7 +74,7 @@ public struct StreamEventsResponse : IApiResponse<StreamEventsResponse>
             throw new InvalidOperationException("No streaming content is available.");
         }
 
-        return JsonStreamReader.ReadSseItemsAsync<CanonTests32.Client.ItemSchema>(this.itemStream, cancellationToken);
+        return JsonStreamReader.ReadSseItemsAsync<CanonTests32.Client.ItemSchema>(this.itemStream, cancellationToken: cancellationToken);
     }
 
     /// <inheritdoc/>
