@@ -120,7 +120,8 @@ public sealed class OpenApi32CodeGenerator
     private readonly record struct ContentInfo(
         string MediaType,
         string? SchemaPointer,
-        IReadOnlyDictionary<string, EncodingInfo>? Encodings);
+        IReadOnlyDictionary<string, EncodingInfo>? Encodings,
+        string? ItemSchemaPointer = null);
 
     private readonly record struct EncodingInfo(
         string? Style,
@@ -568,6 +569,16 @@ public sealed class OpenApi32CodeGenerator
 
                                 pointers.Add(new SchemaReference(positionalPointer, resolvablePointer));
                             }
+
+                            if (mediaTypeProp.Value.ItemSchema.IsNotUndefined())
+                            {
+                                using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+
+                                string positionalPointer = SchemaPointerBuilder.BuildResponseContentItemSchemaPointer(
+                                    pathName.Span, method, statusCode.Span, mediaTypeName.Span);
+
+                                pointers.Add(new SchemaReference(positionalPointer, positionalPointer));
+                            }
                         }
                     }
 
@@ -866,6 +877,15 @@ public sealed class OpenApi32CodeGenerator
         string statusCode = System.Text.Encoding.UTF8.GetString(statusCodeUtf8);
         string mediaTypeSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(mediaTypeNameUtf8));
         return $"#/paths/{pathSegment}/additionalOperations/{customMethodName}/responses/{statusCode}/content/{mediaTypeSegment}/schema";
+    }
+
+    private static string BuildAdditionalOpResponseContentItemSchemaPointer(
+        ReadOnlySpan<byte> pathNameUtf8, string customMethodName, ReadOnlySpan<byte> statusCodeUtf8, ReadOnlySpan<byte> mediaTypeNameUtf8)
+    {
+        string pathSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(pathNameUtf8));
+        string statusCode = System.Text.Encoding.UTF8.GetString(statusCodeUtf8);
+        string mediaTypeSegment = EncodeJsonPointerSegment(System.Text.Encoding.UTF8.GetString(mediaTypeNameUtf8));
+        return $"#/paths/{pathSegment}/additionalOperations/{customMethodName}/responses/{statusCode}/content/{mediaTypeSegment}/itemSchema";
     }
 
     private static string BuildAdditionalOpResponseHeaderSchemaPointer(
@@ -1630,7 +1650,17 @@ public sealed class OpenApi32CodeGenerator
                         pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
             }
 
-            result.Add(new ContentInfo(mediaType, schemaPointer, null));
+            string? itemSchemaPointer = null;
+            if (mediaTypeProp.Value.ItemSchema.IsNotUndefined())
+            {
+                using UnescapedUtf8JsonString mediaTypeName = mediaTypeProp.Utf8NameSpan;
+                itemSchemaPointer = customMethodName is not null
+                    ? BuildAdditionalOpResponseContentItemSchemaPointer(pathNameUtf8, customMethodName, statusCodeUtf8, mediaTypeName.Span)
+                    : SchemaPointerBuilder.BuildResponseContentItemSchemaPointer(
+                        pathNameUtf8, method, statusCodeUtf8, mediaTypeName.Span);
+            }
+
+            result.Add(new ContentInfo(mediaType, schemaPointer, null, itemSchemaPointer));
         }
 
         return [.. result];
@@ -2230,6 +2260,19 @@ public sealed class OpenApi32CodeGenerator
         return null;
     }
 
+    private string? ResolveItemSchemaTypeName(ResponseInfo resp)
+    {
+        foreach (ContentInfo content in resp.Content)
+        {
+            if (content.ItemSchemaPointer is not null)
+            {
+                return this.ResolveSchemaTypeName(content.ItemSchemaPointer);
+            }
+        }
+
+        return null;
+    }
+
     /// <summary>
     /// Returns the distinct content categories present in a response's content entries.
     /// </summary>
@@ -2716,6 +2759,12 @@ public sealed class OpenApi32CodeGenerator
             ContentCategory[] categories = GetDistinctContentCategories(resp);
             if (categories.Contains(ContentCategory.Json))
             {
+                // Skip streaming responses — they can't be validated eagerly.
+                if (this.ResolveItemSchemaTypeName(resp) is not null)
+                {
+                    continue;
+                }
+
                 string? typeName = this.ResolveResponseTypeName(resp);
                 if (typeName is not null)
                 {
@@ -2840,11 +2889,13 @@ public sealed class OpenApi32CodeGenerator
 
         w.WriteLine("private IAsyncDisposable? owner;");
 
-        // Only emit parsedDocument field when at least one response has a JSON body.
+        // Only emit parsedDocument field when at least one response has a JSON body (excluding streaming responses).
         bool hasJsonBody = op.Responses.Any(r =>
-            r.Content.Any(c => c.SchemaPointer is not null && CodeEmitHelpers.IsJsonMediaType(c.MediaType)));
+            r.Content.Any(c => c.SchemaPointer is not null && CodeEmitHelpers.IsJsonMediaType(c.MediaType))
+            && !r.Content.Any(c => c.ItemSchemaPointer is not null));
         bool hasTextBody = op.Responses.Any(r =>
-            r.Content.Any(c => CodeEmitHelpers.IsTextPlainMediaType(c.MediaType)));
+            r.Content.Any(c => CodeEmitHelpers.IsTextPlainMediaType(c.MediaType))
+            && !r.Content.Any(c => c.ItemSchemaPointer is not null));
         if (hasJsonBody)
         {
             w.WriteLine("private IDisposable? parsedDocument;");
@@ -2872,9 +2923,15 @@ public sealed class OpenApi32CodeGenerator
             }
         }
 
-        // Emit private backing fields for text/plain responses.
+        // Emit private backing fields for text/plain responses (excluding streaming responses with itemSchema).
         foreach (ResponseInfo resp in op.Responses)
         {
+            // If this response has itemSchema, it's a streaming response — skip text/plain fields.
+            if (resp.Content.Any(c => c.ItemSchemaPointer is not null))
+            {
+                continue;
+            }
+
             ContentCategory[] categories = GetDistinctContentCategories(resp);
             if (categories.Contains(ContentCategory.TextPlain))
             {
@@ -2892,6 +2949,14 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("private JsonWorkspace workspace;");
         }
 
+        // Detect streaming responses with itemSchema.
+        bool hasItemSchema = op.Responses.Any(r =>
+            r.Content.Any(c => c.ItemSchemaPointer is not null));
+        if (hasItemSchema)
+        {
+            w.WriteLine("private Stream? itemStream;");
+        }
+
         w.WriteLine();
         w.WriteLine("/// <inheritdoc/>");
         w.WriteLine("public int StatusCode { get; private set; }");
@@ -2905,10 +2970,18 @@ public sealed class OpenApi32CodeGenerator
             ContentCategory[] categories = GetDistinctContentCategories(resp);
             string bodyDocSummary = resp.Summary ?? $"Gets the {resp.StatusCode} response body.";
 
+            // Skip all body properties for streaming responses — use EnumerateXxxItems instead.
+            bool isStreaming = resp.Content.Any(c => c.ItemSchemaPointer is not null);
+
             foreach (ContentCategory cat in categories)
             {
                 if (cat == ContentCategory.OctetStream)
                 {
+                    if (isStreaming)
+                    {
+                        continue;
+                    }
+
                     w.WriteLine();
                     w.WriteLine("/// <summary>");
                     w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(resp.Summary ?? $"Gets the {resp.StatusCode} response stream.")}");
@@ -2917,10 +2990,20 @@ public sealed class OpenApi32CodeGenerator
                 }
                 else if (cat == ContentCategory.TextPlain)
                 {
+                    if (isStreaming)
+                    {
+                        continue;
+                    }
+
                     CodeEmitHelpers.EmitTextPlainProperties(w, accessorName);
                 }
                 else if (cat == ContentCategory.Json)
                 {
+                    if (isStreaming)
+                    {
+                        continue;
+                    }
+
                     string? typeName = this.ResolveResponseTypeName(resp);
                     if (typeName is not null)
                     {
@@ -2935,6 +3018,12 @@ public sealed class OpenApi32CodeGenerator
         }
 
         this.EmitResponseHeaderProperties(w, op.Responses);
+
+        // Emit streaming enumeration methods for responses with itemSchema.
+        if (hasItemSchema)
+        {
+            this.EmitStreamingItemMethods(w, op.Responses);
+        }
 
         w.WriteLine();
         this.EmitCreateAsync(w, structName, op.Responses, hasLinks);
@@ -2961,9 +3050,16 @@ public sealed class OpenApi32CodeGenerator
         {
             string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
             ContentCategory[] categories = GetDistinctContentCategories(resp);
+            bool isStreaming = resp.Content.Any(c => c.ItemSchemaPointer is not null);
 
             foreach (ContentCategory cat in categories)
             {
+                // Skip all TryGet methods for streaming responses — use EnumerateXxxItems instead.
+                if (isStreaming && (cat == ContentCategory.OctetStream || cat == ContentCategory.TextPlain || cat == ContentCategory.Json))
+                {
+                    continue;
+                }
+
                 if (cat == ContentCategory.OctetStream)
                 {
                     EmitTryGetMethod(
@@ -3020,9 +3116,14 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine("this.sourceWorkspace?.Dispose();");
         }
 
-        // Return rented text/plain buffers.
+        // Return rented text/plain buffers (excluding streaming responses with itemSchema).
         foreach (ResponseInfo resp in op.Responses)
         {
+            if (resp.Content.Any(c => c.ItemSchemaPointer is not null))
+            {
+                continue;
+            }
+
             ContentCategory[] cats = GetDistinctContentCategories(resp);
             if (cats.Contains(ContentCategory.TextPlain))
             {
@@ -3398,9 +3499,11 @@ public sealed class OpenApi32CodeGenerator
         bool hasLinks)
     {
         // Determine if any response needs async processing (JSON parsing is async; streams and text are not).
+        // Streaming responses (itemSchema present) store the stream, so don't need async parsing.
         bool hasAnyJsonBody = responses.Any(
             r => r.Content.Any(c => CodeEmitHelpers.IsJsonMediaType(c.MediaType))
-                 && this.ResolveResponseTypeName(r) is not null);
+                 && this.ResolveResponseTypeName(r) is not null
+                 && this.ResolveItemSchemaTypeName(r) is null);
 
         w.WriteLine("/// <inheritdoc/>");
 
@@ -3459,7 +3562,12 @@ public sealed class OpenApi32CodeGenerator
             w.WriteLine($"if (statusCode == {resp.StatusCode})");
             w.OpenBrace();
 
-            if (categories.Length == 1)
+            // If this response has itemSchema, store the stream for streaming enumeration.
+            if (this.ResolveItemSchemaTypeName(resp) is not null)
+            {
+                w.WriteLine("response.itemStream = contentStream;");
+            }
+            else if (categories.Length == 1)
             {
                 // Single content category — no Content-Type branching needed.
                 this.EmitResponseBodyForCategory(w, categories[0], resp, accessorName);
@@ -3499,7 +3607,11 @@ public sealed class OpenApi32CodeGenerator
             string accessorName = CodeEmitHelpers.StatusCodeToName("default");
             ContentCategory[] defaultCategories = GetDistinctContentCategories(defaultResp.Value);
 
-            if (defaultCategories.Length == 1)
+            if (this.ResolveItemSchemaTypeName(defaultResp.Value) is not null)
+            {
+                w.WriteLine("response.itemStream = contentStream;");
+            }
+            else if (defaultCategories.Length == 1)
             {
                 this.EmitResponseBodyForCategory(w, defaultCategories[0], defaultResp.Value, accessorName);
             }
@@ -3629,6 +3741,40 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine($"public string? {propertyName}Header {{ get; private set; }}");
                 }
             }
+        }
+    }
+
+    private void EmitStreamingItemMethods(IndentedWriter w, ResponseInfo[] responses)
+    {
+        foreach (ResponseInfo resp in responses)
+        {
+            string? itemTypeName = this.ResolveItemSchemaTypeName(resp);
+            if (itemTypeName is null)
+            {
+                continue;
+            }
+
+            string accessorName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
+
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Enumerates the streaming items from the {resp.StatusCode} response.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
+            w.WriteLine($"/// <returns>An async enumerable of <see cref=\"{itemTypeName}\"/> items.</returns>");
+            w.WriteLine("/// <remarks>");
+            w.WriteLine("/// <para>The response stream is read line-by-line. Supports NDJSON and SSE formats.</para>");
+            w.WriteLine("/// <para>The response must not be disposed until enumeration is complete.</para>");
+            w.WriteLine("/// </remarks>");
+            w.WriteLine($"public IAsyncEnumerable<{itemTypeName}> Enumerate{accessorName}Items(CancellationToken cancellationToken = default)");
+            w.OpenBrace();
+            w.WriteLine("if (this.itemStream is null)");
+            w.OpenBrace();
+            w.WriteLine("throw new InvalidOperationException(\"No streaming content is available.\");");
+            w.CloseBrace();
+            w.WriteLine();
+            w.WriteLine($"return JsonStreamReader.ReadItemsAsync<{itemTypeName}>(this.itemStream, cancellationToken);");
+            w.CloseBrace();
         }
     }
 
@@ -3782,6 +3928,15 @@ public sealed class OpenApi32CodeGenerator
 
             foreach (ContentCategory category in categories)
             {
+                // Skip streaming responses in MatchResult — they use EnumerateXxxItems.
+                if (resp.Content.Any(c => c.ItemSchemaPointer is not null))
+                {
+                    if (category == ContentCategory.Json || category == ContentCategory.TextPlain || category == ContentCategory.OctetStream)
+                    {
+                        continue;
+                    }
+                }
+
                 string? jsonTypeName = category == ContentCategory.Json
                     ? this.ResolveResponseTypeName(resp)
                     : null;

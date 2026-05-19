@@ -177,6 +177,43 @@ public static class SchemaPointerBuilder
     }
 
     /// <summary>
+    /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/content/&lt;mediaType&gt;/itemSchema</c>.
+    /// </summary>
+    /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>
+    /// <param name="method">The HTTP method.</param>
+    /// <param name="statusCodeUtf8">The UTF-8 status code from the responses map.</param>
+    /// <param name="mediaTypeNameUtf8">The UTF-8 media type name from the content map.</param>
+    /// <returns>The JSON Pointer string (including leading <c>#</c>).</returns>
+    public static string BuildResponseContentItemSchemaPointer(
+        ReadOnlySpan<byte> pathNameUtf8,
+        OperationMethod method,
+        ReadOnlySpan<byte> statusCodeUtf8,
+        ReadOnlySpan<byte> mediaTypeNameUtf8)
+    {
+        Span<byte> initialBuffer = stackalloc byte[256];
+        Utf8ValueStringBuilder sb = new(initialBuffer);
+
+        try
+        {
+            sb.Append("#/paths/"u8);
+            AppendEncodedSegment(ref sb, pathNameUtf8);
+            sb.Append((byte)'/');
+            AppendMethodUtf8(ref sb, method);
+            sb.Append("/responses/"u8);
+            AppendEncodedSegment(ref sb, statusCodeUtf8);
+            sb.Append("/content/"u8);
+            AppendEncodedSegment(ref sb, mediaTypeNameUtf8);
+            sb.Append("/itemSchema"u8);
+
+            return Encoding.UTF8.GetString(sb.AsSpan());
+        }
+        finally
+        {
+            sb.Dispose();
+        }
+    }
+
+    /// <summary>
     /// Builds: <c>#/paths/&lt;path&gt;/&lt;method&gt;/responses/&lt;statusCode&gt;/headers/&lt;headerName&gt;/schema</c>.
     /// </summary>
     /// <param name="pathNameUtf8">The UTF-8 path name from the paths map.</param>

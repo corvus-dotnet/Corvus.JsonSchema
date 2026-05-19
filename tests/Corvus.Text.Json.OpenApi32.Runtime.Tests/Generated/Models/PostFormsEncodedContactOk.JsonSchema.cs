@@ -63,7 +63,7 @@ public readonly partial struct PostFormsEncodedContactOk
 #if NET
         [NotNullWhen(true)]
 #endif
-        out CanonTests32.Client.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
+        out CanonTests32.Client.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
             if (span.SequenceEqual(JsonPropertyNames.ReceivedUtf8))
             {
@@ -129,7 +129,7 @@ public readonly partial struct PostFormsEncodedContactOk
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out CanonTests32.Client.PropertiesValidationHandler_NamedPropertyValidator1? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out CanonTests32.Client.PropertiesValidationHandler_NamedPropertyValidator? validator))
                     {
                         validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 

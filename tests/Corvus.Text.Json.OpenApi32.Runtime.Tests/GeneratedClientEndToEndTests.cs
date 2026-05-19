@@ -4669,6 +4669,300 @@ public class GeneratedClientEndToEndTests
         }
     }
 
+    // ── Streaming (itemSchema) E2E tests ─────────────────────────────────
+    // These tests verify that streaming responses (NDJSON and SSE) work correctly
+    // with the generated EnumerateOkItems method and JsonStreamReader.
+    [TestMethod]
+    public async Task StreamEvents_200_NdjsonEnumeratesItems()
+    {
+        const string NdjsonBody = """
+            {"type":"event","id":1}
+            {"type":"event","id":2}
+            {"type":"event","id":3}
+            """;
+        byte[] bytes = Encoding.UTF8.GetBytes(NdjsonBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "application/x-ndjson");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+
+        List<JsonElement> items = [];
+        await foreach (JsonElement item in response.EnumerateOkItems())
+        {
+            items.Add(item);
+        }
+
+        Assert.AreEqual(3, items.Count);
+        Assert.AreEqual(1, items[0].GetProperty("id"u8).GetInt32());
+        Assert.AreEqual(2, items[1].GetProperty("id"u8).GetInt32());
+        Assert.AreEqual(3, items[2].GetProperty("id"u8).GetInt32());
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_EmptyStreamYieldsNoItems()
+    {
+        byte[] bytes = Encoding.UTF8.GetBytes(string.Empty);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "application/x-ndjson");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+
+        List<JsonElement> items = [];
+        await foreach (JsonElement item in response.EnumerateOkItems())
+        {
+            items.Add(item);
+        }
+
+        Assert.AreEqual(0, items.Count);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_SkipsEmptyLines()
+    {
+        const string NdjsonBody = """
+            {"id":1}
+
+            {"id":2}
+
+            """;
+        byte[] bytes = Encoding.UTF8.GetBytes(NdjsonBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "application/x-ndjson");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<JsonElement> items = [];
+        await foreach (JsonElement item in response.EnumerateOkItems())
+        {
+            items.Add(item);
+        }
+
+        Assert.AreEqual(2, items.Count);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_401_ParsesErrorBody()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Unauthorized, """{"message":"unauthorized"}""");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        Assert.AreEqual(401, response.StatusCode);
+        Assert.IsFalse(response.IsSuccess);
+        Assert.IsTrue(response.TryGetUnauthorized(out var body));
+        Assert.AreEqual("unauthorized", (string)body.Message);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_401_EnumerateThrowsWhenNoStream()
+    {
+        using var harness = new TestHarness(HttpStatusCode.Unauthorized, """{"message":"unauthorized"}""");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        Assert.ThrowsExactly<InvalidOperationException>(() => response.EnumerateOkItems());
+    }
+
+    [TestMethod]
+    public async Task ChatCompletions_200_SseEnumeratesItems()
+    {
+        const string SseBody = """
+            :comment line
+            event: message
+            data: {"delta":"Hello"}
+
+            data: {"delta":" World"}
+
+            data: {"delta":"!"}
+
+            """;
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        ChatCompletionsRequest request = default;
+        await using ChatCompletionsResponse response = await harness.Transport
+            .SendAsync<ChatCompletionsRequest, ChatCompletionsResponse>(
+                in request,
+                CancellationToken.None);
+
+        Assert.AreEqual(200, response.StatusCode);
+        Assert.IsTrue(response.IsSuccess);
+
+        List<JsonElement> items = [];
+        await foreach (JsonElement item in response.EnumerateOkItems())
+        {
+            items.Add(item);
+        }
+
+        Assert.AreEqual(3, items.Count);
+        Assert.AreEqual("Hello", items[0].GetProperty("delta"u8).GetString());
+        Assert.AreEqual(" World", items[1].GetProperty("delta"u8).GetString());
+        Assert.AreEqual("!", items[2].GetProperty("delta"u8).GetString());
+    }
+
+    [TestMethod]
+    public async Task ChatCompletions_200_SseSkipsMetadataAndComments()
+    {
+        const string SseBody = """
+            :this is a comment
+            retry: 3000
+            id: 123
+            event: message
+            data: {"value":42}
+
+            :another comment
+            event: done
+            data: {"value":99}
+
+            """;
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        ChatCompletionsRequest request = default;
+        await using ChatCompletionsResponse response = await harness.Transport
+            .SendAsync<ChatCompletionsRequest, ChatCompletionsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<JsonElement> items = [];
+        await foreach (JsonElement item in response.EnumerateOkItems())
+        {
+            items.Add(item);
+        }
+
+        Assert.AreEqual(2, items.Count);
+        Assert.AreEqual(42, items[0].GetProperty("value"u8).GetInt32());
+        Assert.AreEqual(99, items[1].GetProperty("value"u8).GetInt32());
+    }
+
+    [TestMethod]
+    public async Task ChatCompletions_200_SseDataWithoutSpace()
+    {
+        // SSE data lines can omit the space after "data:"
+        const string SseBody = "data:{\"x\":1}\n";
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        ChatCompletionsRequest request = default;
+        await using ChatCompletionsResponse response = await harness.Transport
+            .SendAsync<ChatCompletionsRequest, ChatCompletionsResponse>(
+                in request,
+                CancellationToken.None);
+
+        List<JsonElement> items = [];
+        await foreach (JsonElement item in response.EnumerateOkItems())
+        {
+            items.Add(item);
+        }
+
+        Assert.AreEqual(1, items.Count);
+        Assert.AreEqual(1, items[0].GetProperty("x"u8).GetInt32());
+    }
+
+    [TestMethod]
+    public async Task ChatCompletions_400_ParsesErrorBody()
+    {
+        using var harness = new TestHarness(HttpStatusCode.BadRequest, """{"error":"invalid model","code":400}""");
+
+        ChatCompletionsRequest request = default;
+        await using ChatCompletionsResponse response = await harness.Transport
+            .SendAsync<ChatCompletionsRequest, ChatCompletionsResponse>(
+                in request,
+                CancellationToken.None);
+
+        Assert.AreEqual(400, response.StatusCode);
+        Assert.IsFalse(response.IsSuccess);
+        Assert.IsTrue(response.TryGetBadRequest(out var body));
+        Assert.AreEqual("invalid model", (string)body.Error);
+    }
+
+    [TestMethod]
+    public async Task ChatCompletions_200_CancellationStopsEnumeration()
+    {
+        // A stream that yields many items — we cancel after first
+        const string SseBody = """
+            data: {"n":1}
+            data: {"n":2}
+            data: {"n":3}
+            data: {"n":4}
+            data: {"n":5}
+            """;
+        byte[] bytes = Encoding.UTF8.GetBytes(SseBody);
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        ChatCompletionsRequest request = default;
+        await using ChatCompletionsResponse response = await harness.Transport
+            .SendAsync<ChatCompletionsRequest, ChatCompletionsResponse>(
+                in request,
+                CancellationToken.None);
+
+        using CancellationTokenSource cts = new();
+        List<JsonElement> items = [];
+
+        await foreach (JsonElement item in response.EnumerateOkItems(cts.Token))
+        {
+            items.Add(item);
+            if (items.Count >= 2)
+            {
+                cts.Cancel();
+                break;
+            }
+        }
+
+        Assert.AreEqual(2, items.Count);
+    }
+
+    [TestMethod]
+    public async Task StreamEvents_200_MatchResultFallsToDefault()
+    {
+        // A 200 streaming response doesn't have a MatchResult handler for OK
+        // (streaming responses use EnumerateOkItems instead), so it falls to default
+        byte[] bytes = "{\"id\":1}\n"u8.ToArray();
+
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "application/x-ndjson");
+
+        StreamEventsRequest request = default;
+        await using StreamEventsResponse response = await harness.Transport
+            .SendAsync<StreamEventsRequest, StreamEventsResponse>(
+                in request,
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchUnauthorized: body => "unauthorized",
+            matchDefault: statusCode => $"default:{statusCode}");
+
+        Assert.AreEqual("default:200", result);
+    }
+
     private sealed class SequencedMockHandler : DelegatingHandler
     {
         private readonly IReadOnlyList<(HttpStatusCode StatusCode, string ResponseBody)> responses;
