@@ -120,7 +120,13 @@ public sealed class OpenApi30CodeGenerator
     private readonly record struct RequestBodyInfo(
         string? Description,
         bool IsRequired,
-        ContentInfo[] Content);
+        ContentInfo[] Content,
+        BinaryPropertyInfo[] BinaryProperties);
+
+    private readonly record struct BinaryPropertyInfo(
+        string PropertyName,
+        string ParameterName,
+        string? ContentType);
 
     private readonly record struct ResponseInfo(
         string StatusCode,
@@ -1106,8 +1112,76 @@ public sealed class OpenApi30CodeGenerator
             ContentInfo[] content = PrepareContentEntries(
                 requestBody.Content, pathNameUtf8, method, "/requestBody"u8);
 
-            return new RequestBodyInfo(description, required, content);
+            BinaryPropertyInfo[] binaryProperties = DetectBinaryProperties(requestBody.Content);
+
+            return new RequestBodyInfo(description, required, content, binaryProperties);
         }
+    }
+
+    /// <summary>
+    /// Detects properties with <c>format: binary</c> in the multipart content schema.
+    /// These properties represent file uploads and should be hoisted to separate
+    /// <see cref="BinaryPartData"/> parameters in the generated client method.
+    /// </summary>
+    private static BinaryPropertyInfo[] DetectBinaryProperties(
+        OpenApiDocument.RequestBody.ContentEntity contentMap)
+    {
+        if (contentMap.IsUndefined())
+        {
+            return [];
+        }
+
+        foreach (var mediaTypeProp in contentMap.EnumerateObject())
+        {
+            if (!CodeEmitHelpers.IsMultipartMediaType(mediaTypeProp.Name))
+            {
+                continue;
+            }
+
+            OpenApiDocument.MediaType mediaType = mediaTypeProp.Value;
+            if (mediaType.Schema.IsUndefined())
+            {
+                return [];
+            }
+
+            JsonElement schema = JsonElement.From(mediaType.Schema);
+            if (!schema.TryGetProperty("properties"u8, out JsonElement properties)
+                || properties.ValueKind != JsonValueKind.Object)
+            {
+                return [];
+            }
+
+            // Read per-property encoding overrides (may specify contentType for binary fields).
+            IReadOnlyDictionary<string, EncodingInfo>? encodings = ReadEncodings(mediaType);
+
+            List<BinaryPropertyInfo> result = [];
+
+            foreach (JsonProperty<JsonElement> prop in properties.EnumerateObject())
+            {
+                JsonElement propSchema = prop.Value;
+                if (propSchema.TryGetProperty("format"u8, out JsonElement formatEl)
+                    && formatEl.ValueKind == JsonValueKind.String
+                    && formatEl.ValueEquals("binary"u8))
+                {
+                    string propName = prop.Name;
+                    string paramName = CodeEmitHelpers.SanitizeParameterName(propName);
+
+                    // Use contentType from encoding object if specified.
+                    string? contentType = null;
+                    if (encodings is not null
+                        && encodings.TryGetValue(propName, out EncodingInfo enc))
+                    {
+                        contentType = enc.ContentType;
+                    }
+
+                    result.Add(new BinaryPropertyInfo(propName, paramName, contentType));
+                }
+            }
+
+            return [.. result];
+        }
+
+        return [];
     }
 
     private static ResponseInfo[] PrepareResponses(
@@ -3830,48 +3904,47 @@ public sealed class OpenApi30CodeGenerator
             IReadOnlyDictionary<string, EncodingInfo>? encodings =
                 GetRequestBodyEncodings(op.RequestBody!.Value, CodeEmitHelpers.IsMultipartMediaType);
 
+            BinaryPropertyInfo[] binaryProps = op.RequestBody!.Value.BinaryProperties;
+            bool hasBinaryParts = binaryProps.Length > 0;
+
             w.WriteLine("string boundary = MultipartFormDataSerializer.GenerateBoundary();");
+
+            if (hasBinaryParts)
+            {
+                EmitBinaryPartsDictionary(w, binaryProps);
+            }
+
+            string encodingsArg = encodings is { Count: > 0 } ? ", encodings" : ", null";
+            string binaryPartsArg = hasBinaryParts ? ", binaryParts" : "";
 
             if (encodings is { Count: > 0 })
             {
                 EmitEncodingsDictionary(w, encodings);
-                if (hasRequestExprLinks)
-                {
-                    w.WriteLine(
-                        $"return CaptureRequestAsync(" +
-                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
-                }
-                else
-                {
-                    w.WriteLine(
-                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(workspace, request, " +
-                        $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
-                }
+            }
+
+            // Build the Serialize call arguments.
+            string serializeArgs = hasBinaryParts
+                ? $"bodyValue, stream, boundary{encodingsArg}, binaryParts"
+                : encodings is { Count: > 0 }
+                    ? "bodyValue, stream, boundary, encodings"
+                    : "bodyValue, stream, boundary";
+
+            if (hasRequestExprLinks)
+            {
+                w.WriteLine(
+                    $"return CaptureRequestAsync(" +
+                    $"SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
+                    $"stream => MultipartFormDataSerializer.Serialize({serializeArgs}), " +
+                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
             }
             else
             {
-                if (hasRequestExprLinks)
-                {
-                    w.WriteLine(
-                        $"return CaptureRequestAsync(" +
-                        $"SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(JsonWorkspace.CreateUnrented(), request, " +
-                        $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken), request, {(hasRequestBodyExprLinks ? "bodyValue, " : "")}workspace);");
-                }
-                else
-                {
-                    w.WriteLine(
-                        $"return SendWithBodyWriterAsyncCore<{requestName}, " +
-                        $"{responseName}>(workspace, request, " +
-                        $"stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary), " +
-                        $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
-                }
+                w.WriteLine(
+                    $"return SendWithBodyWriterAsyncCore<{requestName}, " +
+                    $"{responseName}>(workspace, request, " +
+                    $"stream => MultipartFormDataSerializer.Serialize({serializeArgs}), " +
+                    $"\"multipart/form-data; boundary=\" + boundary, responseValidationMode, cancellationToken);");
             }
         }
         else if (hasBody)
@@ -3984,6 +4057,24 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine("};");
     }
 
+    private static void EmitBinaryPartsDictionary(
+        IndentedWriter w,
+        BinaryPropertyInfo[] binaryProperties)
+    {
+        w.WriteLine("Dictionary<string, BinaryPartData> binaryParts = new(StringComparer.Ordinal)");
+        w.WriteLine("{");
+        w.PushIndent();
+
+        foreach (BinaryPropertyInfo prop in binaryProperties)
+        {
+            string propNameLiteral = CodeEmitHelpers.FormatStringLiteral(prop.PropertyName);
+            w.WriteLine($"[{propNameLiteral}] = {prop.ParameterName},");
+        }
+
+        w.PopIndent();
+        w.WriteLine("};");
+    }
+
     private static void EmitMethodDoc(IndentedWriter w, OperationInfo op)
     {
         if (op.Summary is not null)
@@ -4006,6 +4097,11 @@ public sealed class OpenApi30CodeGenerator
         {
             string bodyDesc = rb.Description ?? "The request body.";
             w.WriteLine($"/// <param name=\"body\">{CodeEmitHelpers.EscapeXml(bodyDesc)}.</param>");
+
+            foreach (BinaryPropertyInfo binaryProp in rb.BinaryProperties)
+            {
+                w.WriteLine($"/// <param name=\"{binaryProp.ParameterName}\">Binary data for the '{binaryProp.PropertyName}' part.</param>");
+            }
         }
 
         w.WriteLine("/// <param name=\"cancellationToken\">A cancellation token.</param>");
@@ -4036,6 +4132,15 @@ public sealed class OpenApi30CodeGenerator
             {
                 string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody.Value);
                 paramParts.Add($"{bodyTypeName}.Source body");
+            }
+        }
+
+        // Binary part parameters (for multipart file uploads).
+        if (op.RequestBody is { } rbForBinary && rbForBinary.BinaryProperties.Length > 0)
+        {
+            foreach (BinaryPropertyInfo binaryProp in rbForBinary.BinaryProperties)
+            {
+                paramParts.Add($"BinaryPartData {binaryProp.ParameterName}");
             }
         }
 

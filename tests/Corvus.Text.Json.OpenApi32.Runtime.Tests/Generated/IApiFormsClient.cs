@@ -165,6 +165,7 @@ public interface IApiFormsClient : IAsyncDisposable
     /// Submit multipart form with various value types
     /// </summary>
     /// <param name="body">The request body..</param>
+    /// <param name="file">Binary data for the 'file' part.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    ValueTask<SubmitMultipartTypesResponse> SubmitMultipartTypesAsync(CanonTests32.Client.PostFormsMultipartTypesBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
+    ValueTask<SubmitMultipartTypesResponse> SubmitMultipartTypesAsync(CanonTests32.Client.PostFormsMultipartTypesBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None);
 }

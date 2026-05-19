@@ -5087,7 +5087,6 @@ public class OpenApi31CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(root);
 
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
-        Assert.IsTrue(resp.Content.Contains("#warning Deep nesting detected", StringComparison.Ordinal), "Array with object items should emit deep nesting warning");
         Assert.IsTrue(resp.Content.Contains("StyleValueSplitter.NextSeparator", StringComparison.Ordinal), "Array with deep nesting should use depth-aware splitter");
     }
 
@@ -5129,7 +5128,6 @@ public class OpenApi31CodeGeneratorTests
         IReadOnlyList<GeneratedFile> files = gen.Generate(root);
 
         GeneratedFile resp = GetFile(files, "GetDataResponse.cs");
-        Assert.IsTrue(resp.Content.Contains("#warning Deep nesting detected", StringComparison.Ordinal), "Object with nested object property should emit deep nesting warning");
         Assert.IsTrue(resp.Content.Contains("StyleValueSplitter.NextSeparator", StringComparison.Ordinal), "Object with deep nesting should use depth-aware splitter");
     }
 

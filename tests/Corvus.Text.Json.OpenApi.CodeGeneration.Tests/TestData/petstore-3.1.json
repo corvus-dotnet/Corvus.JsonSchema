@@ -246,13 +246,17 @@
               "schema": {
                 "type": "object",
                 "properties": {
+                  "photo": {
+                    "type": "string",
+                    "format": "binary"
+                  },
                   "caption": { "type": "string" },
                   "tags": {
                     "type": "array",
                     "items": { "type": "string" }
                   }
                 },
-                "required": ["caption"]
+                "required": ["photo", "caption"]
               }
             }
           }

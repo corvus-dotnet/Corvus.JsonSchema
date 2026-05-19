@@ -226,8 +226,9 @@ public sealed class ApiFormsClient : IApiFormsClient
     /// Submit multipart form with various value types
     /// </summary>
     /// <param name="body">The request body..</param>
+    /// <param name="file">Binary data for the 'file' part.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
-    public ValueTask<SubmitMultipartTypesResponse> SubmitMultipartTypesAsync(CanonTests32.Client.PostFormsMultipartTypesBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
+    public ValueTask<SubmitMultipartTypesResponse> SubmitMultipartTypesAsync(CanonTests32.Client.PostFormsMultipartTypesBody.Source body, BinaryPartData file, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
         CanonTests32.Client.PostFormsMultipartTypesBody bodyValue = CanonTests32.Client.PostFormsMultipartTypesBody.CreateBuilder(workspace, body).RootElement;
@@ -249,12 +250,16 @@ public sealed class ApiFormsClient : IApiFormsClient
         }
 
         string boundary = MultipartFormDataSerializer.GenerateBoundary();
+        Dictionary<string, BinaryPartData> binaryParts = new(StringComparer.Ordinal)
+        {
+            ["file"] = file,
+        };
         Dictionary<string, PropertyEncoding> encodings = new(StringComparer.Ordinal)
         {
             ["title"] = new(ContentType: "text/plain"),
             ["file"] = new(ContentType: "application/octet-stream"),
         };
-        return SendWithBodyWriterAsyncCore<SubmitMultipartTypesRequest, SubmitMultipartTypesResponse>(workspace, request, stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
+        return SendWithBodyWriterAsyncCore<SubmitMultipartTypesRequest, SubmitMultipartTypesResponse>(workspace, request, stream => MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, encodings, binaryParts), "multipart/form-data; boundary=" + boundary, responseValidationMode, cancellationToken);
     }
 
     /// <inheritdoc/>

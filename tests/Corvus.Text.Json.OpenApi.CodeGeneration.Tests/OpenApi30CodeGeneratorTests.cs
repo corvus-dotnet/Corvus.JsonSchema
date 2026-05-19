@@ -2545,10 +2545,14 @@ public class OpenApi30CodeGeneratorTests
 
         GeneratedFile client = GetFile(files, "ApiUploadsClient.cs");
 
-        // Without encoding objects, should call MultipartFormDataSerializer.Serialize without encodings param
+        // With format: binary detected, the file property is hoisted to a BinaryPartData
+        // parameter and the Serialize call includes the binaryParts dictionary.
         Assert.IsTrue(
-            client.Content.Contains("MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary)", StringComparison.Ordinal),
-            "Should call Serialize without encodings parameter");
+            client.Content.Contains("BinaryPartData file", StringComparison.Ordinal),
+            "Should generate BinaryPartData parameter for format: binary property");
+        Assert.IsTrue(
+            client.Content.Contains("MultipartFormDataSerializer.Serialize(bodyValue, stream, boundary, null, binaryParts)", StringComparison.Ordinal),
+            "Should call Serialize with binaryParts parameter");
     }
 
     [TestMethod]
