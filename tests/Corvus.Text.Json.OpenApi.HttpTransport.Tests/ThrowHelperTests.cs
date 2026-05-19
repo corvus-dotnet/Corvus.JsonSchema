@@ -4,7 +4,7 @@
 
 using Corvus.Text.Json.OpenApi;
 
-namespace Corvus.Text.Json.OpenApi31.Runtime.Tests;
+namespace Corvus.Text.Json.OpenApi.HttpTransport.Tests;
 
 /// <summary>
 /// Tests for the <see cref="ThrowHelper"/> centralized exception-throwing helpers.

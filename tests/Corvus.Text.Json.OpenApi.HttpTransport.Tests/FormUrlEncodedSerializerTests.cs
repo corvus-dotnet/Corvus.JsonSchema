@@ -7,7 +7,7 @@ using Corvus.Text.Json;
 using Corvus.Text.Json.OpenApi;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 
-namespace Corvus.Text.Json.OpenApi31.Runtime.Tests;
+namespace Corvus.Text.Json.OpenApi.HttpTransport.Tests;
 
 [TestClass]
 public class FormUrlEncodedSerializerTests
