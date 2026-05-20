@@ -1,0 +1,194 @@
+# Corvus OpenAPI Client vs Kiota — Feature Comparison
+
+This document compares the Corvus OpenAPI client generator with [Microsoft Kiota](https://learn.microsoft.com/en-us/openapi/kiota/) across architecture, generated code features, and performance characteristics.
+
+## Architecture
+
+| Aspect | Corvus | Kiota |
+|--------|--------|-------|
+| Generation model | Roslyn source generator + CLI tool | CLI tool only |
+| Runtime dependency | `Corvus.Text.Json.OpenApi` (thin transport abstraction) | `Microsoft.Kiota.Bundle` (abstractions + HTTP + serialization + auth) |
+| Serialization | Zero-copy over pooled JSON document (no POCO hydration) | POCO model classes with `IParsable` self-deserialization |
+| Memory model | Struct-based types backed by pooled `byte[]` — GC-free hot path | Class-based models allocated per response |
+| Transport abstraction | `IApiTransport` (4 overloads: no-body, typed, stream, writer) | `IRequestAdapter` wrapping `HttpClient` with middleware pipeline |
+| HttpClient support | `HttpClientTransport` wraps `HttpClient` (same as Kiota) — but transport is swappable | Tightly coupled to `HttpClient` via `HttpClientRequestAdapter` |
+| Schema validation | Built-in, configurable per-request (`None`/`Basic`/`Detailed`) | None — no schema validation support |
+
+### Transport Design
+
+Corvus separates the transport concern from the generated client via the `IApiTransport` interface (in `Corvus.Text.Json.OpenApi`). The default production implementation is `HttpClientTransport` (in `Corvus.Text.Json.OpenApi.HttpTransport`), which wraps a standard `HttpClient` — the same underlying HTTP stack that Kiota uses. This means the HTTP layer is identical; the performance difference comes entirely from how request/response serialization and validation are handled above the transport.
+
+The `IApiTransport` abstraction enables:
+- **Testing**: mock transports return fixed bytes without any HTTP stack (as used in benchmarks)
+- **Alternative transports**: gRPC, in-process, or message-queue transports can implement the same interface
+- **Composition**: transports can be wrapped for logging, retries, or metrics without modifying generated code
+
+## Response Headers
+
+| Aspect | Corvus | Kiota |
+|--------|--------|-------|
+| Typed header access | Generated properties on response struct (e.g. `response.XNextHeader`) | Not generated — headers discarded by default |
+| Lazy parsing | Yes — header value parsed on first access only | N/A |
+| How to access headers | Direct property access | Must use `NativeResponseHandler` + extract from raw `HttpResponseMessage` manually |
+| Code generation | Automatic from OpenAPI `responses.*.headers` | Not supported |
+
+**Kiota workaround for response headers:**
+
+```csharp
+// Kiota requires a custom response handler to access headers
+var handler = new NativeResponseHandler();
+await client.Pets.GetAsync(config =>
+    config.Options.Add(new ResponseHandlerOption { ResponseHandler = handler }));
+var nativeResponse = handler.Value as HttpResponseMessage;
+string? xNext = nativeResponse?.Headers.GetValues("x-next").FirstOrDefault();
+```
+
+**Corvus equivalent:**
+
+```csharp
+// Corvus generates typed, lazily-parsed header properties
+ListPetsResponse response = await client.ListPetsAsync();
+JsonString? xNext = response.XNextHeader; // parsed on first access, zero extra allocation
+```
+
+## Request Body Construction
+
+| Aspect | Corvus | Kiota |
+|--------|--------|-------|
+| Body construction | `Build()` delegate pattern — deferred serialization, zero allocation at call site | Mutable POCO with property setters |
+| Serialization timing | Lazy — serialized inside transport only when needed | Eager — serialized by `ISerializationWriter` before send |
+| Form-urlencoded | Native codegen support | Not supported (JSON only for typed bodies) |
+| Multipart/mixed | Native codegen with binary parts | Limited multipart support |
+
+**Corvus body construction (zero-allocation delegate):**
+
+```csharp
+await client.CreatePetAsync(
+    NewPet.Build(static (ref NewPet.Builder b) => b.Create("Rex", "dog")));
+```
+
+**Kiota body construction (POCO allocation):**
+
+```csharp
+await client.Pets.PostAsync(new NewPet { Name = "Rex", Tag = "dog" });
+```
+
+## Validation
+
+| Aspect | Corvus | Kiota |
+|--------|--------|-------|
+| Request validation | Compile-time generated schema evaluator, configurable per-call | None |
+| Response validation | Compile-time generated schema evaluator, configurable per-call | None |
+| Validation modes | `None`, `Basic` (fast bool), `Detailed` (full error report) | N/A |
+| Validation cost | ~2× no-validation baseline (Basic mode) | N/A |
+| Allocation overhead | Zero additional allocation for validation | N/A |
+
+## Response Handling
+
+| Aspect | Corvus | Kiota |
+|--------|--------|-------|
+| Return type | Value-type response struct (`IApiResponse<T>`) with `IAsyncDisposable` | Nullable POCO or `Task<T?>` |
+| Status discrimination | `MatchResult()` with typed handlers per status code | Exception-based (`ApiException` subclasses) |
+| Error responses | Typed error body accessible via `TryGetDefault()` or `MatchResult` | `ApiException` with deserialized error model |
+| Memory lifetime | Response owns pooled document; disposed via `await using` | GC-managed; no explicit lifetime |
+| Multiple content types | Discriminated by content-type in response struct | Single content type per operation |
+
+## Path and Query Parameters
+
+| Aspect | Corvus | Kiota |
+|--------|--------|-------|
+| Path parameters | UTF-8 formatted directly into URL template | String interpolation via fluent API indexers |
+| Query parameters | Typed `Source` values, serialized per OpenAPI `style`/`explode` | Lambda-configured query parameter object |
+| Cookie parameters | Supported | Not supported |
+| Header parameters (request) | Supported | Supported (via request configuration headers) |
+
+## Performance (Petstore Benchmark, .NET 10.0, i7-13800H)
+
+All benchmarks use mock transports (no real I/O) measuring the full client pipeline:
+construct request → serialize → transport → parse response → typed access.
+
+### GET /pets (10-item array response)
+
+| Client | Mean | Allocated |
+|--------|------|-----------|
+| Corvus (no validation) | 1.39 μs | 1.03 KB |
+| Corvus (with validation) | 3.32 μs | 1.03 KB |
+| Kiota (no validation) | 6.62 μs | 17.48 KB |
+
+### GET /pets/{petId} (single object, path parameter)
+
+| Client | Mean | Allocated |
+|--------|------|-----------|
+| Corvus (no validation) | 435 ns | 560 B |
+| Corvus (with validation) | 646 ns | 560 B |
+| Kiota (no validation) | 2,314 ns | 8,017 B |
+
+### POST /pets (JSON body via builder delegate)
+
+| Client | Mean | Allocated |
+|--------|------|-----------|
+| Corvus (no validation) | 530 ns | 560 B |
+| Corvus (with validation) | 763 ns | 560 B |
+| Kiota (no validation) | 3,290 ns | 8,665 B |
+
+### PUT /pets/{petId} (form-urlencoded body + path parameter)
+
+| Client | Mean | Allocated |
+|--------|------|-----------|
+| Corvus (no validation) | 611 ns | 792 B |
+| Corvus (with validation) | 925 ns | 792 B |
+| Kiota (no validation) | 3,295 ns | 9,497 B |
+
+### Validation Mode Comparison (GET /pets, 3-item array)
+
+| Mode | Mean | Ratio to None |
+|------|------|---------------|
+| None | 651 ns | 1.0× |
+| Basic | 1,320 ns | 2.0× |
+| Detailed | 2,193 ns | 3.4× |
+
+All validation modes produce zero additional allocation (1.03 KB throughout).
+
+### Summary
+
+- **Corvus WITH full validation is 2–4× faster than Kiota WITHOUT validation** across all operation types
+- **Corvus allocates 10–15× less memory** than Kiota per request/response cycle
+- Validation overhead in Basic mode is ~2× the no-validation baseline — still faster than Kiota without any validation
+- Response header parsing adds negligible cost (528 ns including the full request cycle)
+
+## Feature Support Matrix
+
+| Feature | Corvus | Kiota |
+|---------|--------|-------|
+| OpenAPI 3.0 | ✅ | ✅ |
+| OpenAPI 3.1 | ✅ | ✅ |
+| OpenAPI 3.2 | ✅ | Partial |
+| JSON request/response bodies | ✅ | ✅ |
+| Form-urlencoded bodies | ✅ | ❌ |
+| Multipart/mixed bodies | ✅ | Limited |
+| Binary upload (octet-stream) | ✅ | ✅ |
+| Typed response headers | ✅ | ❌ |
+| Cookie parameters | ✅ | ❌ |
+| Schema validation | ✅ (None/Basic/Detailed) | ❌ |
+| Error response discrimination | ✅ (typed `MatchResult`) | ✅ (exception-based) |
+| Pagination helpers | Planned | ❌ |
+| Authentication | Via transport (user-provided) | Built-in providers |
+| Middleware pipeline | Via transport composition | Built-in pipeline |
+| Multiple languages | C# only | C#, Java, Go, TypeScript, Python, PHP, Ruby, Swift, CLI |
+| Source generator integration | ✅ | ❌ |
+| IDE autocompletion during build | ✅ (via source generator) | ✅ (pre-generated files) |
+
+## When to Choose Corvus
+
+- Performance-critical services where latency and allocation matter
+- APIs requiring request/response validation without external tooling
+- .NET-only projects wanting zero-copy JSON and compile-time safety
+- APIs using form-urlencoded, multipart/mixed, or cookie parameters
+- Scenarios requiring typed response header access
+
+## When to Choose Kiota
+
+- Multi-language projects needing consistent client generation across platforms
+- Teams wanting built-in authentication providers and middleware
+- Projects where POCO-style models are preferred over struct-based types
+- APIs where performance is not the primary concern
