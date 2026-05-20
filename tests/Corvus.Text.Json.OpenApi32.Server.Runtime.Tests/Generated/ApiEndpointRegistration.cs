@@ -5,9 +5,7 @@
 
 #nullable enable
 
-using System.Buffers;
 using System.Diagnostics.CodeAnalysis;
-using System.IO.Pipelines;
 using Corvus.Runtime.InteropServices;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
@@ -36,1746 +34,1701 @@ public static class ApiEndpointRegistration
 
         app.MapGet("/items", async (HttpContext context) =>
         {
-            CanonTests32.Server.GetItemsCategory CategoryParsed = default;
-            if (context.Request.Query.TryGetValue("category", out var CategoryQueryVal) && CategoryQueryVal.Count > 0)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                string CategoryRawStr = CategoryQueryVal[0]!;
-                Span<char> CategoryBuf = stackalloc char[CategoryRawStr.Length + 2];
-                CategoryBuf[0] = '"';
-                CategoryRawStr.AsSpan().CopyTo(CategoryBuf.Slice(1));
-                CategoryBuf[CategoryRawStr.Length + 1] = '"';
-                CategoryParsed = CanonTests32.Server.GetItemsCategory.ParseValue(CategoryBuf.Slice(0, CategoryRawStr.Length + 2));
-            }
-            CanonTests32.Server.GetItemsSort SortParsed = default;
-            if (context.Request.Query.TryGetValue("sort", out var SortQueryVal) && SortQueryVal.Count > 0)
-            {
-                string SortRawStr = SortQueryVal[0]!;
-                Span<char> SortBuf = stackalloc char[SortRawStr.Length + 2];
-                SortBuf[0] = '"';
-                SortRawStr.AsSpan().CopyTo(SortBuf.Slice(1));
-                SortBuf[SortRawStr.Length + 1] = '"';
-                SortParsed = CanonTests32.Server.GetItemsSort.ParseValue(SortBuf.Slice(0, SortRawStr.Length + 2));
-            }
+                CanonTests32.Server.GetItemsActive ActiveValue = context.Request.Query.TryGetValue("active", out var ActiveQueryVal) && ActiveQueryVal.Count > 0 ? HeaderValueParser.ParseBoolean<CanonTests32.Server.GetItemsActive>(ActiveQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.GetItemsCategory CategoryValue = context.Request.Query.TryGetValue("category", out var CategoryQueryVal) && CategoryQueryVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.GetItemsCategory>(CategoryQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.GetItemsPage PageValue = context.Request.Query.TryGetValue("page", out var PageQueryVal) && PageQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetItemsPage>(PageQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.GetItemsSort SortValue = context.Request.Query.TryGetValue("sort", out var SortQueryVal) && SortQueryVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.GetItemsSort>(SortQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.GetItemsVerbose VerboseValue = context.Request.Query.TryGetValue("verbose", out var VerboseQueryVal) && VerboseQueryVal.Count > 0 ? HeaderValueParser.ParseBoolean<CanonTests32.Server.GetItemsVerbose>(VerboseQueryVal[0]!, workspace) : default;
 
-            ListItemsParams parameters = new()
-            {
-                Active = context.Request.Query.TryGetValue("active", out var ActiveQueryVal) && ActiveQueryVal.Count > 0 ? CanonTests32.Server.GetItemsActive.ParseValue(ActiveQueryVal[0]!) : default,
-                Category = CategoryParsed,
-                Page = context.Request.Query.TryGetValue("page", out var PageQueryVal) && PageQueryVal.Count > 0 ? CanonTests32.Server.GetItemsPage.ParseValue(PageQueryVal[0]!) : default,
-                Sort = SortParsed,
-                Verbose = context.Request.Query.TryGetValue("verbose", out var VerboseQueryVal) && VerboseQueryVal.Count > 0 ? CanonTests32.Server.GetItemsVerbose.ParseValue(VerboseQueryVal[0]!) : default,
-            }
-            ;
-
-            ListItemsResult result = await defaultHandler.HandleListItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                ListItemsParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Active = ActiveValue,
+                    Category = CategoryValue,
+                    Page = PageValue,
+                    Sort = SortValue,
+                    Verbose = VerboseValue,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                ListItemsResult result = await defaultHandler.HandleListItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapPost("/items", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString XCorrelationIdParsed = default;
-            if (context.Request.Headers.TryGetValue("X-Correlation-Id", out var XCorrelationIdHeaderVal) && XCorrelationIdHeaderVal.Count > 0)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PostItemsBody>? bodyDoc = null;
+            try
             {
-                string XCorrelationIdRawStr = XCorrelationIdHeaderVal[0]!;
-                Span<char> XCorrelationIdBuf = stackalloc char[XCorrelationIdRawStr.Length + 2];
-                XCorrelationIdBuf[0] = '"';
-                XCorrelationIdRawStr.AsSpan().CopyTo(XCorrelationIdBuf.Slice(1));
-                XCorrelationIdBuf[XCorrelationIdRawStr.Length + 1] = '"';
-                XCorrelationIdParsed = CanonTests32.Server.JsonString.ParseValue(XCorrelationIdBuf.Slice(0, XCorrelationIdRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString XCorrelationIdValue = context.Request.Headers.TryGetValue("X-Correlation-Id", out var XCorrelationIdHeaderVal) && XCorrelationIdHeaderVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XCorrelationIdHeaderVal[0]!, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostItemsBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PostItemsBody body = CanonTests32.Server.PostItemsBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            CreateItemParams parameters = new()
-            {
-                XCorrelationId = XCorrelationIdParsed,
-                Body = body,
-            }
-            ;
-
-            CreateItemResult result = await defaultHandler.HandleCreateItemAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                CreateItemParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    XCorrelationId = XCorrelationIdValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                CreateItemResult result = await defaultHandler.HandleCreateItemAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapMethods("/items", new[] { "OPTIONS" }, async (HttpContext context) =>
         {
-            OptionsItemsParams parameters = new();
-
-            OptionsItemsResult result = await defaultHandler.HandleOptionsItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                OptionsItemsParams parameters = new();
+
+                OptionsItemsResult result = await defaultHandler.HandleOptionsItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapMethods("/items", new[] { "CUSTOM" }, async (HttpContext context) =>
         {
-            PurgeItemsParams parameters = new();
-
-            PurgeItemsResult result = await defaultHandler.HandlePurgeItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                PurgeItemsParams parameters = new();
+
+                PurgeItemsResult result = await defaultHandler.HandlePurgeItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/items/{itemId}", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString ItemIdParsed = default;
-            if (context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Span<char> ItemIdBuf = stackalloc char[ItemIdRouteStr.Length + 2];
-                ItemIdBuf[0] = '"';
-                ItemIdRouteStr.AsSpan().CopyTo(ItemIdBuf.Slice(1));
-                ItemIdBuf[ItemIdRouteStr.Length + 1] = '"';
-                ItemIdParsed = CanonTests32.Server.JsonString.ParseValue(ItemIdBuf.Slice(0, ItemIdRouteStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString ItemIdValue = context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRouteStr, workspace) : default;
 
-            GetItemParams parameters = new()
-            {
-                ItemId = ItemIdParsed,
-            }
-            ;
-
-            GetItemResult result = await defaultHandler.HandleGetItemAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                GetItemParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    ItemId = ItemIdValue,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                GetItemResult result = await defaultHandler.HandleGetItemAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapPatch("/items/{itemId}", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString ItemIdParsed = default;
-            if (context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PatchItemsByItemIdBody>? bodyDoc = null;
+            try
             {
-                Span<char> ItemIdBuf = stackalloc char[ItemIdRouteStr.Length + 2];
-                ItemIdBuf[0] = '"';
-                ItemIdRouteStr.AsSpan().CopyTo(ItemIdBuf.Slice(1));
-                ItemIdBuf[ItemIdRouteStr.Length + 1] = '"';
-                ItemIdParsed = CanonTests32.Server.JsonString.ParseValue(ItemIdBuf.Slice(0, ItemIdRouteStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString ItemIdValue = context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRouteStr, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PatchItemsByItemIdBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PatchItemsByItemIdBody body = CanonTests32.Server.PatchItemsByItemIdBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            PatchItemsItemIdParams parameters = new()
-            {
-                ItemId = ItemIdParsed,
-                Body = body,
-            }
-            ;
-
-            PatchItemsItemIdResult result = await defaultHandler.HandlePatchItemsItemIdAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                PatchItemsItemIdParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    ItemId = ItemIdValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                PatchItemsItemIdResult result = await defaultHandler.HandlePatchItemsItemIdAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapPost("/items/{itemId}/form", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString ItemIdParsed = default;
-            if (context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PostItemsByItemIdFormBody>? bodyDoc = null;
+            try
             {
-                Span<char> ItemIdBuf = stackalloc char[ItemIdRouteStr.Length + 2];
-                ItemIdBuf[0] = '"';
-                ItemIdRouteStr.AsSpan().CopyTo(ItemIdBuf.Slice(1));
-                ItemIdBuf[ItemIdRouteStr.Length + 1] = '"';
-                ItemIdParsed = CanonTests32.Server.JsonString.ParseValue(ItemIdBuf.Slice(0, ItemIdRouteStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString ItemIdValue = context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRouteStr, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostItemsByItemIdFormBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PostItemsByItemIdFormBody body = CanonTests32.Server.PostItemsByItemIdFormBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            UpdateItemFormParams parameters = new()
-            {
-                ItemId = ItemIdParsed,
-                Body = body,
-            }
-            ;
-
-            UpdateItemFormResult result = await defaultHandler.HandleUpdateItemFormAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                UpdateItemFormParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    ItemId = ItemIdValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                UpdateItemFormResult result = await defaultHandler.HandleUpdateItemFormAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapPost("/items/{itemId}/upload", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString ItemIdParsed = default;
-            if (context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PostItemsByItemIdUploadBody>? bodyDoc = null;
+            try
             {
-                Span<char> ItemIdBuf = stackalloc char[ItemIdRouteStr.Length + 2];
-                ItemIdBuf[0] = '"';
-                ItemIdRouteStr.AsSpan().CopyTo(ItemIdBuf.Slice(1));
-                ItemIdBuf[ItemIdRouteStr.Length + 1] = '"';
-                ItemIdParsed = CanonTests32.Server.JsonString.ParseValue(ItemIdBuf.Slice(0, ItemIdRouteStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString ItemIdValue = context.Request.RouteValues.TryGetValue("itemId", out object? ItemIdRouteVal) && ItemIdRouteVal is string ItemIdRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRouteStr, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostItemsByItemIdUploadBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PostItemsByItemIdUploadBody body = CanonTests32.Server.PostItemsByItemIdUploadBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            UploadItemDataParams parameters = new()
-            {
-                ItemId = ItemIdParsed,
-                Body = body,
-            }
-            ;
-
-            UploadItemDataResult result = await defaultHandler.HandleUploadItemDataAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                UploadItemDataParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    ItemId = ItemIdValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                UploadItemDataResult result = await defaultHandler.HandleUploadItemDataAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapGet("/download", async (HttpContext context) =>
         {
-            DownloadFileParams parameters = new();
-
-            DownloadFileResult result = await defaultHandler.HandleDownloadFileAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                DownloadFileParams parameters = new();
+
+                DownloadFileResult result = await defaultHandler.HandleDownloadFileAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/quirky/{qid}", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString QidParsed = default;
-            if (context.Request.RouteValues.TryGetValue("qid", out object? QidRouteVal) && QidRouteVal is string QidRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Span<char> QidBuf = stackalloc char[QidRouteStr.Length + 2];
-                QidBuf[0] = '"';
-                QidRouteStr.AsSpan().CopyTo(QidBuf.Slice(1));
-                QidBuf[QidRouteStr.Length + 1] = '"';
-                QidParsed = CanonTests32.Server.JsonString.ParseValue(QidBuf.Slice(0, QidRouteStr.Length + 2));
-            }
-            CanonTests32.Server.JsonString WeirdLocParsed = default;
-            if (context.Request.Query.TryGetValue("weirdLoc", out var WeirdLocQueryVal) && WeirdLocQueryVal.Count > 0)
-            {
-                string WeirdLocRawStr = WeirdLocQueryVal[0]!;
-                Span<char> WeirdLocBuf = stackalloc char[WeirdLocRawStr.Length + 2];
-                WeirdLocBuf[0] = '"';
-                WeirdLocRawStr.AsSpan().CopyTo(WeirdLocBuf.Slice(1));
-                WeirdLocBuf[WeirdLocRawStr.Length + 1] = '"';
-                WeirdLocParsed = CanonTests32.Server.JsonString.ParseValue(WeirdLocBuf.Slice(0, WeirdLocRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString QidValue = context.Request.RouteValues.TryGetValue("qid", out object? QidRouteVal) && QidRouteVal is string QidRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(QidRouteStr, workspace) : default;
+                CanonTests32.Server.JsonString WeirdLocValue = context.Request.Query.TryGetValue("weirdLoc", out var WeirdLocQueryVal) && WeirdLocQueryVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(WeirdLocQueryVal[0]!, workspace) : default;
 
-            GetQuirkyParams parameters = new()
-            {
-                Qid = QidParsed,
-                WeirdLoc = WeirdLocParsed,
-            }
-            ;
-
-            GetQuirkyResult result = await defaultHandler.HandleGetQuirkyAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                GetQuirkyParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Qid = QidValue,
+                    WeirdLoc = WeirdLocValue,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                GetQuirkyResult result = await defaultHandler.HandleGetQuirkyAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/quirky/{sid}/styled", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString SidParsed = default;
-            if (context.Request.RouteValues.TryGetValue("sid", out object? SidRouteVal) && SidRouteVal is string SidRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Span<char> SidBuf = stackalloc char[SidRouteStr.Length + 2];
-                SidBuf[0] = '"';
-                SidRouteStr.AsSpan().CopyTo(SidBuf.Slice(1));
-                SidBuf[SidRouteStr.Length + 1] = '"';
-                SidParsed = CanonTests32.Server.JsonString.ParseValue(SidBuf.Slice(0, SidRouteStr.Length + 2));
-            }
-            CanonTests32.Server.JsonString BadQueryStyleParsed = default;
-            if (context.Request.Query.TryGetValue("badQueryStyle", out var BadQueryStyleQueryVal) && BadQueryStyleQueryVal.Count > 0)
-            {
-                string BadQueryStyleRawStr = BadQueryStyleQueryVal[0]!;
-                Span<char> BadQueryStyleBuf = stackalloc char[BadQueryStyleRawStr.Length + 2];
-                BadQueryStyleBuf[0] = '"';
-                BadQueryStyleRawStr.AsSpan().CopyTo(BadQueryStyleBuf.Slice(1));
-                BadQueryStyleBuf[BadQueryStyleRawStr.Length + 1] = '"';
-                BadQueryStyleParsed = CanonTests32.Server.JsonString.ParseValue(BadQueryStyleBuf.Slice(0, BadQueryStyleRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString SidValue = context.Request.RouteValues.TryGetValue("sid", out object? SidRouteVal) && SidRouteVal is string SidRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(SidRouteStr, workspace) : default;
+                CanonTests32.Server.JsonString BadQueryStyleValue = context.Request.Query.TryGetValue("badQueryStyle", out var BadQueryStyleQueryVal) && BadQueryStyleQueryVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(BadQueryStyleQueryVal[0]!, workspace) : default;
 
-            GetStyledQuirkyParams parameters = new()
-            {
-                Sid = SidParsed,
-                BadQueryStyle = BadQueryStyleParsed,
-            }
-            ;
-
-            GetStyledQuirkyResult result = await defaultHandler.HandleGetStyledQuirkyAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                GetStyledQuirkyParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Sid = SidValue,
+                    BadQueryStyle = BadQueryStyleValue,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                GetStyledQuirkyResult result = await defaultHandler.HandleGetStyledQuirkyAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/export", async (HttpContext context) =>
         {
-            ExportDataParams parameters = new();
-
-            ExportDataResult result = await defaultHandler.HandleExportDataAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                ExportDataParams parameters = new();
+
+                ExportDataResult result = await defaultHandler.HandleExportDataAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/empty-servers", async (HttpContext context) =>
         {
-            GetEmptyServersParams parameters = new();
-
-            GetEmptyServersResult result = await defaultHandler.HandleGetEmptyServersAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                GetEmptyServersParams parameters = new();
+
+                GetEmptyServersResult result = await defaultHandler.HandleGetEmptyServersAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapMethods("/health", new[] { "HEAD" }, async (HttpContext context) =>
         {
-            HeadHealthParams parameters = new();
-
-            HeadHealthResult result = await defaultHandler.HandleHeadHealthAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                HeadHealthParams parameters = new();
+
+                HeadHealthResult result = await defaultHandler.HandleHeadHealthAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapMethods("/health", new[] { "TRACE" }, async (HttpContext context) =>
         {
-            TraceHealthParams parameters = new();
-
-            TraceHealthResult result = await defaultHandler.HandleTraceHealthAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                TraceHealthParams parameters = new();
+
+                TraceHealthResult result = await defaultHandler.HandleTraceHealthAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/advanced-styles/{ids}", async (HttpContext context) =>
         {
-            GetAdvancedStylesParams parameters = new()
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Ids = context.Request.RouteValues.TryGetValue("ids", out object? IdsRouteVal) && IdsRouteVal is string IdsRouteStr ? CanonTests32.Server.AdvancedStylesByIdsIds.ParseValue(IdsRouteStr) : default,
-                MatrixTags = context.Request.Query.TryGetValue("matrixTags", out var MatrixTagsQueryVal) && MatrixTagsQueryVal.Count > 0 ? CanonTests32.Server.GetAdvancedStylesByIdsMatrixTags.ParseValue(MatrixTagsQueryVal[0]!) : default,
-                Limit = context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0 ? CanonTests32.Server.JsonInt64.ParseValue(LimitQueryVal[0]!) : default,
-                Weight = context.Request.Query.TryGetValue("weight", out var WeightQueryVal) && WeightQueryVal.Count > 0 ? CanonTests32.Server.JsonSingle.ParseValue(WeightQueryVal[0]!) : default,
-                Score = context.Request.Query.TryGetValue("score", out var ScoreQueryVal) && ScoreQueryVal.Count > 0 ? CanonTests32.Server.JsonDouble.ParseValue(ScoreQueryVal[0]!) : default,
+                CanonTests32.Server.AdvancedStylesByIdsIds IdsValue = context.Request.RouteValues.TryGetValue("ids", out object? IdsRouteVal) && IdsRouteVal is string IdsRouteStr ? HeaderValueParser.ParseNumber<CanonTests32.Server.AdvancedStylesByIdsIds>(IdsRouteStr, workspace) : default;
+                CanonTests32.Server.GetAdvancedStylesByIdsMatrixTags MatrixTagsValue = context.Request.Query.TryGetValue("matrixTags", out var MatrixTagsQueryVal) && MatrixTagsQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetAdvancedStylesByIdsMatrixTags>(MatrixTagsQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.JsonInt64 LimitValue = context.Request.Query.TryGetValue("limit", out var LimitQueryVal) && LimitQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.JsonInt64>(LimitQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.JsonSingle WeightValue = context.Request.Query.TryGetValue("weight", out var WeightQueryVal) && WeightQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.JsonSingle>(WeightQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.JsonDouble ScoreValue = context.Request.Query.TryGetValue("score", out var ScoreQueryVal) && ScoreQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.JsonDouble>(ScoreQueryVal[0]!, workspace) : default;
+
+                GetAdvancedStylesParams parameters = new()
+                {
+                    Ids = IdsValue,
+                    MatrixTags = MatrixTagsValue,
+                    Limit = LimitValue,
+                    Weight = WeightValue,
+                    Score = ScoreValue,
+                }
+                ;
+
+                GetAdvancedStylesResult result = await defaultHandler.HandleGetAdvancedStylesAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
             }
-            ;
-
-            GetAdvancedStylesResult result = await defaultHandler.HandleGetAdvancedStylesAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            finally
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
-
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/matrix-test/{codes}", async (HttpContext context) =>
         {
-            GetByMatrixCodesParams parameters = new()
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Codes = context.Request.RouteValues.TryGetValue("codes", out object? CodesRouteVal) && CodesRouteVal is string CodesRouteStr ? CanonTests32.Server.GetMatrixTestByCodesCodes.ParseValue(CodesRouteStr) : default,
+                CanonTests32.Server.GetMatrixTestByCodesCodes CodesValue = context.Request.RouteValues.TryGetValue("codes", out object? CodesRouteVal) && CodesRouteVal is string CodesRouteStr ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetMatrixTestByCodesCodes>(CodesRouteStr, workspace) : default;
+
+                GetByMatrixCodesParams parameters = new()
+                {
+                    Codes = CodesValue,
+                }
+                ;
+
+                GetByMatrixCodesResult result = await defaultHandler.HandleGetByMatrixCodesAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
             }
-            ;
-
-            GetByMatrixCodesResult result = await defaultHandler.HandleGetByMatrixCodesAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            finally
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
-
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/matrix-no-explode/{tags}", async (HttpContext context) =>
         {
-            GetByMatrixTagsParams parameters = new()
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Tags = context.Request.RouteValues.TryGetValue("tags", out object? TagsRouteVal) && TagsRouteVal is string TagsRouteStr ? CanonTests32.Server.GetMatrixNoExplodeByTagsTags.ParseValue(TagsRouteStr) : default,
+                CanonTests32.Server.GetMatrixNoExplodeByTagsTags TagsValue = context.Request.RouteValues.TryGetValue("tags", out object? TagsRouteVal) && TagsRouteVal is string TagsRouteStr ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetMatrixNoExplodeByTagsTags>(TagsRouteStr, workspace) : default;
+
+                GetByMatrixTagsParams parameters = new()
+                {
+                    Tags = TagsValue,
+                }
+                ;
+
+                GetByMatrixTagsResult result = await defaultHandler.HandleGetByMatrixTagsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
             }
-            ;
-
-            GetByMatrixTagsResult result = await defaultHandler.HandleGetByMatrixTagsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            finally
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
-
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/label-no-explode/{.items}", async (HttpContext context) =>
         {
-            GetByLabelItemsParams parameters = new()
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Items = context.Request.RouteValues.TryGetValue("items", out object? ItemsRouteVal) && ItemsRouteVal is string ItemsRouteStr ? CanonTests32.Server.GetLabelNoExplodeByItemsItems.ParseValue(ItemsRouteStr) : default,
+                CanonTests32.Server.GetLabelNoExplodeByItemsItems ItemsValue = context.Request.RouteValues.TryGetValue("items", out object? ItemsRouteVal) && ItemsRouteVal is string ItemsRouteStr ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetLabelNoExplodeByItemsItems>(ItemsRouteStr, workspace) : default;
+
+                GetByLabelItemsParams parameters = new()
+                {
+                    Items = ItemsValue,
+                }
+                ;
+
+                GetByLabelItemsResult result = await defaultHandler.HandleGetByLabelItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
             }
-            ;
-
-            GetByLabelItemsResult result = await defaultHandler.HandleGetByLabelItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            finally
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
-
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/styled-object/{obj}", async (HttpContext context) =>
         {
-            GetByStyledObjectParams parameters = new()
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Obj = context.Request.RouteValues.TryGetValue("obj", out object? ObjRouteVal) && ObjRouteVal is string ObjRouteStr ? CanonTests32.Server.GetStyledObjectByObjObj.ParseValue(ObjRouteStr) : default,
+                CanonTests32.Server.GetStyledObjectByObjObj ObjValue = context.Request.RouteValues.TryGetValue("obj", out object? ObjRouteVal) && ObjRouteVal is string ObjRouteStr ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetStyledObjectByObjObj>(ObjRouteStr, workspace) : default;
+
+                GetByStyledObjectParams parameters = new()
+                {
+                    Obj = ObjValue,
+                }
+                ;
+
+                GetByStyledObjectResult result = await defaultHandler.HandleGetByStyledObjectAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
             }
-            ;
-
-            GetByStyledObjectResult result = await defaultHandler.HandleGetByStyledObjectAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            finally
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
-
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                workspace.Dispose();
             }
         }
         );
 
         app.MapMethods("/query-endpoint", new[] { "QUERY" }, async (HttpContext context) =>
         {
-            CanonTests32.Server.QueryEndpointQueryFormat FormatParsed = default;
-            if (context.Request.Query.TryGetValue("format", out var FormatQueryVal) && FormatQueryVal.Count > 0)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.Schema>? bodyDoc = null;
+            try
             {
-                string FormatRawStr = FormatQueryVal[0]!;
-                Span<char> FormatBuf = stackalloc char[FormatRawStr.Length + 2];
-                FormatBuf[0] = '"';
-                FormatRawStr.AsSpan().CopyTo(FormatBuf.Slice(1));
-                FormatBuf[FormatRawStr.Length + 1] = '"';
-                FormatParsed = CanonTests32.Server.QueryEndpointQueryFormat.ParseValue(FormatBuf.Slice(0, FormatRawStr.Length + 2));
-            }
+                CanonTests32.Server.QueryEndpointQueryFormat FormatValue = context.Request.Query.TryGetValue("format", out var FormatQueryVal) && FormatQueryVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.QueryEndpointQueryFormat>(FormatQueryVal[0]!, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.Schema body = CanonTests32.Server.Schema.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            QueryItemsParams parameters = new()
-            {
-                Format = FormatParsed,
-                Body = body,
-            }
-            ;
-
-            QueryItemsResult result = await defaultHandler.HandleQueryItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                QueryItemsParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Format = FormatValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                QueryItemsResult result = await defaultHandler.HandleQueryItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapGet("/resources/{resourceId}", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString ResourceIdParsed = default;
-            if (context.Request.RouteValues.TryGetValue("resourceId", out object? ResourceIdRouteVal) && ResourceIdRouteVal is string ResourceIdRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Span<char> ResourceIdBuf = stackalloc char[ResourceIdRouteStr.Length + 2];
-                ResourceIdBuf[0] = '"';
-                ResourceIdRouteStr.AsSpan().CopyTo(ResourceIdBuf.Slice(1));
-                ResourceIdBuf[ResourceIdRouteStr.Length + 1] = '"';
-                ResourceIdParsed = CanonTests32.Server.JsonString.ParseValue(ResourceIdBuf.Slice(0, ResourceIdRouteStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString ResourceIdValue = context.Request.RouteValues.TryGetValue("resourceId", out object? ResourceIdRouteVal) && ResourceIdRouteVal is string ResourceIdRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ResourceIdRouteStr, workspace) : default;
 
-            GetResourceParams parameters = new()
-            {
-                ResourceId = ResourceIdParsed,
-            }
-            ;
-
-            GetResourceResult result = await defaultHandler.HandleGetResourceAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                GetResourceParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    ResourceId = ResourceIdValue,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                GetResourceResult result = await defaultHandler.HandleGetResourceAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapMethods("/resources/{resourceId}", new[] { "CUSTOM" }, async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString ResourceIdParsed = default;
-            if (context.Request.RouteValues.TryGetValue("resourceId", out object? ResourceIdRouteVal) && ResourceIdRouteVal is string ResourceIdRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.Schema2>? bodyDoc = null;
+            try
             {
-                Span<char> ResourceIdBuf = stackalloc char[ResourceIdRouteStr.Length + 2];
-                ResourceIdBuf[0] = '"';
-                ResourceIdRouteStr.AsSpan().CopyTo(ResourceIdBuf.Slice(1));
-                ResourceIdBuf[ResourceIdRouteStr.Length + 1] = '"';
-                ResourceIdParsed = CanonTests32.Server.JsonString.ParseValue(ResourceIdBuf.Slice(0, ResourceIdRouteStr.Length + 2));
-            }
-            CanonTests32.Server.JsonUri DestinationParsed = default;
-            if (context.Request.Headers.TryGetValue("Destination", out var DestinationHeaderVal) && DestinationHeaderVal.Count > 0)
-            {
-                string DestinationRawStr = DestinationHeaderVal[0]!;
-                Span<char> DestinationBuf = stackalloc char[DestinationRawStr.Length + 2];
-                DestinationBuf[0] = '"';
-                DestinationRawStr.AsSpan().CopyTo(DestinationBuf.Slice(1));
-                DestinationBuf[DestinationRawStr.Length + 1] = '"';
-                DestinationParsed = CanonTests32.Server.JsonUri.ParseValue(DestinationBuf.Slice(0, DestinationRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString ResourceIdValue = context.Request.RouteValues.TryGetValue("resourceId", out object? ResourceIdRouteVal) && ResourceIdRouteVal is string ResourceIdRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ResourceIdRouteStr, workspace) : default;
+                CanonTests32.Server.JsonUri DestinationValue = context.Request.Headers.TryGetValue("Destination", out var DestinationHeaderVal) && DestinationHeaderVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonUri>(DestinationHeaderVal[0]!, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema2>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.Schema2 body = CanonTests32.Server.Schema2.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            CopyResourceParams parameters = new()
-            {
-                ResourceId = ResourceIdParsed,
-                Destination = DestinationParsed,
-                Body = body,
-            }
-            ;
-
-            CopyResourceResult result = await defaultHandler.HandleCopyResourceAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                CopyResourceParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    ResourceId = ResourceIdValue,
+                    Destination = DestinationValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                CopyResourceResult result = await defaultHandler.HandleCopyResourceAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapGet("/events/stream", async (HttpContext context) =>
         {
-            StreamEventsParams parameters = new();
-
-            StreamEventsResult result = await defaultHandler.HandleStreamEventsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                StreamEventsParams parameters = new();
+
+                StreamEventsResult result = await defaultHandler.HandleStreamEventsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/search-qs", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString SessionIdParsed = default;
-            if (context.Request.Cookies.TryGetValue("session_id", out string? SessionIdCookieVal) && SessionIdCookieVal is not null)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Span<char> SessionIdBuf = stackalloc char[SessionIdCookieVal.Length + 2];
-                SessionIdBuf[0] = '"';
-                SessionIdCookieVal.AsSpan().CopyTo(SessionIdBuf.Slice(1));
-                SessionIdBuf[SessionIdCookieVal.Length + 1] = '"';
-                SessionIdParsed = CanonTests32.Server.JsonString.ParseValue(SessionIdBuf.Slice(0, SessionIdCookieVal.Length + 2));
-            }
-            CanonTests32.Server.JsonString PreferencesParsed = default;
-            if (context.Request.Cookies.TryGetValue("preferences", out string? PreferencesCookieVal) && PreferencesCookieVal is not null)
-            {
-                Span<char> PreferencesBuf = stackalloc char[PreferencesCookieVal.Length + 2];
-                PreferencesBuf[0] = '"';
-                PreferencesCookieVal.AsSpan().CopyTo(PreferencesBuf.Slice(1));
-                PreferencesBuf[PreferencesCookieVal.Length + 1] = '"';
-                PreferencesParsed = CanonTests32.Server.JsonString.ParseValue(PreferencesBuf.Slice(0, PreferencesCookieVal.Length + 2));
-            }
+                CanonTests32.Server.GetSearchQsQs QsValue = context.Request.Query.TryGetValue("qs", out var QsQueryVal) && QsQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetSearchQsQs>(QsQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.JsonString SessionIdValue = context.Request.Cookies.TryGetValue("session_id", out string? SessionIdCookieVal) && SessionIdCookieVal is not null ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(SessionIdCookieVal, workspace) : default;
+                CanonTests32.Server.JsonString PreferencesValue = context.Request.Cookies.TryGetValue("preferences", out string? PreferencesCookieVal) && PreferencesCookieVal is not null ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(PreferencesCookieVal, workspace) : default;
 
-            SearchWithQuerystringParams parameters = new()
-            {
-                Qs = context.Request.Query.TryGetValue("qs", out var QsQueryVal) && QsQueryVal.Count > 0 ? CanonTests32.Server.GetSearchQsQs.ParseValue(QsQueryVal[0]!) : default,
-                SessionId = SessionIdParsed,
-                Preferences = PreferencesParsed,
-            }
-            ;
-
-            SearchWithQuerystringResult result = await defaultHandler.HandleSearchWithQuerystringAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                SearchWithQuerystringParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Qs = QsValue,
+                    SessionId = SessionIdValue,
+                    Preferences = PreferencesValue,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                SearchWithQuerystringResult result = await defaultHandler.HandleSearchWithQuerystringAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/documents/{documentId}", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonUuid DocumentIdParsed = default;
-            if (context.Request.RouteValues.TryGetValue("documentId", out object? DocumentIdRouteVal) && DocumentIdRouteVal is string DocumentIdRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Span<char> DocumentIdBuf = stackalloc char[DocumentIdRouteStr.Length + 2];
-                DocumentIdBuf[0] = '"';
-                DocumentIdRouteStr.AsSpan().CopyTo(DocumentIdBuf.Slice(1));
-                DocumentIdBuf[DocumentIdRouteStr.Length + 1] = '"';
-                DocumentIdParsed = CanonTests32.Server.JsonUuid.ParseValue(DocumentIdBuf.Slice(0, DocumentIdRouteStr.Length + 2));
-            }
+                CanonTests32.Server.JsonUuid DocumentIdValue = context.Request.RouteValues.TryGetValue("documentId", out object? DocumentIdRouteVal) && DocumentIdRouteVal is string DocumentIdRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonUuid>(DocumentIdRouteStr, workspace) : default;
 
-            GetDocumentParams parameters = new()
-            {
-                DocumentId = DocumentIdParsed,
-            }
-            ;
-
-            GetDocumentResult result = await defaultHandler.HandleGetDocumentAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                GetDocumentParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    DocumentId = DocumentIdValue,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                GetDocumentResult result = await defaultHandler.HandleGetDocumentAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapPut("/documents/{documentId}", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonUuid DocumentIdParsed = default;
-            if (context.Request.RouteValues.TryGetValue("documentId", out object? DocumentIdRouteVal) && DocumentIdRouteVal is string DocumentIdRouteStr)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.Schema4>? bodyDoc = null;
+            try
             {
-                Span<char> DocumentIdBuf = stackalloc char[DocumentIdRouteStr.Length + 2];
-                DocumentIdBuf[0] = '"';
-                DocumentIdRouteStr.AsSpan().CopyTo(DocumentIdBuf.Slice(1));
-                DocumentIdBuf[DocumentIdRouteStr.Length + 1] = '"';
-                DocumentIdParsed = CanonTests32.Server.JsonUuid.ParseValue(DocumentIdBuf.Slice(0, DocumentIdRouteStr.Length + 2));
-            }
+                CanonTests32.Server.JsonUuid DocumentIdValue = context.Request.RouteValues.TryGetValue("documentId", out object? DocumentIdRouteVal) && DocumentIdRouteVal is string DocumentIdRouteStr ? HeaderValueParser.ParseString<CanonTests32.Server.JsonUuid>(DocumentIdRouteStr, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema4>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.Schema4 body = CanonTests32.Server.Schema4.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            UpdateDocumentParams parameters = new()
-            {
-                DocumentId = DocumentIdParsed,
-                Body = body,
-            }
-            ;
-
-            UpdateDocumentResult result = await defaultHandler.HandleUpdateDocumentAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                UpdateDocumentParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    DocumentId = DocumentIdValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                UpdateDocumentResult result = await defaultHandler.HandleUpdateDocumentAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapPost("/upload-raw", async (HttpContext context) =>
         {
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<JsonElement>? bodyDoc = null;
+            try
             {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<JsonElement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            JsonElement body = JsonElement.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            UploadRawFileParams parameters = new()
-            {
-                Body = body,
-            }
-            ;
-
-            UploadRawFileResult result = await defaultHandler.HandleUploadRawFileAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                UploadRawFileParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                UploadRawFileResult result = await defaultHandler.HandleUploadRawFileAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapGet("/versions/{versionId}", async (HttpContext context) =>
         {
-            GetResourceVersionParams parameters = new()
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                Version = context.Request.Query.TryGetValue("version", out var VersionQueryVal) && VersionQueryVal.Count > 0 ? CanonTests32.Server.JsonInteger.ParseValue(VersionQueryVal[0]!) : default,
+                CanonTests32.Server.JsonInteger VersionValue = context.Request.Query.TryGetValue("version", out var VersionQueryVal) && VersionQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.JsonInteger>(VersionQueryVal[0]!, workspace) : default;
+
+                GetResourceVersionParams parameters = new()
+                {
+                    Version = VersionValue,
+                }
+                ;
+
+                GetResourceVersionResult result = await defaultHandler.HandleGetResourceVersionAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
             }
-            ;
-
-            GetResourceVersionResult result = await defaultHandler.HandleGetResourceVersionAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            finally
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
-
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                workspace.Dispose();
             }
         }
         );
 
         app.MapGet("/monitoring/status", async (HttpContext context) =>
         {
-            GetMonitoringStatusParams parameters = new();
-
-            GetMonitoringStatusResult result = await defaultHandler.HandleGetMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                GetMonitoringStatusParams parameters = new();
+
+                GetMonitoringStatusResult result = await defaultHandler.HandleGetMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapPut("/monitoring/status", async (HttpContext context) =>
         {
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PutMonitoringStatusBody>? bodyDoc = null;
+            try
             {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PutMonitoringStatusBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PutMonitoringStatusBody body = CanonTests32.Server.PutMonitoringStatusBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            PutMonitoringStatusParams parameters = new()
-            {
-                Body = body,
-            }
-            ;
-
-            PutMonitoringStatusResult result = await defaultHandler.HandlePutMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                PutMonitoringStatusParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                PutMonitoringStatusResult result = await defaultHandler.HandlePutMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapPost("/monitoring/status", async (HttpContext context) =>
         {
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PostMonitoringStatusBody>? bodyDoc = null;
+            try
             {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostMonitoringStatusBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PostMonitoringStatusBody body = CanonTests32.Server.PostMonitoringStatusBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            PostMonitoringStatusParams parameters = new()
-            {
-                Body = body,
-            }
-            ;
-
-            PostMonitoringStatusResult result = await defaultHandler.HandlePostMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                PostMonitoringStatusParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                PostMonitoringStatusResult result = await defaultHandler.HandlePostMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapDelete("/monitoring/status", async (HttpContext context) =>
         {
-            DeleteMonitoringStatusParams parameters = new();
-
-            DeleteMonitoringStatusResult result = await defaultHandler.HandleDeleteMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
-                {
-                    result.WriteBody(writer);
-                    writer.Flush();
-                }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                DeleteMonitoringStatusParams parameters = new();
+
+                DeleteMonitoringStatusResult result = await defaultHandler.HandleDeleteMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapMethods("/monitoring/status", new[] { "QUERY" }, async (HttpContext context) =>
         {
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.Schema6>? bodyDoc = null;
+            try
             {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema6>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.Schema6 body = CanonTests32.Server.Schema6.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            QueryMonitoringStatusParams parameters = new()
-            {
-                Body = body,
-            }
-            ;
-
-            QueryMonitoringStatusResult result = await defaultHandler.HandleQueryMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                QueryMonitoringStatusParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                QueryMonitoringStatusResult result = await defaultHandler.HandleQueryMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapGet("/search", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString QParsed = default;
-            if (context.Request.Query.TryGetValue("q", out var QQueryVal) && QQueryVal.Count > 0)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
             {
-                string QRawStr = QQueryVal[0]!;
-                Span<char> QBuf = stackalloc char[QRawStr.Length + 2];
-                QBuf[0] = '"';
-                QRawStr.AsSpan().CopyTo(QBuf.Slice(1));
-                QBuf[QRawStr.Length + 1] = '"';
-                QParsed = CanonTests32.Server.JsonString.ParseValue(QBuf.Slice(0, QRawStr.Length + 2));
-            }
-            CanonTests32.Server.JsonString SessionParsed = default;
-            if (context.Request.Cookies.TryGetValue("session", out string? SessionCookieVal) && SessionCookieVal is not null)
-            {
-                Span<char> SessionBuf = stackalloc char[SessionCookieVal.Length + 2];
-                SessionBuf[0] = '"';
-                SessionCookieVal.AsSpan().CopyTo(SessionBuf.Slice(1));
-                SessionBuf[SessionCookieVal.Length + 1] = '"';
-                SessionParsed = CanonTests32.Server.JsonString.ParseValue(SessionBuf.Slice(0, SessionCookieVal.Length + 2));
-            }
-            CanonTests32.Server.JsonString PrefsParsed = default;
-            if (context.Request.Cookies.TryGetValue("prefs", out string? PrefsCookieVal) && PrefsCookieVal is not null)
-            {
-                Span<char> PrefsBuf = stackalloc char[PrefsCookieVal.Length + 2];
-                PrefsBuf[0] = '"';
-                PrefsCookieVal.AsSpan().CopyTo(PrefsBuf.Slice(1));
-                PrefsBuf[PrefsCookieVal.Length + 1] = '"';
-                PrefsParsed = CanonTests32.Server.JsonString.ParseValue(PrefsBuf.Slice(0, PrefsCookieVal.Length + 2));
-            }
-            CanonTests32.Server.JsonString XCorrelationIdParsed = default;
-            if (context.Request.Headers.TryGetValue("X-Correlation-Id", out var XCorrelationIdHeaderVal) && XCorrelationIdHeaderVal.Count > 0)
-            {
-                string XCorrelationIdRawStr = XCorrelationIdHeaderVal[0]!;
-                Span<char> XCorrelationIdBuf = stackalloc char[XCorrelationIdRawStr.Length + 2];
-                XCorrelationIdBuf[0] = '"';
-                XCorrelationIdRawStr.AsSpan().CopyTo(XCorrelationIdBuf.Slice(1));
-                XCorrelationIdBuf[XCorrelationIdRawStr.Length + 1] = '"';
-                XCorrelationIdParsed = CanonTests32.Server.JsonString.ParseValue(XCorrelationIdBuf.Slice(0, XCorrelationIdRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString QValue = context.Request.Query.TryGetValue("q", out var QQueryVal) && QQueryVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(QQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.GetSearchTags TagsValue = context.Request.Query.TryGetValue("tags", out var TagsQueryVal) && TagsQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetSearchTags>(TagsQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.GetSearchCoords CoordsValue = context.Request.Query.TryGetValue("coords", out var CoordsQueryVal) && CoordsQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetSearchCoords>(CoordsQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.GetSearchFilter FilterValue = context.Request.Query.TryGetValue("filter", out var FilterQueryVal) && FilterQueryVal.Count > 0 ? HeaderValueParser.ParseNumber<CanonTests32.Server.GetSearchFilter>(FilterQueryVal[0]!, workspace) : default;
+                CanonTests32.Server.JsonString SessionValue = context.Request.Cookies.TryGetValue("session", out string? SessionCookieVal) && SessionCookieVal is not null ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(SessionCookieVal, workspace) : default;
+                CanonTests32.Server.JsonString PrefsValue = context.Request.Cookies.TryGetValue("prefs", out string? PrefsCookieVal) && PrefsCookieVal is not null ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(PrefsCookieVal, workspace) : default;
+                CanonTests32.Server.JsonString XCorrelationIdValue = context.Request.Headers.TryGetValue("X-Correlation-Id", out var XCorrelationIdHeaderVal) && XCorrelationIdHeaderVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XCorrelationIdHeaderVal[0]!, workspace) : default;
 
-            SearchItemsParams parameters = new()
-            {
-                Q = QParsed,
-                Tags = context.Request.Query.TryGetValue("tags", out var TagsQueryVal) && TagsQueryVal.Count > 0 ? CanonTests32.Server.GetSearchTags.ParseValue(TagsQueryVal[0]!) : default,
-                Coords = context.Request.Query.TryGetValue("coords", out var CoordsQueryVal) && CoordsQueryVal.Count > 0 ? CanonTests32.Server.GetSearchCoords.ParseValue(CoordsQueryVal[0]!) : default,
-                Filter = context.Request.Query.TryGetValue("filter", out var FilterQueryVal) && FilterQueryVal.Count > 0 ? CanonTests32.Server.GetSearchFilter.ParseValue(FilterQueryVal[0]!) : default,
-                Session = SessionParsed,
-                Prefs = PrefsParsed,
-                XCorrelationId = XCorrelationIdParsed,
-            }
-            ;
-
-            SearchItemsResult result = await ItemsHandler.HandleSearchItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                SearchItemsParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Q = QValue,
+                    Tags = TagsValue,
+                    Coords = CoordsValue,
+                    Filter = FilterValue,
+                    Session = SessionValue,
+                    Prefs = PrefsValue,
+                    XCorrelationId = XCorrelationIdValue,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                SearchItemsResult result = await ItemsHandler.HandleSearchItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
             }
         }
         );
 
         app.MapPost("/upload", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString XFileNameParsed = default;
-            if (context.Request.Headers.TryGetValue("X-File-Name", out var XFileNameHeaderVal) && XFileNameHeaderVal.Count > 0)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<JsonElement>? bodyDoc = null;
+            try
             {
-                string XFileNameRawStr = XFileNameHeaderVal[0]!;
-                Span<char> XFileNameBuf = stackalloc char[XFileNameRawStr.Length + 2];
-                XFileNameBuf[0] = '"';
-                XFileNameRawStr.AsSpan().CopyTo(XFileNameBuf.Slice(1));
-                XFileNameBuf[XFileNameRawStr.Length + 1] = '"';
-                XFileNameParsed = CanonTests32.Server.JsonString.ParseValue(XFileNameBuf.Slice(0, XFileNameRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString XFileNameValue = context.Request.Headers.TryGetValue("X-File-Name", out var XFileNameHeaderVal) && XFileNameHeaderVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XFileNameHeaderVal[0]!, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<JsonElement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            JsonElement body = JsonElement.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            UploadFileParams parameters = new()
-            {
-                XFileName = XFileNameParsed,
-                Body = body,
-            }
-            ;
-
-            UploadFileResult result = await ItemsHandler.HandleUploadFileAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                UploadFileParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    XFileName = XFileNameValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                UploadFileResult result = await ItemsHandler.HandleUploadFileAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapPost("/feedback", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString SourceParsed = default;
-            if (context.Request.Query.TryGetValue("source", out var SourceQueryVal) && SourceQueryVal.Count > 0)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PostFeedbackBody>? bodyDoc = null;
+            try
             {
-                string SourceRawStr = SourceQueryVal[0]!;
-                Span<char> SourceBuf = stackalloc char[SourceRawStr.Length + 2];
-                SourceBuf[0] = '"';
-                SourceRawStr.AsSpan().CopyTo(SourceBuf.Slice(1));
-                SourceBuf[SourceRawStr.Length + 1] = '"';
-                SourceParsed = CanonTests32.Server.JsonString.ParseValue(SourceBuf.Slice(0, SourceRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString SourceValue = context.Request.Query.TryGetValue("source", out var SourceQueryVal) && SourceQueryVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(SourceQueryVal[0]!, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostFeedbackBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PostFeedbackBody body = CanonTests32.Server.PostFeedbackBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            SubmitFeedbackParams parameters = new()
-            {
-                Source = SourceParsed,
-                Body = body,
-            }
-            ;
-
-            SubmitFeedbackResult result = await ItemsHandler.HandleSubmitFeedbackAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                SubmitFeedbackParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Source = SourceValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                SubmitFeedbackResult result = await ItemsHandler.HandleSubmitFeedbackAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapPost("/attachments", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString XUploadTokenParsed = default;
-            if (context.Request.Headers.TryGetValue("X-Upload-Token", out var XUploadTokenHeaderVal) && XUploadTokenHeaderVal.Count > 0)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PostAttachmentsBody>? bodyDoc = null;
+            try
             {
-                string XUploadTokenRawStr = XUploadTokenHeaderVal[0]!;
-                Span<char> XUploadTokenBuf = stackalloc char[XUploadTokenRawStr.Length + 2];
-                XUploadTokenBuf[0] = '"';
-                XUploadTokenRawStr.AsSpan().CopyTo(XUploadTokenBuf.Slice(1));
-                XUploadTokenBuf[XUploadTokenRawStr.Length + 1] = '"';
-                XUploadTokenParsed = CanonTests32.Server.JsonString.ParseValue(XUploadTokenBuf.Slice(0, XUploadTokenRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString XUploadTokenValue = context.Request.Headers.TryGetValue("X-Upload-Token", out var XUploadTokenHeaderVal) && XUploadTokenHeaderVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XUploadTokenHeaderVal[0]!, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostAttachmentsBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PostAttachmentsBody body = CanonTests32.Server.PostAttachmentsBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            UploadAttachmentParams parameters = new()
-            {
-                XUploadToken = XUploadTokenParsed,
-                Body = body,
-            }
-            ;
-
-            UploadAttachmentResult result = await ItemsHandler.HandleUploadAttachmentAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                UploadAttachmentParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    XUploadToken = XUploadTokenValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                UploadAttachmentResult result = await ItemsHandler.HandleUploadAttachmentAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapPost("/feedback-encoded", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString XSessionIdParsed = default;
-            if (context.Request.Headers.TryGetValue("X-Session-Id", out var XSessionIdHeaderVal) && XSessionIdHeaderVal.Count > 0)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PostFeedbackEncodedBody>? bodyDoc = null;
+            try
             {
-                string XSessionIdRawStr = XSessionIdHeaderVal[0]!;
-                Span<char> XSessionIdBuf = stackalloc char[XSessionIdRawStr.Length + 2];
-                XSessionIdBuf[0] = '"';
-                XSessionIdRawStr.AsSpan().CopyTo(XSessionIdBuf.Slice(1));
-                XSessionIdBuf[XSessionIdRawStr.Length + 1] = '"';
-                XSessionIdParsed = CanonTests32.Server.JsonString.ParseValue(XSessionIdBuf.Slice(0, XSessionIdRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString XSessionIdValue = context.Request.Headers.TryGetValue("X-Session-Id", out var XSessionIdHeaderVal) && XSessionIdHeaderVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XSessionIdHeaderVal[0]!, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostFeedbackEncodedBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PostFeedbackEncodedBody body = CanonTests32.Server.PostFeedbackEncodedBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            SubmitFeedbackEncodedParams parameters = new()
-            {
-                XSessionId = XSessionIdParsed,
-                Body = body,
-            }
-            ;
-
-            SubmitFeedbackEncodedResult result = await ItemsHandler.HandleSubmitFeedbackEncodedAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                SubmitFeedbackEncodedParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    XSessionId = XSessionIdValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                SubmitFeedbackEncodedResult result = await ItemsHandler.HandleSubmitFeedbackEncodedAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapPost("/attachments-encoded", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString XBatchIdParsed = default;
-            if (context.Request.Headers.TryGetValue("X-Batch-Id", out var XBatchIdHeaderVal) && XBatchIdHeaderVal.Count > 0)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PostAttachmentsEncodedBody>? bodyDoc = null;
+            try
             {
-                string XBatchIdRawStr = XBatchIdHeaderVal[0]!;
-                Span<char> XBatchIdBuf = stackalloc char[XBatchIdRawStr.Length + 2];
-                XBatchIdBuf[0] = '"';
-                XBatchIdRawStr.AsSpan().CopyTo(XBatchIdBuf.Slice(1));
-                XBatchIdBuf[XBatchIdRawStr.Length + 1] = '"';
-                XBatchIdParsed = CanonTests32.Server.JsonString.ParseValue(XBatchIdBuf.Slice(0, XBatchIdRawStr.Length + 2));
-            }
+                CanonTests32.Server.JsonString XBatchIdValue = context.Request.Headers.TryGetValue("X-Batch-Id", out var XBatchIdHeaderVal) && XBatchIdHeaderVal.Count > 0 ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XBatchIdHeaderVal[0]!, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostAttachmentsEncodedBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PostAttachmentsEncodedBody body = CanonTests32.Server.PostAttachmentsEncodedBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            UploadAttachmentEncodedParams parameters = new()
-            {
-                XBatchId = XBatchIdParsed,
-                Body = body,
-            }
-            ;
-
-            UploadAttachmentEncodedResult result = await ItemsHandler.HandleUploadAttachmentEncodedAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                UploadAttachmentEncodedParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    XBatchId = XBatchIdValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                UploadAttachmentEncodedResult result = await ItemsHandler.HandleUploadAttachmentEncodedAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );
 
         app.MapPost("/search", async (HttpContext context) =>
         {
-            CanonTests32.Server.JsonString SessionParsed = default;
-            if (context.Request.Cookies.TryGetValue("session", out string? SessionCookieVal) && SessionCookieVal is not null)
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<CanonTests32.Server.PostSearchBody>? bodyDoc = null;
+            try
             {
-                Span<char> SessionBuf = stackalloc char[SessionCookieVal.Length + 2];
-                SessionBuf[0] = '"';
-                SessionCookieVal.AsSpan().CopyTo(SessionBuf.Slice(1));
-                SessionBuf[SessionCookieVal.Length + 1] = '"';
-                SessionParsed = CanonTests32.Server.JsonString.ParseValue(SessionBuf.Slice(0, SessionCookieVal.Length + 2));
-            }
+                CanonTests32.Server.JsonString SessionValue = context.Request.Cookies.TryGetValue("session", out string? SessionCookieVal) && SessionCookieVal is not null ? HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(SessionCookieVal, workspace) : default;
 
-            System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            while (!bodyReadResult.IsCompleted)
-            {
-                context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);
-                bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);
-            }
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostSearchBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
-            Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);
-            CanonTests32.Server.PostSearchBody body = CanonTests32.Server.PostSearchBody.ParseValue(ref bodyReader);
-            context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);
-
-            SearchItemsAdvancedParams parameters = new()
-            {
-                Session = SessionParsed,
-                Body = body,
-            }
-            ;
-
-            SearchItemsAdvancedResult result = await SearchHandler.HandleSearchItemsAdvancedAsync(parameters, context.RequestAborted).ConfigureAwait(false);
-
-            context.Response.StatusCode = result.StatusCode;
-            if (!result.Body.IsUndefined())
-            {
-                context.Response.ContentType = result.ContentType ?? "application/json";
-                using JsonWorkspace workspace = JsonWorkspace.Create();
-                Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
-                try
+                SearchItemsAdvancedParams parameters = new()
                 {
-                    result.WriteBody(writer);
-                    writer.Flush();
+                    Session = SessionValue,
+                    Body = bodyDoc!.RootElement,
                 }
-                finally
-                {
-                    workspace.ReturnWriter(writer);
-                }
+                ;
 
-                await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                SearchItemsAdvancedResult result = await SearchHandler.HandleSearchItemsAdvancedAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
             }
         }
         );

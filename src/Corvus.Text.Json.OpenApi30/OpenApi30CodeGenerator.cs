@@ -4565,9 +4565,7 @@ public sealed class OpenApi30CodeGenerator
         w.WriteLine();
         w.WriteLine("#nullable enable");
         w.WriteLine();
-        w.WriteLine("using System.Buffers;");
         w.WriteLine("using System.Diagnostics.CodeAnalysis;");
-        w.WriteLine("using System.IO.Pipelines;");
         w.WriteLine("using Corvus.Runtime.InteropServices;");
         w.WriteLine("using Corvus.Text.Json;");
         w.WriteLine("using Corvus.Text.Json.Internal;");
@@ -4630,46 +4628,41 @@ public sealed class OpenApi30CodeGenerator
                 w.WriteLine($"app.{mapMethod}(\"{op.PathTemplate}\", async (HttpContext context) =>");
                 w.OpenBrace();
 
-                // Pre-extract string-type parameters using stackalloc to avoid allocations
-                List<(string FieldName, string TypeName, ParameterInfo Param)>? stringParams = null;
-                foreach (ParameterInfo param in op.Parameters)
-                {
-                    if (param.SerializationKind == ParameterSerializationKind.String)
-                    {
-                        stringParams ??= [];
-                        string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
-                        string typeName = this.GetParameterTypeName(param);
-                        stringParams.Add((fieldName, typeName, param));
-                    }
-                }
-
-                if (stringParams is not null)
-                {
-                    foreach ((string fieldName, string typeName, ParameterInfo param) in stringParams)
-                    {
-                        EmitServerStringParameterExtraction(w, param, fieldName, typeName);
-                    }
-
-                    w.WriteLine();
-                }
-
-                // Read body from PipeReader if present
+                // Create workspace for parameter parsing and response writing
+                // (mirrors client response pattern: workspace manages param/header document lifetimes)
+                string? bodyTypeName = hasBody ? this.ResolveRequestBodyTypeName(op.RequestBody!.Value) : null;
+                w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
                 if (hasBody)
                 {
-                    string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
-                    w.WriteLine("System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);");
-                    w.WriteLine("while (!bodyReadResult.IsCompleted)");
-                    w.OpenBrace();
-                    w.WriteLine("context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);");
-                    w.WriteLine("bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);");
-                    w.CloseBrace();
-                    w.WriteLine();
-                    w.WriteLine($"Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);");
-                    w.WriteLine($"{bodyTypeName} body = {bodyTypeName}.ParseValue(ref bodyReader);");
-                    w.WriteLine("context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);");
-                    w.WriteLine();
+                    w.WriteLine($"ParsedJsonDocument<{bodyTypeName}>? bodyDoc = null;");
                 }
 
+                w.WriteLine("try");
+                w.OpenBrace();
+
+                // Parse parameters via HeaderValueParser (mirrors client response header parsing)
+                foreach (ParameterInfo param in op.Parameters)
+                {
+                    string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
+                    string typeName = this.GetParameterTypeName(param);
+                    EmitServerParameterParsing(w, param, fieldName, typeName);
+                }
+
+                // Parse body from request stream into a document
+                // (mirrors client response body parsing: ParsedJsonDocument<T>.ParseAsync(contentStream))
+                if (hasBody)
+                {
+                    if (op.Parameters.Length > 0)
+                    {
+                        w.WriteLine();
+                    }
+
+                    w.WriteLine($"bodyDoc = await ParsedJsonDocument<{bodyTypeName}>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);");
+                }
+
+                w.WriteLine();
+
+                // Bind parameters
                 if (op.Parameters.Length > 0 || hasBody)
                 {
                     w.WriteLine($"{paramsName} parameters = new()");
@@ -4678,13 +4671,12 @@ public sealed class OpenApi30CodeGenerator
                     foreach (ParameterInfo param in op.Parameters)
                     {
                         string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
-                        string typeName = this.GetParameterTypeName(param);
-                        EmitServerParameterBinding(w, param, fieldName, typeName);
+                        w.WriteLine($"{fieldName} = {fieldName}Value,");
                     }
 
                     if (hasBody)
                     {
-                        w.WriteLine("Body = body,");
+                        w.WriteLine("Body = bodyDoc!.RootElement,");
                     }
 
                     w.CloseBrace().Write(";");
@@ -4696,13 +4688,17 @@ public sealed class OpenApi30CodeGenerator
                 }
 
                 w.WriteLine();
+
+                // Call handler
                 w.WriteLine($"{resultName} result = await {paramName}.Handle{op.MethodName}Async(parameters, context.RequestAborted).ConfigureAwait(false);");
                 w.WriteLine();
+
+                // Write response using workspace-rented writer to PipeWriter
+                // (mirrors client request pattern: workspace builds outgoing data)
                 w.WriteLine("context.Response.StatusCode = result.StatusCode;");
                 w.WriteLine("if (!result.Body.IsUndefined())");
                 w.OpenBrace();
                 w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
-                w.WriteLine("using JsonWorkspace workspace = JsonWorkspace.Create();");
                 w.WriteLine("Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);");
                 w.WriteLine("try");
                 w.OpenBrace();
@@ -4715,6 +4711,18 @@ public sealed class OpenApi30CodeGenerator
                 w.CloseBrace();
                 w.WriteLine();
                 w.WriteLine("await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);");
+                w.CloseBrace();
+
+                // Finally: dispose workspace (releases param documents) and body document
+                w.CloseBrace();
+                w.WriteLine("finally");
+                w.OpenBrace();
+                w.WriteLine("workspace.Dispose();");
+                if (hasBody)
+                {
+                    w.WriteLine("bodyDoc?.Dispose();");
+                }
+
                 w.CloseBrace();
 
                 w.CloseBrace().Write(");");
@@ -4731,111 +4739,55 @@ public sealed class OpenApi30CodeGenerator
         return new GeneratedFile($"{className}.cs", w.ToString());
     }
 
-    private static void EmitServerParameterBinding(
+    private void EmitServerParameterParsing(
         IndentedWriter w,
         ParameterInfo param,
         string fieldName,
         string typeName)
     {
-        string paramNameLiteral = param.Name.Replace("\\", "\\\\").Replace("\"", "\\\"");
-        bool isStringKind = param.SerializationKind == ParameterSerializationKind.String;
+        string paramNameLiteral = EscapeStringLiteral(param.Name);
+        string parseMethod = GetHeaderValueParseMethod(param.SerializationKind);
 
-        if (isStringKind)
-        {
-            // String params are pre-extracted above via EmitServerStringParameterExtraction.
-            w.WriteLine($"{fieldName} = {fieldName}Parsed,");
-            return;
-        }
-
-        // For non-string types (numbers, booleans), the raw HTTP string value IS valid JSON.
-        // Use the string overload of ParseValue directly — zero allocation.
         switch (param.Location)
         {
             case ParameterLocation.Path:
                 w.WriteLine(
-                    $"{fieldName} = context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}RouteStr " +
-                    $"? {typeName}.ParseValue({fieldName}RouteStr) : default,");
+                    $"{typeName} {fieldName}Value = context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}RouteStr " +
+                    $"? HeaderValueParser.{parseMethod}<{typeName}>({fieldName}RouteStr, workspace) : default;");
                 break;
 
             case ParameterLocation.Query:
             case ParameterLocation.Querystring:
                 w.WriteLine(
-                    $"{fieldName} = context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryVal) && {fieldName}QueryVal.Count > 0 " +
-                    $"? {typeName}.ParseValue({fieldName}QueryVal[0]!) : default,");
+                    $"{typeName} {fieldName}Value = context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryVal) && {fieldName}QueryVal.Count > 0 " +
+                    $"? HeaderValueParser.{parseMethod}<{typeName}>({fieldName}QueryVal[0]!, workspace) : default;");
                 break;
 
             case ParameterLocation.Header:
                 w.WriteLine(
-                    $"{fieldName} = context.Request.Headers.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}HeaderVal) && {fieldName}HeaderVal.Count > 0 " +
-                    $"? {typeName}.ParseValue({fieldName}HeaderVal[0]!) : default,");
+                    $"{typeName} {fieldName}Value = context.Request.Headers.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}HeaderVal) && {fieldName}HeaderVal.Count > 0 " +
+                    $"? HeaderValueParser.{parseMethod}<{typeName}>({fieldName}HeaderVal[0]!, workspace) : default;");
                 break;
 
             case ParameterLocation.Cookie:
                 w.WriteLine(
-                    $"{fieldName} = context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null " +
-                    $"? {typeName}.ParseValue({fieldName}CookieVal) : default,");
+                    $"{typeName} {fieldName}Value = context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null " +
+                    $"? HeaderValueParser.{parseMethod}<{typeName}>({fieldName}CookieVal, workspace) : default;");
                 break;
         }
     }
 
-    private static void EmitServerStringParameterExtraction(
-        IndentedWriter w,
-        ParameterInfo param,
-        string fieldName,
-        string typeName)
-    {
-        string paramNameLiteral = param.Name.Replace("\\", "\\\\").Replace("\"", "\\\"");
-
-        switch (param.Location)
+    private static string GetHeaderValueParseMethod(ParameterSerializationKind kind) =>
+        kind switch
         {
-            case ParameterLocation.Path:
-                w.WriteLine($"{typeName} {fieldName}Parsed = default;");
-                w.WriteLine($"if (context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}RouteStr)");
-                w.OpenBrace();
-                EmitStackallocStringParse(w, fieldName, typeName, $"{fieldName}RouteStr");
-                w.CloseBrace();
-                break;
+            ParameterSerializationKind.String => "ParseString",
+            ParameterSerializationKind.Boolean => "ParseBoolean",
+            _ => "ParseNumber",
+        };
 
-            case ParameterLocation.Query:
-            case ParameterLocation.Querystring:
-                w.WriteLine($"{typeName} {fieldName}Parsed = default;");
-                w.WriteLine($"if (context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryVal) && {fieldName}QueryVal.Count > 0)");
-                w.OpenBrace();
-                w.WriteLine($"string {fieldName}RawStr = {fieldName}QueryVal[0]!;");
-                EmitStackallocStringParse(w, fieldName, typeName, $"{fieldName}RawStr");
-                w.CloseBrace();
-                break;
-
-            case ParameterLocation.Header:
-                w.WriteLine($"{typeName} {fieldName}Parsed = default;");
-                w.WriteLine($"if (context.Request.Headers.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}HeaderVal) && {fieldName}HeaderVal.Count > 0)");
-                w.OpenBrace();
-                w.WriteLine($"string {fieldName}RawStr = {fieldName}HeaderVal[0]!;");
-                EmitStackallocStringParse(w, fieldName, typeName, $"{fieldName}RawStr");
-                w.CloseBrace();
-                break;
-
-            case ParameterLocation.Cookie:
-                w.WriteLine($"{typeName} {fieldName}Parsed = default;");
-                w.WriteLine($"if (context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null)");
-                w.OpenBrace();
-                EmitStackallocStringParse(w, fieldName, typeName, $"{fieldName}CookieVal");
-                w.CloseBrace();
-                break;
-        }
-    }
-
-    private static void EmitStackallocStringParse(
-        IndentedWriter w,
-        string fieldName,
-        string typeName,
-        string rawVarName)
+    private static string EscapeStringLiteral(string value)
     {
-        w.WriteLine($"Span<char> {fieldName}Buf = stackalloc char[{rawVarName}.Length + 2];");
-        w.WriteLine($"{fieldName}Buf[0] = '\"';");
-        w.WriteLine($"{rawVarName}.AsSpan().CopyTo({fieldName}Buf.Slice(1));");
-        w.WriteLine($"{fieldName}Buf[{rawVarName}.Length + 1] = '\"';");
-        w.WriteLine($"{fieldName}Parsed = {typeName}.ParseValue({fieldName}Buf.Slice(0, {rawVarName}.Length + 2));");
+        return value.Replace("\\", "\\\\").Replace("\"", "\\\"");
     }
 
     private static string GetAspNetMapMethod(OperationMethod method) =>

@@ -116,6 +116,22 @@ public sealed class FixedJsonValueDocument<T> : IJsonDocument, IWorkspaceManaged
     }
 
     /// <summary>
+    /// Creates a <see cref="FixedJsonValueDocument{T}"/> for a boolean value from a char span,
+    /// copying the data into the document's internal buffer (zero heap allocation).
+    /// </summary>
+    /// <param name="chars">The raw boolean chars (<c>true</c> or <c>false</c>).</param>
+    /// <returns>A pooled document instance wrapping the boolean value.</returns>
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static FixedJsonValueDocument<T> ForBooleanFromSpan(ReadOnlySpan<char> chars)
+    {
+        // Booleans are always ASCII — byte count equals char count.
+        JsonTokenType tokenType = chars.Length == 4 ? JsonTokenType.True : JsonTokenType.False;
+        Span<byte> utf8 = stackalloc byte[chars.Length];
+        int written = JsonReaderHelper.TranscodeHelper(chars, utf8);
+        return Pool.RentFromSpan(utf8.Slice(0, written), tokenType);
+    }
+
+    /// <summary>
     /// Creates a <see cref="FixedJsonValueDocument{T}"/> for a string value from a char span.
     /// The input is the pre-quoted, pre-escaped JSON string representation (e.g., <c>"hello"</c>
     /// or <c>"line\nbreak"</c>).

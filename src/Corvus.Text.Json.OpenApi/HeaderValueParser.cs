@@ -55,4 +55,20 @@ public static class HeaderValueParser
         workspace.RegisterDocument(doc);
         return doc.RootElement;
     }
+
+    /// <summary>
+    /// Parses a raw header string as a JSON boolean value.
+    /// </summary>
+    /// <typeparam name="T">The generated JSON element type.</typeparam>
+    /// <param name="rawValue">The raw header value (<c>true</c> or <c>false</c>).</param>
+    /// <param name="workspace">The workspace that will own the document's lifetime.</param>
+    /// <returns>The typed element backed by a pooled document.</returns>
+    public static T ParseBoolean<T>(string rawValue, JsonWorkspace workspace)
+        where T : struct, IJsonElement<T>
+    {
+        FixedJsonValueDocument<T> doc =
+            FixedJsonValueDocument<T>.ForBooleanFromSpan(rawValue.AsSpan());
+        workspace.RegisterDocument(doc);
+        return doc.RootElement;
+    }
 }
