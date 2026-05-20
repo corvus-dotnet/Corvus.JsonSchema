@@ -227,6 +227,158 @@ public static class MultipartFormDataSerializer
         writer.Write("--\r\n");
     }
 
+    /// <summary>
+    /// Deserializes a <c>multipart/form-data</c> body into a
+    /// <see cref="ParsedJsonDocument{T}"/>, building a JSON object from
+    /// the text and JSON parts.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="multipartBody">The raw UTF-8 multipart body bytes.</param>
+    /// <param name="boundary">The boundary string (UTF-8, without leading <c>--</c>).</param>
+    /// <param name="binaryPartCallback">
+    /// Optional callback invoked for each binary part. If <see langword="null"/>,
+    /// binary parts are silently skipped.
+    /// </param>
+    /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<T> Deserialize<T>(
+        ReadOnlyMemory<byte> multipartBody,
+        ReadOnlySpan<byte> boundary,
+        MultipartFormReader.BinaryPartHandler? binaryPartCallback = null)
+        where T : struct, IJsonElement<T>
+    {
+        using PooledBufferWriter jsonBuffer = new(multipartBody.Length);
+        using Utf8JsonWriter jsonWriter = new(jsonBuffer);
+
+        MultipartFormReader.DeserializeToJson(multipartBody.Span, boundary, jsonWriter, binaryPartCallback);
+        jsonWriter.Flush();
+
+        return ParsedJsonDocument<T>.Parse(jsonBuffer.WrittenMemory);
+    }
+
+    /// <summary>
+    /// Deserializes a <c>multipart/form-data</c> body from a stream into a
+    /// <see cref="ParsedJsonDocument{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="stream">The request body stream.</param>
+    /// <param name="contentType">The Content-Type header value (used to extract the boundary).</param>
+    /// <param name="binaryPartCallback">
+    /// Optional callback invoked for each binary part. If <see langword="null"/>,
+    /// binary parts are silently skipped.
+    /// </param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
+    public static async ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
+        Stream stream,
+        ReadOnlyMemory<byte> contentType,
+        MultipartFormReader.BinaryPartHandler? binaryPartCallback = null,
+        CancellationToken cancellationToken = default)
+        where T : struct, IJsonElement<T>
+    {
+        if (!MultipartFormReader.TryExtractBoundary(contentType.Span, out ReadOnlySpan<byte> boundarySpan))
+        {
+            ThrowHelper.ThrowMultipartBoundaryNotFound();
+        }
+
+        // Copy boundary to a rented array — we need it to survive the async state machine.
+        byte[] boundaryBuffer = FormFieldReader.Rent(boundarySpan.Length);
+        boundarySpan.CopyTo(boundaryBuffer);
+        ReadOnlyMemory<byte> boundaryMemory = boundaryBuffer.AsMemory(0, boundarySpan.Length);
+
+        return await DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Deserializes a <c>multipart/form-data</c> body from a stream into a
+    /// <see cref="ParsedJsonDocument{T}"/>, extracting the boundary from the
+    /// Content-Type header string without allocating.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="stream">The request body stream.</param>
+    /// <param name="contentType">The Content-Type header string (e.g., <c>multipart/form-data; boundary=abc</c>).</param>
+    /// <param name="binaryPartCallback">
+    /// Optional callback invoked for each binary part. If <see langword="null"/>,
+    /// binary parts are silently skipped.
+    /// </param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
+    public static ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
+        Stream stream,
+        string? contentType,
+        MultipartFormReader.BinaryPartHandler? binaryPartCallback = null,
+        CancellationToken cancellationToken = default)
+        where T : struct, IJsonElement<T>
+    {
+        // Encode Content-Type string to UTF-8 using a rented buffer.
+        int byteCount = contentType is not null
+            ? System.Text.Encoding.UTF8.GetByteCount(contentType)
+            : 0;
+
+        byte[] ctBuffer = FormFieldReader.Rent(Math.Max(byteCount, 1));
+        try
+        {
+            if (contentType is not null)
+            {
+                System.Text.Encoding.UTF8.GetBytes(contentType, 0, contentType.Length, ctBuffer, 0);
+            }
+
+            if (!MultipartFormReader.TryExtractBoundary(ctBuffer.AsSpan(0, byteCount), out ReadOnlySpan<byte> boundarySpan))
+            {
+                ThrowHelper.ThrowMultipartBoundaryNotFound();
+            }
+
+            // Copy boundary to a rented array that survives the async state machine.
+            byte[] boundaryBuffer = FormFieldReader.Rent(boundarySpan.Length);
+            boundarySpan.CopyTo(boundaryBuffer);
+            ReadOnlyMemory<byte> boundaryMemory = boundaryBuffer.AsMemory(0, boundarySpan.Length);
+
+            // We can now return the content-type buffer before going async.
+            FormFieldReader.Return(ctBuffer);
+            ctBuffer = null!;
+
+            return DeserializeWithRentedBoundaryAsync<T>(stream, boundaryBuffer, boundaryMemory, binaryPartCallback, cancellationToken);
+        }
+        finally
+        {
+            if (ctBuffer is not null)
+            {
+                FormFieldReader.Return(ctBuffer);
+            }
+        }
+    }
+
+    private static async ValueTask<ParsedJsonDocument<T>> DeserializeWithRentedBoundaryAsync<T>(
+        Stream stream,
+        byte[] boundaryBuffer,
+        ReadOnlyMemory<byte> boundaryMemory,
+        MultipartFormReader.BinaryPartHandler? binaryPartCallback,
+        CancellationToken cancellationToken)
+        where T : struct, IJsonElement<T>
+    {
+        try
+        {
+            (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, cancellationToken)
+                .ConfigureAwait(false);
+
+            try
+            {
+                return Deserialize<T>(
+                    buffer.AsMemory(0, length),
+                    boundaryMemory.Span,
+                    binaryPartCallback);
+            }
+            finally
+            {
+                FormFieldReader.Return(buffer);
+            }
+        }
+        finally
+        {
+            FormFieldReader.Return(boundaryBuffer);
+        }
+    }
+
     private static void WriteBinaryPart(
         StreamWriter writer,
         Stream output,

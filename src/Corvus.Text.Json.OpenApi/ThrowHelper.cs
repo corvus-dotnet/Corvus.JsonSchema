@@ -189,4 +189,15 @@ public static class ThrowHelper
     {
         throw new InvalidOperationException(SR.FormBodyMustBeObject);
     }
+
+    /// <summary>
+    /// Throws an <see cref="InvalidOperationException"/> indicating that the
+    /// multipart boundary could not be extracted from the Content-Type header.
+    /// </summary>
+    [DoesNotReturn]
+    [StackTraceHidden]
+    public static void ThrowMultipartBoundaryNotFound()
+    {
+        throw new InvalidOperationException(SR.MultipartBoundaryNotFound);
+    }
 }

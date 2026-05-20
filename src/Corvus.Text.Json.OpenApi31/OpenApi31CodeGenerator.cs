@@ -4762,6 +4762,8 @@ public sealed class OpenApi31CodeGenerator
                 // Parse body from request stream into a document.
                 // For form-urlencoded bodies, use the symmetric deserializer (inverse of
                 // FormUrlEncodedSerializer.Serialize used by the client).
+                // For multipart/form-data bodies, use the symmetric deserializer (inverse of
+                // MultipartFormDataSerializer.Serialize used by the client).
                 // For JSON bodies, parse directly from the stream.
                 if (hasBody)
                 {
@@ -4773,6 +4775,10 @@ public sealed class OpenApi31CodeGenerator
                     if (IsFormUrlEncodedRequestBody(op.RequestBody!.Value))
                     {
                         w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);");
+                    }
+                    else if (IsMultipartRequestBody(op.RequestBody!.Value))
+                    {
+                        w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
                     }
                     else
                     {

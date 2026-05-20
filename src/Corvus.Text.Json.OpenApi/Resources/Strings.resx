@@ -101,5 +101,8 @@
   <data name="FormBodyMustBeObject" xml:space="preserve">
     <value>The form-urlencoded request body must be a JSON object.</value>
   </data>
+  <data name="MultipartBoundaryNotFound" xml:space="preserve">
+    <value>The multipart boundary could not be extracted from the Content-Type header.</value>
+  </data>
 
 </root>
