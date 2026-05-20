@@ -27,6 +27,11 @@ config.AddJob(
 
 BenchmarkRunner.Run(
     [
-        typeof(EndToEndBenchmarks),
+        typeof(GetListBenchmarks),
+        typeof(GetByIdBenchmarks),
+        typeof(PostJsonBodyBenchmarks),
+        typeof(PutFormEncodedBenchmarks),
+        typeof(ResponseHeaderBenchmarks),
+        typeof(ValidationModeBenchmarks),
     ],
     config);
