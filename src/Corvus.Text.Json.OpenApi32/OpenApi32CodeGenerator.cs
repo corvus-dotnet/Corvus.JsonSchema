@@ -5795,7 +5795,7 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with the specified status code and body.</returns>");
                     w.WriteLine(
                         $"public static {structName} {factoryName}(int statusCode, {typeName} body) " +
-                        $"=> new(statusCode, body.As<JsonElement>(), \"application/json\");");
+                        $"=> new(statusCode, (JsonElement)body, \"application/json\");");
                 }
                 else
                 {
@@ -5819,7 +5819,7 @@ public sealed class OpenApi32CodeGenerator
                     w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {resp.StatusCode}.</returns>");
                     w.WriteLine(
                         $"public static {structName} {factoryName}({typeName} body) " +
-                        $"=> new({resp.StatusCode}, body.As<JsonElement>(), \"application/json\");");
+                        $"=> new({resp.StatusCode}, (JsonElement)body, \"application/json\");");
                 }
                 else
                 {
@@ -5836,7 +5836,7 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine("/// Writes the response body to the specified writer.");
         w.WriteLine("/// </summary>");
         w.WriteLine("/// <param name=\"writer\">The UTF-8 JSON writer.</param>");
-        w.WriteLine("public void WriteBody(System.Text.Json.Utf8JsonWriter writer)");
+        w.WriteLine("public void WriteBody(Utf8JsonWriter writer)");
         w.OpenBrace();
         w.WriteLine("if (!this.Body.IsUndefined())");
         w.OpenBrace();
@@ -5913,20 +5913,38 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine(")");
         w.OpenBrace();
 
-        // Emit a MapXxx call for each operation
+        // Emit a MapXxx call for each operation. Track registered operations to avoid
+        // duplicates when the same operation appears under multiple tags.
+        HashSet<string> registeredOperations = [];
         foreach ((string tag, List<OperationInfo> tagOps) in groups)
         {
             string paramName = CodeEmitHelpers.SanitizeParameterName(tag) + "Handler";
 
             foreach (OperationInfo op in tagOps)
             {
+                string operationKey = $"{op.Method}:{op.PathTemplate}";
+                if (!registeredOperations.Add(operationKey))
+                {
+                    continue;
+                }
+
                 string mapMethod = GetAspNetMapMethod(op.Method);
                 string paramsName = $"{op.MethodName}Params";
                 string resultName = $"{op.MethodName}Result";
                 bool hasBody = op.RequestBody is not null;
 
                 w.WriteLine();
-                w.WriteLine($"app.{mapMethod}(\"{op.PathTemplate}\", async (HttpContext context) =>");
+
+                if (mapMethod == "MapMethods")
+                {
+                    string httpMethod = op.Method.ToString().ToUpperInvariant();
+                    w.WriteLine($"app.MapMethods(\"{op.PathTemplate}\", new[] {{ \"{httpMethod}\" }}, async (HttpContext context) =>");
+                }
+                else
+                {
+                    w.WriteLine($"app.{mapMethod}(\"{op.PathTemplate}\", async (HttpContext context) =>");
+                }
+
                 w.OpenBrace();
 
                 // Bind parameters
@@ -5967,7 +5985,7 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine("if (!result.Body.IsUndefined())");
                 w.OpenBrace();
                 w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
-                w.WriteLine("var writer = new System.Text.Json.Utf8JsonWriter(context.Response.Body);");
+                w.WriteLine("var writer = new Utf8JsonWriter(context.Response.Body);");
                 w.WriteLine("await using (writer.ConfigureAwait(false))");
                 w.OpenBrace();
                 w.WriteLine("result.WriteBody(writer);");
@@ -5996,32 +6014,43 @@ public sealed class OpenApi32CodeGenerator
         string typeName)
     {
         string paramNameLiteral = EscapeStringLiteral(param.Name);
+        bool isStringKind = param.SerializationKind == ParameterSerializationKind.String;
+
+        // For string-type parameters, the raw HTTP value must be wrapped in JSON quotes
+        // to produce valid JSON for ParseValue. Numeric/boolean values are already valid JSON.
+        string parseExpr = isStringKind
+            ? $"{typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes(\"\\\"\" + {{0}} + \"\\\"\"))"
+            : $"{typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({{0}}))";
 
         switch (param.Location)
         {
             case ParameterLocation.Path:
+                string pathParse = string.Format(parseExpr, $"{fieldName}RouteStr");
                 w.WriteLine(
                     $"{fieldName} = context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}RouteStr " +
-                    $"? {typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({fieldName}RouteStr)) : default,");
+                    $"? {pathParse} : default,");
                 break;
 
             case ParameterLocation.Query:
             case ParameterLocation.Querystring:
+                string queryParse = string.Format(parseExpr, $"{fieldName}QueryVal[0]!");
                 w.WriteLine(
                     $"{fieldName} = context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryVal) && {fieldName}QueryVal.Count > 0 " +
-                    $"? {typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({fieldName}QueryVal[0]!)) : default,");
+                    $"? {queryParse} : default,");
                 break;
 
             case ParameterLocation.Header:
+                string headerParse = string.Format(parseExpr, $"{fieldName}HeaderVal[0]!");
                 w.WriteLine(
                     $"{fieldName} = context.Request.Headers.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}HeaderVal) && {fieldName}HeaderVal.Count > 0 " +
-                    $"? {typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({fieldName}HeaderVal[0]!)) : default,");
+                    $"? {headerParse} : default,");
                 break;
 
             case ParameterLocation.Cookie:
+                string cookieParse = string.Format(parseExpr, $"{fieldName}CookieVal");
                 w.WriteLine(
                     $"{fieldName} = context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null " +
-                    $"? {typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({fieldName}CookieVal)) : default,");
+                    $"? {cookieParse} : default,");
                 break;
         }
     }

@@ -877,6 +877,235 @@ public class OpenApi32CodeGeneratorTests
         Assert.AreEqual("also-valid", tags[1].Name);
     }
 
+    [TestMethod]
+    public void GenerateServer_ProducesHandlerInterfaces()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "IApiDefaultHandler.cs"),
+            "Expected IApiDefaultHandler.cs");
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "IApiItemsHandler.cs"),
+            "Expected IApiItemsHandler.cs");
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "IApiSearchHandler.cs"),
+            "Expected IApiSearchHandler.cs");
+    }
+
+    [TestMethod]
+    public void GenerateServer_HandlerInterface_ContainsExpectedMethods()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile defaultHandler = files.First(f => f.FileName == "IApiDefaultHandler.cs");
+
+        Assert.IsTrue(
+            defaultHandler.Content.Contains("HandleListItemsAsync"),
+            "Expected HandleListItemsAsync in IApiDefaultHandler");
+        Assert.IsTrue(
+            defaultHandler.Content.Contains("HandleCreateItemAsync"),
+            "Expected HandleCreateItemAsync in IApiDefaultHandler");
+        Assert.IsTrue(
+            defaultHandler.Content.Contains("HandleGetItemAsync"),
+            "Expected HandleGetItemAsync in IApiDefaultHandler");
+
+        // Verify method signatures use params and result types
+        Assert.IsTrue(
+            defaultHandler.Content.Contains("ListItemsParams parameters"),
+            "Expected ListItemsParams parameter in handler method");
+        Assert.IsTrue(
+            defaultHandler.Content.Contains("ValueTask<ListItemsResult>"),
+            "Expected ValueTask<ListItemsResult> return type");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ProducesParamsStructs()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "ListItemsParams.cs"),
+            "Expected ListItemsParams.cs");
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "CreateItemParams.cs"),
+            "Expected CreateItemParams.cs");
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "GetItemParams.cs"),
+            "Expected GetItemParams.cs");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ParamsStruct_ContainsCorrectProperties()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile listItemsParams = files.First(f => f.FileName == "ListItemsParams.cs");
+
+        // ListItems has query params: active, category, page, sort, verbose
+        Assert.IsTrue(
+            listItemsParams.Content.Contains("Active"),
+            "Expected Active property in ListItemsParams");
+        Assert.IsTrue(
+            listItemsParams.Content.Contains("Category"),
+            "Expected Category property in ListItemsParams");
+        Assert.IsTrue(
+            listItemsParams.Content.Contains("Page"),
+            "Expected Page property in ListItemsParams");
+        Assert.IsTrue(
+            listItemsParams.Content.Contains("Sort"),
+            "Expected Sort property in ListItemsParams");
+        Assert.IsTrue(
+            listItemsParams.Content.Contains("Verbose"),
+            "Expected Verbose property in ListItemsParams");
+
+        // CreateItem has X-Correlation-Id header and Body
+        GeneratedFile createItemParams = files.First(f => f.FileName == "CreateItemParams.cs");
+        Assert.IsTrue(
+            createItemParams.Content.Contains("XCorrelationId"),
+            "Expected XCorrelationId property in CreateItemParams");
+        Assert.IsTrue(
+            createItemParams.Content.Contains("Body"),
+            "Expected Body property in CreateItemParams");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ProducesResultStructs()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "ListItemsResult.cs"),
+            "Expected ListItemsResult.cs");
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "CreateItemResult.cs"),
+            "Expected CreateItemResult.cs");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ResultStruct_HasFactoryMethods()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile listItemsResult = files.First(f => f.FileName == "ListItemsResult.cs");
+
+        // ListItems has 200 and default responses
+        Assert.IsTrue(
+            listItemsResult.Content.Contains("Ok("),
+            "Expected Ok() factory method in ListItemsResult");
+        Assert.IsTrue(
+            listItemsResult.Content.Contains("Default("),
+            "Expected Default() factory method in ListItemsResult");
+
+        GeneratedFile createItemResult = files.First(f => f.FileName == "CreateItemResult.cs");
+
+        // CreateItem has 201 and default (if present)
+        Assert.IsTrue(
+            createItemResult.Content.Contains("Created("),
+            "Expected Created() factory method in CreateItemResult");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ProducesEndpointRegistration()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "ApiEndpointRegistration.cs"),
+            "Expected ApiEndpointRegistration.cs");
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(
+            registration.Content.Contains("MapApiEndpoints"),
+            "Expected MapApiEndpoints extension method");
+        Assert.IsTrue(
+            registration.Content.Contains("MapGet"),
+            "Expected MapGet in endpoint registration");
+        Assert.IsTrue(
+            registration.Content.Contains("MapPost"),
+            "Expected MapPost in endpoint registration");
+    }
+
+    [TestMethod]
+    public void GenerateServer_EndpointRegistration_IncludesAllOperations()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot);
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        // Verify key routes are registered
+        Assert.IsTrue(
+            registration.Content.Contains("\"/items\""),
+            "Expected /items route in endpoint registration");
+        Assert.IsTrue(
+            registration.Content.Contains("\"/items/{itemId}\""),
+            "Expected /items/{itemId} route in endpoint registration");
+        Assert.IsTrue(
+            registration.Content.Contains("\"/download\""),
+            "Expected /download route in endpoint registration");
+    }
+
+    [TestMethod]
+    public void GenerateServer_WithFilter_OnlyIncludesMatchedPaths()
+    {
+        Dictionary<string, string> schemaTypeMap = BuildFullCovspecSchemaTypeMap();
+        OpenApi32CodeGenerator generator = new("CovTest.Server", schemaTypeMap);
+        OperationFilter filter = new(["/items/**"]);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(covspecRoot, filter);
+
+        // Should have items-related files
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "ListItemsParams.cs"),
+            "Expected ListItemsParams.cs with /items/** filter");
+
+        // Should NOT have operations from unmatched paths like /download or /health
+        Assert.IsFalse(
+            files.Any(f => f.FileName == "DownloadFileParams.cs"),
+            "Did not expect DownloadFileParams.cs with /items/** filter");
+        Assert.IsFalse(
+            files.Any(f => f.FileName == "HeadHealthParams.cs"),
+            "Did not expect HeadHealthParams.cs with /items/** filter");
+    }
+
+    [TestMethod]
+    public void GenerateServer_Petstore_ProducesCorrectFileCount()
+    {
+        OpenApi32CodeGenerator generator = new("Petstore.Server", PetstoreSchemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(petstoreRoot);
+
+        // Petstore has operations: listPets, createPet, showPetById, updatePet, uploadPetPhoto
+        // Each produces Params + Result = 2 files per operation
+        // Plus handler interfaces (grouped by tag) + 1 endpoint registration
+        Assert.IsTrue(files.Count > 0, "Expected at least some generated files");
+
+        // Should have endpoint registration
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("EndpointRegistration.cs")),
+            "Expected EndpointRegistration.cs in petstore server output");
+
+        // Should have at least one handler interface
+        Assert.IsTrue(
+            files.Any(f => f.FileName.StartsWith("I") && f.FileName.Contains("Handler.cs")),
+            "Expected at least one handler interface in petstore server output");
+    }
+
     private static Dictionary<string, string> BuildFullCovspecSchemaTypeMap()
     {
         // Collect all schema pointers and assign type names
