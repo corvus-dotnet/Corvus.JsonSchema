@@ -112,6 +112,7 @@ public sealed class OpenApi30CodeGenerator
         ParameterStyle Style,
         bool Explode,
         ParameterSerializationKind SerializationKind,
+        ParameterSerializationKind ElementSerializationKind,
         string? SchemaPointer,
         bool HasDeepNesting,
         string? DefaultValueJson,
@@ -1110,6 +1111,13 @@ public sealed class OpenApi30CodeGenerator
                 ? SchemaClassifier.Classify(schemaElement)
                 : ParameterSerializationKind.String;
 
+            ParameterSerializationKind elementKind = serializationKind switch
+            {
+                ParameterSerializationKind.Array => SchemaClassifier.ClassifyArrayElement(schemaElement),
+                ParameterSerializationKind.Object => SchemaClassifier.ClassifyObjectValue(schemaElement),
+                _ => ParameterSerializationKind.String,
+            };
+
             bool deepNesting = hasSchema
                 && serializationKind is ParameterSerializationKind.Object or ParameterSerializationKind.Array
                 && SchemaClassifier.HasDeepNesting(schemaElement);
@@ -1135,7 +1143,7 @@ public sealed class OpenApi30CodeGenerator
 
             result[i] = new ParameterInfo(
                 name, location, required, style, explode,
-                serializationKind, schemaPointer, deepNesting, defaultValueJson, defaultValueKind);
+                serializationKind, elementKind, schemaPointer, deepNesting, defaultValueJson, defaultValueKind);
         }
 
         return result;
@@ -4749,43 +4757,218 @@ public sealed class OpenApi30CodeGenerator
         string typeName)
     {
         string paramNameLiteral = EscapeStringLiteral(param.Name);
-        string parseMethod = GetHeaderValueParseMethod(param.SerializationKind);
+
+        // For array/object types, resolve the element/value type name.
+        string? elementTypeName = null;
+        if (param.HasDeepNesting && param.SchemaPointer is not null)
+        {
+            string elementPointer = param.SerializationKind is ParameterSerializationKind.Array
+                ? param.SchemaPointer + "/items"
+                : param.SchemaPointer + "/additionalProperties";
+            elementTypeName = this.ResolveSchemaTypeName(elementPointer);
+        }
 
         switch (param.Location)
         {
             case ParameterLocation.Path:
-                w.WriteLine(
-                    $"{typeName} {fieldName}Value = context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}RouteStr " +
-                    $"? HeaderValueParser.{parseMethod}<{typeName}>({fieldName}RouteStr, workspace) : default;");
+                EmitServerPathParameterParsing(w, param, fieldName, typeName, paramNameLiteral, elementTypeName);
                 break;
 
             case ParameterLocation.Query:
             case ParameterLocation.Querystring:
-                w.WriteLine(
-                    $"{typeName} {fieldName}Value = context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryVal) && {fieldName}QueryVal.Count > 0 " +
-                    $"? HeaderValueParser.{parseMethod}<{typeName}>({fieldName}QueryVal[0]!, workspace) : default;");
+                EmitServerQueryParameterParsing(w, param, fieldName, typeName, paramNameLiteral, elementTypeName);
                 break;
 
             case ParameterLocation.Header:
-                w.WriteLine(
-                    $"{typeName} {fieldName}Value = context.Request.Headers.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}HeaderVal) && {fieldName}HeaderVal.Count > 0 " +
-                    $"? HeaderValueParser.{parseMethod}<{typeName}>({fieldName}HeaderVal[0]!, workspace) : default;");
+                EmitServerHeaderParameterParsing(w, param, fieldName, typeName, paramNameLiteral, elementTypeName);
                 break;
 
             case ParameterLocation.Cookie:
-                w.WriteLine(
-                    $"{typeName} {fieldName}Value = context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null " +
-                    $"? HeaderValueParser.{parseMethod}<{typeName}>({fieldName}CookieVal, workspace) : default;");
+                EmitServerCookieParameterParsing(w, param, fieldName, typeName, paramNameLiteral, elementTypeName);
                 break;
         }
     }
 
-    private static string GetHeaderValueParseMethod(ParameterSerializationKind kind) =>
-        kind switch
+    private static void EmitServerPathParameterParsing(
+        IndentedWriter w,
+        ParameterInfo param,
+        string fieldName,
+        string typeName,
+        string paramNameLiteral,
+        string? elementTypeName)
+    {
+        w.WriteLine($"{typeName} {fieldName}Value = default;");
+        w.WriteLine($"if (context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}Raw)");
+        w.OpenBrace();
+
+        switch (param.Style)
         {
-            ParameterSerializationKind.String => "ParseString",
-            ParameterSerializationKind.Boolean => "ParseBoolean",
-            _ => "ParseNumber",
+            case ParameterStyle.Matrix:
+                w.WriteLine($"if ({fieldName}Raw.StartsWith(\";\"))");
+                w.OpenBrace();
+                if (param.SerializationKind is ParameterSerializationKind.Array or ParameterSerializationKind.Object && param.Explode)
+                {
+                    w.WriteLine($"{fieldName}Raw = {fieldName}Raw.Substring(1);");
+                }
+                else
+                {
+                    w.WriteLine($"int eqIdx = {fieldName}Raw.IndexOf('=');");
+                    w.WriteLine($"{fieldName}Raw = eqIdx >= 0 ? {fieldName}Raw.Substring(eqIdx + 1) : {fieldName}Raw.Substring(1);");
+                }
+
+                w.CloseBrace();
+                break;
+
+            case ParameterStyle.Label:
+                w.WriteLine($"if ({fieldName}Raw.StartsWith(\".\"))");
+                w.OpenBrace();
+                w.WriteLine($"{fieldName}Raw = {fieldName}Raw.Substring(1);");
+                w.CloseBrace();
+                break;
+        }
+
+        EmitServerValueParse(w, param, fieldName, typeName, $"{fieldName}Raw", "workspace", elementTypeName);
+        w.CloseBrace();
+    }
+
+    private static void EmitServerQueryParameterParsing(
+        IndentedWriter w,
+        ParameterInfo param,
+        string fieldName,
+        string typeName,
+        string paramNameLiteral,
+        string? elementTypeName)
+    {
+        if (param.Style == ParameterStyle.DeepObject && param.SerializationKind == ParameterSerializationKind.Object)
+        {
+            EmitServerDeepObjectQueryParsing(w, param, fieldName, typeName, paramNameLiteral, elementTypeName);
+            return;
+        }
+
+        if (param.Style == ParameterStyle.Form && param.Explode && param.SerializationKind == ParameterSerializationKind.Array)
+        {
+            w.WriteLine($"{typeName} {fieldName}Value = default;");
+            w.WriteLine($"if (context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryValues) && {fieldName}QueryValues.Count > 0)");
+            w.OpenBrace();
+            CodeEmitHelpers.EmitArrayParseFromMultipleValues(w, $"{fieldName}Value", $"{fieldName}QueryValues", "workspace", typeName, param.ElementSerializationKind);
+            w.CloseBrace();
+            return;
+        }
+
+        w.WriteLine($"{typeName} {fieldName}Value = default;");
+        w.WriteLine($"if (context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryVal) && {fieldName}QueryVal.Count > 0)");
+        w.OpenBrace();
+        w.WriteLine($"string {fieldName}Raw = {fieldName}QueryVal[0]!;");
+        EmitServerValueParse(w, param, fieldName, typeName, $"{fieldName}Raw", "workspace", elementTypeName);
+        w.CloseBrace();
+    }
+
+    private static void EmitServerDeepObjectQueryParsing(
+        IndentedWriter w,
+        ParameterInfo param,
+        string fieldName,
+        string typeName,
+        string paramNameLiteral,
+        string? elementTypeName)
+    {
+        w.WriteLine($"{typeName} {fieldName}Value = default;");
+        w.WriteLine($"string {fieldName}Prefix = \"{paramNameLiteral}[\";");
+        w.Write($"{fieldName}Value = {typeName}.CreateBuilder<(string prefix, Microsoft.AspNetCore.Http.IQueryCollection query)>(workspace, ({fieldName}Prefix, context.Request.Query), static (in (string prefix, Microsoft.AspNetCore.Http.IQueryCollection query) ctx, ref {typeName}.Builder objectBuilder) =>");
+        w.WriteLine();
+        w.OpenBrace();
+        w.WriteLine("foreach (string queryKey in ctx.query.Keys)");
+        w.OpenBrace();
+        w.WriteLine("if (!queryKey.StartsWith(ctx.prefix)) continue;");
+        w.WriteLine("int closeBracket = queryKey.IndexOf(']', ctx.prefix.Length);");
+        w.WriteLine("if (closeBracket < 0) continue;");
+        w.WriteLine("System.ReadOnlySpan<char> key = queryKey.AsSpan().Slice(ctx.prefix.Length, closeBracket - ctx.prefix.Length);");
+        w.WriteLine("if (ctx.query.TryGetValue(queryKey, out var vals) && vals.Count > 0 && vals[0] is string v)");
+        w.OpenBrace();
+        string valueSourceExpr = CodeEmitHelpers.GetElementSourceExpressionPublic(param.ElementSerializationKind, "v.AsSpan()");
+        w.WriteLine($"objectBuilder.AddProperty(key, {valueSourceExpr});");
+        w.CloseBrace();
+        w.CloseBrace();
+        w.CloseBraceNoNewline();
+        w.WriteLine(").RootElement;");
+    }
+
+    private static void EmitServerHeaderParameterParsing(
+        IndentedWriter w,
+        ParameterInfo param,
+        string fieldName,
+        string typeName,
+        string paramNameLiteral,
+        string? elementTypeName)
+    {
+        w.WriteLine($"{typeName} {fieldName}Value = default;");
+        w.WriteLine($"if (context.Request.Headers.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}HeaderVal) && {fieldName}HeaderVal.Count > 0)");
+        w.OpenBrace();
+        w.WriteLine($"string {fieldName}Raw = {fieldName}HeaderVal[0]!;");
+        EmitServerValueParse(w, param, fieldName, typeName, $"{fieldName}Raw", "workspace", elementTypeName);
+        w.CloseBrace();
+    }
+
+    private static void EmitServerCookieParameterParsing(
+        IndentedWriter w,
+        ParameterInfo param,
+        string fieldName,
+        string typeName,
+        string paramNameLiteral,
+        string? elementTypeName)
+    {
+        w.WriteLine($"{typeName} {fieldName}Value = default;");
+        w.WriteLine($"if (context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null)");
+        w.OpenBrace();
+        w.WriteLine($"string {fieldName}Raw = {fieldName}CookieVal;");
+        EmitServerValueParse(w, param, fieldName, typeName, $"{fieldName}Raw", "workspace", elementTypeName);
+        w.CloseBrace();
+    }
+
+    private static void EmitServerValueParse(
+        IndentedWriter w,
+        ParameterInfo param,
+        string fieldName,
+        string typeName,
+        string rawVar,
+        string workspaceExpr,
+        string? elementTypeName)
+    {
+        if (param.SerializationKind == ParameterSerializationKind.Array)
+        {
+            string separator = GetArraySeparator(param.Style, param.Explode);
+            CodeEmitHelpers.EmitArrayParseFromSeparatedString(
+                w, $"{fieldName}Value", rawVar, workspaceExpr, typeName,
+                separator, param.ElementSerializationKind, param.HasDeepNesting, elementTypeName);
+        }
+        else if (param.SerializationKind == ParameterSerializationKind.Object)
+        {
+            string separator = GetObjectSeparator(param.Style, param.Explode);
+            CodeEmitHelpers.EmitObjectParseFromSeparatedString(
+                w, $"{fieldName}Value", rawVar, workspaceExpr, typeName,
+                separator, param.Explode, param.ElementSerializationKind, param.HasDeepNesting, elementTypeName);
+        }
+        else
+        {
+            CodeEmitHelpers.EmitScalarParse(w, $"{fieldName}Value", rawVar, workspaceExpr, typeName, param.SerializationKind);
+        }
+    }
+
+    private static string GetArraySeparator(ParameterStyle style, bool explode) =>
+        style switch
+        {
+            ParameterStyle.Label when explode => "'.'",
+            ParameterStyle.Matrix when explode => "';'",
+            ParameterStyle.PipeDelimited => "'|'",
+            ParameterStyle.SpaceDelimited => "' '",
+            _ => "','",
+        };
+
+    private static string GetObjectSeparator(ParameterStyle style, bool explode) =>
+        style switch
+        {
+            ParameterStyle.Label when explode => "'.'",
+            ParameterStyle.Matrix when explode => "';'",
+            _ => "','",
         };
 
     private static string EscapeStringLiteral(string value)

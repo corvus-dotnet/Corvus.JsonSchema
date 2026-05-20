@@ -1855,8 +1855,218 @@ public static class CodeEmitHelpers
             ParameterSerializationKind.Int64 => $"long.Parse({varName})",
             ParameterSerializationKind.Single => $"float.Parse({varName})",
             ParameterSerializationKind.Double => $"double.Parse({varName})",
+            ParameterSerializationKind.Decimal => $"decimal.Parse({varName})",
+            ParameterSerializationKind.Int16 => $"short.Parse({varName})",
+            ParameterSerializationKind.Byte => $"byte.Parse({varName})",
+            ParameterSerializationKind.SByte => $"sbyte.Parse({varName})",
+            ParameterSerializationKind.UInt16 => $"ushort.Parse({varName})",
+            ParameterSerializationKind.UInt32 => $"uint.Parse({varName})",
+            ParameterSerializationKind.UInt64 => $"ulong.Parse({varName})",
+            ParameterSerializationKind.Half => $"double.Parse({varName})",
+            ParameterSerializationKind.UnboundedNumber => $"double.Parse({varName})",
             _ => varName,
         };
+    }
+
+    /// <summary>
+    /// Gets the source expression for converting a span/string variable to the element type.
+    /// Public wrapper for use by server parameter parsing.
+    /// </summary>
+    /// <param name="kind">The serialization kind.</param>
+    /// <param name="varName">The variable name holding the value.</param>
+    /// <returns>A C# expression string.</returns>
+    public static string GetElementSourceExpressionPublic(ParameterSerializationKind kind, string varName)
+    {
+        return GetElementSourceExpression(kind, varName);
+    }
+
+    /// <summary>
+    /// Emits code to parse a comma-separated string into a typed array using CreateBuilder.
+    /// Used by server parameter parsing (style: simple, form non-explode, pipe, space).
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="targetVar">The variable to assign the result to (e.g. "fieldNameValue").</param>
+    /// <param name="rawValueVar">The variable holding the raw string value (e.g. "rawValue").</param>
+    /// <param name="workspaceExpr">The workspace expression (e.g. "workspace").</param>
+    /// <param name="typeName">The array type name.</param>
+    /// <param name="separator">The separator character expression (e.g. "',' " or "'|'").</param>
+    /// <param name="elementKind">The serialization kind of array elements.</param>
+    /// <param name="hasDeepNesting">Whether elements may contain nested JSON.</param>
+    /// <param name="elementTypeName">The element type name for deep-nested elements.</param>
+    public static void EmitArrayParseFromSeparatedString(
+        IndentedWriter w,
+        string targetVar,
+        string rawValueVar,
+        string workspaceExpr,
+        string typeName,
+        string separator,
+        ParameterSerializationKind elementKind,
+        bool hasDeepNesting,
+        string? elementTypeName = null)
+    {
+        string separatorExpr = hasDeepNesting
+            ? "Corvus.Text.Json.OpenApi.StyleValueSplitter.NextSeparator(remaining)"
+            : $"remaining.IndexOf({separator})";
+
+        w.Write($"{targetVar} = {typeName}.CreateBuilder<string>({workspaceExpr}, {rawValueVar}, static (in string ctx, ref {typeName}.Builder arrayBuilder) =>");
+        w.WriteLine();
+        w.OpenBrace();
+        w.WriteLine("System.ReadOnlySpan<char> remaining = ctx;");
+        w.WriteLine("while (!remaining.IsEmpty)");
+        w.OpenBrace();
+        w.WriteLine($"int sepIdx = {separatorExpr};");
+        w.WriteLine("System.ReadOnlySpan<char> element = sepIdx >= 0 ? remaining.Slice(0, sepIdx).Trim() : remaining.Trim();");
+
+        if (hasDeepNesting && elementTypeName is not null)
+        {
+            w.WriteLine("arrayBuilder._builder.AddItemFromJson(element);");
+        }
+        else
+        {
+            string elementSourceExpr = GetElementSourceExpression(elementKind, "element");
+            w.WriteLine($"arrayBuilder.AddItem({elementSourceExpr});");
+        }
+
+        w.WriteLine("remaining = sepIdx >= 0 ? remaining.Slice(sepIdx + 1) : default;");
+        w.CloseBrace();
+        w.CloseBraceNoNewline();
+        w.WriteLine(").RootElement;");
+    }
+
+    /// <summary>
+    /// Emits code to parse a string of key/value pairs into a typed object using CreateBuilder.
+    /// Used by server parameter parsing for object-type parameters.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="targetVar">The variable to assign the result to.</param>
+    /// <param name="rawValueVar">The variable holding the raw string value.</param>
+    /// <param name="workspaceExpr">The workspace expression.</param>
+    /// <param name="typeName">The object type name.</param>
+    /// <param name="separator">The separator character expression (e.g. "','").</param>
+    /// <param name="explode">Whether explode is enabled (key=value vs key,value).</param>
+    /// <param name="valueKind">The serialization kind of object values.</param>
+    /// <param name="hasDeepNesting">Whether values may contain nested JSON.</param>
+    /// <param name="valueTypeName">The value type name for deep-nested values.</param>
+    public static void EmitObjectParseFromSeparatedString(
+        IndentedWriter w,
+        string targetVar,
+        string rawValueVar,
+        string workspaceExpr,
+        string typeName,
+        string separator,
+        bool explode,
+        ParameterSerializationKind valueKind,
+        bool hasDeepNesting,
+        string? valueTypeName = null)
+    {
+        string separatorExpr = hasDeepNesting
+            ? "Corvus.Text.Json.OpenApi.StyleValueSplitter.NextSeparator(remaining)"
+            : $"remaining.IndexOf({separator})";
+
+        w.Write($"{targetVar} = {typeName}.CreateBuilder<string>({workspaceExpr}, {rawValueVar}, static (in string ctx, ref {typeName}.Builder objectBuilder) =>");
+        w.WriteLine();
+        w.OpenBrace();
+        w.WriteLine("System.ReadOnlySpan<char> remaining = ctx;");
+
+        if (explode)
+        {
+            // explode: key=value,key=value (separator between pairs)
+            w.WriteLine("while (!remaining.IsEmpty)");
+            w.OpenBrace();
+            w.WriteLine($"int sepIdx = {separatorExpr};");
+            w.WriteLine("System.ReadOnlySpan<char> pair = sepIdx >= 0 ? remaining.Slice(0, sepIdx) : remaining;");
+            w.WriteLine("int eqIdx = pair.IndexOf('=');");
+            w.WriteLine("if (eqIdx >= 0)");
+            w.OpenBrace();
+            w.WriteLine("System.ReadOnlySpan<char> key = pair.Slice(0, eqIdx).Trim();");
+            w.WriteLine("System.ReadOnlySpan<char> value = pair.Slice(eqIdx + 1).Trim();");
+            EmitObjectAddProperty(w, hasDeepNesting, valueKind, valueTypeName);
+            w.CloseBrace();
+            w.WriteLine("remaining = sepIdx >= 0 ? remaining.Slice(sepIdx + 1) : default;");
+            w.CloseBrace();
+        }
+        else
+        {
+            // non-explode: key,value,key,value (alternating)
+            w.WriteLine("while (!remaining.IsEmpty)");
+            w.OpenBrace();
+            w.WriteLine($"int sepIdx = remaining.IndexOf({separator});");
+            w.WriteLine("System.ReadOnlySpan<char> key = sepIdx >= 0 ? remaining.Slice(0, sepIdx).Trim() : remaining.Trim();");
+            w.WriteLine("remaining = sepIdx >= 0 ? remaining.Slice(sepIdx + 1) : default;");
+            w.WriteLine("if (remaining.IsEmpty) break;");
+            w.WriteLine($"sepIdx = {separatorExpr};");
+            w.WriteLine("System.ReadOnlySpan<char> value = sepIdx >= 0 ? remaining.Slice(0, sepIdx).Trim() : remaining.Trim();");
+            EmitObjectAddProperty(w, hasDeepNesting, valueKind, valueTypeName);
+            w.WriteLine("remaining = sepIdx >= 0 ? remaining.Slice(sepIdx + 1) : default;");
+            w.CloseBrace();
+        }
+
+        w.CloseBraceNoNewline();
+        w.WriteLine(").RootElement;");
+    }
+
+    /// <summary>
+    /// Emits code to parse a scalar string value into a typed element.
+    /// Used by server parameter parsing for scalar parameters.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="targetVar">The variable to assign the result to.</param>
+    /// <param name="rawValueVar">The variable holding the raw string value.</param>
+    /// <param name="workspaceExpr">The workspace expression.</param>
+    /// <param name="typeName">The target type name.</param>
+    /// <param name="kind">The serialization kind of the scalar.</param>
+    public static void EmitScalarParse(
+        IndentedWriter w,
+        string targetVar,
+        string rawValueVar,
+        string workspaceExpr,
+        string typeName,
+        ParameterSerializationKind kind)
+    {
+        if (kind is ParameterSerializationKind.String)
+        {
+            w.WriteLine($"{targetVar} = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<{typeName}>({rawValueVar}, {workspaceExpr});");
+        }
+        else if (IsNumericKind(kind))
+        {
+            w.WriteLine($"{targetVar} = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<{typeName}>({rawValueVar}, {workspaceExpr});");
+        }
+        else
+        {
+            w.WriteLine($"{targetVar} = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<{typeName}>({rawValueVar}, {workspaceExpr});");
+        }
+    }
+
+    /// <summary>
+    /// Emits code to parse form+explode=true query parameters where multiple values arrive as separate query keys.
+    /// Builds an array from StringValues.
+    /// </summary>
+    /// <param name="w">The writer.</param>
+    /// <param name="targetVar">The variable to assign the result to.</param>
+    /// <param name="valuesVar">The StringValues variable name.</param>
+    /// <param name="workspaceExpr">The workspace expression.</param>
+    /// <param name="typeName">The array type name.</param>
+    /// <param name="elementKind">The serialization kind of array elements.</param>
+    public static void EmitArrayParseFromMultipleValues(
+        IndentedWriter w,
+        string targetVar,
+        string valuesVar,
+        string workspaceExpr,
+        string typeName,
+        ParameterSerializationKind elementKind)
+    {
+        w.Write($"{targetVar} = {typeName}.CreateBuilder<Microsoft.Extensions.Primitives.StringValues>({workspaceExpr}, {valuesVar}, static (in Microsoft.Extensions.Primitives.StringValues ctx, ref {typeName}.Builder arrayBuilder) =>");
+        w.WriteLine();
+        w.OpenBrace();
+        w.WriteLine("for (int i = 0; i < ctx.Count; i++)");
+        w.OpenBrace();
+        w.WriteLine("string? item = ctx[i];");
+        w.WriteLine("if (item is null) continue;");
+        string elementSourceExpr = GetElementSourceExpression(elementKind, "item.AsSpan()");
+        w.WriteLine($"arrayBuilder.AddItem({elementSourceExpr});");
+        w.CloseBrace();
+        w.CloseBraceNoNewline();
+        w.WriteLine(").RootElement;");
     }
 
     /// <summary>
