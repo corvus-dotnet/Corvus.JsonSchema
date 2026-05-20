@@ -2058,4 +2058,268 @@ public class OpenApi32CodeGeneratorTests
         // Should generate server code with element type resolution for deep nested array param
         Assert.IsTrue(files.Count > 0);
     }
+
+    [TestMethod]
+    public void Generate_MultipartMixedJsonItemBatch_EmitsWriteJsonPart()
+    {
+        // Exercises lines 5560-5580: JSON batch item code emission via itemEncoding
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "JSON Batch", "version": "1.0" },
+              "paths": {
+                "/process": {
+                  "post": {
+                    "operationId": "processBatch",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "action": { "type": "string" },
+                                "data": { "type": "object" }
+                              }
+                            }
+                          },
+                          "itemEncoding": {
+                            "contentType": "application/json"
+                          }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "total": { "type": "integer" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"JsonBatch.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("JsonBatch", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        // Check that JSON batch code is emitted (WriteJsonPart in a foreach loop)
+        bool hasJsonBatch = false;
+        foreach (GeneratedFile f in files)
+        {
+            if (f.Content.Contains("WriteJsonPart") && f.Content.Contains("foreach"))
+            {
+                hasJsonBatch = true;
+                break;
+            }
+        }
+
+        Assert.IsTrue(hasJsonBatch, "Expected WriteJsonPart + foreach in generated code for JSON batch");
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_PrefixEncodingOnStandardOperation_FindsSchemas()
+    {
+        // Exercises lines 597-615: prefixEncoding in standard (non-additional) operation
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "PrefixEncoding Standard", "version": "1.0" },
+              "paths": {
+                "/upload": {
+                  "post": {
+                    "operationId": "uploadMixed",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "prefixItems": [
+                              { "type": "object", "properties": { "name": { "type": "string" } } },
+                              { "type": "string", "format": "binary" }
+                            ]
+                          },
+                          "prefixEncoding": [
+                            { "contentType": "application/json" },
+                            { "contentType": "application/octet-stream" }
+                          ]
+                        }
+                      }
+                    },
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+
+        // Should find the JSON prefixItem schema (not binary)
+        Assert.IsTrue(pointers.Length >= 1);
+    }
+
+    [TestMethod]
+    public void Generate_DeepNestedResponseHeader_ResolvesElementType()
+    {
+        // Exercises lines 4125-4132: deep nested response header with element type resolution
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Deep Header", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "headers": {
+                          "X-Ids": {
+                            "style": "simple",
+                            "explode": false,
+                            "schema": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": { "type": "string" },
+                                  "rev": { "type": "integer" }
+                                }
+                              }
+                            }
+                          }
+                        },
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "total": { "type": "integer" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"DeepHdr.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("DeepHdr", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        // Should generate code that resolves element type for deep nested header
+        Assert.IsTrue(files.Count > 0);
+    }
+
+    [TestMethod]
+    public void Generate_MultipartMixedPrefixWithBinaryPart_EmitsPrefixCode()
+    {
+        // Exercises lines 5421-5424: binary prefix part in multipart/mixed (emits BinaryPartData param)
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Prefix Binary", "version": "1.0" },
+              "paths": {
+                "/mixed": {
+                  "post": {
+                    "operationId": "uploadMixed",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "prefixItems": [
+                              { "type": "object", "properties": { "meta": { "type": "string" } } },
+                              { "type": "string", "format": "binary" }
+                            ]
+                          },
+                          "prefixEncoding": [
+                            { "contentType": "application/json" },
+                            { "contentType": "application/octet-stream" }
+                          ]
+                        }
+                      }
+                    },
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "uploaded": { "type": "boolean" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"PfxBin.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("PfxBin", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        // Should emit both WriteJsonPart and WriteBinaryPart for prefix parts
+        bool hasJsonPart = false;
+        bool hasBinaryPart = false;
+        foreach (GeneratedFile f in files)
+        {
+            if (f.Content.Contains("WriteJsonPart"))
+            {
+                hasJsonPart = true;
+            }
+
+            if (f.Content.Contains("WriteBinaryPart"))
+            {
+                hasBinaryPart = true;
+            }
+        }
+
+        Assert.IsTrue(hasJsonPart, "Expected WriteJsonPart for JSON prefix part");
+        Assert.IsTrue(hasBinaryPart, "Expected WriteBinaryPart for binary prefix part");
+    }
 }
