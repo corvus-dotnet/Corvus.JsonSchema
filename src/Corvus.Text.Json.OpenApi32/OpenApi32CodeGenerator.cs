@@ -5706,7 +5706,7 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine();
 
         w.WriteLine("/// <summary>");
-        w.WriteLine($"/// Parameters for the {op.MethodName} operation ({op.Method.ToString().ToUpperInvariant()} {op.PathTemplate}).");
+        w.WriteLine($"/// Parameters for the {op.MethodName} operation ({(op.CustomMethodName ?? op.Method.ToString()).ToUpperInvariant()} {op.PathTemplate}).");
         w.WriteLine("/// </summary>");
 
         string? remarks = op.Description ?? op.Summary;
@@ -5734,7 +5734,8 @@ public sealed class OpenApi32CodeGenerator
         // Emit Body property if operation has a request body
         if (op.RequestBody is { } rb)
         {
-            string bodyTypeName = this.ResolveRequestBodyTypeName(rb);
+            bool isRawStream = IsRawStreamRequestBody(rb);
+            string bodyTypeName = isRawStream ? "System.IO.Stream" : this.ResolveRequestBodyTypeName(rb);
             w.WriteLine();
             w.WriteLine("/// <summary>");
             string bodyDesc = rb.Description ?? "Gets the request body.";
@@ -6080,7 +6081,7 @@ public sealed class OpenApi32CodeGenerator
 
             foreach (OperationInfo op in tagOps)
             {
-                string operationKey = $"{op.Method}:{op.PathTemplate}";
+                string operationKey = $"{op.CustomMethodName ?? op.Method.ToString()}:{op.PathTemplate}";
                 if (!registeredOperations.Add(operationKey))
                 {
                     continue;
@@ -6095,7 +6096,7 @@ public sealed class OpenApi32CodeGenerator
 
                 if (mapMethod == "MapMethods")
                 {
-                    string httpMethod = op.Method.ToString().ToUpperInvariant();
+                    string httpMethod = op.CustomMethodName ?? op.Method.ToString().ToUpperInvariant();
                     w.WriteLine($"app.MapMethods(\"{op.PathTemplate}\", new[] {{ \"{httpMethod}\" }}, async (HttpContext context) =>");
                 }
                 else
@@ -6107,9 +6108,10 @@ public sealed class OpenApi32CodeGenerator
 
                 // Create workspace for parameter parsing and response writing
                 // (mirrors client response pattern: workspace manages param/header document lifetimes)
-                string? bodyTypeName = hasBody ? this.ResolveRequestBodyTypeName(op.RequestBody!.Value) : null;
+                bool isRawStreamBody = hasBody && IsRawStreamRequestBody(op.RequestBody!.Value);
+                string? bodyTypeName = hasBody && !isRawStreamBody ? this.ResolveRequestBodyTypeName(op.RequestBody!.Value) : null;
                 w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
-                if (hasBody)
+                if (hasBody && !isRawStreamBody)
                 {
                     w.WriteLine($"ParsedJsonDocument<{bodyTypeName}>? bodyDoc = null;");
                 }
@@ -6130,6 +6132,7 @@ public sealed class OpenApi32CodeGenerator
                 // FormUrlEncodedSerializer.Serialize used by the client).
                 // For multipart/form-data bodies, use the symmetric deserializer (inverse of
                 // MultipartFormDataSerializer.Serialize used by the client).
+                // For raw stream bodies (application/octet-stream), pass the stream directly.
                 // For JSON bodies, parse directly from the stream.
                 if (hasBody)
                 {
@@ -6138,7 +6141,11 @@ public sealed class OpenApi32CodeGenerator
                         w.WriteLine();
                     }
 
-                    if (IsFormUrlEncodedRequestBody(op.RequestBody!.Value))
+                    if (IsRawStreamRequestBody(op.RequestBody!.Value))
+                    {
+                        // Raw stream body — no parsing needed, pass context.Request.Body directly.
+                    }
+                    else if (IsFormUrlEncodedRequestBody(op.RequestBody!.Value))
                     {
                         w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);");
                     }
@@ -6168,7 +6175,14 @@ public sealed class OpenApi32CodeGenerator
 
                     if (hasBody)
                     {
-                        w.WriteLine("Body = bodyDoc!.RootElement,");
+                        if (isRawStreamBody)
+                        {
+                            w.WriteLine("Body = context.Request.Body,");
+                        }
+                        else
+                        {
+                            w.WriteLine("Body = bodyDoc!.RootElement,");
+                        }
                     }
 
                     w.CloseBrace().Write(";");
@@ -6222,7 +6236,7 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine("finally");
                 w.OpenBrace();
                 w.WriteLine("workspace.Dispose();");
-                if (hasBody)
+                if (hasBody && !isRawStreamBody)
                 {
                     w.WriteLine("bodyDoc?.Dispose();");
                 }

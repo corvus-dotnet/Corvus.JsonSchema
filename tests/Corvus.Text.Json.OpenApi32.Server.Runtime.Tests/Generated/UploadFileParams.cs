@@ -29,5 +29,5 @@ public readonly struct UploadFileParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public JsonElement Body { get; init; }
+    public System.IO.Stream Body { get; init; }
 }

@@ -15,7 +15,7 @@ using Corvus.Text.Json.OpenApi;
 namespace CanonTests32.Server;
 
 /// <summary>
-/// Parameters for the CopyResource operation (CUSTOM /resources/{resourceId}).
+/// Parameters for the CopyResource operation (COPY /resources/{resourceId}).
 /// </summary>
 public readonly struct CopyResourceParams
 {

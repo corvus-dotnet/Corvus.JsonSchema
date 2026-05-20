@@ -15,7 +15,7 @@ using Corvus.Text.Json.OpenApi;
 namespace CanonTests32.Server;
 
 /// <summary>
-/// Parameters for the PurgeItems operation (CUSTOM /items).
+/// Parameters for the PurgeItems operation (PURGE /items).
 /// </summary>
 /// <remarks>Purge all items (no operationId)</remarks>
 public readonly struct PurgeItemsParams

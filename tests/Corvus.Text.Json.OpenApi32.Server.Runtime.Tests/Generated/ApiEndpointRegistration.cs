@@ -194,7 +194,7 @@ public static class ApiEndpointRegistration
         }
         );
 
-        app.MapMethods("/items", new[] { "CUSTOM" }, async (HttpContext context) =>
+        app.MapMethods("/items", new[] { "PURGE" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -1131,7 +1131,7 @@ public static class ApiEndpointRegistration
         }
         );
 
-        app.MapMethods("/resources/{resourceId}", new[] { "CUSTOM" }, async (HttpContext context) =>
+        app.MapMethods("/resources/{resourceId}", new[] { "COPY" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             ParsedJsonDocument<CanonTests32.Server.Schema2>? bodyDoc = null;
@@ -1166,6 +1166,166 @@ public static class ApiEndpointRegistration
                 {
                     headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
                 }, context.Response.Headers);
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+                bodyDoc?.Dispose();
+            }
+        }
+        );
+
+        app.MapMethods("/resources/{resourceId}", new[] { "PURGE" }, async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                CanonTests32.Server.JsonString ResourceIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("resourceId", out object? ResourceIdRouteVal) && ResourceIdRouteVal is string ResourceIdRaw)
+                {
+                    ResourceIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ResourceIdRaw, workspace);
+                }
+
+                PurgeResourceParams parameters = new()
+                {
+                    ResourceId = ResourceIdValue,
+                }
+                ;
+
+                PurgeResourceResult result = await defaultHandler.HandlePurgeResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+
+        app.MapMethods("/resources/{resourceId}", new[] { "MOVE" }, async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            try
+            {
+                CanonTests32.Server.JsonString ResourceIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("resourceId", out object? ResourceIdRouteVal) && ResourceIdRouteVal is string ResourceIdRaw)
+                {
+                    ResourceIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ResourceIdRaw, workspace);
+                }
+                CanonTests32.Server.ResourcesByResourceIdAdditionalOperationsMoveOptions OptionsValue = default;
+                if (context.Request.Query.TryGetValue("options", out var OptionsQueryVal) && OptionsQueryVal.Count > 0)
+                {
+                    string OptionsRaw = OptionsQueryVal[0]!;
+                    OptionsValue = CanonTests32.Server.ResourcesByResourceIdAdditionalOperationsMoveOptions.CreateBuilder<string>(workspace, OptionsRaw, static (in string ctx, ref CanonTests32.Server.ResourcesByResourceIdAdditionalOperationsMoveOptions.Builder objectBuilder) =>
+                    {
+                        System.ReadOnlySpan<char> remaining = ctx;
+                        while (!remaining.IsEmpty)
+                        {
+                            int sepIdx = remaining.IndexOf(',');
+                            System.ReadOnlySpan<char> pair = sepIdx >= 0 ? remaining.Slice(0, sepIdx) : remaining;
+                            int eqIdx = pair.IndexOf('=');
+                            if (eqIdx >= 0)
+                            {
+                                System.ReadOnlySpan<char> key = pair.Slice(0, eqIdx).Trim();
+                                System.ReadOnlySpan<char> value = pair.Slice(eqIdx + 1).Trim();
+                                objectBuilder.AddProperty(key, value);
+                            }
+                            remaining = sepIdx >= 0 ? remaining.Slice(sepIdx + 1) : default;
+                        }
+                    }).RootElement;
+                }
+
+                MoveResourceParams parameters = new()
+                {
+                    ResourceId = ResourceIdValue,
+                    Options = OptionsValue,
+                }
+                ;
+
+                MoveResourceResult result = await defaultHandler.HandleMoveResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
+                if (!result.Body.IsUndefined())
+                {
+                    context.Response.ContentType = result.ContentType ?? "application/json";
+                    Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);
+                    try
+                    {
+                        result.WriteBody(writer);
+                        writer.Flush();
+                    }
+                    finally
+                    {
+                        workspace.ReturnWriter(writer);
+                    }
+
+                    await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                workspace.Dispose();
+            }
+        }
+        );
+
+        app.MapMethods("/resources/{resourceId}", new[] { "BATCH" }, async (HttpContext context) =>
+        {
+            JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
+            ParsedJsonDocument<JsonElement>? bodyDoc = null;
+            try
+            {
+                CanonTests32.Server.JsonString ResourceIdValue = default;
+                if (context.Request.RouteValues.TryGetValue("resourceId", out object? ResourceIdRouteVal) && ResourceIdRouteVal is string ResourceIdRaw)
+                {
+                    ResourceIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ResourceIdRaw, workspace);
+                }
+
+                bodyDoc = await ParsedJsonDocument<JsonElement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+
+                BatchResourceParams parameters = new()
+                {
+                    ResourceId = ResourceIdValue,
+                    Body = bodyDoc!.RootElement,
+                }
+                ;
+
+                BatchResourceResult result = await defaultHandler.HandleBatchResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -1405,14 +1565,12 @@ public static class ApiEndpointRegistration
         app.MapPost("/upload-raw", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<JsonElement>? bodyDoc = null;
             try
             {
-                bodyDoc = await ParsedJsonDocument<JsonElement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
                 UploadRawFileParams parameters = new()
                 {
-                    Body = bodyDoc!.RootElement,
+                    Body = context.Request.Body,
                 }
                 ;
 
@@ -1439,7 +1597,6 @@ public static class ApiEndpointRegistration
             finally
             {
                 workspace.Dispose();
-                bodyDoc?.Dispose();
             }
         }
         );
@@ -1809,7 +1966,6 @@ public static class ApiEndpointRegistration
         app.MapPost("/upload", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<JsonElement>? bodyDoc = null;
             try
             {
                 CanonTests32.Server.JsonString XFileNameValue = default;
@@ -1819,12 +1975,11 @@ public static class ApiEndpointRegistration
                     XFileNameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XFileNameRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<JsonElement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
                 UploadFileParams parameters = new()
                 {
                     XFileName = XFileNameValue,
-                    Body = bodyDoc!.RootElement,
+                    Body = context.Request.Body,
                 }
                 ;
 
@@ -1851,7 +2006,6 @@ public static class ApiEndpointRegistration
             finally
             {
                 workspace.Dispose();
-                bodyDoc?.Dispose();
             }
         }
         );

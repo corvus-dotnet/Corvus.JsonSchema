@@ -15,7 +15,7 @@ using Corvus.Text.Json.OpenApi;
 namespace CanonTests32.Server;
 
 /// <summary>
-/// Parameters for the PurgeResource operation (CUSTOM /resources/{resourceId}).
+/// Parameters for the PurgeResource operation (PURGE /resources/{resourceId}).
 /// </summary>
 public readonly struct PurgeResourceParams
 {

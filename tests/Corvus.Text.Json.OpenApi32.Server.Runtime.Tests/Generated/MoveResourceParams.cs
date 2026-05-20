@@ -15,7 +15,7 @@ using Corvus.Text.Json.OpenApi;
 namespace CanonTests32.Server;
 
 /// <summary>
-/// Parameters for the MoveResource operation (CUSTOM /resources/{resourceId}).
+/// Parameters for the MoveResource operation (MOVE /resources/{resourceId}).
 /// </summary>
 public readonly struct MoveResourceParams
 {

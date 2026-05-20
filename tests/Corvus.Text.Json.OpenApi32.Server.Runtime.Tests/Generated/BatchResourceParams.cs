@@ -15,7 +15,7 @@ using Corvus.Text.Json.OpenApi;
 namespace CanonTests32.Server;
 
 /// <summary>
-/// Parameters for the BatchResource operation (CUSTOM /resources/{resourceId}).
+/// Parameters for the BatchResource operation (BATCH /resources/{resourceId}).
 /// </summary>
 public readonly struct BatchResourceParams
 {
