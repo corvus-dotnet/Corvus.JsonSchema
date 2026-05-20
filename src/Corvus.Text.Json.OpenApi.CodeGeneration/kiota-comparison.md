@@ -6,7 +6,7 @@ This document compares the Corvus OpenAPI client generator with [Microsoft Kiota
 
 | Aspect | Corvus | Kiota |
 |--------|--------|-------|
-| Generation model | Roslyn source generator + CLI tool | CLI tool only |
+| Generation model | CLI tool (`corvusjson openapi-client`) | CLI tool (`kiota generate`) |
 | Runtime dependency | `Corvus.Text.Json.OpenApi` (thin transport abstraction) | `Microsoft.Kiota.Bundle` (abstractions + HTTP + serialization + auth) |
 | Serialization | Zero-copy over pooled JSON document (no POCO hydration) | POCO model classes with `IParsable` self-deserialization |
 | Memory model | Struct-based types backed by pooled `byte[]` — GC-free hot path | Class-based models allocated per response |
@@ -194,12 +194,10 @@ All validation modes produce zero additional allocation (1.03 KB throughout).
 | Cookie parameters | ✅ | ❌ |
 | Schema validation | ✅ (None/Basic/Detailed) | ❌ |
 | Error response discrimination | ✅ (typed `MatchResult`) | ✅ (exception-based) |
-| Pagination helpers | Planned | ❌ |
 | Authentication | ✅ Built-in (Bearer, ApiKey, Basic) | ✅ Built-in (Bearer, ApiKey, Basic, Anonymous) |
 | Middleware pipeline | Platform-native (`IHttpClientFactory` + Polly) | Built-in `DelegatingHandler` chain |
 | Multiple languages | C# only | C#, Java, Go, TypeScript, Python, PHP, Ruby, Swift, CLI |
-| Source generator integration | ✅ | ❌ |
-| IDE autocompletion during build | ✅ (via source generator) | ✅ (pre-generated files) |
+| IDE autocompletion | ✅ (pre-generated files) | ✅ (pre-generated files) |
 
 ## When to Choose Corvus
 
