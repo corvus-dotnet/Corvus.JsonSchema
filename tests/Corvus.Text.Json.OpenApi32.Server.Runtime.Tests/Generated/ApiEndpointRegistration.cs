@@ -387,7 +387,7 @@ public static class ApiEndpointRegistration
                     ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostItemsByItemIdUploadBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests32.Server.PostItemsByItemIdUploadBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
 
                 UploadItemDataParams parameters = new()
                 {
@@ -1919,7 +1919,7 @@ public static class ApiEndpointRegistration
                     XUploadTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XUploadTokenRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostAttachmentsBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests32.Server.PostAttachmentsBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
 
                 UploadAttachmentParams parameters = new()
                 {
@@ -2019,7 +2019,7 @@ public static class ApiEndpointRegistration
                     XBatchIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XBatchIdRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostAttachmentsEncodedBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests32.Server.PostAttachmentsEncodedBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
 
                 UploadAttachmentEncodedParams parameters = new()
                 {

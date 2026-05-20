@@ -44,7 +44,13 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
         => new(PatchItemsItemIdResult.Ok(DefaultItem, workspace));
 
     public ValueTask<UpdateItemFormResult> HandleUpdateItemFormAsync(UpdateItemFormParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(UpdateItemFormResult.Ok(DefaultItem, workspace));
+    {
+        // Echo the parsed form body back as JSON to verify deserialization.
+        // We serialize the body JSON element and parse it as ItemEntity (which accepts any JSON).
+        string json = parameters.Body.ToString();
+        ItemEntity echoBody = ItemEntity.ParseValue(System.Text.Encoding.UTF8.GetBytes(json));
+        return new(UpdateItemFormResult.Ok(echoBody, workspace));
+    }
 
     public ValueTask<UploadItemDataResult> HandleUploadItemDataAsync(UploadItemDataParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(UploadItemDataResult.Created(DefaultItem, workspace));
@@ -199,13 +205,23 @@ internal sealed class MockItemsHandler : IApiItemsHandler
         => new(UploadFileResult.Created(DefaultItem, workspace));
 
     public ValueTask<SubmitFeedbackResult> HandleSubmitFeedbackAsync(SubmitFeedbackParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(SubmitFeedbackResult.Created(DefaultItem, workspace));
+    {
+        // Echo the parsed form body back as JSON to verify deserialization.
+        string json = parameters.Body.ToString();
+        ItemEntity echoBody = ItemEntity.ParseValue(System.Text.Encoding.UTF8.GetBytes(json));
+        return new(SubmitFeedbackResult.Created(echoBody, workspace));
+    }
 
     public ValueTask<UploadAttachmentResult> HandleUploadAttachmentAsync(UploadAttachmentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(UploadAttachmentResult.Created(DefaultItem, workspace));
 
     public ValueTask<SubmitFeedbackEncodedResult> HandleSubmitFeedbackEncodedAsync(SubmitFeedbackEncodedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
-        => new(SubmitFeedbackEncodedResult.Created(DefaultItem, workspace));
+    {
+        // Echo the parsed form body back as JSON to verify deserialization.
+        string json = parameters.Body.ToString();
+        ItemEntity echoBody = ItemEntity.ParseValue(System.Text.Encoding.UTF8.GetBytes(json));
+        return new(SubmitFeedbackEncodedResult.Created(echoBody, workspace));
+    }
 
     public ValueTask<UploadAttachmentEncodedResult> HandleUploadAttachmentEncodedAsync(UploadAttachmentEncodedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(UploadAttachmentEncodedResult.Created(DefaultItem, workspace));

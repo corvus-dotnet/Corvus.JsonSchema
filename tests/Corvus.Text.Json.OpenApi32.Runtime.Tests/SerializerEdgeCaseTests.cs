@@ -288,4 +288,85 @@ public class SerializerEdgeCaseTests
         Assert.ThrowsExactly<InvalidOperationException>(
             () => ThrowHelper.ThrowFormBodyMustBeObject());
     }
+
+    [TestMethod]
+    public void FormUrlEncodedSerializer_LongPropertyNameGrowsCharBuf()
+    {
+        // Property name > 128 chars triggers charBuf growth (lines 124-127).
+        // ArrayPool<char>.Rent(128) returns exactly 128 chars, so GetMaxCharCount
+        // for a 129-byte UTF-8 name will exceed it.
+        string longName = new('x', 200);
+        string json = $$"""{"{{longName}}":"value"}""";
+        JsonElement obj = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
+        using MemoryStream stream = new();
+
+        Dictionary<string, PropertyEncoding> encodings = new()
+        {
+            [longName] = new PropertyEncoding(AllowReserved: true),
+        };
+
+        FormUrlEncodedSerializer.Serialize(obj, stream, encodings);
+
+        string output = Encoding.UTF8.GetString(stream.ToArray());
+
+        Assert.AreEqual($"{longName}=value", output);
+    }
+
+    [TestMethod]
+    public void FormUrlEncodedSerializer_LongStringValueGrowsValueBuf()
+    {
+        // A string value > 1024 bytes triggers the TryFormat growth loop (lines 512-515).
+        // TryFormat for a JSON string writes the raw string content (no quotes).
+        // A 1100-char string exceeds InitialScratchSize (1024), forcing buffer growth.
+        string longValue = new('A', 1100);
+        string json = $$"""{"key":"{{longValue}}"}""";
+        JsonElement obj = JsonElement.ParseValue(Encoding.UTF8.GetBytes(json));
+        using MemoryStream stream = new();
+
+        FormUrlEncodedSerializer.Serialize(obj, stream, null);
+
+        string output = Encoding.UTF8.GetString(stream.ToArray());
+
+        Assert.AreEqual($"key={longValue}", output);
+    }
+
+    [TestMethod]
+    public async Task FormUrlEncodedSerializer_LargeStreamBodyGrowsRentBodyBuffer()
+    {
+        // RentBodyAsync uses a 4096-byte initial buffer. A body > 4096 bytes
+        // triggers the growth path (FormFieldReader lines 400-404).
+        // Use long values to ensure total size exceeds 4096.
+        string longBody = string.Join("&", Enumerable.Range(0, 50).Select(i => $"longkey_{i:D4}={new string('v', 80)}"));
+        byte[] bodyBytes = Encoding.UTF8.GetBytes(longBody);
+
+        // Confirm the body exceeds 4096 to actually hit the growth path
+        Assert.IsTrue(bodyBytes.Length > 4096, $"Body length {bodyBytes.Length} should exceed 4096");
+
+        using MemoryStream stream = new(bodyBytes);
+        using ParsedJsonDocument<JsonElement> result =
+            await FormUrlEncodedSerializer.DeserializeAsync<JsonElement>(stream, default);
+
+        // Verify we got a valid object with the expected keys
+        Assert.AreEqual(JsonValueKind.Object, result.RootElement.ValueKind);
+        Assert.IsTrue(result.RootElement.TryGetProperty("longkey_0000", out _));
+        Assert.IsTrue(result.RootElement.TryGetProperty("longkey_0049", out _));
+    }
+
+    [TestMethod]
+    public async Task FormUrlEncodedSerializer_MoreThan64KeysFallsBack()
+    {
+        // FormFieldReader lines 195/199: more than 64 distinct keys exceeds the
+        // fixed stackalloc key offset buffer and falls back to scalar-only mode.
+        string body = string.Join("&", Enumerable.Range(0, 70).Select(i => $"k{i}=v{i}"));
+        byte[] bodyBytes = Encoding.UTF8.GetBytes(body);
+
+        using MemoryStream stream = new(bodyBytes);
+        using ParsedJsonDocument<JsonElement> result =
+            await FormUrlEncodedSerializer.DeserializeAsync<JsonElement>(stream, default);
+
+        // All 70 keys should still be present in the JSON output
+        Assert.AreEqual(JsonValueKind.Object, result.RootElement.ValueKind);
+        Assert.IsTrue(result.RootElement.TryGetProperty("k0", out _));
+        Assert.IsTrue(result.RootElement.TryGetProperty("k69", out _));
+    }
 }
