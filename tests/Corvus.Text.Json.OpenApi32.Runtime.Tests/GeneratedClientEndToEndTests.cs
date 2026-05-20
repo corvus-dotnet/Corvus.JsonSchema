@@ -6347,6 +6347,141 @@ public class GeneratedClientEndToEndTests
         Assert.AreEqual(new string('b', 300), items[1]);
     }
 
+    // ── Medium-risk cross-cutting gap tests ──────────────────────────────
+    [TestMethod]
+    public async Task ChatCompletions_400_MatchResult_DispatchesToBadRequest()
+    {
+        using var harness = new TestHarness(HttpStatusCode.BadRequest, """{"error":"invalid model","code":400}""");
+
+        ChatCompletionsRequest request = default;
+        await using ChatCompletionsResponse response = await harness.Transport
+            .SendAsync<ChatCompletionsRequest, ChatCompletionsResponse>(
+                in request,
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchBadRequest: body => $"bad:{(string)body.Error}",
+            matchDefault: statusCode => $"default:{statusCode}");
+
+        Assert.AreEqual("bad:invalid model", result);
+    }
+
+    [TestMethod]
+    public async Task ChatCompletions_200_MatchResult_FallsToDefault()
+    {
+        // 200 is streaming — no typed body — so MatchResult goes to default
+        byte[] bytes = "data: {\"id\":\"x\"}\n\n"u8.ToArray();
+        using var harness = new TestHarness(HttpStatusCode.OK, bytes, "text/event-stream");
+
+        ChatCompletionsRequest request = default;
+        await using ChatCompletionsResponse response = await harness.Transport
+            .SendAsync<ChatCompletionsRequest, ChatCompletionsResponse>(
+                in request,
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchBadRequest: body => "bad",
+            matchDefault: statusCode => $"default:{statusCode}");
+
+        Assert.AreEqual("default:200", result);
+    }
+
+    [TestMethod]
+    public async Task ChatCompletions_500_MatchResult_FallsToDefault()
+    {
+        using var harness = new TestHarness(HttpStatusCode.InternalServerError, """{"error":"server error"}""");
+
+        ChatCompletionsRequest request = default;
+        await using ChatCompletionsResponse response = await harness.Transport
+            .SendAsync<ChatCompletionsRequest, ChatCompletionsResponse>(
+                in request,
+                CancellationToken.None);
+
+        string result = response.MatchResult(
+            matchBadRequest: body => "bad",
+            matchDefault: statusCode => $"default:{statusCode}");
+
+        Assert.AreEqual("default:500", result);
+    }
+
+    [TestMethod]
+    public async Task GetItem_TransportFailure_ThrowsHttpRequestException()
+    {
+        using var handler = new ThrowingHandler(new HttpRequestException("Connection refused"));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+        await using var transport = new HttpClientTransport(client);
+
+        var request = new GetItemRequest(JsonString.ParseValue("\"item-1\""u8));
+
+        await Assert.ThrowsExactlyAsync<HttpRequestException>(
+            async () =>
+            {
+                await using GetItemResponse response = await transport
+                    .SendAsync<GetItemRequest, GetItemResponse>(in request, CancellationToken.None);
+            });
+    }
+
+    [TestMethod]
+    public async Task GetItem_MalformedJsonResponse_ThrowsOnParse()
+    {
+        // Server returns invalid JSON for a 200 response that expects a typed body
+        using var harness = new TestHarness(HttpStatusCode.OK, "this is not json {{{{");
+
+        var request = new GetItemRequest(JsonString.ParseValue("\"item-1\""u8));
+
+        // ParseAsync should throw when trying to parse invalid JSON
+        await Assert.ThrowsAsync<Corvus.Text.Json.JsonException>(
+            async () =>
+            {
+                await using GetItemResponse response = await harness.Transport
+                    .SendAsync<GetItemRequest, GetItemResponse>(in request, CancellationToken.None);
+            });
+    }
+
+    [TestMethod]
+    public async Task CreateItem_MalformedJson422_ThrowsOnParse()
+    {
+        // Server returns invalid JSON for an error status code
+        using var harness = new TestHarness(HttpStatusCode.UnprocessableEntity, "not valid json");
+
+        PostItemsBody body = PostItemsBody.ParseValue("""{"name":"test","description":"d"}"""u8);
+
+        await Assert.ThrowsAsync<Corvus.Text.Json.JsonException>(
+            async () =>
+            {
+                await using CreateItemResponse response = await harness.Transport
+                    .SendAsync<CreateItemRequest, PostItemsBody, CreateItemResponse>(
+                        default(CreateItemRequest), in body, CancellationToken.None);
+            });
+    }
+
+    [TestMethod]
+    public async Task GetItem_TransportTimeout_ThrowsTaskCanceledException()
+    {
+        using var handler = new ThrowingHandler(new TaskCanceledException("Request timed out"));
+        using var client = new HttpClient(handler) { BaseAddress = new Uri("http://localhost") };
+        await using var transport = new HttpClientTransport(client);
+
+        var request = new GetItemRequest(JsonString.ParseValue("\"item-1\""u8));
+
+        await Assert.ThrowsExactlyAsync<TaskCanceledException>(
+            async () =>
+            {
+                await using GetItemResponse response = await transport
+                    .SendAsync<GetItemRequest, GetItemResponse>(in request, CancellationToken.None);
+            });
+    }
+
+    private sealed class ThrowingHandler(Exception exception) : DelegatingHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(
+            HttpRequestMessage request,
+            CancellationToken cancellationToken)
+        {
+            throw exception;
+        }
+    }
+
     private sealed class SequencedMockHandler : DelegatingHandler
     {
         private readonly IReadOnlyList<(HttpStatusCode StatusCode, string ResponseBody)> responses;
