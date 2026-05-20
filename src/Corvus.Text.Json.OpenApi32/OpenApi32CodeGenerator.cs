@@ -5865,6 +5865,7 @@ public sealed class OpenApi32CodeGenerator
         w.WriteLine();
         w.WriteLine("using System.Buffers;");
         w.WriteLine("using System.Diagnostics.CodeAnalysis;");
+        w.WriteLine("using System.IO.Pipelines;");
         w.WriteLine("using Corvus.Runtime.InteropServices;");
         w.WriteLine("using Corvus.Text.Json;");
         w.WriteLine("using Corvus.Text.Json.Internal;");
@@ -5947,6 +5948,46 @@ public sealed class OpenApi32CodeGenerator
 
                 w.OpenBrace();
 
+                // Pre-extract string-type parameters using stackalloc to avoid allocations
+                List<(string FieldName, string TypeName, ParameterInfo Param)>? stringParams = null;
+                foreach (ParameterInfo param in op.Parameters)
+                {
+                    if (param.SerializationKind == ParameterSerializationKind.String)
+                    {
+                        stringParams ??= [];
+                        string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
+                        string typeName = this.GetParameterTypeName(param);
+                        stringParams.Add((fieldName, typeName, param));
+                    }
+                }
+
+                if (stringParams is not null)
+                {
+                    foreach ((string fieldName, string typeName, ParameterInfo param) in stringParams)
+                    {
+                        EmitServerStringParameterExtraction(w, param, fieldName, typeName);
+                    }
+
+                    w.WriteLine();
+                }
+
+                // Read body from PipeReader if present
+                if (hasBody)
+                {
+                    string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
+                    w.WriteLine("System.IO.Pipelines.ReadResult bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);");
+                    w.WriteLine("while (!bodyReadResult.IsCompleted)");
+                    w.OpenBrace();
+                    w.WriteLine("context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.Start, bodyReadResult.Buffer.End);");
+                    w.WriteLine("bodyReadResult = await context.Request.BodyReader.ReadAsync(context.RequestAborted).ConfigureAwait(false);");
+                    w.CloseBrace();
+                    w.WriteLine();
+                    w.WriteLine($"Utf8JsonReader bodyReader = new(bodyReadResult.Buffer);");
+                    w.WriteLine($"{bodyTypeName} body = {bodyTypeName}.ParseValue(ref bodyReader);");
+                    w.WriteLine("context.Request.BodyReader.AdvanceTo(bodyReadResult.Buffer.End);");
+                    w.WriteLine();
+                }
+
                 // Bind parameters
                 if (op.Parameters.Length > 0 || hasBody)
                 {
@@ -5962,8 +6003,7 @@ public sealed class OpenApi32CodeGenerator
 
                     if (hasBody)
                     {
-                        string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
-                        w.WriteLine($"Body = {bodyTypeName}.ParseValue(await new StreamReader(context.Request.Body).ReadToEndAsync(context.RequestAborted).ConfigureAwait(false)),");
+                        w.WriteLine("Body = body,");
                     }
 
                     w.CloseBrace().Write(";");
@@ -5980,17 +6020,24 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine($"{resultName} result = await {paramName}.Handle{op.MethodName}Async(parameters, context.RequestAborted).ConfigureAwait(false);");
                 w.WriteLine();
 
-                // Write response
+                // Write response using rented writer and PipeWriter
                 w.WriteLine("context.Response.StatusCode = result.StatusCode;");
                 w.WriteLine("if (!result.Body.IsUndefined())");
                 w.OpenBrace();
                 w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
-                w.WriteLine("var writer = new Utf8JsonWriter(context.Response.Body);");
-                w.WriteLine("await using (writer.ConfigureAwait(false))");
+                w.WriteLine("using JsonWorkspace workspace = JsonWorkspace.Create();");
+                w.WriteLine("Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);");
+                w.WriteLine("try");
                 w.OpenBrace();
                 w.WriteLine("result.WriteBody(writer);");
-                w.WriteLine("await writer.FlushAsync(context.RequestAborted).ConfigureAwait(false);");
+                w.WriteLine("writer.Flush();");
                 w.CloseBrace();
+                w.WriteLine("finally");
+                w.OpenBrace();
+                w.WriteLine("workspace.ReturnWriter(writer);");
+                w.CloseBrace();
+                w.WriteLine();
+                w.WriteLine("await context.Response.BodyWriter.FlushAsync(context.RequestAborted).ConfigureAwait(false);");
                 w.CloseBrace();
 
                 w.CloseBrace().Write(");");
@@ -6016,43 +6063,107 @@ public sealed class OpenApi32CodeGenerator
         string paramNameLiteral = EscapeStringLiteral(param.Name);
         bool isStringKind = param.SerializationKind == ParameterSerializationKind.String;
 
-        // For string-type parameters, the raw HTTP value must be wrapped in JSON quotes
-        // to produce valid JSON for ParseValue. Numeric/boolean values are already valid JSON.
-        string parseExpr = isStringKind
-            ? $"{typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes(\"\\\"\" + {{0}} + \"\\\"\"))"
-            : $"{typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({{0}}))";
+        if (isStringKind)
+        {
+            // String params are pre-extracted above via EmitServerStringParameterExtraction.
+            // Just reference the local variable.
+            w.WriteLine($"{fieldName} = {fieldName}Parsed,");
+            return;
+        }
 
+        // For non-string types (numbers, booleans), the raw HTTP string value IS valid JSON.
+        // Use the string overload of ParseValue directly — zero allocation.
         switch (param.Location)
         {
             case ParameterLocation.Path:
-                string pathParse = string.Format(parseExpr, $"{fieldName}RouteStr");
                 w.WriteLine(
                     $"{fieldName} = context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}RouteStr " +
-                    $"? {pathParse} : default,");
+                    $"? {typeName}.ParseValue({fieldName}RouteStr) : default,");
                 break;
 
             case ParameterLocation.Query:
             case ParameterLocation.Querystring:
-                string queryParse = string.Format(parseExpr, $"{fieldName}QueryVal[0]!");
                 w.WriteLine(
                     $"{fieldName} = context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryVal) && {fieldName}QueryVal.Count > 0 " +
-                    $"? {queryParse} : default,");
+                    $"? {typeName}.ParseValue({fieldName}QueryVal[0]!) : default,");
                 break;
 
             case ParameterLocation.Header:
-                string headerParse = string.Format(parseExpr, $"{fieldName}HeaderVal[0]!");
                 w.WriteLine(
                     $"{fieldName} = context.Request.Headers.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}HeaderVal) && {fieldName}HeaderVal.Count > 0 " +
-                    $"? {headerParse} : default,");
+                    $"? {typeName}.ParseValue({fieldName}HeaderVal[0]!) : default,");
                 break;
 
             case ParameterLocation.Cookie:
-                string cookieParse = string.Format(parseExpr, $"{fieldName}CookieVal");
                 w.WriteLine(
                     $"{fieldName} = context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null " +
-                    $"? {cookieParse} : default,");
+                    $"? {typeName}.ParseValue({fieldName}CookieVal) : default,");
                 break;
         }
+    }
+
+    private static void EmitServerStringParameterExtraction(
+        IndentedWriter w,
+        ParameterInfo param,
+        string fieldName,
+        string typeName)
+    {
+        string paramNameLiteral = EscapeStringLiteral(param.Name);
+
+        // Extract the raw string value and parse it using stackalloc to wrap in JSON quotes.
+        // This avoids byte[] allocation from Encoding.UTF8.GetBytes and string concatenation.
+        switch (param.Location)
+        {
+            case ParameterLocation.Path:
+                w.WriteLine($"{typeName} {fieldName}Parsed = default;");
+                w.WriteLine($"if (context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}RouteStr)");
+                w.OpenBrace();
+                EmitStackallocStringParse(w, fieldName, typeName, $"{fieldName}RouteStr");
+                w.CloseBrace();
+                break;
+
+            case ParameterLocation.Query:
+            case ParameterLocation.Querystring:
+                w.WriteLine($"{typeName} {fieldName}Parsed = default;");
+                w.WriteLine($"if (context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryVal) && {fieldName}QueryVal.Count > 0)");
+                w.OpenBrace();
+                w.WriteLine($"string {fieldName}RawStr = {fieldName}QueryVal[0]!;");
+                EmitStackallocStringParse(w, fieldName, typeName, $"{fieldName}RawStr");
+                w.CloseBrace();
+                break;
+
+            case ParameterLocation.Header:
+                w.WriteLine($"{typeName} {fieldName}Parsed = default;");
+                w.WriteLine($"if (context.Request.Headers.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}HeaderVal) && {fieldName}HeaderVal.Count > 0)");
+                w.OpenBrace();
+                w.WriteLine($"string {fieldName}RawStr = {fieldName}HeaderVal[0]!;");
+                EmitStackallocStringParse(w, fieldName, typeName, $"{fieldName}RawStr");
+                w.CloseBrace();
+                break;
+
+            case ParameterLocation.Cookie:
+                w.WriteLine($"{typeName} {fieldName}Parsed = default;");
+                w.WriteLine($"if (context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null)");
+                w.OpenBrace();
+                EmitStackallocStringParse(w, fieldName, typeName, $"{fieldName}CookieVal");
+                w.CloseBrace();
+                break;
+        }
+    }
+
+    private static void EmitStackallocStringParse(
+        IndentedWriter w,
+        string fieldName,
+        string typeName,
+        string rawVarName)
+    {
+        // Wrap the raw string value in JSON quotes using a stackalloc char buffer,
+        // then parse using ParseValue(ReadOnlySpan<char>) — zero heap allocation.
+        w.WriteLine($"Span<char> {fieldName}Buf = stackalloc char[{rawVarName}.Length + 2];");
+        w.WriteLine($"{fieldName}Buf[0] = '\"';");
+        w.WriteLine($"{rawVarName}.AsSpan().CopyTo({fieldName}Buf.Slice(1));");
+        w.WriteLine($"{fieldName}Buf[{rawVarName}.Length + 1] = '\"';");
+        w.WriteLine($"{fieldName}Parsed = {typeName}.ParseValue({fieldName}Buf.Slice(0, {rawVarName}.Length + 2));");
     }
 
     private static string GetAspNetMapMethod(OperationMethod method) =>
