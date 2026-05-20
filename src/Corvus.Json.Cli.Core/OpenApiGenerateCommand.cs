@@ -102,6 +102,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         {
             IReadOnlyList<GeneratedFile> files;
             string modelsPath = Path.Combine(outputPath, "Models");
+            IReadOnlyList<string>? modelFileNames = null;
 
             if (specVersion is "3.2")
             {
@@ -111,10 +112,12 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
-                Dictionary<string, string>? schemaTypeMap = schemaRefs.Length > 0
-                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
-                        .ConfigureAwait(false)
-                    : null;
+                Dictionary<string, string>? schemaTypeMap = null;
+                if (schemaRefs.Length > 0)
+                {
+                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                        .ConfigureAwait(false);
+                }
 
                 if (schemaTypeMap is not null)
                 {
@@ -135,10 +138,12 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
-                Dictionary<string, string>? schemaTypeMap = schemaRefs.Length > 0
-                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
-                        .ConfigureAwait(false)
-                    : null;
+                Dictionary<string, string>? schemaTypeMap = null;
+                if (schemaRefs.Length > 0)
+                {
+                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                        .ConfigureAwait(false);
+                }
 
                 if (schemaTypeMap is not null)
                 {
@@ -159,10 +164,12 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 AnsiConsole.MarkupLine($"[green]API:[/] {OpenApiCommandHelpers.GetTitle(specRoot) ?? "(untitled)"} v{OpenApiCommandHelpers.GetVersion(specRoot) ?? "?"}");
                 AnsiConsole.MarkupLine($"[green]Schemas:[/] {schemaRefs.Length}");
 
-                Dictionary<string, string>? schemaTypeMap = schemaRefs.Length > 0
-                    ? await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
-                        .ConfigureAwait(false)
-                    : null;
+                Dictionary<string, string>? schemaTypeMap = null;
+                if (schemaRefs.Length > 0)
+                {
+                    (schemaTypeMap, modelFileNames) = await GenerateSchemaTypesAsync(specFilePath, specVersion, rootNamespace, modelsPath, schemaRefs, parameterNames, cancellationToken)
+                        .ConfigureAwait(false);
+                }
 
                 if (schemaTypeMap is not null)
                 {
@@ -191,8 +198,16 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
                 generatedFileNames.Add(file.FileName);
             }
 
-            int totalFiles = files.Count;
-            AnsiConsole.MarkupLine($"[green]Generated {totalFiles} files in {outputPath}[/]");
+            // Include model files with relative Models/ prefix
+            if (modelFileNames is not null)
+            {
+                foreach (string modelFile in modelFileNames)
+                {
+                    generatedFileNames.Add(Path.Combine("Models", modelFile));
+                }
+            }
+
+            AnsiConsole.MarkupLine($"[green]Generated {generatedFileNames.Count} files ({files.Count} client + {modelFileNames?.Count ?? 0} model) in {outputPath}[/]");
 
             // Write lock file and clean up backup
             OpenApiLockFileModel lockFile = OpenApiLockFile.Create(in specRoot, specVersion, rootNamespace, settings.ClientName, filter, generatedFileNames, specUrl);
@@ -214,7 +229,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         }
     }
 
-    private static async Task<Dictionary<string, string>> GenerateSchemaTypesAsync(
+    private static async Task<(Dictionary<string, string> SchemaTypeMap, IReadOnlyList<string> GeneratedFileNames)> GenerateSchemaTypesAsync(
         string specFile,
         string specVersion,
         string rootNamespace,
@@ -307,17 +322,17 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
         // Write schema type files
         Directory.CreateDirectory(outputPath);
 
-        int schemaFilesWritten = 0;
+        List<string> schemaFileNames = [];
         foreach (GeneratedCodeFile codeFile in generatedCode)
         {
             string filePath = Path.Combine(outputPath, codeFile.FileName);
             await File.WriteAllTextAsync(filePath, codeFile.FileContent, cancellationToken)
                 .ConfigureAwait(false);
             AnsiConsole.MarkupLine($"  [cyan]Schema type:[/] {filePath}");
-            schemaFilesWritten++;
+            schemaFileNames.Add(codeFile.FileName);
         }
 
-        AnsiConsole.MarkupLine($"[green]Generated {schemaFilesWritten} schema type files[/]");
+        AnsiConsole.MarkupLine($"[green]Generated {schemaFileNames.Count} schema type files[/]");
 
         // Build the pointer → fully qualified type name map
         Dictionary<string, string> schemaTypeMap = new(StringComparer.Ordinal);
@@ -336,7 +351,7 @@ internal sealed class OpenApiGenerateCommand : AsyncCommand<OpenApiGenerateSetti
             AddChildTypesToMap(reduced, schemaTypeMap);
         }
 
-        return schemaTypeMap;
+        return (schemaTypeMap, schemaFileNames);
     }
 
     /// <summary>
