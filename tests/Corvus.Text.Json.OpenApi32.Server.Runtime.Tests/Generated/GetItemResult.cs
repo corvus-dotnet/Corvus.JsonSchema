@@ -19,11 +19,17 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct GetItemResult
 {
-    private GetItemResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private GetItemResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.JsonInt32 xRateLimit = default, CanonTests32.Server.JsonBoolean xActive = default, JsonElement xRequestId = default, CanonTests32.Server.GetItemsByItemIdOkXTags xTags = default, CanonTests32.Server.GetItemsByItemIdOkXPageSizes xPageSizes = default, CanonTests32.Server.GetItemsByItemIdOkXFlags xFlags = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
         this.ContentType = contentType;
+        this.XRateLimit = xRateLimit;
+        this.XActive = xActive;
+        this.XRequestId = xRequestId;
+        this.XTags = xTags;
+        this.XPageSizes = xPageSizes;
+        this.XFlags = xFlags;
     }
 
     /// <summary>Gets the HTTP status code.</summary>
@@ -36,12 +42,48 @@ public readonly struct GetItemResult
     public string? ContentType { get; }
 
     /// <summary>
+    /// Gets the value of the <c>X-Rate-Limit</c> response header.
+    /// </summary>
+    public CanonTests32.Server.JsonInt32 XRateLimit { get; }
+
+    /// <summary>
+    /// Gets the value of the <c>X-Active</c> response header.
+    /// </summary>
+    public CanonTests32.Server.JsonBoolean XActive { get; }
+
+    /// <summary>
+    /// Gets the value of the <c>X-Request-Id</c> response header.
+    /// </summary>
+    public JsonElement XRequestId { get; }
+
+    /// <summary>
+    /// Gets the value of the <c>X-Tags</c> response header.
+    /// </summary>
+    public CanonTests32.Server.GetItemsByItemIdOkXTags XTags { get; }
+
+    /// <summary>
+    /// Gets the value of the <c>X-Page-Sizes</c> response header.
+    /// </summary>
+    public CanonTests32.Server.GetItemsByItemIdOkXPageSizes XPageSizes { get; }
+
+    /// <summary>
+    /// Gets the value of the <c>X-Flags</c> response header.
+    /// </summary>
+    public CanonTests32.Server.GetItemsByItemIdOkXFlags XFlags { get; }
+
+    /// <summary>
     /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
+    /// <param name="xRateLimit">The value for the <c>X-Rate-Limit</c> response header.</param>
+    /// <param name="xActive">The value for the <c>X-Active</c> response header.</param>
+    /// <param name="xRequestId">The value for the <c>X-Request-Id</c> response header.</param>
+    /// <param name="xTags">The value for the <c>X-Tags</c> response header.</param>
+    /// <param name="xPageSizes">The value for the <c>X-Page-Sizes</c> response header.</param>
+    /// <param name="xFlags">The value for the <c>X-Flags</c> response header.</param>
     /// <returns>A <see cref="GetItemResult"/> with status 200.</returns>
-    public static GetItemResult Ok(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static GetItemResult Ok(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xRateLimit = default, CanonTests32.Server.JsonBoolean xActive = default, JsonElement xRequestId = default, CanonTests32.Server.GetItemsByItemIdOkXTags xTags = default, CanonTests32.Server.GetItemsByItemIdOkXPageSizes xPageSizes = default, CanonTests32.Server.GetItemsByItemIdOkXFlags xFlags = default) => new(200, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json", xRateLimit: xRateLimit, xActive: xActive, xRequestId: xRequestId, xTags: xTags, xPageSizes: xPageSizes, xFlags: xFlags);
 
     /// <summary>
     /// Writes the response body to the specified writer.
@@ -53,5 +95,96 @@ public readonly struct GetItemResult
         {
             this.Body.WriteTo(writer);
         }
+    }
+
+    /// <summary>
+    /// Writes the response headers using the specified callback.
+    /// </summary>
+    /// <typeparam name="TState">The state type passed to the callback.</typeparam>
+    /// <param name="callback">A callback that receives the header name and value.</param>
+    /// <param name="state">State to pass to the callback.</param>
+    public void WriteResponseHeaders<TState>(HeaderCallback<TState> callback, TState state)
+    {
+        if (!this.XRateLimit.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8XRateLimit = "X-Rate-Limit"u8;
+            Span<byte> bufXRateLimit = stackalloc byte[11];
+            this.XRateLimit.TryFormat(bufXRateLimit, out int bwXRateLimit, default, default);
+            callback(nameUtf8XRateLimit, bufXRateLimit[..bwXRateLimit], state);
+        }
+
+        if (!this.XActive.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8XActive = "X-Active"u8;
+            callback(nameUtf8XActive, (bool)this.XActive ? "true"u8 : "false"u8, state);
+        }
+
+        if (!this.XRequestId.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8XRequestId = "X-Request-Id"u8;
+            using UnescapedUtf8JsonString utf8XRequestId = ((JsonElement)this.XRequestId).GetUtf8String();
+            callback(nameUtf8XRequestId, utf8XRequestId.Span, state);
+        }
+
+        if (!this.XTags.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8XTags = "X-Tags"u8;
+            Span<byte> headerBuf = stackalloc byte[512];
+            int headerLen = 0;
+            bool firstItemXTags = true;
+            foreach (var itemXTags in ((JsonElement)this.XTags).EnumerateArray())
+            {
+                if (!firstItemXTags)
+                {
+                    headerBuf[headerLen++] = (byte)',';
+                }
+
+                int elLenXTags = System.Text.Encoding.UTF8.GetBytes(itemXTags.ToString(), headerBuf[headerLen..]);
+                headerLen += elLenXTags;
+                firstItemXTags = false;
+            }
+            callback(nameUtf8XTags, headerBuf[..headerLen], state);
+        }
+
+        if (!this.XPageSizes.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8XPageSizes = "X-Page-Sizes"u8;
+            Span<byte> headerBuf = stackalloc byte[512];
+            int headerLen = 0;
+            bool firstItemXPageSizes = true;
+            foreach (var itemXPageSizes in ((JsonElement)this.XPageSizes).EnumerateArray())
+            {
+                if (!firstItemXPageSizes)
+                {
+                    headerBuf[headerLen++] = (byte)',';
+                }
+
+                int elLenXPageSizes = System.Text.Encoding.UTF8.GetBytes(itemXPageSizes.ToString(), headerBuf[headerLen..]);
+                headerLen += elLenXPageSizes;
+                firstItemXPageSizes = false;
+            }
+            callback(nameUtf8XPageSizes, headerBuf[..headerLen], state);
+        }
+
+        if (!this.XFlags.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8XFlags = "X-Flags"u8;
+            Span<byte> headerBuf = stackalloc byte[512];
+            int headerLen = 0;
+            bool firstItemXFlags = true;
+            foreach (var itemXFlags in ((JsonElement)this.XFlags).EnumerateArray())
+            {
+                if (!firstItemXFlags)
+                {
+                    headerBuf[headerLen++] = (byte)',';
+                }
+
+                int elLenXFlags = System.Text.Encoding.UTF8.GetBytes(itemXFlags.ToString(), headerBuf[headerLen..]);
+                headerLen += elLenXFlags;
+                firstItemXFlags = false;
+            }
+            callback(nameUtf8XFlags, headerBuf[..headerLen], state);
+        }
+
     }
 }

@@ -39,7 +39,7 @@ public readonly struct TraceHealthResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <returns>A <see cref="TraceHealthResult"/> with status 200.</returns>
-    public static TraceHealthResult Ok() => new(200);
+    public static TraceHealthResult Ok() => new(200, default, null);
 
     /// <summary>
     /// Writes the response body to the specified writer.

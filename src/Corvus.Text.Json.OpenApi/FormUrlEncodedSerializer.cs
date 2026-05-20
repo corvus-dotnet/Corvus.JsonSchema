@@ -2,7 +2,6 @@
 // Copyright (c) Endjin Limited. All rights reserved.
 // </copyright>
 
-using System.Buffers;
 using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
@@ -10,7 +9,8 @@ using Corvus.Text.Json.Internal;
 namespace Corvus.Text.Json.OpenApi;
 
 /// <summary>
-/// Serializes a JSON object to <c>application/x-www-form-urlencoded</c> format.
+/// Serializes a JSON object to <c>application/x-www-form-urlencoded</c> format,
+/// and deserializes form-encoded bodies back to typed JSON elements.
 /// </summary>
 /// <remarks>
 /// <para>
@@ -27,6 +27,11 @@ namespace Corvus.Text.Json.OpenApi;
 /// <c>allowReserved</c> per property, the overload accepting a
 /// <see cref="IReadOnlyDictionary{TKey, TValue}"/> of <see cref="PropertyEncoding"/>
 /// applies those overrides.
+/// </para>
+/// <para>
+/// Deserialization uses <see cref="Utf8Uri.TryUnescapeDataString"/> (the inverse of
+/// <see cref="Utf8Uri.TryEscapeDataString"/> used during serialization) and writes
+/// the result as a JSON object via <see cref="FormFieldReader"/>.
 /// </para>
 /// </remarks>
 public static class FormUrlEncodedSerializer
@@ -85,6 +90,59 @@ public static class FormUrlEncodedSerializer
             encodings?.TryGetValue(name, out enc);
 
             WriteProperty(writer, name, propValue, enc, ref first);
+        }
+    }
+
+    /// <summary>
+    /// Deserializes a <c>application/x-www-form-urlencoded</c> body into a
+    /// <see cref="ParsedJsonDocument{T}"/>.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// This is the inverse of <see cref="Serialize{T}(in T, Stream)"/>. It unescapes
+    /// each field using <see cref="Utf8Uri.TryUnescapeDataString"/>, writes the result
+    /// as a JSON object, and parses it into a strongly-typed document. Duplicate keys
+    /// (exploded arrays) are collected into JSON arrays.
+    /// </para>
+    /// </remarks>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="formBody">The raw UTF-8 form-urlencoded body bytes.</param>
+    /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
+    public static ParsedJsonDocument<T> Deserialize<T>(ReadOnlyMemory<byte> formBody)
+        where T : struct, IJsonElement<T>
+    {
+        using PooledBufferWriter jsonBuffer = new(formBody.Length * 2);
+        using Utf8JsonWriter jsonWriter = new(jsonBuffer);
+
+        FormFieldReader.DeserializeToJson(formBody.Span, jsonWriter);
+        jsonWriter.Flush();
+
+        return ParsedJsonDocument<T>.Parse(jsonBuffer.WrittenMemory);
+    }
+
+    /// <summary>
+    /// Deserializes a <c>application/x-www-form-urlencoded</c> body from a stream into a
+    /// <see cref="ParsedJsonDocument{T}"/>.
+    /// </summary>
+    /// <typeparam name="T">The JSON element type to parse into.</typeparam>
+    /// <param name="stream">The request body stream.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A parsed JSON document backed by pooled memory. The caller must dispose it.</returns>
+    public static async ValueTask<ParsedJsonDocument<T>> DeserializeAsync<T>(
+        Stream stream,
+        CancellationToken cancellationToken = default)
+        where T : struct, IJsonElement<T>
+    {
+        (byte[] buffer, int length) = await FormFieldReader.RentBodyAsync(stream, cancellationToken)
+            .ConfigureAwait(false);
+
+        try
+        {
+            return Deserialize<T>(buffer.AsMemory(0, length));
+        }
+        finally
+        {
+            FormFieldReader.Return(buffer);
         }
     }
 

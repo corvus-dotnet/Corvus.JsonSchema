@@ -39,7 +39,7 @@ public readonly struct ExportDataResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <returns>A <see cref="ExportDataResult"/> with status 200.</returns>
-    public static ExportDataResult Ok() => new(200);
+    public static ExportDataResult Ok() => new(200, default, null);
 
     /// <summary>
     /// Creates a default error result.
@@ -47,7 +47,7 @@ public readonly struct ExportDataResult
     /// <param name="statusCode">The HTTP status code.</param>
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="ExportDataResult"/> with the specified status code and body.</returns>
+    /// <returns>A <see cref="ExportDataResult"/> with status default.</returns>
     public static ExportDataResult Default(int statusCode, CanonTests32.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, CanonTests32.Server.Error.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>

@@ -19,11 +19,12 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct SearchItemsResult
 {
-    private SearchItemsResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private SearchItemsResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.GetSearchOkXFacets xFacets = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
         this.ContentType = contentType;
+        this.XFacets = xFacets;
     }
 
     /// <summary>Gets the HTTP status code.</summary>
@@ -36,12 +37,18 @@ public readonly struct SearchItemsResult
     public string? ContentType { get; }
 
     /// <summary>
+    /// Gets the value of the <c>X-Facets</c> response header.
+    /// </summary>
+    public CanonTests32.Server.GetSearchOkXFacets XFacets { get; }
+
+    /// <summary>
     /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
+    /// <param name="xFacets">The value for the <c>X-Facets</c> response header.</param>
     /// <returns>A <see cref="SearchItemsResult"/> with status 200.</returns>
-    public static SearchItemsResult Ok(CanonTests32.Server.GetSearchOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.GetSearchOk.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static SearchItemsResult Ok(CanonTests32.Server.GetSearchOk.Source body, JsonWorkspace workspace, CanonTests32.Server.GetSearchOkXFacets xFacets = default) => new(200, CanonTests32.Server.GetSearchOk.CreateBuilder(workspace, body, 0).RootElement, "application/json", xFacets: xFacets);
 
     /// <summary>
     /// Writes the response body to the specified writer.
@@ -53,5 +60,38 @@ public readonly struct SearchItemsResult
         {
             this.Body.WriteTo(writer);
         }
+    }
+
+    /// <summary>
+    /// Writes the response headers using the specified callback.
+    /// </summary>
+    /// <typeparam name="TState">The state type passed to the callback.</typeparam>
+    /// <param name="callback">A callback that receives the header name and value.</param>
+    /// <param name="state">State to pass to the callback.</param>
+    public void WriteResponseHeaders<TState>(HeaderCallback<TState> callback, TState state)
+    {
+        if (!this.XFacets.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8XFacets = "X-Facets"u8;
+            Span<byte> headerBuf = stackalloc byte[512];
+            int headerLen = 0;
+            bool firstPropXFacets = true;
+            foreach (var propXFacets in ((JsonElement)this.XFacets).EnumerateObject())
+            {
+                if (!firstPropXFacets)
+                {
+                    headerBuf[headerLen++] = (byte)',';
+                }
+
+                int keyLenXFacets = System.Text.Encoding.UTF8.GetBytes(propXFacets.Name, headerBuf[headerLen..]);
+                headerLen += keyLenXFacets;
+                headerBuf[headerLen++] = (byte)'=';
+                int elLenXFacets = System.Text.Encoding.UTF8.GetBytes(propXFacets.Value.ToString(), headerBuf[headerLen..]);
+                headerLen += elLenXFacets;
+                firstPropXFacets = false;
+            }
+            callback(nameUtf8XFacets, headerBuf[..headerLen], state);
+        }
+
     }
 }

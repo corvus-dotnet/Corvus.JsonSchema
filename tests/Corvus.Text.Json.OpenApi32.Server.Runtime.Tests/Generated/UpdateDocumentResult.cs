@@ -19,11 +19,12 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct UpdateDocumentResult
 {
-    private UpdateDocumentResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private UpdateDocumentResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.JsonInt32 xDocumentVersion = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
         this.ContentType = contentType;
+        this.XDocumentVersion = xDocumentVersion;
     }
 
     /// <summary>Gets the HTTP status code.</summary>
@@ -36,12 +37,18 @@ public readonly struct UpdateDocumentResult
     public string? ContentType { get; }
 
     /// <summary>
+    /// Gets the value of the <c>X-Document-Version</c> response header.
+    /// </summary>
+    public CanonTests32.Server.JsonInt32 XDocumentVersion { get; }
+
+    /// <summary>
     /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
+    /// <param name="xDocumentVersion">The value for the <c>X-Document-Version</c> response header.</param>
     /// <returns>A <see cref="UpdateDocumentResult"/> with status 200.</returns>
-    public static UpdateDocumentResult Ok(CanonTests32.Server.Schema3.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Schema3.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static UpdateDocumentResult Ok(CanonTests32.Server.Schema3.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xDocumentVersion = default) => new(200, CanonTests32.Server.Schema3.CreateBuilder(workspace, body, 0).RootElement, "application/json", xDocumentVersion: xDocumentVersion);
 
     /// <summary>
     /// Writes the response body to the specified writer.
@@ -53,5 +60,23 @@ public readonly struct UpdateDocumentResult
         {
             this.Body.WriteTo(writer);
         }
+    }
+
+    /// <summary>
+    /// Writes the response headers using the specified callback.
+    /// </summary>
+    /// <typeparam name="TState">The state type passed to the callback.</typeparam>
+    /// <param name="callback">A callback that receives the header name and value.</param>
+    /// <param name="state">State to pass to the callback.</param>
+    public void WriteResponseHeaders<TState>(HeaderCallback<TState> callback, TState state)
+    {
+        if (!this.XDocumentVersion.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8XDocumentVersion = "X-Document-Version"u8;
+            Span<byte> bufXDocumentVersion = stackalloc byte[11];
+            this.XDocumentVersion.TryFormat(bufXDocumentVersion, out int bwXDocumentVersion, default, default);
+            callback(nameUtf8XDocumentVersion, bufXDocumentVersion[..bwXDocumentVersion], state);
+        }
+
     }
 }

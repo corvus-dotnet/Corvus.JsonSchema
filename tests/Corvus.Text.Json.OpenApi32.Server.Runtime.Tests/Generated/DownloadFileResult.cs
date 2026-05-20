@@ -39,7 +39,7 @@ public readonly struct DownloadFileResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <returns>A <see cref="DownloadFileResult"/> with status 200.</returns>
-    public static DownloadFileResult Ok() => new(200);
+    public static DownloadFileResult Ok() => new(200, default, null);
 
     /// <summary>
     /// Writes the response body to the specified writer.

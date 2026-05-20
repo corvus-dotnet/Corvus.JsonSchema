@@ -19,11 +19,12 @@ namespace CanonTests32.Server;
 /// </summary>
 public readonly struct CopyResourceResult
 {
-    private CopyResourceResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private CopyResourceResult(int statusCode, JsonElement body, string? contentType, CanonTests32.Server.JsonUri location = default)
     {
         this.StatusCode = statusCode;
         this.Body = body;
         this.ContentType = contentType;
+        this.Location = location;
     }
 
     /// <summary>Gets the HTTP status code.</summary>
@@ -36,12 +37,18 @@ public readonly struct CopyResourceResult
     public string? ContentType { get; }
 
     /// <summary>
+    /// Gets the value of the <c>Location</c> response header.
+    /// </summary>
+    public CanonTests32.Server.JsonUri Location { get; }
+
+    /// <summary>
     /// Creates a 201 Created result.
     /// </summary>
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
+    /// <param name="location">The value for the <c>Location</c> response header.</param>
     /// <returns>A <see cref="CopyResourceResult"/> with status 201.</returns>
-    public static CopyResourceResult Created(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace) => new(201, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static CopyResourceResult Created(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonUri location = default) => new(201, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json", location: location);
 
     /// <summary>
     /// Writes the response body to the specified writer.
@@ -53,5 +60,22 @@ public readonly struct CopyResourceResult
         {
             this.Body.WriteTo(writer);
         }
+    }
+
+    /// <summary>
+    /// Writes the response headers using the specified callback.
+    /// </summary>
+    /// <typeparam name="TState">The state type passed to the callback.</typeparam>
+    /// <param name="callback">A callback that receives the header name and value.</param>
+    /// <param name="state">State to pass to the callback.</param>
+    public void WriteResponseHeaders<TState>(HeaderCallback<TState> callback, TState state)
+    {
+        if (!this.Location.IsUndefined())
+        {
+            ReadOnlySpan<byte> nameUtf8Location = "Location"u8;
+            using UnescapedUtf8JsonString utf8Location = ((JsonElement)this.Location).GetUtf8String();
+            callback(nameUtf8Location, utf8Location.Span, state);
+        }
+
     }
 }

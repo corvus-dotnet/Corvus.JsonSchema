@@ -39,7 +39,7 @@ public readonly struct MoveResourceResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <returns>A <see cref="MoveResourceResult"/> with status 200.</returns>
-    public static MoveResourceResult Ok() => new(200);
+    public static MoveResourceResult Ok() => new(200, default, null);
 
     /// <summary>
     /// Writes the response body to the specified writer.

@@ -39,7 +39,7 @@ public readonly struct DeleteMonitoringStatusResult
     /// Creates a 204 NoContent result.
     /// </summary>
     /// <returns>A <see cref="DeleteMonitoringStatusResult"/> with status 204.</returns>
-    public static DeleteMonitoringStatusResult NoContent() => new(204);
+    public static DeleteMonitoringStatusResult NoContent() => new(204, default, null);
 
     /// <summary>
     /// Writes the response body to the specified writer.

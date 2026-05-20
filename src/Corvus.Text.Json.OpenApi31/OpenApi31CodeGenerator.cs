@@ -3,6 +3,7 @@
 // </copyright>
 
 using System.Diagnostics;
+using System.Text;
 using Corvus.Text.Json;
 using Corvus.Text.Json.Internal;
 using Corvus.Text.Json.OpenApi;
@@ -4422,18 +4423,66 @@ public sealed class OpenApi31CodeGenerator
         w.WriteLine($"namespace {this.rootNamespace};");
         w.WriteLine();
 
+        // Collect all distinct response headers across all responses.
+        List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> allHeaders = [];
+        HashSet<string> emittedHeaderNames = [];
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            foreach (HeaderInfo header in resp.Headers)
+            {
+                if (!emittedHeaderNames.Add(header.HeaderName))
+                {
+                    continue;
+                }
+
+                string propertyName = CodeEmitHelpers.HeaderNameToPropertyName(header.HeaderName);
+                string fieldName = CodeEmitHelpers.ToCamelCase(propertyName);
+                string? typeName = header.SchemaPointer is not null
+                    ? this.ResolveSchemaTypeName(header.SchemaPointer)
+                    : null;
+
+                allHeaders.Add((header, typeName ?? "JsonElement", fieldName, propertyName));
+            }
+        }
+
+        bool hasHeaders = allHeaders.Count > 0;
+
         w.WriteLine("/// <summary>");
         w.WriteLine($"/// Result type for the {op.MethodName} operation.");
         w.WriteLine("/// </summary>");
         w.WriteLine($"public readonly struct {structName}");
         w.OpenBrace();
 
-        w.WriteLine($"private {structName}(int statusCode, JsonElement body = default, string? contentType = null)");
-        w.OpenBrace();
-        w.WriteLine("this.StatusCode = statusCode;");
-        w.WriteLine("this.Body = body;");
-        w.WriteLine("this.ContentType = contentType;");
-        w.CloseBrace();
+        // Private constructor
+        if (hasHeaders)
+        {
+            w.Write($"private {structName}(int statusCode, JsonElement body, string? contentType");
+            foreach (var (_, typeName, fieldName, _) in allHeaders)
+            {
+                w.Write($", {typeName} {fieldName} = default");
+            }
+
+            w.WriteLine(")");
+            w.OpenBrace();
+            w.WriteLine("this.StatusCode = statusCode;");
+            w.WriteLine("this.Body = body;");
+            w.WriteLine("this.ContentType = contentType;");
+            foreach (var (_, _, fieldName, propertyName) in allHeaders)
+            {
+                w.WriteLine($"this.{propertyName} = {fieldName};");
+            }
+
+            w.CloseBrace();
+        }
+        else
+        {
+            w.WriteLine($"private {structName}(int statusCode, JsonElement body = default, string? contentType = null)");
+            w.OpenBrace();
+            w.WriteLine("this.StatusCode = statusCode;");
+            w.WriteLine("this.Body = body;");
+            w.WriteLine("this.ContentType = contentType;");
+            w.CloseBrace();
+        }
 
         w.WriteLine();
         w.WriteLine("/// <summary>Gets the HTTP status code.</summary>");
@@ -4445,10 +4494,28 @@ public sealed class OpenApi31CodeGenerator
         w.WriteLine("/// <summary>Gets the content type for the response body.</summary>");
         w.WriteLine("public string? ContentType { get; }");
 
+        // Header properties
+        foreach (var (header, typeName, _, propertyName) in allHeaders)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Gets the value of the <c>{header.HeaderName}</c> response header.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine($"public {typeName} {propertyName} {{ get; }}");
+        }
+
+        // Factory methods for each declared response
         foreach (ResponseInfo resp in op.Responses)
         {
             string factoryName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
             string? typeName = this.ResolveResponseTypeName(resp);
+
+            List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders = [];
+            foreach (HeaderInfo header in resp.Headers)
+            {
+                var match = allHeaders.Find(h => h.Header.HeaderName == header.HeaderName);
+                respHeaders.Add(match);
+            }
 
             w.WriteLine();
 
@@ -4458,23 +4525,7 @@ public sealed class OpenApi31CodeGenerator
                 w.WriteLine("/// Creates a default error result.");
                 w.WriteLine("/// </summary>");
 
-                if (typeName is not null)
-                {
-                    w.WriteLine($"/// <param name=\"statusCode\">The HTTP status code.</param>");
-                    w.WriteLine($"/// <param name=\"body\">The response body.</param>");
-                    w.WriteLine($"/// <param name=\"workspace\">The workspace for building the response value.</param>");
-                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with the specified status code and body.</returns>");
-                    w.WriteLine(
-                        $"public static {structName} {factoryName}(int statusCode, {typeName}.Source body, JsonWorkspace workspace) " +
-                        $"=> new(statusCode, {typeName}.CreateBuilder(workspace, body, 0).RootElement, \"application/json\");");
-                }
-                else
-                {
-                    w.WriteLine($"/// <param name=\"statusCode\">The HTTP status code.</param>");
-                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with the specified status code.</returns>");
-                    w.WriteLine(
-                        $"public static {structName} {factoryName}(int statusCode) => new(statusCode);");
-                }
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
             }
             else
             {
@@ -4483,21 +4534,7 @@ public sealed class OpenApi31CodeGenerator
                 w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(desc)}");
                 w.WriteLine("/// </summary>");
 
-                if (typeName is not null)
-                {
-                    w.WriteLine($"/// <param name=\"body\">The response body.</param>");
-                    w.WriteLine($"/// <param name=\"workspace\">The workspace for building the response value.</param>");
-                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {resp.StatusCode}.</returns>");
-                    w.WriteLine(
-                        $"public static {structName} {factoryName}({typeName}.Source body, JsonWorkspace workspace) " +
-                        $"=> new({resp.StatusCode}, {typeName}.CreateBuilder(workspace, body, 0).RootElement, \"application/json\");");
-                }
-                else
-                {
-                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {resp.StatusCode}.</returns>");
-                    w.WriteLine(
-                        $"public static {structName} {factoryName}() => new({resp.StatusCode});");
-                }
+                this.EmitServerResultFactory(w, structName, factoryName, typeName, respHeaders, resp.StatusCode, hasHeaders);
             }
         }
 
@@ -4514,9 +4551,115 @@ public sealed class OpenApi31CodeGenerator
         w.CloseBrace();
         w.CloseBrace();
 
+        // WriteResponseHeaders method (only if there are headers)
+        if (hasHeaders)
+        {
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine("/// Writes the response headers using the specified callback.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine("/// <typeparam name=\"TState\">The state type passed to the callback.</typeparam>");
+            w.WriteLine("/// <param name=\"callback\">A callback that receives the header name and value.</param>");
+            w.WriteLine("/// <param name=\"state\">State to pass to the callback.</param>");
+            w.WriteLine("public void WriteResponseHeaders<TState>(HeaderCallback<TState> callback, TState state)");
+            w.OpenBrace();
+
+            foreach (var (header, _, _, propertyName) in allHeaders)
+            {
+                string uid = CodeEmitHelpers.SanitizeIdentifier(header.HeaderName);
+                w.WriteLine($"if (!this.{propertyName}.IsUndefined())");
+                w.OpenBrace();
+                w.WriteLine($"ReadOnlySpan<byte> nameUtf8{uid} = \"{header.HeaderName}\"u8;");
+                CodeEmitHelpers.EmitHeaderParamWrite(w, $"this.{propertyName}", uid, header.SerializationKind, ParameterStyle.Simple, header.Explode);
+                w.CloseBrace();
+                w.WriteLine();
+            }
+
+            w.CloseBrace();
+        }
+
         w.CloseBrace();
 
         return new GeneratedFile($"{structName}.cs", w.ToString());
+    }
+
+    private void EmitServerResultFactory(
+        IndentedWriter w,
+        string structName,
+        string factoryName,
+        string? bodyTypeName,
+        List<(HeaderInfo Header, string TypeName, string FieldName, string PropertyName)> respHeaders,
+        string statusCode,
+        bool structHasHeaders)
+    {
+        bool isDefault = statusCode == "default";
+        bool hasBody = bodyTypeName is not null;
+
+        StringBuilder paramList = new();
+        if (isDefault)
+        {
+            paramList.Append("int statusCode");
+        }
+
+        if (hasBody)
+        {
+            if (paramList.Length > 0)
+            {
+                paramList.Append(", ");
+            }
+
+            paramList.Append($"{bodyTypeName}.Source body, JsonWorkspace workspace");
+        }
+
+        foreach (var (_, typeName, fieldName, _) in respHeaders)
+        {
+            if (paramList.Length > 0)
+            {
+                paramList.Append(", ");
+            }
+
+            paramList.Append($"{typeName} {fieldName} = default");
+        }
+
+        if (isDefault)
+        {
+            w.WriteLine($"/// <param name=\"statusCode\">The HTTP status code.</param>");
+        }
+
+        if (hasBody)
+        {
+            w.WriteLine($"/// <param name=\"body\">The response body.</param>");
+            w.WriteLine($"/// <param name=\"workspace\">The workspace for building the response value.</param>");
+        }
+
+        foreach (var (header, _, fieldName, _) in respHeaders)
+        {
+            w.WriteLine($"/// <param name=\"{fieldName}\">The value for the <c>{header.HeaderName}</c> response header.</param>");
+        }
+
+        w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {statusCode}.</returns>");
+
+        string statusExpr = isDefault ? "statusCode" : statusCode;
+        string bodyExpr = hasBody
+            ? $"{bodyTypeName}.CreateBuilder(workspace, body, 0).RootElement"
+            : "default";
+        string contentTypeExpr = hasBody ? "\"application/json\"" : "null";
+
+        if (structHasHeaders)
+        {
+            StringBuilder ctorArgs = new();
+            ctorArgs.Append($"{statusExpr}, {bodyExpr}, {contentTypeExpr}");
+            foreach (var (_, _, fieldName, _) in respHeaders)
+            {
+                ctorArgs.Append($", {fieldName}: {fieldName}");
+            }
+
+            w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({ctorArgs});");
+        }
+        else
+        {
+            w.WriteLine($"public static {structName} {factoryName}({paramList}) => new({statusExpr}, {bodyExpr}, {contentTypeExpr});");
+        }
     }
 
     private GeneratedFile EmitServerEndpointRegistration(
@@ -4616,8 +4759,10 @@ public sealed class OpenApi31CodeGenerator
                     EmitServerParameterParsing(w, param, fieldName, typeName);
                 }
 
-                // Parse body from request stream into a document
-                // (mirrors client response body parsing: ParsedJsonDocument<T>.ParseAsync(contentStream))
+                // Parse body from request stream into a document.
+                // For form-urlencoded bodies, use the symmetric deserializer (inverse of
+                // FormUrlEncodedSerializer.Serialize used by the client).
+                // For JSON bodies, parse directly from the stream.
                 if (hasBody)
                 {
                     if (op.Parameters.Length > 0)
@@ -4625,7 +4770,14 @@ public sealed class OpenApi31CodeGenerator
                         w.WriteLine();
                     }
 
-                    w.WriteLine($"bodyDoc = await ParsedJsonDocument<{bodyTypeName}>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);");
+                    if (IsFormUrlEncodedRequestBody(op.RequestBody!.Value))
+                    {
+                        w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);");
+                    }
+                    else
+                    {
+                        w.WriteLine($"bodyDoc = await ParsedJsonDocument<{bodyTypeName}>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);");
+                    }
                 }
 
                 w.WriteLine();
@@ -4664,7 +4816,19 @@ public sealed class OpenApi31CodeGenerator
                 // Write response using workspace-rented writer to PipeWriter
                 // (mirrors client request pattern: workspace builds outgoing data)
                 w.WriteLine("context.Response.StatusCode = result.StatusCode;");
-                w.WriteLine("if (!result.Body.IsUndefined())");
+
+                // Write response headers (if the operation defines any).
+                bool opHasResponseHeaders = op.Responses.Any(r => r.Headers.Length > 0);
+                if (opHasResponseHeaders)
+                {
+                    w.WriteLine("result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>");
+                    w.OpenBrace();
+                    w.WriteLine("headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));");
+                    w.CloseBraceNoNewline().Write(", context.Response.Headers);");
+                    w.WriteLine();
+                }
+
+                w.WriteLine("if (!result.Body.IsUndefined())");;
                 w.OpenBrace();
                 w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
                 w.WriteLine("Utf8JsonWriter writer = workspace.RentWriter(context.Response.BodyWriter);");

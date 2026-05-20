@@ -39,7 +39,7 @@ public readonly struct HeadHealthResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <returns>A <see cref="HeadHealthResult"/> with status 200.</returns>
-    public static HeadHealthResult Ok() => new(200);
+    public static HeadHealthResult Ok() => new(200, default, null);
 
     /// <summary>
     /// Writes the response body to the specified writer.

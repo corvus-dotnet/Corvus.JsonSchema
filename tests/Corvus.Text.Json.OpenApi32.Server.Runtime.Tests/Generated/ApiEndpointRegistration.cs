@@ -166,6 +166,10 @@ public static class ApiEndpointRegistration
                 OptionsItemsResult result = await defaultHandler.HandleOptionsItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -245,6 +249,10 @@ public static class ApiEndpointRegistration
                 GetItemResult result = await defaultHandler.HandleGetItemAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -330,7 +338,7 @@ public static class ApiEndpointRegistration
                     ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostItemsByItemIdFormBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests32.Server.PostItemsByItemIdFormBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
 
                 UpdateItemFormParams parameters = new()
                 {
@@ -762,6 +770,10 @@ public static class ApiEndpointRegistration
                 GetAdvancedStylesResult result = await defaultHandler.HandleGetAdvancedStylesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -1150,6 +1162,10 @@ public static class ApiEndpointRegistration
                 CopyResourceResult result = await defaultHandler.HandleCopyResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -1305,6 +1321,10 @@ public static class ApiEndpointRegistration
                 GetDocumentResult result = await defaultHandler.HandleGetDocumentAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -1353,6 +1373,10 @@ public static class ApiEndpointRegistration
                 UpdateDocumentResult result = await defaultHandler.HandleUpdateDocumentAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -1754,6 +1778,10 @@ public static class ApiEndpointRegistration
                 SearchItemsResult result = await ItemsHandler.HandleSearchItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
+                result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
+                {
+                    headers.Append(System.Text.Encoding.UTF8.GetString(name), System.Text.Encoding.UTF8.GetString(value));
+                }, context.Response.Headers);
                 if (!result.Body.IsUndefined())
                 {
                     context.Response.ContentType = result.ContentType ?? "application/json";
@@ -1841,7 +1869,7 @@ public static class ApiEndpointRegistration
                     SourceValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(SourceRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostFeedbackBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests32.Server.PostFeedbackBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
 
                 SubmitFeedbackParams parameters = new()
                 {
@@ -1941,7 +1969,7 @@ public static class ApiEndpointRegistration
                     XSessionIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XSessionIdRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostFeedbackEncodedBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests32.Server.PostFeedbackEncodedBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
 
                 SubmitFeedbackEncodedParams parameters = new()
                 {

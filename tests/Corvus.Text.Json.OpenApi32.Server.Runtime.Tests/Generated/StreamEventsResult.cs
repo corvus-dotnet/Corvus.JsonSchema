@@ -39,7 +39,7 @@ public readonly struct StreamEventsResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <returns>A <see cref="StreamEventsResult"/> with status 200.</returns>
-    public static StreamEventsResult Ok() => new(200);
+    public static StreamEventsResult Ok() => new(200, default, null);
 
     /// <summary>
     /// Writes the response body to the specified writer.
