@@ -38,19 +38,27 @@ public sealed class ApiDocsClient : IApiDocsClient
     public ValueTask<UploadDocMixedResponse> UploadDocMixedAsync(CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.Source part0, BinaryPartData part1, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        UploadDocMixedRequest request = new();
-
-        request.Validate(validationMode);
-
-        Guid guid = Guid.NewGuid();
-        using var part0Builder = CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.CreateBuilder(workspace, part0);
-        CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle part0Value = part0Builder.RootElement;
-        return SendWithBodyWriterAsyncCore<UploadDocMixedRequest, UploadDocMixedResponse>(workspace, request, stream =>
+        try
         {
-            MultipartMixedSerializer.WriteJsonPart(stream, guid, part0Value);
-            MultipartMixedSerializer.WriteBinaryPart(stream, guid, part1);
-            MultipartMixedSerializer.WriteClosingBoundary(stream, guid);
-        }, MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);
+            UploadDocMixedRequest request = new();
+
+            request.Validate(validationMode);
+
+            Guid guid = Guid.NewGuid();
+            var part0Builder = CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle.CreateBuilder(workspace, part0);
+            CanonTests32.Client.PostDocsUploadMixedBody.RequiredTitle part0Value = part0Builder.RootElement;
+            return SendWithBodyWriterAsyncCore<UploadDocMixedRequest, UploadDocMixedResponse>(workspace, request, stream =>
+            {
+                MultipartMixedSerializer.WriteJsonPart(stream, guid, part0Value);
+                MultipartMixedSerializer.WriteBinaryPart(stream, guid, part1);
+                MultipartMixedSerializer.WriteClosingBoundary(stream, guid);
+            }, MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);
+        }
+        catch
+        {
+            workspace.Dispose();
+            throw;
+        }
     }
 
     /// <summary>
@@ -61,21 +69,29 @@ public sealed class ApiDocsClient : IApiDocsClient
     public ValueTask<ProcessBatchResponse> ProcessBatchAsync(IEnumerable<CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source> items, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        ProcessBatchRequest request = new();
-
-        request.Validate(validationMode);
-
-        Guid guid = Guid.NewGuid();
-        return SendWithBodyWriterAsyncCore<ProcessBatchRequest, ProcessBatchResponse>(workspace, request, stream =>
+        try
         {
-            foreach (CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source item in items)
+            ProcessBatchRequest request = new();
+
+            request.Validate(validationMode);
+
+            Guid guid = Guid.NewGuid();
+            return SendWithBodyWriterAsyncCore<ProcessBatchRequest, ProcessBatchResponse>(workspace, request, stream =>
             {
-                using var itemBuilder = CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.CreateBuilder(workspace, item);
-                CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction itemValue = itemBuilder.RootElement;
-                MultipartMixedSerializer.WriteJsonPart(stream, guid, itemValue);
-            }
-            MultipartMixedSerializer.WriteClosingBoundary(stream, guid);
-        }, MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);
+                foreach (CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.Source item in items)
+                {
+                    var itemBuilder = CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction.CreateBuilder(workspace, item);
+                    CanonTests32.Client.PostDocsBatchProcessBody.RequiredAction itemValue = itemBuilder.RootElement;
+                    MultipartMixedSerializer.WriteJsonPart(stream, guid, itemValue);
+                }
+                MultipartMixedSerializer.WriteClosingBoundary(stream, guid);
+            }, MultipartMixedSerializer.GetContentType(guid), responseValidationMode, cancellationToken);
+        }
+        catch
+        {
+            workspace.Dispose();
+            throw;
+        }
     }
 
     /// <inheritdoc/>

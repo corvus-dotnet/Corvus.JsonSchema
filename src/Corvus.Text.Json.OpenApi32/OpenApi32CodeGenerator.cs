@@ -4937,6 +4937,8 @@ public sealed class OpenApi32CodeGenerator
 
         bool hasRequestExprLinks = HasRequestBasedExpressions(op);
 
+        bool isMultipartMixedBody = op.RequestBody is not null && IsMultipartMixedRequestBody(op.RequestBody!.Value);
+
         w.WriteLine(
             $"public ValueTask<{responseName}> {op.MethodName}Async(" +
             $"{string.Join(", ", paramParts)})");
@@ -4945,7 +4947,6 @@ public sealed class OpenApi32CodeGenerator
 
         bool hasParams = op.Parameters.Length > 0;
         bool hasBody = op.RequestBody is not null;
-        bool isMultipartMixedBody = hasBody && IsMultipartMixedRequestBody(op.RequestBody!.Value);
         bool isRawStreamBody = hasBody && !isMultipartMixedBody && IsRawStreamRequestBody(op.RequestBody!.Value);
         bool isFormUrlEncodedBody = hasBody && !isRawStreamBody && !isMultipartMixedBody && IsFormUrlEncodedRequestBody(op.RequestBody!.Value);
         bool isMultipartBody = hasBody && !isRawStreamBody && !isFormUrlEncodedBody && !isMultipartMixedBody && IsMultipartRequestBody(op.RequestBody!.Value);
@@ -4954,6 +4955,27 @@ public sealed class OpenApi32CodeGenerator
             && hasBody && !isRawStreamBody && !isMultipartMixedBody;
 
         w.WriteLine("JsonWorkspace workspace = JsonWorkspace.CreateUnrented();");
+
+        // Multipart/mixed methods cannot be async because Source is a ref struct (CS4012).
+        // Instead, we use a non-async method that returns the ValueTask from SendWithBodyWriterAsyncCore
+        // directly. This is safe because:
+        //
+        // 1. The caller still gets a single awaiter — SendWithBodyWriterAsyncCore returns a ValueTask
+        //    that is awaited exactly once by the consumer. No fire-and-forget.
+        //
+        // 2. The try/catch here guards only the synchronous setup (request construction, validation,
+        //    builder materialisation). If any of that throws, workspace is disposed immediately.
+        //
+        // 3. Once we reach the return, ownership of workspace transfers to SendWithBodyWriterAsyncCore
+        //    which disposes it in its own finally block — covering both success and async exceptions.
+        //
+        // 4. No "using" on builders — the workspace manages their memory. Premature disposal via
+        //    "using" would invalidate values captured in the body-writer lambda before it executes.
+        if (isMultipartMixedBody)
+        {
+            w.WriteLine("try");
+            w.OpenBrace();
+        }
 
         // Materialise body from Source → immutable typed element (JSON and form-urlencoded).
         // For multipart/mixed, parts are materialised individually below, not as a single body.
@@ -5116,6 +5138,16 @@ public sealed class OpenApi32CodeGenerator
         else if (isMultipartMixedBody)
         {
             EmitMultipartMixedBody(w, op, requestName, responseName);
+
+            // Close the try block. The catch only fires for synchronous exceptions
+            // (before SendWithBodyWriterAsyncCore is called). Once the async helper
+            // takes ownership of workspace, it handles disposal in its own finally.
+            w.CloseBrace();
+            w.WriteLine("catch");
+            w.OpenBrace();
+            w.WriteLine("workspace.Dispose();");
+            w.WriteLine("throw;");
+            w.CloseBrace();
         }
         else if (isMultipartBody)
         {
@@ -5423,6 +5455,24 @@ public sealed class OpenApi32CodeGenerator
         return paramParts;
     }
 
+    /// <summary>
+    /// Emits the body of a multipart/mixed client method.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// The generated code materialises Source ref structs into typed values synchronously (via
+    /// CreateBuilder on the workspace), then returns a <c>ValueTask</c> from
+    /// <c>SendWithBodyWriterAsyncCore</c>. This is a non-async method — we cannot mark it async
+    /// because Source parameters are ref structs (CS4012).
+    /// </para>
+    /// <para>
+    /// Workspace lifetime: the try/catch emitted by the caller guards the synchronous setup. Once
+    /// <c>SendWithBodyWriterAsyncCore</c> is called, it takes ownership of the workspace and
+    /// disposes it in its own <c>finally</c> block. Builders are NOT disposed via <c>using</c>
+    /// because the workspace manages their memory; premature disposal would invalidate values
+    /// captured by the body-writer lambda.
+    /// </para>
+    /// </remarks>
     private void EmitMultipartMixedBody(
         IndentedWriter w,
         OperationInfo op,
@@ -5436,8 +5486,7 @@ public sealed class OpenApi32CodeGenerator
         if (rb.PrefixParts is { } prefixParts)
         {
             // Materialise JSON prefix parts from Source → typed values.
-            // Each builder is properly disposed; the workspace still owns the
-            // underlying memory until it is disposed in SendWithBodyWriterAsyncCore.
+            // The workspace manages builder lifetimes — no using on the builders.
             for (int i = 0; i < prefixParts.Length; i++)
             {
                 MixedPartInfo part = prefixParts[i];
@@ -5445,13 +5494,15 @@ public sealed class OpenApi32CodeGenerator
                 {
                     string typeName = this.ResolveSchemaTypeName(part.SchemaPointer);
                     w.WriteLine(
-                        $"using var part{i}Builder = {typeName}.CreateBuilder(workspace, part{i});");
+                        $"var part{i}Builder = {typeName}.CreateBuilder(workspace, part{i});");
                     w.WriteLine(
                         $"{typeName} part{i}Value = part{i}Builder.RootElement;");
                 }
             }
 
-            // Build the body writer lambda.
+            // Transfer workspace ownership to the async helper. From this point,
+            // SendWithBodyWriterAsyncCore disposes workspace in its finally block.
+            // The returned ValueTask is awaited exactly once by the caller — no leak.
             w.WriteLine(
                 $"return SendWithBodyWriterAsyncCore<{requestName}, " +
                 $"{responseName}>(workspace, request, stream =>");
@@ -5460,7 +5511,6 @@ public sealed class OpenApi32CodeGenerator
             for (int i = 0; i < prefixParts.Length; i++)
             {
                 MixedPartInfo part = prefixParts[i];
-                string contentType = part.ContentType ?? "application/json";
 
                 if (part.IsBinary)
                 {
@@ -5481,8 +5531,6 @@ public sealed class OpenApi32CodeGenerator
         }
         else if (rb.ItemPart is { } itemPart)
         {
-            string contentType = itemPart.ContentType ?? "application/json";
-
             if (itemPart.IsBinary)
             {
                 // Homogeneous binary batch.
@@ -5502,7 +5550,7 @@ public sealed class OpenApi32CodeGenerator
             }
             else
             {
-                // Homogeneous JSON batch.
+                // Homogeneous JSON batch — workspace manages builder lifetimes.
                 string typeName = this.ResolveSchemaTypeName(itemPart.SchemaPointer);
                 w.WriteLine(
                     $"return SendWithBodyWriterAsyncCore<{requestName}, " +
@@ -5511,7 +5559,7 @@ public sealed class OpenApi32CodeGenerator
                 w.WriteLine($"foreach ({typeName}.Source item in items)");
                 w.OpenBrace();
                 w.WriteLine(
-                    $"using var itemBuilder = {typeName}.CreateBuilder(workspace, item);");
+                    $"var itemBuilder = {typeName}.CreateBuilder(workspace, item);");
                 w.WriteLine(
                     $"{typeName} itemValue = itemBuilder.RootElement;");
                 w.WriteLine(
