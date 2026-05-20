@@ -85,6 +85,9 @@
     <PackageVersion Include="Microsoft.VisualStudio.DiagnosticsHub.BenchmarkDotNetDiagnosers" Version="18.6.37110.2" />
     <PackageVersion Include="Microsoft.VisualStudio.DiagnosticsHub.UserMarks" Version="18.6.37110.2" />
 
+    <!-- OpenAPI baseline comparisons (Kiota) -->
+    <PackageVersion Include="Microsoft.Kiota.Bundle" Version="1.22.1" />
+
     <!-- JSON validation baseline comparisons -->
     <PackageVersion Include="JmesPath.Net" Version="1.1.0" />
     <PackageVersion Include="Jsonata.Net.Native" Version="3.0.0" />

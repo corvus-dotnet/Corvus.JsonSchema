@@ -1,0 +1,26 @@
+{
+  "excludePaths": [],
+  "generatedAt": "2026-05-20T07:23:28.4287977\u002B00:00",
+  "generatedFiles": [
+    "ListPetsRequest.cs",
+    "ListPetsResponse.cs",
+    "CreatePetRequest.cs",
+    "CreatePetResponse.cs",
+    "ShowPetByIdRequest.cs",
+    "ShowPetByIdResponse.cs",
+    "UpdatePetRequest.cs",
+    "UpdatePetResponse.cs",
+    "DeletePetRequest.cs",
+    "DeletePetResponse.cs",
+    "UploadPetPhotoRequest.cs",
+    "UploadPetPhotoResponse.cs",
+    "IPetstorePetsClient.cs",
+    "PetstorePetsClient.cs"
+  ],
+  "generatorVersion": "1.0.0\u002Beb4fa6420a089ec7f930d7b19bef4d0a8c5fe935",
+  "includePaths": [],
+  "rootNamespace": "PetstoreBenchmark.CorvusClient",
+  "specFileHash": "92c01f0dc027e429701cea315560d0b0ee472bdb3fccb07158ba29de7d159d1c",
+  "specVersion": "3.1",
+  "clientName": "Petstore"
+}

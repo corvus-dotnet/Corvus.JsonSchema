@@ -1,9 +1,19 @@
 <Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Corvus.Text.Json.Analyzers/Corvus.Text.Json.Analyzers.csproj" />
+    <Project Path="src/Corvus.Text.Json.OpenApi/Corvus.Text.Json.OpenApi.csproj" />
+    <Project Path="src/Corvus.Text.Json.SourceGenerator/Corvus.Text.Json.SourceGenerator.csproj" />
+    <Project Path="src/Corvus.Text.Json/Corvus.Text.Json.csproj" />
+  </Folder>
+  <Folder Name="/v4/" />
 
 <Folder Name="/v4/.Benchmarks/">
   <Project Path="src-v4/Corvus.Json.Benchmarking/Corvus.Json.Benchmarking.csproj" />
   <Project Path="src-v4/Corvus.JsonPatch.Benchmarking/Corvus.JsonPatch.Benchmarking.csproj" />
 </Folder>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/Corvus.Text.Json.OpenApi.Benchmarks/Corvus.Text.Json.OpenApi.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/benchmarks/SourceMetaModels/">
     <Project Path="benchmarks/Corvus.Text.Json.AnsibleMetaBenchmarkModels/Corvus.Text.Json.AnsibleMetaBenchmarkModels.csproj" />
     <Project Path="benchmarks/Corvus.Text.Json.AwsCdkBenchmarkModels/Corvus.Text.Json.AwsCdkBenchmarkModels.csproj" />
