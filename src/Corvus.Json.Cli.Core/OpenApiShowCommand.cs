@@ -77,7 +77,14 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
 
         if (groupByTag)
         {
-            RenderByTag(operations);
+            TagInfo[] tags = specVersion switch
+            {
+                "3.0" => OpenApi30CodeGenerator.ListTags(specRoot),
+                "3.2" => OpenApi32CodeGenerator.ListTags(specRoot),
+                _ => OpenApi31CodeGenerator.ListTags(specRoot),
+            };
+
+            RenderByTag(operations, tags);
         }
         else
         {
@@ -130,19 +137,27 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
         AnsiConsole.Write(tree);
     }
 
-    private static void RenderByTag(OperationSummary[] operations)
+    private static void RenderByTag(OperationSummary[] operations, TagInfo[] tags)
     {
         var tree = new Tree($"[bold]Operations by Tag[/] ({operations.Length})");
 
-        var tagGroups = new Dictionary<string, List<OperationSummary>>(StringComparer.Ordinal);
+        // Build lookup from tag name to TagInfo
+        var tagLookup = new Dictionary<string, TagInfo>(StringComparer.Ordinal);
+        foreach (TagInfo tag in tags)
+        {
+            tagLookup[tag.Name] = tag;
+        }
+
+        // Group operations by tag name
+        var tagOps = new Dictionary<string, List<OperationSummary>>(StringComparer.Ordinal);
         foreach (OperationSummary op in operations)
         {
             if (op.Tags.Length == 0)
             {
-                if (!tagGroups.TryGetValue("(untagged)", out List<OperationSummary>? untagged))
+                if (!tagOps.TryGetValue("(untagged)", out List<OperationSummary>? untagged))
                 {
                     untagged = [];
-                    tagGroups["(untagged)"] = untagged;
+                    tagOps["(untagged)"] = untagged;
                 }
 
                 untagged.Add(op);
@@ -151,10 +166,10 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
             {
                 foreach (string tag in op.Tags)
                 {
-                    if (!tagGroups.TryGetValue(tag, out List<OperationSummary>? group))
+                    if (!tagOps.TryGetValue(tag, out List<OperationSummary>? group))
                     {
                         group = [];
-                        tagGroups[tag] = group;
+                        tagOps[tag] = group;
                     }
 
                     group.Add(op);
@@ -162,16 +177,93 @@ internal sealed class OpenApiShowCommand : AsyncCommand<OpenApiSettings>
             }
         }
 
-        foreach ((string tag, List<OperationSummary> ops) in tagGroups.OrderBy(g => g.Key, StringComparer.OrdinalIgnoreCase))
+        // Find root tags (no parent, or parent not in the lookup)
+        List<string> rootTags = [];
+        HashSet<string> childTags = new(StringComparer.Ordinal);
+
+        foreach (TagInfo tag in tags)
         {
-            TreeNode tagNode = tree.AddNode($"[bold]{Markup.Escape(tag)}[/] [dim]({ops.Count})[/]");
+            if (tag.Parent is null || !tagLookup.ContainsKey(tag.Parent))
+            {
+                rootTags.Add(tag.Name);
+            }
+            else
+            {
+                childTags.Add(tag.Name);
+            }
+        }
+
+        // Also include any tag names from operations that aren't in the top-level tags array
+        foreach (string tagName in tagOps.Keys.OrderBy(k => k, StringComparer.OrdinalIgnoreCase))
+        {
+            if (!tagLookup.ContainsKey(tagName) && !string.Equals(tagName, "(untagged)", StringComparison.Ordinal))
+            {
+                rootTags.Add(tagName);
+            }
+        }
+
+        // Render hierarchically
+        foreach (string rootTag in rootTags.OrderBy(t => t, StringComparer.OrdinalIgnoreCase))
+        {
+            RenderTagNode(tree, rootTag, tagLookup, tagOps);
+        }
+
+        // Render untagged at the end
+        if (tagOps.TryGetValue("(untagged)", out List<OperationSummary>? untaggedOps))
+        {
+            TreeNode untaggedNode = tree.AddNode($"[dim](untagged)[/] [dim]({untaggedOps.Count})[/]");
+            foreach (OperationSummary op in untaggedOps)
+            {
+                untaggedNode.AddNode(FormatOperation(op, includePath: true));
+            }
+        }
+
+        AnsiConsole.Write(tree);
+    }
+
+    private static void RenderTagNode(IHasTreeNodes parent, string tagName, Dictionary<string, TagInfo> tagLookup, Dictionary<string, List<OperationSummary>> tagOps)
+    {
+        string label = FormatTagLabel(tagName, tagLookup);
+        int opCount = tagOps.TryGetValue(tagName, out List<OperationSummary>? ops) ? ops.Count : 0;
+
+        TreeNode tagNode = parent.AddNode($"{label} [dim]({opCount})[/]");
+
+        // Render operations for this tag
+        if (ops is not null)
+        {
             foreach (OperationSummary op in ops)
             {
                 tagNode.AddNode(FormatOperation(op, includePath: true));
             }
         }
 
-        AnsiConsole.Write(tree);
+        // Render child tags recursively
+        List<string> children = [];
+        foreach ((string name, TagInfo info) in tagLookup)
+        {
+            if (string.Equals(info.Parent, tagName, StringComparison.Ordinal))
+            {
+                children.Add(name);
+            }
+        }
+
+        foreach (string child in children.OrderBy(c => c, StringComparer.OrdinalIgnoreCase))
+        {
+            RenderTagNode(tagNode, child, tagLookup, tagOps);
+        }
+    }
+
+    private static string FormatTagLabel(string tagName, Dictionary<string, TagInfo> tagLookup)
+    {
+        if (!tagLookup.TryGetValue(tagName, out TagInfo info))
+        {
+            return $"[bold]{Markup.Escape(tagName)}[/]";
+        }
+
+        string displayName = info.Summary ?? info.Name;
+        string kindStr = info.Kind is not null ? $" [italic cyan]{Markup.Escape(info.Kind)}[/]" : string.Empty;
+
+        return $"[bold]{Markup.Escape(displayName)}[/]{kindStr}";
     }
 
     private static string FormatOperation(OperationSummary op, bool includePath = false)

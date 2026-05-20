@@ -272,6 +272,62 @@ public sealed class OpenApi31CodeGenerator
     }
 
     /// <summary>
+    /// Lists all tags defined in the top-level <c>tags</c> array of an OpenAPI 3.1 specification.
+    /// </summary>
+    /// <remarks>
+    /// The <c>parent</c> and <c>kind</c> fields are new in OpenAPI 3.2, but this method will
+    /// still read them if present (e.g. from extension usage in 3.1 specs).
+    /// </remarks>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <returns>An array of <see cref="TagInfo"/> records.</returns>
+    public static TagInfo[] ListTags(JsonElement specRoot)
+    {
+        if (!specRoot.TryGetProperty("tags"u8, out JsonElement tagsElement)
+            || tagsElement.ValueKind != JsonValueKind.Array)
+        {
+            return [];
+        }
+
+        List<TagInfo> result = [];
+        foreach (JsonElement tag in tagsElement.EnumerateArray())
+        {
+            if (tag.ValueKind != JsonValueKind.Object)
+            {
+                continue;
+            }
+
+            string? name = tag.TryGetProperty("name"u8, out JsonElement nameEl) && nameEl.ValueKind == JsonValueKind.String
+                ? nameEl.GetString()
+                : null;
+
+            if (name is null)
+            {
+                continue;
+            }
+
+            string? summary = tag.TryGetProperty("summary"u8, out JsonElement summaryEl) && summaryEl.ValueKind == JsonValueKind.String
+                ? summaryEl.GetString()
+                : null;
+
+            string? description = tag.TryGetProperty("description"u8, out JsonElement descEl) && descEl.ValueKind == JsonValueKind.String
+                ? descEl.GetString()
+                : null;
+
+            string? parent = tag.TryGetProperty("parent"u8, out JsonElement parentEl) && parentEl.ValueKind == JsonValueKind.String
+                ? parentEl.GetString()
+                : null;
+
+            string? kind = tag.TryGetProperty("kind"u8, out JsonElement kindEl) && kindEl.ValueKind == JsonValueKind.String
+                ? kindEl.GetString()
+                : null;
+
+            result.Add(new TagInfo(name, summary, description, parent, kind));
+        }
+
+        return [.. result];
+    }
+
+    /// <summary>
     /// Walks the OpenAPI 3.1 specification and emits C# source files.
     /// </summary>
     /// <param name="specRoot">The root element of the parsed spec document.</param>

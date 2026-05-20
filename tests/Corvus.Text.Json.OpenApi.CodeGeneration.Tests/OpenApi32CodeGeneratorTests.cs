@@ -763,6 +763,120 @@ public class OpenApi32CodeGeneratorTests
             "Expected RefreshItem link accessor in GetItemResponse");
     }
 
+    [TestMethod]
+    public void ListTags_ReturnsHierarchicalTagInfo()
+    {
+        const string json = """
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Test", "version": "1.0.0" },
+              "tags": [
+                {
+                  "name": "products",
+                  "summary": "Products",
+                  "description": "All product operations",
+                  "kind": "nav"
+                },
+                {
+                  "name": "cakes",
+                  "summary": "Cakes",
+                  "description": "Cake catalog",
+                  "parent": "products",
+                  "kind": "nav"
+                },
+                {
+                  "name": "seasonal",
+                  "summary": "Seasonal",
+                  "kind": "badge"
+                },
+                {
+                  "name": "partner",
+                  "parent": "external",
+                  "kind": "audience"
+                },
+                {
+                  "name": "external",
+                  "summary": "External",
+                  "kind": "audience"
+                }
+              ],
+              "paths": {}
+            }
+            """;
+
+        JsonElement root = ParseSpec(json);
+        TagInfo[] tags = OpenApi32CodeGenerator.ListTags(root);
+
+        Assert.AreEqual(5, tags.Length);
+
+        TagInfo products = tags.First(t => t.Name == "products");
+        Assert.AreEqual("Products", products.Summary);
+        Assert.AreEqual("All product operations", products.Description);
+        Assert.IsNull(products.Parent);
+        Assert.AreEqual("nav", products.Kind);
+
+        TagInfo cakes = tags.First(t => t.Name == "cakes");
+        Assert.AreEqual("Cakes", cakes.Summary);
+        Assert.AreEqual("products", cakes.Parent);
+        Assert.AreEqual("nav", cakes.Kind);
+
+        TagInfo seasonal = tags.First(t => t.Name == "seasonal");
+        Assert.AreEqual("Seasonal", seasonal.Summary);
+        Assert.IsNull(seasonal.Parent);
+        Assert.AreEqual("badge", seasonal.Kind);
+
+        TagInfo partner = tags.First(t => t.Name == "partner");
+        Assert.AreEqual("external", partner.Parent);
+        Assert.AreEqual("audience", partner.Kind);
+        Assert.IsNull(partner.Summary);
+
+        TagInfo external = tags.First(t => t.Name == "external");
+        Assert.AreEqual("External", external.Summary);
+        Assert.IsNull(external.Parent);
+        Assert.AreEqual("audience", external.Kind);
+    }
+
+    [TestMethod]
+    public void ListTags_ReturnsEmptyWhenNoTagsArray()
+    {
+        const string json = """
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Test", "version": "1.0.0" },
+              "paths": {}
+            }
+            """;
+
+        JsonElement root = ParseSpec(json);
+        TagInfo[] tags = OpenApi32CodeGenerator.ListTags(root);
+
+        Assert.AreEqual(0, tags.Length);
+    }
+
+    [TestMethod]
+    public void ListTags_SkipsTagsWithoutName()
+    {
+        const string json = """
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Test", "version": "1.0.0" },
+              "tags": [
+                { "name": "valid", "kind": "nav" },
+                { "summary": "No Name" },
+                { "name": "also-valid" }
+              ],
+              "paths": {}
+            }
+            """;
+
+        JsonElement root = ParseSpec(json);
+        TagInfo[] tags = OpenApi32CodeGenerator.ListTags(root);
+
+        Assert.AreEqual(2, tags.Length);
+        Assert.AreEqual("valid", tags[0].Name);
+        Assert.AreEqual("also-valid", tags[1].Name);
+    }
+
     private static Dictionary<string, string> BuildFullCovspecSchemaTypeMap()
     {
         // Collect all schema pointers and assign type names
