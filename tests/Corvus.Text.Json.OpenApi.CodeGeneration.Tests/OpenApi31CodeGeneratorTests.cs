@@ -8121,4 +8121,152 @@ public class OpenApi31CodeGeneratorTests
             client.Content.Contains("response.sourceRequest = request;", StringComparison.Ordinal),
             "CaptureRequestAsync local function should set response.sourceRequest");
     }
+
+    // ── Server generation tests ───────────────────────────────────────────
+    private static IReadOnlyList<GeneratedFile> GenerateServerCoverageSpec()
+    {
+        JsonElement root = GetCoverageRoot();
+        OpenApi31CodeGenerator gen = new("CovTest.Server", CoverageSchemaTypeMap);
+        return gen.GenerateServer(root);
+    }
+
+    [TestMethod]
+    public void GenerateServer_ProducesHandlerInterfaces()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "IApiDefaultHandler.cs"),
+            "Expected IApiDefaultHandler.cs");
+    }
+
+    [TestMethod]
+    public void GenerateServer_HandlerInterface_ContainsExpectedMethods()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile defaultHandler = files.First(f => f.FileName == "IApiDefaultHandler.cs");
+
+        Assert.IsTrue(
+            defaultHandler.Content.Contains("HandleListItemsAsync"),
+            "Expected HandleListItemsAsync in IApiDefaultHandler");
+        Assert.IsTrue(
+            defaultHandler.Content.Contains("ListItemsParams parameters"),
+            "Expected ListItemsParams parameter in handler method");
+        Assert.IsTrue(
+            defaultHandler.Content.Contains("ValueTask<ListItemsResult>"),
+            "Expected ValueTask<ListItemsResult> return type");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ProducesParamsStructs()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "ListItemsParams.cs"),
+            "Expected ListItemsParams.cs");
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "CreateItemParams.cs"),
+            "Expected CreateItemParams.cs");
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "GetItemParams.cs"),
+            "Expected GetItemParams.cs");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ParamsStruct_ContainsCorrectProperties()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile listItemsParams = files.First(f => f.FileName == "ListItemsParams.cs");
+
+        Assert.IsTrue(listItemsParams.Content.Contains("Active"), "Expected Active property");
+        Assert.IsTrue(listItemsParams.Content.Contains("Category"), "Expected Category property");
+        Assert.IsTrue(listItemsParams.Content.Contains("Page"), "Expected Page property");
+        Assert.IsTrue(listItemsParams.Content.Contains("Sort"), "Expected Sort property");
+        Assert.IsTrue(listItemsParams.Content.Contains("Verbose"), "Expected Verbose property");
+
+        GeneratedFile createItemParams = files.First(f => f.FileName == "CreateItemParams.cs");
+        Assert.IsTrue(createItemParams.Content.Contains("XCorrelationId"), "Expected XCorrelationId property");
+        Assert.IsTrue(createItemParams.Content.Contains("Body"), "Expected Body property");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ProducesResultStructs()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "ListItemsResult.cs"),
+            "Expected ListItemsResult.cs");
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "CreateItemResult.cs"),
+            "Expected CreateItemResult.cs");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ResultStruct_HasFactoryMethods()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile listItemsResult = files.First(f => f.FileName == "ListItemsResult.cs");
+
+        Assert.IsTrue(listItemsResult.Content.Contains("Ok("), "Expected Ok() factory method");
+        Assert.IsTrue(listItemsResult.Content.Contains("Default("), "Expected Default() factory method");
+
+        GeneratedFile createItemResult = files.First(f => f.FileName == "CreateItemResult.cs");
+        Assert.IsTrue(createItemResult.Content.Contains("Created("), "Expected Created() factory method");
+    }
+
+    [TestMethod]
+    public void GenerateServer_ProducesEndpointRegistration()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+
+        Assert.IsTrue(
+            files.Any(f => f.FileName == "ApiEndpointRegistration.cs"),
+            "Expected ApiEndpointRegistration.cs");
+
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+        Assert.IsTrue(registration.Content.Contains("MapApiEndpoints"), "Expected MapApiEndpoints");
+        Assert.IsTrue(registration.Content.Contains("MapGet"), "Expected MapGet");
+        Assert.IsTrue(registration.Content.Contains("MapPost"), "Expected MapPost");
+    }
+
+    [TestMethod]
+    public void GenerateServer_EndpointRegistration_IncludesAllOperations()
+    {
+        IReadOnlyList<GeneratedFile> files = GenerateServerCoverageSpec();
+        GeneratedFile registration = files.First(f => f.FileName == "ApiEndpointRegistration.cs");
+
+        Assert.IsTrue(registration.Content.Contains("\"/items\""), "Expected /items route");
+        Assert.IsTrue(registration.Content.Contains("\"/items/{itemId}\""), "Expected /items/{itemId} route");
+        Assert.IsTrue(registration.Content.Contains("\"/download\""), "Expected /download route");
+    }
+
+    [TestMethod]
+    public void GenerateServer_WithFilter_OnlyIncludesMatchedPaths()
+    {
+        JsonElement root = GetCoverageRoot();
+        OpenApi31CodeGenerator gen = new("CovTest.Server", CoverageSchemaTypeMap);
+        OperationFilter filter = new(["/items/**"]);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(root, filter);
+
+        Assert.IsTrue(files.Any(f => f.FileName == "ListItemsParams.cs"), "Expected ListItemsParams.cs");
+        Assert.IsFalse(files.Any(f => f.FileName == "DownloadFileParams.cs"), "Did not expect DownloadFileParams.cs");
+        Assert.IsFalse(files.Any(f => f.FileName == "HeadHealthParams.cs"), "Did not expect HeadHealthParams.cs");
+    }
+
+    [TestMethod]
+    public void GenerateServer_Petstore_ProducesCorrectFileCount()
+    {
+        OpenApi31CodeGenerator generator = new("Petstore.Server", PetstoreSchemaTypeMap);
+        IReadOnlyList<GeneratedFile> files = generator.GenerateServer(petstoreRoot);
+
+        Assert.IsTrue(files.Count > 0, "Expected at least some generated files");
+        Assert.IsTrue(
+            files.Any(f => f.FileName.Contains("EndpointRegistration.cs")),
+            "Expected EndpointRegistration.cs");
+        Assert.IsTrue(
+            files.Any(f => f.FileName.StartsWith("I") && f.FileName.Contains("Handler.cs")),
+            "Expected at least one handler interface");
+    }
 }
