@@ -8269,4 +8269,93 @@ public class OpenApi31CodeGeneratorTests
             files.Any(f => f.FileName.StartsWith("I") && f.FileName.Contains("Handler.cs")),
             "Expected at least one handler interface");
     }
+
+    [TestMethod]
+    public void ListTags_ReturnsTagInfo()
+    {
+        const string json = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "Test", "version": "1.0.0" },
+              "tags": [
+                {
+                  "name": "products",
+                  "summary": "Products",
+                  "description": "All product operations",
+                  "kind": "nav"
+                },
+                {
+                  "name": "cakes",
+                  "summary": "Cakes",
+                  "description": "Cake catalog",
+                  "parent": "products",
+                  "kind": "nav"
+                },
+                {
+                  "name": "seasonal",
+                  "summary": "Seasonal",
+                  "kind": "badge"
+                }
+              ],
+              "paths": {}
+            }
+            """;
+
+        JsonElement root = ParseSpec(json);
+        TagInfo[] tags = OpenApi31CodeGenerator.ListTags(root);
+
+        Assert.AreEqual(3, tags.Length);
+
+        TagInfo products = tags.First(t => t.Name == "products");
+        Assert.AreEqual("Products", products.Summary);
+        Assert.AreEqual("All product operations", products.Description);
+        Assert.IsNull(products.Parent);
+        Assert.AreEqual("nav", products.Kind);
+
+        TagInfo cakes = tags.First(t => t.Name == "cakes");
+        Assert.AreEqual("Cakes", cakes.Summary);
+        Assert.AreEqual("products", cakes.Parent);
+        Assert.AreEqual("nav", cakes.Kind);
+    }
+
+    [TestMethod]
+    public void ListTags_ReturnsEmptyWhenNoTagsArray()
+    {
+        const string json = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "Test", "version": "1.0.0" },
+              "paths": {}
+            }
+            """;
+
+        JsonElement root = ParseSpec(json);
+        TagInfo[] tags = OpenApi31CodeGenerator.ListTags(root);
+
+        Assert.AreEqual(0, tags.Length);
+    }
+
+    [TestMethod]
+    public void ListTags_SkipsTagsWithoutName()
+    {
+        const string json = """
+            {
+              "openapi": "3.1.0",
+              "info": { "title": "Test", "version": "1.0.0" },
+              "tags": [
+                { "name": "valid", "kind": "nav" },
+                { "summary": "No Name" },
+                { "name": "also-valid" }
+              ],
+              "paths": {}
+            }
+            """;
+
+        JsonElement root = ParseSpec(json);
+        TagInfo[] tags = OpenApi31CodeGenerator.ListTags(root);
+
+        Assert.AreEqual(2, tags.Length);
+        Assert.AreEqual("valid", tags[0].Name);
+        Assert.AreEqual("also-valid", tags[1].Name);
+    }
 }

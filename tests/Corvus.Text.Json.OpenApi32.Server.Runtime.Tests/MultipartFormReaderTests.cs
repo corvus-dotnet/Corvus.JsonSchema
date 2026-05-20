@@ -859,4 +859,37 @@ public class MultipartFormReaderTests
         // minus the CRLF (the line was split on CRLF already, so it should just be "field").
         Assert.AreEqual("data", root.GetProperty("field"u8).GetString());
     }
+
+    [TestMethod]
+    public void DeserializeToJson_ContentDispositionNameTruncatedAtPrefix_PartSkipped()
+    {
+        // Exercises ExtractQuotedParam L334-335: paramPrefix (name=") at end of header,
+        // start >= headerValue.Length, returns default → part has no name → skipped.
+        // Construct a part where Content-Disposition ends with name=" and nothing after.
+        const string body = "--boundary\r\n" +
+            "Content-Disposition: form-data; name=\"\r\n" +
+            "\r\n" +
+            "data\r\n" +
+            "--boundary\r\n" +
+            "Content-Disposition: form-data; name=\"valid\"\r\n" +
+            "\r\n" +
+            "value\r\n" +
+            "--boundary--\r\n";
+
+        ArrayBufferWriter<byte> buffer = new(body.Length);
+        using Utf8JsonWriter writer = new(buffer);
+
+        MultipartFormReader.DeserializeToJson(
+            Encoding.UTF8.GetBytes(body),
+            "boundary"u8,
+            writer);
+
+        writer.Flush();
+        using ParsedJsonDocument<JsonElement> doc = ParsedJsonDocument<JsonElement>.Parse(buffer.WrittenMemory);
+        JsonElement root = doc.RootElement;
+
+        // The first part has empty name (closing quote immediately follows the opening),
+        // the second part has name="valid".
+        Assert.AreEqual("value", root.GetProperty("valid"u8).GetString());
+    }
 }
