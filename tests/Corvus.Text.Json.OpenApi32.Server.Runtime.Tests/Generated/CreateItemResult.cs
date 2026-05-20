@@ -39,8 +39,9 @@ public readonly struct CreateItemResult
     /// Creates a 201 Created result.
     /// </summary>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="CreateItemResult"/> with status 201.</returns>
-    public static CreateItemResult Created(CanonTests32.Server.PostItemsCreated body) => new(201, (JsonElement)body, "application/json");
+    public static CreateItemResult Created(CanonTests32.Server.PostItemsCreated.Source body, JsonWorkspace workspace) => new(201, CanonTests32.Server.PostItemsCreated.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

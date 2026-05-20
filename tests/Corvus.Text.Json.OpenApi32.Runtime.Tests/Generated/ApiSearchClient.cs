@@ -62,7 +62,7 @@ public sealed class ApiSearchClient : IApiSearchClient
     public ValueTask<QuerySearchResponse> QuerySearchAsync(CanonTests32.Client.Schema1.Source body, CanonTests32.Client.JsonInt32.Source limit = default, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.Schema1 bodyValue = CanonTests32.Client.Schema1.CreateBuilder(workspace, body).RootElement;
+        CanonTests32.Client.Schema1 bodyValue = CanonTests32.Client.Schema1.CreateBuilder(workspace, body, 0).RootElement;
         QuerySearchRequest request = new()
         {
             Limit = limit.IsUndefined ? default : (CanonTests32.Client.JsonInt32)CanonTests32.Client.JsonInt32.CreateBuilder(workspace, limit).RootElement,

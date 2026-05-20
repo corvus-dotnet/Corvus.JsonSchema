@@ -46,8 +46,9 @@ public readonly struct ExportDataResult
     /// </summary>
     /// <param name="statusCode">The HTTP status code.</param>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ExportDataResult"/> with the specified status code and body.</returns>
-    public static ExportDataResult Default(int statusCode, CanonTests32.Server.Error body) => new(statusCode, (JsonElement)body, "application/json");
+    public static ExportDataResult Default(int statusCode, CanonTests32.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, CanonTests32.Server.Error.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

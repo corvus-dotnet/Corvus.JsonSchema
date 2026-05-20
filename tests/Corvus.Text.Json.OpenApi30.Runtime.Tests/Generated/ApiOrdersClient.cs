@@ -63,7 +63,7 @@ public sealed class ApiOrdersClient : IApiOrdersClient
     public ValueTask<UpdateOrderResponse> UpdateOrderAsync(CanonTests30.Client.JsonUuid.Source orderId, CanonTests30.Client.JsonUuid.Source xTraceId, CanonTests30.Client.PutOrdersByOrderIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PutOrdersByOrderIdBody bodyValue = CanonTests30.Client.PutOrdersByOrderIdBody.CreateBuilder(workspace, body).RootElement;
+        CanonTests30.Client.PutOrdersByOrderIdBody bodyValue = CanonTests30.Client.PutOrdersByOrderIdBody.CreateBuilder(workspace, body, 0).RootElement;
         CanonTests30.Client.JsonUuid OrderIdValue = CanonTests30.Client.JsonUuid.CreateBuilder(workspace, orderId).RootElement;
         CanonTests30.Client.JsonUuid XTraceIdValue = CanonTests30.Client.JsonUuid.CreateBuilder(workspace, xTraceId).RootElement;
         UpdateOrderRequest request = new(OrderIdValue, XTraceIdValue);

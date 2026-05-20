@@ -39,8 +39,9 @@ public readonly struct GetAdvancedStylesResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetAdvancedStylesResult"/> with status 200.</returns>
-    public static GetAdvancedStylesResult Ok(CanonTests32.Server.GetAdvancedStylesByIdsOk body) => new(200, (JsonElement)body, "application/json");
+    public static GetAdvancedStylesResult Ok(CanonTests32.Server.GetAdvancedStylesByIdsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.GetAdvancedStylesByIdsOk.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

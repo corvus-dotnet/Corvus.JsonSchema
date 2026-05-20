@@ -24,15 +24,17 @@ public interface IApiSearchHandler
     /// Handles GET /search.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<SearchItemsResult> HandleSearchItemsAsync(SearchItemsParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<SearchItemsResult> HandleSearchItemsAsync(SearchItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /search.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<SearchItemsAdvancedResult> HandleSearchItemsAdvancedAsync(SearchItemsAdvancedParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<SearchItemsAdvancedResult> HandleSearchItemsAdvancedAsync(SearchItemsAdvancedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

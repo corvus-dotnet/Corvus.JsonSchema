@@ -38,7 +38,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<SubmitContactFormResponse> SubmitContactFormAsync(CanonTests30.Client.PostFormsContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PostFormsContactBody bodyValue = CanonTests30.Client.PostFormsContactBody.CreateBuilder(workspace, body).RootElement;
+        CanonTests30.Client.PostFormsContactBody bodyValue = CanonTests30.Client.PostFormsContactBody.CreateBuilder(workspace, body, 0).RootElement;
         SubmitContactFormRequest request = new();
 
         request.Validate(validationMode);
@@ -67,7 +67,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<UploadDocumentResponse> UploadDocumentAsync(CanonTests30.Client.PostFormsUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PostFormsUploadBody bodyValue = CanonTests30.Client.PostFormsUploadBody.CreateBuilder(workspace, body).RootElement;
+        CanonTests30.Client.PostFormsUploadBody bodyValue = CanonTests30.Client.PostFormsUploadBody.CreateBuilder(workspace, body, 0).RootElement;
         UploadDocumentRequest request = new();
 
         request.Validate(validationMode);
@@ -97,7 +97,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<SubmitEncodedContactFormResponse> SubmitEncodedContactFormAsync(CanonTests30.Client.PostFormsEncodedContactBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PostFormsEncodedContactBody bodyValue = CanonTests30.Client.PostFormsEncodedContactBody.CreateBuilder(workspace, body).RootElement;
+        CanonTests30.Client.PostFormsEncodedContactBody bodyValue = CanonTests30.Client.PostFormsEncodedContactBody.CreateBuilder(workspace, body, 0).RootElement;
         SubmitEncodedContactFormRequest request = new();
 
         request.Validate(validationMode);
@@ -132,7 +132,7 @@ public sealed class ApiFormsClient : IApiFormsClient
     public ValueTask<UploadEncodedDocumentResponse> UploadEncodedDocumentAsync(CanonTests30.Client.PostFormsEncodedUploadBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests30.Client.PostFormsEncodedUploadBody bodyValue = CanonTests30.Client.PostFormsEncodedUploadBody.CreateBuilder(workspace, body).RootElement;
+        CanonTests30.Client.PostFormsEncodedUploadBody bodyValue = CanonTests30.Client.PostFormsEncodedUploadBody.CreateBuilder(workspace, body, 0).RootElement;
         UploadEncodedDocumentRequest request = new();
 
         request.Validate(validationMode);

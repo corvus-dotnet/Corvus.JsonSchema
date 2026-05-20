@@ -3832,7 +3832,7 @@ public sealed class OpenApi31CodeGenerator
         {
             bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
             w.WriteLine(
-                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body).RootElement;");
+                $"{bodyTypeName} bodyValue = {bodyTypeName}.CreateBuilder(workspace, body, 0).RootElement;");
         }
 
         if (hasParams)
@@ -4337,6 +4337,7 @@ public sealed class OpenApi31CodeGenerator
             w.WriteLine($"/// {summary}");
             w.WriteLine("/// </summary>");
             w.WriteLine($"/// <param name=\"parameters\">The operation parameters.</param>");
+            w.WriteLine($"/// <param name=\"workspace\">The workspace for building response values.</param>");
             w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
             w.WriteLine($"/// <returns>The operation result.</returns>");
 
@@ -4346,7 +4347,7 @@ public sealed class OpenApi31CodeGenerator
             }
 
             w.WriteLine(
-                $"ValueTask<{resultName}> Handle{op.MethodName}Async({paramsName} parameters, CancellationToken cancellationToken = default);");
+                $"ValueTask<{resultName}> Handle{op.MethodName}Async({paramsName} parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);");
         }
 
         w.CloseBrace();
@@ -4453,10 +4454,11 @@ public sealed class OpenApi31CodeGenerator
                 {
                     w.WriteLine($"/// <param name=\"statusCode\">The HTTP status code.</param>");
                     w.WriteLine($"/// <param name=\"body\">The response body.</param>");
+                    w.WriteLine($"/// <param name=\"workspace\">The workspace for building the response value.</param>");
                     w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with the specified status code and body.</returns>");
                     w.WriteLine(
-                        $"public static {structName} {factoryName}(int statusCode, {typeName} body) " +
-                        $"=> new(statusCode, body.As<JsonElement>(), \"application/json\");");
+                        $"public static {structName} {factoryName}(int statusCode, {typeName}.Source body, JsonWorkspace workspace) " +
+                        $"=> new(statusCode, {typeName}.CreateBuilder(workspace, body, 0).RootElement, \"application/json\");");
                 }
                 else
                 {
@@ -4476,10 +4478,11 @@ public sealed class OpenApi31CodeGenerator
                 if (typeName is not null)
                 {
                     w.WriteLine($"/// <param name=\"body\">The response body.</param>");
+                    w.WriteLine($"/// <param name=\"workspace\">The workspace for building the response value.</param>");
                     w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {resp.StatusCode}.</returns>");
                     w.WriteLine(
-                        $"public static {structName} {factoryName}({typeName} body) " +
-                        $"=> new({resp.StatusCode}, body.As<JsonElement>(), \"application/json\");");
+                        $"public static {structName} {factoryName}({typeName}.Source body, JsonWorkspace workspace) " +
+                        $"=> new({resp.StatusCode}, {typeName}.CreateBuilder(workspace, body, 0).RootElement, \"application/json\");");
                 }
                 else
                 {
@@ -4647,7 +4650,7 @@ public sealed class OpenApi31CodeGenerator
                 w.WriteLine();
 
                 // Call handler
-                w.WriteLine($"{resultName} result = await {paramName}.Handle{op.MethodName}Async(parameters, context.RequestAborted).ConfigureAwait(false);");
+                w.WriteLine($"{resultName} result = await {paramName}.Handle{op.MethodName}Async(parameters, workspace, context.RequestAborted).ConfigureAwait(false);");
                 w.WriteLine();
 
                 // Write response using workspace-rented writer to PipeWriter

@@ -39,16 +39,18 @@ public readonly struct ListItemsResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ListItemsResult"/> with status 200.</returns>
-    public static ListItemsResult Ok(CanonTests32.Server.GetItemsOk body) => new(200, (JsonElement)body, "application/json");
+    public static ListItemsResult Ok(CanonTests32.Server.GetItemsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.GetItemsOk.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Creates a default error result.
     /// </summary>
     /// <param name="statusCode">The HTTP status code.</param>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="ListItemsResult"/> with the specified status code and body.</returns>
-    public static ListItemsResult Default(int statusCode, CanonTests32.Server.Error body) => new(statusCode, (JsonElement)body, "application/json");
+    public static ListItemsResult Default(int statusCode, CanonTests32.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, CanonTests32.Server.Error.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

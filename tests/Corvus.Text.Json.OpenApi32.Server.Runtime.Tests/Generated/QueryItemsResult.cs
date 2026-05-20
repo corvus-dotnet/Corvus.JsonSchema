@@ -39,8 +39,9 @@ public readonly struct QueryItemsResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="QueryItemsResult"/> with status 200.</returns>
-    public static QueryItemsResult Ok(CanonTests32.Server.Schema1 body) => new(200, (JsonElement)body, "application/json");
+    public static QueryItemsResult Ok(CanonTests32.Server.Schema1.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Schema1.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

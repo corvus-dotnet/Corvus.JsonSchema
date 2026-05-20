@@ -53,7 +53,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                ListItemsResult result = await defaultHandler.HandleListItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                ListItemsResult result = await defaultHandler.HandleListItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -97,7 +97,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                CreateItemResult result = await defaultHandler.HandleCreateItemAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                CreateItemResult result = await defaultHandler.HandleCreateItemAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -133,7 +133,7 @@ public static class ApiEndpointRegistration
 
                 OptionsItemsParams parameters = new();
 
-                OptionsItemsResult result = await defaultHandler.HandleOptionsItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                OptionsItemsResult result = await defaultHandler.HandleOptionsItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -168,7 +168,7 @@ public static class ApiEndpointRegistration
 
                 PurgeItemsParams parameters = new();
 
-                PurgeItemsResult result = await defaultHandler.HandlePurgeItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                PurgeItemsResult result = await defaultHandler.HandlePurgeItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -208,7 +208,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetItemResult result = await defaultHandler.HandleGetItemAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetItemResult result = await defaultHandler.HandleGetItemAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -252,7 +252,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                PatchItemsItemIdResult result = await defaultHandler.HandlePatchItemsItemIdAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                PatchItemsItemIdResult result = await defaultHandler.HandlePatchItemsItemIdAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -297,7 +297,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                UpdateItemFormResult result = await defaultHandler.HandleUpdateItemFormAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                UpdateItemFormResult result = await defaultHandler.HandleUpdateItemFormAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -342,7 +342,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                UploadItemDataResult result = await defaultHandler.HandleUploadItemDataAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                UploadItemDataResult result = await defaultHandler.HandleUploadItemDataAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -378,7 +378,7 @@ public static class ApiEndpointRegistration
 
                 DownloadFileParams parameters = new();
 
-                DownloadFileResult result = await defaultHandler.HandleDownloadFileAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                DownloadFileResult result = await defaultHandler.HandleDownloadFileAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -420,7 +420,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetQuirkyResult result = await defaultHandler.HandleGetQuirkyAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetQuirkyResult result = await defaultHandler.HandleGetQuirkyAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -462,7 +462,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetStyledQuirkyResult result = await defaultHandler.HandleGetStyledQuirkyAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetStyledQuirkyResult result = await defaultHandler.HandleGetStyledQuirkyAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -497,7 +497,7 @@ public static class ApiEndpointRegistration
 
                 ExportDataParams parameters = new();
 
-                ExportDataResult result = await defaultHandler.HandleExportDataAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                ExportDataResult result = await defaultHandler.HandleExportDataAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -532,7 +532,7 @@ public static class ApiEndpointRegistration
 
                 GetEmptyServersParams parameters = new();
 
-                GetEmptyServersResult result = await defaultHandler.HandleGetEmptyServersAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetEmptyServersResult result = await defaultHandler.HandleGetEmptyServersAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -567,7 +567,7 @@ public static class ApiEndpointRegistration
 
                 HeadHealthParams parameters = new();
 
-                HeadHealthResult result = await defaultHandler.HandleHeadHealthAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                HeadHealthResult result = await defaultHandler.HandleHeadHealthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -602,7 +602,7 @@ public static class ApiEndpointRegistration
 
                 TraceHealthParams parameters = new();
 
-                TraceHealthResult result = await defaultHandler.HandleTraceHealthAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                TraceHealthResult result = await defaultHandler.HandleTraceHealthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -650,7 +650,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetAdvancedStylesResult result = await defaultHandler.HandleGetAdvancedStylesAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetAdvancedStylesResult result = await defaultHandler.HandleGetAdvancedStylesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -690,7 +690,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetByMatrixCodesResult result = await defaultHandler.HandleGetByMatrixCodesAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetByMatrixCodesResult result = await defaultHandler.HandleGetByMatrixCodesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -730,7 +730,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetByMatrixTagsResult result = await defaultHandler.HandleGetByMatrixTagsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetByMatrixTagsResult result = await defaultHandler.HandleGetByMatrixTagsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -770,7 +770,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetByLabelItemsResult result = await defaultHandler.HandleGetByLabelItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetByLabelItemsResult result = await defaultHandler.HandleGetByLabelItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -810,7 +810,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetByStyledObjectResult result = await defaultHandler.HandleGetByStyledObjectAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetByStyledObjectResult result = await defaultHandler.HandleGetByStyledObjectAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -854,7 +854,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                QueryItemsResult result = await defaultHandler.HandleQueryItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                QueryItemsResult result = await defaultHandler.HandleQueryItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -895,7 +895,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetResourceResult result = await defaultHandler.HandleGetResourceAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetResourceResult result = await defaultHandler.HandleGetResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -941,7 +941,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                CopyResourceResult result = await defaultHandler.HandleCopyResourceAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                CopyResourceResult result = await defaultHandler.HandleCopyResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -977,7 +977,7 @@ public static class ApiEndpointRegistration
 
                 StreamEventsParams parameters = new();
 
-                StreamEventsResult result = await defaultHandler.HandleStreamEventsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                StreamEventsResult result = await defaultHandler.HandleStreamEventsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1021,7 +1021,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                SearchWithQuerystringResult result = await defaultHandler.HandleSearchWithQuerystringAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                SearchWithQuerystringResult result = await defaultHandler.HandleSearchWithQuerystringAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1061,7 +1061,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetDocumentResult result = await defaultHandler.HandleGetDocumentAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetDocumentResult result = await defaultHandler.HandleGetDocumentAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1105,7 +1105,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                UpdateDocumentResult result = await defaultHandler.HandleUpdateDocumentAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                UpdateDocumentResult result = await defaultHandler.HandleUpdateDocumentAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1147,7 +1147,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                UploadRawFileResult result = await defaultHandler.HandleUploadRawFileAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                UploadRawFileResult result = await defaultHandler.HandleUploadRawFileAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1188,7 +1188,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                GetResourceVersionResult result = await defaultHandler.HandleGetResourceVersionAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetResourceVersionResult result = await defaultHandler.HandleGetResourceVersionAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1223,7 +1223,7 @@ public static class ApiEndpointRegistration
 
                 GetMonitoringStatusParams parameters = new();
 
-                GetMonitoringStatusResult result = await defaultHandler.HandleGetMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                GetMonitoringStatusResult result = await defaultHandler.HandleGetMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1264,7 +1264,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                PutMonitoringStatusResult result = await defaultHandler.HandlePutMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                PutMonitoringStatusResult result = await defaultHandler.HandlePutMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1306,7 +1306,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                PostMonitoringStatusResult result = await defaultHandler.HandlePostMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                PostMonitoringStatusResult result = await defaultHandler.HandlePostMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1342,7 +1342,7 @@ public static class ApiEndpointRegistration
 
                 DeleteMonitoringStatusParams parameters = new();
 
-                DeleteMonitoringStatusResult result = await defaultHandler.HandleDeleteMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                DeleteMonitoringStatusResult result = await defaultHandler.HandleDeleteMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1383,7 +1383,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                QueryMonitoringStatusResult result = await defaultHandler.HandleQueryMonitoringStatusAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                QueryMonitoringStatusResult result = await defaultHandler.HandleQueryMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1436,7 +1436,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                SearchItemsResult result = await ItemsHandler.HandleSearchItemsAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                SearchItemsResult result = await ItemsHandler.HandleSearchItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1480,7 +1480,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                UploadFileResult result = await ItemsHandler.HandleUploadFileAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                UploadFileResult result = await ItemsHandler.HandleUploadFileAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1525,7 +1525,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                SubmitFeedbackResult result = await ItemsHandler.HandleSubmitFeedbackAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                SubmitFeedbackResult result = await ItemsHandler.HandleSubmitFeedbackAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1570,7 +1570,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                UploadAttachmentResult result = await ItemsHandler.HandleUploadAttachmentAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                UploadAttachmentResult result = await ItemsHandler.HandleUploadAttachmentAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1615,7 +1615,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                SubmitFeedbackEncodedResult result = await ItemsHandler.HandleSubmitFeedbackEncodedAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                SubmitFeedbackEncodedResult result = await ItemsHandler.HandleSubmitFeedbackEncodedAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1660,7 +1660,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                UploadAttachmentEncodedResult result = await ItemsHandler.HandleUploadAttachmentEncodedAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                UploadAttachmentEncodedResult result = await ItemsHandler.HandleUploadAttachmentEncodedAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1705,7 +1705,7 @@ public static class ApiEndpointRegistration
                 }
                 ;
 
-                SearchItemsAdvancedResult result = await SearchHandler.HandleSearchItemsAdvancedAsync(parameters, context.RequestAborted).ConfigureAwait(false);
+                SearchItemsAdvancedResult result = await SearchHandler.HandleSearchItemsAdvancedAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())

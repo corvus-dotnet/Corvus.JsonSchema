@@ -39,8 +39,9 @@ public readonly struct UploadRawFileResult
     /// Creates a 201 Created result.
     /// </summary>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="UploadRawFileResult"/> with status 201.</returns>
-    public static UploadRawFileResult Created(CanonTests32.Server.PostUploadRawCreated body) => new(201, (JsonElement)body, "application/json");
+    public static UploadRawFileResult Created(CanonTests32.Server.PostUploadRawCreated.Source body, JsonWorkspace workspace) => new(201, CanonTests32.Server.PostUploadRawCreated.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

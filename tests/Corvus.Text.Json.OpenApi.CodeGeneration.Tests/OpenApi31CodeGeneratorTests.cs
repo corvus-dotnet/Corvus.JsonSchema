@@ -533,7 +533,7 @@ public class OpenApi31CodeGeneratorTests
 
         Assert.IsTrue(
             impl.Content.Contains(
-                "Petstore.Client.NewPet.CreateBuilder(workspace, body).RootElement",
+                "Petstore.Client.NewPet.CreateBuilder(workspace, body, 0).RootElement",
                 StringComparison.Ordinal));
     }
 

@@ -106,7 +106,7 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<PatchItemResponse> PatchItemAsync(CanonTests31.Client.JsonString.Source itemId, CanonTests31.Client.PatchItemsByItemIdBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests31.Client.PatchItemsByItemIdBody bodyValue = CanonTests31.Client.PatchItemsByItemIdBody.CreateBuilder(workspace, body).RootElement;
+        CanonTests31.Client.PatchItemsByItemIdBody bodyValue = CanonTests31.Client.PatchItemsByItemIdBody.CreateBuilder(workspace, body, 0).RootElement;
         CanonTests31.Client.JsonString ItemIdValue = CanonTests31.Client.JsonString.CreateBuilder(workspace, itemId).RootElement;
         PatchItemRequest request = new(ItemIdValue);
 
@@ -191,7 +191,7 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<UpdateItemResponse> UpdateItemAsync(CanonTests31.Client.PutItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests31.Client.PutItemsBody bodyValue = CanonTests31.Client.PutItemsBody.CreateBuilder(workspace, body).RootElement;
+        CanonTests31.Client.PutItemsBody bodyValue = CanonTests31.Client.PutItemsBody.CreateBuilder(workspace, body, 0).RootElement;
         UpdateItemRequest request = new();
 
         request.Validate(validationMode);
@@ -220,7 +220,7 @@ public sealed class ApiItemsClient : IApiItemsClient
     public ValueTask<CreateItemResponse> CreateItemAsync(CanonTests31.Client.PostItemsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests31.Client.PostItemsBody bodyValue = CanonTests31.Client.PostItemsBody.CreateBuilder(workspace, body).RootElement;
+        CanonTests31.Client.PostItemsBody bodyValue = CanonTests31.Client.PostItemsBody.CreateBuilder(workspace, body, 0).RootElement;
         CreateItemRequest request = new();
 
         request.Validate(validationMode);

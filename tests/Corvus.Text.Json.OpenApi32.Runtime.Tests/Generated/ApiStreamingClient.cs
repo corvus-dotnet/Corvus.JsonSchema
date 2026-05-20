@@ -52,7 +52,7 @@ public sealed class ApiStreamingClient : IApiStreamingClient
     public ValueTask<ChatCompletionsResponse> ChatCompletionsAsync(CanonTests32.Client.PostChatCompletionsBody.Source body, CancellationToken cancellationToken = default, ValidationMode validationMode = ValidationMode.Basic, ValidationMode responseValidationMode = ValidationMode.None)
     {
         JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-        CanonTests32.Client.PostChatCompletionsBody bodyValue = CanonTests32.Client.PostChatCompletionsBody.CreateBuilder(workspace, body).RootElement;
+        CanonTests32.Client.PostChatCompletionsBody bodyValue = CanonTests32.Client.PostChatCompletionsBody.CreateBuilder(workspace, body, 0).RootElement;
         ChatCompletionsRequest request = new();
 
         request.Validate(validationMode);

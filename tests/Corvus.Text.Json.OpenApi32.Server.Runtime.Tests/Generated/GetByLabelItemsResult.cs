@@ -39,8 +39,9 @@ public readonly struct GetByLabelItemsResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetByLabelItemsResult"/> with status 200.</returns>
-    public static GetByLabelItemsResult Ok(CanonTests32.Server.GetLabelNoExplodeByItemsOk body) => new(200, (JsonElement)body, "application/json");
+    public static GetByLabelItemsResult Ok(CanonTests32.Server.GetLabelNoExplodeByItemsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.GetLabelNoExplodeByItemsOk.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

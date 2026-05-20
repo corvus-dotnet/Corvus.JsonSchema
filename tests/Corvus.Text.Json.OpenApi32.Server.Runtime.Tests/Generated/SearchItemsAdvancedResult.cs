@@ -39,8 +39,9 @@ public readonly struct SearchItemsAdvancedResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="SearchItemsAdvancedResult"/> with status 200.</returns>
-    public static SearchItemsAdvancedResult Ok(CanonTests32.Server.PostSearchOk body) => new(200, (JsonElement)body, "application/json");
+    public static SearchItemsAdvancedResult Ok(CanonTests32.Server.PostSearchOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.PostSearchOk.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

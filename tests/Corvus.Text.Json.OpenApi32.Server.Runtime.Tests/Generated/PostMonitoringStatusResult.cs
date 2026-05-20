@@ -39,8 +39,9 @@ public readonly struct PostMonitoringStatusResult
     /// Creates a 201 Created result.
     /// </summary>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="PostMonitoringStatusResult"/> with status 201.</returns>
-    public static PostMonitoringStatusResult Created(CanonTests32.Server.PostMonitoringStatusCreated body) => new(201, (JsonElement)body, "application/json");
+    public static PostMonitoringStatusResult Created(CanonTests32.Server.PostMonitoringStatusCreated.Source body, JsonWorkspace workspace) => new(201, CanonTests32.Server.PostMonitoringStatusCreated.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

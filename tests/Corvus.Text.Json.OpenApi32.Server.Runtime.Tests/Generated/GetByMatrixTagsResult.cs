@@ -39,8 +39,9 @@ public readonly struct GetByMatrixTagsResult
     /// Creates a 200 Ok result.
     /// </summary>
     /// <param name="body">The response body.</param>
+    /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="GetByMatrixTagsResult"/> with status 200.</returns>
-    public static GetByMatrixTagsResult Ok(CanonTests32.Server.GetMatrixNoExplodeByTagsOk body) => new(200, (JsonElement)body, "application/json");
+    public static GetByMatrixTagsResult Ok(CanonTests32.Server.GetMatrixNoExplodeByTagsOk.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.GetMatrixNoExplodeByTagsOk.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

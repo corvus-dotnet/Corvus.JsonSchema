@@ -24,287 +24,323 @@ public interface IApiDefaultHandler
     /// Handles GET /items — List items with various default parameter values
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<ListItemsResult> HandleListItemsAsync(ListItemsParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<ListItemsResult> HandleListItemsAsync(ListItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /items — Create a new item
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<CreateItemResult> HandleCreateItemAsync(CreateItemParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<CreateItemResult> HandleCreateItemAsync(CreateItemParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles OPTIONS /items — CORS preflight for items
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<OptionsItemsResult> HandleOptionsItemsAsync(OptionsItemsParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<OptionsItemsResult> HandleOptionsItemsAsync(OptionsItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles CUSTOM /items — Purge all items (no operationId)
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<PurgeItemsResult> HandlePurgeItemsAsync(PurgeItemsParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<PurgeItemsResult> HandlePurgeItemsAsync(PurgeItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /items/{itemId}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetItemResult> HandleGetItemAsync(GetItemParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetItemResult> HandleGetItemAsync(GetItemParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles PATCH /items/{itemId} — Partial update an item
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<PatchItemsItemIdResult> HandlePatchItemsItemIdAsync(PatchItemsItemIdParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<PatchItemsItemIdResult> HandlePatchItemsItemIdAsync(PatchItemsItemIdParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /items/{itemId}/form.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<UpdateItemFormResult> HandleUpdateItemFormAsync(UpdateItemFormParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<UpdateItemFormResult> HandleUpdateItemFormAsync(UpdateItemFormParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /items/{itemId}/upload.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<UploadItemDataResult> HandleUploadItemDataAsync(UploadItemDataParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<UploadItemDataResult> HandleUploadItemDataAsync(UploadItemDataParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /download.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<DownloadFileResult> HandleDownloadFileAsync(DownloadFileParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<DownloadFileResult> HandleDownloadFileAsync(DownloadFileParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /quirky/{qid}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetQuirkyResult> HandleGetQuirkyAsync(GetQuirkyParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetQuirkyResult> HandleGetQuirkyAsync(GetQuirkyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /quirky/{sid}/styled.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetStyledQuirkyResult> HandleGetStyledQuirkyAsync(GetStyledQuirkyParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetStyledQuirkyResult> HandleGetStyledQuirkyAsync(GetStyledQuirkyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /export.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<ExportDataResult> HandleExportDataAsync(ExportDataParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<ExportDataResult> HandleExportDataAsync(ExportDataParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /empty-servers.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetEmptyServersResult> HandleGetEmptyServersAsync(GetEmptyServersParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetEmptyServersResult> HandleGetEmptyServersAsync(GetEmptyServersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles HEAD /health.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<HeadHealthResult> HandleHeadHealthAsync(HeadHealthParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<HeadHealthResult> HandleHeadHealthAsync(HeadHealthParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles TRACE /health — Trace request
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<TraceHealthResult> HandleTraceHealthAsync(TraceHealthParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<TraceHealthResult> HandleTraceHealthAsync(TraceHealthParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /advanced-styles/{ids}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetAdvancedStylesResult> HandleGetAdvancedStylesAsync(GetAdvancedStylesParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetAdvancedStylesResult> HandleGetAdvancedStylesAsync(GetAdvancedStylesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /matrix-test/{codes}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetByMatrixCodesResult> HandleGetByMatrixCodesAsync(GetByMatrixCodesParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetByMatrixCodesResult> HandleGetByMatrixCodesAsync(GetByMatrixCodesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /matrix-no-explode/{tags}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetByMatrixTagsResult> HandleGetByMatrixTagsAsync(GetByMatrixTagsParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetByMatrixTagsResult> HandleGetByMatrixTagsAsync(GetByMatrixTagsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /label-no-explode/{.items}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetByLabelItemsResult> HandleGetByLabelItemsAsync(GetByLabelItemsParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetByLabelItemsResult> HandleGetByLabelItemsAsync(GetByLabelItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /styled-object/{obj}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetByStyledObjectResult> HandleGetByStyledObjectAsync(GetByStyledObjectParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetByStyledObjectResult> HandleGetByStyledObjectAsync(GetByStyledObjectParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles QUERY /query-endpoint — Query items using HTTP QUERY method
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<QueryItemsResult> HandleQueryItemsAsync(QueryItemsParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<QueryItemsResult> HandleQueryItemsAsync(QueryItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /resources/{resourceId}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetResourceResult> HandleGetResourceAsync(GetResourceParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetResourceResult> HandleGetResourceAsync(GetResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles CUSTOM /resources/{resourceId}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<CopyResourceResult> HandleCopyResourceAsync(CopyResourceParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<CopyResourceResult> HandleCopyResourceAsync(CopyResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles CUSTOM /resources/{resourceId}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<PurgeResourceResult> HandlePurgeResourceAsync(PurgeResourceParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<PurgeResourceResult> HandlePurgeResourceAsync(PurgeResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles CUSTOM /resources/{resourceId}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<MoveResourceResult> HandleMoveResourceAsync(MoveResourceParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<MoveResourceResult> HandleMoveResourceAsync(MoveResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /events/stream — Stream events via NDJSON
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<StreamEventsResult> HandleStreamEventsAsync(StreamEventsParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<StreamEventsResult> HandleStreamEventsAsync(StreamEventsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /search-qs — Search using querystring content parameter
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<SearchWithQuerystringResult> HandleSearchWithQuerystringAsync(SearchWithQuerystringParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<SearchWithQuerystringResult> HandleSearchWithQuerystringAsync(SearchWithQuerystringParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /documents/{documentId}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetDocumentResult> HandleGetDocumentAsync(GetDocumentParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetDocumentResult> HandleGetDocumentAsync(GetDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles PUT /documents/{documentId}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<UpdateDocumentResult> HandleUpdateDocumentAsync(UpdateDocumentParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<UpdateDocumentResult> HandleUpdateDocumentAsync(UpdateDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /upload-raw — Upload raw binary file
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<UploadRawFileResult> HandleUploadRawFileAsync(UploadRawFileParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<UploadRawFileResult> HandleUploadRawFileAsync(UploadRawFileParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /versions/{versionId}.
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetResourceVersionResult> HandleGetResourceVersionAsync(GetResourceVersionParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetResourceVersionResult> HandleGetResourceVersionAsync(GetResourceVersionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles GET /monitoring/status — Get monitoring status
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<GetMonitoringStatusResult> HandleGetMonitoringStatusAsync(GetMonitoringStatusParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<GetMonitoringStatusResult> HandleGetMonitoringStatusAsync(GetMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles PUT /monitoring/status — Update monitoring config
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<PutMonitoringStatusResult> HandlePutMonitoringStatusAsync(PutMonitoringStatusParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<PutMonitoringStatusResult> HandlePutMonitoringStatusAsync(PutMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles POST /monitoring/status — Create monitoring rule
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<PostMonitoringStatusResult> HandlePostMonitoringStatusAsync(PostMonitoringStatusParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<PostMonitoringStatusResult> HandlePostMonitoringStatusAsync(PostMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles DELETE /monitoring/status — Delete monitoring data
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<DeleteMonitoringStatusResult> HandleDeleteMonitoringStatusAsync(DeleteMonitoringStatusParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<DeleteMonitoringStatusResult> HandleDeleteMonitoringStatusAsync(DeleteMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Handles QUERY /monitoring/status — Query monitoring metrics
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The operation result.</returns>
-    ValueTask<QueryMonitoringStatusResult> HandleQueryMonitoringStatusAsync(QueryMonitoringStatusParams parameters, CancellationToken cancellationToken = default);
+    ValueTask<QueryMonitoringStatusResult> HandleQueryMonitoringStatusAsync(QueryMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 }

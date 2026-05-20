@@ -15,170 +15,170 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
 {
     private static readonly ItemEntity DefaultItem = ItemEntity.ParseValue("""{"id":"1","name":"Widget","price":9.99}"""u8);
 
-    public ValueTask<ListItemsResult> HandleListItemsAsync(ListItemsParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<ListItemsResult> HandleListItemsAsync(ListItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetItemsOk body = GetItemsOk.ParseValue("""[{"id":"1","name":"Test Item","price":10}]"""u8);
-        return new(ListItemsResult.Ok(body));
+        return new(ListItemsResult.Ok(body, workspace));
     }
 
-    public ValueTask<CreateItemResult> HandleCreateItemAsync(CreateItemParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<CreateItemResult> HandleCreateItemAsync(CreateItemParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         PostItemsCreated body = PostItemsCreated.ParseValue("""{"id":"new-1","name":"Created"}"""u8);
-        return new(CreateItemResult.Created(body));
+        return new(CreateItemResult.Created(body, workspace));
     }
 
-    public ValueTask<OptionsItemsResult> HandleOptionsItemsAsync(OptionsItemsParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<OptionsItemsResult> HandleOptionsItemsAsync(OptionsItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(OptionsItemsResult.NoContent());
 
-    public ValueTask<PurgeItemsResult> HandlePurgeItemsAsync(PurgeItemsParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<PurgeItemsResult> HandlePurgeItemsAsync(PurgeItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(PurgeItemsResult.NoContent());
 
-    public ValueTask<GetItemResult> HandleGetItemAsync(GetItemParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetItemResult> HandleGetItemAsync(GetItemParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string itemId = (string)parameters.ItemId;
         ItemEntity body = ItemEntity.ParseValue(System.Text.Encoding.UTF8.GetBytes($$"""{"id":"{{itemId}}","name":"Widget","price":9.99}"""));
-        return new(GetItemResult.Ok(body));
+        return new(GetItemResult.Ok(body, workspace));
     }
 
-    public ValueTask<PatchItemsItemIdResult> HandlePatchItemsItemIdAsync(PatchItemsItemIdParams parameters, CancellationToken cancellationToken = default)
-        => new(PatchItemsItemIdResult.Ok(DefaultItem));
+    public ValueTask<PatchItemsItemIdResult> HandlePatchItemsItemIdAsync(PatchItemsItemIdParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(PatchItemsItemIdResult.Ok(DefaultItem, workspace));
 
-    public ValueTask<UpdateItemFormResult> HandleUpdateItemFormAsync(UpdateItemFormParams parameters, CancellationToken cancellationToken = default)
-        => new(UpdateItemFormResult.Ok(DefaultItem));
+    public ValueTask<UpdateItemFormResult> HandleUpdateItemFormAsync(UpdateItemFormParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(UpdateItemFormResult.Ok(DefaultItem, workspace));
 
-    public ValueTask<UploadItemDataResult> HandleUploadItemDataAsync(UploadItemDataParams parameters, CancellationToken cancellationToken = default)
-        => new(UploadItemDataResult.Created(DefaultItem));
+    public ValueTask<UploadItemDataResult> HandleUploadItemDataAsync(UploadItemDataParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(UploadItemDataResult.Created(DefaultItem, workspace));
 
-    public ValueTask<DownloadFileResult> HandleDownloadFileAsync(DownloadFileParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<DownloadFileResult> HandleDownloadFileAsync(DownloadFileParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(DownloadFileResult.Ok());
 
-    public ValueTask<GetQuirkyResult> HandleGetQuirkyAsync(GetQuirkyParams parameters, CancellationToken cancellationToken = default)
-        => new(GetQuirkyResult.Ok(DefaultItem));
+    public ValueTask<GetQuirkyResult> HandleGetQuirkyAsync(GetQuirkyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(GetQuirkyResult.Ok(DefaultItem, workspace));
 
-    public ValueTask<GetStyledQuirkyResult> HandleGetStyledQuirkyAsync(GetStyledQuirkyParams parameters, CancellationToken cancellationToken = default)
-        => new(GetStyledQuirkyResult.Ok(DefaultItem));
+    public ValueTask<GetStyledQuirkyResult> HandleGetStyledQuirkyAsync(GetStyledQuirkyParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(GetStyledQuirkyResult.Ok(DefaultItem, workspace));
 
-    public ValueTask<ExportDataResult> HandleExportDataAsync(ExportDataParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<ExportDataResult> HandleExportDataAsync(ExportDataParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(ExportDataResult.Ok());
 
-    public ValueTask<GetEmptyServersResult> HandleGetEmptyServersAsync(GetEmptyServersParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetEmptyServersResult> HandleGetEmptyServersAsync(GetEmptyServersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetEmptyServersOk body = GetEmptyServersOk.ParseValue("""[]"""u8);
-        return new(GetEmptyServersResult.Ok(body));
+        return new(GetEmptyServersResult.Ok(body, workspace));
     }
 
-    public ValueTask<HeadHealthResult> HandleHeadHealthAsync(HeadHealthParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<HeadHealthResult> HandleHeadHealthAsync(HeadHealthParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(HeadHealthResult.Ok());
 
-    public ValueTask<TraceHealthResult> HandleTraceHealthAsync(TraceHealthParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<TraceHealthResult> HandleTraceHealthAsync(TraceHealthParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(TraceHealthResult.Ok());
 
-    public ValueTask<GetAdvancedStylesResult> HandleGetAdvancedStylesAsync(GetAdvancedStylesParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetAdvancedStylesResult> HandleGetAdvancedStylesAsync(GetAdvancedStylesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetAdvancedStylesByIdsOk body = GetAdvancedStylesByIdsOk.ParseValue("""[]"""u8);
-        return new(GetAdvancedStylesResult.Ok(body));
+        return new(GetAdvancedStylesResult.Ok(body, workspace));
     }
 
-    public ValueTask<GetByMatrixCodesResult> HandleGetByMatrixCodesAsync(GetByMatrixCodesParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetByMatrixCodesResult> HandleGetByMatrixCodesAsync(GetByMatrixCodesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetMatrixTestByCodesOk body = GetMatrixTestByCodesOk.ParseValue("""[]"""u8);
-        return new(GetByMatrixCodesResult.Ok(body));
+        return new(GetByMatrixCodesResult.Ok(body, workspace));
     }
 
-    public ValueTask<GetByMatrixTagsResult> HandleGetByMatrixTagsAsync(GetByMatrixTagsParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetByMatrixTagsResult> HandleGetByMatrixTagsAsync(GetByMatrixTagsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetMatrixNoExplodeByTagsOk body = GetMatrixNoExplodeByTagsOk.ParseValue("""[]"""u8);
-        return new(GetByMatrixTagsResult.Ok(body));
+        return new(GetByMatrixTagsResult.Ok(body, workspace));
     }
 
-    public ValueTask<GetByLabelItemsResult> HandleGetByLabelItemsAsync(GetByLabelItemsParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetByLabelItemsResult> HandleGetByLabelItemsAsync(GetByLabelItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetLabelNoExplodeByItemsOk body = GetLabelNoExplodeByItemsOk.ParseValue("""[]"""u8);
-        return new(GetByLabelItemsResult.Ok(body));
+        return new(GetByLabelItemsResult.Ok(body, workspace));
     }
 
-    public ValueTask<GetByStyledObjectResult> HandleGetByStyledObjectAsync(GetByStyledObjectParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetByStyledObjectResult> HandleGetByStyledObjectAsync(GetByStyledObjectParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetStyledObjectByObjOk body = GetStyledObjectByObjOk.ParseValue("""{}"""u8);
-        return new(GetByStyledObjectResult.Ok(body));
+        return new(GetByStyledObjectResult.Ok(body, workspace));
     }
 
-    public ValueTask<QueryItemsResult> HandleQueryItemsAsync(QueryItemsParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<QueryItemsResult> HandleQueryItemsAsync(QueryItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         Schema1 body = Schema1.ParseValue("""[]"""u8);
-        return new(QueryItemsResult.Ok(body));
+        return new(QueryItemsResult.Ok(body, workspace));
     }
 
-    public ValueTask<GetResourceResult> HandleGetResourceAsync(GetResourceParams parameters, CancellationToken cancellationToken = default)
-        => new(GetResourceResult.Ok(DefaultItem));
+    public ValueTask<GetResourceResult> HandleGetResourceAsync(GetResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(GetResourceResult.Ok(DefaultItem, workspace));
 
-    public ValueTask<CopyResourceResult> HandleCopyResourceAsync(CopyResourceParams parameters, CancellationToken cancellationToken = default)
-        => new(CopyResourceResult.Created(DefaultItem));
+    public ValueTask<CopyResourceResult> HandleCopyResourceAsync(CopyResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(CopyResourceResult.Created(DefaultItem, workspace));
 
-    public ValueTask<PurgeResourceResult> HandlePurgeResourceAsync(PurgeResourceParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<PurgeResourceResult> HandlePurgeResourceAsync(PurgeResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(PurgeResourceResult.NoContent());
 
-    public ValueTask<MoveResourceResult> HandleMoveResourceAsync(MoveResourceParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<MoveResourceResult> HandleMoveResourceAsync(MoveResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(MoveResourceResult.Ok());
 
-    public ValueTask<StreamEventsResult> HandleStreamEventsAsync(StreamEventsParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<StreamEventsResult> HandleStreamEventsAsync(StreamEventsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(StreamEventsResult.Ok());
 
-    public ValueTask<SearchWithQuerystringResult> HandleSearchWithQuerystringAsync(SearchWithQuerystringParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<SearchWithQuerystringResult> HandleSearchWithQuerystringAsync(SearchWithQuerystringParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetSearchQsOk body = GetSearchQsOk.ParseValue("""{"results":[]}"""u8);
-        return new(SearchWithQuerystringResult.Ok(body));
+        return new(SearchWithQuerystringResult.Ok(body, workspace));
     }
 
-    public ValueTask<GetDocumentResult> HandleGetDocumentAsync(GetDocumentParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetDocumentResult> HandleGetDocumentAsync(GetDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         Schema3 body = Schema3.ParseValue("""{}"""u8);
-        return new(GetDocumentResult.Ok(body));
+        return new(GetDocumentResult.Ok(body, workspace));
     }
 
-    public ValueTask<UpdateDocumentResult> HandleUpdateDocumentAsync(UpdateDocumentParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<UpdateDocumentResult> HandleUpdateDocumentAsync(UpdateDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         Schema3 body = Schema3.ParseValue("""{}"""u8);
-        return new(UpdateDocumentResult.Ok(body));
+        return new(UpdateDocumentResult.Ok(body, workspace));
     }
 
-    public ValueTask<UploadRawFileResult> HandleUploadRawFileAsync(UploadRawFileParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<UploadRawFileResult> HandleUploadRawFileAsync(UploadRawFileParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         PostUploadRawCreated body = PostUploadRawCreated.ParseValue("""{"url":"https://example.com/file.bin"}"""u8);
-        return new(UploadRawFileResult.Created(body));
+        return new(UploadRawFileResult.Created(body, workspace));
     }
 
-    public ValueTask<GetResourceVersionResult> HandleGetResourceVersionAsync(GetResourceVersionParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetResourceVersionResult> HandleGetResourceVersionAsync(GetResourceVersionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         Schema5 body = Schema5.ParseValue("""{"version":"1.0"}"""u8);
-        return new(GetResourceVersionResult.Ok(body));
+        return new(GetResourceVersionResult.Ok(body, workspace));
     }
 
-    public ValueTask<GetMonitoringStatusResult> HandleGetMonitoringStatusAsync(GetMonitoringStatusParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<GetMonitoringStatusResult> HandleGetMonitoringStatusAsync(GetMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetMonitoringStatusOk body = GetMonitoringStatusOk.ParseValue("""{"status":"ok"}"""u8);
-        return new(GetMonitoringStatusResult.Ok(body));
+        return new(GetMonitoringStatusResult.Ok(body, workspace));
     }
 
-    public ValueTask<PutMonitoringStatusResult> HandlePutMonitoringStatusAsync(PutMonitoringStatusParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<PutMonitoringStatusResult> HandlePutMonitoringStatusAsync(PutMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         PutMonitoringStatusOk body = PutMonitoringStatusOk.ParseValue("""{"status":"updated"}"""u8);
-        return new(PutMonitoringStatusResult.Ok(body));
+        return new(PutMonitoringStatusResult.Ok(body, workspace));
     }
 
-    public ValueTask<PostMonitoringStatusResult> HandlePostMonitoringStatusAsync(PostMonitoringStatusParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<PostMonitoringStatusResult> HandlePostMonitoringStatusAsync(PostMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         PostMonitoringStatusCreated body = PostMonitoringStatusCreated.ParseValue("""{"status":"created"}"""u8);
-        return new(PostMonitoringStatusResult.Created(body));
+        return new(PostMonitoringStatusResult.Created(body, workspace));
     }
 
-    public ValueTask<DeleteMonitoringStatusResult> HandleDeleteMonitoringStatusAsync(DeleteMonitoringStatusParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<DeleteMonitoringStatusResult> HandleDeleteMonitoringStatusAsync(DeleteMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
         => new(DeleteMonitoringStatusResult.NoContent());
 
-    public ValueTask<QueryMonitoringStatusResult> HandleQueryMonitoringStatusAsync(QueryMonitoringStatusParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<QueryMonitoringStatusResult> HandleQueryMonitoringStatusAsync(QueryMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         Schema7 body = Schema7.ParseValue("""[]"""u8);
-        return new(QueryMonitoringStatusResult.Ok(body));
+        return new(QueryMonitoringStatusResult.Ok(body, workspace));
     }
 }
 
@@ -189,26 +189,26 @@ internal sealed class MockItemsHandler : IApiItemsHandler
 {
     private static readonly ItemEntity DefaultItem = ItemEntity.ParseValue("""{"id":"1","name":"Widget","price":9.99}"""u8);
 
-    public ValueTask<SearchItemsResult> HandleSearchItemsAsync(SearchItemsParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<SearchItemsResult> HandleSearchItemsAsync(SearchItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetSearchOk body = GetSearchOk.ParseValue("""{"results":[{"id":"1","name":"Found Item"}]}"""u8);
-        return new(SearchItemsResult.Ok(body));
+        return new(SearchItemsResult.Ok(body, workspace));
     }
 
-    public ValueTask<UploadFileResult> HandleUploadFileAsync(UploadFileParams parameters, CancellationToken cancellationToken = default)
-        => new(UploadFileResult.Created(DefaultItem));
+    public ValueTask<UploadFileResult> HandleUploadFileAsync(UploadFileParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(UploadFileResult.Created(DefaultItem, workspace));
 
-    public ValueTask<SubmitFeedbackResult> HandleSubmitFeedbackAsync(SubmitFeedbackParams parameters, CancellationToken cancellationToken = default)
-        => new(SubmitFeedbackResult.Created(DefaultItem));
+    public ValueTask<SubmitFeedbackResult> HandleSubmitFeedbackAsync(SubmitFeedbackParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(SubmitFeedbackResult.Created(DefaultItem, workspace));
 
-    public ValueTask<UploadAttachmentResult> HandleUploadAttachmentAsync(UploadAttachmentParams parameters, CancellationToken cancellationToken = default)
-        => new(UploadAttachmentResult.Created(DefaultItem));
+    public ValueTask<UploadAttachmentResult> HandleUploadAttachmentAsync(UploadAttachmentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(UploadAttachmentResult.Created(DefaultItem, workspace));
 
-    public ValueTask<SubmitFeedbackEncodedResult> HandleSubmitFeedbackEncodedAsync(SubmitFeedbackEncodedParams parameters, CancellationToken cancellationToken = default)
-        => new(SubmitFeedbackEncodedResult.Created(DefaultItem));
+    public ValueTask<SubmitFeedbackEncodedResult> HandleSubmitFeedbackEncodedAsync(SubmitFeedbackEncodedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(SubmitFeedbackEncodedResult.Created(DefaultItem, workspace));
 
-    public ValueTask<UploadAttachmentEncodedResult> HandleUploadAttachmentEncodedAsync(UploadAttachmentEncodedParams parameters, CancellationToken cancellationToken = default)
-        => new(UploadAttachmentEncodedResult.Created(DefaultItem));
+    public ValueTask<UploadAttachmentEncodedResult> HandleUploadAttachmentEncodedAsync(UploadAttachmentEncodedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+        => new(UploadAttachmentEncodedResult.Created(DefaultItem, workspace));
 }
 
 /// <summary>
@@ -216,15 +216,15 @@ internal sealed class MockItemsHandler : IApiItemsHandler
 /// </summary>
 internal sealed class MockSearchHandler : IApiSearchHandler
 {
-    public ValueTask<SearchItemsResult> HandleSearchItemsAsync(SearchItemsParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<SearchItemsResult> HandleSearchItemsAsync(SearchItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         GetSearchOk body = GetSearchOk.ParseValue("""{"results":[{"id":"s1","name":"Search Result"}]}"""u8);
-        return new(SearchItemsResult.Ok(body));
+        return new(SearchItemsResult.Ok(body, workspace));
     }
 
-    public ValueTask<SearchItemsAdvancedResult> HandleSearchItemsAdvancedAsync(SearchItemsAdvancedParams parameters, CancellationToken cancellationToken = default)
+    public ValueTask<SearchItemsAdvancedResult> HandleSearchItemsAdvancedAsync(SearchItemsAdvancedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         PostSearchOk body = PostSearchOk.ParseValue("""{"results":[{"id":"a1","name":"Advanced Result"}]}"""u8);
-        return new(SearchItemsAdvancedResult.Ok(body));
+        return new(SearchItemsAdvancedResult.Ok(body, workspace));
     }
 }
