@@ -35,6 +35,8 @@ public static class CliAppFactory
 #if NET10_0_OR_GREATER
                 c.AddCommand<OpenApiGenerateCommand>("openapi-client")
                     .WithDescription("Generate API client code from an OpenAPI specification.");
+                c.AddCommand<OpenApiServerCommand>("openapi-server")
+                    .WithDescription("Generate API server stubs from an OpenAPI specification.");
                 c.AddCommand<OpenApiShowCommand>("openapi-show")
                     .WithDescription("Display the operation tree of an OpenAPI specification.");
 #endif

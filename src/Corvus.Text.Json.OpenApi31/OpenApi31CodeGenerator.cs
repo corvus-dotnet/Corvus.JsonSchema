@@ -4244,4 +4244,448 @@ public sealed class OpenApi31CodeGenerator
 
         return paramParts;
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // Server stub generation
+    // ═══════════════════════════════════════════════════════════════════
+
+    /// <summary>
+    /// Generates ASP.NET Minimal API server stubs from the OpenAPI specification.
+    /// </summary>
+    /// <param name="specRoot">The root element of the parsed spec document.</param>
+    /// <param name="filter">Optional operation filter.</param>
+    /// <param name="referenceResolver">
+    /// Optional reference resolver. If <see langword="null"/>,
+    /// a <see cref="LocalReferenceResolver"/> is used.
+    /// </param>
+    /// <returns>The generated server stub source files.</returns>
+    public IReadOnlyList<GeneratedFile> GenerateServer(
+        JsonElement specRoot,
+        OperationFilter? filter = null,
+        IOpenApiReferenceResolver? referenceResolver = null)
+    {
+        referenceResolver ??= new LocalReferenceResolver(specRoot);
+        List<OperationInfo> operations = [];
+        ServerInfo? rootServer = GetDefaultServerInfo(specRoot);
+
+        foreach (OperationRef opRef in WalkOperationRefs(specRoot, filter, referenceResolver))
+        {
+            operations.Add(PrepareOperation(opRef, referenceResolver, rootServer));
+        }
+
+        List<GeneratedFile> files = [];
+        Dictionary<string, List<OperationInfo>> groups = GroupOperationsByTag(operations);
+
+        foreach (OperationInfo op in operations)
+        {
+            files.Add(this.EmitServerOperationParams(op));
+            files.Add(this.EmitServerOperationResult(op));
+        }
+
+        foreach ((string tag, List<OperationInfo> tagOps) in groups)
+        {
+            string handlerName = this.GetHandlerName(tag);
+            files.Add(this.EmitServerHandlerInterface(handlerName, tagOps));
+        }
+
+        files.Add(this.EmitServerEndpointRegistration(groups));
+
+        return files;
+    }
+
+    private string GetHandlerName(string tag)
+    {
+        string prefix = this.clientNamePrefix ?? "Api";
+        string sanitized = CodeEmitHelpers.SanitizeIdentifier(tag);
+        return $"{prefix}{sanitized}";
+    }
+
+    private GeneratedFile EmitServerHandlerInterface(
+        string handlerName,
+        IReadOnlyList<OperationInfo> operations)
+    {
+        string interfaceName = $"I{handlerName}Handler";
+        IndentedWriter w = new();
+
+        CodeEmitHelpers.EmitHeader(w);
+        w.WriteLine($"namespace {this.rootNamespace};");
+        w.WriteLine();
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Handler interface for {handlerName} API operations.");
+        w.WriteLine("/// Implement this interface to provide the server-side logic.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public interface {interfaceName}");
+        w.OpenBrace();
+
+        for (int i = 0; i < operations.Count; i++)
+        {
+            if (i > 0)
+            {
+                w.WriteLine();
+            }
+
+            OperationInfo op = operations[i];
+            string paramsName = $"{op.MethodName}Params";
+            string resultName = $"{op.MethodName}Result";
+
+            w.WriteLine("/// <summary>");
+            string httpMethod = op.Method.ToString().ToUpperInvariant();
+            string summary = op.Summary is not null
+                ? $"Handles {httpMethod} {op.PathTemplate} \u2014 {CodeEmitHelpers.EscapeXml(op.Summary)}"
+                : $"Handles {httpMethod} {op.PathTemplate}.";
+            w.WriteLine($"/// {summary}");
+            w.WriteLine("/// </summary>");
+            w.WriteLine($"/// <param name=\"parameters\">The operation parameters.</param>");
+            w.WriteLine($"/// <param name=\"cancellationToken\">A cancellation token.</param>");
+            w.WriteLine($"/// <returns>The operation result.</returns>");
+
+            if (op.IsDeprecated)
+            {
+                w.WriteLine("[Obsolete(\"This operation is deprecated.\")]");
+            }
+
+            w.WriteLine(
+                $"ValueTask<{resultName}> Handle{op.MethodName}Async({paramsName} parameters, CancellationToken cancellationToken = default);");
+        }
+
+        w.CloseBrace();
+
+        return new GeneratedFile($"{interfaceName}.cs", w.ToString());
+    }
+
+    private GeneratedFile EmitServerOperationParams(OperationInfo op)
+    {
+        string structName = $"{op.MethodName}Params";
+        IndentedWriter w = new();
+
+        CodeEmitHelpers.EmitHeader(w);
+        w.WriteLine($"namespace {this.rootNamespace};");
+        w.WriteLine();
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Parameters for the {op.MethodName} operation ({op.Method.ToString().ToUpperInvariant()} {op.PathTemplate}).");
+        w.WriteLine("/// </summary>");
+
+        string? remarks = op.Description ?? op.Summary;
+        if (remarks is not null)
+        {
+            w.WriteLine($"/// <remarks>{CodeEmitHelpers.EscapeXml(remarks)}</remarks>");
+        }
+
+        w.WriteLine($"public readonly struct {structName}");
+        w.OpenBrace();
+
+        foreach (ParameterInfo param in op.Parameters)
+        {
+            string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
+            string typeName = this.GetParameterTypeName(param);
+
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            w.WriteLine($"/// Gets the '{param.Name}' {param.Location.ToString().ToLowerInvariant()} parameter.");
+            w.WriteLine("/// </summary>");
+            w.WriteLine($"public {typeName} {fieldName} {{ get; init; }}");
+        }
+
+        if (op.RequestBody is { } rb)
+        {
+            string bodyTypeName = this.ResolveRequestBodyTypeName(rb);
+            w.WriteLine();
+            w.WriteLine("/// <summary>");
+            string bodyDesc = rb.Description ?? "Gets the request body.";
+            w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(bodyDesc)}");
+            w.WriteLine("/// </summary>");
+            w.WriteLine($"public {bodyTypeName} Body {{ get; init; }}");
+        }
+
+        w.CloseBrace();
+
+        return new GeneratedFile($"{structName}.cs", w.ToString());
+    }
+
+    private GeneratedFile EmitServerOperationResult(OperationInfo op)
+    {
+        string structName = $"{op.MethodName}Result";
+        IndentedWriter w = new();
+
+        CodeEmitHelpers.EmitHeader(w);
+        w.WriteLine($"namespace {this.rootNamespace};");
+        w.WriteLine();
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Result type for the {op.MethodName} operation.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public readonly struct {structName}");
+        w.OpenBrace();
+
+        w.WriteLine($"private {structName}(int statusCode, JsonElement body = default, string? contentType = null)");
+        w.OpenBrace();
+        w.WriteLine("this.StatusCode = statusCode;");
+        w.WriteLine("this.Body = body;");
+        w.WriteLine("this.ContentType = contentType;");
+        w.CloseBrace();
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the HTTP status code.</summary>");
+        w.WriteLine("public int StatusCode { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the response body.</summary>");
+        w.WriteLine("public JsonElement Body { get; }");
+        w.WriteLine();
+        w.WriteLine("/// <summary>Gets the content type for the response body.</summary>");
+        w.WriteLine("public string? ContentType { get; }");
+
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            string factoryName = CodeEmitHelpers.StatusCodeToName(resp.StatusCode);
+            string? typeName = this.ResolveResponseTypeName(resp);
+
+            w.WriteLine();
+
+            if (resp.StatusCode == "default")
+            {
+                w.WriteLine("/// <summary>");
+                w.WriteLine("/// Creates a default error result.");
+                w.WriteLine("/// </summary>");
+
+                if (typeName is not null)
+                {
+                    w.WriteLine($"/// <param name=\"statusCode\">The HTTP status code.</param>");
+                    w.WriteLine($"/// <param name=\"body\">The response body.</param>");
+                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with the specified status code and body.</returns>");
+                    w.WriteLine(
+                        $"public static {structName} {factoryName}(int statusCode, {typeName} body) " +
+                        $"=> new(statusCode, body.As<JsonElement>(), \"application/json\");");
+                }
+                else
+                {
+                    w.WriteLine($"/// <param name=\"statusCode\">The HTTP status code.</param>");
+                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with the specified status code.</returns>");
+                    w.WriteLine(
+                        $"public static {structName} {factoryName}(int statusCode) => new(statusCode);");
+                }
+            }
+            else
+            {
+                w.WriteLine("/// <summary>");
+                string desc = $"Creates a {resp.StatusCode} {factoryName} result.";
+                w.WriteLine($"/// {CodeEmitHelpers.EscapeXml(desc)}");
+                w.WriteLine("/// </summary>");
+
+                if (typeName is not null)
+                {
+                    w.WriteLine($"/// <param name=\"body\">The response body.</param>");
+                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {resp.StatusCode}.</returns>");
+                    w.WriteLine(
+                        $"public static {structName} {factoryName}({typeName} body) " +
+                        $"=> new({resp.StatusCode}, body.As<JsonElement>(), \"application/json\");");
+                }
+                else
+                {
+                    w.WriteLine($"/// <returns>A <see cref=\"{structName}\"/> with status {resp.StatusCode}.</returns>");
+                    w.WriteLine(
+                        $"public static {structName} {factoryName}() => new({resp.StatusCode});");
+                }
+            }
+        }
+
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Writes the response body to the specified writer.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"writer\">The UTF-8 JSON writer.</param>");
+        w.WriteLine("public void WriteBody(System.Text.Json.Utf8JsonWriter writer)");
+        w.OpenBrace();
+        w.WriteLine("if (!this.Body.IsUndefined())");
+        w.OpenBrace();
+        w.WriteLine("this.Body.WriteTo(writer);");
+        w.CloseBrace();
+        w.CloseBrace();
+
+        w.CloseBrace();
+
+        return new GeneratedFile($"{structName}.cs", w.ToString());
+    }
+
+    private GeneratedFile EmitServerEndpointRegistration(
+        Dictionary<string, List<OperationInfo>> groups)
+    {
+        string prefix = this.clientNamePrefix ?? "Api";
+        string className = $"{prefix}EndpointRegistration";
+        IndentedWriter w = new();
+
+        w.WriteLine("// <auto-generated>");
+        w.WriteLine("// This code was generated by the Corvus.Text.Json OpenAPI code generator.");
+        w.WriteLine("// Do not edit this file directly.");
+        w.WriteLine("// </auto-generated>");
+        w.WriteLine();
+        w.WriteLine("#nullable enable");
+        w.WriteLine();
+        w.WriteLine("using System.Buffers;");
+        w.WriteLine("using System.Diagnostics.CodeAnalysis;");
+        w.WriteLine("using Corvus.Runtime.InteropServices;");
+        w.WriteLine("using Corvus.Text.Json;");
+        w.WriteLine("using Corvus.Text.Json.Internal;");
+        w.WriteLine("using Corvus.Text.Json.OpenApi;");
+        w.WriteLine("using Microsoft.AspNetCore.Builder;");
+        w.WriteLine("using Microsoft.AspNetCore.Http;");
+        w.WriteLine("using Microsoft.AspNetCore.Routing;");
+        w.WriteLine();
+
+        w.WriteLine($"namespace {this.rootNamespace};");
+        w.WriteLine();
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Extension methods for registering {prefix} API endpoints.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public static class {className}");
+        w.OpenBrace();
+
+        List<string> handlerParams = [];
+        foreach ((string tag, _) in groups)
+        {
+            string handlerName = this.GetHandlerName(tag);
+            string paramName = CodeEmitHelpers.SanitizeParameterName(tag) + "Handler";
+            handlerParams.Add($"I{handlerName}Handler {paramName}");
+        }
+
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Maps all {prefix} API endpoints to the application.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <param name=\"app\">The endpoint route builder.</param>");
+        foreach ((string tag, _) in groups)
+        {
+            string paramName = CodeEmitHelpers.SanitizeParameterName(tag) + "Handler";
+            string handlerName = this.GetHandlerName(tag);
+            w.WriteLine($"/// <param name=\"{paramName}\">The handler for {handlerName} operations.</param>");
+        }
+
+        w.WriteLine("/// <returns>The endpoint route builder for chaining.</returns>");
+        w.Write($"public static IEndpointRouteBuilder Map{prefix}Endpoints(this IEndpointRouteBuilder app");
+        foreach (string hp in handlerParams)
+        {
+            w.Write($", {hp}");
+        }
+
+        w.WriteLine(")");
+        w.OpenBrace();
+
+        foreach ((string tag, List<OperationInfo> tagOps) in groups)
+        {
+            string paramName = CodeEmitHelpers.SanitizeParameterName(tag) + "Handler";
+
+            foreach (OperationInfo op in tagOps)
+            {
+                string mapMethod = GetAspNetMapMethod(op.Method);
+                string paramsName = $"{op.MethodName}Params";
+                string resultName = $"{op.MethodName}Result";
+                bool hasBody = op.RequestBody is not null;
+
+                w.WriteLine();
+                w.WriteLine($"app.{mapMethod}(\"{op.PathTemplate}\", async (HttpContext context) =>");
+                w.OpenBrace();
+
+                if (op.Parameters.Length > 0 || hasBody)
+                {
+                    w.WriteLine($"{paramsName} parameters = new()");
+                    w.OpenBrace();
+
+                    foreach (ParameterInfo param in op.Parameters)
+                    {
+                        string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
+                        string typeName = this.GetParameterTypeName(param);
+                        EmitServerParameterBinding(w, param, fieldName, typeName);
+                    }
+
+                    if (hasBody)
+                    {
+                        string bodyTypeName = this.ResolveRequestBodyTypeName(op.RequestBody!.Value);
+                        w.WriteLine($"Body = {bodyTypeName}.ParseValue(await new StreamReader(context.Request.Body).ReadToEndAsync(context.RequestAborted).ConfigureAwait(false)),");
+                    }
+
+                    w.CloseBrace().Write(";");
+                    w.WriteLine();
+                }
+                else
+                {
+                    w.WriteLine($"{paramsName} parameters = new();");
+                }
+
+                w.WriteLine();
+                w.WriteLine($"{resultName} result = await {paramName}.Handle{op.MethodName}Async(parameters, context.RequestAborted).ConfigureAwait(false);");
+                w.WriteLine();
+                w.WriteLine("context.Response.StatusCode = result.StatusCode;");
+                w.WriteLine("if (!result.Body.IsUndefined())");
+                w.OpenBrace();
+                w.WriteLine("context.Response.ContentType = result.ContentType ?? \"application/json\";");
+                w.WriteLine("var writer = new System.Text.Json.Utf8JsonWriter(context.Response.Body);");
+                w.WriteLine("await using (writer.ConfigureAwait(false))");
+                w.OpenBrace();
+                w.WriteLine("result.WriteBody(writer);");
+                w.WriteLine("await writer.FlushAsync(context.RequestAborted).ConfigureAwait(false);");
+                w.CloseBrace();
+                w.CloseBrace();
+
+                w.CloseBrace().Write(");");
+                w.WriteLine();
+            }
+        }
+
+        w.WriteLine();
+        w.WriteLine("return app;");
+        w.CloseBrace();
+
+        w.CloseBrace();
+
+        return new GeneratedFile($"{className}.cs", w.ToString());
+    }
+
+    private static void EmitServerParameterBinding(
+        IndentedWriter w,
+        ParameterInfo param,
+        string fieldName,
+        string typeName)
+    {
+        string paramNameLiteral = param.Name.Replace("\\", "\\\\").Replace("\"", "\\\"");
+
+        switch (param.Location)
+        {
+            case ParameterLocation.Path:
+                w.WriteLine(
+                    $"{fieldName} = context.Request.RouteValues.TryGetValue(\"{paramNameLiteral}\", out object? {fieldName}RouteVal) && {fieldName}RouteVal is string {fieldName}RouteStr " +
+                    $"? {typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({fieldName}RouteStr)) : default,");
+                break;
+
+            case ParameterLocation.Query:
+            case ParameterLocation.Querystring:
+                w.WriteLine(
+                    $"{fieldName} = context.Request.Query.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}QueryVal) && {fieldName}QueryVal.Count > 0 " +
+                    $"? {typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({fieldName}QueryVal[0]!)) : default,");
+                break;
+
+            case ParameterLocation.Header:
+                w.WriteLine(
+                    $"{fieldName} = context.Request.Headers.TryGetValue(\"{paramNameLiteral}\", out var {fieldName}HeaderVal) && {fieldName}HeaderVal.Count > 0 " +
+                    $"? {typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({fieldName}HeaderVal[0]!)) : default,");
+                break;
+
+            case ParameterLocation.Cookie:
+                w.WriteLine(
+                    $"{fieldName} = context.Request.Cookies.TryGetValue(\"{paramNameLiteral}\", out string? {fieldName}CookieVal) && {fieldName}CookieVal is not null " +
+                    $"? {typeName}.ParseValue(System.Text.Encoding.UTF8.GetBytes({fieldName}CookieVal)) : default,");
+                break;
+        }
+    }
+
+    private static string GetAspNetMapMethod(OperationMethod method) =>
+        method switch
+        {
+            OperationMethod.Get => "MapGet",
+            OperationMethod.Post => "MapPost",
+            OperationMethod.Put => "MapPut",
+            OperationMethod.Delete => "MapDelete",
+            OperationMethod.Patch => "MapPatch",
+            _ => "MapMethods",
+        };
 }
