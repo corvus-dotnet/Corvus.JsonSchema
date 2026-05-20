@@ -84,7 +84,7 @@ public static class FormUrlEncodedSerializer
     public static void Serialize<T>(
         in T value,
         Stream output,
-        IReadOnlyDictionary<string, PropertyEncoding>? encodings)
+        Dictionary<string, PropertyEncoding>? encodings)
         where T : struct, IJsonElement<T>
     {
         if (value.ValueKind != JsonValueKind.Object)
@@ -96,10 +96,18 @@ public static class FormUrlEncodedSerializer
         // Keeping them separate avoids ref-struct lifetime issues (CS8350).
         byte[] valueBuf = ArrayPool<byte>.Shared.Rent(InitialScratchSize);
         byte[] encodeBuf = ArrayPool<byte>.Shared.Rent(InitialScratchSize);
+        char[] charBuf = ArrayPool<char>.Shared.Rent(128);
 
         try
         {
             bool first = true;
+
+            // AlternateLookup avoids allocating a string for each property name lookup.
+            Dictionary<string, PropertyEncoding>.AlternateLookup<ReadOnlySpan<char>> altLookup = default;
+            if (encodings is not null)
+            {
+                altLookup = encodings.GetAlternateLookup<ReadOnlySpan<char>>();
+            }
 
             foreach (JsonProperty<JsonElement> property in JsonElement.From(value).EnumerateObject())
             {
@@ -108,10 +116,18 @@ public static class FormUrlEncodedSerializer
                 PropertyEncoding enc = default;
                 if (encodings is not null)
                 {
-                    // Look up encoding by matching the UTF-8 property name against dictionary keys.
                     using UnescapedUtf8JsonString utf8Name = property.Utf8NameSpan;
-                    string nameKey = System.Text.Encoding.UTF8.GetString(utf8Name.Span);
-                    encodings.TryGetValue(nameKey, out enc);
+                    ReadOnlySpan<byte> nameBytes = utf8Name.Span;
+
+                    int maxChars = System.Text.Encoding.UTF8.GetMaxCharCount(nameBytes.Length);
+                    if (charBuf.Length < maxChars)
+                    {
+                        ArrayPool<char>.Shared.Return(charBuf);
+                        charBuf = ArrayPool<char>.Shared.Rent(maxChars);
+                    }
+
+                    int charCount = System.Text.Encoding.UTF8.GetChars(nameBytes, charBuf);
+                    altLookup.TryGetValue(charBuf.AsSpan(0, charCount), out enc);
                 }
 
                 WriteProperty(output, property, propValue, enc, ref first, ref valueBuf, ref encodeBuf);
@@ -119,6 +135,7 @@ public static class FormUrlEncodedSerializer
         }
         finally
         {
+            ArrayPool<char>.Shared.Return(charBuf);
             ArrayPool<byte>.Shared.Return(valueBuf);
             ArrayPool<byte>.Shared.Return(encodeBuf);
         }
