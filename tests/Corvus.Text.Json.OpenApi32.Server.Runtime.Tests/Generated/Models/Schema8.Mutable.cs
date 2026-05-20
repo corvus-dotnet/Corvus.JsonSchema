@@ -22,7 +22,7 @@ namespace CanonTests32.Server;
 /// Generated from JSON Schema.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct Schema4
+public readonly partial struct Schema8
 {
     public partial struct Mutable
 #if NET8_0_OR_GREATER
@@ -127,7 +127,7 @@ public readonly partial struct Schema4
         /// <param name="value">The instance of this type.</param>
         /// <returns>A mutable instance.</returns>
         /// <exception cref="FormatException">Thrown if the instance is not backed by a mutable document.</exception>
-        public static explicit operator Mutable(Schema4 instance)
+        public static explicit operator Mutable(Schema8 instance)
         {
             if (instance._parent is not IMutableJsonDocument doc)
             {
@@ -142,9 +142,9 @@ public readonly partial struct Schema4
         /// Converts to an immutable instance of the <see cref="Mutable"/> type.
         /// </summary>
         /// <param name="value">The <see cref="Mutable"/> instance.</param>
-        /// <returns>An immutable instance of a <see cref="Schema4"/>, initialized from the <see cref="Mutable"/> value.</returns>
+        /// <returns>An immutable instance of a <see cref="Schema8"/>, initialized from the <see cref="Mutable"/> value.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator Schema4(Mutable instance)
+        public static implicit operator Schema8(Mutable instance)
         {
             return new(instance._parent, instance._idx);
         }
@@ -261,13 +261,13 @@ public readonly partial struct Schema4
         }
 
         /// <summary>
-        /// Gets the (optional) <c>processed</c> property.
+        /// Gets the (optional) <c>filter</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonInteger.Mutable Processed
+        public CanonTests32.Server.JsonString.Mutable Filter
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProcessedUtf8, out CanonTests32.Server.JsonInteger.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out CanonTests32.Server.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -300,7 +300,7 @@ public readonly partial struct Schema4
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new Schema4(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new Schema8(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -316,22 +316,22 @@ public readonly partial struct Schema4
         }
 
         /// <summary>
-        /// Set the <c>processed</c> property.
+        /// Set the <c>filter</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetProcessed(in CanonTests32.Server.JsonInteger.Source value)
+        public void SetFilter(in CanonTests32.Server.JsonString.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ProcessedUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.FilterUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProcessedUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -340,7 +340,7 @@ public readonly partial struct Schema4
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Processed, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filter, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -349,13 +349,13 @@ public readonly partial struct Schema4
         }
 
         /// <summary>
-        /// Remove the <c>processed</c> property, if present.
+        /// Remove the <c>filter</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveProcessed()
+        public bool RemoveFilter()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ProcessedUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.FilterUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -444,7 +444,7 @@ public readonly partial struct Schema4
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"Schema4.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"Schema8.Mutable: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         /// <summary>
         ///   Sets a property on this JSON object element.
@@ -635,11 +635,11 @@ public readonly partial struct Schema4
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="Schema4"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="Schema8"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="Schema4"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="Schema8"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -648,10 +648,10 @@ public readonly partial struct Schema4
         /// document. The result is independent of the workspace.
         /// </para>
         /// </remarks>
-        public readonly Schema4 Clone()
+        public readonly Schema8 Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<Schema4>(_idx);
+            return _parent.CloneElement<Schema8>(_idx);
         }
 
         /// <summary>
@@ -659,7 +659,7 @@ public readonly partial struct Schema4
         /// document builder registered in the same workspace.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="Schema4"/> that lives for the lifetime of its
+        /// An immutable <see cref="Schema8"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -670,10 +670,10 @@ public readonly partial struct Schema4
         /// immutable but is only valid for the lifetime of the workspace.
         /// </para>
         /// </remarks>
-        public readonly Schema4 Freeze()
+        public readonly Schema8 Freeze()
         {
             CheckValidInstance();
-            return _parent.FreezeElement<Schema4>(_idx);
+            return _parent.FreezeElement<Schema8>(_idx);
         }
     }
 
@@ -701,9 +701,9 @@ public readonly partial struct Schema4
             _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
         }
 
-        internal Source(CanonTests32.Server.Schema4.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(CanonTests32.Server.Schema8.Builder.Build value) {_objectBuilder = value; _kind = Kind.Builder; }
 
-        public static implicit operator Source(Schema4 instance) => new(JsonElement.From(instance));
+        public static implicit operator Source(Schema8 instance) => new(JsonElement.From(instance));
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -822,7 +822,7 @@ public readonly partial struct Schema4
 
         public static implicit operator Source<TContext>(Source source) => new (source);
 
-        internal Source(scoped in TContext context, CanonTests32.Server.Schema4.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
+        internal Source(scoped in TContext context, CanonTests32.Server.Schema8.Builder.Build<TContext> value) {_context = context; _objectBuilder = value; _kind = Kind.Builder; }
 
         internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
         {
@@ -934,19 +934,19 @@ public readonly partial struct Schema4
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="Schema4"/>.
+        /// Creates an instance of a <see cref="Schema8"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.JsonInteger.Source processed = default)
+        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.JsonString.Source filter = default)
         {
-            processed.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Processed, ref builder);
+            filter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filter, ref builder);
         }
 
         /// <summary>
-        /// Creates an instance of a <see cref="Schema4"/>.
+        /// Creates an instance of a <see cref="Schema8"/>.
         /// </summary>
-        public void Create(in CanonTests32.Server.JsonInteger.Source processed = default)
+        public void Create(in CanonTests32.Server.JsonString.Source filter = default)
         {
-            Create(ref _builder, processed);
+            Create(ref _builder, filter);
         }
 
         /// <summary>
@@ -1120,16 +1120,16 @@ public readonly partial struct Schema4
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="processed">The value of the property.</param>
+    /// <param name="filter">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonInteger.Source processed = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonString.Source filter = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(processed);
+        ovb.Create(filter);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1143,6 +1143,6 @@ public readonly partial struct Schema4
     /// <returns>An instance of a mutable document initialized with this instance.</returns>
     public JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace)
     {
-        return workspace.CreateBuilder<Schema4, Mutable>(this);
+        return workspace.CreateBuilder<Schema8, Mutable>(this);
     }
 }

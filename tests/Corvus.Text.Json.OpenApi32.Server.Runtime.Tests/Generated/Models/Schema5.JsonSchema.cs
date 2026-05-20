@@ -27,28 +27,94 @@ public readonly partial struct Schema5
 {
     public static partial class JsonSchema
     {
-        private static readonly JsonSchemaPathProvider DataSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/data"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyIdPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("id"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyIdNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("id"u8, buffer, out written);
+
+        private const int RequiredOffsetForId = 0;
+        private const uint RequiredBitForId = 0b00000000000000000000000000000001;
+
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTitlePresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("title"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyTitleNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("title"u8, buffer, out written);
+
+        private const int RequiredOffsetForTitle = 0;
+        private const uint RequiredBitForTitle = 0b00000000000000000000000000000010;
+
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyVersionPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyPresent("version"u8, buffer, out written);
+        private static readonly JsonSchemaMessageProvider<int> RequiredPropertyVersionNotPresent = static (_, buffer, out written) => JsonSchemaEvaluation.RequiredPropertyNotPresent("version"u8, buffer, out written);
+
+        private const int RequiredOffsetForVersion = 0;
+        private const uint RequiredBitForVersion = 0b00000000000000000000000000000100;
+
+        private const uint RequiredBitMask0 =
+            RequiredBitForId | RequiredBitForTitle | RequiredBitForVersion;
+        private static readonly JsonSchemaPathProvider ContentSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/content"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider IdSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/id"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider TitleSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/title"u8, buffer, out written);
         private static readonly JsonSchemaPathProvider VersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/version"u8, buffer, out written);
 
-        private static void MatchData(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchContent(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                CanonTests32.Server.JsonObject.JsonSchema.PushChildContextUnescaped(
+                CanonTests32.Server.JsonString.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.DataUtf8,
-                    evaluationPath: DataSchemaEvaluationPath);
+                    JsonPropertyNames.ContentUtf8,
+                    evaluationPath: ContentSchemaEvaluationPath);
 
-            CanonTests32.Server.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            CanonTests32.Server.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
 
-        private static void MatchVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchId(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext1 =
+                CanonTests32.Server.JsonUuid.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.IdUtf8,
+                    evaluationPath: IdSchemaEvaluationPath);
+
+            CanonTests32.Server.JsonUuid.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+
+            if (!context.HasCollector && !context.IsMatch)
+            {
+                return;
+            }
+
+            requiredBitBuffer[RequiredOffsetForId] |= RequiredBitForId;
+        }
+
+        private static void MatchTitle(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext2 =
+                CanonTests32.Server.JsonString.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.TitleUtf8,
+                    evaluationPath: TitleSchemaEvaluationPath);
+
+            CanonTests32.Server.JsonString.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext2);
+            context.CommitChildContext(childContext2.IsMatch, ref childContext2);
+
+            if (!context.HasCollector && !context.IsMatch)
+            {
+                return;
+            }
+
+            requiredBitBuffer[RequiredOffsetForTitle] |= RequiredBitForTitle;
+        }
+
+        private static void MatchVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex, Span<uint> requiredBitBuffer)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext3 =
                 CanonTests32.Server.JsonInteger.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
@@ -56,25 +122,34 @@ public readonly partial struct Schema5
                     JsonPropertyNames.VersionUtf8,
                     evaluationPath: VersionSchemaEvaluationPath);
 
-            CanonTests32.Server.JsonInteger.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
-            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+            CanonTests32.Server.JsonInteger.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext3);
+            context.CommitChildContext(childContext3.IsMatch, ref childContext3);
+
+            if (!context.HasCollector && !context.IsMatch)
+            {
+                return;
+            }
+
+            requiredBitBuffer[RequiredOffsetForVersion] |= RequiredBitForVersion;
         }
 
-        private static PropertySchemaMatchers<CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        private static PropertySchemaMatchers<CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator1> MatchersBuilder()
         {
-            return new PropertySchemaMatchers<CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator>([
-                (static () => JsonPropertyNames.DataUtf8, MatchData),
+            return new PropertySchemaMatchers<CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator1>([
+                (static () => JsonPropertyNames.ContentUtf8, MatchContent),
+                (static () => JsonPropertyNames.IdUtf8, MatchId),
+                (static () => JsonPropertyNames.TitleUtf8, MatchTitle),
                 (static () => JsonPropertyNames.VersionUtf8, MatchVersion),
             ]);
         }
 
-        private static PropertySchemaMatchers<CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
+        private static PropertySchemaMatchers<CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator1> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
         [NotNullWhen(true)]
 #endif
-        out CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator? matcher)
+        out CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator1? matcher)
         {
             return Matchers.TryGetNamedMatcher(span, out matcher);
         }
@@ -82,17 +157,17 @@ public readonly partial struct Schema5
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/pathItems/VersionedResource/get/responses/200/content/application~1json/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/responses/DocumentResponse/content/application~1json/schema"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/components/pathItems/VersionedResource/get/responses/200/content/application~1json/schema";
+        public const string SchemaLocation = "/components/responses/DocumentResponse/content/application~1json/schema";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/pathItems/VersionedResource/get/responses/200/content/application~1json/schema"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/responses/DocumentResponse/content/application~1json/schema"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.
@@ -120,9 +195,11 @@ public readonly partial struct Schema5
                     return;
                 }
                 context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "properties"u8);
+                context.IgnoredKeyword(JsonSchemaEvaluation.IgnoredNotTypeObject, "required"u8);
             }
             else
             {
+                Span<uint> requiredPropertyChildHandler_seenItems = stackalloc uint[1];
                 int objectValidation_propertyCount = 0;
 
                 var objectValidation_enumerator = new ObjectEnumerator(parentDocument, parentIndex);
@@ -131,9 +208,9 @@ public readonly partial struct Schema5
                     int objectValidation_currentIndex = objectValidation_enumerator.CurrentIndex;
                     using UnescapedUtf8JsonString objectValidation_unescapedPropertyName = parentDocument.GetPropertyNameUnescaped(objectValidation_currentIndex);
 
-                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator? validator))
+                    if (TryGetNamedMatcher(objectValidation_unescapedPropertyName.Span, out CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator1? validator))
                     {
-                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex);
+                        validator!(parentDocument, objectValidation_currentIndex, objectValidation_propertyCount, ref context, parentIndex, requiredPropertyChildHandler_seenItems);
 
                         if (!context.HasCollector && !context.IsMatch)
                         {
@@ -142,6 +219,51 @@ public readonly partial struct Schema5
                     }
 
                     objectValidation_propertyCount++;
+                }
+
+                // Do a quick test to see if we have all of the required bits set in each element
+                if ((~(requiredPropertyChildHandler_seenItems[0]) & RequiredBitMask0) == 0)
+                {
+                    if (context.HasCollector)
+                    {
+                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyIdPresent, "id"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyTitlePresent, "title"u8, "required"u8);
+                        context.EvaluatedKeywordForProperty(true, 2, RequiredPropertyVersionPresent, "version"u8, "required"u8);
+                    }
+                }
+                else if (!context.HasCollector)
+                {
+                    context.EvaluatedBooleanSchema(false);
+                    return;
+                }
+                else
+                {
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForId] & RequiredBitForId) == 0)
+                    {
+                        context.EvaluatedKeywordForProperty(false, 0, RequiredPropertyIdNotPresent, "id"u8, "required"u8);
+                    }
+                    else
+                    {
+                        context.EvaluatedKeywordForProperty(true, 0, RequiredPropertyIdPresent, "id"u8, "required"u8);
+                    }
+
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForTitle] & RequiredBitForTitle) == 0)
+                    {
+                        context.EvaluatedKeywordForProperty(false, 1, RequiredPropertyTitleNotPresent, "title"u8, "required"u8);
+                    }
+                    else
+                    {
+                        context.EvaluatedKeywordForProperty(true, 1, RequiredPropertyTitlePresent, "title"u8, "required"u8);
+                    }
+
+                    if ((requiredPropertyChildHandler_seenItems[RequiredOffsetForVersion] & RequiredBitForVersion) == 0)
+                    {
+                        context.EvaluatedKeywordForProperty(false, 2, RequiredPropertyVersionNotPresent, "version"u8, "required"u8);
+                    }
+                    else
+                    {
+                        context.EvaluatedKeywordForProperty(true, 2, RequiredPropertyVersionPresent, "version"u8, "required"u8);
+                    }
                 }
             }
         }

@@ -15,11 +15,11 @@ using Corvus.Text.Json.OpenApi;
 namespace CanonTests32.Server;
 
 /// <summary>
-/// Result type for the GetResourceVersion operation.
+/// Result type for the BatchResource operation.
 /// </summary>
-public readonly struct GetResourceVersionResult
+public readonly struct BatchResourceResult
 {
-    private GetResourceVersionResult(int statusCode, JsonElement body = default, string? contentType = null)
+    private BatchResourceResult(int statusCode, JsonElement body = default, string? contentType = null)
     {
         this.StatusCode = statusCode;
         this.Body = body;
@@ -40,8 +40,8 @@ public readonly struct GetResourceVersionResult
     /// </summary>
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
-    /// <returns>A <see cref="GetResourceVersionResult"/> with status 200.</returns>
-    public static GetResourceVersionResult Ok(CanonTests32.Server.Schema7.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Schema7.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    /// <returns>A <see cref="BatchResourceResult"/> with status 200.</returns>
+    public static BatchResourceResult Ok(CanonTests32.Server.Schema4.Source body, JsonWorkspace workspace) => new(200, CanonTests32.Server.Schema4.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
     /// Writes the response body to the specified writer.

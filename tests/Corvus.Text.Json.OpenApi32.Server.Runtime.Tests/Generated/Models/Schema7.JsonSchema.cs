@@ -27,22 +27,48 @@ public readonly partial struct Schema7
 {
     public static partial class JsonSchema
     {
-        private static readonly JsonSchemaPathProvider ResultsSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/results"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider DataSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/data"u8, buffer, out written);
+        private static readonly JsonSchemaPathProvider VersionSchemaEvaluationPath = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("#/properties/version"u8, buffer, out written);
 
-        private static void MatchResults(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        private static void MatchData(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
         {
             context.AddLocalEvaluatedProperty(propertyCount);
             JsonSchemaContext childContext =
-                CanonTests32.Server.Schema7.JsonObjectArray.JsonSchema.PushChildContextUnescaped(
+                CanonTests32.Server.JsonObject.JsonSchema.PushChildContextUnescaped(
                     parentDocument,
                     parentDocumentIndex,
                     ref context,
-                    JsonPropertyNames.ResultsUtf8,
-                    evaluationPath: ResultsSchemaEvaluationPath);
+                    JsonPropertyNames.DataUtf8,
+                    evaluationPath: DataSchemaEvaluationPath);
 
-            CanonTests32.Server.Schema7.JsonObjectArray.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
+            CanonTests32.Server.JsonObject.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext);
             context.CommitChildContext(childContext.IsMatch, ref childContext);
         }
+
+        private static void MatchVersion(IJsonDocument parentDocument, int parentDocumentIndex, int propertyCount, ref JsonSchemaContext context, int depdendentSchemasChildHandler_propertyParentDocumentIndex)
+        {
+            context.AddLocalEvaluatedProperty(propertyCount);
+            JsonSchemaContext childContext1 =
+                CanonTests32.Server.JsonInteger.JsonSchema.PushChildContextUnescaped(
+                    parentDocument,
+                    parentDocumentIndex,
+                    ref context,
+                    JsonPropertyNames.VersionUtf8,
+                    evaluationPath: VersionSchemaEvaluationPath);
+
+            CanonTests32.Server.JsonInteger.JsonSchema.Evaluate(parentDocument, parentDocumentIndex, ref childContext1);
+            context.CommitChildContext(childContext1.IsMatch, ref childContext1);
+        }
+
+        private static PropertySchemaMatchers<CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator> MatchersBuilder()
+        {
+            return new PropertySchemaMatchers<CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator>([
+                (static () => JsonPropertyNames.DataUtf8, MatchData),
+                (static () => JsonPropertyNames.VersionUtf8, MatchVersion),
+            ]);
+        }
+
+        private static PropertySchemaMatchers<CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator> Matchers { get; } = MatchersBuilder();
 
         private static bool TryGetNamedMatcher(ReadOnlySpan<byte> span,
 #if NET
@@ -50,30 +76,23 @@ public readonly partial struct Schema7
 #endif
         out CanonTests32.Server.PropertiesValidationHandler_NamedPropertyValidator? matcher)
         {
-            if (span.SequenceEqual(JsonPropertyNames.ResultsUtf8))
-            {
-                matcher = MatchResults;
-                return true;
-            }
-
-            matcher = default;
-            return false;
+            return Matchers.TryGetNamedMatcher(span, out matcher);
         }
 
         /// <summary>
         /// Gets a provider for the schema location from which this type was generated.
         /// </summary>
-        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/paths/~1monitoring~1status/query/responses/200/content/application~1json/schema"u8, buffer, out written);
+        public static readonly JsonSchemaPathProvider SchemaLocationProvider = static (buffer, out written) => JsonSchemaEvaluation.TryCopyPath("/components/pathItems/VersionedResource/get/responses/200/content/application~1json/schema"u8, buffer, out written);
 
         /// <summary>
         /// Gets the schema location from which this type was generated.
         /// </summary>
-        public const string SchemaLocation = "/paths/~1monitoring~1status/query/responses/200/content/application~1json/schema";
+        public const string SchemaLocation = "/components/pathItems/VersionedResource/get/responses/200/content/application~1json/schema";
 
         /// <summary>
         /// Gets the schema location from which this type was generated as a UTF-8 string.
         /// </summary>
-        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/paths/~1monitoring~1status/query/responses/200/content/application~1json/schema"u8;
+        public static ReadOnlySpan<byte> SchemaLocationUtf8 => "/components/pathItems/VersionedResource/get/responses/200/content/application~1json/schema"u8;
 
         /// <summary>
         /// Applies the JSON schema semantics defined by this type to the instance determined by the given document and index.

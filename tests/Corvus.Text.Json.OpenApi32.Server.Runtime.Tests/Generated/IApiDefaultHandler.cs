@@ -246,6 +246,15 @@ public interface IApiDefaultHandler
     ValueTask<MoveResourceResult> HandleMoveResourceAsync(MoveResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Handles CUSTOM /resources/{resourceId}.
+    /// </summary>
+    /// <param name="parameters">The operation parameters.</param>
+    /// <param name="workspace">The workspace for building response values.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>The operation result.</returns>
+    ValueTask<BatchResourceResult> HandleBatchResourceAsync(BatchResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Handles GET /events/stream — Stream events via NDJSON
     /// </summary>
     /// <param name="parameters">The operation parameters.</param>

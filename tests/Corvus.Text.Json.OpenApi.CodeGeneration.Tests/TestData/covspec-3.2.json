@@ -1693,6 +1693,62 @@
               }
             }
           }
+        },
+        "BATCH": {
+          "operationId": "batchResource",
+          "parameters": [
+            {
+              "name": "resourceId",
+              "in": "path",
+              "required": true,
+              "schema": {
+                "type": "string"
+              }
+            }
+          ],
+          "requestBody": {
+            "required": true,
+            "content": {
+              "multipart/mixed": {
+                "schema": {
+                  "type": "array",
+                  "prefixItems": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "action": { "type": "string" },
+                        "target": { "type": "string" }
+                      },
+                      "required": ["action"]
+                    },
+                    {
+                      "type": "string",
+                      "format": "binary"
+                    }
+                  ]
+                },
+                "prefixEncoding": [
+                  { "contentType": "application/json" },
+                  { "contentType": "application/octet-stream" }
+                ]
+              }
+            }
+          },
+          "responses": {
+            "200": {
+              "description": "Batch result",
+              "content": {
+                "application/json": {
+                  "schema": {
+                    "type": "object",
+                    "properties": {
+                      "processed": { "type": "integer" }
+                    }
+                  }
+                }
+              }
+            }
+          }
         }
       }
     },

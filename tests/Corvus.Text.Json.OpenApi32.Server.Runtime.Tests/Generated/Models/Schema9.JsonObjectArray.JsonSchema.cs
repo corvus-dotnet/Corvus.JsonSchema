@@ -22,7 +22,7 @@ namespace CanonTests32.Server;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct Schema7
+public readonly partial struct Schema9
 {
     /// <summary>
     /// Generated from JSON Schema.

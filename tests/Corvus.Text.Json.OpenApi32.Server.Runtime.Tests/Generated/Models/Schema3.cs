@@ -55,201 +55,67 @@ public readonly partial struct Schema3
     public static Schema3 DefaultInstance { get; }
 
     /// <summary>
-    /// Gets the value of the property with the given name.
+    /// Gets the item at the given index.
     /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <returns>The value of the property with the given name.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public JsonElement this[ReadOnlySpan<byte> propertyName]
+    /// <param name="index">The index at which to retrieve the item.</param>
+    /// <returns>The item at the given index.</returns>
+    /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    public JsonElement this[int index]
     {
         get
         {
             CheckValidInstance();
-            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
-            {
-                return default;
-            }
-
-            return value;
+            return _parent.GetArrayIndexElement<JsonElement>(_idx, index);
         }
     }
 
     /// <summary>
-    /// Gets the value of the property with the given name.
+    /// Gets the tuple item.
     /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <returns>The value of the property with the given name.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public JsonElement this[ReadOnlySpan<char> propertyName]
+    /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    public CanonTests32.Server.Schema3.RequiredAction Item1
     {
         get
         {
             CheckValidInstance();
-            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
-            {
-                return default;
-            }
-
-            return value;
+            return _parent.GetArrayIndexElement<CanonTests32.Server.Schema3.RequiredAction>(_idx, 0);
         }
     }
 
     /// <summary>
-    /// Gets the value of the property with the given name.
+    /// Gets the tuple item.
     /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <returns>The value of the property with the given name.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public JsonElement this[string propertyName]
+    /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
+    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    public CanonTests32.Server.JsonBinary Item2
     {
         get
         {
             CheckValidInstance();
-            if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
-            {
-                return default;
-            }
-
-            return value;
+            return _parent.GetArrayIndexElement<CanonTests32.Server.JsonBinary>(_idx, 1);
         }
     }
 
     /// <summary>
-    /// Tries to get the value of the property with the given name.
+    /// Gets the array length.
     /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The value of the property, if present.</param>
-    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement value)
+    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    public int GetArrayLength()
     {
         CheckValidInstance();
-        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+        return _parent.GetArrayLength(_idx);
     }
 
     /// <summary>
-    /// Tries to get the value of the property with the given name.
+    /// Enumerates the array.
     /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The value of the property, if present.</param>
-    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement value)
+    /// <exception cref="InvalidOperationException">The value is not an array.</exception>
+    public ArrayEnumerator<JsonElement> EnumerateArray()
     {
         CheckValidInstance();
-        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-    }
-
-    /// <summary>
-    /// Tries to get the value of the property with the given name.
-    /// </summary>
-    /// <param name="propertyName">The name of the property.</param>
-    /// <param name="value">The value of the property, if present.</param>
-    /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public bool TryGetProperty(string propertyName, out JsonElement value)
-    {
-        CheckValidInstance();
-        return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
-    }
-
-    /// <summary>
-    /// Gets the (optional) <c>content</c> property.
-    /// </summary>
-    public CanonTests32.Server.JsonString Content
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out CanonTests32.Server.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>id</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// </remarks>
-    public CanonTests32.Server.JsonUuid Id
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.IdUtf8, out CanonTests32.Server.JsonUuid value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>title</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// </remarks>
-    public CanonTests32.Server.JsonString Title
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests32.Server.JsonString value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the <c>version</c> property.
-    /// </summary>
-    /// <remarks>
-    /// <para>
-    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
-    /// </para>
-    /// </remarks>
-    public CanonTests32.Server.JsonInteger Version
-    {
-        get
-        {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out CanonTests32.Server.JsonInteger value))
-            {
-                return value;
-            }
-
-            return default;
-        }
-    }
-
-    /// <summary>
-    /// Gets the number of properties in the object.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public int GetPropertyCount()
-    {
-        CheckValidInstance();
-        return _parent.GetPropertyCount(_idx);
-    }
-
-    /// <summary>
-    /// Enumerates the object.
-    /// </summary>
-    /// <exception cref="InvalidOperationException">The value is not an object.</exception>
-    public ObjectEnumerator<JsonElement> EnumerateObject()
-    {
-        CheckValidInstance();
-        return EnumeratorCreator.CreateObjectEnumerator<JsonElement>(_parent, _idx);
+        return EnumeratorCreator.CreateArrayEnumerator<JsonElement>(_parent, _idx);
     }
 
     /// <inheritdoc/>
@@ -656,104 +522,5 @@ public readonly partial struct Schema3
         }
 
         return this;
-    }
-
-    /// <summary>
-    /// Provides UTF8 and string versions of the JSON property names on the object.
-    /// </summary>
-    public static class JsonPropertyNames
-    {
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Content"/>.
-        /// </summary>
-        public const string Content = "content";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Id"/>.
-        /// </summary>
-        public const string Id = "id";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Title"/>.
-        /// </summary>
-        public const string Title = "title";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Version"/>.
-        /// </summary>
-        public const string Version = "version";
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Content"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> ContentUtf8 => "content"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Id"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> IdUtf8 => "id"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Title"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> TitleUtf8 => "title"u8;
-
-        /// <summary>
-        /// Gets the JSON property name for <see cref="Version"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> VersionUtf8 => "version"u8;
-    }
-
-    /// <summary>
-    /// Provides escaped UTF-8 versions of the JSON property names on the object.
-    /// </summary>
-    private static class JsonPropertyNamesEscaped
-    {
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Content"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Content => "content"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Id"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Id => "id"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Title"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Title => "title"u8;
-
-        /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Version"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Version => "version"u8;
-    }
-
-    /// <summary>
-    /// Provides pre-baked property name blobs for fast builder property storage.
-    /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
-    /// </summary>
-    private static class JsonPropertyNamesPrebaked
-    {
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Content"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Content => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Id"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Id => [0x45, 0x00, 0x00, 0x00, 0x22, 0x69, 0x64, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Title"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Title => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x74, 0x6C, 0x65, 0x22];
-
-        /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Version"/>.
-        /// </summary>
-        public static ReadOnlySpan<byte> Version => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
     }
 }

@@ -154,13 +154,34 @@ public readonly partial struct Schema6
     }
 
     /// <summary>
-    /// Gets the (optional) <c>filter</c> property.
+    /// Gets the (optional) <c>content</c> property.
     /// </summary>
-    public CanonTests32.Server.JsonString Filter
+    public CanonTests32.Server.JsonString Content
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out CanonTests32.Server.JsonString value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out CanonTests32.Server.JsonString value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the <c>title</c> property.
+    /// </summary>
+    /// <remarks>
+    /// <para>
+    /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+    /// </para>
+    /// </remarks>
+    public CanonTests32.Server.JsonString Title
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests32.Server.JsonString value))
             {
                 return value;
             }
@@ -601,14 +622,24 @@ public readonly partial struct Schema6
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="Filter"/>.
+        /// Gets the JSON property name for <see cref="Content"/>.
         /// </summary>
-        public const string Filter = "filter";
+        public const string Content = "content";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Filter"/>.
+        /// Gets the JSON property name for <see cref="Title"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> FilterUtf8 => "filter"u8;
+        public const string Title = "title";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Content"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> ContentUtf8 => "content"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Title"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> TitleUtf8 => "title"u8;
     }
 
     /// <summary>
@@ -617,9 +648,14 @@ public readonly partial struct Schema6
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Filter"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Content"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Filter => "filter"u8;
+        public static ReadOnlySpan<byte> Content => "content"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Title"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Title => "title"u8;
     }
 
     /// <summary>
@@ -629,8 +665,13 @@ public readonly partial struct Schema6
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Filter"/>.
+        /// Gets the pre-baked property name blob for <see cref="Content"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Filter => [0x85, 0x00, 0x00, 0x00, 0x22, 0x66, 0x69, 0x6C, 0x74, 0x65, 0x72, 0x22];
+        public static ReadOnlySpan<byte> Content => [0x95, 0x00, 0x00, 0x00, 0x22, 0x63, 0x6F, 0x6E, 0x74, 0x65, 0x6E, 0x74, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Title"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Title => [0x75, 0x00, 0x00, 0x00, 0x22, 0x74, 0x69, 0x74, 0x6C, 0x65, 0x22];
     }
 }

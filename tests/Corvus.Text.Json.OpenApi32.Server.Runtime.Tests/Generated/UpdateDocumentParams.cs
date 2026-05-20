@@ -28,5 +28,5 @@ public readonly struct UpdateDocumentParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.Schema4 Body { get; init; }
+    public CanonTests32.Server.Schema6 Body { get; init; }
 }

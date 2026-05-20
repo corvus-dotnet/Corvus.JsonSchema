@@ -261,13 +261,29 @@ public readonly partial struct Schema7
         }
 
         /// <summary>
-        /// Gets the (optional) <c>results</c> property.
+        /// Gets the (optional) <c>data</c> property.
         /// </summary>
-        public CanonTests32.Server.Schema7.JsonObjectArray.Mutable Results
+        public CanonTests32.Server.JsonObject.Mutable Data
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out CanonTests32.Server.Schema7.JsonObjectArray.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataUtf8, out CanonTests32.Server.JsonObject.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>version</c> property.
+        /// </summary>
+        public CanonTests32.Server.JsonInteger.Mutable Version
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out CanonTests32.Server.JsonInteger.Mutable value))
                 {
                     return value;
                 }
@@ -316,22 +332,22 @@ public readonly partial struct Schema7
         }
 
         /// <summary>
-        /// Set the <c>results</c> property.
+        /// Set the <c>data</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetResults(in CanonTests32.Server.Schema7.JsonObjectArray.Source value)
+        public void SetData(in CanonTests32.Server.JsonObject.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ResultsUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.DataUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -340,7 +356,7 @@ public readonly partial struct Schema7
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Results, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Data, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -349,10 +365,10 @@ public readonly partial struct Schema7
         }
 
         /// <summary>
-        /// Set the <c>results</c> property.
+        /// Set the <c>data</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetResults<TContext>(in CanonTests32.Server.Schema7.JsonObjectArray.Source<TContext> value)
+        public void SetData<TContext>(in CanonTests32.Server.JsonObject.Source<TContext> value)
 #if NET9_0_OR_GREATER
             where TContext : allows ref struct
 #endif
@@ -361,13 +377,13 @@ public readonly partial struct Schema7
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ResultsUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.DataUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -376,7 +392,7 @@ public readonly partial struct Schema7
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Results, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Data, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -385,13 +401,58 @@ public readonly partial struct Schema7
         }
 
         /// <summary>
-        /// Remove the <c>results</c> property, if present.
+        /// Remove the <c>data</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveResults()
+        public bool RemoveData()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ResultsUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.DataUtf8);
+            _documentVersion = _parent.Version;
+            return result;
+        }
+
+        /// <summary>
+        /// Set the <c>version</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetVersion(in CanonTests32.Server.JsonInteger.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VersionUtf8);
+                _documentVersion = _parent.Version;
+                return;
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
+        }
+
+        /// <summary>
+        /// Remove the <c>version</c> property, if present.
+        /// </summary>
+        /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
+        public bool RemoveVersion()
+        {
+            CheckValidInstance();
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.VersionUtf8);
             _documentVersion = _parent.Version;
             return result;
         }
@@ -972,17 +1033,21 @@ public readonly partial struct Schema7
         /// <summary>
         /// Creates an instance of a <see cref="Schema7"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.Schema7.JsonObjectArray.Source results = default)
+        internal static void Create(
+            ref ComplexValueBuilder builder,
+            in CanonTests32.Server.JsonObject.Source data = default,
+            in CanonTests32.Server.JsonInteger.Source version = default)
         {
-            results.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Results, ref builder);
+            data.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Data, ref builder);
+            version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="Schema7"/>.
         /// </summary>
-        public void Create(in CanonTests32.Server.Schema7.JsonObjectArray.Source results = default)
+        public void Create(in CanonTests32.Server.JsonObject.Source data = default, in CanonTests32.Server.JsonInteger.Source version = default)
         {
-            Create(ref _builder, results);
+            Create(ref _builder, data, version);
         }
 
         /// <summary>
@@ -991,23 +1056,28 @@ public readonly partial struct Schema7
         internal static void Create<TContext>(
             in TContext context,
             ref ComplexValueBuilder builder,
-            in CanonTests32.Server.Schema7.JsonObjectArray.Source<TContext> results = default)
+            in CanonTests32.Server.JsonObject.Source<TContext> data = default,
+            in CanonTests32.Server.JsonInteger.Source version = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            results.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Results, ref builder);
+            data.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Data, ref builder);
+            version.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Version, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="Schema7"/>.
         /// </summary>
-        public void Create<TContext>(in TContext context, in CanonTests32.Server.Schema7.JsonObjectArray.Source<TContext> results = default)
+        public void Create<TContext>(
+            in TContext context,
+            in CanonTests32.Server.JsonObject.Source<TContext> data = default,
+            in CanonTests32.Server.JsonInteger.Source version = default)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
         {
-            Create(context, ref _builder, results);
+            Create(context, ref _builder, data, version);
         }
 
         /// <summary>
@@ -1113,24 +1183,6 @@ public readonly partial struct Schema7
     }
 
     /// <summary>
-    /// Creates an empty mutable document builder.
-    /// </summary>
-    /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
-    /// <returns>An empty mutable document builder.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(
-        JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
-    {
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
-        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        cvb.StartObject();
-        cvb.EndObject();
-        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-        return documentBuilder;
-    }
-
-    /// <summary>
     /// Creates and initializes a mutable document from a value.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
@@ -1181,16 +1233,17 @@ public readonly partial struct Schema7
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="results">The value of the property.</param>
+    /// <param name="data">The value of the property.</param>
+    /// <param name="version">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.Schema7.JsonObjectArray.Source results = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonObject.Source data = default, in CanonTests32.Server.JsonInteger.Source version = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(results);
+        ovb.Create(data, version);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
@@ -1203,10 +1256,11 @@ public readonly partial struct Schema7
     /// <typeparam name="TContext">The type of the context to pass to the builder.</typeparam>
     /// <param name="workspace">The JSON workspace.</param>
     /// <param name="context">The value of the property.</param>
-    /// <param name="results">The value of the property.</param>
+    /// <param name="data">The value of the property.</param>
+    /// <param name="version">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Server.Schema7.JsonObjectArray.Source<TContext> results = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder<TContext>(JsonWorkspace workspace, in TContext context, in CanonTests32.Server.JsonObject.Source<TContext> data = default, in CanonTests32.Server.JsonInteger.Source version = default, int initialCapacity = 30)
         #if NET9_0_OR_GREATER
         where TContext : allows ref struct
         #endif
@@ -1215,7 +1269,7 @@ public readonly partial struct Schema7
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(context, results);
+        ovb.Create(context, data, version);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

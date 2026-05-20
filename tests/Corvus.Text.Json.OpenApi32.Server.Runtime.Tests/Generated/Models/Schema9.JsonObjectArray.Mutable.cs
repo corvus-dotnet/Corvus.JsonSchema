@@ -22,7 +22,7 @@ namespace CanonTests32.Server;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct Schema7
+public readonly partial struct Schema9
 {
     /// <summary>
     /// Generated from JSON Schema.
@@ -739,7 +739,7 @@ public readonly partial struct Schema7
                 _kind = jsonElement.ValueKind == JsonValueKind.Undefined ? Kind.Unknown : Kind.JsonElement;
             }
 
-            internal Source(CanonTests32.Server.Schema7.JsonObjectArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(CanonTests32.Server.Schema9.JsonObjectArray.Builder.Build value) {_arrayBuilder = value; _kind = Kind.Builder; }
 
             public static implicit operator Source(JsonObjectArray instance) => new(JsonElement.From(instance));
 
@@ -860,7 +860,7 @@ public readonly partial struct Schema7
 
             public static implicit operator Source<TContext>(Source source) => new (source);
 
-            internal Source(scoped in TContext context, CanonTests32.Server.Schema7.JsonObjectArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
+            internal Source(scoped in TContext context, CanonTests32.Server.Schema9.JsonObjectArray.Builder.Build<TContext> value) {_context = context; _arrayBuilder = value; _kind = Kind.Builder; }
 
             internal void AddAsProperty(ReadOnlySpan<byte> utf8Name, ref ComplexValueBuilder valueBuilder, bool escapeName = true, bool nameRequiresUnescaping = false)
             {

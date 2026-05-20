@@ -154,13 +154,29 @@ public readonly partial struct Schema7
     }
 
     /// <summary>
-    /// Gets the (optional) <c>results</c> property.
+    /// Gets the (optional) <c>data</c> property.
     /// </summary>
-    public CanonTests32.Server.Schema7.JsonObjectArray Results
+    public CanonTests32.Server.JsonObject Data
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ResultsUtf8, out CanonTests32.Server.Schema7.JsonObjectArray value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.DataUtf8, out CanonTests32.Server.JsonObject value))
+            {
+                return value;
+            }
+
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// Gets the (optional) <c>version</c> property.
+    /// </summary>
+    public CanonTests32.Server.JsonInteger Version
+    {
+        get
+        {
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.VersionUtf8, out CanonTests32.Server.JsonInteger value))
             {
                 return value;
             }
@@ -601,14 +617,24 @@ public readonly partial struct Schema7
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="Results"/>.
+        /// Gets the JSON property name for <see cref="Data"/>.
         /// </summary>
-        public const string Results = "results";
+        public const string Data = "data";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Results"/>.
+        /// Gets the JSON property name for <see cref="Version"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ResultsUtf8 => "results"u8;
+        public const string Version = "version";
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Data"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> DataUtf8 => "data"u8;
+
+        /// <summary>
+        /// Gets the JSON property name for <see cref="Version"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> VersionUtf8 => "version"u8;
     }
 
     /// <summary>
@@ -617,9 +643,14 @@ public readonly partial struct Schema7
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Results"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Data"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Results => "results"u8;
+        public static ReadOnlySpan<byte> Data => "data"u8;
+
+        /// <summary>
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Version"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Version => "version"u8;
     }
 
     /// <summary>
@@ -629,8 +660,13 @@ public readonly partial struct Schema7
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Results"/>.
+        /// Gets the pre-baked property name blob for <see cref="Data"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Results => [0x95, 0x00, 0x00, 0x00, 0x22, 0x72, 0x65, 0x73, 0x75, 0x6C, 0x74, 0x73, 0x22];
+        public static ReadOnlySpan<byte> Data => [0x65, 0x00, 0x00, 0x00, 0x22, 0x64, 0x61, 0x74, 0x61, 0x22];
+
+        /// <summary>
+        /// Gets the pre-baked property name blob for <see cref="Version"/>.
+        /// </summary>
+        public static ReadOnlySpan<byte> Version => [0x95, 0x00, 0x00, 0x00, 0x22, 0x76, 0x65, 0x72, 0x73, 0x69, 0x6F, 0x6E, 0x22];
     }
 }

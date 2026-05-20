@@ -138,13 +138,13 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
 
     public ValueTask<GetDocumentResult> HandleGetDocumentAsync(GetDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Schema3 body = Schema3.ParseValue("""{}"""u8);
+        Schema5 body = Schema5.ParseValue("""{}"""u8);
         return new(GetDocumentResult.Ok(body, workspace));
     }
 
     public ValueTask<UpdateDocumentResult> HandleUpdateDocumentAsync(UpdateDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Schema3 body = Schema3.ParseValue("""{}"""u8);
+        Schema5 body = Schema5.ParseValue("""{}"""u8);
         return new(UpdateDocumentResult.Ok(body, workspace));
     }
 
@@ -156,7 +156,7 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
 
     public ValueTask<GetResourceVersionResult> HandleGetResourceVersionAsync(GetResourceVersionParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Schema5 body = Schema5.ParseValue("""{"version":"1.0"}"""u8);
+        Schema7 body = Schema7.ParseValue("""{"version":"1.0"}"""u8);
         return new(GetResourceVersionResult.Ok(body, workspace));
     }
 
@@ -183,8 +183,14 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
 
     public ValueTask<QueryMonitoringStatusResult> HandleQueryMonitoringStatusAsync(QueryMonitoringStatusParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Schema7 body = Schema7.ParseValue("""[]"""u8);
+        Schema9 body = Schema9.ParseValue("""[]"""u8);
         return new(QueryMonitoringStatusResult.Ok(body, workspace));
+    }
+
+    public ValueTask<BatchResourceResult> HandleBatchResourceAsync(BatchResourceParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
+    {
+        Schema4 body = Schema4.ParseValue("""{"processed":1}"""u8);
+        return new(BatchResourceResult.Ok(body, workspace));
     }
 }
 

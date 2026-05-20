@@ -48,7 +48,7 @@ public readonly struct GetDocumentResult
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <param name="xDocumentVersion">The value for the <c>X-Document-Version</c> response header.</param>
     /// <returns>A <see cref="GetDocumentResult"/> with status 200.</returns>
-    public static GetDocumentResult Ok(CanonTests32.Server.Schema3.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xDocumentVersion = default) => new(200, CanonTests32.Server.Schema3.CreateBuilder(workspace, body, 0).RootElement, "application/json", xDocumentVersion: xDocumentVersion);
+    public static GetDocumentResult Ok(CanonTests32.Server.Schema5.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xDocumentVersion = default) => new(200, CanonTests32.Server.Schema5.CreateBuilder(workspace, body, 0).RootElement, "application/json", xDocumentVersion: xDocumentVersion);
 
     /// <summary>
     /// Writes the response body to the specified writer.

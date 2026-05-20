@@ -22,20 +22,20 @@ namespace CanonTests32.Server;
 /// <summary>
 /// Generated from JSON Schema.
 /// </summary>
-public readonly partial struct Schema7
+public readonly partial struct Schema3
 {
     /// <summary>
     /// Generated from JSON Schema.
     /// </summary>
     [DebuggerDisplay("{DebuggerDisplay,nq}")]
-    public readonly partial struct JsonObjectArray
+    public readonly partial struct RequiredAction
 #if NET8_0_OR_GREATER
-        : IJsonElement<JsonObjectArray>,
+        : IJsonElement<RequiredAction>,
           IFormattable,
           ISpanFormattable,
           IUtf8SpanFormattable
 #else
-        : IJsonElement<JsonObjectArray>,
+        : IJsonElement<RequiredAction>,
           IFormattable
 #endif
     {
@@ -45,10 +45,10 @@ public readonly partial struct Schema7
 
         #pragma warning restore CS8618 // JsonDocument nullability
         /// <summary>
-        /// Initializes a new instance of the <see cref="JsonObjectArray"/> struct.
+        /// Initializes a new instance of the <see cref="RequiredAction"/> struct.
         /// </summary>
         /// <param name="value">The value from which to construct the instance.</param>
-        internal JsonObjectArray(IJsonDocument parent, int idx)
+        internal RequiredAction(IJsonDocument parent, int idx)
         {
             Debug.Assert(idx >= 0);
             _parent = parent;
@@ -58,47 +58,162 @@ public readonly partial struct Schema7
         /// <summary>
         /// Gets the default instance.
         /// </summary>
-        public static JsonObjectArray DefaultInstance { get; }
+        public static RequiredAction DefaultInstance { get; }
 
         /// <summary>
-        /// Gets the rank of the array.
+        /// Gets the value of the property with the given name.
         /// </summary>
-        public static int Rank => 1;
-
-        /// <summary>
-        /// Gets the item at the given index.
-        /// </summary>
-        /// <param name="index">The index at which to retrieve the item.</param>
-        /// <returns>The item at the given index.</returns>
-        /// <exception cref="IndexOutOfRangeException">The index was outside the bounds of the array.</exception>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public CanonTests32.Server.JsonObject this[int index]
+        /// <param name="propertyName">The name of the property.</param>
+        /// <returns>The value of the property with the given name.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public JsonElement this[ReadOnlySpan<byte> propertyName]
         {
             get
             {
                 CheckValidInstance();
-                return _parent.GetArrayIndexElement<CanonTests32.Server.JsonObject>(_idx, index);
+                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+                {
+                    return default;
+                }
+
+                return value;
             }
         }
 
         /// <summary>
-        /// Gets the array length.
+        /// Gets the value of the property with the given name.
         /// </summary>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public int GetArrayLength()
+        /// <param name="propertyName">The name of the property.</param>
+        /// <returns>The value of the property with the given name.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public JsonElement this[ReadOnlySpan<char> propertyName]
         {
-            CheckValidInstance();
-            return _parent.GetArrayLength(_idx);
+            get
+            {
+                CheckValidInstance();
+                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+                {
+                    return default;
+                }
+
+                return value;
+            }
         }
 
         /// <summary>
-        /// Enumerates the array.
+        /// Gets the value of the property with the given name.
         /// </summary>
-        /// <exception cref="InvalidOperationException">The value is not an array.</exception>
-        public ArrayEnumerator<CanonTests32.Server.JsonObject> EnumerateArray()
+        /// <param name="propertyName">The name of the property.</param>
+        /// <returns>The value of the property with the given name.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public JsonElement this[string propertyName]
+        {
+            get
+            {
+                CheckValidInstance();
+                if (!_parent.TryGetNamedPropertyValue(_idx, propertyName, out JsonElement value))
+                {
+                    return default;
+                }
+
+                return value;
+            }
+        }
+
+        /// <summary>
+        /// Tries to get the value of the property with the given name.
+        /// </summary>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property, if present.</param>
+        /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public bool TryGetProperty(ReadOnlySpan<byte> propertyName, out JsonElement value)
         {
             CheckValidInstance();
-            return EnumeratorCreator.CreateArrayEnumerator<CanonTests32.Server.JsonObject>(_parent, _idx);
+            return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+        }
+
+        /// <summary>
+        /// Tries to get the value of the property with the given name.
+        /// </summary>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property, if present.</param>
+        /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public bool TryGetProperty(ReadOnlySpan<char> propertyName, out JsonElement value)
+        {
+            CheckValidInstance();
+            return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+        }
+
+        /// <summary>
+        /// Tries to get the value of the property with the given name.
+        /// </summary>
+        /// <param name="propertyName">The name of the property.</param>
+        /// <param name="value">The value of the property, if present.</param>
+        /// <returns><see langword="true"/> if the property was found, otherwise <see langword="false"/>.</returns>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public bool TryGetProperty(string propertyName, out JsonElement value)
+        {
+            CheckValidInstance();
+            return _parent.TryGetNamedPropertyValue(_idx, propertyName, out value);
+        }
+
+        /// <summary>
+        /// Gets the <c>action</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+        /// </para>
+        /// </remarks>
+        public CanonTests32.Server.JsonString Action
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ActionUtf8, out CanonTests32.Server.JsonString value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the (optional) <c>target</c> property.
+        /// </summary>
+        public CanonTests32.Server.JsonString Target
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TargetUtf8, out CanonTests32.Server.JsonString value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the number of properties in the object.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public int GetPropertyCount()
+        {
+            CheckValidInstance();
+            return _parent.GetPropertyCount(_idx);
+        }
+
+        /// <summary>
+        /// Enumerates the object.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">The value is not an object.</exception>
+        public ObjectEnumerator<JsonElement> EnumerateObject()
+        {
+            CheckValidInstance();
+            return EnumeratorCreator.CreateObjectEnumerator<JsonElement>(_parent, _idx);
         }
 
         /// <inheritdoc/>
@@ -115,7 +230,7 @@ public readonly partial struct Schema7
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in JsonObjectArray left, in JsonObjectArray right)
+        public static bool operator ==(in RequiredAction left, in RequiredAction right)
         {
             return left.Equals(right);
         }
@@ -128,7 +243,7 @@ public readonly partial struct Schema7
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in JsonObjectArray left, in JsonObjectArray right)
+        public static bool operator !=(in RequiredAction left, in RequiredAction right)
         {
             return !left.Equals(right);
         }
@@ -141,7 +256,7 @@ public readonly partial struct Schema7
         /// <returns>
         /// <c>True</c> if the values are equal.
         /// </returns>
-        public static bool operator ==(in JsonObjectArray left, in JsonElement right)
+        public static bool operator ==(in RequiredAction left, in JsonElement right)
         {
             return left.Equals(right);
         }
@@ -154,7 +269,7 @@ public readonly partial struct Schema7
         /// <returns>
         /// <c>True</c> if the values are not equal.
         /// </returns>
-        public static bool operator !=(in JsonObjectArray left, in JsonElement right)
+        public static bool operator !=(in RequiredAction left, in JsonElement right)
         {
             return !left.Equals(right);
         }
@@ -165,7 +280,7 @@ public readonly partial struct Schema7
         /// <param name="value">The instance of this type.</param>
         /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonElement(JsonObjectArray instance)
+        public static implicit operator JsonElement(RequiredAction instance)
         {
             return JsonElement.From(instance);
         }
@@ -176,9 +291,9 @@ public readonly partial struct Schema7
         /// <param name="value">The instance of this type as a JsonElement.</param>
         /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static implicit operator JsonObjectArray(JsonElement instance)
+        public static implicit operator RequiredAction(JsonElement instance)
         {
-            return JsonObjectArray.From(instance);
+            return RequiredAction.From(instance);
         }
 
         /// <summary>
@@ -187,7 +302,7 @@ public readonly partial struct Schema7
         /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
         /// <returns>An instance of this type, initialized from the JSON element.</returns>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonObjectArray From<T>(in T instance)
+        public static RequiredAction From<T>(in T instance)
             where T : struct, IJsonElement<T>
         {
             return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -211,9 +326,9 @@ public readonly partial struct Schema7
         ///   A value could not be read from the span.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonObjectArray ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+        public static RequiredAction ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
         {
-            return JsonElementHelpers.ParseValue<JsonObjectArray>(utf8Json, options);
+            return JsonElementHelpers.ParseValue<RequiredAction>(utf8Json, options);
         }
 
         /// <summary>
@@ -234,9 +349,9 @@ public readonly partial struct Schema7
         ///   A value could not be read from the span.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonObjectArray ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+        public static RequiredAction ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
         {
-            return JsonElementHelpers.ParseValue<JsonObjectArray>(json, options);
+            return JsonElementHelpers.ParseValue<RequiredAction>(json, options);
         }
 
         /// <summary>
@@ -257,9 +372,9 @@ public readonly partial struct Schema7
         ///   A value could not be read from the text.
         /// </exception>
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static JsonObjectArray ParseValue(string json, JsonDocumentOptions options = default)
+        public static RequiredAction ParseValue(string json, JsonDocumentOptions options = default)
         {
-            return JsonElementHelpers.ParseValue<JsonObjectArray>(json, options);
+            return JsonElementHelpers.ParseValue<RequiredAction>(json, options);
         }
 
         /// <summary>
@@ -297,9 +412,9 @@ public readonly partial struct Schema7
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static JsonObjectArray ParseValue(ref Utf8JsonReader reader)
+        public static RequiredAction ParseValue(ref Utf8JsonReader reader)
         {
-            return JsonElementHelpers.ParseValue<JsonObjectArray>(ref reader);
+            return JsonElementHelpers.ParseValue<RequiredAction>(ref reader);
         }
 
         /// <summary>
@@ -340,16 +455,16 @@ public readonly partial struct Schema7
         /// <exception cref="JsonException">
         ///   A value could not be read from the reader.
         /// </exception>
-        public static bool TryParseValue(ref Utf8JsonReader reader, out JsonObjectArray? result)
+        public static bool TryParseValue(ref Utf8JsonReader reader, out RequiredAction? result)
         {
-            return JsonElementHelpers.TryParseValue<JsonObjectArray>(ref reader, out result);
+            return JsonElementHelpers.TryParseValue<RequiredAction>(ref reader, out result);
         }
 
         /// <inheritdoc/>
         public override bool Equals(object? obj)
         {
             return
-                (obj is IJsonElement value && Equals(new JsonObjectArray(value.ParentDocument, value.ParentDocumentIndex))) ||
+                (obj is IJsonElement value && Equals(new RequiredAction(value.ParentDocument, value.ParentDocumentIndex))) ||
                 (obj is null && this.IsNull());
         }
 
@@ -439,11 +554,11 @@ public readonly partial struct Schema7
         void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-        static JsonObjectArray IJsonElement<JsonObjectArray>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+        static RequiredAction IJsonElement<RequiredAction>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-        private string DebuggerDisplay => $"JsonObjectArray: ValueKind = {ValueKind} : \"{ToString()}\"";
+        private string DebuggerDisplay => $"RequiredAction: ValueKind = {ValueKind} : \"{ToString()}\"";
 
         [DebuggerBrowsable(DebuggerBrowsableState.Never)]
         IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -458,11 +573,11 @@ public readonly partial struct Schema7
         JsonValueKind IJsonElement.ValueKind => ValueKind;
 
         /// <summary>
-        /// Gets a <see cref="JsonObjectArray"/> which can be safely stored beyond the lifetime of the
+        /// Gets a <see cref="RequiredAction"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </summary>
         /// <returns>
-        /// A <see cref="JsonObjectArray"/> which can be safely stored beyond the lifetime of the
+        /// A <see cref="RequiredAction"/> which can be safely stored beyond the lifetime of the
         /// original document.
         /// </returns>
         /// <remarks>
@@ -471,10 +586,10 @@ public readonly partial struct Schema7
         /// this method returns the same instance without additional allocation.
         /// </para>
         /// </remarks>
-        public JsonObjectArray Clone()
+        public RequiredAction Clone()
         {
             CheckValidInstance();
-            return _parent.CloneElement<JsonObjectArray>(_idx);
+            return _parent.CloneElement<RequiredAction>(_idx);
         }
 
         /// <summary>
@@ -482,7 +597,7 @@ public readonly partial struct Schema7
         /// or returns this instance if it is already immutable.
         /// </summary>
         /// <returns>
-        /// An immutable <see cref="JsonObjectArray"/> that lives for the lifetime of its
+        /// An immutable <see cref="RequiredAction"/> that lives for the lifetime of its
         /// workspace and its associated documents.
         /// </returns>
         /// <remarks>
@@ -496,15 +611,74 @@ public readonly partial struct Schema7
         /// If this instance is already backed by an immutable document, it is returned as-is.
         /// </para>
         /// </remarks>
-        public JsonObjectArray Freeze()
+        public RequiredAction Freeze()
         {
             CheckValidInstance();
             if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
             {
-                return mutable.FreezeElement<JsonObjectArray>(_idx);
+                return mutable.FreezeElement<RequiredAction>(_idx);
             }
 
             return this;
+        }
+
+        /// <summary>
+        /// Provides UTF8 and string versions of the JSON property names on the object.
+        /// </summary>
+        public static class JsonPropertyNames
+        {
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Action"/>.
+            /// </summary>
+            public const string Action = "action";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Target"/>.
+            /// </summary>
+            public const string Target = "target";
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Action"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> ActionUtf8 => "action"u8;
+
+            /// <summary>
+            /// Gets the JSON property name for <see cref="Target"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> TargetUtf8 => "target"u8;
+        }
+
+        /// <summary>
+        /// Provides escaped UTF-8 versions of the JSON property names on the object.
+        /// </summary>
+        private static class JsonPropertyNamesEscaped
+        {
+            /// <summary>
+            /// Gets the escaped UTF-8 JSON property name for <see cref="Action"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Action => "action"u8;
+
+            /// <summary>
+            /// Gets the escaped UTF-8 JSON property name for <see cref="Target"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Target => "target"u8;
+        }
+
+        /// <summary>
+        /// Provides pre-baked property name blobs for fast builder property storage.
+        /// Each blob contains the complete value-buffer entry: [4-byte header][quote][escaped UTF-8 name][quote].
+        /// </summary>
+        private static class JsonPropertyNamesPrebaked
+        {
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Action"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Action => [0x85, 0x00, 0x00, 0x00, 0x22, 0x61, 0x63, 0x74, 0x69, 0x6F, 0x6E, 0x22];
+
+            /// <summary>
+            /// Gets the pre-baked property name blob for <see cref="Target"/>.
+            /// </summary>
+            public static ReadOnlySpan<byte> Target => [0x85, 0x00, 0x00, 0x00, 0x22, 0x74, 0x61, 0x72, 0x67, 0x65, 0x74, 0x22];
         }
     }
 }

@@ -22,14 +22,14 @@ namespace CanonTests32.Server;
 /// Generated from JSON Schema.
 /// </summary>
 [DebuggerDisplay("{DebuggerDisplay,nq}")]
-public readonly partial struct Schema4
+public readonly partial struct Schema8
 #if NET8_0_OR_GREATER
-    : IJsonElement<Schema4>,
+    : IJsonElement<Schema8>,
       IFormattable,
       ISpanFormattable,
       IUtf8SpanFormattable
 #else
-    : IJsonElement<Schema4>,
+    : IJsonElement<Schema8>,
       IFormattable
 #endif
 {
@@ -39,10 +39,10 @@ public readonly partial struct Schema4
 
     #pragma warning restore CS8618 // JsonDocument nullability
     /// <summary>
-    /// Initializes a new instance of the <see cref="Schema4"/> struct.
+    /// Initializes a new instance of the <see cref="Schema8"/> struct.
     /// </summary>
     /// <param name="value">The value from which to construct the instance.</param>
-    internal Schema4(IJsonDocument parent, int idx)
+    internal Schema8(IJsonDocument parent, int idx)
     {
         Debug.Assert(idx >= 0);
         _parent = parent;
@@ -52,7 +52,7 @@ public readonly partial struct Schema4
     /// <summary>
     /// Gets the default instance.
     /// </summary>
-    public static Schema4 DefaultInstance { get; }
+    public static Schema8 DefaultInstance { get; }
 
     /// <summary>
     /// Gets the value of the property with the given name.
@@ -154,13 +154,13 @@ public readonly partial struct Schema4
     }
 
     /// <summary>
-    /// Gets the (optional) <c>processed</c> property.
+    /// Gets the (optional) <c>filter</c> property.
     /// </summary>
-    public CanonTests32.Server.JsonInteger Processed
+    public CanonTests32.Server.JsonString Filter
     {
         get
         {
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ProcessedUtf8, out CanonTests32.Server.JsonInteger value))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out CanonTests32.Server.JsonString value))
             {
                 return value;
             }
@@ -203,7 +203,7 @@ public readonly partial struct Schema4
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in Schema4 left, in Schema4 right)
+    public static bool operator ==(in Schema8 left, in Schema8 right)
     {
         return left.Equals(right);
     }
@@ -216,7 +216,7 @@ public readonly partial struct Schema4
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in Schema4 left, in Schema4 right)
+    public static bool operator !=(in Schema8 left, in Schema8 right)
     {
         return !left.Equals(right);
     }
@@ -229,7 +229,7 @@ public readonly partial struct Schema4
     /// <returns>
     /// <c>True</c> if the values are equal.
     /// </returns>
-    public static bool operator ==(in Schema4 left, in JsonElement right)
+    public static bool operator ==(in Schema8 left, in JsonElement right)
     {
         return left.Equals(right);
     }
@@ -242,7 +242,7 @@ public readonly partial struct Schema4
     /// <returns>
     /// <c>True</c> if the values are not equal.
     /// </returns>
-    public static bool operator !=(in Schema4 left, in JsonElement right)
+    public static bool operator !=(in Schema8 left, in JsonElement right)
     {
         return !left.Equals(right);
     }
@@ -253,7 +253,7 @@ public readonly partial struct Schema4
     /// <param name="value">The instance of this type.</param>
     /// <returns>An instance of JsonElement, initialized from the <see cref="IJsonElement{T}"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator JsonElement(Schema4 instance)
+    public static implicit operator JsonElement(Schema8 instance)
     {
         return JsonElement.From(instance);
     }
@@ -264,9 +264,9 @@ public readonly partial struct Schema4
     /// <param name="value">The instance of this type as a JsonElement.</param>
     /// <returns>An instance of the type, initialized from the <see cref="JsonElement"/>.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static implicit operator Schema4(JsonElement instance)
+    public static implicit operator Schema8(JsonElement instance)
     {
-        return Schema4.From(instance);
+        return Schema8.From(instance);
     }
 
     /// <summary>
@@ -275,7 +275,7 @@ public readonly partial struct Schema4
     /// <param name="value">The <see cref="IJsonElement{T}"/> value from which to instantiate the instance.</param>
     /// <returns>An instance of this type, initialized from the JSON element.</returns>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema4 From<T>(in T instance)
+    public static Schema8 From<T>(in T instance)
         where T : struct, IJsonElement<T>
     {
         return new(instance.ParentDocument, instance.ParentDocumentIndex);
@@ -299,9 +299,9 @@ public readonly partial struct Schema4
     ///   A value could not be read from the span.
     /// </exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema4 ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
+    public static Schema8 ParseValue(ReadOnlySpan<byte> utf8Json, JsonDocumentOptions options = default)
     {
-        return JsonElementHelpers.ParseValue<Schema4>(utf8Json, options);
+        return JsonElementHelpers.ParseValue<Schema8>(utf8Json, options);
     }
 
     /// <summary>
@@ -322,9 +322,9 @@ public readonly partial struct Schema4
     ///   A value could not be read from the span.
     /// </exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema4 ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
+    public static Schema8 ParseValue(ReadOnlySpan<char> json, JsonDocumentOptions options = default)
     {
-        return JsonElementHelpers.ParseValue<Schema4>(json, options);
+        return JsonElementHelpers.ParseValue<Schema8>(json, options);
     }
 
     /// <summary>
@@ -345,9 +345,9 @@ public readonly partial struct Schema4
     ///   A value could not be read from the text.
     /// </exception>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static Schema4 ParseValue(string json, JsonDocumentOptions options = default)
+    public static Schema8 ParseValue(string json, JsonDocumentOptions options = default)
     {
-        return JsonElementHelpers.ParseValue<Schema4>(json, options);
+        return JsonElementHelpers.ParseValue<Schema8>(json, options);
     }
 
     /// <summary>
@@ -385,9 +385,9 @@ public readonly partial struct Schema4
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static Schema4 ParseValue(ref Utf8JsonReader reader)
+    public static Schema8 ParseValue(ref Utf8JsonReader reader)
     {
-        return JsonElementHelpers.ParseValue<Schema4>(ref reader);
+        return JsonElementHelpers.ParseValue<Schema8>(ref reader);
     }
 
     /// <summary>
@@ -428,16 +428,16 @@ public readonly partial struct Schema4
     /// <exception cref="JsonException">
     ///   A value could not be read from the reader.
     /// </exception>
-    public static bool TryParseValue(ref Utf8JsonReader reader, out Schema4? result)
+    public static bool TryParseValue(ref Utf8JsonReader reader, out Schema8? result)
     {
-        return JsonElementHelpers.TryParseValue<Schema4>(ref reader, out result);
+        return JsonElementHelpers.TryParseValue<Schema8>(ref reader, out result);
     }
 
     /// <inheritdoc/>
     public override bool Equals(object? obj)
     {
         return
-            (obj is IJsonElement value && Equals(new Schema4(value.ParentDocument, value.ParentDocumentIndex))) ||
+            (obj is IJsonElement value && Equals(new Schema8(value.ParentDocument, value.ParentDocumentIndex))) ||
             (obj is null && this.IsNull());
     }
 
@@ -527,11 +527,11 @@ public readonly partial struct Schema4
     void IJsonElement.CheckValidInstance() => CheckValidInstance();
 
 #if NET
-    static Schema4 IJsonElement<Schema4>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
+    static Schema8 IJsonElement<Schema8>.CreateInstance(IJsonDocument parentDocument, int parentDocumentIndex) => new(parentDocument, parentDocumentIndex);
 #endif
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
-    private string DebuggerDisplay => $"Schema4: ValueKind = {ValueKind} : \"{ToString()}\"";
+    private string DebuggerDisplay => $"Schema8: ValueKind = {ValueKind} : \"{ToString()}\"";
 
     [DebuggerBrowsable(DebuggerBrowsableState.Never)]
     IJsonDocument IJsonElement.ParentDocument => _parent;
@@ -546,11 +546,11 @@ public readonly partial struct Schema4
     JsonValueKind IJsonElement.ValueKind => ValueKind;
 
     /// <summary>
-    /// Gets a <see cref="Schema4"/> which can be safely stored beyond the lifetime of the
+    /// Gets a <see cref="Schema8"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </summary>
     /// <returns>
-    /// A <see cref="Schema4"/> which can be safely stored beyond the lifetime of the
+    /// A <see cref="Schema8"/> which can be safely stored beyond the lifetime of the
     /// original document.
     /// </returns>
     /// <remarks>
@@ -559,10 +559,10 @@ public readonly partial struct Schema4
     /// this method returns the same instance without additional allocation.
     /// </para>
     /// </remarks>
-    public Schema4 Clone()
+    public Schema8 Clone()
     {
         CheckValidInstance();
-        return _parent.CloneElement<Schema4>(_idx);
+        return _parent.CloneElement<Schema8>(_idx);
     }
 
     /// <summary>
@@ -570,7 +570,7 @@ public readonly partial struct Schema4
     /// or returns this instance if it is already immutable.
     /// </summary>
     /// <returns>
-    /// An immutable <see cref="Schema4"/> that lives for the lifetime of its
+    /// An immutable <see cref="Schema8"/> that lives for the lifetime of its
     /// workspace and its associated documents.
     /// </returns>
     /// <remarks>
@@ -584,12 +584,12 @@ public readonly partial struct Schema4
     /// If this instance is already backed by an immutable document, it is returned as-is.
     /// </para>
     /// </remarks>
-    public Schema4 Freeze()
+    public Schema8 Freeze()
     {
         CheckValidInstance();
         if (_parent is global::Corvus.Text.Json.Internal.IMutableJsonDocument mutable)
         {
-            return mutable.FreezeElement<Schema4>(_idx);
+            return mutable.FreezeElement<Schema8>(_idx);
         }
 
         return this;
@@ -601,14 +601,14 @@ public readonly partial struct Schema4
     public static class JsonPropertyNames
     {
         /// <summary>
-        /// Gets the JSON property name for <see cref="Processed"/>.
+        /// Gets the JSON property name for <see cref="Filter"/>.
         /// </summary>
-        public const string Processed = "processed";
+        public const string Filter = "filter";
 
         /// <summary>
-        /// Gets the JSON property name for <see cref="Processed"/>.
+        /// Gets the JSON property name for <see cref="Filter"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> ProcessedUtf8 => "processed"u8;
+        public static ReadOnlySpan<byte> FilterUtf8 => "filter"u8;
     }
 
     /// <summary>
@@ -617,9 +617,9 @@ public readonly partial struct Schema4
     private static class JsonPropertyNamesEscaped
     {
         /// <summary>
-        /// Gets the escaped UTF-8 JSON property name for <see cref="Processed"/>.
+        /// Gets the escaped UTF-8 JSON property name for <see cref="Filter"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Processed => "processed"u8;
+        public static ReadOnlySpan<byte> Filter => "filter"u8;
     }
 
     /// <summary>
@@ -629,8 +629,8 @@ public readonly partial struct Schema4
     private static class JsonPropertyNamesPrebaked
     {
         /// <summary>
-        /// Gets the pre-baked property name blob for <see cref="Processed"/>.
+        /// Gets the pre-baked property name blob for <see cref="Filter"/>.
         /// </summary>
-        public static ReadOnlySpan<byte> Processed => [0xB5, 0x00, 0x00, 0x00, 0x22, 0x70, 0x72, 0x6F, 0x63, 0x65, 0x73, 0x73, 0x65, 0x64, 0x22];
+        public static ReadOnlySpan<byte> Filter => [0x85, 0x00, 0x00, 0x00, 0x22, 0x66, 0x69, 0x6C, 0x74, 0x65, 0x72, 0x22];
     }
 }

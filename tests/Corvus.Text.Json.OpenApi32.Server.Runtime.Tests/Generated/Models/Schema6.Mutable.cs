@@ -261,13 +261,34 @@ public readonly partial struct Schema6
         }
 
         /// <summary>
-        /// Gets the (optional) <c>filter</c> property.
+        /// Gets the (optional) <c>content</c> property.
         /// </summary>
-        public CanonTests32.Server.JsonString.Mutable Filter
+        public CanonTests32.Server.JsonString.Mutable Content
         {
             get
             {
-                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out CanonTests32.Server.JsonString.Mutable value))
+                {
+                    return value;
+                }
+
+                return default;
+            }
+        }
+
+        /// <summary>
+        /// Gets the <c>title</c> property.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// If the instance is valid, this property will not be <see cref="JsonValueKind.Undefined"/>.
+        /// </para>
+        /// </remarks>
+        public CanonTests32.Server.JsonString.Mutable Title
+        {
+            get
+            {
+                if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out CanonTests32.Server.JsonString.Mutable value))
                 {
                     return value;
                 }
@@ -316,22 +337,22 @@ public readonly partial struct Schema6
         }
 
         /// <summary>
-        /// Set the <c>filter</c> property.
+        /// Set the <c>content</c> property.
         /// </summary>
         /// <param name="value">The value of the property to add.</param>
-        public void SetFilter(in CanonTests32.Server.JsonString.Source value)
+        public void SetContent(in CanonTests32.Server.JsonString.Source value)
         {
             CheckValidInstance();
 
             if (value.IsUndefined)
             {
-                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.FilterUtf8);
+                JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ContentUtf8);
                 _documentVersion = _parent.Version;
                 return;
             }
 
             ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
-            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.FilterUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.ContentUtf8, out IJsonDocument? elementParent, out int elementIdx))
             {
                 // We are going to replace just the value
                 value.AddAsItem(ref cvb);
@@ -340,7 +361,7 @@ public readonly partial struct Schema6
             else
             {
                 // We are going to insert the new value
-                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filter, ref cvb);
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Content, ref cvb);
                 int endIndex = _idx + _parent.GetDbSize(_idx, false);
                 _parent.InsertAndDispose(_idx, endIndex, ref cvb);
             }
@@ -349,15 +370,46 @@ public readonly partial struct Schema6
         }
 
         /// <summary>
-        /// Remove the <c>filter</c> property, if present.
+        /// Remove the <c>content</c> property, if present.
         /// </summary>
         /// <returns><see langword="true"/> if the property was found and removed; otherwise, <see langword="false"/>.</returns>
-        public bool RemoveFilter()
+        public bool RemoveContent()
         {
             CheckValidInstance();
-            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.FilterUtf8);
+            bool result = JsonElementHelpers.RemovePropertyUnsafe(_parent, _idx, JsonPropertyNames.ContentUtf8);
             _documentVersion = _parent.Version;
             return result;
+        }
+
+        /// <summary>
+        /// Set the <c>title</c> property.
+        /// </summary>
+        /// <param name="value">The value of the property to add.</param>
+        public void SetTitle(in CanonTests32.Server.JsonString.Source value)
+        {
+            CheckValidInstance();
+
+            if (value.IsUndefined)
+            {
+                CodeGenThrowHelper.ThrowInvalidOperationException_SetRequiredPropertyToUndefined("title");
+            }
+
+            ComplexValueBuilder cvb = ComplexValueBuilder.Create(_parent, 2);
+            if (_parent.TryGetNamedPropertyValue(_idx, JsonPropertyNames.TitleUtf8, out IJsonDocument? elementParent, out int elementIdx))
+            {
+                // We are going to replace just the value
+                value.AddAsItem(ref cvb);
+                _parent.OverwriteAndDispose(_idx, elementIdx, elementIdx + elementParent.GetDbSize(elementIdx, true), 1, ref cvb);
+            }
+            else
+            {
+                // We are going to insert the new value
+                value.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref cvb);
+                int endIndex = _idx + _parent.GetDbSize(_idx, false);
+                _parent.InsertAndDispose(_idx, endIndex, ref cvb);
+            }
+
+            _documentVersion = _parent.Version;
         }
 
         /// <inheritdoc/>
@@ -936,17 +988,21 @@ public readonly partial struct Schema6
         /// <summary>
         /// Creates an instance of a <see cref="Schema6"/>.
         /// </summary>
-        internal static void Create(ref ComplexValueBuilder builder, in CanonTests32.Server.JsonString.Source filter = default)
+        internal static void Create(
+            ref ComplexValueBuilder builder,
+            in CanonTests32.Server.JsonString.Source title,
+            in CanonTests32.Server.JsonString.Source content = default)
         {
-            filter.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Filter, ref builder);
+            title.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Title, ref builder);
+            content.AddAsPrebakedProperty(JsonPropertyNamesPrebaked.Content, ref builder);
         }
 
         /// <summary>
         /// Creates an instance of a <see cref="Schema6"/>.
         /// </summary>
-        public void Create(in CanonTests32.Server.JsonString.Source filter = default)
+        public void Create(in CanonTests32.Server.JsonString.Source title, in CanonTests32.Server.JsonString.Source content = default)
         {
-            Create(ref _builder, filter);
+            Create(ref _builder, title, content);
         }
 
         /// <summary>
@@ -1052,24 +1108,6 @@ public readonly partial struct Schema6
     }
 
     /// <summary>
-    /// Creates an empty mutable document builder.
-    /// </summary>
-    /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
-    /// <param name="initialValueBufferSize">The initial size in bytes of the value buffer.</param>
-    /// <returns>An empty mutable document builder.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(
-        JsonWorkspace workspace, int initialCapacity = 30, int initialValueBufferSize = 8192)
-    {
-        JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1, initialValueBufferSize);
-        ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
-        cvb.StartObject();
-        cvb.EndObject();
-        ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);
-        return documentBuilder;
-    }
-
-    /// <summary>
     /// Creates and initializes a mutable document from a value.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
@@ -1120,16 +1158,17 @@ public readonly partial struct Schema6
     /// Creates and initializes a mutable document from the given property values.
     /// </summary>
     /// <param name="workspace">The JSON workspace.</param>
-    /// <param name="filter">The value of the property.</param>
+    /// <param name="title">The value of the property.</param>
+    /// <param name="content">The value of the property.</param>
     /// <param name="initialCapacity">The (optional) estimate of the capacity to reserve for the document.</param>
     /// <returns>An instance of a mutable document initialized with the given property values.</returns>
-    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonString.Source filter = default, int initialCapacity = 30)
+    public static JsonDocumentBuilder<Mutable> CreateBuilder(JsonWorkspace workspace, in CanonTests32.Server.JsonString.Source title, in CanonTests32.Server.JsonString.Source content = default, int initialCapacity = 30)
     {
         JsonDocumentBuilder<Mutable> documentBuilder = workspace.CreateBuilder<Mutable>(-1);
         ComplexValueBuilder cvb = ComplexValueBuilder.Create(documentBuilder, initialCapacity);
         cvb.StartObject();
         Builder ovb = new(cvb);
-        ovb.Create(filter);
+        ovb.Create(title, content);
         cvb = ovb._builder;
         cvb.EndObject();
         ((IMutableJsonDocument)documentBuilder).SetAndDispose(ref cvb);

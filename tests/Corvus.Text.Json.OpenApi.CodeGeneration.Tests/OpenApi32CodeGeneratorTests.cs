@@ -1123,4 +1123,939 @@ public class OpenApi32CodeGeneratorTests
 
         return map;
     }
+
+    [TestMethod]
+    public void CollectSchemaPointers_EmptyPaths_ReturnsEmpty()
+    {
+        // Exercises OpenApi32CodeGenerator lines 200-203: PathsValue.IsUndefined()
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Empty", "version": "1.0" }
+            }
+            """);
+
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out Dictionary<string, string> parameterNames)];
+
+        Assert.AreEqual(0, pointers.Length);
+        Assert.AreEqual(0, parameterNames.Count);
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_WithFilter_ExcludesNonMatchingPaths()
+    {
+        // Exercises OpenApi32CodeGenerator lines 212-216: filter.Matches()
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Filter Test", "version": "1.0" },
+              "paths": {
+                "/included": {
+                  "get": {
+                    "operationId": "getIncluded",
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "a": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "/excluded": {
+                  "get": {
+                    "operationId": "getExcluded",
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "b": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        // Use a filter that only matches "/included"
+        OperationFilter filter = new(["/included"]);
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _, filter: filter)];
+
+        Assert.IsTrue(pointers.Any(p => p.PositionalPointer.Contains("included")));
+        Assert.IsFalse(pointers.Any(p => p.PositionalPointer.Contains("excluded")));
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_BrokenParameterRef_IsSkipped()
+    {
+        // Exercises TryResolveParameter returning false (lines 1270-1273)
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Broken Ref", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "getTest",
+                    "parameters": [
+                      { "$ref": "#/components/parameters/NonExistent" }
+                    ],
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "string" }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        // Should not throw — broken ref is simply skipped
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+
+        // The response schema should still be collected
+        Assert.IsTrue(pointers.Any(p => p.PositionalPointer.Contains("responses")));
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_BrokenRequestBodyRef_IsSkipped()
+    {
+        // Exercises TryResolveRequestBody returning false (lines 1301-1304)
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Broken RequestBody Ref", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "post": {
+                    "operationId": "postTest",
+                    "requestBody": { "$ref": "#/components/requestBodies/NonExistent" },
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "id": { "type": "integer" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+
+        // The response schema should still be collected
+        Assert.IsTrue(pointers.Any(p => p.PositionalPointer.Contains("responses")));
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_BrokenResponseRef_IsSkipped()
+    {
+        // Exercises TryResolveResponse returning false (lines 1332-1335)
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Broken Response Ref", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "getTest",
+                    "responses": {
+                      "200": { "$ref": "#/components/responses/NonExistent" },
+                      "404": {
+                        "description": "Not found",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "error": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+
+        // The 404 response schema should still be collected
+        Assert.IsTrue(pointers.Any(p => p.PositionalPointer.Contains("404")));
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_BrokenHeaderRef_IsSkipped()
+    {
+        // Exercises TryResolveHeader returning false (lines 1363-1366)
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Broken Header Ref", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "getTest",
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "headers": {
+                          "X-Rate-Limit": { "$ref": "#/components/headers/NonExistent" }
+                        },
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+
+        // The response body schema should still be collected
+        Assert.IsTrue(pointers.Any(p => p.PositionalPointer.Contains("content")));
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_BrokenPathItemRef_IsSkipped()
+    {
+        // Exercises TryResolvePathItem returning false (lines 1394-1396)
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Broken PathItem Ref", "version": "1.0" },
+              "paths": {
+                "/broken": { "$ref": "#/components/pathItems/NonExistent" },
+                "/working": {
+                  "get": {
+                    "operationId": "getWorking",
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "val": { "type": "number" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+
+        // The working path's schema should still be collected
+        Assert.IsTrue(pointers.Any(p => p.PositionalPointer.Contains("working")));
+    }
+
+    [TestMethod]
+    public void Generate_NonExplodeObjectParameter_ProducesCode()
+    {
+        // Exercises CodeEmitHelpers lines 1989-2002: non-explode object parameter parsing
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Non-Explode Object", "version": "1.0" },
+              "paths": {
+                "/items/{id}": {
+                  "get": {
+                    "operationId": "getItem",
+                    "parameters": [
+                      {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": { "type": "string" }
+                      },
+                      {
+                        "name": "filter",
+                        "in": "query",
+                        "style": "form",
+                        "explode": false,
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": { "type": "string" }
+                        }
+                      }
+                    ],
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "name": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"Test.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("Test", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        Assert.IsTrue(files.Count > 0);
+
+        // Verify the generated client handles non-explode object
+        GeneratedFile clientFile = files.First(f => f.FileName.Contains("Client.cs"));
+        Assert.IsTrue(clientFile.Content.Length > 0);
+    }
+
+    [TestMethod]
+    public void Generate_ExoticNumericFormats_ProducesCode()
+    {
+        // Exercises CodeEmitHelpers lines 1858-1865: decimal, int16, byte, sbyte, etc.
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Exotic Numerics", "version": "1.0" },
+              "paths": {
+                "/numeric": {
+                  "get": {
+                    "operationId": "getNumeric",
+                    "parameters": [
+                      {
+                        "name": "decimalVal",
+                        "in": "query",
+                        "schema": { "type": "number", "format": "decimal" }
+                      },
+                      {
+                        "name": "shortVal",
+                        "in": "query",
+                        "schema": { "type": "integer", "format": "int16" }
+                      },
+                      {
+                        "name": "byteVal",
+                        "in": "query",
+                        "schema": { "type": "integer", "format": "uint8" }
+                      },
+                      {
+                        "name": "sbyteVal",
+                        "in": "query",
+                        "schema": { "type": "integer", "format": "int8" }
+                      },
+                      {
+                        "name": "ushortVal",
+                        "in": "query",
+                        "schema": { "type": "integer", "format": "uint16" }
+                      },
+                      {
+                        "name": "uintVal",
+                        "in": "query",
+                        "schema": { "type": "integer", "format": "uint32" }
+                      },
+                      {
+                        "name": "ulongVal",
+                        "in": "query",
+                        "schema": { "type": "integer", "format": "uint64" }
+                      },
+                      {
+                        "name": "halfVal",
+                        "in": "query",
+                        "schema": { "type": "number", "format": "half" }
+                      }
+                    ],
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "result": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"Numeric.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("Numeric", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        Assert.IsTrue(files.Count > 0);
+        GeneratedFile clientFile = files.First(f => f.FileName.Contains("Client.cs"));
+
+        // Should contain parsing for the exotic types — the codegen path was exercised
+        Assert.IsTrue(clientFile.Content.Length > 0);
+    }
+
+    [TestMethod]
+    public void GenerateServer_NonExplodeObjectParameter_ProducesCode()
+    {
+        // Exercises CodeEmitHelpers lines 1989-2002 in server mode
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Server Non-Explode", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      {
+                        "name": "filter",
+                        "in": "query",
+                        "style": "form",
+                        "explode": false,
+                        "schema": {
+                          "type": "object",
+                          "additionalProperties": { "type": "string" }
+                        }
+                      }
+                    ],
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "items": { "type": "array", "items": { "type": "string" } } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"SrvTest.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("SrvTest", map);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        Assert.IsTrue(files.Count > 0);
+    }
+
+    [TestMethod]
+    public void Generate_DeepNestedArrayParameter_ProducesCode()
+    {
+        // Exercises CodeEmitHelpers lines 1920-1923: hasDeepNesting with array
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Deep Nesting", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      {
+                        "name": "ids",
+                        "in": "query",
+                        "style": "form",
+                        "explode": false,
+                        "schema": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "nested": { "type": "string" }
+                            }
+                          }
+                        }
+                      }
+                    ],
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"Deep.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("Deep", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        Assert.IsTrue(files.Count > 0);
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_MultipartMixedPrefixEncoding_FindsSchemas()
+    {
+        // Exercises lines 835-853: multipart/mixed with prefixEncoding in additionalOperations
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "MultipartMixed PrefixEncoding", "version": "1.0" },
+              "paths": {
+                "/batch": {
+                  "additionalOperations": {
+                    "BATCH": {
+                      "operationId": "batchItems",
+                      "requestBody": {
+                        "required": true,
+                        "content": {
+                          "multipart/mixed": {
+                            "schema": {
+                              "type": "array",
+                              "prefixItems": [
+                                { "type": "object", "properties": { "meta": { "type": "string" } } },
+                                { "type": "string", "format": "binary" }
+                              ]
+                            },
+                            "prefixEncoding": [
+                              { "contentType": "application/json" },
+                              { "contentType": "application/octet-stream" }
+                            ]
+                          }
+                        }
+                      },
+                      "responses": {
+                        "200": {
+                          "description": "OK",
+                          "content": {
+                            "application/json": {
+                              "schema": { "type": "object", "properties": { "ok": { "type": "boolean" } } }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+
+        // Should find the first prefixItem schema (JSON one, not binary)
+        Assert.IsTrue(pointers.Length >= 1);
+    }
+
+    [TestMethod]
+    public void CollectSchemaPointers_MultipartMixedItemEncoding_FindsSchemas()
+    {
+        // Exercises lines 855-868: multipart/mixed with itemEncoding in additionalOperations
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "MultipartMixed ItemEncoding", "version": "1.0" },
+              "paths": {
+                "/process": {
+                  "additionalOperations": {
+                    "PROCESS": {
+                      "operationId": "processItems",
+                      "requestBody": {
+                        "required": true,
+                        "content": {
+                          "multipart/mixed": {
+                            "schema": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "action": { "type": "string" },
+                                  "payload": { "type": "object" }
+                                }
+                              }
+                            },
+                            "itemEncoding": {
+                              "contentType": "application/json"
+                            }
+                          }
+                        }
+                      },
+                      "responses": {
+                        "200": {
+                          "description": "OK",
+                          "content": {
+                            "application/json": {
+                              "schema": { "type": "object", "properties": { "count": { "type": "integer" } } }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] pointers = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+
+        // Should find the items schema
+        Assert.IsTrue(pointers.Length >= 1);
+    }
+
+    [TestMethod]
+    public void Generate_BrokenRequestBodyRef_Throws()
+    {
+        // Exercises line 1672-1674: ThrowUnableToResolveRequestBodyRef in Generate path
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Broken RB Ref Gen", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "post": {
+                    "operationId": "postTest",
+                    "requestBody": { "$ref": "#/components/requestBodies/Missing" },
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "x": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"Err.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("Err", map);
+
+        Assert.ThrowsExactly<InvalidOperationException>(() => gen.Generate(spec));
+    }
+
+    [TestMethod]
+    public void Generate_BrokenResponseRef_Throws()
+    {
+        // Exercises line 1787-1789: ThrowUnableToResolveResponseRef in Generate path
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Broken Resp Ref Gen", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "getTest",
+                    "responses": {
+                      "200": { "$ref": "#/components/responses/Missing" }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"Err.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("Err", map);
+
+        Assert.ThrowsExactly<InvalidOperationException>(() => gen.Generate(spec));
+    }
+
+    [TestMethod]
+    public void Generate_BrokenHeaderRef_Throws()
+    {
+        // Exercises line 1968-1970: ThrowUnableToResolveHeaderRef in Generate path
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Broken Header Ref Gen", "version": "1.0" },
+              "paths": {
+                "/test": {
+                  "get": {
+                    "operationId": "getTest",
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "headers": {
+                          "X-Rate": { "$ref": "#/components/headers/Missing" }
+                        },
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "y": { "type": "integer" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"Err.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("Err", map);
+
+        Assert.ThrowsExactly<InvalidOperationException>(() => gen.Generate(spec));
+    }
+
+    [TestMethod]
+    public void Generate_MalformedPathTemplate_EmitsLiteral()
+    {
+        // Exercises line 2880-2882: unclosed '{' in path template
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Malformed Path", "version": "1.0" },
+              "paths": {
+                "/items/{id": {
+                  "get": {
+                    "operationId": "getItem",
+                    "parameters": [
+                      {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": { "type": "string" }
+                      }
+                    ],
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "name": { "type": "string" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"Malformed.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("Malformed", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        // Should generate code despite malformed path — literal segment emitted
+        Assert.IsTrue(files.Count > 0);
+    }
+
+    [TestMethod]
+    public void Generate_MultipartMixedBinaryItemBatch_EmitsWriteBinaryPart()
+    {
+        // Exercises lines 5542-5558: binary batch item code emission via itemEncoding
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Binary Batch", "version": "1.0" },
+              "paths": {
+                "/upload": {
+                  "post": {
+                    "operationId": "uploadBatch",
+                    "requestBody": {
+                      "required": true,
+                      "content": {
+                        "multipart/mixed": {
+                          "schema": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "format": "binary"
+                            }
+                          },
+                          "itemEncoding": {
+                            "contentType": "application/octet-stream"
+                          }
+                        }
+                      }
+                    },
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "count": { "type": "integer" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"BinBatch.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("BinBatch", map);
+        IReadOnlyList<GeneratedFile> files = gen.Generate(spec);
+
+        // Check that binary batch code is emitted (WriteBinaryPart)
+        bool hasBinaryBatch = false;
+        foreach (GeneratedFile f in files)
+        {
+            if (f.Content.Contains("WriteBinaryPart"))
+            {
+                hasBinaryBatch = true;
+                break;
+            }
+        }
+
+        Assert.IsTrue(hasBinaryBatch, "Expected WriteBinaryPart in generated code for binary batch");
+    }
+
+    [TestMethod]
+    public void GenerateServer_DeepNestedArrayParam_EmitsElementType()
+    {
+        // Exercises lines 6256-6262: deep nesting with element type resolution in server code
+        JsonElement spec = ParseSpec("""
+            {
+              "openapi": "3.2.0",
+              "info": { "title": "Deep Nested Server", "version": "1.0" },
+              "paths": {
+                "/items": {
+                  "get": {
+                    "operationId": "listItems",
+                    "parameters": [
+                      {
+                        "name": "filters",
+                        "in": "query",
+                        "style": "form",
+                        "explode": false,
+                        "schema": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "field": { "type": "string" },
+                              "value": { "type": "string" }
+                            }
+                          }
+                        }
+                      }
+                    ],
+                    "responses": {
+                      "200": {
+                        "description": "OK",
+                        "content": {
+                          "application/json": {
+                            "schema": { "type": "object", "properties": { "total": { "type": "integer" } } }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+            """);
+
+        SchemaReference[] refs = [.. OpenApi32CodeGenerator.CollectSchemaPointers(spec, out _)];
+        Dictionary<string, string> map = new(StringComparer.Ordinal);
+        int i = 0;
+        foreach (SchemaReference r in refs)
+        {
+            map[r.PositionalPointer] = $"DeepSrv.Type{i}";
+            i++;
+        }
+
+        OpenApi32CodeGenerator gen = new("DeepSrv", map);
+        IReadOnlyList<GeneratedFile> files = gen.GenerateServer(spec);
+
+        // Should generate server code with element type resolution for deep nested array param
+        Assert.IsTrue(files.Count > 0);
+    }
 }

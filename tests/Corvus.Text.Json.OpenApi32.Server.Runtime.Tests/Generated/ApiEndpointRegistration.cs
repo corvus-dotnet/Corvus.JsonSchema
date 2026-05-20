@@ -1352,7 +1352,7 @@ public static class ApiEndpointRegistration
         app.MapPut("/documents/{documentId}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests32.Server.Schema4>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests32.Server.Schema6>? bodyDoc = null;
             try
             {
                 CanonTests32.Server.JsonUuid DocumentIdValue = default;
@@ -1361,7 +1361,7 @@ public static class ApiEndpointRegistration
                     DocumentIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonUuid>(DocumentIdRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema4>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema6>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
                 UpdateDocumentParams parameters = new()
                 {
@@ -1646,10 +1646,10 @@ public static class ApiEndpointRegistration
         app.MapMethods("/monitoring/status", new[] { "QUERY" }, async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests32.Server.Schema6>? bodyDoc = null;
+            ParsedJsonDocument<CanonTests32.Server.Schema8>? bodyDoc = null;
             try
             {
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema6>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema8>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
 
                 QueryMonitoringStatusParams parameters = new()
                 {

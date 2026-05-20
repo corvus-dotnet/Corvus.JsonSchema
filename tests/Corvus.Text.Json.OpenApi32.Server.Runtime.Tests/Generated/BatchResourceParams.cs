@@ -15,14 +15,18 @@ using Corvus.Text.Json.OpenApi;
 namespace CanonTests32.Server;
 
 /// <summary>
-/// Parameters for the QueryMonitoringStatus operation (QUERY /monitoring/status).
+/// Parameters for the BatchResource operation (CUSTOM /resources/{resourceId}).
 /// </summary>
-/// <remarks>Query monitoring metrics</remarks>
-public readonly struct QueryMonitoringStatusParams
+public readonly struct BatchResourceParams
 {
+
+    /// <summary>
+    /// Gets the 'resourceId' path parameter.
+    /// </summary>
+    public CanonTests32.Server.JsonString ResourceId { get; init; }
 
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.Schema8 Body { get; init; }
+    public JsonElement Body { get; init; }
 }
