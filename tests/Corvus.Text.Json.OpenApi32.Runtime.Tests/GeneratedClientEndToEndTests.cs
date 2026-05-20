@@ -1195,8 +1195,8 @@ public class GeneratedClientEndToEndTests
                 CancellationToken.None);
 
         // Accessing XTotalCountHeader should lazily parse the integer value.
-        Assert.IsNotNull(response.XTotalCountHeader);
-        Assert.AreEqual(42, (int)response.XTotalCountHeader.Value);
+        Assert.IsFalse(response.XTotalCountHeader.IsUndefined());
+        Assert.AreEqual(42, (int)response.XTotalCountHeader);
     }
 
     [TestMethod]
@@ -1212,12 +1212,12 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.IsNotNull(response.XRequestIdHeader);
-        Assert.AreEqual("req-abc-123", (string)response.XRequestIdHeader.Value);
+        Assert.IsFalse(response.XRequestIdHeader.IsUndefined());
+        Assert.AreEqual("req-abc-123", (string)response.XRequestIdHeader);
     }
 
     [TestMethod]
-    public async Task GetItemTag_ResponseHeader_MissingHeaderReturnsNull()
+    public async Task GetItemTag_ResponseHeader_MissingHeaderReturnsUndefined()
     {
         // No response headers set at all.
         using var harness = new TestHarness(HttpStatusCode.OK, """{"tag":"v"}""");
@@ -1227,8 +1227,8 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.IsNull(response.XTotalCountHeader);
-        Assert.IsNull(response.XRequestIdHeader);
+        Assert.IsTrue(response.XTotalCountHeader.IsUndefined());
+        Assert.IsTrue(response.XRequestIdHeader.IsUndefined());
     }
 
     [TestMethod]
@@ -1248,9 +1248,9 @@ public class GeneratedClientEndToEndTests
         var first = response.XTotalCountHeader;
         var second = response.XTotalCountHeader;
 
-        Assert.IsNotNull(first);
-        Assert.IsNotNull(second);
-        Assert.AreEqual((int)first.Value, (int)second.Value);
+        Assert.IsFalse(first.IsUndefined());
+        Assert.IsFalse(second.IsUndefined());
+        Assert.AreEqual((int)first, (int)second);
     }
 
     [TestMethod]
@@ -1270,8 +1270,8 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.AreEqual(7, (int)response.XTotalCountHeader!.Value);
-        Assert.AreEqual("id-xyz", (string)response.XRequestIdHeader!.Value);
+        Assert.AreEqual(7, (int)response.XTotalCountHeader);
+        Assert.AreEqual("id-xyz", (string)response.XRequestIdHeader);
     }
 
     [TestMethod]
@@ -1290,7 +1290,7 @@ public class GeneratedClientEndToEndTests
 
         Assert.AreEqual(404, response.StatusCode);
         Assert.IsFalse(response.IsSuccess);
-        Assert.AreEqual("err-404", (string)response.XRequestIdHeader!.Value);
+        Assert.AreEqual("err-404", (string)response.XRequestIdHeader);
     }
 
     [TestMethod]
@@ -1306,8 +1306,8 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.IsNotNull(response.XTagsHeader);
-        var tags = response.XTagsHeader.Value;
+        Assert.IsFalse(response.XTagsHeader.IsUndefined());
+        var tags = response.XTagsHeader;
         Assert.AreEqual(3, tags.GetArrayLength());
         Assert.AreEqual("alpha", (string)tags[0]);
         Assert.AreEqual("beta", (string)tags[1]);
@@ -1327,8 +1327,8 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.IsNotNull(response.XTagsHeader);
-        var tags = response.XTagsHeader.Value;
+        Assert.IsFalse(response.XTagsHeader.IsUndefined());
+        var tags = response.XTagsHeader;
         Assert.AreEqual(1, tags.GetArrayLength());
         Assert.AreEqual("solo", (string)tags[0]);
     }
@@ -1343,7 +1343,7 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.IsNull(response.XTagsHeader);
+        Assert.IsTrue(response.XTagsHeader.IsUndefined());
     }
 
     [TestMethod]
@@ -1360,8 +1360,8 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.IsNotNull(response.XMetadataHeader);
-        var metadata = response.XMetadataHeader.Value;
+        Assert.IsFalse(response.XMetadataHeader.IsUndefined());
+        var metadata = response.XMetadataHeader;
         Assert.IsTrue(metadata.TryGetProperty("env", out var envVal));
         Assert.AreEqual("production", envVal.GetString());
         Assert.IsTrue(metadata.TryGetProperty("region", out var regionVal));
@@ -1381,8 +1381,8 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.IsNotNull(response.XMetadataHeader);
-        var metadata = response.XMetadataHeader.Value;
+        Assert.IsFalse(response.XMetadataHeader.IsUndefined());
+        var metadata = response.XMetadataHeader;
         Assert.IsTrue(metadata.TryGetProperty("key", out var val));
         Assert.AreEqual("value", val.GetString());
     }
@@ -1397,7 +1397,7 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.IsNull(response.XMetadataHeader);
+        Assert.IsTrue(response.XMetadataHeader.IsUndefined());
     }
 
     [TestMethod]
@@ -1419,15 +1419,15 @@ public class GeneratedClientEndToEndTests
                 new GetItemTagRequest(JsonInt64.ParseValue("1"u8), JsonString.ParseValue("\"t\""u8)),
                 CancellationToken.None);
 
-        Assert.AreEqual(42, (int)response.XTotalCountHeader!.Value);
-        Assert.AreEqual("req-123", (string)response.XRequestIdHeader!.Value);
+        Assert.AreEqual(42, (int)response.XTotalCountHeader);
+        Assert.AreEqual("req-123", (string)response.XRequestIdHeader);
 
-        var tags = response.XTagsHeader!.Value;
+        var tags = response.XTagsHeader;
         Assert.AreEqual(2, tags.GetArrayLength());
         Assert.AreEqual("a", (string)tags[0]);
         Assert.AreEqual("b", (string)tags[1]);
 
-        var metadata = response.XMetadataHeader!.Value;
+        var metadata = response.XMetadataHeader;
         Assert.IsTrue(metadata.TryGetProperty("k1", out var v1));
         Assert.AreEqual("v1", v1.GetString());
     }
@@ -2480,7 +2480,7 @@ public class GeneratedClientEndToEndTests
         await using CopyItemResponse response = await harness.Transport
             .SendAsync<CopyItemRequest, CopyItemResponse>(in request, CancellationToken.None);
 
-        Assert.IsNotNull(response.LocationHeader);
+        Assert.IsFalse(response.LocationHeader.IsUndefined());
     }
 
     [TestMethod]
@@ -3371,8 +3371,8 @@ public class GeneratedClientEndToEndTests
         Assert.IsTrue(response.IsSuccess);
 
         // Verify the deeply nested header was parsed correctly
-        Assert.IsNotNull(response.XNestedItemsHeader);
-        var items = response.XNestedItemsHeader.Value;
+        Assert.IsFalse(response.XNestedItemsHeader.IsUndefined());
+        var items = response.XNestedItemsHeader;
         Assert.AreEqual(2, items.GetArrayLength());
 
         // First element
@@ -3390,7 +3390,7 @@ public class GeneratedClientEndToEndTests
     }
 
     [TestMethod]
-    public async Task Client_ApiComplexClient_HeaderNestedArrayAsync_MissingHeaderReturnsNull()
+    public async Task Client_ApiComplexClient_HeaderNestedArrayAsync_MissingHeaderReturnsUndefined()
     {
         using var harness = new TestHarness(
             HttpStatusCode.OK,
@@ -3400,7 +3400,7 @@ public class GeneratedClientEndToEndTests
         await using HeaderNestedArrayResponse response = await client.HeaderNestedArrayAsync();
 
         Assert.AreEqual(200, response.StatusCode);
-        Assert.IsNull(response.XNestedItemsHeader);
+        Assert.IsTrue(response.XNestedItemsHeader.IsUndefined());
     }
 
     [TestMethod]
@@ -3417,8 +3417,8 @@ public class GeneratedClientEndToEndTests
 
         await using HeaderNestedArrayResponse response = await client.HeaderNestedArrayAsync();
 
-        Assert.IsNotNull(response.XNestedItemsHeader);
-        var items = response.XNestedItemsHeader.Value;
+        Assert.IsFalse(response.XNestedItemsHeader.IsUndefined());
+        var items = response.XNestedItemsHeader;
         Assert.AreEqual(1, items.GetArrayLength());
         Assert.AreEqual("solo", (string)items[0].Id);
         Assert.AreEqual(0, items[0].Tags.GetArrayLength());
@@ -5184,12 +5184,12 @@ public class GeneratedClientEndToEndTests
 
         // Verify the int32 array header was parsed with int.Parse
         var pageSizes = response.XPageSizesHeader;
-        Assert.IsNotNull(pageSizes);
-        Assert.AreEqual(4, pageSizes.Value.GetArrayLength());
-        Assert.AreEqual(10, (int)pageSizes.Value[0]);
-        Assert.AreEqual(25, (int)pageSizes.Value[1]);
-        Assert.AreEqual(50, (int)pageSizes.Value[2]);
-        Assert.AreEqual(100, (int)pageSizes.Value[3]);
+        Assert.IsFalse(pageSizes.IsUndefined());
+        Assert.AreEqual(4, pageSizes.GetArrayLength());
+        Assert.AreEqual(10, (int)pageSizes[0]);
+        Assert.AreEqual(25, (int)pageSizes[1]);
+        Assert.AreEqual(50, (int)pageSizes[2]);
+        Assert.AreEqual(100, (int)pageSizes[3]);
     }
 
     [TestMethod]
@@ -5218,11 +5218,11 @@ public class GeneratedClientEndToEndTests
 
         // Verify the boolean array header was parsed with bool.Parse
         var flags = response.XFlagsHeader;
-        Assert.IsNotNull(flags);
-        Assert.AreEqual(3, flags.Value.GetArrayLength());
-        Assert.AreEqual(true, (bool)flags.Value[0]);
-        Assert.AreEqual(false, (bool)flags.Value[1]);
-        Assert.AreEqual(true, (bool)flags.Value[2]);
+        Assert.IsFalse(flags.IsUndefined());
+        Assert.AreEqual(3, flags.GetArrayLength());
+        Assert.AreEqual(true, (bool)flags[0]);
+        Assert.AreEqual(false, (bool)flags[1]);
+        Assert.AreEqual(true, (bool)flags[2]);
     }
 
     // ── Link following E2E tests ─────────────────────────────────────────

@@ -39,10 +39,15 @@ public struct CopyItemResponse : IApiResponse<CopyItemResponse>
     /// Gets the value of the <c>Location</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.JsonUri? locationHeaderValue;
+    private CanonTests32.Client.JsonUri locationHeaderValue;
     private bool locationHeaderParsed;
 
-    public CanonTests32.Client.JsonUri? LocationHeader
+    /// <summary>
+    /// Gets the parsed value of the <c>Location</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public CanonTests32.Client.JsonUri LocationHeader
     {
         get
         {

@@ -39,10 +39,15 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Total-Count</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests31.Client.JsonInt32? xTotalCountHeaderValue;
+    private CanonTests31.Client.JsonInt32 xTotalCountHeaderValue;
     private bool xTotalCountHeaderParsed;
 
-    public CanonTests31.Client.JsonInt32? XTotalCountHeader
+    /// <summary>
+    /// Gets the parsed value of the <c>X-Total-Count</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public CanonTests31.Client.JsonInt32 XTotalCountHeader
     {
         get
         {
@@ -68,10 +73,15 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Request-Id</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests31.Client.JsonString? xRequestIdHeaderValue;
+    private CanonTests31.Client.JsonString xRequestIdHeaderValue;
     private bool xRequestIdHeaderParsed;
 
-    public CanonTests31.Client.JsonString? XRequestIdHeader
+    /// <summary>
+    /// Gets the parsed value of the <c>X-Request-Id</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public CanonTests31.Client.JsonString XRequestIdHeader
     {
         get
         {
@@ -97,10 +107,15 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Tags</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXTags? xTagsHeaderValue;
+    private CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXTags xTagsHeaderValue;
     private bool xTagsHeaderParsed;
 
-    public CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXTags? XTagsHeader
+    /// <summary>
+    /// Gets the parsed value of the <c>X-Tags</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXTags XTagsHeader
     {
         get
         {
@@ -136,10 +151,15 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Metadata</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXMetadata? xMetadataHeaderValue;
+    private CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXMetadata xMetadataHeaderValue;
     private bool xMetadataHeaderParsed;
 
-    public CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXMetadata? XMetadataHeader
+    /// <summary>
+    /// Gets the parsed value of the <c>X-Metadata</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXMetadata XMetadataHeader
     {
         get
         {
@@ -179,10 +199,15 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Page-Sizes</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXPageSizes? xPageSizesHeaderValue;
+    private CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXPageSizes xPageSizesHeaderValue;
     private bool xPageSizesHeaderParsed;
 
-    public CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXPageSizes? XPageSizesHeader
+    /// <summary>
+    /// Gets the parsed value of the <c>X-Page-Sizes</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXPageSizes XPageSizesHeader
     {
         get
         {
@@ -218,10 +243,15 @@ public struct GetItemTagResponse : IApiResponse<GetItemTagResponse>
     /// Gets the value of the <c>X-Flags</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXFlags? xFlagsHeaderValue;
+    private CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXFlags xFlagsHeaderValue;
     private bool xFlagsHeaderParsed;
 
-    public CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXFlags? XFlagsHeader
+    /// <summary>
+    /// Gets the parsed value of the <c>X-Flags</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public CanonTests31.Client.GetItemsByItemIdTagsByTagNameOkXFlags XFlagsHeader
     {
         get
         {

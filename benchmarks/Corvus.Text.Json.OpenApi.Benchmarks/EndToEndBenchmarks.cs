@@ -339,7 +339,7 @@ public class ResponseHeaderBenchmarks
     }
 
     [Benchmark(Description = "Corvus: response header (x-next) parsing")]
-    public async ValueTask<string?> Corvus_ResponseHeader()
+    public async ValueTask<bool> Corvus_ResponseHeader()
     {
         ListPetsResponse response = await this.corvusClient.ListPetsAsync(
             validationMode: ValidationMode.None,
@@ -347,8 +347,8 @@ public class ResponseHeaderBenchmarks
 
         await using (response.ConfigureAwait(false))
         {
-            JsonString? xNext = response.XNextHeader;
-            return xNext?.ToString();
+            JsonString xNext = response.XNextHeader;
+            return !xNext.IsUndefined() && xNext.ValueEquals("/pets?cursor=abc123"u8);
         }
     }
 }

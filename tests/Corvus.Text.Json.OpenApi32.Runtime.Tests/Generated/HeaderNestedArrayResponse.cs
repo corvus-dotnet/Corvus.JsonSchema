@@ -39,10 +39,15 @@ public struct HeaderNestedArrayResponse : IApiResponse<HeaderNestedArrayResponse
     /// Gets the value of the <c>X-Nested-Items</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems? xNestedItemsHeaderValue;
+    private CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems xNestedItemsHeaderValue;
     private bool xNestedItemsHeaderParsed;
 
-    public CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems? XNestedItemsHeader
+    /// <summary>
+    /// Gets the parsed value of the <c>X-Nested-Items</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public CanonTests32.Client.GetComplexHeaderNestedArrayOkXNestedItems XNestedItemsHeader
     {
         get
         {

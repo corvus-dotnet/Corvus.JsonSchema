@@ -1608,12 +1608,20 @@ public static class CodeEmitHelpers
         string? elementTypeName = null)
     {
         // Backing fields: cached parsed value and a flag to avoid re-parsing.
-        w.WriteLine($"private {typeName}? {fieldName}HeaderValue;");
+        // The value is non-nullable; when the header is absent, it remains default
+        // and consumers check via IsUndefined().
+        w.WriteLine($"private {typeName} {fieldName}HeaderValue;");
         w.WriteLine($"private bool {fieldName}HeaderParsed;");
         w.WriteLine();
 
         // Property getter: lazily parse the raw header string on first access.
-        w.WriteLine($"public {typeName}? {propertyName}Header");
+        // Returns default (undefined) when the header is not present.
+        w.WriteLine("/// <summary>");
+        w.WriteLine($"/// Gets the parsed value of the <c>{headerName}</c> response header,");
+        w.WriteLine("/// or <see langword=\"default\"/> (undefined) if not present.");
+        w.WriteLine("/// Use <c>IsUndefined()</c> to check for absence.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine($"public {typeName} {propertyName}Header");
         w.OpenBrace();
         w.WriteLine("get");
         w.OpenBrace();

@@ -44,10 +44,15 @@ public struct ListPetsResponse : IApiResponse<ListPetsResponse>
     /// Gets the value of the <c>x-next</c> response header,
     /// or <see langword="null"/> if the header was not present.
     /// </summary>
-    private PetstoreBenchmark.CorvusClient.JsonString? xNextHeaderValue;
+    private PetstoreBenchmark.CorvusClient.JsonString xNextHeaderValue;
     private bool xNextHeaderParsed;
 
-    public PetstoreBenchmark.CorvusClient.JsonString? XNextHeader
+    /// <summary>
+    /// Gets the parsed value of the <c>x-next</c> response header,
+    /// or <see langword="default"/> (undefined) if not present.
+    /// Use <c>IsUndefined()</c> to check for absence.
+    /// </summary>
+    public PetstoreBenchmark.CorvusClient.JsonString XNextHeader
     {
         get
         {
