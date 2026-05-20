@@ -23,6 +23,29 @@ The `IApiTransport` abstraction enables:
 - **Alternative transports**: gRPC, in-process, or message-queue transports can implement the same interface
 - **Composition**: transports can be wrapped for logging, retries, or metrics without modifying generated code
 
+### Middleware / Resilience
+
+Kiota ships its own `DelegatingHandler` pipeline with default handlers for retry (exponential backoff on 429/503/504, honours `Retry-After`), redirect (301/302/303/307/308 with auth-stripping on host change), parameter name decoding, user-agent injection, and header inspection. It disables `SocketsHttpHandler.AllowAutoRedirect` so that its own redirect handler has full control.
+
+Corvus takes a different approach: since `HttpClientTransport` wraps a standard `HttpClient`, resilience and middleware are composed using platform-native .NET patterns:
+
+- **Retry / circuit-breaker**: `Microsoft.Extensions.Http.Resilience` (Polly v8) via `IHttpClientFactory` — richer policies than Kiota's built-in handler (jitter, circuit breakers, hedging, per-endpoint configuration)
+- **Redirect**: `SocketsHttpHandler.AllowAutoRedirect = true` (the platform default) handles standard redirects without a custom handler
+- **Observability**: OpenTelemetry `HttpClient` instrumentation integrates automatically
+- **Custom handlers**: any `DelegatingHandler` can be added to the `HttpClient` pipeline via `IHttpClientFactory.AddHttpMessageHandler()`
+
+This means Corvus doesn't reimplement retry/redirect logic that the platform already provides, and users can mix any community middleware (Polly, OpenTelemetry, logging, etc.) without learning a Kiota-specific handler API.
+The downside of this is that there is no transport-independent middleware model in Corvus.
+
+| Concern | Corvus approach | Kiota approach |
+|---------|----------------|----------------|
+| Retry | `Microsoft.Extensions.Http.Resilience` (Polly) | Built-in `RetryHandler` (exponential backoff) |
+| Redirect | `SocketsHttpHandler.AllowAutoRedirect` (platform) | Built-in `RedirectHandler` (custom impl) |
+| Auth header stripping on redirect | Platform `SocketsHttpHandler` handles this | Custom logic in `RedirectHandler` |
+| Observability | OpenTelemetry `HttpClient` instrumentation | Custom `Activity` tracing in each handler |
+| Per-request options | Standard `HttpRequestMessage.Options` | Custom `IRequestOption` per handler |
+| Composition | `IHttpClientFactory.AddHttpMessageHandler()` | `KiotaClientFactory.CreateDefaultHandlers()` |
+
 ## Response Headers
 
 | Aspect | Corvus | Kiota |
@@ -64,7 +87,7 @@ JsonString? xNext = response.XNextHeader; // parsed on first access, zero extra 
 
 ```csharp
 await client.CreatePetAsync(
-    NewPet.Build(static (ref NewPet.Builder b) => b.Create("Rex", "dog")));
+    NewPet.Build(static (ref NewPet.Builder b) => b.Create("Rex"u8, "dog"u8)));
 ```
 
 **Kiota body construction (POCO allocation):**
@@ -172,8 +195,8 @@ All validation modes produce zero additional allocation (1.03 KB throughout).
 | Schema validation | ✅ (None/Basic/Detailed) | ❌ |
 | Error response discrimination | ✅ (typed `MatchResult`) | ✅ (exception-based) |
 | Pagination helpers | Planned | ❌ |
-| Authentication | Via transport (user-provided) | Built-in providers |
-| Middleware pipeline | Via transport composition | Built-in pipeline |
+| Authentication | ✅ Built-in (Bearer, ApiKey, Basic) | ✅ Built-in (Bearer, ApiKey, Basic, Anonymous) |
+| Middleware pipeline | Platform-native (`IHttpClientFactory` + Polly) | Built-in `DelegatingHandler` chain |
 | Multiple languages | C# only | C#, Java, Go, TypeScript, Python, PHP, Ruby, Swift, CLI |
 | Source generator integration | ✅ | ❌ |
 | IDE autocompletion during build | ✅ (via source generator) | ✅ (pre-generated files) |
@@ -189,6 +212,6 @@ All validation modes produce zero additional allocation (1.03 KB throughout).
 ## When to Choose Kiota
 
 - Multi-language projects needing consistent client generation across platforms
-- Teams wanting built-in authentication providers and middleware
+- Teams wanting a self-contained middleware pipeline without configuring `IHttpClientFactory`
 - Projects where POCO-style models are preferred over struct-based types
 - APIs where performance is not the primary concern

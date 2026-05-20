@@ -139,7 +139,7 @@ public class GetByIdBenchmarks
     public async ValueTask<long> Corvus_NoValidation()
     {
         ShowPetByIdResponse response = await this.corvusClient.ShowPetByIdAsync(
-            "42",
+            "42"u8,
             validationMode: ValidationMode.None,
             responseValidationMode: ValidationMode.None);
 
@@ -153,7 +153,7 @@ public class GetByIdBenchmarks
     public async ValueTask<long> Corvus_WithValidation()
     {
         ShowPetByIdResponse response = await this.corvusClient.ShowPetByIdAsync(
-            "42",
+            "42"u8,
             validationMode: ValidationMode.Basic,
             responseValidationMode: ValidationMode.Basic);
 
@@ -205,7 +205,7 @@ public class PostJsonBodyBenchmarks
     public async ValueTask<long> Corvus_NoValidation()
     {
         CreatePetResponse response = await this.corvusClient.CreatePetAsync(
-            NewPet.Build(static (ref NewPet.Builder b) => b.Create("Rex", "dog")),
+            NewPet.Build(static (ref NewPet.Builder b) => b.Create("Rex"u8, "dog"u8)),
             validationMode: ValidationMode.None,
             responseValidationMode: ValidationMode.None);
 
@@ -219,7 +219,7 @@ public class PostJsonBodyBenchmarks
     public async ValueTask<long> Corvus_WithValidation()
     {
         CreatePetResponse response = await this.corvusClient.CreatePetAsync(
-            NewPet.Build(static (ref NewPet.Builder b) => b.Create("Rex", "dog")),
+            NewPet.Build(static (ref NewPet.Builder b) => b.Create("Rex"u8, "dog"u8)),
             validationMode: ValidationMode.Basic,
             responseValidationMode: ValidationMode.Basic);
 
@@ -277,8 +277,8 @@ public class PutFormEncodedBenchmarks
     public async ValueTask<long> Corvus_NoValidation()
     {
         UpdatePetResponse response = await this.corvusClient.UpdatePetAsync(
-            "42",
-            NewPet.Build(static (ref NewPet.Builder b) => b.Create("Fido Updated", "dog")),
+            "42"u8,
+            NewPet.Build(static (ref NewPet.Builder b) => b.Create("Fido Updated"u8, "dog"u8)),
             validationMode: ValidationMode.None,
             responseValidationMode: ValidationMode.None);
 
@@ -292,8 +292,8 @@ public class PutFormEncodedBenchmarks
     public async ValueTask<long> Corvus_WithValidation()
     {
         UpdatePetResponse response = await this.corvusClient.UpdatePetAsync(
-            "42",
-            NewPet.Build(static (ref NewPet.Builder b) => b.Create("Fido Updated", "dog")),
+            "42"u8,
+            NewPet.Build(static (ref NewPet.Builder b) => b.Create("Fido Updated"u8, "dog"u8)),
             validationMode: ValidationMode.Basic,
             responseValidationMode: ValidationMode.Basic);
 
