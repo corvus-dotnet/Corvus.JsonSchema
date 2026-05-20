@@ -51,6 +51,20 @@ public readonly struct GetDocumentResult
     public static GetDocumentResult Ok(CanonTests32.Server.Schema5.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xDocumentVersion = default) => new(200, CanonTests32.Server.Schema5.CreateBuilder(workspace, body, 0).RootElement, "application/json", xDocumentVersion: xDocumentVersion);
 
     /// <summary>
+    /// Validates the response body against the schema for the current status code.
+    /// </summary>
+    /// <returns><see langword="true"/> if the body is valid or undefined; otherwise <see langword="false"/>.</returns>
+    public bool ValidateBody()
+    {
+        if (this.Body.IsUndefined()) return true;
+        return this.StatusCode switch
+        {
+            200 => CanonTests32.Server.Schema5.From(this.Body).EvaluateSchema(),
+            _ => true,
+        };
+    }
+
+    /// <summary>
     /// Writes the response body to the specified writer.
     /// </summary>
     /// <param name="writer">The UTF-8 JSON writer.</param>

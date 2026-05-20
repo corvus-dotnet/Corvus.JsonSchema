@@ -13,11 +13,11 @@ namespace Corvus.Text.Json.OpenApi32.Server.Runtime.Tests;
 /// </summary>
 internal sealed class MockDefaultHandler : IApiDefaultHandler
 {
-    private static readonly ItemEntity DefaultItem = ItemEntity.ParseValue("""{"id":"1","name":"Widget","price":9.99}"""u8);
+    private static readonly ItemEntity DefaultItem = ItemEntity.ParseValue("""{"id":1,"name":"Widget"}"""u8);
 
     public ValueTask<ListItemsResult> HandleListItemsAsync(ListItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GetItemsOk body = GetItemsOk.ParseValue("""[{"id":"1","name":"Test Item","price":10}]"""u8);
+        GetItemsOk body = GetItemsOk.ParseValue("""[{"id":1,"name":"Test Item"}]"""u8);
         return new(ListItemsResult.Ok(body, workspace));
     }
 
@@ -36,7 +36,7 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
     public ValueTask<GetItemResult> HandleGetItemAsync(GetItemParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         string itemId = (string)parameters.ItemId;
-        ItemEntity body = ItemEntity.ParseValue(System.Text.Encoding.UTF8.GetBytes($$"""{"id":"{{itemId}}","name":"Widget","price":9.99}"""));
+        ItemEntity body = ItemEntity.ParseValue(System.Text.Encoding.UTF8.GetBytes($$"""{"id":42,"name":"Widget-{{itemId}}"}"""));
         return new(GetItemResult.Ok(body, workspace));
     }
 
@@ -46,9 +46,8 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
     public ValueTask<UpdateItemFormResult> HandleUpdateItemFormAsync(UpdateItemFormParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
         // Echo the parsed form body back as JSON to verify deserialization.
-        // We serialize the body JSON element and parse it as ItemEntity (which accepts any JSON).
         string json = parameters.Body.ToString();
-        ItemEntity echoBody = ItemEntity.ParseValue(System.Text.Encoding.UTF8.GetBytes(json));
+        JsonElement echoBody = JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(json));
         return new(UpdateItemFormResult.Ok(echoBody, workspace));
     }
 
@@ -69,7 +68,7 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
 
     public ValueTask<GetEmptyServersResult> HandleGetEmptyServersAsync(GetEmptyServersParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GetEmptyServersOk body = GetEmptyServersOk.ParseValue("""[]"""u8);
+        GetEmptyServersOk body = GetEmptyServersOk.ParseValue("""{"ok":true}"""u8);
         return new(GetEmptyServersResult.Ok(body, workspace));
     }
 
@@ -81,25 +80,25 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
 
     public ValueTask<GetAdvancedStylesResult> HandleGetAdvancedStylesAsync(GetAdvancedStylesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GetAdvancedStylesByIdsOk body = GetAdvancedStylesByIdsOk.ParseValue("""[]"""u8);
+        GetAdvancedStylesByIdsOk body = GetAdvancedStylesByIdsOk.ParseValue("""{"items":[],"total":0}"""u8);
         return new(GetAdvancedStylesResult.Ok(body, workspace));
     }
 
     public ValueTask<GetByMatrixCodesResult> HandleGetByMatrixCodesAsync(GetByMatrixCodesParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GetMatrixTestByCodesOk body = GetMatrixTestByCodesOk.ParseValue("""[]"""u8);
+        GetMatrixTestByCodesOk body = GetMatrixTestByCodesOk.ParseValue("""{"count":0}"""u8);
         return new(GetByMatrixCodesResult.Ok(body, workspace));
     }
 
     public ValueTask<GetByMatrixTagsResult> HandleGetByMatrixTagsAsync(GetByMatrixTagsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GetMatrixNoExplodeByTagsOk body = GetMatrixNoExplodeByTagsOk.ParseValue("""[]"""u8);
+        GetMatrixNoExplodeByTagsOk body = GetMatrixNoExplodeByTagsOk.ParseValue("""{"count":0}"""u8);
         return new(GetByMatrixTagsResult.Ok(body, workspace));
     }
 
     public ValueTask<GetByLabelItemsResult> HandleGetByLabelItemsAsync(GetByLabelItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GetLabelNoExplodeByItemsOk body = GetLabelNoExplodeByItemsOk.ParseValue("""[]"""u8);
+        GetLabelNoExplodeByItemsOk body = GetLabelNoExplodeByItemsOk.ParseValue("""{"count":0}"""u8);
         return new(GetByLabelItemsResult.Ok(body, workspace));
     }
 
@@ -138,13 +137,13 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
 
     public ValueTask<GetDocumentResult> HandleGetDocumentAsync(GetDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Schema5 body = Schema5.ParseValue("""{}"""u8);
+        Schema5 body = Schema5.ParseValue("""{"id":"550e8400-e29b-41d4-a716-446655440000","title":"Test Document","version":1}"""u8);
         return new(GetDocumentResult.Ok(body, workspace));
     }
 
     public ValueTask<UpdateDocumentResult> HandleUpdateDocumentAsync(UpdateDocumentParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        Schema5 body = Schema5.ParseValue("""{}"""u8);
+        Schema5 body = Schema5.ParseValue("""{"id":"550e8400-e29b-41d4-a716-446655440000","title":"Updated Document","version":2}"""u8);
         return new(UpdateDocumentResult.Ok(body, workspace));
     }
 
@@ -199,11 +198,11 @@ internal sealed class MockDefaultHandler : IApiDefaultHandler
 /// </summary>
 internal sealed class MockItemsHandler : IApiItemsHandler
 {
-    private static readonly ItemEntity DefaultItem = ItemEntity.ParseValue("""{"id":"1","name":"Widget","price":9.99}"""u8);
+    private static readonly ItemEntity DefaultItem = ItemEntity.ParseValue("""{"id":1,"name":"Widget"}"""u8);
 
     public ValueTask<SearchItemsResult> HandleSearchItemsAsync(SearchItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GetSearchOk body = GetSearchOk.ParseValue("""{"results":[{"id":"1","name":"Found Item"}]}"""u8);
+        GetSearchOk body = GetSearchOk.ParseValue("""[{"id":1,"name":"Found Item"}]"""u8);
         return new(SearchItemsResult.Ok(body, workspace));
     }
 
@@ -214,7 +213,7 @@ internal sealed class MockItemsHandler : IApiItemsHandler
     {
         // Echo the parsed form body back as JSON to verify deserialization.
         string json = parameters.Body.ToString();
-        ItemEntity echoBody = ItemEntity.ParseValue(System.Text.Encoding.UTF8.GetBytes(json));
+        JsonElement echoBody = JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(json));
         return new(SubmitFeedbackResult.Created(echoBody, workspace));
     }
 
@@ -225,7 +224,7 @@ internal sealed class MockItemsHandler : IApiItemsHandler
     {
         // Echo the parsed form body back as JSON to verify deserialization.
         string json = parameters.Body.ToString();
-        ItemEntity echoBody = ItemEntity.ParseValue(System.Text.Encoding.UTF8.GetBytes(json));
+        JsonElement echoBody = JsonElement.ParseValue(System.Text.Encoding.UTF8.GetBytes(json));
         return new(SubmitFeedbackEncodedResult.Created(echoBody, workspace));
     }
 
@@ -240,13 +239,13 @@ internal sealed class MockSearchHandler : IApiSearchHandler
 {
     public ValueTask<SearchItemsResult> HandleSearchItemsAsync(SearchItemsParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        GetSearchOk body = GetSearchOk.ParseValue("""{"results":[{"id":"s1","name":"Search Result"}]}"""u8);
+        GetSearchOk body = GetSearchOk.ParseValue("""[{"id":1,"name":"Search Result"}]"""u8);
         return new(SearchItemsResult.Ok(body, workspace));
     }
 
     public ValueTask<SearchItemsAdvancedResult> HandleSearchItemsAdvancedAsync(SearchItemsAdvancedParams parameters, JsonWorkspace workspace, CancellationToken cancellationToken = default)
     {
-        PostSearchOk body = PostSearchOk.ParseValue("""{"results":[{"id":"a1","name":"Advanced Result"}]}"""u8);
+        PostSearchOk body = PostSearchOk.ParseValue("""{"results":[{"id":1,"name":"Advanced Result"}]}"""u8);
         return new(SearchItemsAdvancedResult.Ok(body, workspace));
     }
 }

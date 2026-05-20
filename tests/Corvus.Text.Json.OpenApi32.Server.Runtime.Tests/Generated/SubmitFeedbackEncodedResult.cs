@@ -41,7 +41,21 @@ public readonly struct SubmitFeedbackEncodedResult
     /// <param name="body">The response body.</param>
     /// <param name="workspace">The workspace for building the response value.</param>
     /// <returns>A <see cref="SubmitFeedbackEncodedResult"/> with status 201.</returns>
-    public static SubmitFeedbackEncodedResult Created(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace) => new(201, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+    public static SubmitFeedbackEncodedResult Created(Corvus.Text.Json.JsonElement.Source body, JsonWorkspace workspace) => new(201, Corvus.Text.Json.JsonElement.CreateBuilder(workspace, body, 0).RootElement, "application/json");
+
+    /// <summary>
+    /// Validates the response body against the schema for the current status code.
+    /// </summary>
+    /// <returns><see langword="true"/> if the body is valid or undefined; otherwise <see langword="false"/>.</returns>
+    public bool ValidateBody()
+    {
+        if (this.Body.IsUndefined()) return true;
+        return this.StatusCode switch
+        {
+            201 => Corvus.Text.Json.JsonElement.From(this.Body).EvaluateSchema(),
+            _ => true,
+        };
+    }
 
     /// <summary>
     /// Writes the response body to the specified writer.

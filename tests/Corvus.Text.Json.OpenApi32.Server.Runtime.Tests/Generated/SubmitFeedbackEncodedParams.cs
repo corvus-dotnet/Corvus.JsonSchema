@@ -29,5 +29,5 @@ public readonly struct SubmitFeedbackEncodedParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.PostFeedbackEncodedBody Body { get; init; }
+    public Corvus.Text.Json.JsonElement Body { get; init; }
 }

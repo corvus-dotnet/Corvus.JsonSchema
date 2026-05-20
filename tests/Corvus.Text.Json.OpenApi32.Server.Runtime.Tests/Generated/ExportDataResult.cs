@@ -51,6 +51,16 @@ public readonly struct ExportDataResult
     public static ExportDataResult Default(int statusCode, CanonTests32.Server.Error.Source body, JsonWorkspace workspace) => new(statusCode, CanonTests32.Server.Error.CreateBuilder(workspace, body, 0).RootElement, "application/json");
 
     /// <summary>
+    /// Validates the response body against the schema for the current status code.
+    /// </summary>
+    /// <returns><see langword="true"/> if the body is valid or undefined; otherwise <see langword="false"/>.</returns>
+    public bool ValidateBody()
+    {
+        if (this.Body.IsUndefined()) return true;
+        return true;
+    }
+
+    /// <summary>
     /// Writes the response body to the specified writer.
     /// </summary>
     /// <param name="writer">The UTF-8 JSON writer.</param>

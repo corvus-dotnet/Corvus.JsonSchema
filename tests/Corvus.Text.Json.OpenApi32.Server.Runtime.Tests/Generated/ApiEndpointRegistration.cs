@@ -68,6 +68,47 @@ public static class ApiEndpointRegistration
                     VerboseValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseBoolean<CanonTests32.Server.GetItemsVerbose>(VerboseRaw, workspace);
                 }
 
+                if (!ActiveValue.IsUndefined() && !ActiveValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'active' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CategoryValue.IsUndefined() && !CategoryValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'category' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!PageValue.IsUndefined() && !PageValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'page' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!SortValue.IsUndefined() && !SortValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'sort' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!VerboseValue.IsUndefined() && !VerboseValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'verbose' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 ListItemsParams parameters = new()
                 {
                     Active = ActiveValue,
@@ -79,6 +120,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 ListItemsResult result = await defaultHandler.HandleListItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -118,7 +167,35 @@ public static class ApiEndpointRegistration
                     XCorrelationIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XCorrelationIdRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostItemsBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                if (!XCorrelationIdValue.IsUndefined() && !XCorrelationIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'X-Correlation-Id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostItemsBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 CreateItemParams parameters = new()
                 {
@@ -128,6 +205,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 CreateItemResult result = await defaultHandler.HandleCreateItemAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -164,6 +249,14 @@ public static class ApiEndpointRegistration
                 OptionsItemsParams parameters = new();
 
                 OptionsItemsResult result = await defaultHandler.HandleOptionsItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
@@ -204,6 +297,14 @@ public static class ApiEndpointRegistration
 
                 PurgeItemsResult result = await defaultHandler.HandlePurgeItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
                 {
@@ -240,6 +341,23 @@ public static class ApiEndpointRegistration
                     ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRaw, workspace);
                 }
 
+                if (ItemIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'itemId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ItemIdValue.IsUndefined() && !ItemIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'itemId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetItemParams parameters = new()
                 {
                     ItemId = ItemIdValue,
@@ -247,6 +365,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetItemResult result = await defaultHandler.HandleGetItemAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
@@ -289,7 +415,43 @@ public static class ApiEndpointRegistration
                     ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PatchItemsByItemIdBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                if (ItemIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'itemId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ItemIdValue.IsUndefined() && !ItemIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'itemId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PatchItemsByItemIdBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 PatchItemsItemIdParams parameters = new()
                 {
@@ -299,6 +461,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 PatchItemsItemIdResult result = await defaultHandler.HandlePatchItemsItemIdAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -329,7 +499,7 @@ public static class ApiEndpointRegistration
         app.MapPost("/items/{itemId}/form", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests32.Server.PostItemsByItemIdFormBody>? bodyDoc = null;
+            ParsedJsonDocument<Corvus.Text.Json.JsonElement>? bodyDoc = null;
             try
             {
                 CanonTests32.Server.JsonString ItemIdValue = default;
@@ -338,7 +508,43 @@ public static class ApiEndpointRegistration
                     ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRaw, workspace);
                 }
 
-                bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests32.Server.PostItemsByItemIdFormBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                if (ItemIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'itemId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ItemIdValue.IsUndefined() && !ItemIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'itemId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<Corvus.Text.Json.JsonElement>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 UpdateItemFormParams parameters = new()
                 {
@@ -348,6 +554,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 UpdateItemFormResult result = await defaultHandler.HandleUpdateItemFormAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -387,7 +601,34 @@ public static class ApiEndpointRegistration
                     ItemIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ItemIdRaw, workspace);
                 }
 
-                bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests32.Server.PostItemsByItemIdUploadBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                if (ItemIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'itemId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ItemIdValue.IsUndefined() && !ItemIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'itemId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests32.Server.PostItemsByItemIdUploadBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 UploadItemDataParams parameters = new()
                 {
@@ -397,6 +638,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 UploadItemDataResult result = await defaultHandler.HandleUploadItemDataAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -433,6 +682,14 @@ public static class ApiEndpointRegistration
                 DownloadFileParams parameters = new();
 
                 DownloadFileResult result = await defaultHandler.HandleDownloadFileAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -476,6 +733,23 @@ public static class ApiEndpointRegistration
                     WeirdLocValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(WeirdLocRaw, workspace);
                 }
 
+                if (!QidValue.IsUndefined() && !QidValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'qid' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!WeirdLocValue.IsUndefined() && !WeirdLocValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'weirdLoc' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetQuirkyParams parameters = new()
                 {
                     Qid = QidValue,
@@ -484,6 +758,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetQuirkyResult result = await defaultHandler.HandleGetQuirkyAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -527,6 +809,31 @@ public static class ApiEndpointRegistration
                     BadQueryStyleValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(BadQueryStyleRaw, workspace);
                 }
 
+                if (SidValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'sid' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!SidValue.IsUndefined() && !SidValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'sid' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!BadQueryStyleValue.IsUndefined() && !BadQueryStyleValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'badQueryStyle' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetStyledQuirkyParams parameters = new()
                 {
                     Sid = SidValue,
@@ -535,6 +842,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetStyledQuirkyResult result = await defaultHandler.HandleGetStyledQuirkyAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -571,6 +886,14 @@ public static class ApiEndpointRegistration
 
                 ExportDataResult result = await defaultHandler.HandleExportDataAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
                 {
@@ -605,6 +928,14 @@ public static class ApiEndpointRegistration
                 GetEmptyServersParams parameters = new();
 
                 GetEmptyServersResult result = await defaultHandler.HandleGetEmptyServersAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -641,6 +972,14 @@ public static class ApiEndpointRegistration
 
                 HeadHealthResult result = await defaultHandler.HandleHeadHealthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
                 {
@@ -675,6 +1014,14 @@ public static class ApiEndpointRegistration
                 TraceHealthParams parameters = new();
 
                 TraceHealthResult result = await defaultHandler.HandleTraceHealthAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -757,6 +1104,55 @@ public static class ApiEndpointRegistration
                     ScoreValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests32.Server.JsonDouble>(ScoreRaw, workspace);
                 }
 
+                if (IdsValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'ids' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!IdsValue.IsUndefined() && !IdsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'ids' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!MatrixTagsValue.IsUndefined() && !MatrixTagsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'matrixTags' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!LimitValue.IsUndefined() && !LimitValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'limit' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!WeightValue.IsUndefined() && !WeightValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'weight' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ScoreValue.IsUndefined() && !ScoreValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'score' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetAdvancedStylesParams parameters = new()
                 {
                     Ids = IdsValue,
@@ -768,6 +1164,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetAdvancedStylesResult result = await defaultHandler.HandleGetAdvancedStylesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
@@ -823,6 +1227,23 @@ public static class ApiEndpointRegistration
                     }).RootElement;
                 }
 
+                if (CodesValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'codes' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CodesValue.IsUndefined() && !CodesValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'codes' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetByMatrixCodesParams parameters = new()
                 {
                     Codes = CodesValue,
@@ -830,6 +1251,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetByMatrixCodesResult result = await defaultHandler.HandleGetByMatrixCodesAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -882,6 +1311,23 @@ public static class ApiEndpointRegistration
                     }).RootElement;
                 }
 
+                if (TagsValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'tags' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!TagsValue.IsUndefined() && !TagsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'tags' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetByMatrixTagsParams parameters = new()
                 {
                     Tags = TagsValue,
@@ -889,6 +1335,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetByMatrixTagsResult result = await defaultHandler.HandleGetByMatrixTagsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -915,7 +1369,7 @@ public static class ApiEndpointRegistration
         }
         );
 
-        app.MapGet("/label-no-explode/{.items}", async (HttpContext context) =>
+        app.MapGet("/label-no-explode/{items}", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
             try
@@ -940,6 +1394,23 @@ public static class ApiEndpointRegistration
                     }).RootElement;
                 }
 
+                if (ItemsValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'items' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ItemsValue.IsUndefined() && !ItemsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'items' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetByLabelItemsParams parameters = new()
                 {
                     Items = ItemsValue,
@@ -947,6 +1418,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetByLabelItemsResult result = await defaultHandler.HandleGetByLabelItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1004,6 +1483,23 @@ public static class ApiEndpointRegistration
                     }).RootElement;
                 }
 
+                if (ObjValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'obj' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ObjValue.IsUndefined() && !ObjValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'obj' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetByStyledObjectParams parameters = new()
                 {
                     Obj = ObjValue,
@@ -1011,6 +1507,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetByStyledObjectResult result = await defaultHandler.HandleGetByStyledObjectAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1050,7 +1554,35 @@ public static class ApiEndpointRegistration
                     FormatValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.QueryEndpointQueryFormat>(FormatRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                if (!FormatValue.IsUndefined() && !FormatValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'format' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 QueryItemsParams parameters = new()
                 {
@@ -1060,6 +1592,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 QueryItemsResult result = await defaultHandler.HandleQueryItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1098,6 +1638,23 @@ public static class ApiEndpointRegistration
                     ResourceIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ResourceIdRaw, workspace);
                 }
 
+                if (ResourceIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'resourceId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ResourceIdValue.IsUndefined() && !ResourceIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'resourceId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetResourceParams parameters = new()
                 {
                     ResourceId = ResourceIdValue,
@@ -1105,6 +1662,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetResourceResult result = await defaultHandler.HandleGetResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1149,7 +1714,59 @@ public static class ApiEndpointRegistration
                     DestinationValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonUri>(DestinationRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema2>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                if (ResourceIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'resourceId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (DestinationValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'Destination' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ResourceIdValue.IsUndefined() && !ResourceIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'resourceId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!DestinationValue.IsUndefined() && !DestinationValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'Destination' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema2>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 CopyResourceParams parameters = new()
                 {
@@ -1160,6 +1777,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 CopyResourceResult result = await defaultHandler.HandleCopyResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
@@ -1202,6 +1827,23 @@ public static class ApiEndpointRegistration
                     ResourceIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ResourceIdRaw, workspace);
                 }
 
+                if (ResourceIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'resourceId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ResourceIdValue.IsUndefined() && !ResourceIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'resourceId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 PurgeResourceParams parameters = new()
                 {
                     ResourceId = ResourceIdValue,
@@ -1209,6 +1851,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 PurgeResourceResult result = await defaultHandler.HandlePurgeResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1268,6 +1918,31 @@ public static class ApiEndpointRegistration
                     }).RootElement;
                 }
 
+                if (ResourceIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'resourceId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ResourceIdValue.IsUndefined() && !ResourceIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'resourceId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!OptionsValue.IsUndefined() && !OptionsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'options' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 MoveResourceParams parameters = new()
                 {
                     ResourceId = ResourceIdValue,
@@ -1276,6 +1951,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 MoveResourceResult result = await defaultHandler.HandleMoveResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1314,7 +1997,43 @@ public static class ApiEndpointRegistration
                     ResourceIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(ResourceIdRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<JsonElement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                if (ResourceIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'resourceId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!ResourceIdValue.IsUndefined() && !ResourceIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'resourceId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<JsonElement>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 BatchResourceParams parameters = new()
                 {
@@ -1324,6 +2043,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 BatchResourceResult result = await defaultHandler.HandleBatchResourceAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1360,6 +2087,14 @@ public static class ApiEndpointRegistration
                 StreamEventsParams parameters = new();
 
                 StreamEventsResult result = await defaultHandler.HandleStreamEventsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1426,6 +2161,31 @@ public static class ApiEndpointRegistration
                     PreferencesValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(PreferencesRaw, workspace);
                 }
 
+                if (!QsValue.IsUndefined() && !QsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'qs' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!SessionIdValue.IsUndefined() && !SessionIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'session_id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!PreferencesValue.IsUndefined() && !PreferencesValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'preferences' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 SearchWithQuerystringParams parameters = new()
                 {
                     Qs = QsValue,
@@ -1435,6 +2195,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 SearchWithQuerystringResult result = await defaultHandler.HandleSearchWithQuerystringAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1472,6 +2240,23 @@ public static class ApiEndpointRegistration
                     DocumentIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonUuid>(DocumentIdRaw, workspace);
                 }
 
+                if (DocumentIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'documentId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!DocumentIdValue.IsUndefined() && !DocumentIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'documentId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetDocumentParams parameters = new()
                 {
                     DocumentId = DocumentIdValue,
@@ -1479,6 +2264,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetDocumentResult result = await defaultHandler.HandleGetDocumentAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
@@ -1521,7 +2314,43 @@ public static class ApiEndpointRegistration
                     DocumentIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonUuid>(DocumentIdRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema6>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                if (DocumentIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'documentId' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!DocumentIdValue.IsUndefined() && !DocumentIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'documentId' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema6>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 UpdateDocumentParams parameters = new()
                 {
@@ -1531,6 +2360,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 UpdateDocumentResult result = await defaultHandler.HandleUpdateDocumentAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
@@ -1576,6 +2413,14 @@ public static class ApiEndpointRegistration
 
                 UploadRawFileResult result = await defaultHandler.HandleUploadRawFileAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
                 {
@@ -1613,6 +2458,15 @@ public static class ApiEndpointRegistration
                     VersionValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseNumber<CanonTests32.Server.JsonInteger>(VersionRaw, workspace);
                 }
 
+                if (!VersionValue.IsUndefined() && !VersionValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'version' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 GetResourceVersionParams parameters = new()
                 {
                     Version = VersionValue,
@@ -1620,6 +2474,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 GetResourceVersionResult result = await defaultHandler.HandleGetResourceVersionAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1656,6 +2518,14 @@ public static class ApiEndpointRegistration
 
                 GetMonitoringStatusResult result = await defaultHandler.HandleGetMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
                 {
@@ -1687,7 +2557,26 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<CanonTests32.Server.PutMonitoringStatusBody>? bodyDoc = null;
             try
             {
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PutMonitoringStatusBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PutMonitoringStatusBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 PutMonitoringStatusParams parameters = new()
                 {
@@ -1696,6 +2585,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 PutMonitoringStatusResult result = await defaultHandler.HandlePutMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1729,7 +2626,26 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<CanonTests32.Server.PostMonitoringStatusBody>? bodyDoc = null;
             try
             {
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostMonitoringStatusBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostMonitoringStatusBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 PostMonitoringStatusParams parameters = new()
                 {
@@ -1738,6 +2654,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 PostMonitoringStatusResult result = await defaultHandler.HandlePostMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1775,6 +2699,14 @@ public static class ApiEndpointRegistration
 
                 DeleteMonitoringStatusResult result = await defaultHandler.HandleDeleteMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
 
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
                 {
@@ -1806,7 +2738,26 @@ public static class ApiEndpointRegistration
             ParsedJsonDocument<CanonTests32.Server.Schema8>? bodyDoc = null;
             try
             {
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema8>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<CanonTests32.Server.Schema8>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 QueryMonitoringStatusParams parameters = new()
                 {
@@ -1815,6 +2766,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 QueryMonitoringStatusResult result = await defaultHandler.HandleQueryMonitoringStatusAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -1920,6 +2879,87 @@ public static class ApiEndpointRegistration
                     XCorrelationIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XCorrelationIdRaw, workspace);
                 }
 
+                if (QValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'q' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (SessionValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'session' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (XCorrelationIdValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'X-Correlation-Id' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!QValue.IsUndefined() && !QValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'q' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!TagsValue.IsUndefined() && !TagsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'tags' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!CoordsValue.IsUndefined() && !CoordsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'coords' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!FilterValue.IsUndefined() && !FilterValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'filter' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!SessionValue.IsUndefined() && !SessionValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'session' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!PrefsValue.IsUndefined() && !PrefsValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'prefs' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!XCorrelationIdValue.IsUndefined() && !XCorrelationIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'X-Correlation-Id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
                 SearchItemsParams parameters = new()
                 {
                     Q = QValue,
@@ -1933,6 +2973,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 SearchItemsResult result = await ItemsHandler.HandleSearchItemsAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 result.WriteResponseHeaders<Microsoft.AspNetCore.Http.IHeaderDictionary>(static (name, value, headers) =>
@@ -1975,6 +3023,23 @@ public static class ApiEndpointRegistration
                     XFileNameValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XFileNameRaw, workspace);
                 }
 
+                if (XFileNameValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'X-File-Name' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!XFileNameValue.IsUndefined() && !XFileNameValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'X-File-Name' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
 
                 UploadFileParams parameters = new()
                 {
@@ -1984,6 +3049,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 UploadFileResult result = await ItemsHandler.HandleUploadFileAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -2013,7 +3086,7 @@ public static class ApiEndpointRegistration
         app.MapPost("/feedback", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests32.Server.PostFeedbackBody>? bodyDoc = null;
+            ParsedJsonDocument<Corvus.Text.Json.JsonElement>? bodyDoc = null;
             try
             {
                 CanonTests32.Server.JsonString SourceValue = default;
@@ -2023,7 +3096,35 @@ public static class ApiEndpointRegistration
                     SourceValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(SourceRaw, workspace);
                 }
 
-                bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests32.Server.PostFeedbackBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                if (!SourceValue.IsUndefined() && !SourceValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'source' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<Corvus.Text.Json.JsonElement>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 SubmitFeedbackParams parameters = new()
                 {
@@ -2033,6 +3134,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 SubmitFeedbackResult result = await ItemsHandler.HandleSubmitFeedbackAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -2073,7 +3182,34 @@ public static class ApiEndpointRegistration
                     XUploadTokenValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XUploadTokenRaw, workspace);
                 }
 
-                bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests32.Server.PostAttachmentsBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                if (XUploadTokenValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'X-Upload-Token' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!XUploadTokenValue.IsUndefined() && !XUploadTokenValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'X-Upload-Token' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests32.Server.PostAttachmentsBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 UploadAttachmentParams parameters = new()
                 {
@@ -2083,6 +3219,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 UploadAttachmentResult result = await ItemsHandler.HandleUploadAttachmentAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -2113,7 +3257,7 @@ public static class ApiEndpointRegistration
         app.MapPost("/feedback-encoded", async (HttpContext context) =>
         {
             JsonWorkspace workspace = JsonWorkspace.CreateUnrented();
-            ParsedJsonDocument<CanonTests32.Server.PostFeedbackEncodedBody>? bodyDoc = null;
+            ParsedJsonDocument<Corvus.Text.Json.JsonElement>? bodyDoc = null;
             try
             {
                 CanonTests32.Server.JsonString XSessionIdValue = default;
@@ -2123,7 +3267,35 @@ public static class ApiEndpointRegistration
                     XSessionIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XSessionIdRaw, workspace);
                 }
 
-                bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<CanonTests32.Server.PostFeedbackEncodedBody>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                if (!XSessionIdValue.IsUndefined() && !XSessionIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'X-Session-Id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<Corvus.Text.Json.JsonElement>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 SubmitFeedbackEncodedParams parameters = new()
                 {
@@ -2133,6 +3305,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 SubmitFeedbackEncodedResult result = await ItemsHandler.HandleSubmitFeedbackEncodedAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -2173,7 +3353,26 @@ public static class ApiEndpointRegistration
                     XBatchIdValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(XBatchIdRaw, workspace);
                 }
 
-                bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests32.Server.PostAttachmentsEncodedBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                if (!XBatchIdValue.IsUndefined() && !XBatchIdValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'X-Batch-Id' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<CanonTests32.Server.PostAttachmentsEncodedBody>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 UploadAttachmentEncodedParams parameters = new()
                 {
@@ -2183,6 +3382,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 UploadAttachmentEncodedResult result = await ItemsHandler.HandleUploadAttachmentEncodedAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())
@@ -2223,7 +3430,43 @@ public static class ApiEndpointRegistration
                     SessionValue = Corvus.Text.Json.OpenApi.HeaderValueParser.ParseString<CanonTests32.Server.JsonString>(SessionRaw, workspace);
                 }
 
-                bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostSearchBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                if (SessionValue.IsUndefined())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The required parameter 'session' is missing.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!SessionValue.IsUndefined() && !SessionValue.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The parameter 'session' failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+
+                try
+                {
+                    bodyDoc = await ParsedJsonDocument<CanonTests32.Server.PostSearchBody>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);
+                }
+                catch
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body could not be parsed.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
+                if (!bodyDoc!.RootElement.EvaluateSchema())
+                {
+                    context.Response.StatusCode = 400;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Bad Request\",\"status\":400,\"detail\":\"The request body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
+
 
                 SearchItemsAdvancedParams parameters = new()
                 {
@@ -2233,6 +3476,14 @@ public static class ApiEndpointRegistration
                 ;
 
                 SearchItemsAdvancedResult result = await SearchHandler.HandleSearchItemsAdvancedAsync(parameters, workspace, context.RequestAborted).ConfigureAwait(false);
+
+                if (!result.ValidateBody())
+                {
+                    context.Response.StatusCode = 500;
+                    context.Response.ContentType = "application/problem+json";
+                    await context.Response.WriteAsync("{\"type\":\"about:blank\",\"title\":\"Internal Server Error\",\"status\":500,\"detail\":\"The response body failed schema validation.\"}", context.RequestAborted).ConfigureAwait(false);
+                    return;
+                }
 
                 context.Response.StatusCode = result.StatusCode;
                 if (!result.Body.IsUndefined())

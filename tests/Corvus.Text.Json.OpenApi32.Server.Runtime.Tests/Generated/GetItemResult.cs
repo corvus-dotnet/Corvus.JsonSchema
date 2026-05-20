@@ -86,6 +86,20 @@ public readonly struct GetItemResult
     public static GetItemResult Ok(CanonTests32.Server.ItemEntity.Source body, JsonWorkspace workspace, CanonTests32.Server.JsonInt32 xRateLimit = default, CanonTests32.Server.JsonBoolean xActive = default, JsonElement xRequestId = default, CanonTests32.Server.GetItemsByItemIdOkXTags xTags = default, CanonTests32.Server.GetItemsByItemIdOkXPageSizes xPageSizes = default, CanonTests32.Server.GetItemsByItemIdOkXFlags xFlags = default) => new(200, CanonTests32.Server.ItemEntity.CreateBuilder(workspace, body, 0).RootElement, "application/json", xRateLimit: xRateLimit, xActive: xActive, xRequestId: xRequestId, xTags: xTags, xPageSizes: xPageSizes, xFlags: xFlags);
 
     /// <summary>
+    /// Validates the response body against the schema for the current status code.
+    /// </summary>
+    /// <returns><see langword="true"/> if the body is valid or undefined; otherwise <see langword="false"/>.</returns>
+    public bool ValidateBody()
+    {
+        if (this.Body.IsUndefined()) return true;
+        return this.StatusCode switch
+        {
+            200 => CanonTests32.Server.ItemEntity.From(this.Body).EvaluateSchema(),
+            _ => true,
+        };
+    }
+
+    /// <summary>
     /// Writes the response body to the specified writer.
     /// </summary>
     /// <param name="writer">The UTF-8 JSON writer.</param>

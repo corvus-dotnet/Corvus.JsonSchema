@@ -51,6 +51,20 @@ public readonly struct SearchItemsResult
     public static SearchItemsResult Ok(CanonTests32.Server.GetSearchOk.Source body, JsonWorkspace workspace, CanonTests32.Server.GetSearchOkXFacets xFacets = default) => new(200, CanonTests32.Server.GetSearchOk.CreateBuilder(workspace, body, 0).RootElement, "application/json", xFacets: xFacets);
 
     /// <summary>
+    /// Validates the response body against the schema for the current status code.
+    /// </summary>
+    /// <returns><see langword="true"/> if the body is valid or undefined; otherwise <see langword="false"/>.</returns>
+    public bool ValidateBody()
+    {
+        if (this.Body.IsUndefined()) return true;
+        return this.StatusCode switch
+        {
+            200 => CanonTests32.Server.GetSearchOk.From(this.Body).EvaluateSchema(),
+            _ => true,
+        };
+    }
+
+    /// <summary>
     /// Writes the response body to the specified writer.
     /// </summary>
     /// <param name="writer">The UTF-8 JSON writer.</param>

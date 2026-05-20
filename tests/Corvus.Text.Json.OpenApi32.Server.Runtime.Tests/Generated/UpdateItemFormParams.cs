@@ -28,5 +28,5 @@ public readonly struct UpdateItemFormParams
     /// <summary>
     /// Gets the request body.
     /// </summary>
-    public CanonTests32.Server.PostItemsByItemIdFormBody Body { get; init; }
+    public Corvus.Text.Json.JsonElement Body { get; init; }
 }

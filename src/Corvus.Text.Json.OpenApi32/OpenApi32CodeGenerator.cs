@@ -5878,6 +5878,50 @@ public sealed class OpenApi32CodeGenerator
             }
         }
 
+        // ValidateBody method — validates the response body against the typed schema
+        // for the current status code.
+        w.WriteLine();
+        w.WriteLine("/// <summary>");
+        w.WriteLine("/// Validates the response body against the schema for the current status code.");
+        w.WriteLine("/// </summary>");
+        w.WriteLine("/// <returns><see langword=\"true\"/> if the body is valid or undefined; otherwise <see langword=\"false\"/>.</returns>");
+        w.WriteLine("public bool ValidateBody()");
+        w.OpenBrace();
+        w.WriteLine("if (this.Body.IsUndefined()) return true;");
+
+        // Emit switch arms for each response that has a typed body
+        bool hasAnyTypedResponse = false;
+        foreach (ResponseInfo resp in op.Responses)
+        {
+            string? typeName = this.ResolveResponseTypeName(resp);
+            if (typeName is null || resp.StatusCode == "default")
+            {
+                continue;
+            }
+
+            if (!hasAnyTypedResponse)
+            {
+                w.WriteLine("return this.StatusCode switch");
+                w.OpenBrace();
+                hasAnyTypedResponse = true;
+            }
+
+            w.WriteLine($"{resp.StatusCode} => {typeName}.From(this.Body).EvaluateSchema(),");
+        }
+
+        if (hasAnyTypedResponse)
+        {
+            w.WriteLine("_ => true,");
+            w.CloseBraceNoNewline().Write(";");
+            w.WriteLine();
+        }
+        else
+        {
+            w.WriteLine("return true;");
+        }
+
+        w.CloseBrace();
+
         // WriteBody method
         w.WriteLine();
         w.WriteLine("/// <summary>");
@@ -6097,11 +6141,11 @@ public sealed class OpenApi32CodeGenerator
                 if (mapMethod == "MapMethods")
                 {
                     string httpMethod = op.CustomMethodName ?? op.Method.ToString().ToUpperInvariant();
-                    w.WriteLine($"app.MapMethods(\"{op.PathTemplate}\", new[] {{ \"{httpMethod}\" }}, async (HttpContext context) =>");
+                    w.WriteLine($"app.MapMethods(\"{ConvertToAspNetRoute(op.PathTemplate)}\", new[] {{ \"{httpMethod}\" }}, async (HttpContext context) =>");
                 }
                 else
                 {
-                    w.WriteLine($"app.{mapMethod}(\"{op.PathTemplate}\", async (HttpContext context) =>");
+                    w.WriteLine($"app.{mapMethod}(\"{ConvertToAspNetRoute(op.PathTemplate)}\", async (HttpContext context) =>");
                 }
 
                 w.OpenBrace();
@@ -6127,6 +6171,39 @@ public sealed class OpenApi32CodeGenerator
                     EmitServerParameterParsing(w, param, fieldName, typeName);
                 }
 
+                // Validate parameters: check required parameters are present and all parameters pass schema validation.
+                if (op.Parameters.Length > 0)
+                {
+                    w.WriteLine();
+
+                    // Required parameter presence checks
+                    foreach (ParameterInfo param in op.Parameters)
+                    {
+                        if (param.IsRequired)
+                        {
+                            string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
+                            w.WriteLine($"if ({fieldName}Value.IsUndefined())");
+                            w.OpenBrace();
+                            EmitProblemDetailsResponse(w, 400, "Bad Request", $"The required parameter '{param.Name}' is missing.");
+                            w.WriteLine("return;");
+                            w.CloseBrace();
+                            w.WriteLine();
+                        }
+                    }
+
+                    // Schema validation for all parameters that have a value
+                    foreach (ParameterInfo param in op.Parameters)
+                    {
+                        string fieldName = CodeEmitHelpers.SanitizeIdentifier(param.Name);
+                        w.WriteLine($"if (!{fieldName}Value.IsUndefined() && !{fieldName}Value.EvaluateSchema())");
+                        w.OpenBrace();
+                        EmitProblemDetailsResponse(w, 400, "Bad Request", $"The parameter '{param.Name}' failed schema validation.");
+                        w.WriteLine("return;");
+                        w.CloseBrace();
+                        w.WriteLine();
+                    }
+                }
+
                 // Parse body from request stream into a document.
                 // For form-urlencoded bodies, use the symmetric deserializer (inverse of
                 // FormUrlEncodedSerializer.Serialize used by the client).
@@ -6147,15 +6224,47 @@ public sealed class OpenApi32CodeGenerator
                     }
                     else if (IsFormUrlEncodedRequestBody(op.RequestBody!.Value))
                     {
+                        w.WriteLine("try");
+                        w.OpenBrace();
                         w.WriteLine($"bodyDoc = await FormUrlEncodedSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.RequestAborted).ConfigureAwait(false);");
+                        w.CloseBrace();
+                        w.WriteLine("catch");
+                        w.OpenBrace();
+                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
+                        w.WriteLine("return;");
+                        w.CloseBrace();
+                        w.WriteLine();
+                        EmitRequestBodySchemaValidation(w, bodyTypeName);
                     }
                     else if (IsMultipartRequestBody(op.RequestBody!.Value))
                     {
+                        w.WriteLine("try");
+                        w.OpenBrace();
                         w.WriteLine($"bodyDoc = await MultipartFormDataSerializer.DeserializeAsync<{bodyTypeName}>(context.Request.Body, context.Request.ContentType, cancellationToken: context.RequestAborted).ConfigureAwait(false);");
+                        w.CloseBrace();
+                        w.WriteLine("catch");
+                        w.OpenBrace();
+                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
+                        w.WriteLine("return;");
+                        w.CloseBrace();
+
+                        // Note: schema validation is skipped for multipart/form-data bodies because
+                        // binary file fields (format: binary) are serialized as JSON strings whose
+                        // content cannot meaningfully be validated against the schema format annotation.
                     }
                     else
                     {
+                        w.WriteLine("try");
+                        w.OpenBrace();
                         w.WriteLine($"bodyDoc = await ParsedJsonDocument<{bodyTypeName}>.ParseAsync(context.Request.Body, default, context.RequestAborted).ConfigureAwait(false);");
+                        w.CloseBrace();
+                        w.WriteLine("catch");
+                        w.OpenBrace();
+                        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body could not be parsed.");
+                        w.WriteLine("return;");
+                        w.CloseBrace();
+                        w.WriteLine();
+                        EmitRequestBodySchemaValidation(w, bodyTypeName);
                     }
                 }
 
@@ -6197,6 +6306,15 @@ public sealed class OpenApi32CodeGenerator
 
                 // Call handler
                 w.WriteLine($"{resultName} result = await {paramName}.Handle{op.MethodName}Async(parameters, workspace, context.RequestAborted).ConfigureAwait(false);");
+                w.WriteLine();
+
+                // Validate the response body against the schema for the returned status code.
+                // If the handler produces an invalid response, return 500 Internal Server Error.
+                w.WriteLine("if (!result.ValidateBody())");
+                w.OpenBrace();
+                EmitProblemDetailsResponse(w, 500, "Internal Server Error", "The response body failed schema validation.");
+                w.WriteLine("return;");
+                w.CloseBrace();
                 w.WriteLine();
 
                 // Write response using workspace-rented writer to PipeWriter
@@ -6507,4 +6625,66 @@ public sealed class OpenApi32CodeGenerator
             OperationMethod.Patch => "MapPatch",
             _ => "MapMethods",
         };
+
+    /// <summary>
+    /// Converts an OpenAPI path template to an ASP.NET Core route template by stripping
+    /// label-style (.) and matrix-style (;) prefixes from path parameter names.
+    /// E.g., <c>/label/{.items}</c> becomes <c>/label/{items}</c>.
+    /// </summary>
+    private static string ConvertToAspNetRoute(string openApiPath)
+    {
+        // Replace {.paramName} and {;paramName} with {paramName}
+        int idx = openApiPath.IndexOf('{');
+        if (idx < 0)
+        {
+            return openApiPath;
+        }
+
+        var sb = new System.Text.StringBuilder(openApiPath.Length);
+        int pos = 0;
+        while (idx >= 0)
+        {
+            sb.Append(openApiPath, pos, idx - pos + 1); // Include the '{'
+            pos = idx + 1;
+
+            // Skip style prefix if present (. or ;)
+            if (pos < openApiPath.Length && (openApiPath[pos] == '.' || openApiPath[pos] == ';'))
+            {
+                pos++;
+            }
+
+            idx = openApiPath.IndexOf('{', pos);
+        }
+
+        sb.Append(openApiPath, pos, openApiPath.Length - pos);
+        return sb.ToString();
+    }
+
+    /// <summary>
+    /// Emits an RFC 9457 Problem Details JSON response with the given status, title, and detail.
+    /// </summary>
+    private static void EmitProblemDetailsResponse(IndentedWriter w, int statusCode, string title, string detail)
+    {
+        w.WriteLine($"context.Response.StatusCode = {statusCode};");
+        w.WriteLine("context.Response.ContentType = \"application/problem+json\";");
+        w.WriteLine($"await context.Response.WriteAsync(\"{{\u005C\"type\u005C\":\u005C\"about:blank\u005C\",\u005C\"title\u005C\":\u005C\"{title}\u005C\",\u005C\"status\u005C\":{statusCode},\u005C\"detail\u005C\":\u005C\"{detail}\u005C\"}}\", context.RequestAborted).ConfigureAwait(false);");
+    }
+
+    /// <summary>
+    /// Emits schema validation of the parsed request body, returning 400 if invalid.
+    /// </summary>
+    private static void EmitRequestBodySchemaValidation(IndentedWriter w, string? bodyTypeName)
+    {
+        if (bodyTypeName is null)
+        {
+            return;
+        }
+
+        w.WriteLine("if (!bodyDoc!.RootElement.EvaluateSchema())");
+        w.OpenBrace();
+        EmitProblemDetailsResponse(w, 400, "Bad Request", "The request body failed schema validation.");
+        w.WriteLine("return;");
+        w.CloseBrace();
+        w.WriteLine();
+    }
 }

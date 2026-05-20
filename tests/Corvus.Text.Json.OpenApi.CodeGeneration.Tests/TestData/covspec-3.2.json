@@ -381,31 +381,7 @@
           "required": true,
           "content": {
             "application/x-www-form-urlencoded": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string"
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "metadata": {
-                    "type": "object",
-                    "properties": {
-                      "color": {
-                        "type": "string"
-                      },
-                      "size": {
-                        "type": "string"
-                      }
-                    }
-                  }
-                }
-              },
+              "schema": {},
               "encoding": {
                 "tags": {
                   "style": "form",
@@ -425,9 +401,7 @@
             "description": "Updated item",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Item"
-                }
+                "schema": {}
               }
             }
           }
@@ -913,20 +887,7 @@
           "required": true,
           "content": {
             "application/x-www-form-urlencoded": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "rating": {
-                    "type": "integer"
-                  },
-                  "comment": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "rating"
-                ]
-              }
+              "schema": {}
             }
           }
         },
@@ -935,9 +896,7 @@
             "description": "Feedback submitted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Item"
-                }
+                "schema": {}
               }
             },
             "links": {
@@ -1034,23 +993,7 @@
           "required": true,
           "content": {
             "application/x-www-form-urlencoded": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  },
-                  "comment": {
-                    "type": "string"
-                  }
-                },
-                "required": [
-                  "tags"
-                ]
-              },
+              "schema": {},
               "encoding": {
                 "tags": {
                   "style": "pipeDelimited",
@@ -1065,9 +1008,7 @@
             "description": "Feedback submitted",
             "content": {
               "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/Item"
-                }
+                "schema": {}
               }
             },
             "links": {
@@ -1716,10 +1657,16 @@
                     {
                       "type": "object",
                       "properties": {
-                        "action": { "type": "string" },
-                        "target": { "type": "string" }
+                        "action": {
+                          "type": "string"
+                        },
+                        "target": {
+                          "type": "string"
+                        }
                       },
-                      "required": ["action"]
+                      "required": [
+                        "action"
+                      ]
                     },
                     {
                       "type": "string",
@@ -1728,8 +1675,12 @@
                   ]
                 },
                 "prefixEncoding": [
-                  { "contentType": "application/json" },
-                  { "contentType": "application/octet-stream" }
+                  {
+                    "contentType": "application/json"
+                  },
+                  {
+                    "contentType": "application/octet-stream"
+                  }
                 ]
               }
             }
@@ -1742,7 +1693,9 @@
                   "schema": {
                     "type": "object",
                     "properties": {
-                      "processed": { "type": "integer" }
+                      "processed": {
+                        "type": "integer"
+                      }
                     }
                   }
                 }

@@ -68,8 +68,8 @@ public class GeneratedServerEndToEndTests
     public async Task GetItems_ReturnsOk_WithJsonBody()
     {
         HttpResponseMessage response = await client!.GetAsync("/items");
-        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         string body = await response.Content.ReadAsStringAsync();
+        Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         Assert.IsTrue(body.Contains("\"id\""));
     }
 
@@ -116,7 +116,10 @@ public class GeneratedServerEndToEndTests
     [TestMethod]
     public async Task SearchItems_ReturnsOk()
     {
-        HttpResponseMessage response = await client!.GetAsync("/search?q=test");
+        HttpRequestMessage request = new(HttpMethod.Get, "/search?q=test");
+        request.Headers.Add("X-Correlation-Id", "corr-001");
+        request.Headers.Add("Cookie", "session=abc123");
+        HttpResponseMessage response = await client!.SendAsync(request);
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -627,7 +630,7 @@ public class GeneratedServerEndToEndTests
     [TestMethod]
     public async Task GetDocument_ReturnsOk()
     {
-        HttpResponseMessage response = await client!.GetAsync("/documents/doc-1");
+        HttpResponseMessage response = await client!.GetAsync("/documents/550e8400-e29b-41d4-a716-446655440000");
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -635,7 +638,7 @@ public class GeneratedServerEndToEndTests
     public async Task PutDocument_ReturnsOk()
     {
         StringContent content = new("""{"title":"Updated Doc"}""", Encoding.UTF8, "application/json");
-        HttpResponseMessage response = await client!.PutAsync("/documents/doc-1", content);
+        HttpResponseMessage response = await client!.PutAsync("/documents/550e8400-e29b-41d4-a716-446655440000", content);
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
     }
 
@@ -674,6 +677,6 @@ public class GeneratedServerEndToEndTests
         HttpResponseMessage response = await client!.GetAsync("/empty-servers");
         Assert.AreEqual(HttpStatusCode.OK, response.StatusCode);
         string body = await response.Content.ReadAsStringAsync();
-        Assert.AreEqual("[]", body);
+        Assert.AreEqual("{\"ok\":true}", body);
     }
 }
