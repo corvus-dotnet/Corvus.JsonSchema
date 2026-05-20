@@ -69,6 +69,19 @@ public class CodeEmitHelpersTests
     }
 
     [TestMethod]
+    public void SanitizeParameterName_Empty_ReturnsFallback()
+    {
+        Assert.AreEqual("_param", CodeEmitHelpers.SanitizeParameterName(""));
+    }
+
+    [TestMethod]
+    public void SanitizeParameterName_StartsWithUnderscore_ReturnsSame()
+    {
+        // Starts with underscore — valid, does not need sanitizing
+        Assert.AreEqual("_id", CodeEmitHelpers.SanitizeParameterName("_id"));
+    }
+
+    [TestMethod]
     public void SanitizeParameterName_ContainsInvalidChar_NeedsSanitizing()
     {
         // Contains hyphen → needs sanitizing
@@ -431,5 +444,319 @@ public class CodeEmitHelpersTests
     {
         string result = CodeEmitHelpers.ContentTypeCondition((ContentCategory)99);
         Assert.AreEqual("true", result);
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.String, "element")]
+    [DataRow(ParameterSerializationKind.Boolean, "bool.Parse(element)")]
+    [DataRow(ParameterSerializationKind.Int32, "int.Parse(element)")]
+    [DataRow(ParameterSerializationKind.Int64, "long.Parse(element)")]
+    [DataRow(ParameterSerializationKind.Single, "float.Parse(element)")]
+    [DataRow(ParameterSerializationKind.Double, "double.Parse(element)")]
+    [DataRow(ParameterSerializationKind.Decimal, "decimal.Parse(element)")]
+    [DataRow(ParameterSerializationKind.Int16, "short.Parse(element)")]
+    [DataRow(ParameterSerializationKind.Byte, "byte.Parse(element)")]
+    [DataRow(ParameterSerializationKind.SByte, "sbyte.Parse(element)")]
+    [DataRow(ParameterSerializationKind.UInt16, "ushort.Parse(element)")]
+    [DataRow(ParameterSerializationKind.UInt32, "uint.Parse(element)")]
+    [DataRow(ParameterSerializationKind.UInt64, "ulong.Parse(element)")]
+    [DataRow(ParameterSerializationKind.Half, "double.Parse(element)")]
+    [DataRow(ParameterSerializationKind.UnboundedNumber, "double.Parse(element)")]
+    public void GetElementSourceExpression_AllKinds_ReturnsExpected(
+        ParameterSerializationKind kind, string expected)
+    {
+        Assert.AreEqual(expected, CodeEmitHelpers.GetElementSourceExpressionPublic(kind, "element"));
+    }
+
+    [TestMethod]
+    public void GetElementSourceExpression_UnknownKind_ReturnsVarName()
+    {
+        // The default case returns the variable name unchanged
+        Assert.AreEqual("element", CodeEmitHelpers.GetElementSourceExpressionPublic((ParameterSerializationKind)99, "element"));
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.Array)]
+    [DataRow(ParameterSerializationKind.Byte)]
+    [DataRow(ParameterSerializationKind.UInt16)]
+    [DataRow(ParameterSerializationKind.UInt32)]
+    [DataRow(ParameterSerializationKind.UInt64)]
+    [DataRow(ParameterSerializationKind.SByte)]
+    [DataRow(ParameterSerializationKind.Int16)]
+    [DataRow(ParameterSerializationKind.Int64)]
+    [DataRow(ParameterSerializationKind.Int128)]
+    [DataRow(ParameterSerializationKind.UInt128)]
+    [DataRow(ParameterSerializationKind.Half)]
+    [DataRow(ParameterSerializationKind.Single)]
+    [DataRow(ParameterSerializationKind.Decimal)]
+    public void EmitQueryScalarWrite_AdditionalKinds_ProducesOutput(ParameterSerializationKind kind)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitQueryScalarWrite(w, "value", "q0", kind);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitQueryScalarWrite should produce output for {kind}");
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.Array)]
+    [DataRow(ParameterSerializationKind.Byte)]
+    [DataRow(ParameterSerializationKind.UInt16)]
+    [DataRow(ParameterSerializationKind.UInt32)]
+    [DataRow(ParameterSerializationKind.UInt64)]
+    [DataRow(ParameterSerializationKind.SByte)]
+    [DataRow(ParameterSerializationKind.Int16)]
+    [DataRow(ParameterSerializationKind.Int64)]
+    [DataRow(ParameterSerializationKind.Int128)]
+    [DataRow(ParameterSerializationKind.UInt128)]
+    [DataRow(ParameterSerializationKind.Half)]
+    [DataRow(ParameterSerializationKind.Single)]
+    [DataRow(ParameterSerializationKind.Decimal)]
+    public void EmitHeaderScalarWrite_AdditionalKinds_ProducesOutput(ParameterSerializationKind kind)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitHeaderScalarWrite(w, "value", "h0", kind);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitHeaderScalarWrite should produce output for {kind}");
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.Array)]
+    [DataRow(ParameterSerializationKind.Byte)]
+    [DataRow(ParameterSerializationKind.UInt16)]
+    [DataRow(ParameterSerializationKind.UInt32)]
+    [DataRow(ParameterSerializationKind.UInt64)]
+    [DataRow(ParameterSerializationKind.SByte)]
+    [DataRow(ParameterSerializationKind.Int16)]
+    [DataRow(ParameterSerializationKind.Int64)]
+    [DataRow(ParameterSerializationKind.Int128)]
+    [DataRow(ParameterSerializationKind.UInt128)]
+    [DataRow(ParameterSerializationKind.Half)]
+    [DataRow(ParameterSerializationKind.Single)]
+    [DataRow(ParameterSerializationKind.Decimal)]
+    public void EmitCookieScalarWrite_AdditionalKinds_ProducesOutput(ParameterSerializationKind kind)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitCookieScalarWrite(w, "value", "c0", kind);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitCookieScalarWrite should produce output for {kind}");
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.Array)]
+    [DataRow(ParameterSerializationKind.Byte)]
+    [DataRow(ParameterSerializationKind.UInt16)]
+    [DataRow(ParameterSerializationKind.UInt32)]
+    [DataRow(ParameterSerializationKind.UInt64)]
+    [DataRow(ParameterSerializationKind.SByte)]
+    [DataRow(ParameterSerializationKind.Int16)]
+    [DataRow(ParameterSerializationKind.Int64)]
+    [DataRow(ParameterSerializationKind.Int128)]
+    [DataRow(ParameterSerializationKind.UInt128)]
+    [DataRow(ParameterSerializationKind.Half)]
+    [DataRow(ParameterSerializationKind.Single)]
+    [DataRow(ParameterSerializationKind.Decimal)]
+    public void EmitPathParamWrite_AdditionalKinds_ProducesOutput(ParameterSerializationKind kind)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitPathParamWrite(w, "color", "value", "p0", kind, ParameterStyle.Simple, false);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitPathParamWrite should produce output for {kind}");
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.String)]
+    [DataRow(ParameterSerializationKind.Boolean)]
+    [DataRow(ParameterSerializationKind.Int32)]
+    [DataRow(ParameterSerializationKind.Double)]
+    [DataRow(ParameterSerializationKind.UnboundedNumber)]
+    [DataRow(ParameterSerializationKind.Byte)]
+    [DataRow(ParameterSerializationKind.Decimal)]
+    [DataRow(ParameterSerializationKind.Half)]
+    public void EmitPathScalarValue_AllKindCategories_ProducesOutput(ParameterSerializationKind kind)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitPathScalarValue(w, "value", "p0", kind, allowReserved: false);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitPathScalarValue should produce output for {kind}");
+    }
+
+    [TestMethod]
+    public void EmitPathScalarValue_String_AllowReserved_WritesDirectly()
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitPathScalarValue(w, "value", "p0", ParameterSerializationKind.String, allowReserved: true);
+        string output = w.ToString();
+        Assert.IsTrue(output.Contains("writer.Write(utf8p0.Span)"), "AllowReserved=true should write directly");
+    }
+
+    [TestMethod]
+    public void EmitQueryScalarWrite_UnrecognizedKind_ProducesNoOutput()
+    {
+        // Exercises the implicit default (fall-through) branch
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitQueryScalarWrite(w, "value", "q0", (ParameterSerializationKind)99);
+        Assert.AreEqual(0, w.ToString().Length);
+    }
+
+    [TestMethod]
+    public void EmitHeaderScalarWrite_UnrecognizedKind_ProducesNoOutput()
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitHeaderScalarWrite(w, "value", "h0", (ParameterSerializationKind)99);
+        Assert.AreEqual(0, w.ToString().Length);
+    }
+
+    [TestMethod]
+    public void EmitCookieScalarWrite_UnrecognizedKind_ProducesNoOutput()
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitCookieScalarWrite(w, "value", "c0", (ParameterSerializationKind)99);
+        Assert.AreEqual(0, w.ToString().Length);
+    }
+
+    [TestMethod]
+    public void EmitPathScalarValue_UnrecognizedKind_ProducesNoOutput()
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitPathScalarValue(w, "value", "p0", (ParameterSerializationKind)99, allowReserved: false);
+        Assert.AreEqual(0, w.ToString().Length);
+    }
+
+    [TestMethod]
+    [DataRow(ParameterSerializationKind.Boolean, 5)]
+    [DataRow(ParameterSerializationKind.Byte, 3)]
+    [DataRow(ParameterSerializationKind.UInt16, 5)]
+    [DataRow(ParameterSerializationKind.UInt32, 10)]
+    [DataRow(ParameterSerializationKind.UInt64, 20)]
+    [DataRow(ParameterSerializationKind.UInt128, 39)]
+    [DataRow(ParameterSerializationKind.SByte, 4)]
+    [DataRow(ParameterSerializationKind.Int16, 6)]
+    [DataRow(ParameterSerializationKind.Int32, 11)]
+    [DataRow(ParameterSerializationKind.Int64, 20)]
+    [DataRow(ParameterSerializationKind.Int128, 40)]
+    [DataRow(ParameterSerializationKind.Half, 16)]
+    [DataRow(ParameterSerializationKind.Single, 32)]
+    [DataRow(ParameterSerializationKind.Double, 32)]
+    [DataRow(ParameterSerializationKind.Decimal, 32)]
+    public void TryFormatBufferSize_AllBoundedKinds_ReturnsExpectedSize(
+        ParameterSerializationKind kind, int expected)
+    {
+        Assert.AreEqual(expected, CodeEmitHelpers.TryFormatBufferSize(kind));
+    }
+
+    [TestMethod]
+    [DataRow(ParameterStyle.Simple, false)]
+    [DataRow(ParameterStyle.Simple, true)]
+    [DataRow(ParameterStyle.Label, false)]
+    [DataRow(ParameterStyle.Label, true)]
+    [DataRow(ParameterStyle.Matrix, false)]
+    [DataRow(ParameterStyle.Matrix, true)]
+    public void EmitPathArrayWrite_AllStyleExplodeCombinations_ProducesOutput(
+        ParameterStyle style, bool explode)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitPathArrayWrite(w, "colors", "value", "a0", style, explode);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitPathArrayWrite should produce output for {style}/{explode}");
+    }
+
+    [TestMethod]
+    [DataRow(ParameterStyle.Simple, false)]
+    [DataRow(ParameterStyle.Simple, true)]
+    [DataRow(ParameterStyle.Label, false)]
+    [DataRow(ParameterStyle.Label, true)]
+    [DataRow(ParameterStyle.Matrix, false)]
+    [DataRow(ParameterStyle.Matrix, true)]
+    public void EmitPathObjectWrite_AllStyleExplodeCombinations_ProducesOutput(
+        ParameterStyle style, bool explode)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitPathObjectWrite(w, "color", "value", "o0", style, explode);
+        Assert.IsTrue(w.ToString().Length > 0, $"EmitPathObjectWrite should produce output for {style}/{explode}");
+    }
+
+    [TestMethod]
+    public void GetAcceptMediaTypes_MultipleTypes_OrdersByPriority()
+    {
+        var responses = new[]
+        {
+            ("application/octet-stream", (string?)null),
+            ("text/plain", (string?)null),
+            ("application/json", (string?)"#/components/schemas/Pet"),
+        };
+
+        string[] result = CodeEmitHelpers.GetAcceptMediaTypes(responses);
+
+        // JSON should be first, text second, octet-stream third
+        Assert.AreEqual(3, result.Length);
+        Assert.AreEqual("application/json", result[0]);
+        Assert.AreEqual("text/plain", result[1]);
+        Assert.AreEqual("application/octet-stream", result[2]);
+    }
+
+    [TestMethod]
+    public void GetAcceptMediaTypes_WildcardExcluded()
+    {
+        var responses = new[]
+        {
+            ("*/*", (string?)null),
+            ("application/json", (string?)"#/components/schemas/Pet"),
+        };
+
+        string[] result = CodeEmitHelpers.GetAcceptMediaTypes(responses);
+        Assert.AreEqual(1, result.Length);
+        Assert.AreEqual("application/json", result[0]);
+    }
+
+    [TestMethod]
+    public void GetMatchTypeName_JsonCategory_ReturnsTypeName()
+    {
+        string result = CodeEmitHelpers.GetMatchTypeName(ContentCategory.Json, "MySchema");
+        Assert.AreEqual("MySchema", result);
+    }
+
+    [TestMethod]
+    public void GetMatchTypeName_JsonCategory_NullTypeName_ReturnsEmpty()
+    {
+        string result = CodeEmitHelpers.GetMatchTypeName(ContentCategory.Json, null);
+        Assert.AreEqual(string.Empty, result);
+    }
+
+    [TestMethod]
+    public void GetMatchTypeName_OctetStream_ReturnsStreamNullable()
+    {
+        string result = CodeEmitHelpers.GetMatchTypeName(ContentCategory.OctetStream, "MySchema");
+        Assert.AreEqual("Stream?", result);
+    }
+
+    [TestMethod]
+    public void GetMatchTypeName_TextPlain_ReturnsStringNullable()
+    {
+        string result = CodeEmitHelpers.GetMatchTypeName(ContentCategory.TextPlain, "MySchema");
+        Assert.AreEqual("string?", result);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public void EmitObjectParseFromSeparatedString_HasDeepNesting_UsesNextSeparator(bool hasDeepNesting)
+    {
+        IndentedWriter w = new();
+        CodeEmitHelpers.EmitObjectParseFromSeparatedString(
+            w,
+            targetVar: "result",
+            rawValueVar: "raw",
+            workspaceExpr: "workspace",
+            typeName: "MyObj",
+            separator: "','",
+            explode: false,
+            valueKind: ParameterSerializationKind.String,
+            hasDeepNesting: hasDeepNesting,
+            valueTypeName: "MyVal");
+
+        string output = w.ToString();
+
+        if (hasDeepNesting)
+        {
+            Assert.IsTrue(output.Contains("NextSeparator"), "Deep nesting should use NextSeparator");
+        }
+        else
+        {
+            Assert.IsTrue(output.Contains("IndexOf"), "Non-deep nesting should use IndexOf");
+        }
     }
 }

@@ -206,4 +206,76 @@ public class SchemaClassifierTests
     {
         Assert.IsFalse(SchemaClassifier.IsFormattable(kind));
     }
+
+    [TestMethod]
+    public void ClassifyArrayElement_HasItems_ReturnsItemKind()
+    {
+        JsonElement schema = ParseSchema("""{ "type": "array", "items": { "type": "integer", "format": "int32" } }""");
+        Assert.AreEqual(
+            ParameterSerializationKind.Int32,
+            SchemaClassifier.ClassifyArrayElement(schema));
+    }
+
+    [TestMethod]
+    public void ClassifyArrayElement_NoItems_ReturnsString()
+    {
+        JsonElement schema = ParseSchema("""{ "type": "array" }""");
+        Assert.AreEqual(
+            ParameterSerializationKind.String,
+            SchemaClassifier.ClassifyArrayElement(schema));
+    }
+
+    [TestMethod]
+    public void ClassifyArrayElement_ItemsNotObject_ReturnsString()
+    {
+        JsonElement schema = ParseSchema("""{ "type": "array", "items": true }""");
+        Assert.AreEqual(
+            ParameterSerializationKind.String,
+            SchemaClassifier.ClassifyArrayElement(schema));
+    }
+
+    [TestMethod]
+    public void ClassifyObjectValue_HasAdditionalProperties_ReturnsValueKind()
+    {
+        JsonElement schema = ParseSchema("""{ "type": "object", "additionalProperties": { "type": "number", "format": "double" } }""");
+        Assert.AreEqual(
+            ParameterSerializationKind.Double,
+            SchemaClassifier.ClassifyObjectValue(schema));
+    }
+
+    [TestMethod]
+    public void ClassifyObjectValue_NoAdditionalProperties_ReturnsString()
+    {
+        JsonElement schema = ParseSchema("""{ "type": "object" }""");
+        Assert.AreEqual(
+            ParameterSerializationKind.String,
+            SchemaClassifier.ClassifyObjectValue(schema));
+    }
+
+    [TestMethod]
+    public void ClassifyObjectValue_AdditionalPropertiesNotObject_ReturnsString()
+    {
+        JsonElement schema = ParseSchema("""{ "type": "object", "additionalProperties": true }""");
+        Assert.AreEqual(
+            ParameterSerializationKind.String,
+            SchemaClassifier.ClassifyObjectValue(schema));
+    }
+
+    [TestMethod]
+    public void Classify_IntegerFormatNotString_ReturnsUnboundedNumber()
+    {
+        JsonElement schema = ParseSchema("""{ "type": "integer", "format": 42 }""");
+        Assert.AreEqual(
+            ParameterSerializationKind.UnboundedNumber,
+            SchemaClassifier.Classify(schema));
+    }
+
+    [TestMethod]
+    public void Classify_NumberFormatNotString_ReturnsUnboundedNumber()
+    {
+        JsonElement schema = ParseSchema("""{ "type": "number", "format": true }""");
+        Assert.AreEqual(
+            ParameterSerializationKind.UnboundedNumber,
+            SchemaClassifier.Classify(schema));
+    }
 }
